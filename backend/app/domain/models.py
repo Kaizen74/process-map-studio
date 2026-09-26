@@ -378,3 +378,23 @@ class CheckOutcome(BaseModel):
     passed: bool
     guardrail: str = ""  # B.20: G3, G4, G5 …
     reason: str = ""
+
+
+class PromptSegment(BaseModel):
+    """One passage as it is sent to Claude: a call-local ID, its anchor, the speaker's role (never a
+    name) and the text with names already hidden. `segment_id` is the stored passage's real ID."""
+
+    ref: str
+    segment_id: str
+    seq: int
+    anchor: str
+    text: str
+    speaker_role: str = ""
+    page: int | None = None
+    start_ms: int | None = None
+
+
+class Prompt(BaseModel):
+    name: str
+    version: str
+    text: str
