@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import VersionView
-from app.repositories.tables import MapVersion
+from app.repositories.tables import Element, MapVersion
 
 
 def _view(row: MapVersion) -> VersionView:
@@ -42,8 +42,28 @@ def current_draft(session: Session, engagement_id: str) -> VersionView | None:
     return _view(row) if row else None
 
 
+def drafts(session: Session, engagement_id: str) -> list[VersionView]:
+    """The engagement's draft versions, newest first (two exist only while a new draft is made)."""
+    rows = session.scalars(
+        select(MapVersion)
+        .where(MapVersion.engagement_id == engagement_id)
+        .where(MapVersion.state == "draft")
+        .order_by(MapVersion.created_at.desc(), MapVersion.id)
+    )
+    return [_view(row) for row in rows]
+
+
 def delete(session: Session, version_id: str) -> None:
     row = session.get(MapVersion, version_id)
     if row is not None:
         session.delete(row)
         session.flush()
+
+
+def element_count(session: Session, version_id: str) -> int:
+    return (
+        session.scalar(
+            select(func.count()).select_from(Element).where(Element.version_id == version_id)
+        )
+        or 0
+    )

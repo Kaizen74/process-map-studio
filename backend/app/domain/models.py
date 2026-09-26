@@ -316,6 +316,16 @@ class Redacted(BaseModel):
 # --- Jobs (PRD §4 Pipeline) ---------------------------------------------------------------------
 
 
+class JobStage(BaseModel):
+    """One stage of a draft job, for the stage stepper (API_CONTRACT.md → Jobs)."""
+
+    id: str
+    name: str
+    status: str  # waiting · running · done · failed · later
+    started_at: str | None = None
+    finished_at: str | None = None
+
+
 class JobClaims(BaseModel):
     verified: int = 0
     rejected: int = 0
@@ -333,6 +343,7 @@ class JobView(BaseModel):
     error: str
     usage: dict[str, int] | None = None
     claims: JobClaims = JobClaims()
+    stages: list[JobStage] = []
     created_at: str
 
 
@@ -446,3 +457,60 @@ class StoredSegment(BaseModel):
     speaker_role: str | None
     is_interviewer: bool
     instruction_like: bool
+
+
+class DraftSummary(BaseModel):
+    verified: int
+    rejected: int
+    open_questions: int
+    scrubbed: int
+
+
+class DraftState(BaseModel):
+    """GET /engagements/{id}/draft: the latest draft job and the current draft."""
+
+    job: JobView | None
+    version: VersionView | None
+    summary: DraftSummary | None
+
+
+class DraftStarted(BaseModel):
+    job_id: str
+
+
+class RejectedClaim(BaseModel):
+    id: str
+    claim_text: str
+    source_id: str
+    source_name: str
+    anchor: str
+    reason: str
+    guardrail: str
+    stage: str
+    passage_available: bool
+    segment_id: str | None
+
+
+class RejectedClaims(BaseModel):
+    items: list[RejectedClaim]
+    total: int
+    scrub_count: int
+    instruction_like_count: int
+
+
+class AiUsageRow(BaseModel):
+    id: str
+    created_at: str
+    job_id: str | None
+    stage_id: str
+    prompt_version: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    duration_ms: int
+    status: str
+
+
+class AiUsage(BaseModel):
+    items: list[AiUsageRow]
+    totals: dict[str, int]

@@ -2,11 +2,29 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
 from app.repositories.tables import Claim, Unknown
+
+
+def _record(row: Claim) -> ClaimRecord:
+    return ClaimRecord(
+        source_id=row.source_id,
+        stage=row.stage,
+        claim_type=row.claim_type,
+        payload=dict(row.payload),
+        segment_ids=list(row.segment_ids),
+        quote=row.quote,
+        provenance=row.provenance,
+        basis=row.basis,
+        verification_status=row.verification_status,
+        rejection_reason=row.rejection_reason,
+        rejection_guardrail=row.rejection_guardrail,
+    )
 
 
 def add_claims(session: Session, version_id: str, claims: list[ClaimRecord]) -> None:
@@ -26,22 +44,7 @@ def list_claims(session: Session, version_id: str, status: str | None = None) ->
     if status is not None:
         query = query.where(Claim.verification_status == status)
     rows = session.scalars(query.order_by(Claim.created_at, Claim.id))
-    return [
-        ClaimRecord(
-            source_id=row.source_id,
-            stage=row.stage,
-            claim_type=row.claim_type,
-            payload=dict(row.payload),
-            segment_ids=list(row.segment_ids),
-            quote=row.quote,
-            provenance=row.provenance,
-            basis=row.basis,
-            verification_status=row.verification_status,
-            rejection_reason=row.rejection_reason,
-            rejection_guardrail=row.rejection_guardrail,
-        )
-        for row in rows
-    ]
+    return [_record(row) for row in rows]
 
 
 def list_unknowns(session: Session, version_id: str) -> list[UnknownRecord]:
@@ -62,3 +65,30 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
         .group_by(Claim.verification_status)
     )
     return {status: count for status, count in rows}
+
+
+def rejected_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Rejected claims of a version with their IDs, oldest first (the rejected-claims register)."""
+    rows = session.scalars(
+        select(Claim)
+        .where(Claim.version_id == version_id, Claim.verification_status == "rejected")
+        .order_by(Claim.created_at, Claim.id)
+    )
+    return [(row.id, _record(row)) for row in rows]
+
+
+def scrub_count(session: Session, version_id: str) -> int:
+    """Names replaced by roles in Claude's answers, across every claim of a version (G10)."""
+    payloads: list[dict[str, Any]] = list(
+        session.scalars(select(Claim.payload).where(Claim.version_id == version_id))
+    )
+    return sum(int(payload.get("scrubbed", 0) or 0) for payload in payloads)
+
+
+def unknown_count(session: Session, version_id: str) -> int:
+    return (
+        session.scalar(
+            select(func.count()).select_from(Unknown).where(Unknown.version_id == version_id)
+        )
+        or 0
+    )

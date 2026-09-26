@@ -152,7 +152,25 @@ def test_an_old_database_reports_its_pending_update(migrated: Path) -> None:
     assert db.pending_migrations(migrated) == MIGRATION_COUNT
     db.upgrade(migrated)
     db.downgrade(migrated, "0001")  # a phase-P1 database
-    assert db.pending_migrations(migrated) == 1
+    assert db.pending_migrations(migrated) == MIGRATION_COUNT - 1
+
+
+def test_downgrade_of_0003_removes_only_job_stages_and_keeps_jobs(migrated: Path) -> None:
+    with sqlite3.connect(migrated) as conn:
+        conn.execute(
+            "INSERT INTO jobs (id, created_at, engagement_id, type, status, stage, progress, "
+            "message, error, target_id, stages) "
+            "VALUES ('j', 't', NULL, 'read_source', 'done', '', 1.0, 'ok', '', NULL, '[]')"
+        )
+    db.downgrade(migrated, "0002")
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(jobs)")}
+        kept = conn.execute("SELECT id, message, target_id FROM jobs").fetchall()
+    assert "stages" not in columns and {"target_id", "status"} <= columns
+    assert kept == [("j", "ok", None)]
+    db.upgrade(migrated)
+    with sqlite3.connect(migrated) as conn:
+        assert conn.execute("SELECT stages FROM jobs").fetchone() == ("[]",)
 
 
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:

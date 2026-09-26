@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 
 from app.actions import settings
 from app.domain.models import (
+    AiUsage,
     ApiKeyUpdate,
     ConnectionTest,
     ModelChoices,
@@ -56,3 +57,8 @@ def update_model(request: Request, body: ModelUpdate) -> SettingsView:
             sessions=request.app.state.sessions,
         )
     )
+
+
+@router.get("/usage")
+def get_usage(request: Request, limit: int = 50) -> AiUsage:
+    return unwrap(settings.list_usage(request.app.state.sessions, limit))

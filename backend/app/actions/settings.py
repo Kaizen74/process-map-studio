@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import SETTING_DEFAULTS, AppConfig
 from app.db import session_scope
 from app.domain.models import (
+    AiUsage,
     ConnectionCapabilities,
     ConnectionTest,
     ModelChoices,
@@ -22,7 +23,7 @@ from app.domain.models import (
     SettingsView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
-from app.repositories import audit
+from app.repositories import ai_calls, audit
 from app.services import ai_service, settings_store
 
 log = logging.getLogger(__name__)
@@ -270,3 +271,16 @@ def update_model(
                 after={"model": model, "effort": effort, "verifier_enabled": verifier_enabled},
             )
     return get_settings(config)
+
+
+USAGE_LIMIT = (1, 500)
+BAD_LIMIT = "Choose how many AI calls to show: 1 to 500."
+
+
+def list_usage(sessions: sessionmaker[Session], limit: int) -> Result[AiUsage]:
+    """The most recent AI calls and the totals of every call (usage only, never text)."""
+    low, high = USAGE_LIMIT
+    if not low <= limit <= high:
+        return Err(ErrorKind.VALIDATION, BAD_LIMIT, {"field": "limit"})
+    with session_scope(sessions) as session:
+        return Ok(AiUsage(items=ai_calls.recent(session, limit), totals=ai_calls.totals(session)))

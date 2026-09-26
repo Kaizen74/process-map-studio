@@ -89,6 +89,19 @@ Response `200`: the settings object.
 Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
 Used by: Settings screen, "Model" card.
 
+### GET /api/settings/usage
+The AI calls the app has made, newest first, for the "AI usage" card. Usage only: never prompt or document text.
+Request: `?limit=50` (1 to 500; default 50).
+Response `200`:
+```json
+{"items": [{"id": "…", "created_at": "…", "job_id": "…", "stage_id": "S1_extract_interview",
+            "prompt_version": "1", "model": "claude-opus-5-5", "input_tokens": 5120,
+            "output_tokens": 830, "duration_ms": 14200, "status": "ok"}],
+ "totals": {"calls": 12, "input_tokens": 61000, "output_tokens": 9800}}
+```
+`status`: `ok` · `error` · `mock` (answered from the offline test answers). `totals` cover every call ever made, not just the rows returned.
+Errors: `422 VALIDATION` (limit out of range). Used by: Settings screen, "AI usage" card (phase P3).
+
 ## Engagements and roles (PRD §4, §5.4 Setup) — phase P1
 
 An engagement is one process being mapped. Deleting it removes all its rows **and its files** (`data/sources/<id>/`, `data/images/<id>/`). Every change writes an audit row (actor = the owner name from Settings).
@@ -260,10 +273,61 @@ Long work runs in one background worker inside the app, one job at a time, in th
 ### GET /api/jobs/{job_id}
 Response `200`:
 ```json
-{"id": "…", "engagement_id": "…", "type": "read_source", "target_id": "<source id>",
- "status": "queued", "stage": "Reading the file", "progress": 0.0,
- "message": "", "error": "", "usage": null, "claims": {"verified": 0, "rejected": 0},
+{"id": "…", "engagement_id": "…", "type": "draft", "target_id": "<version id>",
+ "status": "running", "stage": "Extracting steps from each source", "progress": 0.4,
+ "message": "", "error": "",
+ "usage": {"calls": 3, "input_tokens": 15400, "output_tokens": 2100},
+ "claims": {"verified": 12, "rejected": 1},
+ "stages": [{"id": "read", "name": "Reading the documents", "status": "done",
+             "started_at": "…", "finished_at": "…"},
+            {"id": "extract", "name": "Extracting steps from each source", "status": "running",
+             "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type` in P2: `read_source`. `usage` and `claims` are filled by the AI stages from phase P3.
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+- `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
+- `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
+- `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `later` (the stage is built in a later phase and is skipped for now). Times are UTC ISO 8601; the screen shows the elapsed time.
 Errors: `404` ("That job doesn't exist."). Used by: Sources (reading status), Draft (from P3).
+
+## Draft (PRD §3.7 pipeline, §4, §5.4 Draft) — phase P3
+
+Drafting is one background job of type `draft`. In phase P3 it runs the stages **Reading the documents** (S0: scanned PDF pages are read by Claude), **Extracting steps from each source** (S1, per source and chunk) and **Checking every quote against your documents** (G3–G5 and name scrubbing G10, on every claim as it arrives). **Comparing sources**, **Independent verification**, **Building the map** and **Writing validation questions** are listed with status `later` (phases P4 onwards). Every ready source of the engagement is used.
+
+The draft version (`v0.1`, state `draft`) is created when the job starts. If any stage fails, the version and everything stored for it are deleted ("Nothing was saved."); the usage of the calls already made stays in the AI usage list. A draft that has no map elements yet (everything drafted in P3) is replaced by a new one when drafting succeeds; a draft with elements is never replaced here (refreshing arrives with the review workbench).
+
+### POST /api/engagements/{id}/draft
+**AI.** Starts drafting. Request: none.
+Response `202`: `{"job_id": "…"}`.
+Errors:
+- `404` engagement missing.
+- `409 CONFLICT` "The draft can't start yet: <first missing item>." with `details.missing`: the readiness `missing` list (key, transcript, document, speakers).
+- `409 CONFLICT` "A draft map is already being made." (a draft job is queued or running) or "This engagement already has a draft map with steps on it. Refresh it from the sources on the Review screen instead." (from P4).
+Used by: Draft screen (Create draft map, Retry).
+
+### GET /api/engagements/{id}/draft
+The latest draft job and the current draft, so the Draft screen can pick up a running job after a reload.
+Response `200`:
+```json
+{"job": {"…": "job object as GET /api/jobs/{job_id}"},
+ "version": {"id": "…", "label": "v0.1", "state": "draft", "created_at": "…"},
+ "summary": {"verified": 23, "rejected": 2, "open_questions": 3, "scrubbed": 0}}
+```
+`job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `open_questions` counts the unknowns Claude raised (they become validation questions in P4).
+Errors: `404`. Used by: Draft screen.
+
+### GET /api/versions/{vid}/rejected-claims
+The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.
+Response `200`:
+```json
+{"items": [{"id": "…", "claim_text": "The plan takes 30 min.", "source_id": "…",
+            "source_name": "interview_transcript.txt", "anchor": "08:12",
+            "reason": "number not found in cited text: 30", "guardrail": "G5", "stage": "S1",
+            "passage_available": true, "segment_id": "…"}],
+ "total": 1, "scrub_count": 1, "instruction_like_count": 1}
+```
+- `claim_text` and `source_name` have names on the redaction list replaced by roles.
+- `anchor` and `segment_id`: the first cited passage that exists; `""` and `null` when none does (`passage_available: false`, e.g. G3 "cites a passage that wasn't provided").
+- `guardrail`: B.20 (`G3` passage · `G4` quote · `G5` number or role · `G6` verifier · `G10` redaction).
+- `scrub_count`: names Claude used that were replaced by roles, across all claims of the version. `instruction_like_count`: passages in the engagement's sources that looked like instructions and were treated as data.
+Errors: `404` ("That version doesn't exist."). Used by: Draft screen (rejected-claims list, P3), Review workbench (P5).

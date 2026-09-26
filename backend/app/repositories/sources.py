@@ -371,3 +371,28 @@ def add_page_text(
         segment.seq = number
     row.ocr_pages = [p for p in row.ocr_pages if p != page]
     session.flush()
+
+
+def segment_rows(session: Session, segment_ids: list[str]) -> dict[str, tuple[SourceSegment, str]]:
+    """Passages by ID with their source's format (to build anchors); missing IDs are left out."""
+    if not segment_ids:
+        return {}
+    rows = session.execute(
+        select(SourceSegment, Source.format)
+        .join(Source, Source.id == SourceSegment.source_id)
+        .where(SourceSegment.id.in_(segment_ids))
+    )
+    return {seg.id: (seg, fmt) for seg, fmt in rows}
+
+
+def instruction_like_count(session: Session, engagement_id: str) -> int:
+    """Passages in an engagement's sources that looked like instructions (treated as data, G9)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(SourceSegment)
+            .join(Source, Source.id == SourceSegment.source_id)
+            .where(Source.engagement_id == engagement_id, SourceSegment.instruction_like.is_(True))
+        )
+        or 0
+    )
