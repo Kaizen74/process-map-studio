@@ -33,7 +33,8 @@ export interface SourceStatus {
   dashed: boolean;
 }
 
-/** Status chip wording (PRD §5.4 Sources: Reading… · Ready · Failed + reason). */
+/** Status chip wording (PRD §5.4 Sources: Reading… · Ready · Failed + reason). "pending" means its
+ * background reading job hasn't finished yet. */
 export function sourceStatus(source: Pick<Source, "text_status">): SourceStatus {
   switch (source.text_status) {
     case "ready":
@@ -41,6 +42,6 @@ export function sourceStatus(source: Pick<Source, "text_status">): SourceStatus 
     case "failed":
       return { label: "Failed", tone: "danger", dashed: false };
     default:
-      return { label: "Not read yet", tone: "neutral", dashed: true };
+      return { label: "Reading…", tone: "neutral", dashed: true };
   }
 }

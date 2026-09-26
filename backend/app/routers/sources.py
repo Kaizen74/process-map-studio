@@ -7,7 +7,14 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, Request, Response, UploadFile
 
 from app.actions import sources
-from app.domain.models import SegmentPage, SourcePatch, SourceView
+from app.domain.models import (
+    SegmentPage,
+    SegmentPatch,
+    SegmentView,
+    SourcePatch,
+    SourceView,
+    SpeakerView,
+)
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["sources"])
@@ -32,6 +39,7 @@ def upload_source(
             filename=file.filename or "",
             stream=file.file,
             content_type=file.content_type or "",
+            enqueue=state.worker.submit,
             kind=kind or None,
             version_date=version_date,
             owner=owner,
@@ -53,7 +61,9 @@ def get_source(request: Request, source_id: str) -> SourceView:
 @router.patch("/sources/{source_id}")
 def update_source(request: Request, source_id: str, body: SourcePatch) -> SourceView:
     state = request.app.state
-    return unwrap(sources.update_source(state.config, state.sessions, source_id, body))
+    return unwrap(
+        sources.update_source(state.config, state.sessions, source_id, body, state.worker.submit)
+    )
 
 
 @router.delete("/sources/{source_id}", status_code=204)
@@ -65,6 +75,27 @@ def delete_source(request: Request, source_id: str) -> Response:
 
 @router.get("/sources/{source_id}/segments")
 def list_segments(
-    request: Request, source_id: str, page: int = 1, page_size: int = 200
+    request: Request, source_id: str, page: int = 1, page_size: int = 200, raw: bool = False
 ) -> SegmentPage:
-    return unwrap(sources.list_segments(request.app.state.sessions, source_id, page, page_size))
+    return unwrap(
+        sources.list_segments(request.app.state.sessions, source_id, page, page_size, raw=raw)
+    )
+
+
+@router.patch("/segments/{segment_id}")
+def correct_segment(request: Request, segment_id: str, body: SegmentPatch) -> SegmentView:
+    state = request.app.state
+    return unwrap(sources.correct_segment(state.config, state.sessions, segment_id, body))
+
+
+@router.get("/sources/{source_id}/speakers")
+def get_speakers(request: Request, source_id: str) -> list[SpeakerView]:
+    return unwrap(sources.get_speakers(request.app.state.sessions, source_id))
+
+
+@router.put("/sources/{source_id}/speakers")
+def map_speakers(
+    request: Request, source_id: str, body: dict[str, str | None]
+) -> list[SpeakerView]:
+    state = request.app.state
+    return unwrap(sources.map_speakers(state.config, state.sessions, source_id, body))

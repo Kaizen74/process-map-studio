@@ -163,6 +163,7 @@ class ParsedSegment(BaseModel):
     speaker_label: str = ""
     start_ms: int | None = None
     end_ms: int | None = None
+    instruction_like: bool = False
 
 
 class ParsedDocument(BaseModel):
@@ -202,6 +203,19 @@ class SourceView(BaseModel):
     ocr_pages: list[int]
     suggested_images: int
     created_at: str
+    # Only on the upload response: the background job reading the file.
+    job_id: str | None = None
+
+
+class SourceReadInfo(BaseModel):
+    """What the reading job needs to know about a source."""
+
+    id: str
+    engagement_id: str
+    filename: str
+    kind: str
+    format: str
+    stored_path: str
 
 
 class SourcePatch(BaseModel):
@@ -221,6 +235,20 @@ class SegmentView(BaseModel):
     text: str
     cited: bool
     instruction_like: bool
+    # Only with raw=1 (owner-only correction editor): the speaker label as written in the file.
+    speaker_label: str | None = None
+    corrected: bool = False
+
+
+class SegmentPatch(BaseModel):
+    text: str
+
+
+class SpeakerView(BaseModel):
+    label: str
+    segment_count: int
+    role_id: str | None
+    is_interviewer: bool
 
 
 class SegmentPage(BaseModel):
@@ -268,3 +296,54 @@ class Readiness(BaseModel):
     next_step: str | None
     missing: list[str]
     ready_to_draft: bool
+
+
+# --- Redaction (PRD §3.8 G10) -------------------------------------------------------------------
+
+
+class NameReplacement(BaseModel):
+    """A term to hide and what to show instead (a role name, "Interviewer" or "[name]")."""
+
+    term: str
+    replacement: str = "[name]"
+
+
+class Redacted(BaseModel):
+    text: str
+    hits: int
+
+
+# --- Jobs (PRD §4 Pipeline) ---------------------------------------------------------------------
+
+
+class JobClaims(BaseModel):
+    verified: int = 0
+    rejected: int = 0
+
+
+class JobView(BaseModel):
+    id: str
+    engagement_id: str | None
+    type: str
+    target_id: str | None
+    status: str
+    stage: str
+    progress: float
+    message: str
+    error: str
+    usage: dict[str, int] | None = None
+    claims: JobClaims = JobClaims()
+    created_at: str
+
+
+class RedactionTermCreate(BaseModel):
+    term: str
+    replacement: str = ""
+
+
+class RedactionTermView(BaseModel):
+    id: str
+    engagement_id: str
+    term: str
+    replacement: str
+    origin: str

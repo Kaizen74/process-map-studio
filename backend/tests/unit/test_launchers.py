@@ -224,7 +224,9 @@ def test_no_update_means_no_backup(tmp_path: Path, monkeypatch: pytest.MonkeyPat
 
 def test_pending_migrations_reads_backend_answer(tmp_path: Path) -> None:
     # A brand-new data folder has every migration waiting.
-    assert start_script.pending_migrations(common.venv_python(REPO_ROOT), tmp_path) == 1
+    migrations = len(list((REPO_ROOT / "backend" / "migrations" / "versions").glob("0*.py")))
+    assert migrations >= 2
+    assert start_script.pending_migrations(common.venv_python(REPO_ROOT), tmp_path) == migrations
 
 
 def test_start_backs_up_an_older_database_then_updates_it(tmp_path: Path) -> None:
@@ -232,7 +234,7 @@ def test_start_backs_up_an_older_database_then_updates_it(tmp_path: Path) -> Non
 
     database = tmp_path / "app.db"
     db.upgrade(database)
-    db.downgrade(database, "base")  # an "older" database with an update waiting
+    db.downgrade(database, "0001")  # a phase-P1 database with the P2 update waiting
     python = common.venv_python(REPO_ROOT)
     assert start_script.pending_migrations(python, tmp_path) == 1
     start_script.apply_database_updates(python, tmp_path)

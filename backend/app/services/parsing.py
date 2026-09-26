@@ -3,12 +3,18 @@
 Verified against python-docx 1.2.0 (`Document.iter_inner_content()` yields Paragraph and Table in
 body order; `Paragraph.style.name`, `.text`; `Table.rows[].cells[].text`), pdfplumber 0.11.10
 (`pdfplumber.open(path).pages[].extract_text()`) and pypdf 6.19.0 (`PdfReader(path).pages[].images`
-→ ImageFile with `.name`, `.data`, `.image` (Pillow)). Transcript formats arrive in phase P2.
+→ ImageFile with `.name`, `.data`, `.image` (Pillow)).
+
+Transcripts (phase P2): plain text with `Speaker: text` or `[mm:ss] Speaker: text` turns, WebVTT
+cues (with `<v Speaker>` voice tags or a `Speaker:` prefix) and SubRip (.srt) cues. Word and PDF
+transcripts are read as documents first, then `detect_speakers` turns their lines into speaker
+turns. Lines without a speaker continue the turn before them (PDF line wrapping, page breaks).
 """
 
 from __future__ import annotations
 
 import re
+from itertools import pairwise
 from pathlib import Path
 
 import pdfplumber
@@ -24,6 +30,18 @@ OCR_THRESHOLD_CHARS = 50  # PRD §3.7 S0: pages with fewer characters are treate
 MIN_IMAGE_SIDE_PX = 48  # smaller images (bullets, logos, rules) are not worth suggesting
 _CLAUSE = re.compile(r"^(§\s?\d+(?:\.\d+)*|\d+(?:\.\d+)+)\s")
 _WHITESPACE = re.compile(r"[ \t\xa0]+")  # spaces, tabs, non-breaking spaces
+
+# A speaker turn: optional [h:mm:ss] or [mm:ss], a short label, a colon, then the words spoken.
+# Labels are 1-5 words of letters, digits, dots, hyphens and apostrophes ("Priya Nair", "SME 2").
+_TURN = re.compile(
+    r"^\[?(?P<ts>(?:\d{1,2}:)?\d{1,2}:\d{2})?\]?\s*"
+    r"(?:(?P<label>[^\W\d_][\w.'\u2019-]*(?: [\w.'\u2019-]+){0,4})\s*:\s+)?(?P<text>.*)$"
+)
+_CUE_TIME = re.compile(
+    r"(?P<start>(?:\d+:)?\d{2}:\d{2}[.,]\d{3})\s*-->\s*(?P<end>(?:\d+:)?\d{2}:\d{2}[.,]\d{3})"
+)
+_VOICE = re.compile(r"<v(?:\.[\w.-]+)?\s+(?P<label>[^>]+)>")
+_TAG = re.compile(r"</?[^>]+>")
 
 
 def _tidy(text: str) -> str:
@@ -132,3 +150,194 @@ def segment_anchor(
     if page is not None and fmt == "pdf":
         return f"p. {page}"
     return f"¶ {seq}"
+
+
+# --- Transcripts (phase P2) ---------------------------------------------------------------------
+
+
+def _read_text(path: Path) -> Result[str]:
+    """Text files as UTF-8 (with or without a byte-order mark), else Windows-1252."""
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        return Err(ErrorKind.IO, "The file could not be opened.", {"reason": type(exc).__name__})
+    try:
+        return Ok(data.decode("utf-8-sig"))
+    except UnicodeDecodeError:
+        return Ok(data.decode("cp1252", errors="replace"))
+
+
+def _stamp_ms(stamp: str) -> int:
+    """ "06:40" → 400000; "1:02:03" → 3723000; "00:06:40.500" or "00:06:40,500" → 400500."""
+    whole, _, fraction = stamp.replace(",", ".").partition(".")
+    seconds = 0
+    for part in whole.split(":"):
+        seconds = seconds * 60 + int(part)
+    return seconds * 1000 + (int(fraction.ljust(3, "0")[:3]) if fraction else 0)
+
+
+def _split_turn(line: str) -> tuple[int | None, str, str]:
+    """(start_ms, speaker label, spoken text) for one line; label "" when it names no speaker."""
+    match = _TURN.match(line)
+    if match is None:  # the pattern always matches; kept for the type checker
+        return None, "", line
+    stamp, label, text = match.group("ts"), match.group("label") or "", match.group("text")
+    if stamp is None and not line.lstrip().startswith(label or "\0"):
+        label = ""
+    if stamp is None and not label:
+        return None, "", line
+    return (_stamp_ms(stamp) if stamp else None), _tidy(label), _tidy(text)
+
+
+def detect_speakers(segments: list[ParsedSegment]) -> list[ParsedSegment]:
+    """Turn document lines into speaker turns.
+
+    A line starting with `Speaker:` or `[mm:ss] Speaker:` starts a new turn; any other line
+    continues the turn before it (so wrapped lines and page breaks don't split what was said).
+    Word headings stay separate passages without a speaker.
+    Each turn keeps the page and section of its first line; `end_ms` is the next turn's start.
+    """
+    turns: list[ParsedSegment] = []
+    for segment in segments:
+        if segment.section and segment.text == segment.section:  # a heading is never a turn
+            turns.append(segment.model_copy(update={"seq": len(turns) + 1}))
+            continue
+        start_ms, label, text = _split_turn(segment.text)
+        starts_turn = bool(label) or start_ms is not None
+        if not starts_turn and turns:
+            previous = turns[-1]
+            previous.text = f"{previous.text} {_tidy(segment.text)}".strip()
+            continue
+        if not label and turns and start_ms is not None:
+            label = turns[-1].speaker_label  # "[mm:ss] more words" keeps the last speaker
+        turns.append(
+            ParsedSegment(
+                seq=len(turns) + 1,
+                text=text if starts_turn else _tidy(segment.text),
+                page=segment.page,
+                section=segment.section,
+                speaker_label=label,
+                start_ms=start_ms,
+            )
+        )
+    for current, following in pairwise(turns):
+        if current.start_ms is not None and following.start_ms is not None:
+            current.end_ms = following.start_ms
+    return [turn for turn in turns if turn.text]
+
+
+def parse_transcript_text(path: Path) -> Result[ParsedDocument]:
+    """Plain-text transcripts: `Speaker: text` or `[mm:ss] Speaker: text`, one turn per line."""
+    match _read_text(path):
+        case Err() as err:
+            return err
+        case Ok(value=text):
+            pass
+    lines = [ParsedSegment(seq=n, text=line) for n, line in enumerate(text.splitlines(), 1)]
+    return Ok(ParsedDocument(segments=detect_speakers([s for s in lines if s.text.strip()])))
+
+
+def parse_text_document(path: Path) -> Result[ParsedDocument]:
+    """Plain-text documents (not transcripts): one passage per paragraph (blank-line separated)."""
+    match _read_text(path):
+        case Err() as err:
+            return err
+        case Ok(value=text):
+            pass
+    paragraphs = re.split(r"\n\s*\n", text.replace("\r\n", "\n").replace("\r", "\n"))
+    segments: list[ParsedSegment] = []
+    for paragraph in paragraphs:
+        clean = _tidy(" ".join(paragraph.split("\n")))
+        if clean:
+            segments.append(ParsedSegment(seq=len(segments) + 1, text=clean))
+    return Ok(ParsedDocument(segments=segments))
+
+
+def _cues(text: str) -> list[tuple[int, int, list[str]]]:
+    """(start_ms, end_ms, payload lines) for each timed cue in a VTT or SRT file."""
+    cues: list[tuple[int, int, list[str]]] = []
+    for block in re.split(r"\n\s*\n", text.replace("\r\n", "\n").replace("\r", "\n")):
+        lines = [line for line in block.split("\n") if line.strip()]
+        for index, line in enumerate(lines):
+            timing = _CUE_TIME.search(line)
+            if timing:
+                payload = lines[index + 1 :]
+                cues.append((_stamp_ms(timing["start"]), _stamp_ms(timing["end"]), payload))
+                break
+    return cues
+
+
+def _cue_segments(cues: list[tuple[int, int, list[str]]]) -> list[ParsedSegment]:
+    """One segment per cue; a cue with no speaker continues the previous speaker."""
+    segments: list[ParsedSegment] = []
+    speaker = ""
+    for start_ms, end_ms, payload in cues:
+        raw = " ".join(payload)
+        voice = _VOICE.search(raw)
+        label = _tidy(voice["label"]) if voice else ""
+        text = _tidy(_TAG.sub("", raw))
+        if not voice:
+            _, prefixed, rest = _split_turn(text)
+            if prefixed:
+                label, text = prefixed, rest
+        speaker = label or speaker
+        if text:
+            segments.append(
+                ParsedSegment(
+                    seq=len(segments) + 1,
+                    text=text,
+                    speaker_label=speaker,
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                )
+            )
+    return segments
+
+
+def parse_vtt(path: Path) -> Result[ParsedDocument]:
+    """WebVTT captions: cue times, speakers from `<v Name>` voice tags or a `Name:` prefix."""
+    match _read_text(path):
+        case Err() as err:
+            return err
+        case Ok(value=text):
+            pass
+    if not text.lstrip().startswith("WEBVTT"):
+        return Err(ErrorKind.VALIDATION, "This .vtt file doesn't start with WEBVTT.")
+    return Ok(ParsedDocument(segments=_cue_segments(_cues(text))))
+
+
+def parse_srt(path: Path) -> Result[ParsedDocument]:
+    """SubRip captions: numbered cues with `00:06:40,000 --> …` times and `Name:` prefixes."""
+    match _read_text(path):
+        case Err() as err:
+            return err
+        case Ok(value=text):
+            pass
+    return Ok(ParsedDocument(segments=_cue_segments(_cues(text))))
+
+
+# Words that mark a speaker label as a role or a generic tag rather than a person's name.
+_NOT_NAMES = frozenset(
+    """interviewer interviewee speaker moderator facilitator host participant respondent sme
+    unknown unidentified q a question answer note narrator voice audience all both other team
+    lead manager controller supervisor agent captain officer engineer operator planner
+    coordinator analyst director head chief staff member crew pilot ramp load control airline
+    customer client vendor driver clerk assistant admin administrator representative rep expert
+    specialist technician inspector auditor dispatcher system""".split()  # noqa: SIM905
+)
+_NAME_WORD = re.compile(r"^[A-Z][a-zà-öø-ÿ'\u2019.-]*(?:-[A-Z][a-zà-öø-ÿ'\u2019.-]*)?$")
+
+
+def looks_like_name(label: str, known_roles: frozenset[str] = frozenset()) -> bool:
+    """True when a speaker label looks like a person's name ("Priya Nair"), not a role.
+
+    1-4 capitalised words, no digits, none of them a role or generic word, and not a known role
+    name or alias (compared ignoring case).
+    """
+    text = _tidy(label)
+    words = text.split(" ")
+    if not text or len(words) > 4 or text.casefold() in known_roles:
+        return False
+    return all(
+        _NAME_WORD.match(word) and word.strip(".").casefold() not in _NOT_NAMES for word in words
+    )

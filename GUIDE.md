@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-26 (build phase P1)*
+*Updated: 2026-09-26 (build phase P2)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -7,7 +7,7 @@ This guide explains how to **use** the app. How to install, start, stop, update,
 You give it the documents behind one process: an SME interview transcript, SOPs, job descriptions and supporting documents. Claude reads them and drafts a swimlane map of how the work is really done: steps, roles, who is responsible and accountable, decisions, approvals, timings, KPIs and constraints. Every step links to the exact passage it came from. The app checks the AI's work before you see it, and anything it can't find in your documents is thrown out and listed for you. You review every step, and nothing is published until you have.
 
 ## What you can do today
-The app is being built in phases. At the moment (phase P1, finished 2026-09-26) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, and upload Word and PDF documents and read them inside the app. Interview transcripts can be uploaded but are read from phase P2; drafting the map arrives in phase P3.
+The app is being built in phases. At the moment (phase P2, finished 2026-09-26) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, and keep a list of names the app hides. Drafting the map arrives in phase P3.
 
 **Start and stop** (full steps in [README.md](README.md)): double-click **Start.command** (Mac) or **start.bat** (Windows). Your browser opens the app at http://127.0.0.1:8000. Close the small window to stop it.
 
@@ -34,12 +34,21 @@ The step to do next carries a **Next** tag. Gap analysis is marked **Optional** 
 6. Put the lanes in order: drag a role onto another, or use **Move up** and **Move down**. The **Lane preview** shows the order the lanes will have on the map, top to bottom. **Edit** changes a role's name and aliases.
 
 ### Sources, step by step
-1. Open **Sources** in the top bar. Drop files on the large box, or click **Choose files**. The app reads .docx, .pdf, .txt, .vtt and .srt files up to 50 MB each; anything else is refused with that list.
-2. Each file appears in the table with a status: **Ready** (read), **Not read yet** (interview transcripts are read from phase P2) or **Failed** with the reason. The app guesses each file's **Kind** from its name (for example "jd" → Job description); change it if the guess is wrong.
+1. Open **Sources** in the top bar. Drop files on the large box, or click **Choose files**. The app reads Word (.docx), PDF (.pdf), text (.txt) and subtitle (.vtt, .srt) files up to 50 MB each; anything else is refused with that list.
+2. Each file appears in the table straight away with the status **Reading…**, and changes to **Ready** a moment later (or **Failed** with the reason). You don't need to wait on the screen: if you close the app while a file is being read, it finishes when you start it again. The app guesses each file's **Kind** from its name (for example "jd" → Job description, "interview" → Interview transcript); change it if the guess is wrong. Changing a file to or from **Interview transcript** reads it again the right way.
 3. Fill in the **Version date**, **Owner** and **Controlled copy** where you know them. Changes save as soon as you leave the field.
-4. Click a file's name (or its row) to open the **source viewer** below the table. It lists every passage with its anchor, such as **§3.1** (a clause), **p. 5** (a PDF page) or **¶ 7** (a paragraph); these anchors are how each step on the map will point back to its evidence. PDF pages with almost no text (probably scanned) are listed; they will be read in phase P3. Pictures found in PDFs are kept as suggestions for you to review in phase P8.
-5. The box at the bottom says **Ready to draft** or lists exactly what is still needed, for example "Add an interview transcript".
-6. **Delete** on a row removes that file and its passages after a confirmation.
+4. Click a file's name (or its row) to open the **source viewer** below the table. It lists every passage with its anchor: **§3.1** (a clause), **p. 5** (a PDF page), **¶ 7** (a paragraph) or **06:40** (the time in an interview). These anchors are how each step on the map will point back to its evidence. PDF pages with almost no text (probably scanned) are listed; they will be read in phase P3. Pictures found in PDFs are kept as suggestions for you to review in phase P8.
+5. A passage that tries to give instructions to an AI (for example "ignore all previous instructions") carries the tag **Instruction-like text. Treated as data and ignored.** The app treats it as ordinary text in the document.
+6. The box at the bottom says **Ready to draft** or lists exactly what is still needed, for example "Map 2 speakers in interview_transcript.txt".
+7. **Delete** on a row removes that file and its passages after a confirmation.
+
+### Interviews: speakers and names, step by step
+The app splits an interview into who said what and when. It reads `[06:40] Name: text` or `Name: text` lines in text, Word and PDF files, and the speakers in .vtt and .srt subtitle files.
+1. Add the roles on **Setup** first (for example "Load controller").
+2. On **Sources**, open the interview. The **Speaker mapping** card lists each speaker as written in the file, with how many passages they have. For each, choose their **Role**, or **Interviewer** for the person asking the questions. Click **Save speakers**. The passages in the viewer now show the role next to each answer.
+3. **Names to hide** (below the speaker mapping) lists the names the app keeps out of view. Speaker names that look like a person's name are added automatically, marked "from speaker label", and shown as their role once you map them (as "[name]" before that). Add anyone else who is mentioned by name, and nicknames or first names used on their own (for example "Priya" as well as "Priya Nair"), under **Name to hide**, optionally with what to show instead. The × removes a name from the list.
+4. Names appear in only three places: the speaker mapping, the names list and the correction editor. Everywhere else, including file names, the app shows the role or "[name]". Names never go into the map, exports or anything sent to Claude.
+5. To fix words the transcript got wrong, click **Correct the text** in the viewer, then **Correct** on a passage, change the text and click **Save correction**. Corrected passages are tagged **Corrected** and are kept if the file is read again. Click **Done correcting** to go back.
 
 ### Settings, step by step
 1. Click **Settings** (top right), or **Add your Claude API key** on the home screen.
@@ -58,7 +67,7 @@ Two Settings cards arrive later: **AI usage** (a log of every AI call, once draf
 | Home (Engagements) | Your engagements, with a three-step first-run checklist | Now |
 | Settings | Your name, your Claude API key, model choice, connection test | Now (usage log P3, web research P10) |
 | Setup | The process scope card, roles and lanes | Now |
-| Sources | Upload and read documents (now); read transcripts, map speakers to roles and hide names (P2); read scanned pages (P3) | Now, P2, P3 |
+| Sources | Upload and read documents and interviews, map speakers to roles, hide names, correct transcripts (now); read scanned pages (P3); coverage (P9) | Now, P3, P9 |
 | Draft | Create the draft map and watch each stage | P3, P4 |
 | Review | The workbench: map, lenses, detail panel, evidence, review actions | P5, P6 |
 | Published and Exports | Read-only published maps; Markdown, JSON, CSV and HTML exports | P7 |
@@ -70,6 +79,7 @@ Two Settings cards arrive later: **AI usage** (a log of every AI call, once draf
 Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, export) are added here as each screen is built.
 
 ## What changed recently
+- 2026-09-26 (phase P2): Interviews. Transcripts in text, Word, PDF and subtitle files are split into who said what and when; map each speaker to a role on **Sources**; a **Names to hide** list keeps people's names out of view everywhere except three owner-only places; fix transcript text with **Correct the text**; passages that try to instruct an AI are tagged. Files are now read in the background ("Reading…").
 - 2026-09-26 (phase P1): Engagements. Create, open and delete engagements from the home screen; describe the process and its roles and lanes on **Setup**; upload Word and PDF documents on **Sources** and read them passage by passage with their anchors. The guided path in the top bar shows what is done and what to do next.
 - 2026-09-26: The app has its look and feel (calm colours, IBM Plex fonts stored inside the app), a top bar, the home screen with the **Get started** checklist, and the **Settings** screen: save your name and API key, test the connection, choose the model. Every screen is checked automatically for accessibility.
 - 2026-09-26: Project foundations (phase P0a). The app can be installed and started with double-click files, backs up its database before any update, and a safety check stops your API key and your data folder from ever reaching GitHub.
@@ -88,3 +98,6 @@ Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, ex
 - **Anchor:** the short reference to a passage in a source, such as §3.1, p. 5 or ¶ 7.
 - **Lane:** one horizontal band of the map, for one role.
 - **Confidential terms:** names that must never be sent to web research.
+- **Speaker mapping:** telling the app which role each speaker in an interview has (or that they are the interviewer).
+- **Names to hide (redaction list):** people's names the app replaces with their role or "[name]" everywhere except three owner-only places.
+- **Instruction-like text:** a passage that reads like an instruction to an AI; it is kept as ordinary text and never followed.

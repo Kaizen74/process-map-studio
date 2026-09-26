@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,9 +12,7 @@ from app.actions import sources as source_actions
 from app.config import AppConfig
 from app.domain.enums import SourceKind
 from app.main import create_app
-from tests.paths import BACKEND_ROOT
-
-FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
+from tests.uploads import FIXTURES, upload, wait_for_jobs
 
 
 @pytest.fixture()
@@ -26,17 +23,6 @@ def client(settings_config: AppConfig) -> TestClient:
 @pytest.fixture()
 def engagement(client: TestClient) -> str:
     return str(client.post("/api/engagements", json={"name": "Load control"}).json()["id"])
-
-
-def upload(
-    client: TestClient, engagement: str, name: str, content: bytes | None = None, **form: Any
-) -> Any:
-    data = content if content is not None else (FIXTURES / name).read_bytes()
-    return client.post(
-        f"/api/engagements/{engagement}/sources",
-        files={"file": (name, data, "application/octet-stream")},
-        data={k: str(v).lower() if isinstance(v, bool) else v for k, v in form.items()},
-    )
 
 
 def db_count(config: AppConfig, table: str) -> int:
@@ -84,16 +70,104 @@ def test_pdf_flags_scanned_pages_and_suggests_its_image(
     assert {s["anchor"] for s in segments} == {"p. 1", "p. 3"}
 
 
-def test_transcripts_wait_for_phase_p2(client: TestClient, engagement: str) -> None:
-    source = upload(client, engagement, "interview_transcript.txt", b"[06:40] Speaker: text").json()
+def test_uploads_answer_at_once_and_are_read_by_a_job(client: TestClient, engagement: str) -> None:
+    uploaded = upload(client, engagement, "sop_LC-07.docx")
+    assert uploaded.status_code == 201
+    first = uploaded.upload_body
+    assert first["text_status"] == "pending" and first["job_id"]
+    source = uploaded.json()
+    assert (source["text_status"], source["segment_count"], source["job_id"]) == ("ready", 10, None)
+    job = client.get(f"/api/jobs/{first['job_id']}").json()
+    assert job["type"] == "read_source" and job["target_id"] == first["id"]
+    assert (job["status"], job["progress"], job["message"]) == ("done", 1.0, "Read 10 passages.")
+    assert job["claims"] == {"verified": 0, "rejected": 0} and job["usage"] is None
+
+
+def test_transcripts_are_read_into_speaker_turns(client: TestClient, engagement: str) -> None:
+    source = upload(client, engagement, "interview_transcript.txt").json()
     assert source["kind"] == "interview_transcript"
-    assert source["text_status"] == "pending" and source["segment_count"] == 0
-    assert "phase P2" in source["error"]
+    assert (source["text_status"], source["segment_count"], source["error"]) == ("ready", 9, "")
+    page = client.get(f"/api/sources/{source['id']}/segments").json()
+    assert [s["anchor"] for s in page["segments"]][:3] == ["06:38", "06:40", "07:55"]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "interview_transcript.vtt",
+        "interview_transcript.srt",
+        "interview_transcript.docx",
+        "interview_transcript.pdf",
+    ],
+)
+def test_every_transcript_format_is_read(client: TestClient, engagement: str, name: str) -> None:
+    source = upload(client, engagement, name).json()
+    assert source["kind"] == "interview_transcript" and source["text_status"] == "ready"
+    page = client.get(f"/api/sources/{source['id']}/segments").json()
+    anchors = [s["anchor"] for s in page["segments"] if ":" in s["anchor"]]
+    assert anchors[0] == "06:38" and anchors[-1] == "31:10" and len(anchors) == 9
+
+
+def test_name_like_speaker_labels_become_redaction_terms(
+    client: TestClient, engagement: str, settings_config: AppConfig
+) -> None:
+    upload(client, engagement, "interview_transcript.txt").json()
+    upload(client, engagement, "interview_transcript.vtt").json()  # the same name is added once
+    with sqlite3.connect(settings_config.data_dir / "app.db") as conn:
+        rows = conn.execute("SELECT term, replacement, origin FROM redaction_terms").fetchall()
+    assert rows == [("Priya Nair", "[name]", "speaker_map")]
+
+
+def test_a_plain_text_document_is_read_by_paragraph(client: TestClient, engagement: str) -> None:
+    source = upload(
+        client, engagement, "notes.txt", b"Note: first.\n\nSecond.", kind="other"
+    ).json()
+    page = client.get(f"/api/sources/{source['id']}/segments").json()
+    assert [(s["text"], s["speaker_role"]) for s in page["segments"]] == [
+        ("Note: first.", None),
+        ("Second.", None),
+    ]
+
+
+def test_the_injection_line_is_flagged(client: TestClient, engagement: str) -> None:
+    source = upload(client, engagement, "sop_RP-02.docx").json()
+    page = client.get(f"/api/sources/{source['id']}/segments").json()
+    flagged = [s["anchor"] for s in page["segments"] if s["instruction_like"]]
+    assert flagged == ["§9"]
+
+
+def test_changing_the_kind_to_transcript_reads_the_file_again(
+    client: TestClient, engagement: str
+) -> None:
+    source = upload(
+        client, engagement, "call notes.docx", (FIXTURES / "interview_transcript.docx").read_bytes()
+    ).json()
+    assert source["kind"] == "other" and source["segment_count"] == 10
+    changed = client.patch(f"/api/sources/{source['id']}", json={"kind": "interview_transcript"})
+    assert changed.json()["text_status"] == "pending" and changed.json()["job_id"]
+    wait_for_jobs(client)
+    page = client.get(f"/api/sources/{source['id']}/segments").json()
+    assert [s["anchor"] for s in page["segments"]][1:3] == ["06:38", "06:40"]
+    same = client.patch(f"/api/sources/{source['id']}", json={"kind": "interview_transcript"})
+    assert same.json()["job_id"] is None
+    other = client.patch(f"/api/sources/{source['id']}", json={"owner": "Ops"})
+    assert other.json()["job_id"] is None and other.json()["text_status"] == "ready"
+
+
+def test_unknown_job_is_404(client: TestClient) -> None:
+    response = client.get("/api/jobs/nope")
+    assert (
+        response.status_code == 404
+        and response.json()["error"]["message"] == "That job doesn't exist."
+    )
 
 
 def test_a_damaged_file_is_kept_and_marked_failed(client: TestClient, engagement: str) -> None:
-    source = upload(client, engagement, "sop_broken.docx", b"not a word file").json()
+    uploaded = upload(client, engagement, "sop_broken.docx", b"not a word file")
+    source = uploaded.json()
     assert source["text_status"] == "failed"
+    job = client.get(f"/api/jobs/{uploaded.upload_body['job_id']}").json()
+    assert job["status"] == "failed" and job["error"] == source["error"]
     assert source["error"].startswith("The Word document could not be opened.")
     assert "upload it again" in source["error"]
 

@@ -16,13 +16,14 @@ from app.repositories.tables import Engagement, GapAnalysis, MapVersion, Source,
 
 
 def _unmapped_speakers(session: Session, engagement_id: str) -> dict[str, int]:
-    """Per source: speaker labels that have no role yet."""
+    """Per source: speaker labels with no role that aren't marked Interviewer."""
     rows = session.execute(
         select(SourceSegment.source_id, func.count(distinct(SourceSegment.speaker_label)))
         .join(Source, Source.id == SourceSegment.source_id)
         .where(Source.engagement_id == engagement_id)
         .where(SourceSegment.speaker_label != "")
         .where(SourceSegment.speaker_role_id.is_(None))
+        .where(SourceSegment.is_interviewer.is_(False))
         .group_by(SourceSegment.source_id)
     )
     return {source_id: count for source_id, count in rows}

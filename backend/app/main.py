@@ -16,9 +16,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db
+from app.actions import jobs as job_actions
 from app.config import AppConfig, load_config
-from app.routers import engagements, readiness, settings, sources, system
+from app.routers import engagements, jobs, readiness, redaction, settings, sources, system
 from app.routers.http import ApiError, err_response, error_response
+from app.worker import JobWorker
 
 NOT_BUILT_PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Process Map Studio</title></head>
@@ -32,13 +34,19 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     config = config or load_config()
     app = FastAPI(title="Process Map Studio", version=config.app_version)
     app.state.config = config
-    app.state.sessions = _open_database(config)
+    app.state.sessions = sessions = _open_database(config)
+    app.state.worker = worker = JobWorker(
+        lambda job_id: job_actions.run_job(config, sessions, job_id)
+    )
+    job_actions.resume_jobs(sessions, worker.submit)
 
     app.include_router(system.router)
     app.include_router(settings.router)
     app.include_router(engagements.router)
     app.include_router(sources.router)
     app.include_router(readiness.router)
+    app.include_router(jobs.router)
+    app.include_router(redaction.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

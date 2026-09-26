@@ -1,8 +1,9 @@
 """Latency gate (PRD §6.2 item 5): p95 < 200 ms on every non-AI endpoint on the fixture data set.
 
-The data set is the PRD Appendix A load-control fixture: the two SOPs, both job descriptions and the
-illustrative manual extract (PDF), plus three roles. Each endpoint is called REPEATS times through
-the real app (TestClient, real SQLite file); the 95th percentile must stay under the budget.
+The data set is the PRD Appendix A load-control fixture: the two SOPs, both job descriptions, the
+illustrative manual extract (PDF) and the interview transcript, plus three roles. Each endpoint is
+called REPEATS times through the real app (TestClient, real SQLite file); the 95th percentile must
+stay under the budget.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from fastapi.testclient import TestClient
 from app.config import AppConfig
 from app.main import create_app
 from tests.paths import BACKEND_ROOT
+from tests.uploads import wait_for_jobs
 
 FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
 DOCUMENTS = [
@@ -26,6 +28,7 @@ DOCUMENTS = [
     "jd_load_control_lead.docx",
     "jd_load_controller.docx",
     "manual_extract.pdf",
+    "interview_transcript.txt",
 ]
 BUDGET_MS = 200.0
 REPEATS = 30
@@ -56,15 +59,19 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     role = ""
     for name in ("Load controller", "Load control lead", "Ramp agent"):
         role = client.post(f"/api/engagements/{eid}/roles", json={"name": name}).json()["id"]
-    source = ""
+    source = job = ""
     for name in DOCUMENTS:
         response = client.post(
             f"/api/engagements/{eid}/sources",
             files={"file": (name, (FIXTURES / name).read_bytes(), "application/octet-stream")},
         )
         assert response.status_code == 201
-        source = response.json()["id"]
-    return client, {"eid": eid, "role": role, "source": source}
+        source, job = response.json()["id"], response.json()["job_id"]
+    wait_for_jobs(client)
+    # The last document is the interview transcript: map one speaker, find a passage to correct.
+    client.put(f"/api/sources/{source}/speakers", json={"Priya Nair": role})
+    segment = client.get(f"/api/sources/{source}/segments").json()["segments"][0]["id"]
+    return client, {"eid": eid, "role": role, "source": source, "job": job, "segment": segment}
 
 
 ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
@@ -80,6 +87,12 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/sources/{source}", None),
     ("PATCH", "/api/sources/{source}", {"owner": "Load Control"}),
     ("GET", "/api/sources/{source}/segments", None),
+    ("GET", "/api/jobs/{job}", None),
+    ("GET", "/api/sources/{source}/segments?raw=1", None),
+    ("GET", "/api/sources/{source}/speakers", None),
+    ("PUT", "/api/sources/{source}/speakers", {"Interviewer": "interviewer"}),
+    ("PATCH", "/api/segments/{segment}", {"text": "Walk me through the last flight you planned."}),
+    ("GET", "/api/engagements/{eid}/redaction-terms", None),
 ]
 
 
@@ -102,8 +115,8 @@ def test_endpoint_p95_under_budget(
 
 
 @pytest.mark.parametrize("name", ["sop_LC-07.docx", "manual_extract.pdf"])
-def test_upload_and_read_p95_under_budget(loaded: Loaded, name: str) -> None:
-    """Uploading reads Word and PDF files in the request (P1), so it is held to the same budget."""
+def test_upload_p95_under_budget(loaded: Loaded, name: str) -> None:
+    """Uploading stores the file and queues its reading job (the reading itself runs after)."""
     client, ids = loaded
     data = (FIXTURES / name).read_bytes()
     created: list[str] = []
@@ -118,6 +131,28 @@ def test_upload_and_read_p95_under_budget(loaded: Loaded, name: str) -> None:
 
     p95 = p95_ms(call)
     print(f"\nupload {name}: p95 {p95:.1f} ms")  # shown with pytest -s
+    wait_for_jobs(client)
     for source_id in created:
         client.delete(f"/api/sources/{source_id}")
     assert p95 < BUDGET_MS, f"upload {name}: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
+def test_adding_and_removing_names_p95_under_budget(loaded: Loaded) -> None:
+    client, ids = loaded
+    added: list[str] = []
+
+    def add() -> None:
+        response = client.post(
+            f"/api/engagements/{ids['eid']}/redaction-terms", json={"term": f"Name {len(added)}"}
+        )
+        assert response.status_code == 201
+        added.append(response.json()["id"])
+
+    def remove() -> None:
+        response = client.delete(f"/api/redaction-terms/{added.pop()}")
+        assert response.status_code == 204
+
+    p95_add = p95_ms(add)
+    p95_remove = p95_ms(remove)
+    print(f"\nPOST redaction-terms: p95 {p95_add:.1f} ms; DELETE: p95 {p95_remove:.1f} ms")
+    assert p95_add < BUDGET_MS and p95_remove < BUDGET_MS

@@ -14,6 +14,7 @@ from app.db import session_scope
 from app.main import create_app
 from app.repositories.tables import Element, GapAnalysis, MapVersion, SourceSegment
 from tests.paths import BACKEND_ROOT
+from tests.uploads import wait_for_jobs
 
 FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
 KEY = "sk-" + "ant-" + "api03-" + "R3ady" * 9 + "Qw7e"
@@ -43,6 +44,7 @@ def upload(client: TestClient, engagement: str, name: str, data: bytes | None = 
         files={"file": (name, content, "application/octet-stream")},
     )
     assert response.status_code == 201, response.text
+    wait_for_jobs(client)
     return str(response.json()["id"])
 
 
@@ -80,14 +82,13 @@ def test_key_and_uploaded_word_sop(client: TestClient, engagement: str, env_file
     assert body["missing"] == [ADD_TRANSCRIPT] and body["next_step"] == "sources"
 
 
-def test_transcript_waits_for_phase_p2(client: TestClient, engagement: str) -> None:
-    upload(client, engagement, "interview_transcript.txt", b"[00:05] Interviewer: Hello\n")
+def test_a_read_transcript_is_ready_and_its_speakers_need_mapping(
+    client: TestClient, engagement: str
+) -> None:
+    upload(client, engagement, "interview_transcript.txt")
     body = readiness(client, engagement)
-    assert body["transcripts_ready"] is False
-    assert (
-        "Wait for the interview transcript to be read (interview_transcript.txt)"
-        in (body["missing"])
-    )
+    assert body["transcripts_ready"] is True and body["speakers_unmapped"] == 2
+    assert "Map 2 speakers in interview_transcript.txt" in body["missing"]
 
 
 def test_unmapped_speakers_are_counted(client: TestClient, engagement: str) -> None:

@@ -263,3 +263,12 @@ def update_role(session: Session, role_id: str, fields: dict[str, Any]) -> RoleV
             role.lane_order = index
     session.flush()
     return _role_view(row)
+
+
+def role_names(session: Session, engagement_id: str) -> frozenset[str]:
+    """Every role name and alias in the engagement, in lower case."""
+    names: set[str] = set()
+    for row in session.scalars(select(Role).where(Role.engagement_id == engagement_id)):
+        names.add(row.name.casefold())
+        names.update(alias.casefold() for alias in row.aliases)
+    return frozenset(names)

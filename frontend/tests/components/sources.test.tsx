@@ -33,7 +33,12 @@ const SOP = source("s1", "sop_LC-07.docx", { version_date: "2026-03-01", owner: 
 const TRANSCRIPT = source("s2", "interview_transcript.txt", {
   kind: "interview_transcript",
   text_status: "pending",
-  error: "Waiting: transcript files are read from build phase P2.",
+  segment_count: 0,
+});
+const BROKEN = source("s4", "old_scan.pdf", {
+  kind: "manual",
+  text_status: "failed",
+  error: "The PDF could not be read. Check it opens on your computer, then upload it again.",
   segment_count: 0,
 });
 const MANUAL = source("s3", "manual_extract.pdf", { kind: "manual", ocr_pages: [2], suggested_images: 1 });
@@ -48,6 +53,8 @@ function sourcesApi(initial: Source[], extra: Parameters<typeof fakeApi>[0] = {}
     "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/sources": () => ({ body: list }),
+    "GET /api/engagements/e1/roles": () => ({ body: [] }),
+    "GET /api/engagements/e1/redaction-terms": () => ({ body: [] }),
     ...Object.fromEntries(
       initial.flatMap((s) => [
         [`GET /api/sources/${s.id}`, () => ({ body: list.find((x) => x.id === s.id) })],
@@ -140,17 +147,18 @@ describe("Sources: upload", () => {
 
 describe("Sources: registry", () => {
   it("lists each source with kind, format, date, owner, controlled copy, status and reason", async () => {
-    sourcesApi([SOP, TRANSCRIPT]);
+    sourcesApi([SOP, TRANSCRIPT, BROKEN]);
     renderApp(PATH);
     const table = await screen.findByRole("table", { name: "Sources for this engagement" });
     const rows = within(table).getAllByRole("row").slice(1);
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(within(rows[0] as HTMLElement).getByRole("combobox", { name: "Kind of sop_LC-07.docx" })).toHaveValue("sop");
     expect(within(rows[0] as HTMLElement).getByLabelText("Version date of sop_LC-07.docx")).toHaveValue("2026-03-01");
     expect(within(rows[0] as HTMLElement).getByLabelText("Owner of sop_LC-07.docx")).toHaveValue("Load Control");
     expect(rows[0]).toHaveTextContent("Ready");
-    expect(rows[1]).toHaveTextContent("Not read yet");
-    expect(rows[1]).toHaveTextContent("Waiting: transcript files are read from build phase P2.");
+    expect(rows[1]).toHaveTextContent("Reading…");
+    expect(rows[2]).toHaveTextContent("Failed");
+    expect(rows[2]).toHaveTextContent("The PDF could not be read.");
   });
 
   it("saves kind, owner, date and controlled copy straight from the table", async () => {
@@ -177,6 +185,20 @@ describe("Sources: registry", () => {
         { controlled_copy: true },
       ]),
     );
+  });
+
+  it("keeps looking while a file is being read, then shows it as ready", async () => {
+    let reads = 0;
+    sourcesApi([], {
+      "GET /api/engagements/e1/sources": () => {
+        reads += 1;
+        return { body: [reads < 2 ? TRANSCRIPT : { ...TRANSCRIPT, text_status: "ready", segment_count: 9 }] };
+      },
+    });
+    renderApp(PATH);
+    expect(await screen.findByText("Reading…")).toBeInTheDocument();
+    expect(await screen.findByText("Ready", {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(reads).toBeGreaterThanOrEqual(2);
   });
 
   it("does not save a field that didn't change", async () => {

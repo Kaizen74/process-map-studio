@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { SegmentPage, Source, SourcePatch, SourceUpload } from "./types";
+import type { Segment, SegmentPage, Source, SourcePatch, SourceUpload, Speaker, SpeakerMapping } from "./types";
 
 const enc = encodeURIComponent;
 
@@ -19,5 +19,16 @@ export const updateSource = (sourceId: string, patch: SourcePatch) =>
 
 export const deleteSource = (sourceId: string) => request<null>(`/sources/${enc(sourceId)}`, { method: "DELETE" });
 
-export const listSegments = (sourceId: string, page: number, pageSize = 200) =>
-  request<SegmentPage>(`/sources/${enc(sourceId)}/segments?page=${page}&page_size=${pageSize}`);
+export const listSegments = (sourceId: string, page: number, pageSize = 200, raw = false) =>
+  request<SegmentPage>(
+    `/sources/${enc(sourceId)}/segments?page=${page}&page_size=${pageSize}${raw ? "&raw=1" : ""}`,
+  );
+
+// Owner-only places (PRD §3.8 G10): speaker labels and raw text may contain names.
+export const getSpeakers = (sourceId: string) => request<Speaker[]>(`/sources/${enc(sourceId)}/speakers`);
+
+export const mapSpeakers = (sourceId: string, mapping: SpeakerMapping) =>
+  request<Speaker[]>(`/sources/${enc(sourceId)}/speakers`, { method: "PUT", body: mapping });
+
+export const correctSegment = (segmentId: string, text: string) =>
+  request<Segment>(`/segments/${enc(segmentId)}`, { method: "PATCH", body: { text } });

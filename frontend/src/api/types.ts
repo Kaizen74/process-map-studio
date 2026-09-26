@@ -150,6 +150,8 @@ export interface Source {
   ocr_pages: number[];
   suggested_images: number;
   created_at: string;
+  /** Only on upload (and kind changes that re-read the file): the background reading job. */
+  job_id?: string | null;
 }
 
 export interface SourcePatch {
@@ -174,6 +176,9 @@ export interface Segment {
   text: string;
   cited: boolean;
   instruction_like: boolean;
+  /** Only with raw=1 (owner-only correction editor). */
+  speaker_label?: string | null;
+  corrected?: boolean;
 }
 
 export interface SegmentPage {
@@ -182,4 +187,22 @@ export interface SegmentPage {
   page: number;
   pages: number;
   coverage_pct: number | null;
+}
+
+export interface Speaker {
+  label: string;
+  segment_count: number;
+  role_id: string | null;
+  is_interviewer: boolean;
+}
+
+/** For each speaker label: a role ID, "interviewer", or null to clear. */
+export type SpeakerMapping = Record<string, string | null>;
+
+export interface RedactionTerm {
+  id: string;
+  engagement_id: string;
+  term: string;
+  replacement: string;
+  origin: "speaker_map" | "manual" | string;
 }
