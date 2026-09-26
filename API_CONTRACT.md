@@ -139,3 +139,43 @@ Used by: Setup screen (rename, aliases, system toggle, reorder).
 
 ### PUT /api/settings/model (change)
 Now also writes an audit row (`target_type: "settings"`, before/after model, effort, verifier).
+
+## Sources (PRD §4, §5.4 Sources) — phase P1
+
+Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, up to 50 MB. In phase P1, Word and PDF files are read on upload; `.txt`, `.vtt` and `.srt` are stored with `text_status: "pending"` and read from phase P2 (transcripts). Images inside PDFs (at least 48 px) are saved to `data/images/<engagement_id>/` as **suggestions** (`status: "suggested"`, page number kept); nothing is shown on a map until Eric keeps them (P8).
+
+### Source object
+```json
+{"id": "…", "engagement_id": "…", "kind": "sop", "filename": "sop_LC-07.docx",
+ "format": "docx", "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+ "version_date": "2026-03-01", "owner": "Load Control", "controlled_copy": true,
+ "text_status": "ready", "error": "", "segment_count": 10, "ocr_pages": [],
+ "suggested_images": 0, "created_at": "…"}
+```
+`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (waiting to be read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3.
+
+### POST /api/engagements/{id}/sources (multipart form)
+Fields: `file` (required); `kind` (optional: guessed from the file name if missing: `.vtt`/`.srt`/names with "transcript" or "interview" → `interview_transcript`, "sop" → `sop`, "jd"/"job description" → `job_description`, "manual" → `manual`, else `other`); `version_date` (optional, `YYYY-MM-DD`); `owner` (optional, up to 120 characters); `controlled_copy` (optional, `true`/`false`).
+Response `201`: source object (already read, for Word and PDF).
+Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files." · "That file is larger than 50 MB." · "The file is empty." · bad kind or date). A file that can't be read is still saved with `text_status: "failed"` and a plain `error`, so Eric can see it and delete or replace it.
+Used by: Sources screen (drop zone).
+
+### GET /api/engagements/{id}/sources
+Response `200`: source objects, oldest first. Errors: `404`. Used by: Sources screen (registry), readiness.
+
+### GET /api/sources/{sid} · PATCH /api/sources/{sid} · DELETE /api/sources/{sid}
+GET → source object. PATCH → any of `kind`, `version_date`, `owner`, `controlled_copy` → source object. DELETE → `204`; removes the file, its passages and its suggested images.
+Errors: `404` ("That source doesn't exist. It may have been deleted."); `422`.
+Used by: Sources screen (registry row edits, delete, viewer header).
+
+### GET /api/sources/{sid}/segments
+Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (from P9; ignored until then), `raw` (P2; ignored until then).
+Response `200`:
+```json
+{"segments": [{"id": "…", "seq": 3, "anchor": "§3.1", "page": null, "section": "3 Load planning",
+               "speaker_role": null, "text": "§3.1 The Load Controller shall …",
+               "cited": false, "instruction_like": false}],
+ "total": 10, "page": 1, "pages": 1, "coverage_pct": null}
+```
+`coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
+Used by: Sources screen (full-width source viewer).

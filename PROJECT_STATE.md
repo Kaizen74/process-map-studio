@@ -11,8 +11,8 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - [x] Increment 1 — database foundation: SQLAlchemy 2 + Alembic (verify versions and licences), `app/db.py`, Appendix B enums in `domain/enums.py`, migration 0001 with every §3.5 table, `app/manage.py` reports real pending migrations and upgrades; tests (all tables created, downgrade removes only its own tables, Start backs up before an update)
 - [x] Increment 2 — engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
 - [x] Increment 3 — document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
-- [ ] Increment 4 — IN PROGRESS: sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
-- [ ] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
+- [x] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
+- [ ] Increment 5 — IN PROGRESS: readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
 - [ ] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup)
 - [ ] Increment 7 — UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview) and the guided engagement nav in the top bar
 - [ ] Increment 8 — UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
@@ -34,6 +34,7 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - 2026-09-26 Database foundation: SQLAlchemy + Alembic, migration 0001 with all 27 PRD tables, Appendix B enums, Start backs up an older database before updating it (tested end to end), tests can never touch the real data folder
 - 2026-09-26 Engagements backend: create/list/get/edit/delete engagements (delete removes files), scope card with confidential terms, roles and lane order, audit rows (incl. model changes)
 - 2026-09-26 Document parsing: Word and PDF split into anchored passages (§3.2, p. 5), scanned pages flagged for OCR, PDF images found as suggestions; PRD sample documents as fixtures
+- 2026-09-26 Sources backend: upload Word/PDF/transcript files (up to 50 MB), read Word and PDF on upload, registry list/edit/delete, paged passages with anchors, PDF images saved as suggestions
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
@@ -48,7 +49,6 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 
 ## Known issues
 - The `phase-p0b` tag was never pushed (cloud sessions can't push tags); P0b's last commit is `0c2c0e5`, merged into `main` in pull request #2.
-- Model changes are written to the app log, not yet to an audit table (arrives with the database in P1).
 - The `phase-p0a` tag was never pushed (cloud sessions can't push tags); P0a's last commit is `b78f2d1`, merged into `main` in pull request #1.
 - Work is pushed to branch `claude/charming-davinci-sck1cq`; Eric merges it into `main` with a pull request (P0a: #1, P0b: #2).
 - The Windows launchers (`setup.bat`, `start.bat`, `run_checks.bat`) and the macOS `.command` files have been checked for content and line endings by tests, but not yet run on a real Windows PC or Mac; the P12 clean-clone rehearsal covers this, and Eric's first double-click is the earlier real test.

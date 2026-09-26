@@ -80,6 +80,8 @@ class Source(Row):
     controlled_copy: Mapped[bool] = mapped_column(Boolean, default=False)
     text_status: Mapped[str] = mapped_column(String(16), default="pending")
     error: Mapped[str] = mapped_column(Text, default="")
+    # PDF pages with almost no text, to be read by OCR (S0) from phase P3.
+    ocr_pages: Mapped[list[int]] = mapped_column(JSON, default=list)
 
 
 class SourceSegment(Row):

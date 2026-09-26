@@ -138,6 +138,7 @@ def upgrade() -> None:
         sa.Column("controlled_copy", sa.Boolean(), nullable=False),
         sa.Column("text_status", sa.String(length=16), nullable=False),
         sa.Column("error", sa.Text(), nullable=False),
+        sa.Column("ocr_pages", sa.JSON(), nullable=False),
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("created_at", sa.String(length=32), nullable=False),
         sa.ForeignKeyConstraint(["engagement_id"], ["engagements.id"], ondelete="CASCADE"),

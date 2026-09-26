@@ -101,7 +101,8 @@ def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, 
     return Ok(cleaned)
 
 
-def _actor(config: AppConfig) -> str:
+def actor_name(config: AppConfig) -> str:
+    """Who is making changes: the owner name from Settings (used for audit rows)."""
     match effective_settings(config):
         case Ok(value=values):
             return values["OWNER_NAME"]
@@ -129,7 +130,7 @@ def create_engagement(
             return err
         case Ok(value=fields):
             pass
-    actor = _actor(config)
+    actor = actor_name(config)
 
     def work(session: Session) -> Result[EngagementView]:
         view = repo.create(session, fields)
@@ -166,7 +167,7 @@ def update_engagement(
             return err
         case Ok(value=fields):
             pass
-    actor = _actor(config)
+    actor = actor_name(config)
 
     def work(session: Session) -> Result[EngagementView]:
         before = repo.get(session, engagement_id)
@@ -257,7 +258,7 @@ def create_role(
             return err
         case Ok(value=aliases):
             pass
-    actor = _actor(config)
+    actor = actor_name(config)
 
     def work(session: Session) -> Result[RoleView]:
         if not repo.exists(session, engagement_id):
@@ -305,7 +306,7 @@ def update_role(
         if not isinstance(sent["lane_order"], int) or sent["lane_order"] < 1:
             return _invalid("lane_order", "Lane order must be 1 or more.")
         fields["lane_order"] = sent["lane_order"]
-    actor = _actor(config)
+    actor = actor_name(config)
 
     def work(session: Session) -> Result[RoleView]:
         before = repo.get_role(session, role_id)

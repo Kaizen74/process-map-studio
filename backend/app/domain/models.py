@@ -181,3 +181,51 @@ class ExtractedImage(BaseModel):
     data: bytes
     width: int
     height: int
+
+
+# --- Sources (API_CONTRACT.md → Sources) -----------------------------------------------------
+
+
+class SourceView(BaseModel):
+    id: str
+    engagement_id: str
+    kind: str
+    filename: str
+    format: str
+    mime: str
+    version_date: str
+    owner: str
+    controlled_copy: bool
+    text_status: str
+    error: str
+    segment_count: int
+    ocr_pages: list[int]
+    suggested_images: int
+    created_at: str
+
+
+class SourcePatch(BaseModel):
+    kind: str | None = None
+    version_date: str | None = None
+    owner: str | None = None
+    controlled_copy: bool | None = None
+
+
+class SegmentView(BaseModel):
+    id: str
+    seq: int
+    anchor: str
+    page: int | None
+    section: str
+    speaker_role: str | None
+    text: str
+    cited: bool
+    instruction_like: bool
+
+
+class SegmentPage(BaseModel):
+    segments: list[SegmentView]
+    total: int
+    page: int
+    pages: int
+    coverage_pct: float | None
