@@ -11,21 +11,26 @@ import re
 import uuid
 from collections.abc import Callable
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import redaction
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
+from app.actions.redaction import NAME_ORIGINS
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import SourceKind
 from app.domain.models import (
+    NameReplacement,
     ParsedDocument,
     SegmentPage,
+    SegmentPatch,
     SegmentView,
     SourcePatch,
     SourceReadInfo,
     SourceView,
+    SpeakerView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
@@ -42,8 +47,6 @@ Enqueue = Callable[[str], None]
 MAX_BYTES = 50 * 1024 * 1024
 FORMATS = {"docx", "pdf", "txt", "vtt", "srt"}
 READ_JOB = "read_source"
-# Origins of redaction terms that hide names (confidential terms only limit web research).
-NAME_ORIGINS = ("speaker_map", "manual")
 SOURCE_MISSING = "That source doesn't exist. It may have been deleted."
 BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files."
 TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again."
@@ -149,6 +152,17 @@ def _queue_read(session: Session, engagement_id: str, source_id: str) -> str:
     return job.id
 
 
+def _public(session: Session, view: SourceView) -> SourceView:
+    """The source as shown outside the owner-only places: names hidden in file name and error."""
+    terms = redaction.name_replacements(session, view.engagement_id)
+    return view.model_copy(
+        update={
+            "filename": redaction.hide(view.filename, terms),
+            "error": redaction.hide(view.error, terms),
+        }
+    )
+
+
 def upload_source(
     config: AppConfig,
     sessions: Sessions,
@@ -212,8 +226,9 @@ def upload_source(
             engagement_id=engagement_id,
             after={"filename": display_name, "kind": meta["kind"]},
         )
-        view = repo.get(session, source_id)
-    assert view is not None
+        stored = repo.get(session, source_id)
+        assert stored is not None
+        view = _public(session, stored)
     enqueue(job_id)  # after the commit, so the worker finds the rows
     return Ok(view.model_copy(update={"job_id": job_id}))
 
@@ -286,13 +301,13 @@ def list_sources(sessions: Sessions, engagement_id: str) -> Result[list[SourceVi
     with session_scope(sessions) as session:
         if not engagements_repo.exists(session, engagement_id):
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
-        return Ok(repo.list_for_engagement(session, engagement_id))
+        return Ok([_public(session, v) for v in repo.list_for_engagement(session, engagement_id)])
 
 
 def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:
     with session_scope(sessions) as session:
         view = repo.get(session, source_id)
-    return Ok(view) if view else Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        return Ok(_public(session, view)) if view else Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
 
 
 def _reading_changes(fmt: str, old_kind: str, new_kind: str) -> bool:
@@ -327,8 +342,9 @@ def update_source(
             fields["text_status"] = "pending"
             fields["error"] = ""
             job_id = _queue_read(session, before.engagement_id, source_id)
-        view = repo.update(session, source_id, fields)
-        assert view is not None
+        updated = repo.update(session, source_id, fields)
+        assert updated is not None
+        view = _public(session, updated)
         if changed:
             engagements_repo.touch(session, before.engagement_id)
             audit.record(
@@ -374,8 +390,35 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
     return Ok(None)
 
 
+def _segment_view(
+    fmt: str, item: dict[str, Any], terms: list[NameReplacement] | None
+) -> SegmentView:
+    """One passage; `terms` hides names, `None` means raw (owner-only correction editor)."""
+    role = item["speaker_role"] or ("Interviewer" if item["is_interviewer"] else None)
+    return SegmentView(
+        id=item["id"],
+        seq=item["seq"],
+        anchor=parsing.segment_anchor(
+            fmt=fmt,
+            seq=item["seq"],
+            page=item["page"],
+            section=item["section"],
+            text=item["text"],
+            start_ms=item["start_ms"],
+        ),
+        page=item["page"],
+        section=item["section"] if terms is None else redaction.hide(item["section"], terms),
+        speaker_role=role,
+        text=item["text"] if terms is None else redaction.hide(item["text"], terms),
+        cited=False,
+        instruction_like=item["instruction_like"],
+        speaker_label=item["speaker_label"] if terms is None else None,
+        corrected=item["corrected"],
+    )
+
+
 def list_segments(
-    sessions: Sessions, source_id: str, page: int = 1, page_size: int = 200
+    sessions: Sessions, source_id: str, page: int = 1, page_size: int = 200, *, raw: bool = False
 ) -> Result[SegmentPage]:
     if page < 1 or not 1 <= page_size <= 500:
         return Err(
@@ -388,28 +431,99 @@ def list_segments(
         if source is None:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
         items, total = repo.segment_page(session, source_id, page, page_size)
-    segments = [
-        SegmentView(
-            id=item["id"],
-            seq=item["seq"],
-            anchor=parsing.segment_anchor(
-                fmt=source.format,
-                seq=item["seq"],
-                page=item["page"],
-                section=item["section"],
-                text=item["text"],
-                start_ms=item["start_ms"],
-            ),
-            page=item["page"],
-            section=item["section"],
-            speaker_role=item["speaker_role"],
-            text=item["text"],
-            cited=False,
-            instruction_like=item["instruction_like"],
-        )
-        for item in items
-    ]
+        terms = None if raw else redaction.name_replacements(session, source.engagement_id)
+    segments = [_segment_view(source.format, item, terms) for item in items]
     pages = max(1, math.ceil(total / page_size))
     return Ok(
         SegmentPage(segments=segments, total=total, page=page, pages=pages, coverage_pct=None)
     )
+
+
+# --- Speakers and corrections (owner-only places, PRD §3.8 G10) ------------------------------
+
+
+SEGMENT_MISSING = "That passage doesn't exist."
+BAD_TEXT = "Please keep the passage between 1 and 5,000 characters."
+BAD_ROLE = "Choose one of this engagement's roles, or Interviewer."
+
+
+def get_speakers(sessions: Sessions, source_id: str) -> Result[list[SpeakerView]]:
+    with session_scope(sessions) as session:
+        if repo.get(session, source_id) is None:
+            return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        return Ok(repo.speakers(session, source_id))
+
+
+def map_speakers(
+    config: AppConfig, sessions: Sessions, source_id: str, mapping: dict[str, str | None]
+) -> Result[list[SpeakerView]]:
+    """Map speaker labels to roles or Interviewer; name-like labels show as the mapped role."""
+    actor = actor_name(config)
+    with session_scope(sessions) as session:
+        source = repo.get(session, source_id)
+        if source is None:
+            return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        labels = {s.label for s in repo.speakers(session, source_id)}
+        roles = {r.id: r.name for r in engagements_repo.list_roles(session, source.engagement_id)}
+        known = engagements_repo.role_names(session, source.engagement_id)
+        for label, target in mapping.items():  # check everything before changing anything
+            if label not in labels:
+                return Err(
+                    ErrorKind.VALIDATION,
+                    f"There is no speaker called {label} in this file.",
+                    {"field": "label"},
+                )
+            if target is not None and target != "interviewer" and target not in roles:
+                return Err(ErrorKind.VALIDATION, BAD_ROLE, {"field": "role_id"})
+        for label, target in mapping.items():
+            interviewer = target == "interviewer"
+            role_id = None if target is None or interviewer else target
+            repo.map_speaker(session, source_id, label, role_id=role_id, is_interviewer=interviewer)
+            if parsing.looks_like_name(label, known):
+                shown = (
+                    "Interviewer" if interviewer else roles.get(role_id or "", DEFAULT_REPLACEMENT)
+                )
+                redaction.set_speaker_term(session, source.engagement_id, label, shown)
+        if mapping:
+            engagements_repo.touch(session, source.engagement_id)
+            audit.record(
+                session,
+                actor=actor,
+                action="Mapped speakers",
+                target_type="source",
+                target_id=source_id,
+                engagement_id=source.engagement_id,
+                after={"speakers_mapped": sum(1 for t in mapping.values() if t is not None)},
+            )
+        return Ok(repo.speakers(session, source_id))
+
+
+def correct_segment(
+    config: AppConfig, sessions: Sessions, segment_id: str, data: SegmentPatch
+) -> Result[SegmentView]:
+    """The correction editor: save the passage as typed (owner-only; returned raw)."""
+    text = data.text.strip()
+    if not text or len(text) > 5000:
+        return Err(ErrorKind.VALIDATION, BAD_TEXT, {"field": "text"})
+    actor = actor_name(config)
+    with session_scope(sessions) as session:
+        source_id = repo.segment_source(session, segment_id)
+        source = repo.get(session, source_id) if source_id else None
+        if source is None:
+            return Err(ErrorKind.NOT_FOUND, SEGMENT_MISSING)
+        item = repo.correct_segment(
+            session,
+            segment_id,
+            text=text,
+            instruction_like=grounding.detect_instruction_like(text),
+        )
+        assert item is not None
+        audit.record(
+            session,
+            actor=actor,
+            action="Corrected a passage",
+            target_type="segment",
+            target_id=segment_id,
+            engagement_id=source.engagement_id,
+        )
+    return Ok(_segment_view(source.format, item, None))

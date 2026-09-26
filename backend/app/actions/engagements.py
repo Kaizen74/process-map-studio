@@ -27,6 +27,7 @@ from app.domain.models import (
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import engagements as repo
+from app.repositories import redaction as redaction_repo
 
 Sessions = sessionmaker[Session]
 
@@ -321,6 +322,15 @@ def update_role(
                 {"field": "name"},
             )
         role = repo.update_role(session, role_id, fields)
+        if "name" in fields and fields["name"] != before.name:
+            # Names shown as this role now show its new name (PRD §3.8 G10).
+            redaction_repo.replace_replacement(
+                session,
+                before.engagement_id,
+                before.name,
+                fields["name"],
+                redaction_repo.NAME_ORIGINS,
+            )
         assert role is not None
         repo.touch(session, before.engagement_id)
         audit.record(

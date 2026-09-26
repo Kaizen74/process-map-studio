@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import db
 from app.actions import jobs as job_actions
 from app.config import AppConfig, load_config
-from app.routers import engagements, jobs, readiness, settings, sources, system
+from app.routers import engagements, jobs, readiness, redaction, settings, sources, system
 from app.routers.http import ApiError, err_response, error_response
 from app.worker import JobWorker
 
@@ -46,6 +46,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(sources.router)
     app.include_router(readiness.router)
     app.include_router(jobs.router)
+    app.include_router(redaction.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

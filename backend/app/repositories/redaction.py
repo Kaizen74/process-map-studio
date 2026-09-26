@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.domain.models import RedactionTermView
 from app.repositories.tables import RedactionTerm
 
+# Origins of terms that hide names; `confidential_term` only restricts web research.
+NAME_ORIGINS = ("speaker_map", "manual")
+
 
 def _view(row: RedactionTerm) -> RedactionTermView:
     return RedactionTermView(
@@ -76,3 +79,18 @@ def delete(session: Session, term_id: str) -> bool:
     session.delete(row)
     session.flush()
     return True
+
+
+def replace_replacement(
+    session: Session, engagement_id: str, old: str, new: str, origins: Iterable[str]
+) -> None:
+    """After a role is renamed: terms shown as the old role name now show the new one."""
+    rows = session.scalars(
+        select(RedactionTerm)
+        .where(RedactionTerm.engagement_id == engagement_id)
+        .where(RedactionTerm.origin.in_(list(origins)))
+        .where(RedactionTerm.replacement == old)
+    )
+    for row in rows:
+        row.replacement = new
+    session.flush()

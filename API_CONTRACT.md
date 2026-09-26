@@ -149,7 +149,7 @@ Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the origin
 - Every passage is checked for instruction-like text (PRD §3.8 G9) and flagged `instruction_like: true`.
 - Speaker labels that look like a person's name ("Priya Nair") are added to the engagement's redaction terms automatically (origin `speaker_map`, shown as "[name]" until the speaker is mapped).
 - Images inside PDFs (at least 48 px) are saved to `data/images/<engagement_id>/` as **suggestions** (`status: "suggested"`, page number kept); nothing is shown on a map until Eric keeps them (P8).
-- Changing a source's `kind` to or from `interview_transcript` reads a Word, PDF or text file again, unless one of its passages was corrected by hand (then the passages are kept as they are). Speaker mappings are kept by label.
+- Changing a source's `kind` to or from `interview_transcript` reads a Word, PDF or text file again, unless one of its passages was corrected by hand (then the passages are kept as they are). Reading as a document removes the speaker turns and their mappings; names already on the redaction list stay hidden. When a file is read again as a transcript (for example a job run again after a restart), mappings are kept by speaker label.
 - When the app starts, unfinished jobs are run again, and files still waiting to be read (for example transcripts uploaded in phase P1) are read.
 
 ### Source object
@@ -160,7 +160,7 @@ Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the origin
  "text_status": "ready", "error": "", "segment_count": 10, "ocr_pages": [],
  "suggested_images": 0, "created_at": "…"}
 ```
-`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`.
+`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`. `filename` and `error` are shown with names hidden (G10), so a file called "Priya Nair interview.txt" is listed as "[name] interview.txt" or with the mapped role.
 
 ### POST /api/engagements/{id}/sources (multipart form)
 Fields: `file` (required); `kind` (optional: guessed from the file name if missing: `.vtt`/`.srt`/names with "transcript" or "interview" → `interview_transcript`, "sop" → `sop`, "jd"/"job description" → `job_description`, "manual" → `manual`, else `other`); `version_date` (optional, `YYYY-MM-DD`); `owner` (optional, up to 120 characters); `controlled_copy` (optional, `true`/`false`).
@@ -177,16 +177,55 @@ Errors: `404` ("That source doesn't exist. It may have been deleted."); `422`.
 Used by: Sources screen (registry row edits, delete, viewer header).
 
 ### GET /api/sources/{sid}/segments
-Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (from P9; ignored until then), `raw` (P2; ignored until then).
+Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (from P9; ignored until then), `raw` (`1` only for the owner-only correction editor).
 Response `200`:
 ```json
 {"segments": [{"id": "…", "seq": 3, "anchor": "§3.1", "page": null, "section": "3 Load planning",
-               "speaker_role": null, "text": "§3.1 The Load Controller shall …",
-               "cited": false, "instruction_like": false}],
+               "speaker_role": null, "speaker_label": null, "text": "§3.1 The Load Controller shall …",
+               "cited": false, "instruction_like": false, "corrected": false}],
  "total": 10, "page": 1, "pages": 1, "coverage_pct": null}
 ```
-`coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
-Used by: Sources screen (full-width source viewer).
+- `speaker_role`: the mapped role's name, `"Interviewer"`, or `null` when the speaker isn't mapped yet (never the label, which may be a name).
+- **Names are hidden** (PRD §3.8 G10): `text` and `section` have every redaction term replaced by its replacement (the mapped role, "Interviewer" or "[name]"). With `raw=1` the text is exactly as stored and `speaker_label` is filled; this is one of the three owner-only places where names appear.
+- `coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
+Used by: Sources screen (full-width source viewer; correction editor with `raw=1`).
+
+### PATCH /api/segments/{segid} (correction editor, owner-only)
+Request: `{"text": "…"}` — 1 to 5,000 characters. The passage is saved as typed, marked `corrected: true`, and checked again for instruction-like text.
+Response `200`: the segment as with `raw=1`. Errors: `404` ("That passage doesn't exist."), `422`. Writes an audit row (without the text).
+
+### GET /api/sources/{sid}/speakers (speaker-mapping card, owner-only)
+Response `200`: one entry per speaker label, in order of first appearance:
+```json
+[{"label": "Interviewer", "segment_count": 1, "role_id": null, "is_interviewer": true},
+ {"label": "Priya Nair", "segment_count": 8, "role_id": "…", "is_interviewer": false}]
+```
+Errors: `404`. A document without speakers returns `[]`.
+
+### PUT /api/sources/{sid}/speakers (owner-only)
+Request: `{"Priya Nair": "<role id>", "Interviewer": "interviewer", "Speaker 3": null}` — for each label: a role of this engagement, `"interviewer"`, or `null` to clear the mapping. Labels not sent are left as they are.
+Effect: every passage of that label gets the role (or Interviewer). A label that looks like a personal name is on the redaction list, and its replacement becomes the role's name ("Interviewer", or "[name]" when cleared); if Eric removed it from the list, mapping adds it back.
+Response `200`: the speakers list as for GET. Errors: `404`; `422` ("There is no speaker called … in this file." · "Choose one of this engagement's roles, or Interviewer."). Writes an audit row (counts only, no names).
+
+## Redaction terms (PRD §4 Redaction, §3.8 G10) — phase P2
+
+Names to hide everywhere except the three owner-only places (speaker-mapping card, redaction list, correction editor). Terms are matched as whole words, ignoring case and spacing. Confidential terms from the scope card (origin `confidential_term`) are stored in the same table but are **not** part of this list: they only restrict what is sent to web research.
+
+### Redaction term object
+```json
+{"id": "…", "engagement_id": "…", "term": "Priya Nair", "replacement": "Load controller", "origin": "speaker_map"}
+```
+`origin`: `speaker_map` (added automatically from a name-like speaker label) or `manual` (added by Eric).
+
+### GET /api/engagements/{id}/redaction-terms
+Response `200`: terms, oldest first. Errors: `404`.
+
+### POST /api/engagements/{id}/redaction-terms
+Request: `{"term": "Priya", "replacement": "Load controller"}` — `term` 1–120 characters, one line; `replacement` optional (up to 80 characters; empty means "[name]").
+Response `201`: term (`origin: "manual"`). Errors: `404`; `409 CONFLICT` ("That name is already on the list."); `422`.
+
+### DELETE /api/redaction-terms/{tid}
+Response `204`. Errors: `404` (also for confidential terms, which are edited on the scope card). Writes an audit row.
 
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
@@ -205,9 +244,9 @@ Response `200`:
 ```
 - `transcripts_ready`: at least one `interview_transcript` source has `text_status: "ready"`.
 - `documents_ready`: at least one SOP, manual, executed artefact or other document is ready (a job description alone doesn't describe the steps).
-- `speakers_unmapped`: speaker labels in ready transcripts that have no role yet (from P2).
+- `speakers_unmapped`: speaker labels in ready transcripts with no role and not marked Interviewer.
 - `blockers_count`: failing hard checks on the latest draft's quality card (from P7; `0` until then).
-- `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · process document · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true.
+- `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · process document · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true. File names are shown with names hidden.
 - `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** stays not started until exports are recorded (P7).
 - `nav_counts` has an entry only for items in `attention`.
 - `next_step`: the first item in nav order that isn't done, never `gap_analysis`; `null` when everything is done.

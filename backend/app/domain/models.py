@@ -235,6 +235,20 @@ class SegmentView(BaseModel):
     text: str
     cited: bool
     instruction_like: bool
+    # Only with raw=1 (owner-only correction editor): the speaker label as written in the file.
+    speaker_label: str | None = None
+    corrected: bool = False
+
+
+class SegmentPatch(BaseModel):
+    text: str
+
+
+class SpeakerView(BaseModel):
+    label: str
+    segment_count: int
+    role_id: str | None
+    is_interviewer: bool
 
 
 class SegmentPage(BaseModel):
@@ -320,6 +334,11 @@ class JobView(BaseModel):
     usage: dict[str, int] | None = None
     claims: JobClaims = JobClaims()
     created_at: str
+
+
+class RedactionTermCreate(BaseModel):
+    term: str
+    replacement: str = ""
 
 
 class RedactionTermView(BaseModel):

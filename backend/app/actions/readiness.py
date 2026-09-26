@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import redaction
 from app.actions.engagements import ENGAGEMENT_MISSING
 from app.actions.settings import get_settings
 from app.config import AppConfig
@@ -158,8 +159,18 @@ def assess(facts: ReadinessFacts, *, key_set: bool) -> Readiness:
 def get_readiness(config: AppConfig, sessions: Sessions, engagement_id: str) -> Result[Readiness]:
     with session_scope(sessions) as session:
         facts = repo.facts(session, engagement_id)
-    if facts is None:
-        return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        if facts is None:
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        terms = redaction.name_replacements(session, engagement_id)
+    # File names appear in the "missing" list, so names in them are hidden (G10).
+    facts = facts.model_copy(
+        update={
+            "sources": [
+                s.model_copy(update={"filename": redaction.hide(s.filename, terms)})
+                for s in facts.sources
+            ]
+        }
+    )
     match get_settings(config):
         case Err() as err:
             return err
