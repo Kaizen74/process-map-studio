@@ -17,7 +17,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import AppConfig
+from app.db import session_scope
+from app.domain.models import ClaimRecord
 from app.main import create_app
+from app.repositories import claims
 from tests.paths import BACKEND_ROOT
 from tests.uploads import wait_for_jobs
 
@@ -71,7 +74,33 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     # The last document is the interview transcript: map one speaker, find a passage to correct.
     client.put(f"/api/sources/{source}/speakers", json={"Priya Nair": role})
     segment = client.get(f"/api/sources/{source}/segments").json()["segments"][0]["id"]
-    return client, {"eid": eid, "role": role, "source": source, "job": job, "segment": segment}
+    # A mocked draft, plus a full rejected-claims register, for the P3 endpoints.
+    client.put(f"/api/sources/{source}/speakers", json={"Interviewer": "interviewer"})
+    client.put("/api/settings/key", json={"anthropic_api_key": "sk-" + "ant-" + "L4tency" * 5})
+    draft_job = client.post(f"/api/engagements/{eid}/draft").json()["job_id"]
+    wait_for_jobs(client)
+    version = client.get(f"/api/jobs/{draft_job}").json()["target_id"]
+    assert version, "the mocked draft did not finish"
+    rejected = [
+        ClaimRecord(
+            source_id=source,
+            stage="S1",
+            claim_type="activity",
+            payload={"text": f"Planted claim {n}", "scrubbed": n % 2},
+            segment_ids=[segment],
+            quote="not in the source",
+            provenance="O",
+            basis="",
+            verification_status="rejected",
+            rejection_reason="quote not found in source",
+            rejection_guardrail="G4",
+        )
+        for n in range(60)
+    ]
+    with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        claims.add_claims(session, version, rejected)
+    ids = {"eid": eid, "role": role, "source": source, "job": job, "segment": segment}
+    return client, ids | {"draft_job": draft_job, "version": version}
 
 
 ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
@@ -93,6 +122,10 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("PUT", "/api/sources/{source}/speakers", {"Interviewer": "interviewer"}),
     ("PATCH", "/api/segments/{segment}", {"text": "Walk me through the last flight you planned."}),
     ("GET", "/api/engagements/{eid}/redaction-terms", None),
+    ("GET", "/api/engagements/{eid}/draft", None),
+    ("GET", "/api/jobs/{draft_job}", None),
+    ("GET", "/api/versions/{version}/rejected-claims", None),
+    ("GET", "/api/settings/usage", None),
 ]
 
 

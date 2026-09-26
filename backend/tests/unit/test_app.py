@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import logging
 from pathlib import Path
 
 import pytest
@@ -165,3 +166,19 @@ def test_config_defaults_and_overrides(tmp_path: Path) -> None:
     assert custom.port == 8123
     assert custom.data_dir == tmp_path.resolve()
     assert custom.mock_claude is True
+
+
+def test_source_text_never_reaches_the_log_even_at_debug_level(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The SDK logs whole requests at DEBUG; the app keeps its loggers at WARNING (privacy)."""
+    import json
+
+    from app.services import ai_service
+    from tests.services.test_call_claude import GOOD, FakeAnthropic, connect, stage, stream
+
+    create_app(load_config({"PMS_ENV_FILE": str(tmp_path / ".env"), "DATA_DIR": str(tmp_path)}))
+    caplog.set_level(logging.DEBUG)
+    ai_service.call_claude(connect(FakeAnthropic(stream(json.dumps(GOOD)))), stage())
+    logged = "\n".join(record.getMessage() for record in caplog.records)
+    assert "§3.1" not in logged and "Use only the supplied segments" not in logged

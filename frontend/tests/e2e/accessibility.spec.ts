@@ -66,7 +66,11 @@ test.describe("accessibility and offline assets", () => {
       expect(await seriousViolations(page)).toEqual([]);
 
       await page.goto(`/engagements/${id}/draft`);
-      await expect(page.getByText(/arrives in build phase P3/)).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Before drafting" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.goto(`/engagements/${id}/review`);
+      await expect(page.getByText(/arrives in build phase P5/)).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     } finally {
       expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);

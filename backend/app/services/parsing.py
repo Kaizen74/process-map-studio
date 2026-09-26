@@ -13,6 +13,7 @@ turns. Lines without a speaker continue the turn before them (PDF line wrapping,
 
 from __future__ import annotations
 
+import io
 import re
 from itertools import pairwise
 from pathlib import Path
@@ -134,6 +135,25 @@ def extract_pdf_images(path: Path) -> Result[list[ExtractedImage]]:
             ErrorKind.IO, "Images in the PDF could not be read.", {"reason": type(exc).__name__}
         )
     return Ok(found)
+
+
+def split_pdf_page(path: Path, page: int) -> Result[bytes]:
+    """One page of a PDF as a PDF of its own (for reading a scanned page, PRD §3.7 S0).
+
+    Verified in pypdf 6.19.0: `PdfWriter().add_page(reader.pages[i])`, `write(stream)`; the output
+    is byte-identical between runs.
+    """
+    try:
+        reader = pypdf.PdfReader(str(path))
+        if not 1 <= page <= len(reader.pages):
+            return Err(ErrorKind.NOT_FOUND, "That page isn't in the PDF.", {"page": page})
+        writer = pypdf.PdfWriter()
+        writer.add_page(reader.pages[page - 1])
+        out = io.BytesIO()
+        writer.write(out)
+    except Exception as exc:  # pypdf raises many types for damaged files
+        return Err(ErrorKind.IO, "The PDF page could not be read.", {"reason": type(exc).__name__})
+    return Ok(out.getvalue())
 
 
 def segment_anchor(

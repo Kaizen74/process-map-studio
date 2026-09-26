@@ -206,3 +206,91 @@ export interface RedactionTerm {
   replacement: string;
   origin: "speaker_map" | "manual" | string;
 }
+
+// --- Jobs and drafting (API_CONTRACT.md → Jobs, Draft) — phase P3 ---------------------------
+
+export type JobStatus = "queued" | "running" | "done" | "failed";
+export type StageStatus = "waiting" | "running" | "done" | "failed" | "later";
+
+export interface JobStage {
+  id: string;
+  name: string;
+  status: StageStatus;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface Job {
+  id: string;
+  engagement_id: string | null;
+  type: "read_source" | "draft";
+  target_id: string | null;
+  status: JobStatus;
+  stage: string;
+  progress: number;
+  message: string;
+  error: string;
+  usage: { calls: number; input_tokens: number; output_tokens: number } | null;
+  claims: { verified: number; rejected: number };
+  stages: JobStage[];
+  created_at: string;
+}
+
+export interface Version {
+  id: string;
+  engagement_id: string;
+  label: string;
+  state: "draft" | "published" | "superseded";
+  created_at: string;
+}
+
+export interface DraftSummary {
+  verified: number;
+  rejected: number;
+  open_questions: number;
+  scrubbed: number;
+}
+
+export interface DraftState {
+  job: Job | null;
+  version: Version | null;
+  summary: DraftSummary | null;
+}
+
+export interface RejectedClaim {
+  id: string;
+  claim_text: string;
+  source_id: string;
+  source_name: string;
+  anchor: string;
+  reason: string;
+  guardrail: string;
+  stage: string;
+  passage_available: boolean;
+  segment_id: string | null;
+}
+
+export interface RejectedClaims {
+  items: RejectedClaim[];
+  total: number;
+  scrub_count: number;
+  instruction_like_count: number;
+}
+
+export interface AiUsageRow {
+  id: string;
+  created_at: string;
+  job_id: string | null;
+  stage_id: string;
+  prompt_version: string;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  duration_ms: number;
+  status: "ok" | "error" | "mock";
+}
+
+export interface AiUsage {
+  items: AiUsageRow[];
+  totals: { calls: number; input_tokens: number; output_tokens: number };
+}

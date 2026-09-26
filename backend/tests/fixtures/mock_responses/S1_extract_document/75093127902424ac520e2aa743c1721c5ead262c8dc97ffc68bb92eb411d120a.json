@@ -1,0 +1,92 @@
+{
+  "claims": [
+    {
+      "claim_type": "activity",
+      "text": "The Load Controller prepares the preliminary load plan by T-90.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "The Load Controller shall prepare the preliminary load plan by T-90.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "approval",
+      "text": "The Load Control Lead approves the preliminary load plan before release to Ramp.",
+      "responsible_role": "",
+      "accountable_role": "Load control lead",
+      "decider_role": "",
+      "mechanism": "judgment",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The preliminary load plan shall be approved by the Load Control Lead before release to Ramp.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "decision",
+      "text": "Special loads are checked against the acceptance checklist before loading.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "rule_based",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Special loads shall be checked against the acceptance checklist before loading.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "decision",
+      "text": "Where actual weights deviate beyond the airline tolerance, the Load Control Lead decides on corrective action.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "Load control lead",
+      "mechanism": "judgment",
+      "duration_text": "",
+      "threshold": "beyond the airline tolerance",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "Where actual weights deviate from planned beyond the airline tolerance, the Load Control Lead shall decide on corrective action.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "The final load sheet is issued through the departure control system no later than T-10.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p10"
+      ],
+      "quote": "The final load sheet shall be issued through the departure control system no later than T-10.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": [
+    {
+      "question": "Which role issues the final load sheet?",
+      "segment_ids": [
+        "p10"
+      ]
+    }
+  ]
+}

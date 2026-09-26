@@ -1,0 +1,22 @@
+{
+  "claims": [
+    {
+      "claim_type": "raci",
+      "text": "The Load Control Lead is accountable for approval of load plans and for load control compliance.",
+      "responsible_role": "",
+      "accountable_role": "Load control lead",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p1",
+        "p2"
+      ],
+      "quote": "Accountable for approval of load plans and for load control compliance.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": []
+}

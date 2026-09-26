@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { ConnectionTest, ModelChoices, ModelUpdate, Settings } from "./types";
+import type { AiUsage, ConnectionTest, ModelChoices, ModelUpdate, Settings } from "./types";
 
 export const getSettings = () => request<Settings>("/settings");
 
@@ -16,3 +16,5 @@ export const listModels = () => request<ModelChoices>("/settings/models");
 
 export const saveModel = (update: ModelUpdate) =>
   request<Settings>("/settings/model", { method: "PUT", body: update });
+
+export const getAiUsage = (limit = 50) => request<AiUsage>(`/settings/usage?limit=${limit}`);

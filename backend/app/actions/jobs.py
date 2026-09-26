@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import sources
+from app.actions import draft, sources
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
@@ -34,7 +34,9 @@ UNEXPECTED = (
 def get_job(sessions: Sessions, job_id: str) -> Result[JobView]:
     with session_scope(sessions) as session:
         job = repo.get(session, job_id)
-    return Ok(job) if job else Err(ErrorKind.NOT_FOUND, JOB_MISSING)
+        if job is None:
+            return Err(ErrorKind.NOT_FOUND, JOB_MISSING)
+        return Ok(draft.with_progress(session, job))
 
 
 def _finish(sessions: Sessions, job_id: str, result: Result[str]) -> None:
@@ -54,23 +56,44 @@ def _finish(sessions: Sessions, job_id: str, result: Result[str]) -> None:
                 repo.update(session, job_id, status="failed", error=message)
 
 
+def _run_read(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = sources.read_source(config, sessions, job.target_id or "")
+    except Exception as exc:  # recorded for Eric in plain words, and in the app log for a fix
+        log.exception("Reading job %s failed", job.id)
+        sources.mark_unreadable(sessions, job.target_id or "", UNEXPECTED)
+        result = Err(ErrorKind.IO, UNEXPECTED, {"type": type(exc).__name__})
+    _finish(sessions, job.id, result)
+
+
+def _run_draft(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = draft.run_draft(config, sessions, job.id)
+    except Exception as exc:  # the draft's version was already removed by run_draft
+        log.exception("Draft job %s failed", job.id)
+        result = Err(ErrorKind.IO, draft.UNEXPECTED, {"type": type(exc).__name__})
+    with session_scope(sessions) as session:
+        match result:
+            case Ok(value=message):
+                repo.update(session, job.id, status="done", progress=1.0, message=message)
+            case Err(message=message):
+                repo.update(session, job.id, status="failed", error=message)
+
+
 def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
     """Run one job and record how it went. Jobs already finished are left alone."""
     with session_scope(sessions) as session:
         job = repo.get(session, job_id)
         if job is None or job.status not in repo.UNFINISHED:
             return
-        repo.update(session, job_id, status="running", stage=READ_STAGE, progress=0.0)
-    if job.type != sources.READ_JOB:
+        first_stage = READ_STAGE if job.type == sources.READ_JOB else ""
+        repo.update(session, job_id, status="running", stage=first_stage, progress=0.0)
+    if job.type == sources.READ_JOB:
+        _run_read(config, sessions, job)
+    elif job.type == draft.DRAFT_JOB:
+        _run_draft(config, sessions, job)
+    else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
-        return
-    try:
-        result = sources.read_source(config, sessions, job.target_id or "")
-    except Exception as exc:  # recorded for Eric in plain words, and in the app log for a fix
-        log.exception("Reading job %s failed", job_id)
-        sources.mark_unreadable(sessions, job.target_id or "", UNEXPECTED)
-        result = Err(ErrorKind.IO, UNEXPECTED, {"type": type(exc).__name__})
-    _finish(sessions, job_id, result)
 
 
 def resume_jobs(sessions: Sessions, enqueue: Enqueue) -> list[str]:

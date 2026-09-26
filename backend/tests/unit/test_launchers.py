@@ -234,7 +234,7 @@ def test_start_backs_up_an_older_database_then_updates_it(tmp_path: Path) -> Non
 
     database = tmp_path / "app.db"
     db.upgrade(database)
-    db.downgrade(database, "0001")  # a phase-P1 database with the P2 update waiting
+    db.downgrade(database, "-1")  # a database from the phase before, with one update waiting
     python = common.venv_python(REPO_ROOT)
     assert start_script.pending_migrations(python, tmp_path) == 1
     start_script.apply_database_updates(python, tmp_path)

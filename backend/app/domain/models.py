@@ -316,6 +316,16 @@ class Redacted(BaseModel):
 # --- Jobs (PRD §4 Pipeline) ---------------------------------------------------------------------
 
 
+class JobStage(BaseModel):
+    """One stage of a draft job, for the stage stepper (API_CONTRACT.md → Jobs)."""
+
+    id: str
+    name: str
+    status: str  # waiting · running · done · failed · later
+    started_at: str | None = None
+    finished_at: str | None = None
+
+
 class JobClaims(BaseModel):
     verified: int = 0
     rejected: int = 0
@@ -333,6 +343,7 @@ class JobView(BaseModel):
     error: str
     usage: dict[str, int] | None = None
     claims: JobClaims = JobClaims()
+    stages: list[JobStage] = []
     created_at: str
 
 
@@ -347,3 +358,159 @@ class RedactionTermView(BaseModel):
     term: str
     replacement: str
     origin: str
+
+
+# --- AI calls (PRD §3.7 call_claude, §3.4 AI usage) ------------------------------------------
+
+
+class AiCallRecord(BaseModel):
+    """One Messages API call, for the ai_calls table. Never holds prompt or document text."""
+
+    stage_id: str
+    prompt_version: str
+    model: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    duration_ms: int = 0
+    status: str  # ok · repaired · invalid · refused · truncated · error · mock
+    input_hash: str
+
+
+class AiAnswer(BaseModel):
+    """A validated answer from a stage call, plus the calls it took (the first and any repair)."""
+
+    data: dict[str, object]
+    calls: list[AiCallRecord]
+
+
+class CheckOutcome(BaseModel):
+    """The result of one grounding check (PRD §3.8): passed, or which guardrail failed and why."""
+
+    passed: bool
+    guardrail: str = ""  # B.20: G3, G4, G5 …
+    reason: str = ""
+
+
+class PromptSegment(BaseModel):
+    """One passage as it is sent to Claude: a call-local ID, its anchor, the speaker's role (never a
+    name) and the text with names already hidden. `segment_id` is the stored passage's real ID."""
+
+    ref: str
+    segment_id: str
+    seq: int
+    anchor: str
+    text: str
+    speaker_role: str = ""
+    page: int | None = None
+    start_ms: int | None = None
+
+
+class Prompt(BaseModel):
+    name: str
+    version: str
+    text: str
+
+
+# --- Versions and claims (PRD §3.5) ----------------------------------------------------------
+
+
+class VersionView(BaseModel):
+    id: str
+    engagement_id: str
+    label: str
+    state: str
+    created_at: str
+
+
+class ClaimRecord(BaseModel):
+    """A claim as stored after the grounding gate (verified or rejected, with guardrail)."""
+
+    source_id: str
+    stage: str
+    claim_type: str
+    payload: dict[str, object]
+    segment_ids: list[str]
+    quote: str
+    provenance: str
+    basis: str
+    verification_status: str
+    rejection_reason: str = ""
+    rejection_guardrail: str = ""
+
+
+class UnknownRecord(BaseModel):
+    source_id: str
+    question: str
+    segment_ids: list[str]
+
+
+class StoredSegment(BaseModel):
+    """A stored passage with what a stage needs to send it (names not yet hidden)."""
+
+    id: str
+    seq: int
+    page: int | None
+    section: str
+    start_ms: int | None
+    text: str
+    speaker_label: str
+    speaker_role: str | None
+    is_interviewer: bool
+    instruction_like: bool
+
+
+class DraftSummary(BaseModel):
+    verified: int
+    rejected: int
+    open_questions: int
+    scrubbed: int
+
+
+class DraftState(BaseModel):
+    """GET /engagements/{id}/draft: the latest draft job and the current draft."""
+
+    job: JobView | None
+    version: VersionView | None
+    summary: DraftSummary | None
+
+
+class DraftStarted(BaseModel):
+    job_id: str
+
+
+class RejectedClaim(BaseModel):
+    id: str
+    claim_text: str
+    source_id: str
+    source_name: str
+    anchor: str
+    reason: str
+    guardrail: str
+    stage: str
+    passage_available: bool
+    segment_id: str | None
+
+
+class RejectedClaims(BaseModel):
+    items: list[RejectedClaim]
+    total: int
+    scrub_count: int
+    instruction_like_count: int
+
+
+class AiUsageRow(BaseModel):
+    id: str
+    created_at: str
+    job_id: str | None
+    stage_id: str
+    prompt_version: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    duration_ms: int
+    status: str
+
+
+class AiUsage(BaseModel):
+    items: list[AiUsageRow]
+    totals: dict[str, int]

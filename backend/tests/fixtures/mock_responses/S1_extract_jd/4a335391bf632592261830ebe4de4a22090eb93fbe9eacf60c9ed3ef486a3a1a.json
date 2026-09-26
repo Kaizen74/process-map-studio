@@ -1,0 +1,22 @@
+{
+  "claims": [
+    {
+      "claim_type": "raci",
+      "text": "The Load Controller prepares load plans, performs special load acceptance checks and issues load sheets.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p1",
+        "p2"
+      ],
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": []
+}

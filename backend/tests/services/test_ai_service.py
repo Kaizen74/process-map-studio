@@ -157,6 +157,7 @@ def test_list_models_classifies_errors() -> None:
 
 def test_the_key_is_never_logged_even_at_debug_level(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="anthropic")  # the app itself keeps it at WARNING
     ai_service.get_model(connect(FakeAnthropic(answer(200, model_json()))), "claude-opus-5-5")
     ai_service.get_model(
         connect(FakeAnthropic(answer(401, error_body("authentication_error")))), "m"

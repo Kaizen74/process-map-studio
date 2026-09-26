@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-26 (build phase P2)*
+*Updated: 2026-09-26 (build phase P3)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -7,7 +7,7 @@ This guide explains how to **use** the app. How to install, start, stop, update,
 You give it the documents behind one process: an SME interview transcript, SOPs, job descriptions and supporting documents. Claude reads them and drafts a swimlane map of how the work is really done: steps, roles, who is responsible and accountable, decisions, approvals, timings, KPIs and constraints. Every step links to the exact passage it came from. The app checks the AI's work before you see it, and anything it can't find in your documents is thrown out and listed for you. You review every step, and nothing is published until you have.
 
 ## What you can do today
-The app is being built in phases. At the moment (phase P2, finished 2026-09-26) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, and keep a list of names the app hides. Drafting the map arrives in phase P3.
+The app is being built in phases. At the moment (phase P3, finished 2026-09-26) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, keep a list of names the app hides, and **create a draft**: Claude reads every source and every claim it makes is checked against your documents. Turning those checked claims into the map itself arrives in phase P4.
 
 **Start and stop** (full steps in [README.md](README.md)): double-click **Start.command** (Mac) or **start.bat** (Windows). Your browser opens the app at http://127.0.0.1:8000. Close the small window to stop it.
 
@@ -37,9 +37,9 @@ The step to do next carries a **Next** tag. Gap analysis is marked **Optional** 
 1. Open **Sources** in the top bar. Drop files on the large box, or click **Choose files**. The app reads Word (.docx), PDF (.pdf), text (.txt) and subtitle (.vtt, .srt) files up to 50 MB each; anything else is refused with that list.
 2. Each file appears in the table straight away with the status **Reading…**, and changes to **Ready** a moment later (or **Failed** with the reason). You don't need to wait on the screen: if you close the app while a file is being read, it finishes when you start it again. The app guesses each file's **Kind** from its name (for example "jd" → Job description, "interview" → Interview transcript); change it if the guess is wrong. Changing a file to or from **Interview transcript** reads it again the right way.
 3. Fill in the **Version date**, **Owner** and **Controlled copy** where you know them. Changes save as soon as you leave the field.
-4. Click a file's name (or its row) to open the **source viewer** below the table. It lists every passage with its anchor: **§3.1** (a clause), **p. 5** (a PDF page), **¶ 7** (a paragraph) or **06:40** (the time in an interview). These anchors are how each step on the map will point back to its evidence. PDF pages with almost no text (probably scanned) are listed; they will be read in phase P3. Pictures found in PDFs are kept as suggestions for you to review in phase P8.
+4. Click a file's name (or its row) to open the **source viewer** below the table. It lists every passage with its anchor: **§3.1** (a clause), **p. 5** (a PDF page), **¶ 7** (a paragraph) or **06:40** (the time in an interview). These anchors are how each step on the map will point back to its evidence. PDF pages with almost no text (probably scanned) are listed; Claude reads them when you create the draft map. Pictures found in PDFs are kept as suggestions for you to review in phase P8.
 5. A passage that tries to give instructions to an AI (for example "ignore all previous instructions") carries the tag **Instruction-like text. Treated as data and ignored.** The app treats it as ordinary text in the document.
-6. The box at the bottom says **Ready to draft** or lists exactly what is still needed, for example "Map 2 speakers in interview_transcript.txt".
+6. The box at the bottom says **Ready to draft** (with a link, **Go to Draft**) or lists exactly what is still needed, for example "Map 2 speakers in interview_transcript.txt".
 7. **Delete** on a row removes that file and its passages after a confirmation.
 
 ### Interviews: speakers and names, step by step
@@ -50,25 +50,35 @@ The app splits an interview into who said what and when. It reads `[06:40] Name:
 4. Names appear in only three places: the speaker mapping, the names list and the correction editor. Everywhere else, including file names, the app shows the role or "[name]". Names never go into the map, exports or anything sent to Claude.
 5. To fix words the transcript got wrong, click **Correct the text** in the viewer, then **Correct** on a passage, change the text and click **Save correction**. Corrected passages are tagged **Corrected** and are kept if the file is read again. Click **Done correcting** to go back.
 
+### Draft, step by step
+1. Open **Draft** in the top bar (or **Go to Draft** on Sources). **Before drafting** lists four things: your Claude API key saved, at least one interview transcript read, at least one process document read (an SOP or manual), and every speaker mapped to a role. Each shows **Done** or **To do** with a link to fix it, and "Still needed" says exactly what is missing.
+2. Click **Create draft map**. If something is still missing, the app says what instead of starting.
+3. While Claude works you see each stage with its status and how long it has taken: **Reading the documents** (including scanned PDF pages), **Extracting steps from each source**, **Checking every quote against your documents**. The other four stages show **Later build phase** for now. Below them: **Claims verified**, **Rejected** and **Tokens used so far**, updating every second. You can leave the screen; drafting carries on, and the screen picks it up again when you come back.
+4. When it is done, **Draft v0.1** shows how many claims were verified, how many were rejected and how many open questions Claude raised. The map itself is built from these in phase P4.
+5. **Rejected claims** lists every claim that failed a check, struck through, with the reason in red (for example "number not found in cited text: 30"), the check that caught it (for example **G5 · S1**), the file and passage, and **Open source** (or "Passage missing" when Claude cited a passage that doesn't exist). These never reach the map. The line above the list also says how many names in Claude's answers were replaced by roles and how many instruction-like passages were ignored.
+6. If drafting stops, the stage that failed is marked **Failed**, the message says what happened and that nothing was saved, with **Try again** and **Copy details**.
+7. **Draft again from sources** makes a fresh draft that replaces this one. That is safe for now because nothing has been reviewed yet.
+
 ### Settings, step by step
 1. Click **Settings** (top right), or **Add your Claude API key** on the home screen.
 2. **Claude connection:** paste your key into **Claude API key** and click **Save key**. The box empties and the card shows "Saved key ••••••••" followed by the key's last 4 characters. That is all the app will ever show of it. To get a key: sign in at platform.claude.com → API keys → Create key → copy it once.
 3. Click **Test connection**. You'll see a line for each check: **Key valid**, **Model available**, **PDF input**, **Structured outputs**. You want **Pass** or **Yes** on every line. If the key was rejected, copy it again from the Claude Console and save it again.
 4. **Your name:** type your name and click **Save name**. It appears as the validator on published maps and exports.
 5. **Model:** the list shows the Claude models your key can use (default: Claude Opus 5.5). **Effort** controls how hard Claude thinks; **High** is recommended. Leave **Independent verifier** ticked: it checks every step a second time against only its evidence. If you untick it, the card warns that confidence scores will be lower. Click **Save model settings**.
-6. **About** shows the app and PRD versions (useful when reporting a problem).
+6. **AI usage** lists every call the app has made to Claude, newest first: when, which stage (for example "Extracting steps (interview)"), the model, input and output tokens, how long it took and whether it worked, with all-time totals above the table. Only these numbers are kept, never your documents. Before your first draft it says "No AI calls yet".
+7. **About** shows the app and PRD versions (useful when reporting a problem).
 
 A short message in the bottom-left confirms each save. If anything goes wrong, the app says what happened in plain words and offers **Copy details** for a bug report. Settings take effect straight away; there is no need to restart.
 
-Two Settings cards arrive later: **AI usage** (a log of every AI call, once drafting exists) and **Web research** (for the optional external best-practice analysis, phase P10).
+One Settings card arrives later: **Web research** (for the optional external best-practice analysis, phase P10).
 
 | Screen | What it will do | Arrives in |
 |---|---|---|
 | Home (Engagements) | Your engagements, with a three-step first-run checklist | Now |
-| Settings | Your name, your Claude API key, model choice, connection test | Now (usage log P3, web research P10) |
+| Settings | Your name, your Claude API key, model choice, connection test, AI usage log | Now (web research P10) |
 | Setup | The process scope card, roles and lanes | Now |
-| Sources | Upload and read documents and interviews, map speakers to roles, hide names, correct transcripts (now); read scanned pages (P3); coverage (P9) | Now, P3, P9 |
-| Draft | Create the draft map and watch each stage | P3, P4 |
+| Sources | Upload and read documents and interviews, map speakers to roles, hide names, correct transcripts; scanned pages read while drafting (now); coverage (P9) | Now, P9 |
+| Draft | Create a draft and watch each stage; checked and rejected claims (now); comparing sources and building the map (P4) | Now, P4 |
 | Review | The workbench: map, lenses, detail panel, evidence, review actions | P5, P6 |
 | Published and Exports | Read-only published maps; Markdown, JSON, CSV and HTML exports | P7 |
 | Matrix and Registers | Source alignment and the registers | P9 |
@@ -79,6 +89,7 @@ Two Settings cards arrive later: **AI usage** (a log of every AI call, once draf
 Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, export) are added here as each screen is built.
 
 ## What changed recently
+- 2026-09-26 (phase P3): Drafting. On **Draft**, create a draft: Claude reads every source (and scanned PDF pages) and every claim it makes is checked against your documents; claims whose passage, quote, numbers or roles can't be found are rejected with the reason and listed. Watch each stage live; **Settings → AI usage** logs every call with its tokens.
 - 2026-09-26 (phase P2): Interviews. Transcripts in text, Word, PDF and subtitle files are split into who said what and when; map each speaker to a role on **Sources**; a **Names to hide** list keeps people's names out of view everywhere except three owner-only places; fix transcript text with **Correct the text**; passages that try to instruct an AI are tagged. Files are now read in the background ("Reading…").
 - 2026-09-26 (phase P1): Engagements. Create, open and delete engagements from the home screen; describe the process and its roles and lanes on **Setup**; upload Word and PDF documents on **Sources** and read them passage by passage with their anchors. The guided path in the top bar shows what is done and what to do next.
 - 2026-09-26: The app has its look and feel (calm colours, IBM Plex fonts stored inside the app), a top bar, the home screen with the **Get started** checklist, and the **Settings** screen: save your name and API key, test the connection, choose the model. Every screen is checked automatically for accessibility.

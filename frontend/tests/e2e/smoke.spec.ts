@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { FAKE_KEY } from "./helpers";
+import { FAKE_KEY, publicText, seriousViolations } from "./helpers";
 
 // First-run path through the real app (built frontend + backend, Claude mocked).
 test("first run: add name and key, test the connection, checklist ticks", async ({ page }) => {
@@ -104,4 +104,85 @@ test("engagement: create, set up, upload and read sources, then delete", async (
   await page.getByRole("dialog").getByRole("button", { name: "Delete engagement" }).click();
   await expect(page.getByText("Engagement deleted.")).toBeVisible();
   await expect(page.getByText(/No engagements yet/)).toBeVisible();
+});
+
+// Phase P3 path: the Appendix A engagement set up exactly as the mock answers expect (roles with
+// their aliases, speakers mapped), then a draft made from the Draft screen with Claude mocked.
+// Runs after the first-run test above, which saved the key. Cleans up after itself.
+const ROLES: [string, string[]][] = [
+  ["Load controller", ["LC", "Load Controller"]],
+  ["Load control lead", ["Load Control Lead"]],
+  ["Ramp", ["Ramp Supervisor", "Ramp agent"]],
+  ["Airline ops", ["airline"]],
+  ["Captain", []],
+];
+const FIXTURES = resolve(dirname(fileURLToPath(import.meta.url)), "../../../backend/tests/fixtures/engagement_load_control");
+const DRAFT_SOURCES = [
+  "interview_transcript.txt",
+  "sop_LC-07.docx",
+  "sop_RP-02.docx",
+  "jd_load_control_lead.docx",
+  "jd_load_controller.docx",
+];
+
+test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
+  const created = await request.post("/api/engagements", {
+    data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
+  });
+  const { id } = (await created.json()) as { id: string };
+  try {
+    const roleIds: Record<string, string> = {};
+    for (const [name, aliases] of ROLES) {
+      const role = await request.post(`/api/engagements/${id}/roles`, { data: { name, aliases } });
+      roleIds[name] = ((await role.json()) as { id: string }).id;
+    }
+    await page.goto(`/engagements/${id}/sources`);
+    await page.getByTestId("source-file-input").setInputFiles(DRAFT_SOURCES.map((name) => join(FIXTURES, name)));
+    await expect(page.getByText("5 files uploaded.")).toBeVisible();
+    const table = page.getByRole("table", { name: "Sources for this engagement" });
+    await expect(table.getByText("Ready")).toHaveCount(5);
+    const sources = (await (await request.get(`/api/engagements/${id}/sources`)).json()) as {
+      id: string;
+      filename: string;
+    }[];
+    const transcript = sources.find((s) => s.filename === "interview_transcript.txt");
+    const mapped = await request.put(`/api/sources/${transcript?.id ?? ""}/speakers`, {
+      data: { Interviewer: "interviewer", "Priya Nair": roleIds["Load controller"] },
+    });
+    expect(mapped.status()).toBe(200);
+
+    await page.reload();
+    await page.getByRole("link", { name: "Go to Draft" }).click();
+    const checklist = page.getByRole("region", { name: "Before drafting" });
+    await expect(checklist.getByText("4 of 4 ready.")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    await page.getByRole("button", { name: "Create draft map" }).click();
+    const summary = page.getByRole("region", { name: "Draft v0.1" });
+    await expect(summary).toBeVisible({ timeout: 30_000 });
+    await expect(summary.getByText("Claims verified").locator("xpath=following-sibling::dd")).toHaveText("21");
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("2");
+    await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
+    await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    const text = await publicText(page);
+    expect(text.includes("Priya"), "a name shown on Draft").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p3-draft-done.png"), fullPage: true });
+    }
+
+    // Every AI call shows in Settings, as usage only.
+    await page.goto("/settings");
+    const usage = page.getByRole("region", { name: "AI usage" });
+    await expect(usage.getByRole("table")).toBeVisible();
+    await expect(usage.getByText(/All time: \d+ calls/)).toBeVisible();
+    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(3);
+    await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await usage.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p3-settings-ai-usage.png") });
+    }
+  } finally {
+    expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
+  }
 });

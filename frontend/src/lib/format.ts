@@ -19,3 +19,11 @@ export function plural(count: number, one: string, many = `${one}s`): string {
 export function sentence(text: string): string {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
+
+/** "26 Sep 2026, 10:02" (local time) from an ISO timestamp; the raw text if it can't be read. */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${formatDate(iso)}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

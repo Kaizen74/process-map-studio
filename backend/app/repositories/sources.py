@@ -7,7 +7,13 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.models import ParsedSegment, SourceReadInfo, SourceView, SpeakerView
+from app.domain.models import (
+    ParsedSegment,
+    SourceReadInfo,
+    SourceView,
+    SpeakerView,
+    StoredSegment,
+)
 from app.repositories.tables import Image, Role, Source, SourceSegment
 
 EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
@@ -306,3 +312,87 @@ def correct_segment(
         "instruction_like": row.instruction_like,
         "corrected": row.corrected,
     }
+
+
+def stored_segments(session: Session, source_id: str) -> list[StoredSegment]:
+    """Every passage of a source in reading order, with its speaker's role name."""
+    rows = session.execute(
+        select(SourceSegment, Role.name)
+        .outerjoin(Role, Role.id == SourceSegment.speaker_role_id)
+        .where(SourceSegment.source_id == source_id)
+        .order_by(SourceSegment.seq)
+    )
+    return [
+        StoredSegment(
+            id=seg.id,
+            seq=seg.seq,
+            page=seg.page,
+            section=seg.section,
+            start_ms=seg.start_ms,
+            text=seg.text,
+            speaker_label=seg.speaker_label,
+            speaker_role=role_name,
+            is_interviewer=seg.is_interviewer,
+            instruction_like=seg.instruction_like,
+        )
+        for seg, role_name in rows
+    ]
+
+
+def ocr_pages(session: Session, source_id: str) -> list[int]:
+    row = session.get(Source, source_id)
+    return list(row.ocr_pages) if row else []
+
+
+def add_page_text(
+    session: Session, source_id: str, page: int, lines: list[tuple[str, bool]]
+) -> None:
+    """Store the text read from a scanned page (lines with their instruction-like flag), put the
+    passages in page order and take the page off the list waiting to be read."""
+    row = session.get(Source, source_id)
+    if row is None:
+        return
+    for index, (text, instruction_like) in enumerate(lines):
+        session.add(
+            SourceSegment(
+                source_id=source_id,
+                seq=10**6 + index,  # after every existing passage; renumbered below
+                page=page,
+                text=text,
+                instruction_like=instruction_like,
+            )
+        )
+    session.flush()
+    ordered = session.scalars(
+        select(SourceSegment).where(SourceSegment.source_id == source_id)
+    ).all()
+    ordered = sorted(ordered, key=lambda s: (s.page if s.page is not None else 0, s.seq))
+    for number, segment in enumerate(ordered, start=1):
+        segment.seq = number
+    row.ocr_pages = [p for p in row.ocr_pages if p != page]
+    session.flush()
+
+
+def segment_rows(session: Session, segment_ids: list[str]) -> dict[str, tuple[SourceSegment, str]]:
+    """Passages by ID with their source's format (to build anchors); missing IDs are left out."""
+    if not segment_ids:
+        return {}
+    rows = session.execute(
+        select(SourceSegment, Source.format)
+        .join(Source, Source.id == SourceSegment.source_id)
+        .where(SourceSegment.id.in_(segment_ids))
+    )
+    return {seg.id: (seg, fmt) for seg, fmt in rows}
+
+
+def instruction_like_count(session: Session, engagement_id: str) -> int:
+    """Passages in an engagement's sources that looked like instructions (treated as data, G9)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(SourceSegment)
+            .join(Source, Source.id == SourceSegment.source_id)
+            .where(Source.engagement_id == engagement_id, SourceSegment.instruction_like.is_(True))
+        )
+        or 0
+    )

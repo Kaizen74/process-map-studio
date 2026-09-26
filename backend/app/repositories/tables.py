@@ -323,6 +323,8 @@ class Job(Row):
     error: Mapped[str] = mapped_column(Text, default="")
     # Added in migration 0002: what the job works on (for "read_source", the source ID).
     target_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    # Added in migration 0003: a draft job's stages (name, status, start and finish times).
+    stages: Mapped[list[Any]] = mapped_column(JSON, default=list)
 
 
 class AiCall(Row):
