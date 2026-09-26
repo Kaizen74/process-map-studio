@@ -1,0 +1,5 @@
+# Keep launchers working on every computer, whatever git's line-ending settings are.
+*.bat     text eol=crlf
+*.command text eol=lf
+*.sh      text eol=lf
+.githooks/* text eol=lf

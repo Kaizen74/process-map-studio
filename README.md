@@ -92,4 +92,5 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 ## For builders
 - Specification: [PRD_ProcessMapStudio.md](PRD_ProcessMapStudio.md) · Rules for Claude Code: [CLAUDE.md](CLAUDE.md) · Progress: [PROJECT_STATE.md](PROJECT_STATE.md)
 - Stack: FastAPI, SQLite, React + TypeScript, Claude API. Local only; binds to 127.0.0.1.
-- Run all checks: `./run_checks.sh` (all lines should say PASS).
+- Developer set-up (adds the check tools): `python3.12 scripts/setup.py --dev`. Developer mode with live reload: `python3.12 scripts/dev.py` (screens on http://127.0.0.1:5173).
+- Run all checks: `./run_checks.sh` (all lines should say PASS). On Windows: `run_checks.bat` (needs Git for Windows).
