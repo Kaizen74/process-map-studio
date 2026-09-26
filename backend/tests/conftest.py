@@ -70,3 +70,15 @@ def settings_config(env_file: Path) -> AppConfig:
             "DATA_DIR": str(env_file.parent / "data"),
         }
     )
+
+
+@pytest.fixture()
+def sessions(settings_config: AppConfig) -> Iterator[object]:
+    """A migrated throwaway database for one test, with its session factory."""
+    from app import db
+
+    path = db.db_path(settings_config.data_dir)
+    db.upgrade(path)
+    engine = db.make_engine(path)
+    yield db.session_factory(engine)
+    engine.dispose()

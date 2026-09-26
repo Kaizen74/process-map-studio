@@ -88,3 +88,54 @@ Request: `{"model": "claude-opus-5-5", "effort": "high", "verifier_enabled": tru
 Response `200`: the settings object.
 Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
 Used by: Settings screen, "Model" card.
+
+## Engagements and roles (PRD §4, §5.4 Setup) — phase P1
+
+An engagement is one process being mapped. Deleting it removes all its rows **and its files** (`data/sources/<id>/`, `data/images/<id>/`). Every change writes an audit row (actor = the owner name from Settings).
+
+### Engagement object
+```json
+{"id": "…", "name": "Load control", "process_name": "Aircraft load control",
+ "trigger": "Flight scheduled", "end_point": "Final load sheet issued",
+ "in_scope_roles": ["Load controller", "Ramp"], "out_of_scope": "Fuelling",
+ "process_kpi": "Load sheet issued by T-10", "industry": "Aviation ground handling",
+ "adjacent_industries": ["Air cargo"], "confidential_terms": ["Acme Ground Services"],
+ "status": "active", "created_at": "2026-09-26T09:00:00+00:00", "updated_at": "…"}
+```
+Rules: `name` 1–120 characters (required). Text fields up to 2,000 characters. List fields (`in_scope_roles`, `adjacent_industries`, `confidential_terms`): up to 50 items, each 1–120 characters, duplicates (ignoring case) removed, no line breaks. `confidential_terms` are company, client, site and system names that must never be sent to web research (PRD §3.11); they are **not** redacted from the app or internal exports.
+
+### POST /api/engagements
+Request: `{"name": "…"}` plus any scope fields. Response `201`: the engagement object.
+Errors: `422 VALIDATION` with `details.field`.
+Used by: Home (New engagement).
+
+### GET /api/engagements
+Response `200`: list, newest first, of the engagement object plus
+`{"latest_version": null | {"label": "v0.1", "state": "draft"}, "review_progress": {"reviewed": 0, "total": 0}, "sources_count": 0}`.
+Used by: Home engagement cards.
+
+### GET /api/engagements/{id} · PATCH /api/engagements/{id} · DELETE /api/engagements/{id}
+GET → `200` engagement object. PATCH → any scope fields (same rules) → `200` engagement object. DELETE → `204`, removes rows and files.
+Errors: `404 NOT_FOUND` ("That engagement doesn't exist. It may have been deleted."); `422 VALIDATION`.
+Used by: Setup screen (scope card), Home (delete, from P1 UI), top bar (engagement name).
+
+### Role object
+```json
+{"id": "…", "engagement_id": "…", "name": "Load controller", "aliases": ["LC"],
+ "is_system": false, "lane_order": 1}
+```
+
+### GET /api/engagements/{id}/roles
+Response `200`: roles in lane order (1 = top lane). Used by: Setup screen (Roles and lanes).
+
+### POST /api/engagements/{id}/roles
+Request: `{"name": "…", "aliases": [], "is_system": false}` — name 1–80 characters, unique in the engagement (ignoring case). The new role goes to the bottom lane.
+Response `201`: role. Errors: `404`, `409 CONFLICT` ("There is already a role called …"), `422`.
+
+### PATCH /api/roles/{rid}
+Request: any of `{"name", "aliases", "is_system", "lane_order"}`. Setting `lane_order` to *n* moves the role to lane *n* and renumbers the others (1…N, no gaps).
+Response `200`: role. Errors: `404`, `409`, `422`.
+Used by: Setup screen (rename, aliases, system toggle, reorder).
+
+### PUT /api/settings/model (change)
+Now also writes an audit row (`target_type: "settings"`, before/after model, effort, verifier).

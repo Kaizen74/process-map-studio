@@ -10,7 +10,10 @@ import logging
 import re
 from collections.abc import Mapping
 
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.config import SETTING_DEFAULTS, AppConfig
+from app.db import session_scope
 from app.domain.models import (
     ConnectionCapabilities,
     ConnectionTest,
@@ -19,6 +22,7 @@ from app.domain.models import (
     SettingsView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.repositories import audit
 from app.services import ai_service, settings_store
 
 log = logging.getLogger(__name__)
@@ -213,9 +217,14 @@ def list_model_choices(config: AppConfig) -> Result[ModelChoices]:
 
 
 def update_model(
-    config: AppConfig, model: str, effort: str, verifier_enabled: bool
+    config: AppConfig,
+    model: str,
+    effort: str,
+    verifier_enabled: bool,
+    *,
+    sessions: sessionmaker[Session] | None = None,
 ) -> Result[SettingsView]:
-    """Save the model, effort and verifier switch. The change is logged (audit rows from P1)."""
+    """Save the model, effort and verifier switch; log it and write an audit row (PRD §3.4)."""
     model = model.strip()
     if not _MODEL_ID.match(model):
         return Err(ErrorKind.VALIDATION, BAD_MODEL, {"field": "model"})
@@ -245,4 +254,19 @@ def update_model(
         before.verifier_enabled,
         verifier_enabled,
     )
+    if sessions is not None:
+        with session_scope(sessions) as session:
+            audit.record(
+                session,
+                actor=before.owner_name,
+                action="Changed model settings",
+                target_type="settings",
+                target_id="model",
+                before={
+                    "model": before.model,
+                    "effort": before.effort,
+                    "verifier_enabled": before.verifier_enabled,
+                },
+                after={"model": model, "effort": effort, "verifier_enabled": verifier_enabled},
+            )
     return get_settings(config)

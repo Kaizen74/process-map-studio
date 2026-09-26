@@ -9,8 +9,8 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 
 ## This session (2026-09-26, session 3) — goal: Phase P1 (engagements and documents); likely continues next session
 - [x] Increment 1 — database foundation: SQLAlchemy 2 + Alembic (verify versions and licences), `app/db.py`, Appendix B enums in `domain/enums.py`, migration 0001 with every §3.5 table, `app/manage.py` reports real pending migrations and upgrades; tests (all tables created, downgrade removes only its own tables, Start backs up before an update)
-- [ ] Increment 2 — IN PROGRESS: engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
-- [ ] Increment 3 — document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
+- [x] Increment 2 — engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
+- [ ] Increment 3 — IN PROGRESS: document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
 - [ ] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
 - [ ] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
 - [ ] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup)
@@ -32,6 +32,7 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - 2026-09-26 Browser checks: Playwright + axe (WCAG 2.1 AA, incl. real colour contrast) on Home, Settings and not-found, fonts load locally, no external requests, first-run smoke path (13 checks; 7 browser tests)
 - 2026-09-26 Phase P0b closed: README first-start step now matches the app; GUIDE explains Home and Settings step by step
 - 2026-09-26 Database foundation: SQLAlchemy + Alembic, migration 0001 with all 27 PRD tables, Appendix B enums, Start backs up an older database before updating it (tested end to end), tests can never touch the real data folder
+- 2026-09-26 Engagements backend: create/list/get/edit/delete engagements (delete removes files), scope card with confidential terms, roles and lane order, audit rows (incl. model changes)
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

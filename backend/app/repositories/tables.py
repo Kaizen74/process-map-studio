@@ -27,7 +27,8 @@ def new_id() -> str:
 
 
 def now_iso() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds")
+    # Microseconds keep "newest first" ordering reliable when several changes happen in a second.
+    return datetime.now(UTC).isoformat(timespec="microseconds")
 
 
 class Base(DeclarativeBase):

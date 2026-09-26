@@ -49,6 +49,10 @@ def list_models(request: Request) -> ModelChoices:
 def update_model(request: Request, body: ModelUpdate) -> SettingsView:
     return unwrap(
         settings.update_model(
-            request.app.state.config, body.model, body.effort, body.verifier_enabled
+            request.app.state.config,
+            body.model,
+            body.effort,
+            body.verifier_enabled,
+            sessions=request.app.state.sessions,
         )
     )
