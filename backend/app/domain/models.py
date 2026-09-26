@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 
 class HealthInfo(BaseModel):
@@ -11,3 +11,24 @@ class HealthInfo(BaseModel):
     status: str
     app_version: str
     prd_version: str
+
+
+class SettingsView(BaseModel):
+    """The Settings object (API_CONTRACT.md → Settings). Never contains the API key itself."""
+
+    owner_name: str
+    model: str
+    effort: str
+    verifier_enabled: bool
+    web_research_enabled: bool
+    key_set: bool
+    key_last4: str
+
+
+class ProfileUpdate(BaseModel):
+    owner_name: str
+
+
+class ApiKeyUpdate(BaseModel):
+    # SecretStr keeps the key out of repr, str, logs and JSON dumps.
+    anthropic_api_key: SecretStr

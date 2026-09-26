@@ -100,6 +100,7 @@ def test_unexpected_error_is_plain_and_hides_internals(built_dist: Path) -> None
     response = TestClient(app, raise_server_exceptions=False).get("/api/test-boom")
     assert response.status_code == 500
     assert_error_shape(response.json(), "INTERNAL")
+    assert len(response.json()["error"]["details"]["request_id"]) == 12
     assert "/secret/path" not in response.text
 
 
@@ -129,13 +130,24 @@ def test_unwrap_raises_api_error_rendered_in_standard_shape(built_dist: Path) ->
     app.router.routes.insert(0, extra.routes[0])
     response = TestClient(app).get("/api/test-blocked")
     assert response.status_code == 409
+    request_id = response.headers["X-Request-ID"]
+    assert len(request_id) == 12
     assert response.json() == {
         "error": {
             "code": "PUBLISH_BLOCKED",
             "message": "Publishing is blocked.",
-            "details": {"blockers": []},
+            "details": {"blockers": [], "request_id": request_id},
         }
     }
+
+
+def test_every_response_has_a_request_id(built_dist: Path) -> None:
+    client = make_client(built_dist)
+    first = client.get("/api/health").headers["X-Request-ID"]
+    second = client.get("/api/health").headers["X-Request-ID"]
+    assert first and second and first != second
+    missing = client.get("/api/no-such-thing")
+    assert missing.json()["error"]["details"]["request_id"] == missing.headers["X-Request-ID"]
 
 
 def test_every_error_kind_has_an_http_status() -> None:

@@ -1,7 +1,8 @@
 """Application configuration read from environment variables (PRD §3.4).
 
-Phase P0a reads only what the running shell needs. The .env file (API key, model, owner name)
-is read and written through services/settings_store.py from phase P0b.
+Start-up values come from the environment. Settings Eric changes in the app (API key, model,
+owner name, switches) live in the .env file, read and written through services/settings_store.py
+by the settings actions, and take effect without restarting.
 """
 
 from __future__ import annotations
@@ -10,12 +11,29 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 
 APP_VERSION = "0.1.0"
 PRD_VERSION = "1.5"
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
+DEFAULT_ENV_FILE = REPO_ROOT / ".env"
+
+# PRD §3.4 defaults for settings read from .env, then the environment, then these.
+SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
+    {
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_MODEL": "claude-opus-5-5",
+        "ANTHROPIC_EFFORT": "high",
+        "MOCK_CLAUDE": "0",
+        "VERIFIER_ENABLED": "1",
+        "WEB_RESEARCH_ENABLED": "0",
+        "WEB_SEARCH_TOOL_VERSION": "",
+        "WEB_SEARCH_MAX_USES_CAP": "20",
+        "OWNER_NAME": "Owner",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +44,9 @@ class AppConfig:
     data_dir: Path
     frontend_dist: Path
     mock_claude: bool
+    env_file: Path
+    # Snapshot of the computer's environment variables at start-up.
+    environ: Mapping[str, str]
 
 
 def load_config(env: Mapping[str, str] | None = None) -> AppConfig:
@@ -41,4 +62,7 @@ def load_config(env: Mapping[str, str] | None = None) -> AppConfig:
         data_dir=data_dir.resolve(),
         frontend_dist=DEFAULT_FRONTEND_DIST,
         mock_claude=values.get("MOCK_CLAUDE", "0") == "1",
+        # PMS_ENV_FILE lets tests and the browser checks use a throwaway settings file.
+        env_file=Path(values.get("PMS_ENV_FILE", str(DEFAULT_ENV_FILE))),
+        environ=MappingProxyType(dict(values)),
     )
