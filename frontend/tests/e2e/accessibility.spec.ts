@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { seriousViolations, watchExternalRequests } from "./helpers";
+
+const SOP = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../backend/tests/fixtures/engagement_load_control/sop_LC-07.docx",
+);
 
 // PRD §6.2 item 7 and acceptance 23: 0 serious/critical axe violations on every screen built so
 // far; fonts are self-hosted and no request leaves the app.
@@ -43,6 +51,18 @@ test.describe("accessibility and offline assets", () => {
       await page.getByRole("link", { name: "Load control" }).click();
       await expect(page).toHaveURL(new RegExp(`/engagements/${id}/setup$`));
       await expect(page.getByRole("navigation", { name: "Engagement steps" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      const upload = await request.post(`/api/engagements/${id}/sources`, {
+        multipart: { file: { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("[00:05] Interviewer: Hello") } },
+      });
+      expect(upload.status()).toBe(201);
+      const sop = await request.post(`/api/engagements/${id}/sources`, {
+        multipart: { file: { name: "sop.docx", mimeType: "application/octet-stream", buffer: readFileSync(SOP) } },
+      });
+      const { id: sopId } = (await sop.json()) as { id: string };
+      await page.goto(`/engagements/${id}/sources?source=${sopId}`);
+      await expect(page.getByRole("list", { name: "Passages" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
 
       await page.goto(`/engagements/${id}/draft`);
