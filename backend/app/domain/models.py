@@ -370,3 +370,11 @@ class AiAnswer(BaseModel):
 
     data: dict[str, object]
     calls: list[AiCallRecord]
+
+
+class CheckOutcome(BaseModel):
+    """The result of one grounding check (PRD §3.8): passed, or which guardrail failed and why."""
+
+    passed: bool
+    guardrail: str = ""  # B.20: G3, G4, G5 …
+    reason: str = ""
