@@ -148,3 +148,36 @@ class RoleView(BaseModel):
     aliases: list[str]
     is_system: bool
     lane_order: int | None
+
+
+# --- Parsed documents (services/parsing.py) ---------------------------------------------------
+
+
+class ParsedSegment(BaseModel):
+    """One anchored passage of a source, before it is stored as a source_segments row."""
+
+    seq: int
+    text: str
+    page: int | None = None
+    section: str = ""
+    speaker_label: str = ""
+    start_ms: int | None = None
+    end_ms: int | None = None
+
+
+class ParsedDocument(BaseModel):
+    segments: list[ParsedSegment]
+    # PDF pages with under 50 characters of text: sent to OCR (S0) from phase P3.
+    ocr_pages: list[int] = []
+    page_count: int | None = None
+
+
+class ExtractedImage(BaseModel):
+    """An image found inside a PDF: offered to Eric as a suggestion, never used automatically."""
+
+    page: int
+    name: str
+    extension: str
+    data: bytes
+    width: int
+    height: int

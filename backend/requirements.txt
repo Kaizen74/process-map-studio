@@ -1,7 +1,10 @@
 # Runtime dependencies (exact versions; all permissive licences — PRD constraint 19).
-# Later phases add document parsers and Pillow.
 fastapi==0.141.1
 anthropic==1.8.0
 sqlalchemy==2.1.1
 alembic==1.20.0
+python-docx==1.2.0
+pypdf==6.19.0
+pdfplumber==0.11.10
+pillow==12.3.0
 uvicorn==0.54.0
