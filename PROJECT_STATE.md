@@ -8,8 +8,8 @@ Process Map Studio is a local app for Eric (non-technical owner) that turns SME 
 Phase P0a is complete and merged into `main` by Eric (pull request #1). Phase P0b (design system, shell, Settings) in progress.
 
 ## This session (2026-09-26, session 2) — goal: Phase P0b (design system, shell, Settings), then stop and report
-- [ ] Increment 1 — IN PROGRESS: design tokens (`shared/design_tokens.json` → `frontend/scripts/generate-tokens.mjs` → `src/styles/tokens.css`), self-hosted IBM Plex Sans/Mono, base styles; token-sync, no-raw-colour and contrast tests
-- [ ] Increment 2 — common components (§5.11): Button, Chip, Card, SegmentedControl, Skeleton, EmptyState, ErrorState, StateGlyph, Dialog, Popover; component tests
+- [x] Increment 1 — design tokens (`shared/design_tokens.json` → `frontend/scripts/generate-tokens.mjs` → `src/styles/tokens.css`), self-hosted IBM Plex Sans/Mono, base styles; token-sync, no-raw-colour and contrast tests
+- [ ] Increment 2 — IN PROGRESS: common components (§5.11): Button, Chip, Card, SegmentedControl, Skeleton, EmptyState, ErrorState, StateGlyph, Dialog, Popover; component tests
 - [ ] Increment 3 — Settings backend part 1 (contract first): `services/settings_store.py` (read_env, write_env_key, mask_key), settings actions and router (GET /settings, PUT /settings/profile, PUT /settings/key), request IDs; tests that the key is never unmasked in any response or log
 - [ ] Increment 4 — Settings backend part 2: `services/ai_service.py` Models API (list_models, get_model; mock mode) after verifying the anthropic SDK; POST /settings/test-connection, PUT /settings/model, GET /settings/models; tests for every test-connection path
 - [ ] Increment 5 — app shell and Home: TanStack Query, routing, `src/api/request.ts`, hooks, TopBar, EngagementNav, Toast, error pattern; Home with the first-run checklist
@@ -22,6 +22,7 @@ Phase P0a is complete and merged into `main` by Eric (pull request #1). Phase P0
 - 2026-09-26 Backend skeleton: the layered folders from PRD §3.3, the shared Ok/Err result type, a health endpoint (router → action), the standard error shape, serving the built frontend, and the architecture test (7 checks, 59 tests)
 - 2026-09-26 Frontend placeholder: React 18 + TypeScript strict + Vite page served by the backend; eslint with the components import rule (tested), tsc, vitest; licence test covers frontend packages (11 checks)
 - 2026-09-26 Launchers: Setup.command/setup.bat and Start.command/start.bat call scripts/setup.py and start.py (standard library only); Start backs up the database before any update, starts one server on 127.0.0.1:8000, opens the browser and stops cleanly; scripts/dev.py for developers; run_checks.bat (11 checks, 99 backend tests)
+- 2026-09-26 Design system: tokens JSON → generated tokens.css, self-hosted IBM Plex fonts, token-based base styles; token-sync, no-raw-colour, contrast and font tests (12 checks)
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

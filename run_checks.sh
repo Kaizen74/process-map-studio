@@ -57,6 +57,8 @@ if [ -d frontend/node_modules ]; then
   check "Frontend lint (eslint, incl. the components import rule)" \
     npm --prefix frontend run --silent lint
   check "Frontend type check (tsc --noEmit)" npm --prefix frontend run --silent typecheck
+  check "Design tokens in sync (tokens.css matches shared/design_tokens.json)" \
+    npm --prefix frontend run --silent tokens:check
   check "Frontend tests (vitest)" npm --prefix frontend run --silent test
   check "Frontend build (the page the app serves)" npm --prefix frontend run --silent build
 else

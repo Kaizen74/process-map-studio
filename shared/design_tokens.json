@@ -1,0 +1,91 @@
+{
+  "$description": "Process Map Studio design tokens (PRD §5.2). Single source for the app (generated frontend/src/styles/tokens.css via `npm run tokens`) and the HTML export. Light palette; the dark palette is a later value swap under the same names. Each group becomes CSS custom properties: color → --<name>, others → --<prefix>-<name>.",
+  "color": {
+    "bg": "#F4F3EF",
+    "surface": "#FFFFFF",
+    "surface-2": "#FAFAF7",
+    "border": "#E4E2DB",
+    "border-soft": "#F0EEE8",
+    "border-strong": "#CFCCC2",
+    "border-input": "#8C897F",
+    "ink": "#1E1D1A",
+    "ink-2": "#3F3D38",
+    "ink-3": "#55534D",
+    "ink-4": "#6F6C64",
+    "edge": "#9A978E",
+    "node-stroke": "#8C897F",
+    "decision-fill": "#EEEDFE",
+    "decision-stroke": "#534AB7",
+    "approval-fill": "#E1F5EE",
+    "approval-stroke": "#0F6E56",
+    "constraint": "#D85A30",
+    "danger-text": "#993C1D",
+    "danger-bg": "#FBEEE8",
+    "highlight-bg": "rgba(83, 74, 183, 0.16)",
+    "highlight-line": "#534AB7",
+    "on-ink": "#FFFFFF"
+  },
+  "font": {
+    "sans": "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "mono": "'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace"
+  },
+  "weight": {
+    "regular": "400",
+    "medium": "500"
+  },
+  "text": {
+    "micro": "10.5px",
+    "label": "11.5px",
+    "body": "12.5px",
+    "card-value": "13.5px",
+    "popover-title": "14px",
+    "viewer-title": "18px",
+    "panel-title": "21px",
+    "screen-title": "24px"
+  },
+  "leading": {
+    "tight": "1.25",
+    "normal": "1.5"
+  },
+  "space": {
+    "4": "4px",
+    "6": "6px",
+    "8": "8px",
+    "10": "10px",
+    "12": "12px",
+    "14": "14px",
+    "16": "16px",
+    "20": "20px",
+    "24": "24px",
+    "32": "32px"
+  },
+  "radius": {
+    "control": "5px",
+    "node": "6px",
+    "button": "8px",
+    "card": "10px",
+    "section": "12px",
+    "pill": "999px"
+  },
+  "line": {
+    "hairline": "1px",
+    "outline": "1.5px",
+    "edge": "1.5px",
+    "edge-selected": "2px",
+    "highlight": "1.5px"
+  },
+  "shadow": {
+    "popover": "0 12px 32px rgba(30, 29, 26, 0.14)",
+    "segment": "0 1px 2px rgba(30, 29, 26, 0.12)",
+    "selection": "0 0 0 2px var(--surface), 0 0 0 4px var(--ink)"
+  },
+  "motion": {
+    "duration": "120ms",
+    "easing": "ease-out"
+  },
+  "layout": {
+    "min-width": "1080px",
+    "panel-width": "400px",
+    "hit-target": "28px"
+  }
+}

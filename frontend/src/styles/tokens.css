@@ -1,0 +1,80 @@
+/* Generated from shared/design_tokens.json by `npm run tokens`. Do not edit by hand. */
+:root {
+  /* color */
+  --bg: #F4F3EF;
+  --surface: #FFFFFF;
+  --surface-2: #FAFAF7;
+  --border: #E4E2DB;
+  --border-soft: #F0EEE8;
+  --border-strong: #CFCCC2;
+  --border-input: #8C897F;
+  --ink: #1E1D1A;
+  --ink-2: #3F3D38;
+  --ink-3: #55534D;
+  --ink-4: #6F6C64;
+  --edge: #9A978E;
+  --node-stroke: #8C897F;
+  --decision-fill: #EEEDFE;
+  --decision-stroke: #534AB7;
+  --approval-fill: #E1F5EE;
+  --approval-stroke: #0F6E56;
+  --constraint: #D85A30;
+  --danger-text: #993C1D;
+  --danger-bg: #FBEEE8;
+  --highlight-bg: rgba(83, 74, 183, 0.16);
+  --highlight-line: #534AB7;
+  --on-ink: #FFFFFF;
+  /* font */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  /* weight */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  /* text */
+  --text-micro: 10.5px;
+  --text-label: 11.5px;
+  --text-body: 12.5px;
+  --text-card-value: 13.5px;
+  --text-popover-title: 14px;
+  --text-viewer-title: 18px;
+  --text-panel-title: 21px;
+  --text-screen-title: 24px;
+  /* leading */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  /* space */
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  /* radius */
+  --radius-control: 5px;
+  --radius-node: 6px;
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-section: 12px;
+  --radius-pill: 999px;
+  /* line */
+  --line-hairline: 1px;
+  --line-outline: 1.5px;
+  --line-edge: 1.5px;
+  --line-edge-selected: 2px;
+  --line-highlight: 1.5px;
+  /* shadow */
+  --shadow-popover: 0 12px 32px rgba(30, 29, 26, 0.14);
+  --shadow-segment: 0 1px 2px rgba(30, 29, 26, 0.12);
+  --shadow-selection: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+  /* motion */
+  --motion-duration: 120ms;
+  --motion-easing: ease-out;
+  /* layout */
+  --layout-min-width: 1080px;
+  --layout-panel-width: 400px;
+  --layout-hit-target: 28px;
+}
