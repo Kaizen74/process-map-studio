@@ -4,14 +4,17 @@ import type { Source, SourcePatch } from "../../api/types";
 import { Button, Card, Dialog, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { useToast } from "../../components/shell";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
+import { useRoles } from "../../hooks/useRoles";
 import { useDeleteSource, useSources, useUpdateSource, useUploadSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
 import { uploadProblem } from "../../lib/sources";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DropZone } from "./DropZone";
+import { RedactionList } from "./RedactionList";
 import { SourceRegistry } from "./SourceRegistry";
 import { SourceViewer } from "./SourceViewer";
+import { SpeakerMapping } from "./SpeakerMapping";
 import "./sources.css";
 
 interface UploadNote {
@@ -29,6 +32,7 @@ export function SourcesScreen() {
   const engagement = useEngagement(engagementId);
   const sources = useSources(engagementId);
   const readiness = useReadiness(engagementId);
+  const roles = useRoles(engagementId);
   const upload = useUploadSource(engagementId);
   const update = useUpdateSource(engagementId);
   const remove = useDeleteSource(engagementId);
@@ -96,6 +100,8 @@ export function SourcesScreen() {
 
   const list = sources.data ?? [];
   const missing = readiness.data?.missing ?? [];
+  const opened = list.find((s) => s.id === openId);
+  const showSpeakers = opened?.kind === "interview_transcript" && opened.text_status === "ready";
 
   return (
     <main className="screen" aria-labelledby="sources-title">
@@ -173,6 +179,13 @@ export function SourcesScreen() {
         </p>
       )}
 
+      {openId && showSpeakers && (
+        <SpeakerMapping key={openId} engagementId={engagementId} sourceId={openId} roles={roles.data ?? []} />
+      )}
+      {/* Names to hide sit below the speaker mapping (PRD §5.4); shown once there are sources. */}
+      {list.length > 0 && <RedactionList engagementId={engagementId} />}
+      {openId && <SourceViewer key={openId} sourceId={openId} onClose={() => open(null)} />}
+
       {readiness.data && (
         <div className={["readiness-line", missing.length ? "" : "readiness-line--ready"].join(" ")}>
           {missing.length === 0 ? (
@@ -194,7 +207,6 @@ export function SourcesScreen() {
         </div>
       )}
 
-      {openId && <SourceViewer key={openId} sourceId={openId} onClose={() => open(null)} />}
 
       <Dialog
         open={deleting !== null}

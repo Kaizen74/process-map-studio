@@ -12,8 +12,8 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - [x] Increment 1 — transcript parsing and grounding basics: `parsing.parse_transcript_text` (`Speaker:` and `[mm:ss] Speaker:`), `parse_vtt`, `parse_srt`, `detect_speakers` (Word and PDF transcripts), `looks_like_name`; `grounding.detect_instruction_like`, `redact_text`, `scan_redaction_terms`; A.1 transcript fixture plus VTT, SRT, Word and PDF versions; tests (speakers and timestamps per format, A.3 §9 flagged)
 - [x] Increment 2 — jobs worker (contract first): migration 0002 (`source_segments.is_interviewer`), in-process worker thread, `GET /api/jobs/{id}`, uploads read as a job (all formats; instruction-like flag; name-like speaker labels become redaction terms), restart recovery and reading of P1 transcripts left pending
 - [x] Increment 3 — speakers, redaction terms, corrections (contract first): `GET/PUT /api/sources/{sid}/speakers`, `GET/POST /api/engagements/{id}/redaction-terms`, `DELETE /api/redaction-terms/{tid}`, `PATCH /api/segments/{segid}`, `?raw=1`; names replaced in every other response (segments, sources, readiness); readiness ignores Interviewer
-- [ ] Increment 4 — IN PROGRESS: UI: "Reading…" status with automatic refresh; speaker-mapping card; redaction list (owner-only places)
-- [ ] Increment 5 — UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
+- [x] Increment 4 — UI: "Reading…" status with automatic refresh; speaker-mapping card; redaction list (owner-only places)
+- [ ] Increment 5 — IN PROGRESS: UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
 - [ ] Increment 6 — browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
 
 ## Done (all sessions)
@@ -41,6 +41,7 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - 2026-09-26 Transcript reading: plain text, VTT, SRT, Word and PDF interviews become speaker turns with times (the PRD sample interview gives the same nine turns in every format); name-like speaker labels are recognised; names can be hidden (whole words, any case); instruction-like text such as the A.3 test line is flagged
 - 2026-09-26 Background reading: uploads answer at once and a worker reads each file ("Reading…" on screen until done); transcripts in every format become speaker turns; name-like speaker labels become hidden names; unfinished work and P1 transcripts are read when the app starts; database update 0002
 - 2026-09-26 Speakers and hidden names: map each speaker to a role or Interviewer, a list of names to hide (automatic from speaker names, plus Eric's own), passages can be corrected; names are hidden in every response except the three owner-only places
+- 2026-09-26 Sources screen: speaker-mapping card for an open transcript and the Names to hide list (both owner-only), readiness line moved to the bottom
 
 ## Not started yet
 - P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

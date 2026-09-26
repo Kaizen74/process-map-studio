@@ -210,3 +210,64 @@ select.registry__input {
   text-wrap: pretty;
   color: var(--ink);
 }
+
+/* Speaker mapping and names to hide (owner-only places, PRD §3.8 G10) */
+.speakers {
+  width: 100%;
+  border-collapse: collapse;
+}
+.speakers th,
+.speakers td {
+  padding: var(--space-6) var(--space-8);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  text-align: left;
+}
+.speakers thead th {
+  border-top: none;
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.speakers tbody th {
+  font-weight: var(--weight-medium);
+}
+.speakers__select {
+  min-width: 220px;
+}
+.speakers__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+.name-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+.name-list__chip {
+  min-height: var(--layout-hit-target);
+  padding-right: 0;
+  gap: var(--space-8);
+}
+.name-list__shown,
+.name-list__tag {
+  color: var(--ink-3);
+}
+.name-list__tag {
+  font-size: var(--text-micro);
+  border-left: var(--line-hairline) solid var(--border);
+  padding-left: var(--space-8);
+}
+.name-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-12);
+  align-items: start;
+}
+.name-form__actions {
+  grid-column: 1 / -1;
+}

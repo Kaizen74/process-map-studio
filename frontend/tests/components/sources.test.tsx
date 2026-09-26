@@ -53,6 +53,8 @@ function sourcesApi(initial: Source[], extra: Parameters<typeof fakeApi>[0] = {}
     "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/sources": () => ({ body: list }),
+    "GET /api/engagements/e1/roles": () => ({ body: [] }),
+    "GET /api/engagements/e1/redaction-terms": () => ({ body: [] }),
     ...Object.fromEntries(
       initial.flatMap((s) => [
         [`GET /api/sources/${s.id}`, () => ({ body: list.find((x) => x.id === s.id) })],

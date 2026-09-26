@@ -1,11 +1,23 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { deleteSource, getSource, listSegments, listSources, updateSource, uploadSource } from "../api/sources";
-import type { Source, SourcePatch, SourceUpload } from "../api/types";
+import {
+  correctSegment,
+  deleteSource,
+  getSource,
+  getSpeakers,
+  listSegments,
+  listSources,
+  mapSpeakers,
+  updateSource,
+  uploadSource,
+} from "../api/sources";
+import type { Source, SourcePatch, SourceUpload, SpeakerMapping } from "../api/types";
 
 const sourcesKey = (engagementId: string) => ["engagements", engagementId, "sources"] as const;
 const sourceKey = (sourceId: string) => ["sources", sourceId] as const;
 const segmentsKey = (sourceId: string) => ["sources", sourceId, "segments"] as const;
+const rawSegmentsKey = (sourceId: string) => ["sources", sourceId, "segments", "raw"] as const;
+const speakersKey = (sourceId: string) => ["sources", sourceId, "speakers"] as const;
 
 /** Sources change what the draft still needs and the Home card counts: refresh those too. */
 function refreshAround(client: QueryClient, engagementId: string) {
@@ -84,5 +96,46 @@ export function useDeleteSource(engagementId: string) {
       client.removeQueries({ queryKey: sourceKey(id) });
       refreshAround(client, engagementId);
     },
+  });
+}
+
+/** Owner-only: the passages exactly as stored, for the correction editor. */
+export function useRawSegments(sourceId: string | null, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: rawSegmentsKey(sourceId ?? ""),
+    queryFn: ({ pageParam }) => listSegments(sourceId ?? "", pageParam, 200, true),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.pages ? last.page + 1 : undefined),
+    enabled: Boolean(sourceId) && enabled,
+  });
+}
+
+export function useSpeakers(sourceId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: speakersKey(sourceId ?? ""),
+    queryFn: () => getSpeakers(sourceId ?? ""),
+    enabled: Boolean(sourceId) && enabled,
+  });
+}
+
+export function useMapSpeakers(engagementId: string, sourceId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (mapping: SpeakerMapping) => mapSpeakers(sourceId, mapping),
+    onSuccess: (speakers) => client.setQueryData(speakersKey(sourceId), speakers),
+    onSettled: () => {
+      // Passages now show roles, and names show as the mapped role.
+      void client.invalidateQueries({ queryKey: ["sources"] });
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "redaction-terms"] });
+      refreshAround(client, engagementId);
+    },
+  });
+}
+
+export function useCorrectSegment(sourceId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, text }: { id: string; text: string }) => correctSegment(id, text),
+    onSettled: () => void client.invalidateQueries({ queryKey: ["sources", sourceId] }),
   });
 }
