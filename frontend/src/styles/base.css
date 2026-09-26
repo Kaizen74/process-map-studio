@@ -1,12 +1,95 @@
-/* Phase P0a placeholder styles. Phase P0b replaces these with the design tokens (PRD §5.2). */
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+/* Base styles (PRD §5.2). Tokens only: every colour, size and radius comes from tokens.css. */
+@import "./tokens.css";
+@import "./fonts.css";
+@import "./layout.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-.placeholder {
-  max-width: 40rem;
-  margin: 4rem auto;
-  padding: 0 1rem;
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-width: var(--layout-min-width);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-screen-title);
+}
+
+h2 {
+  font-size: var(--text-popover-title);
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
+code,
+kbd,
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Focus ring = the selection ring (PRD §5.10). */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+  border-radius: var(--radius-control);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

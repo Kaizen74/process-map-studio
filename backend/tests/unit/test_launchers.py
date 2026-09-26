@@ -370,3 +370,25 @@ def test_start_never_uses_a_proxy_for_the_local_app(monkeypatch: pytest.MonkeyPa
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_dev_setup_skips_the_test_browser_when_one_is_provided(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PMS_CHROMIUM_PATH", "/opt/some/chromium")
+    monkeypatch.setattr(setup_script.subprocess, "run", lambda *a, **k: pytest.fail("no download"))
+    assert "nothing to do" in setup_script.install_test_browser("npm")
+
+
+def test_dev_setup_installs_the_test_browser_otherwise(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PMS_CHROMIUM_PATH", raising=False)
+    monkeypatch.delenv("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", raising=False)
+    seen: list[list[str]] = []
+
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        seen.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(setup_script.subprocess, "run", fake_run)
+    assert setup_script.install_test_browser("npm") == "installed"
+    assert seen == [["npm", "exec", "--", "playwright", "install", "chromium"]]

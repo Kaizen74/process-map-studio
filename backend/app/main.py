@@ -5,6 +5,8 @@ Started by scripts/start.py with: python -m uvicorn app.main:app --host 127.0.0.
 
 from __future__ import annotations
 
+import uuid
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -13,7 +15,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import AppConfig, load_config
-from app.routers import system
+from app.routers import settings, system
 from app.routers.http import ApiError, err_response, error_response
 
 NOT_BUILT_PAGE = """<!doctype html>
@@ -30,41 +32,68 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.state.config = config
 
     app.include_router(system.router)
+    app.include_router(settings.router)
+    _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
     return app
 
 
+def request_id_of(request: Request) -> str:
+    return str(getattr(request.state, "request_id", ""))
+
+
+def _add_request_ids(app: FastAPI) -> None:
+    """Give every request a short ID, returned in the X-Request-ID header and in error details."""
+
+    @app.middleware("http")
+    async def add_request_id(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        request.state.request_id = uuid.uuid4().hex[:12]
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request.state.request_id
+        return response
+
+
 def _add_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
-    async def handle_api_error(_: Request, exc: ApiError) -> Response:
-        return err_response(exc.err)
+    async def handle_api_error(request: Request, exc: ApiError) -> Response:
+        return err_response(exc.err, request_id_of(request))
 
     @app.exception_handler(RequestValidationError)
-    async def handle_validation(_: Request, exc: RequestValidationError) -> Response:
+    async def handle_validation(request: Request, exc: RequestValidationError) -> Response:
+        # Only field names are returned, never the submitted values (they may hold the API key).
         return error_response(
             422,
             "VALIDATION",
             "Some of the information sent was missing or not in the expected form.",
             {"fields": [".".join(str(p) for p in e["loc"]) for e in exc.errors()]},
+            request_id_of(request),
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def handle_http(_: Request, exc: StarletteHTTPException) -> Response:
+    async def handle_http(request: Request, exc: StarletteHTTPException) -> Response:
+        rid = request_id_of(request)
         if exc.status_code == 404:
-            return error_response(404, "NOT_FOUND", "That address doesn't exist in the app.")
+            return error_response(
+                404, "NOT_FOUND", "That address doesn't exist in the app.", None, rid
+            )
         if exc.status_code == 405:
-            return error_response(405, "METHOD_NOT_ALLOWED", "That action isn't available here.")
-        return error_response(exc.status_code, "HTTP_ERROR", str(exc.detail))
+            return error_response(
+                405, "METHOD_NOT_ALLOWED", "That action isn't available here.", None, rid
+            )
+        return error_response(exc.status_code, "HTTP_ERROR", str(exc.detail), None, rid)
 
     @app.exception_handler(Exception)
-    async def handle_unexpected(_: Request, exc: Exception) -> Response:
+    async def handle_unexpected(request: Request, exc: Exception) -> Response:
         return error_response(
             500,
             "INTERNAL",
             "Something went wrong inside the app. Nothing was changed. "
             "Use Copy details and the Bug-fix prompt to report it.",
             {"type": type(exc).__name__},
+            request_id_of(request),
         )
 
 
@@ -72,8 +101,10 @@ def _add_frontend(app: FastAPI, dist: Path) -> None:
     """Serve the built frontend; unknown non-API paths get index.html (client-side screens)."""
 
     @app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-    def unknown_api(rest: str) -> Response:
-        return error_response(404, "NOT_FOUND", "That address doesn't exist in the app.")
+    def unknown_api(request: Request, rest: str) -> Response:
+        return error_response(
+            404, "NOT_FOUND", "That address doesn't exist in the app.", None, request_id_of(request)
+        )
 
     @app.get("/{path:path}", include_in_schema=False)
     def frontend(path: str) -> Response:

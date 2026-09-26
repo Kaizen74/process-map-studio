@@ -43,11 +43,19 @@ def unwrap[T](result: Result[T]) -> T:
 
 
 def error_response(
-    status: int, code: str, message: str, details: Mapping[str, object] | None = None
+    status: int,
+    code: str,
+    message: str,
+    details: Mapping[str, object] | None = None,
+    request_id: str = "",
 ) -> JSONResponse:
-    body = {"error": {"code": code, "message": message, "details": dict(details or {})}}
+    """The standard error shape; the request ID (if any) goes into details for Copy details."""
+    body_details = dict(details or {})
+    if request_id:
+        body_details["request_id"] = request_id
+    body = {"error": {"code": code, "message": message, "details": body_details}}
     return JSONResponse(status_code=status, content=body)
 
 
-def err_response(err: Err) -> JSONResponse:
-    return error_response(STATUS_BY_KIND[err.kind], err.code, err.message, err.details)
+def err_response(err: Err, request_id: str = "") -> JSONResponse:
+    return error_response(STATUS_BY_KIND[err.kind], err.code, err.message, err.details, request_id)

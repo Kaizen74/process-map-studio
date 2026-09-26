@@ -2,9 +2,9 @@
 
 Turn SME interview transcripts and process documents into a clear, evidence-backed swimlane process map. Claude drafts the map; you review every step and publish it. Everything runs on your own computer.
 
-> Version 0.1.0 (build phase P0a: foundations) · Last updated 2026-09-26 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
+> Version 0.1.0 (build phase P0b: design system, app shell and Settings) · Last updated 2026-09-26 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
 
-**Build status:** the app is being built in phases. Right now it installs, starts and shows a placeholder page. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
+**Build status:** the app is being built in phases. Right now it installs and starts, and you can save your name and your Claude API key and test the connection. Creating engagements arrives in phase P1. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
 
 ## What you need
 - A Mac (macOS 13 or later) or a Windows 10/11 PC, with at least 8 GB of memory and 2 GB of free disk space.
@@ -43,7 +43,7 @@ A window opens and shows progress. It takes about 5–10 minutes the first time.
 ### 5. First start
 1. **Mac:** double-click **Start.command**. **Windows:** double-click **start.bat**.
 2. Your browser opens Process Map Studio at http://127.0.0.1:8000 (bookmark it).
-3. The home screen shows a three-step checklist. Click **Add your Claude API key** → paste the key → **Save** → **Test connection**. You want a green tick on every line. (Available from phase P0b; until then the page says the foundations are in place.)
+3. The home screen shows a three-step **Get started** checklist. Click **Add your Claude API key** → paste the key into the **Claude API key** box → **Save key** → **Test connection**. You want **Pass** or **Yes** on every line of the results. (You can also reach **Settings** from the top-right corner at any time.)
 
 Your key is stored only on this computer, never in GitHub.
 

@@ -11,6 +11,7 @@ Standard library only.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -109,6 +110,20 @@ def activate_hook(root: Path) -> str:
     return "switched on" if result.returncode == 0 else "could not be switched on"
 
 
+def install_test_browser(npm: str) -> str:
+    """Developers only: the browser Playwright uses for the accessibility and smoke checks."""
+    if os.environ.get("PMS_CHROMIUM_PATH") or os.environ.get("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"):
+        return "provided by this computer; nothing to do"
+    result = subprocess.run(
+        [npm, "exec", "--", "playwright", "install", "chromium"], cwd=FRONTEND, check=False
+    )
+    return (
+        "installed"
+        if result.returncode == 0
+        else "could not be installed (browser checks will fail)"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Set up Process Map Studio.")
     parser.add_argument("--dev", action="store_true", help="also install the check tools")
@@ -164,6 +179,8 @@ def main(argv: list[str] | None = None) -> int:
     for item in ensure_data_and_env(ROOT):
         say(f"      created the {item}")
     say(f"      secret-check hook: {activate_hook(ROOT)}")
+    if args.dev:
+        say(f"      test browser for the checks: {install_test_browser(npm)}")
 
     say()
     say("Setup complete. You can now start Process Map Studio.")

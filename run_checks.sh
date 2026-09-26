@@ -57,8 +57,16 @@ if [ -d frontend/node_modules ]; then
   check "Frontend lint (eslint, incl. the components import rule)" \
     npm --prefix frontend run --silent lint
   check "Frontend type check (tsc --noEmit)" npm --prefix frontend run --silent typecheck
+  check "Design tokens in sync (tokens.css matches shared/design_tokens.json)" \
+    npm --prefix frontend run --silent tokens:check
   check "Frontend tests (vitest)" npm --prefix frontend run --silent test
   check "Frontend build (the page the app serves)" npm --prefix frontend run --silent build
+  # Use a preinstalled Chromium when the computer provides one (cloud build machines).
+  if [ -z "${PMS_CHROMIUM_PATH:-}" ] && [ -x /opt/pw-browsers/chromium ]; then
+    export PMS_CHROMIUM_PATH=/opt/pw-browsers/chromium
+  fi
+  check "Browser checks (accessibility on every screen, fonts offline, first-run path)" \
+    npm --prefix frontend run --silent e2e
 else
   TOTAL=$((TOTAL + 1))
   FAILED_NAMES+=("Frontend checks")
