@@ -96,3 +96,48 @@ def test_unwritable_settings_file_gives_a_plain_error(client: TestClient, env_fi
     assert error["code"] == "IO"
     assert ".env file in the app folder" in error["message"]
     assert error["details"]["request_id"] == response.headers["X-Request-ID"]
+
+
+def test_connection_models_and_model_endpoints_in_mock_mode(
+    client: TestClient, env_file: Path
+) -> None:
+    env_file.write_text(f"ANTHROPIC_API_KEY={KEY}\nMOCK_CLAUDE=1\n")
+    tested = client.post("/api/settings/test-connection")
+    assert tested.status_code == 200
+    assert tested.json()["key_valid"] is True
+    assert tested.json()["capabilities"] == {"pdf_input": True, "structured_outputs": True}
+    models = client.get("/api/settings/models")
+    assert models.status_code == 200 and models.json()["from_anthropic"] is True
+    saved = client.put(
+        "/api/settings/model",
+        json={"model": "claude-sonnet-5", "effort": "medium", "verifier_enabled": False},
+    )
+    assert saved.status_code == 200
+    assert saved.json()["model"] == "claude-sonnet-5"
+    for response in (tested, models, saved):
+        assert KEY not in response.text
+
+
+def test_busy_anthropic_is_a_503_in_the_standard_shape(
+    client: TestClient, env_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.domain.result import Err, ErrorKind
+
+    env_file.write_text(f"ANTHROPIC_API_KEY={KEY}\n")
+    monkeypatch.setattr(
+        "app.actions.settings.ai_service.get_model",
+        lambda *_: Err(ErrorKind.AI_RATE_LIMIT, "busy", {"status": 429}),
+    )
+    response = client.post("/api/settings/test-connection")
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "AI_RATE_LIMIT"
+    assert "try again in a minute" in response.json()["error"]["message"].lower()
+
+
+def test_model_update_rejects_bad_effort(client: TestClient) -> None:
+    response = client.put(
+        "/api/settings/model",
+        json={"model": "claude-opus-5-5", "effort": "huge", "verifier_enabled": True},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["field"] == "effort"

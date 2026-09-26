@@ -57,3 +57,34 @@ Request: `{"anthropic_api_key": "sk-ant-..."}` — trimmed; must start with `sk-
 Response `200`: the settings object (masked: `key_set: true`, `key_last4`).
 Errors: `422 VALIDATION` ("That doesn't look like a Claude API key. Keys start with sk-ant-. Copy it again from the Claude Console."); `500 IO`. Error bodies never echo the key.
 Used by: Settings screen, "Claude connection" card.
+
+### POST /api/settings/test-connection
+Checks the saved key and the configured model with Anthropic's Models API (`GET /v1/models/{model}`; one retry on rate limits, never on a rejected key). Mocked in tests (`MOCK_CLAUDE=1`).
+Request: none.
+Response `200`:
+```json
+{"key_valid": true, "model_available": true,
+ "capabilities": {"pdf_input": true, "structured_outputs": true},
+ "message": "Connected. Your key works and claude-opus-5-5 is available."}
+```
+Outcomes, all `200` with a plain `message`: no key saved (`key_valid: false`, "Add your Claude API key first…"); key rejected (`key_valid: false`, "Your API key was rejected. Copy it again from the Claude Console and paste it here."); model not available (`key_valid: true, model_available: false`).
+Errors: `503 AI_RATE_LIMIT` (Anthropic busy: "try again in a minute"); `500 IO` (Anthropic couldn't be reached: check the internet connection).
+Used by: Settings screen, "Claude connection" card (Test connection).
+
+### GET /api/settings/models
+Lists the models available to the saved key, for the Model dropdown.
+Response `200`:
+```json
+{"models": [{"id": "claude-opus-5-5", "display_name": "Claude Opus 5.5",
+             "effort_levels": ["low", "medium", "high", "xhigh", "max"]}],
+ "from_anthropic": true, "message": ""}
+```
+Without a key (or if the key is rejected) it returns only the configured model with `from_anthropic: false` and a message such as "Add your Claude API key to see every model available to you." `effort_levels` lists the levels the model reports as supported (from its `capabilities.effort`).
+Errors: `503 AI_RATE_LIMIT`, `500 IO` as above.
+Used by: Settings screen, "Model" card.
+
+### PUT /api/settings/model
+Request: `{"model": "claude-opus-5-5", "effort": "high", "verifier_enabled": true}` — `model` is a model ID (lower-case letters, digits, dots and dashes); `effort` one of `low`, `medium`, `high`, `xhigh`, `max`.
+Response `200`: the settings object.
+Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
+Used by: Settings screen, "Model" card.

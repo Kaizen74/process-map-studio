@@ -19,6 +19,8 @@ PRD_VERSION = "1.5"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
 DEFAULT_ENV_FILE = REPO_ROOT / ".env"
+# Canned AI answers used when MOCK_CLAUDE=1 (PRD §3.7).
+MOCK_FIXTURES_DIR = REPO_ROOT / "backend" / "tests" / "fixtures" / "mock_responses"
 
 # PRD §3.4 defaults for settings read from .env, then the environment, then these.
 SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
@@ -47,6 +49,7 @@ class AppConfig:
     env_file: Path
     # Snapshot of the computer's environment variables at start-up.
     environ: Mapping[str, str]
+    mock_fixtures_dir: Path = MOCK_FIXTURES_DIR
 
 
 def load_config(env: Mapping[str, str] | None = None) -> AppConfig:
