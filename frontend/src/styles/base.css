@@ -1,6 +1,7 @@
 /* Base styles (PRD §5.2). Tokens only: every colour, size and radius comes from tokens.css. */
 @import "./tokens.css";
 @import "./fonts.css";
+@import "./layout.css";
 
 *,
 *::before,

@@ -8,8 +8,8 @@ export interface ErrorStateProps {
   /** What it affects and what to do next. */
   message: string;
   /** Error code and request or job ID for bug reports ("Copy details"). */
-  details?: string;
-  onRetry?: () => void;
+  details?: string | undefined;
+  onRetry?: (() => void) | undefined;
 }
 
 /** The standard error pattern (PRD §5.3): plain message, next step, Copy details. Never a stack trace. */
