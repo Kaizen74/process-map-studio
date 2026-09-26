@@ -5,6 +5,7 @@ Started by scripts/start.py with: python -m uvicorn app.main:app --host 127.0.0.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -30,8 +31,16 @@ NOT_BUILT_PAGE = """<!doctype html>
 </body></html>"""
 
 
+# The anthropic SDK logs whole requests (the source text sent to Claude) at DEBUG, and httpx2
+# logs every request at INFO. Transcripts and documents must never reach a log file, so these
+# loggers stay at WARNING whatever the rest of the logging is set to.
+QUIET_LOGGERS = ("anthropic", "httpx2", "httpcore")
+
+
 def create_app(config: AppConfig | None = None) -> FastAPI:
     config = config or load_config()
+    for name in QUIET_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
     app = FastAPI(title="Process Map Studio", version=config.app_version)
     app.state.config = config
     app.state.sessions = sessions = _open_database(config)

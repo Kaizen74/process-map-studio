@@ -347,3 +347,26 @@ class RedactionTermView(BaseModel):
     term: str
     replacement: str
     origin: str
+
+
+# --- AI calls (PRD §3.7 call_claude, §3.4 AI usage) ------------------------------------------
+
+
+class AiCallRecord(BaseModel):
+    """One Messages API call, for the ai_calls table. Never holds prompt or document text."""
+
+    stage_id: str
+    prompt_version: str
+    model: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    duration_ms: int = 0
+    status: str  # ok · repaired · invalid · refused · truncated · error · mock
+    input_hash: str
+
+
+class AiAnswer(BaseModel):
+    """A validated answer from a stage call, plus the calls it took (the first and any repair)."""
+
+    data: dict[str, object]
+    calls: list[AiCallRecord]
