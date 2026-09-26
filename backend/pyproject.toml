@@ -12,9 +12,18 @@ mypy_path = "."
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q -m 'not live'"
+# Any warning during tests is a failure (0-warnings gate, PRD §6.2).
+filterwarnings = ["error"]
 markers = [
     "live: calls the real Claude API; run only when Eric asks (pytest -m live)",
 ]
 
 [tool.coverage.run]
+# PRD §6.2: coverage >= 85% on services and actions.
 branch = true
+source = ["app/services", "app/actions"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_empty = true

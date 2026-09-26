@@ -48,10 +48,13 @@ check "README check (required sections, no placeholders, links work)" "$PY" scri
 # 1. Static checks, backend (0 warnings)
 check "Backend lint (ruff check)" "$PY" -m ruff check --no-cache backend scripts
 check "Backend formatting (ruff format --check)" "$PY" -m ruff format --check --no-cache backend scripts
+check "Backend type check (mypy app)" bash -c "cd backend && '$PY' -m mypy --no-incremental"
+check "Launch scripts type check (mypy scripts)" \
+  bash -c "cd backend && '$PY' -m mypy --strict --no-incremental ../scripts"
 
 # 2-3. Architecture, unit and action tests
-check "Backend tests (architecture, unit, launch scripts)" \
-  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider"
+check "Backend tests (architecture, unit, actions; coverage >= 85% on services and actions)" \
+  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider --cov --cov-report=term"
 
 echo "-------------------------"
 echo "$PASSED of $TOTAL checks passing"
