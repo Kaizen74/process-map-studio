@@ -236,6 +236,7 @@ describe("Sources: registry", () => {
     });
     renderApp(PATH);
     expect(await screen.findByText("Ready to draft.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Draft" })).toHaveAttribute("href", "/engagements/e1/draft");
   });
 
   it("has no serious or critical accessibility violations", async () => {

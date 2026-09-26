@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import type { Source, SourcePatch } from "../../api/types";
 import { Button, Card, Dialog, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { useToast } from "../../components/shell";
@@ -7,6 +7,7 @@ import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
 import { useDeleteSource, useSources, useUpdateSource, useUploadSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
 import { uploadProblem } from "../../lib/sources";
 import { EngagementProblem } from "../engagement/EngagementProblem";
@@ -190,7 +191,8 @@ export function SourcesScreen() {
         <div className={["readiness-line", missing.length ? "" : "readiness-line--ready"].join(" ")}>
           {missing.length === 0 ? (
             <p>
-              <strong>Ready to draft.</strong> Drafting arrives in build phase P3.
+              <strong>Ready to draft.</strong>{" "}
+              <Link to={engagementPath(engagementId, "draft")}>Go to Draft</Link>
             </p>
           ) : (
             <>

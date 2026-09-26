@@ -57,8 +57,8 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
       {data && data.ocr_pages.length > 0 && (
         <p className="viewer__note">
           {data.ocr_pages.length === 1 ? "Page" : "Pages"} <span className="mono">{data.ocr_pages.join(", ")}</span>{" "}
-          {data.ocr_pages.length === 1 ? "has" : "have"} almost no text (probably scanned). They will be read by OCR
-          from build phase P3.
+          {data.ocr_pages.length === 1 ? "has" : "have"} almost no text (probably scanned). Claude reads{" "}
+          {data.ocr_pages.length === 1 ? "it" : "them"} when you create the draft map.
         </p>
       )}
       {data && data.suggested_images > 0 && (
