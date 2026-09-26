@@ -17,7 +17,7 @@ from types import ModuleType
 
 import pytest
 
-from tests.paths import BACKEND_ROOT, FRONTEND_ROOT, REPO_ROOT, SCRIPTS_DIR
+from tests.paths import FRONTEND_ROOT, REPO_ROOT, SCRIPTS_DIR
 
 SCRIPT_FILES = sorted(SCRIPTS_DIR.glob("*.py"))
 LOCAL_MODULES = {path.stem for path in SCRIPT_FILES}
@@ -203,7 +203,7 @@ def test_update_backs_up_first_then_upgrades(
     (tmp_path / "app.db").write_bytes(b"db")
     calls: list[str] = []
     monkeypatch.setattr(start_script, "ROOT", tmp_path)
-    monkeypatch.setattr(start_script, "pending_migrations", lambda _python: 1)
+    monkeypatch.setattr(start_script, "pending_migrations", lambda _python, _data: 1)
 
     def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append(command[-1])
@@ -217,13 +217,37 @@ def test_update_backs_up_first_then_upgrades(
 
 def test_no_update_means_no_backup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "app.db").write_bytes(b"db")
-    monkeypatch.setattr(start_script, "pending_migrations", lambda _python: 0)
+    monkeypatch.setattr(start_script, "pending_migrations", lambda _python, _data: 0)
     start_script.apply_database_updates(Path("python"), tmp_path)
     assert not (tmp_path / "backups").exists()
 
 
-def test_pending_migrations_reads_backend_answer() -> None:
-    assert start_script.pending_migrations(common.venv_python(REPO_ROOT)) == 0
+def test_pending_migrations_reads_backend_answer(tmp_path: Path) -> None:
+    # A brand-new data folder has every migration waiting.
+    assert start_script.pending_migrations(common.venv_python(REPO_ROOT), tmp_path) == 1
+
+
+def test_start_backs_up_an_older_database_then_updates_it(tmp_path: Path) -> None:
+    from app import db
+
+    database = tmp_path / "app.db"
+    db.upgrade(database)
+    db.downgrade(database, "base")  # an "older" database with an update waiting
+    python = common.venv_python(REPO_ROOT)
+    assert start_script.pending_migrations(python, tmp_path) == 1
+    start_script.apply_database_updates(python, tmp_path)
+    backups = list((tmp_path / "backups").glob("app-*.db"))
+    assert len(backups) == 1
+    assert start_script.pending_migrations(python, tmp_path) == 0
+
+
+def test_data_folder_setting(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DATA_DIR", raising=False)
+    assert common.data_dir(tmp_path) == (tmp_path / "data").resolve()
+    (tmp_path / ".env").write_text("DATA_DIR=./my-data\n")
+    assert common.data_dir(tmp_path) == (tmp_path / "my-data").resolve()
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "elsewhere"))
+    assert common.data_dir(tmp_path) == (tmp_path / "elsewhere").resolve()
 
 
 # --- Start script, end to end -------------------------------------------------------------
@@ -326,18 +350,6 @@ def test_executable_bit_is_recorded_in_git(name: str) -> None:
     if not result.stdout:
         pytest.skip(f"{name} not tracked yet")
     assert result.stdout.startswith("100755"), f"{name} must be committed as executable"
-
-
-def test_manage_reports_no_pending_updates_yet() -> None:
-    result = subprocess.run(
-        [str(common.venv_python(REPO_ROOT)), "-m", "app.manage", "pending-migrations"],
-        cwd=BACKEND_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "0"
 
 
 def test_start_never_uses_a_proxy_for_the_local_app(monkeypatch: pytest.MonkeyPatch) -> None:

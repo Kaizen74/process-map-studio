@@ -1,5 +1,7 @@
 # Runtime dependencies (exact versions; all permissive licences — PRD constraint 19).
-# Later phases add SQLAlchemy, Alembic, document parsers, Pillow.
+# Later phases add document parsers and Pillow.
 fastapi==0.141.1
 anthropic==1.8.0
+sqlalchemy==2.1.1
+alembic==1.20.0
 uvicorn==0.54.0
