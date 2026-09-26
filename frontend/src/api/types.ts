@@ -44,3 +44,67 @@ export interface ModelUpdate {
   effort: string;
   verifier_enabled: boolean;
 }
+
+export interface ScopeFields {
+  name?: string;
+  process_name?: string;
+  trigger?: string;
+  end_point?: string;
+  in_scope_roles?: string[];
+  out_of_scope?: string;
+  process_kpi?: string;
+  industry?: string;
+  adjacent_industries?: string[];
+  confidential_terms?: string[];
+}
+
+export interface Engagement {
+  id: string;
+  name: string;
+  process_name: string;
+  trigger: string;
+  end_point: string;
+  in_scope_roles: string[];
+  out_of_scope: string;
+  process_kpi: string;
+  industry: string;
+  adjacent_industries: string[];
+  confidential_terms: string[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EngagementSummary extends Engagement {
+  latest_version: { label: string; state: string } | null;
+  review_progress: { reviewed: number; total: number };
+  sources_count: number;
+}
+
+export type NavKey =
+  | "setup"
+  | "sources"
+  | "draft"
+  | "review"
+  | "published"
+  | "matrix"
+  | "gap_analysis"
+  | "registers"
+  | "leadership"
+  | "exports";
+
+export type NavState = "done" | "attention" | "not_started";
+
+export interface Readiness {
+  key_set: boolean;
+  transcripts_ready: boolean;
+  documents_ready: boolean;
+  speakers_unmapped: number;
+  draft_exists: boolean;
+  blockers_count: number;
+  nav: Record<NavKey, NavState>;
+  nav_counts: Partial<Record<NavKey, number>>;
+  next_step: NavKey | null;
+  missing: string[];
+  ready_to_draft: boolean;
+}

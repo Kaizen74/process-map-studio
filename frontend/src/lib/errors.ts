@@ -14,3 +14,8 @@ export function messageOf(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return "Something went wrong. Try again, or use Copy details to report it.";
 }
+
+/** True when the app's API said the thing asked for doesn't exist (HTTP 404). */
+export function isNotFound(error: unknown): boolean {
+  return Boolean(error && typeof error === "object" && "status" in error && error.status === 404);
+}

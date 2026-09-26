@@ -27,15 +27,43 @@ test.describe("accessibility and offline assets", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  test("Home with an engagement card and the engagement's screens have no serious or critical violations", async ({
+    page,
+    request,
+  }) => {
+    // Created through the API and removed afterwards, so the first-run smoke test still starts empty.
+    const created = await request.post("/api/engagements", { data: { name: "Load control" } });
+    expect(created.status()).toBe(201);
+    const { id } = (await created.json()) as { id: string };
+    try {
+      await page.goto("/");
+      await expect(page.getByRole("link", { name: "Load control" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.getByRole("link", { name: "Load control" }).click();
+      await expect(page).toHaveURL(new RegExp(`/engagements/${id}/setup$`));
+      await expect(page.getByRole("navigation", { name: "Engagement steps" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.goto(`/engagements/${id}/draft`);
+      await expect(page.getByText(/arrives in build phase P3/)).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+    } finally {
+      expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
+    }
+  });
+
   test("IBM Plex Sans and Mono load from the app itself", async ({ page }) => {
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await page.evaluate(() => document.fonts.ready);
-    const loaded = await page.evaluate(() => [
-      document.fonts.check('12px "IBM Plex Sans"'),
-      document.fonts.check('500 12px "IBM Plex Sans"'),
-      document.fonts.check('12px "IBM Plex Mono"'),
-    ]);
+    // Load each face explicitly: `document.fonts.ready` only waits for faces the page has already
+    // asked for, so checking right after it raced with the weight-500 face (seen once, 2026-09-26).
+    // A face whose file is missing or blocked loads as nothing, so this still fails.
+    const loaded = await page.evaluate(async () => {
+      const faces = ['12px "IBM Plex Sans"', '500 12px "IBM Plex Sans"', '12px "IBM Plex Mono"'];
+      const results = await Promise.all(faces.map((face) => document.fonts.load(face)));
+      return results.map((found, i) => found.length > 0 && document.fonts.check(faces[i] ?? ""));
+    });
     expect(loaded).toEqual([true, true, true]);
     const family = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
     expect(family).toContain("IBM Plex Sans");

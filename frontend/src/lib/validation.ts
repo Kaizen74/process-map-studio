@@ -15,3 +15,11 @@ export function validateOwnerName(value: string): string | null {
 export function validateApiKey(value: string): string | null {
   return /^sk-ant-[A-Za-z0-9_-]{13,293}$/.test(value.trim()) ? null : API_KEY_MESSAGE;
 }
+
+export const ENGAGEMENT_NAME_MESSAGE = "Please give the engagement a name (up to 120 characters).";
+
+export function validateEngagementName(value: string): string | null {
+  const name = value.trim();
+  if (!name || name.length > 120 || /[\r\n]/.test(name)) return ENGAGEMENT_NAME_MESSAGE;
+  return null;
+}

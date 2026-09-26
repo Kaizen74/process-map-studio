@@ -34,3 +34,91 @@
   align-items: center;
   gap: var(--space-10);
 }
+
+/* Engagement cards (PRD §5.4 Home): auto-fill grid, min 300 px. */
+.engagement-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-16);
+}
+.engagement-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  height: 100%;
+  padding: var(--space-16);
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-section);
+}
+.engagement-card:hover {
+  border-color: var(--border-strong);
+}
+.engagement-card:focus-within {
+  outline: var(--line-outline) solid var(--ink);
+  outline-offset: var(--line-outline);
+}
+.engagement-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-10);
+}
+.engagement-card__title {
+  font-size: var(--text-card-value);
+  font-weight: var(--weight-medium);
+  text-wrap: balance;
+}
+.engagement-card__link {
+  color: var(--ink);
+  text-decoration: none;
+}
+.engagement-card__link:focus-visible {
+  outline: none;
+}
+/* The whole card opens the engagement; the Delete button sits above this layer. */
+.engagement-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-section);
+}
+.engagement-card__process {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.engagement-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.progress-bar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: var(--line-hairline) solid var(--border);
+  overflow: hidden;
+}
+.progress-bar__fill {
+  height: 100%;
+  background: var(--ink-2);
+}
+.engagement-card__meta {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.engagement-card__footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+}
+.engagement-card__delete {
+  position: relative;
+  z-index: 1;
+}
