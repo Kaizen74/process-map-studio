@@ -179,3 +179,29 @@ Response `200`:
 ```
 `coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
 Used by: Sources screen (full-width source viewer).
+
+## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
+
+### GET /api/engagements/{id}/readiness
+Response `200`:
+```json
+{"key_set": true, "transcripts_ready": false, "documents_ready": true,
+ "speakers_unmapped": 0, "draft_exists": false, "blockers_count": 0,
+ "nav": {"setup": "done", "sources": "attention", "draft": "not_started", "review": "not_started",
+         "published": "not_started", "matrix": "not_started", "gap_analysis": "not_started",
+         "registers": "not_started", "leadership": "not_started", "exports": "not_started"},
+ "nav_counts": {"sources": 1},
+ "next_step": "sources",
+ "missing": ["Add an interview transcript"],
+ "ready_to_draft": false}
+```
+- `transcripts_ready`: at least one `interview_transcript` source has `text_status: "ready"`.
+- `documents_ready`: at least one SOP, manual, executed artefact or other document is ready (a job description alone doesn't describe the steps).
+- `speakers_unmapped`: speaker labels in ready transcripts that have no role yet (from P2).
+- `blockers_count`: failing hard checks on the latest draft's quality card (from P7; `0` until then).
+- `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · process document · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true.
+- `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** stays not started until exports are recorded (P7).
+- `nav_counts` has an entry only for items in `attention`.
+- `next_step`: the first item in nav order that isn't done, never `gap_analysis`; `null` when everything is done.
+
+Errors: `404`. Used by: engagement navigation (top bar), Home (card click opens `next_step`; first-run checklist), Sources (readiness line), Draft (checklist, from P3).

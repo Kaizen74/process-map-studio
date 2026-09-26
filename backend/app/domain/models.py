@@ -229,3 +229,42 @@ class SegmentPage(BaseModel):
     page: int
     pages: int
     coverage_pct: float | None
+
+
+# --- Readiness (guided navigation) -----------------------------------------------------------
+
+
+class SourceFacts(BaseModel):
+    """What readiness needs to know about one source."""
+
+    id: str
+    filename: str
+    kind: str
+    text_status: str
+    unmapped_speakers: int
+
+
+class ReadinessFacts(BaseModel):
+    """Stored facts about an engagement that the readiness rules read (no rules here)."""
+
+    trigger: str
+    end_point: str
+    sources: list[SourceFacts]
+    version_count: int
+    published: bool
+    latest_progress: ReviewProgress
+    gap_finalised: bool
+
+
+class Readiness(BaseModel):
+    key_set: bool
+    transcripts_ready: bool
+    documents_ready: bool
+    speakers_unmapped: int
+    draft_exists: bool
+    blockers_count: int
+    nav: dict[str, str]
+    nav_counts: dict[str, int]
+    next_step: str | None
+    missing: list[str]
+    ready_to_draft: bool

@@ -137,33 +137,42 @@ def set_confidential_terms(session: Session, engagement_id: str, terms: list[str
     session.flush()
 
 
+def latest_version(
+    session: Session, engagement_id: str
+) -> tuple[VersionLabel | None, ReviewProgress]:
+    """The newest map version's label and how many of its elements have been reviewed."""
+    latest = session.scalars(
+        select(MapVersion)
+        .where(MapVersion.engagement_id == engagement_id)
+        .order_by(MapVersion.created_at.desc(), MapVersion.id)
+        .limit(1)
+    ).first()
+    if latest is None:
+        return None, ReviewProgress(reviewed=0, total=0)
+    total = (
+        session.scalar(
+            select(func.count()).select_from(Element).where(Element.version_id == latest.id)
+        )
+        or 0
+    )
+    reviewed = (
+        session.scalar(
+            select(func.count())
+            .select_from(Element)
+            .where(Element.version_id == latest.id)
+            .where(Element.review_status != ReviewStatus.DRAFT.value)
+        )
+        or 0
+    )
+    label = VersionLabel(label=latest.label, state=latest.state)
+    return label, ReviewProgress(reviewed=reviewed, total=total)
+
+
 def list_summaries(session: Session) -> list[EngagementSummary]:
     rows = session.scalars(select(Engagement).order_by(Engagement.updated_at.desc(), Engagement.id))
     summaries = []
     for row in rows:
-        latest = session.scalars(
-            select(MapVersion)
-            .where(MapVersion.engagement_id == row.id)
-            .order_by(MapVersion.created_at.desc(), MapVersion.id)
-            .limit(1)
-        ).first()
-        reviewed = total = 0
-        if latest is not None:
-            total = (
-                session.scalar(
-                    select(func.count()).select_from(Element).where(Element.version_id == latest.id)
-                )
-                or 0
-            )
-            reviewed = (
-                session.scalar(
-                    select(func.count())
-                    .select_from(Element)
-                    .where(Element.version_id == latest.id)
-                    .where(Element.review_status != ReviewStatus.DRAFT.value)
-                )
-                or 0
-            )
+        label, progress = latest_version(session, row.id)
         sources = (
             session.scalar(
                 select(func.count()).select_from(Source).where(Source.engagement_id == row.id)
@@ -174,10 +183,8 @@ def list_summaries(session: Session) -> list[EngagementSummary]:
         summaries.append(
             EngagementSummary(
                 **view.model_dump(),
-                latest_version=VersionLabel(label=latest.label, state=latest.state)
-                if latest
-                else None,
-                review_progress=ReviewProgress(reviewed=reviewed, total=total),
+                latest_version=label,
+                review_progress=progress,
                 sources_count=sources,
             )
         )

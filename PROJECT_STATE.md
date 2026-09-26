@@ -12,8 +12,8 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - [x] Increment 2 — engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
 - [x] Increment 3 — document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
 - [x] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
-- [ ] Increment 5 — IN PROGRESS: readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
-- [ ] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup)
+- [x] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
+- [ ] Increment 6 — IN PROGRESS: UI: Home engagement cards and New engagement (creates it and opens Setup)
 - [ ] Increment 7 — UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview) and the guided engagement nav in the top bar
 - [ ] Increment 8 — UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
 - [ ] Increment 9 — browser checks (axe on the new screens, smoke path extended), GUIDE/README, close P1 (tag phase-p1, push, report card)
@@ -35,6 +35,7 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - 2026-09-26 Engagements backend: create/list/get/edit/delete engagements (delete removes files), scope card with confidential terms, roles and lane order, audit rows (incl. model changes)
 - 2026-09-26 Document parsing: Word and PDF split into anchored passages (§3.2, p. 5), scanned pages flagged for OCR, PDF images found as suggestions; PRD sample documents as fixtures
 - 2026-09-26 Sources backend: upload Word/PDF/transcript files (up to 50 MB), read Word and PDF on upload, registry list/edit/delete, paged passages with anchors, PDF images saved as suggestions
+- 2026-09-26 Readiness: one endpoint tells each screen what is done, what needs attention (with a count), the next recommended step and exactly what the draft still needs
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
@@ -43,9 +44,10 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 1. The next task is: the IN PROGRESS increment above. Phase P1 (PRD §6.3): migration 0001 creating all §3.5 tables (Alembic; `app/manage.py` then reports real pending migrations so Start backs up before updating), repositories, engagement and scope-card actions, readiness endpoint, `parsing` for DOCX and PDF text with anchors, PDF image suggestions; UI: Engagements home cards, Setup screen, Sources screen (drop zone, registry, full-width source viewer), guided nav status (the `EngagementNav` component already exists). Also in P1: audit rows for model changes (logged only, for now) and the AI usage card once `ai_calls` exists. Break it into ~30-minute increments here before starting; P1 will likely need two sessions.
 2. The relevant files are: CLAUDE.md, PRD_ProcessMapStudio.md §3.3, §3.5, §4 (Engagements, Sources, Readiness), §5.4 (Home, Setup, Sources), §6.3; `backend/app/manage.py`, `backend/app/db.py`, `frontend/src/features/home/`, `frontend/src/components/shell/EngagementNav.tsx`, API_CONTRACT.md (add endpoints first).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
-4. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
-5. Before using the anthropic SDK or Models API in P0b, check the installed version and the current docs and log it in DECISIONS.md (PRD §3.4). New packages: check licences (the licence test will also catch GPL) and peer ranges; TypeScript must stay below 6.1 while typescript-eslint 8.70 is used.
-6. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
+4. Phase P2 must record "Interviewer" speaker mappings so readiness does not count them as unmapped (readiness counts speaker labels without a role).
+5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
+6. Before using the anthropic SDK or Models API in P0b, check the installed version and the current docs and log it in DECISIONS.md (PRD §3.4). New packages: check licences (the licence test will also catch GPL) and peer ranges; TypeScript must stay below 6.1 while typescript-eslint 8.70 is used.
+7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
 - The `phase-p0b` tag was never pushed (cloud sessions can't push tags); P0b's last commit is `0c2c0e5`, merged into `main` in pull request #2.

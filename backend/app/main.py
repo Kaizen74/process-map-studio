@@ -17,7 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db
 from app.config import AppConfig, load_config
-from app.routers import engagements, settings, sources, system
+from app.routers import engagements, readiness, settings, sources, system
 from app.routers.http import ApiError, err_response, error_response
 
 NOT_BUILT_PAGE = """<!doctype html>
@@ -38,6 +38,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(settings.router)
     app.include_router(engagements.router)
     app.include_router(sources.router)
+    app.include_router(readiness.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
