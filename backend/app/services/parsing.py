@@ -237,6 +237,22 @@ def parse_transcript_text(path: Path) -> Result[ParsedDocument]:
     return Ok(ParsedDocument(segments=detect_speakers([s for s in lines if s.text.strip()])))
 
 
+def parse_text_document(path: Path) -> Result[ParsedDocument]:
+    """Plain-text documents (not transcripts): one passage per paragraph (blank-line separated)."""
+    match _read_text(path):
+        case Err() as err:
+            return err
+        case Ok(value=text):
+            pass
+    paragraphs = re.split(r"\n\s*\n", text.replace("\r\n", "\n").replace("\r", "\n"))
+    segments: list[ParsedSegment] = []
+    for paragraph in paragraphs:
+        clean = _tidy(" ".join(paragraph.split("\n")))
+        if clean:
+            segments.append(ParsedSegment(seq=len(segments) + 1, text=clean))
+    return Ok(ParsedDocument(segments=segments))
+
+
 def _cues(text: str) -> list[tuple[int, int, list[str]]]:
     """(start_ms, end_ms, payload lines) for each timed cue in a VTT or SRT file."""
     cues: list[tuple[int, int, list[str]]] = []

@@ -142,7 +142,15 @@ Now also writes an audit row (`target_type: "settings"`, before/after model, eff
 
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
-Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, up to 50 MB. In phase P1, Word and PDF files are read on upload; `.txt`, `.vtt` and `.srt` are stored with `text_status: "pending"` and read from phase P2 (transcripts). Images inside PDFs (at least 48 px) are saved to `data/images/<engagement_id>/` as **suggestions** (`status: "suggested"`, page number kept); nothing is shown on a map until Eric keeps them (P8).
+Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:
+- `.vtt`, `.srt`: caption cues become speaker turns with start and end times.
+- `.txt`: an interview transcript (`kind: "interview_transcript"`) is split into speaker turns (`Speaker: text` or `[mm:ss] Speaker: text`); any other `.txt` is split into paragraphs.
+- `.docx`, `.pdf`: read as documents (paragraphs, headings as sections; PDF text per page); for an interview transcript the lines are then joined into speaker turns.
+- Every passage is checked for instruction-like text (PRD §3.8 G9) and flagged `instruction_like: true`.
+- Speaker labels that look like a person's name ("Priya Nair") are added to the engagement's redaction terms automatically (origin `speaker_map`, shown as "[name]" until the speaker is mapped).
+- Images inside PDFs (at least 48 px) are saved to `data/images/<engagement_id>/` as **suggestions** (`status: "suggested"`, page number kept); nothing is shown on a map until Eric keeps them (P8).
+- Changing a source's `kind` to or from `interview_transcript` reads a Word, PDF or text file again, unless one of its passages was corrected by hand (then the passages are kept as they are). Speaker mappings are kept by label.
+- When the app starts, unfinished jobs are run again, and files still waiting to be read (for example transcripts uploaded in phase P1) are read.
 
 ### Source object
 ```json
@@ -152,12 +160,12 @@ Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the origin
  "text_status": "ready", "error": "", "segment_count": 10, "ocr_pages": [],
  "suggested_images": 0, "created_at": "…"}
 ```
-`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (waiting to be read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3.
+`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`.
 
 ### POST /api/engagements/{id}/sources (multipart form)
 Fields: `file` (required); `kind` (optional: guessed from the file name if missing: `.vtt`/`.srt`/names with "transcript" or "interview" → `interview_transcript`, "sop" → `sop`, "jd"/"job description" → `job_description`, "manual" → `manual`, else `other`); `version_date` (optional, `YYYY-MM-DD`); `owner` (optional, up to 120 characters); `controlled_copy` (optional, `true`/`false`).
-Response `201`: source object (already read, for Word and PDF).
-Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files." · "That file is larger than 50 MB." · "The file is empty." · bad kind or date). A file that can't be read is still saved with `text_status: "failed"` and a plain `error`, so Eric can see it and delete or replace it.
+Response `201`: source object with `text_status: "pending"` and `job_id`; the file is read in the background (poll the source or `GET /api/jobs/{job_id}`).
+Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files." · "That file is larger than 50 MB." · "The file is empty." · bad kind or date). A file that can't be read is still kept with `text_status: "failed"` and a plain `error`, so Eric can see it and delete or replace it.
 Used by: Sources screen (drop zone).
 
 ### GET /api/engagements/{id}/sources
@@ -205,3 +213,18 @@ Response `200`:
 - `next_step`: the first item in nav order that isn't done, never `gap_analysis`; `null` when everything is done.
 
 Errors: `404`. Used by: engagement navigation (top bar), Home (card click opens `next_step`; first-run checklist), Sources (readiness line), Draft (checklist, from P3).
+
+## Jobs (PRD §4 Pipeline) — phase P2
+
+Long work runs in one background worker inside the app, one job at a time, in the order it was started. Jobs survive a restart: when the app starts, jobs that were queued or running are run again.
+
+### GET /api/jobs/{job_id}
+Response `200`:
+```json
+{"id": "…", "engagement_id": "…", "type": "read_source", "target_id": "<source id>",
+ "status": "queued", "stage": "Reading the file", "progress": 0.0,
+ "message": "", "error": "", "usage": null, "claims": {"verified": 0, "rejected": 0},
+ "created_at": "…"}
+```
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type` in P2: `read_source`. `usage` and `claims` are filled by the AI stages from phase P3.
+Errors: `404` ("That job doesn't exist."). Used by: Sources (reading status), Draft (from P3).

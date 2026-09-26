@@ -238,3 +238,16 @@ def test_name_like_labels(label: str, expected: bool) -> None:
 def test_a_known_role_is_never_a_name() -> None:
     assert parsing.looks_like_name("Tower", frozenset({"tower"})) is False
     assert parsing.looks_like_name("Tower") is True
+
+
+def test_plain_text_documents_are_read_by_paragraph(tmp_path: Path) -> None:
+    path = write(
+        tmp_path, "notes.txt", "Note: first line\ncontinues here.\n\n\nSecond  paragraph.\r\n"
+    )
+    result = parsing.parse_text_document(path)
+    assert isinstance(result, Ok)
+    assert [(s.seq, s.text, s.speaker_label) for s in result.value.segments] == [
+        (1, "Note: first line continues here.", ""),
+        (2, "Second paragraph.", ""),
+    ]
+    assert isinstance(parsing.parse_text_document(tmp_path / "gone.txt"), Err)

@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { deleteSource, getSource, listSegments, listSources, updateSource, uploadSource } from "../api/sources";
 import type { Source, SourcePatch, SourceUpload } from "../api/types";
 
@@ -13,8 +14,30 @@ function refreshAround(client: QueryClient, engagementId: string) {
   void client.invalidateQueries({ queryKey: ["engagements"], exact: true });
 }
 
+/** How often to look again while a file is being read in the background. */
+export const READING_POLL_MS = 1000;
+
+const reading = (sources: readonly Source[] | undefined) => sources?.some((s) => s.text_status === "pending");
+
 export function useSources(engagementId: string) {
-  return useQuery({ queryKey: sourcesKey(engagementId), queryFn: () => listSources(engagementId) });
+  const client = useQueryClient();
+  const query = useQuery({
+    queryKey: sourcesKey(engagementId),
+    queryFn: () => listSources(engagementId),
+    refetchInterval: (q) => (reading(q.state.data) ? READING_POLL_MS : false),
+  });
+  // When a file finishes reading, what the draft needs (readiness) and the passages change too.
+  const readingCount = query.data?.filter((s) => s.text_status === "pending").length ?? 0;
+  const previous = useRef(readingCount);
+  useEffect(() => {
+    if (readingCount < previous.current) {
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "readiness"] });
+      void client.invalidateQueries({ queryKey: ["engagements"], exact: true });
+      void client.invalidateQueries({ queryKey: ["sources"] });
+    }
+    previous.current = readingCount;
+  }, [client, engagementId, readingCount]);
+  return query;
 }
 
 export function useSource(sourceId: string | null) {
@@ -22,6 +45,7 @@ export function useSource(sourceId: string | null) {
     queryKey: sourceKey(sourceId ?? ""),
     queryFn: () => getSource(sourceId ?? ""),
     enabled: Boolean(sourceId),
+    refetchInterval: (q) => (q.state.data?.text_status === "pending" ? READING_POLL_MS : false),
   });
 }
 

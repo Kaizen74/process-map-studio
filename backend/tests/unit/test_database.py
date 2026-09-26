@@ -24,6 +24,8 @@ PRD_TABLES = {
     "external_sources", "external_citations",
 }  # fmt: skip
 
+MIGRATION_COUNT = len(list((BACKEND_ROOT / "migrations" / "versions").glob("0*.py")))
+
 
 @pytest.fixture()
 def migrated(tmp_path: Path) -> Path:
@@ -88,6 +90,45 @@ def test_downgrade_removes_only_what_0001_added(migrated: Path) -> None:
     assert table_names(migrated) == {"eric_notes"}
 
 
+def test_downgrade_of_0002_removes_only_its_columns(migrated: Path) -> None:
+    db.downgrade(migrated, "0001")
+    engine = db.make_engine(migrated)
+    inspector = inspect(engine)
+    segments = {c["name"] for c in inspector.get_columns("source_segments")}
+    jobs = {c["name"] for c in inspector.get_columns("jobs")}
+    engine.dispose()
+    assert "is_interviewer" not in segments and {"speaker_role_id", "instruction_like"} <= segments
+    assert "target_id" not in jobs and {"status", "stage"} <= jobs
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+
+
+def test_0002_keeps_existing_segments_and_marks_none_as_interviewer(tmp_path: Path) -> None:
+    path = tmp_path / "app.db"
+    db.upgrade(path)
+    db.downgrade(path, "0001")
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "INSERT INTO engagements (id, created_at, name, process_name, trigger, end_point, "
+            "in_scope_roles, out_of_scope, process_kpi, industry, adjacent_industries, status, "
+            "updated_at) VALUES ('e', 't', 'E', '', '', '', '[]', '', '', '', '[]', 'active', 't')"
+        )
+        conn.execute(
+            "INSERT INTO sources (id, created_at, engagement_id, kind, filename, stored_path, "
+            "mime, format, version_date, owner, controlled_copy, text_status, error, ocr_pages) "
+            "VALUES ('s', 't', 'e', 'sop', 'f', 'p', '', 'docx', '', '', 0, 'ready', '', '[]')"
+        )
+        conn.execute(
+            "INSERT INTO source_segments (id, created_at, source_id, seq, speaker_label, page, "
+            "section, text, corrected, instruction_like) "
+            "VALUES ('g', 't', 's', 1, 'Lead', NULL, '', 'Hello', 0, 0)"
+        )
+    db.upgrade(path)
+    with sqlite3.connect(path) as conn:
+        row = conn.execute("SELECT text, is_interviewer FROM source_segments").fetchone()
+    assert row == ("Hello", 0)
+
+
 def test_migrations_are_additive_only() -> None:
     """Constraint 16: no migration drops or alters existing columns in upgrade()."""
     for script in (BACKEND_ROOT / "migrations" / "versions").glob("*.py"):
@@ -98,7 +139,7 @@ def test_migrations_are_additive_only() -> None:
 
 def test_pending_counts_then_zero_after_upgrade(tmp_path: Path) -> None:
     path = tmp_path / "app.db"
-    assert db.pending_migrations(path) == 1
+    assert db.pending_migrations(path) == MIGRATION_COUNT
     db.upgrade(path)
     assert db.pending_migrations(path) == 0
     db.upgrade(path)  # running again changes nothing
@@ -108,6 +149,9 @@ def test_pending_counts_then_zero_after_upgrade(tmp_path: Path) -> None:
 def test_an_old_database_reports_its_pending_update(migrated: Path) -> None:
     db.downgrade(migrated, "base")
     assert migrated.exists()
+    assert db.pending_migrations(migrated) == MIGRATION_COUNT
+    db.upgrade(migrated)
+    db.downgrade(migrated, "0001")  # a phase-P1 database
     assert db.pending_migrations(migrated) == 1
 
 
@@ -177,7 +221,7 @@ def test_manage_reports_and_applies_updates(tmp_path: Path) -> None:
         text=True,
         check=True,
     )
-    assert run("pending-migrations").stdout.strip() == "1"
+    assert run("pending-migrations").stdout.strip() == str(MIGRATION_COUNT)
     run("upgrade")
     assert (tmp_path / "app.db").exists()
     assert run("pending-migrations").stdout.strip() == "0"

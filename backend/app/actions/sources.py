@@ -1,7 +1,7 @@
 """Source actions (PRD §4 Sources, §3.7 S0): upload, read, registry edits, delete, passages.
 
-Word and PDF files are read on upload (phase P1). Transcript formats (.txt, .vtt, .srt) are
-stored and read from phase P2. Images inside PDFs become suggestions only.
+Uploads are stored and then read by a background job (phase P2): documents into anchored passages,
+transcripts into speaker turns. Images inside PDFs become suggestions only.
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 import re
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import BinaryIO
 
@@ -18,18 +19,31 @@ from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import SourceKind
-from app.domain.models import ParsedDocument, SegmentPage, SegmentView, SourcePatch, SourceView
+from app.domain.models import (
+    ParsedDocument,
+    SegmentPage,
+    SegmentView,
+    SourcePatch,
+    SourceReadInfo,
+    SourceView,
+)
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import engagements as engagements_repo
+from app.repositories import jobs as jobs_repo
+from app.repositories import redaction as redaction_repo
 from app.repositories import sources as repo
-from app.services import parsing
+from app.services import grounding, parsing
+from app.services.grounding import DEFAULT_REPLACEMENT
 
 Sessions = sessionmaker[Session]
+Enqueue = Callable[[str], None]
 
 MAX_BYTES = 50 * 1024 * 1024
 FORMATS = {"docx", "pdf", "txt", "vtt", "srt"}
-READ_NOW = {"docx", "pdf"}
+READ_JOB = "read_source"
+# Origins of redaction terms that hide names (confidential terms only limit web research).
+NAME_ORIGINS = ("speaker_map", "manual")
 SOURCE_MISSING = "That source doesn't exist. It may have been deleted."
 BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files."
 TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again."
@@ -37,7 +51,7 @@ EMPTY = "The file is empty."
 BAD_KIND = "Please choose what kind of source this is."
 BAD_DATE = "Please enter the version date as YYYY-MM-DD, or leave it blank."
 BAD_OWNER = "Owner: up to 120 characters, one line."
-PENDING_P2 = "Waiting: transcript files are read from build phase P2."
+CANT_READ_TAIL = " Check it opens on your computer, then upload it again."
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
@@ -106,8 +120,33 @@ def _save_upload(stream: BinaryIO, target: Path) -> Result[int]:
     return Ok(written)
 
 
-def _read(fmt: str, path: Path) -> Result[ParsedDocument]:
-    return parsing.parse_docx(path) if fmt == "docx" else parsing.parse_pdf_text(path)
+def _parse(info: SourceReadInfo) -> Result[ParsedDocument]:
+    """Read the stored file the way its format and kind call for (API_CONTRACT.md → Sources)."""
+    path = Path(info.stored_path)
+    transcript = info.kind == SourceKind.INTERVIEW_TRANSCRIPT.value
+    if info.format == "vtt":
+        return parsing.parse_vtt(path)
+    if info.format == "srt":
+        return parsing.parse_srt(path)
+    if info.format == "txt":
+        return (
+            parsing.parse_transcript_text(path) if transcript else parsing.parse_text_document(path)
+        )
+    result = parsing.parse_docx(path) if info.format == "docx" else parsing.parse_pdf_text(path)
+    match result:
+        case Ok(value=document) if transcript:
+            return Ok(
+                document.model_copy(update={"segments": parsing.detect_speakers(document.segments)})
+            )
+        case _:
+            return result
+
+
+def _queue_read(session: Session, engagement_id: str, source_id: str) -> str:
+    job = jobs_repo.create(
+        session, engagement_id=engagement_id, job_type=READ_JOB, target_id=source_id
+    )
+    return job.id
 
 
 def upload_source(
@@ -118,11 +157,13 @@ def upload_source(
     filename: str,
     stream: BinaryIO,
     content_type: str,
+    enqueue: Enqueue,
     kind: str | None = None,
     version_date: str | None = None,
     owner: str | None = None,
     controlled_copy: bool = False,
 ) -> Result[SourceView]:
+    """Store the file and queue it to be read in the background (PRD §4: parsing runs as a job)."""
     display_name = Path(filename or "").name.strip() or "unnamed"
     fmt = Path(display_name).suffix.lower().lstrip(".")
     if fmt not in FORMATS:
@@ -144,17 +185,6 @@ def upload_source(
         case Ok():
             pass
 
-    # Read the text before opening the unit of work (reading can take a few seconds).
-    document: ParsedDocument | None = None
-    read_error = ""
-    if fmt in READ_NOW:
-        match _read(fmt, target):
-            case Ok(value=parsed):
-                document = parsed
-            case Err(message=message):
-                read_error = f"{message} Check it opens on your computer, then upload it again."
-    images = parsing.extract_pdf_images(target) if fmt == "pdf" and document else Ok([])
-
     actor = actor_name(config)
     with session_scope(sessions) as session:
         repo.create(
@@ -167,29 +197,11 @@ def upload_source(
                 "mime": content_type or "",
                 "format": fmt,
                 "controlled_copy": controlled_copy,
+                "text_status": "pending",
                 **meta,
             },
         )
-        if document is not None:
-            repo.add_segments(session, source_id, document.segments)
-            repo.set_read_result(session, source_id, status="ready", ocr_pages=document.ocr_pages)
-        elif read_error:
-            repo.set_read_result(session, source_id, status="failed", error=read_error)
-        else:
-            repo.set_read_result(session, source_id, status="pending", error=PENDING_P2)
-        if isinstance(images, Ok):
-            folder = config.data_dir / "images" / engagement_id
-            folder.mkdir(parents=True, exist_ok=True)
-            for number, image in enumerate(images.value, start=1):
-                path = folder / f"{source_id}-p{image.page}-{number}.{image.extension}"
-                path.write_bytes(image.data)
-                repo.add_suggested_image(
-                    session,
-                    source_id=source_id,
-                    stored_path=str(path),
-                    page=image.page,
-                    caption=f"Image from {display_name}, page {image.page}",
-                )
+        job_id = _queue_read(session, engagement_id, source_id)
         engagements_repo.touch(session, engagement_id)
         audit.record(
             session,
@@ -202,7 +214,72 @@ def upload_source(
         )
         view = repo.get(session, source_id)
     assert view is not None
-    return Ok(view)
+    enqueue(job_id)  # after the commit, so the worker finds the rows
+    return Ok(view.model_copy(update={"job_id": job_id}))
+
+
+def read_source(config: AppConfig, sessions: Sessions, source_id: str) -> Result[str]:
+    """The reading job: parse the stored file into passages (PRD §3.7 S0).
+
+    Flags instruction-like passages (G9), adds name-like speaker labels to the redaction terms
+    (G10) and saves PDF images as suggestions. A file that can't be read is marked failed with a
+    plain reason; its row stays so Eric can see it.
+    """
+    with session_scope(sessions) as session:
+        info = repo.reading_info(session, source_id)
+        if info is None:
+            return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        known_roles = engagements_repo.role_names(session, info.engagement_id)
+        want_images = info.format == "pdf" and not repo.has_images(session, source_id)
+
+    match _parse(info):
+        case Err(message=message) as err:
+            mark_unreadable(sessions, source_id, message + CANT_READ_TAIL)
+            return Err(err.kind, message + CANT_READ_TAIL, err.details)
+        case Ok(value=document):
+            pass
+    segments = [
+        s.model_copy(update={"instruction_like": grounding.detect_instruction_like(s.text)})
+        for s in document.segments
+    ]
+    images = parsing.extract_pdf_images(Path(info.stored_path)) if want_images else Ok([])
+    names = sorted(
+        {s.speaker_label for s in segments if parsing.looks_like_name(s.speaker_label, known_roles)}
+    )
+
+    with session_scope(sessions) as session:
+        if repo.reading_info(session, source_id) is None:  # deleted while it was being read
+            return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        repo.replace_segments(session, source_id, segments)
+        repo.set_read_result(session, source_id, status="ready", ocr_pages=document.ocr_pages)
+        for name in names:
+            if redaction_repo.find(session, info.engagement_id, name, NAME_ORIGINS) is None:
+                redaction_repo.add(
+                    session,
+                    engagement_id=info.engagement_id,
+                    term=name,
+                    replacement=DEFAULT_REPLACEMENT,
+                    origin="speaker_map",
+                )
+        if isinstance(images, Ok) and images.value:
+            folder = config.data_dir / "images" / info.engagement_id
+            folder.mkdir(parents=True, exist_ok=True)
+            for number, image in enumerate(images.value, start=1):
+                path = folder / f"{source_id}-p{image.page}-{number}.{image.extension}"
+                path.write_bytes(image.data)
+                repo.add_suggested_image(
+                    session,
+                    source_id=source_id,
+                    stored_path=str(path),
+                    page=image.page,
+                    caption=f"Image from {info.filename}, page {image.page}",
+                )
+    return Ok(f"Read {len(segments)} passages.")
+
+
+def mark_unreadable(sessions: Sessions, source_id: str, message: str) -> None:
+    with session_scope(sessions) as session:
+        repo.set_read_result(session, source_id, status="failed", error=message)
 
 
 def list_sources(sessions: Sessions, engagement_id: str) -> Result[list[SourceView]]:
@@ -218,8 +295,14 @@ def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:
     return Ok(view) if view else Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
 
 
+def _reading_changes(fmt: str, old_kind: str, new_kind: str) -> bool:
+    """Whether a new kind means the file must be read again (transcript ↔ document)."""
+    transcript = SourceKind.INTERVIEW_TRANSCRIPT.value
+    return fmt in {"txt", "docx", "pdf"} and (old_kind == transcript) != (new_kind == transcript)
+
+
 def update_source(
-    config: AppConfig, sessions: Sessions, source_id: str, data: SourcePatch
+    config: AppConfig, sessions: Sessions, source_id: str, data: SourcePatch, enqueue: Enqueue
 ) -> Result[SourceView]:
     sent = data.model_dump(exclude_unset=True)
     match _check_meta(sent.get("kind"), sent.get("version_date"), sent.get("owner")):
@@ -230,13 +313,22 @@ def update_source(
     if sent.get("controlled_copy") is not None:
         fields["controlled_copy"] = bool(sent["controlled_copy"])
     actor = actor_name(config)
+    job_id = None
     with session_scope(sessions) as session:
         before = repo.get(session, source_id)
         if before is None:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        changed = {k: v for k, v in fields.items() if getattr(before, k) != v}
+        if (
+            "kind" in changed
+            and _reading_changes(before.format, before.kind, str(changed["kind"]))
+            and not repo.has_corrected_segments(session, source_id)
+        ):
+            fields["text_status"] = "pending"
+            fields["error"] = ""
+            job_id = _queue_read(session, before.engagement_id, source_id)
         view = repo.update(session, source_id, fields)
         assert view is not None
-        changed = {k: v for k, v in fields.items() if getattr(before, k) != v}
         if changed:
             engagements_repo.touch(session, before.engagement_id)
             audit.record(
@@ -249,6 +341,9 @@ def update_source(
                 before={k: getattr(before, k) for k in changed},
                 after=changed,
             )
+    if job_id:
+        enqueue(job_id)
+        return Ok(view.model_copy(update={"job_id": job_id}))
     return Ok(view)
 
 

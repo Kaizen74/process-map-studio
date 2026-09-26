@@ -32,6 +32,7 @@ def upload_source(
             filename=file.filename or "",
             stream=file.file,
             content_type=file.content_type or "",
+            enqueue=state.worker.submit,
             kind=kind or None,
             version_date=version_date,
             owner=owner,
@@ -53,7 +54,9 @@ def get_source(request: Request, source_id: str) -> SourceView:
 @router.patch("/sources/{source_id}")
 def update_source(request: Request, source_id: str, body: SourcePatch) -> SourceView:
     state = request.app.state
-    return unwrap(sources.update_source(state.config, state.sessions, source_id, body))
+    return unwrap(
+        sources.update_source(state.config, state.sessions, source_id, body, state.worker.submit)
+    )
 
 
 @router.delete("/sources/{source_id}", status_code=204)

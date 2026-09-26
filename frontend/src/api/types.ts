@@ -150,6 +150,8 @@ export interface Source {
   ocr_pages: number[];
   suggested_images: number;
   created_at: string;
+  /** Only on upload (and kind changes that re-read the file): the background reading job. */
+  job_id?: string | null;
 }
 
 export interface SourcePatch {

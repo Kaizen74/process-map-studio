@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.models import ParsedSegment, SourceView
+from app.domain.models import ParsedSegment, SourceReadInfo, SourceView
 from app.repositories.tables import Image, Role, Source, SourceSegment
 
 EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
@@ -114,18 +114,70 @@ def delete(session: Session, source_id: str) -> tuple[str, list[str]] | None:
     return path, images
 
 
-def add_segments(session: Session, source_id: str, segments: list[ParsedSegment]) -> None:
+def reading_info(session: Session, source_id: str) -> SourceReadInfo | None:
+    row = session.get(Source, source_id)
+    if row is None:
+        return None
+    return SourceReadInfo(
+        id=row.id,
+        engagement_id=row.engagement_id,
+        filename=row.filename,
+        kind=row.kind,
+        format=row.format,
+        stored_path=row.stored_path,
+    )
+
+
+def pending(session: Session) -> list[SourceReadInfo]:
+    """Sources still waiting to be read, oldest first."""
+    rows = session.scalars(
+        select(Source).where(Source.text_status == "pending").order_by(Source.created_at, Source.id)
+    )
+    return [info for row in rows if (info := reading_info(session, row.id)) is not None]
+
+
+def has_corrected_segments(session: Session, source_id: str) -> bool:
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(SourceSegment)
+            .where(SourceSegment.source_id == source_id)
+            .where(SourceSegment.corrected.is_(True))
+        )
+        or 0
+    ) > 0
+
+
+def has_images(session: Session, source_id: str) -> bool:
+    count = session.scalar(
+        select(func.count()).select_from(Image).where(Image.source_id == source_id)
+    )
+    return (count or 0) > 0
+
+
+def replace_segments(session: Session, source_id: str, segments: list[ParsedSegment]) -> None:
+    """Store a fresh reading of the file. Speaker mappings are kept by label."""
+    mapping: dict[str, tuple[str | None, bool]] = {}
+    for old in session.scalars(select(SourceSegment).where(SourceSegment.source_id == source_id)):
+        if old.speaker_label and (old.speaker_role_id or old.is_interviewer):
+            mapping[old.speaker_label] = (old.speaker_role_id, old.is_interviewer)
+        session.delete(old)
+    session.flush()
     for segment in segments:
+        role_id, is_interviewer = mapping.get(segment.speaker_label, (None, False))
         session.add(
             SourceSegment(
                 source_id=source_id,
                 seq=segment.seq,
                 speaker_label=segment.speaker_label,
+                speaker_role_id=role_id,
+                is_interviewer=is_interviewer,
                 start_ms=segment.start_ms,
                 end_ms=segment.end_ms,
                 page=segment.page,
                 section=segment.section,
                 text=segment.text,
+                instruction_like=segment.instruction_like,
             )
         )
     session.flush()

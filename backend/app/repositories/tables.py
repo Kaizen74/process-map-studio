@@ -15,7 +15,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text, false
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 ID = String(36)
@@ -97,6 +97,8 @@ class SourceSegment(Row):
     text: Mapped[str] = mapped_column(Text)
     corrected: Mapped[bool] = mapped_column(Boolean, default=False)
     instruction_like: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Added in migration 0002: the label was mapped to "Interviewer" (not a role).
+    is_interviewer: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class RedactionTerm(Row):
@@ -319,6 +321,8 @@ class Job(Row):
     progress: Mapped[float] = mapped_column(Float, default=0.0)
     message: Mapped[str] = mapped_column(Text, default="")
     error: Mapped[str] = mapped_column(Text, default="")
+    # Added in migration 0002: what the job works on (for "read_source", the source ID).
+    target_id: Mapped[str | None] = mapped_column(ID, nullable=True)
 
 
 class AiCall(Row):
