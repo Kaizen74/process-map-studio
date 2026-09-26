@@ -1,0 +1,9 @@
+[06:38] Interviewer: Walk me through the last flight you planned.
+[06:40] Priya Nair: First thing, I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.
+[07:55] Priya Nair: For widebodies, honestly only me and one other controller really know the configurations.
+[14:05] Priya Nair: Then I check special loads, dangerous goods and live animals, against the checklist. The notification from the cargo terminal often comes late.
+[16:22] Priya Nair: If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes. Then I re-plan.
+[21:50] Priya Nair: Ramp loads the aircraft, forty minutes or so, and sends back the loading report. It's still on paper and I re-key it. We sometimes wait fifteen minutes for it, and at peak we're short of containers.
+[27:15] Priya Nair: If the weight deviation is outside tolerance, it's the captain who decides, not us. The tolerance depends on the airline contract.
+[29:02] Priya Nair: The captain either accepts or asks for a re-trim. Five to fifteen minutes.
+[31:10] Priya Nair: Then I issue the final load sheet, around T-15.

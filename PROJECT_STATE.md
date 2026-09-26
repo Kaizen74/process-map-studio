@@ -1,22 +1,20 @@
 # Project State
-*Last updated: 2026-09-26 (session 3) — update after EVERY increment*
+*Last updated: 2026-09-26 (session 4) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P1 (engagements and documents) is complete on branch `claude/charming-davinci-sck1cq` (tag `phase-p1` created locally; see Known issues). Next: phase P2 (transcripts, speakers, redaction).
+Phase P1 is complete and merged into `main` (pull request #3). Phase P2 (transcripts, speakers, redaction) in progress.
 
-## This session (2026-09-26, session 3) — goal: Phase P1 (engagements and documents); likely continues next session
-- [x] Increment 1 — database foundation: SQLAlchemy 2 + Alembic (verify versions and licences), `app/db.py`, Appendix B enums in `domain/enums.py`, migration 0001 with every §3.5 table, `app/manage.py` reports real pending migrations and upgrades; tests (all tables created, downgrade removes only its own tables, Start backs up before an update)
-- [x] Increment 2 — engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
-- [x] Increment 3 — document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
-- [x] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
-- [x] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
-- [x] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup); engagement pages with the guided nav in the top bar (statuses from readiness) and "arrives in phase Pn" pages for later screens
-- [x] Increment 7 — UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview)
-- [x] Increment 8 — UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
-- [x] Increment 9 — browser checks (axe on the new screens, smoke path extended), GUIDE/README, close P1 (tag phase-p1, push, report card)
+## This session (2026-09-26, session 4) — goal: Phase P2 (transcripts, speakers, redaction)
+P1 was merged into `main` by Eric (pull request #3); the working branch was restarted from `main`.
+- [x] Increment 1 — transcript parsing and grounding basics: `parsing.parse_transcript_text` (`Speaker:` and `[mm:ss] Speaker:`), `parse_vtt`, `parse_srt`, `detect_speakers` (Word and PDF transcripts), `looks_like_name`; `grounding.detect_instruction_like`, `redact_text`, `scan_redaction_terms`; A.1 transcript fixture plus VTT, SRT, Word and PDF versions; tests (speakers and timestamps per format, A.3 §9 flagged)
+- [ ] Increment 2 — IN PROGRESS: jobs worker (contract first): migration 0002 (`source_segments.is_interviewer`), in-process worker thread, `GET /api/jobs/{id}`, uploads read as a job (all formats; instruction-like flag; name-like speaker labels become redaction terms), restart recovery and reading of P1 transcripts left pending
+- [ ] Increment 3 — speakers, redaction terms, corrections (contract first): `GET/PUT /api/sources/{sid}/speakers`, `GET/POST /api/engagements/{id}/redaction-terms`, `DELETE /api/redaction-terms/{tid}`, `PATCH /api/segments/{segid}`, `?raw=1`; names replaced in every other response (segments, sources, readiness); readiness ignores Interviewer
+- [ ] Increment 4 — UI: "Reading…" status with automatic refresh; speaker-mapping card; redaction list (owner-only places)
+- [ ] Increment 5 — UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
+- [ ] Increment 6 — browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -40,12 +38,13 @@ Phase P1 (engagements and documents) is complete on branch `claude/charming-davi
 - 2026-09-26 Setup screen: process scope (with chips for roles, industries and confidential terms), roles and lanes (add, edit, system role, reorder by drag or Move up/down) and a lane preview
 - 2026-09-26 Sources screen: drop zone and Choose files, registry table with editable kind, date, owner and controlled copy, status with reasons, delete with confirmation, full-width source viewer with anchors, and the "Before drafting" line
 - 2026-09-26 Phase P1 closed: latency gate on every non-AI endpoint (p95 4–70 ms against a 200 ms budget), axe on Home cards, Setup and Sources, smoke path through a whole engagement, GUIDE and README updated
+- 2026-09-26 Transcript reading: plain text, VTT, SRT, Word and PDF interviews become speaker turns with times (the PRD sample interview gives the same nine turns in every format); name-like speaker labels are recognised; names can be hidden (whole words, any case); instruction-like text such as the A.3 test line is flagged
 
 ## Not started yet
 - P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: phase P2 (PRD §6.3): `parsing` for TXT (`Speaker:` and `[mm:ss] Speaker:`), VTT, SRT, DOCX and PDF transcripts; speaker detection; `GET/PUT /sources/{sid}/speakers`; redaction terms (auto from name-like labels, manual); redacted text in all other responses; `grounding.detect_instruction_like`; the jobs worker. UI: speaker-mapping card, redaction list, correction editor, "instruction-like" tag. Break it into ~30-minute increments here before starting. Transcripts uploaded in P1 are stored with `text_status: "pending"`; P2 must read them (on upload and for files already stored).
+1. The next task is: the IN PROGRESS increment above. Phase P2 (PRD §6.3): `parsing` for TXT (`Speaker:` and `[mm:ss] Speaker:`), VTT, SRT, DOCX and PDF transcripts; speaker detection; `GET/PUT /sources/{sid}/speakers`; redaction terms (auto from name-like labels, manual); redacted text in all other responses; `grounding.detect_instruction_like`; the jobs worker. UI: speaker-mapping card, redaction list, correction editor, "instruction-like" tag. Break it into ~30-minute increments here before starting. Transcripts uploaded in P1 are stored with `text_status: "pending"`; P2 must read them (on upload and for files already stored).
 2. The relevant files are: CLAUDE.md, PRD_ProcessMapStudio.md §3.7 (S0, speaker mapping), §3.8 G10, §4 (Sources, speakers), §5.4 Sources, Appendix A.1 (the transcript fixture), §6.3; `backend/app/services/parsing.py`, `backend/app/actions/sources.py`, `backend/app/actions/readiness.py`, `frontend/src/features/sources/`, API_CONTRACT.md (add endpoints first).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Phase P2 must record "Interviewer" speaker mappings so readiness does not count them as unmapped (readiness counts speaker labels without a role).

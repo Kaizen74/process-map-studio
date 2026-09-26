@@ -90,37 +90,18 @@ def write_docx(name: str, blocks: list[tuple[str, object]]) -> None:
     document.save(HERE / name)
 
 
-def write_pdf(name: str) -> None:
-    """A small hand-built PDF: page 1 text, page 2 nearly empty (like a scan), page 3 text + image."""
-    width, height = 612, 792
+def text_stream(lines: list[str]) -> bytes:
+    parts = ["BT /F1 12 Tf 72 720 Td 16 TL"]
+    for line in lines:
+        safe = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+        parts.append(f"({safe}) Tj T*")
+    parts.append("ET")
+    return "\n".join(parts).encode("latin-1")
 
-    def text_stream(lines: list[str]) -> bytes:
-        parts = ["BT /F1 12 Tf 72 720 Td 16 TL"]
-        for line in lines:
-            safe = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-            parts.append(f"({safe}) Tj T*")
-        parts.append("ET")
-        return "\n".join(parts).encode("latin-1")
 
-    size = 64
-    pixels = bytearray()
-    for y in range(size):
-        for x in range(size):
-            pixels += bytes((83, 74, 183) if (x // 8 + y // 8) % 2 else (225, 245, 238))
-    image_data = zlib.compress(bytes(pixels))
-
-    page1 = text_stream(
-        [
-            "Loading manual extract (illustrative fixture)",
-            "Section 2 Loading completion",
-            "The loading report is signed by the Ramp Supervisor and returned to Load Control.",
-        ]
-    )
-    page2 = text_stream(["Page 2"])  # under 50 characters: treated as a scanned page
-    page3 = text_stream(
-        ["Section 3 Container build-up", "Figure 1 shows the unit load device layout."]
-    ) + (b"\nq 128 0 0 128 72 480 cm /Im1 Do Q")
-
+def pdf_bytes(pages: list[bytes], image: tuple[int, bytes] | None = None) -> bytes:
+    """A minimal PDF from page content streams; `image` = (page index, 64 px RGB data)."""
+    width, height, size = 612, 792, 64
     objects: list[bytes] = []
 
     def add(obj: bytes) -> int:
@@ -128,21 +109,20 @@ def write_pdf(name: str) -> None:
         return len(objects)
 
     font = add(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
-    image = add(
-        b"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB "
-        b"/BitsPerComponent 8 /Filter /FlateDecode /Length %d >>\nstream\n"
-        % (size, size, len(image_data))
-        + image_data
-        + b"\nendstream"
-    )
-    contents = [
-        add(b"<< /Length %d >>\nstream\n" % len(s) + s + b"\nendstream")
-        for s in (page1, page2, page3)
-    ]
+    image_id = 0
+    if image is not None:
+        image_id = add(
+            b"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB "
+            b"/BitsPerComponent 8 /Filter /FlateDecode /Length %d >>\nstream\n"
+            % (size, size, len(image[1]))
+            + image[1]
+            + b"\nendstream"
+        )
+    contents = [add(b"<< /Length %d >>\nstream\n" % len(s) + s + b"\nendstream") for s in pages]
     pages_id = len(objects) + len(contents) + 1
     page_ids = []
     for index, content in enumerate(contents):
-        xobject = b" /XObject << /Im1 %d 0 R >>" % image if index == 2 else b""
+        xobject = b" /XObject << /Im1 %d 0 R >>" % image_id if image and index == image[0] else b""
         page_ids.append(
             add(
                 b"<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %d %d] /Contents %d 0 R "
@@ -168,7 +148,123 @@ def write_pdf(name: str) -> None:
         catalog,
         xref,
     )
-    (HERE / name).write_bytes(bytes(out))
+    return bytes(out)
+
+
+def write_pdf(name: str) -> None:
+    """A small hand-built PDF: page 1 text, page 2 nearly empty (like a scan), page 3 text + image."""
+    size = 64
+    pixels = bytearray()
+    for y in range(size):
+        for x in range(size):
+            pixels += bytes((83, 74, 183) if (x // 8 + y // 8) % 2 else (225, 245, 238))
+    page1 = text_stream(
+        [
+            "Loading manual extract (illustrative fixture)",
+            "Section 2 Loading completion",
+            "The loading report is signed by the Ramp Supervisor and returned to Load Control.",
+        ]
+    )
+    page2 = text_stream(["Page 2"])  # under 50 characters: treated as a scanned page
+    page3 = text_stream(
+        ["Section 3 Container build-up", "Figure 1 shows the unit load device layout."]
+    ) + (b"\nq 128 0 0 128 72 480 cm /Im1 Do Q")
+    (HERE / name).write_bytes(pdf_bytes([page1, page2, page3], (2, zlib.compress(bytes(pixels)))))
+
+
+# PRD Appendix A.1, verbatim. "Priya Nair" is a fictional SME whose name must become a redaction
+# term and never appear in outputs or exports.
+TRANSCRIPT = [
+    ("06:38", "Interviewer", "Walk me through the last flight you planned."),
+    (
+        "06:40",
+        "Priya Nair",
+        "First thing, I build the preliminary load plan off the booked figures, usually around "
+        "T-120. Takes me about twenty minutes.",
+    ),
+    (
+        "07:55",
+        "Priya Nair",
+        "For widebodies, honestly only me and one other controller really know the configurations.",
+    ),
+    (
+        "14:05",
+        "Priya Nair",
+        "Then I check special loads, dangerous goods and live animals, against the checklist. The "
+        "notification from the cargo terminal often comes late.",
+    ),
+    (
+        "16:22",
+        "Priya Nair",
+        "If something can't be accepted, the airline decides what to offload. That takes anywhere "
+        "from fifteen to forty minutes. Then I re-plan.",
+    ),
+    (
+        "21:50",
+        "Priya Nair",
+        "Ramp loads the aircraft, forty minutes or so, and sends back the loading report. It's "
+        "still on paper and I re-key it. We sometimes wait fifteen minutes for it, and at peak "
+        "we're short of containers.",
+    ),
+    (
+        "27:15",
+        "Priya Nair",
+        "If the weight deviation is outside tolerance, it's the captain who decides, not us. The "
+        "tolerance depends on the airline contract.",
+    ),
+    (
+        "29:02",
+        "Priya Nair",
+        "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
+    ),
+    ("31:10", "Priya Nair", "Then I issue the final load sheet, around T-15."),
+]
+
+
+def _cue_time(stamp: str, offset_s: int, sep: str) -> str:
+    minutes, seconds = (int(x) for x in stamp.split(":"))
+    total = minutes * 60 + seconds + offset_s
+    return f"00:{total // 60:02d}:{total % 60:02d}{sep}000"
+
+
+def write_transcripts() -> None:
+    """The A.1 interview in the five transcript formats the app reads."""
+    lines = [f"[{t}] {who}: {text}" for t, who, text in TRANSCRIPT]
+    (HERE / "interview_transcript.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    starts = [t for t, _, _ in TRANSCRIPT]
+    vtt = ["WEBVTT", "", "NOTE Illustrative fixture (PRD Appendix A.1)", ""]
+    srt: list[str] = []
+    for index, (stamp, who, text) in enumerate(TRANSCRIPT):
+        following = starts[index + 1] if index + 1 < len(starts) else None
+        end_vtt = _cue_time(following, 0, ".") if following else _cue_time(stamp, 5, ".")
+        end_srt = _cue_time(following, 0, ",") if following else _cue_time(stamp, 5, ",")
+        vtt += [f"{_cue_time(stamp, 0, '.')} --> {end_vtt}", f"<v {who}>{text}</v>", ""]
+        srt += [str(index + 1), f"{_cue_time(stamp, 0, ',')} --> {end_srt}", f"{who}: {text}", ""]
+    (HERE / "interview_transcript.vtt").write_text("\n".join(vtt), encoding="utf-8")
+    (HERE / "interview_transcript.srt").write_text("\n".join(srt), encoding="utf-8")
+
+    write_docx(
+        "interview_transcript.docx",
+        [("heading", "Interview: load control (illustrative fixture)")]
+        + [("para", line) for line in lines],
+    )
+
+    # PDF transcripts wrap long turns onto continuation lines, as real exported PDFs do.
+    wrapped: list[str] = []
+    for line in lines:
+        words, current = line.split(" "), ""
+        for word in words:
+            if current and len(current) + 1 + len(word) > 80:
+                wrapped.append(current)
+                current = word
+            else:
+                current = f"{current} {word}" if current else word
+        wrapped.append(current)
+    half = len(wrapped) // 2
+    (HERE / "interview_transcript.pdf").write_bytes(
+        pdf_bytes([text_stream(wrapped[:half]), text_stream(wrapped[half:])])
+    )
 
 
 def main() -> None:
@@ -177,6 +273,7 @@ def main() -> None:
     write_docx("jd_load_control_lead.docx", JD_LEAD)
     write_docx("jd_load_controller.docx", JD_CONTROLLER)
     write_pdf("manual_extract.pdf")
+    write_transcripts()
     (HERE / "README.md").write_text(
         "# Illustrative load-control engagement (PRD Appendix A)\n\n"
         "ILLUSTRATIVE ONLY — not SATS data. Built by `make_fixtures.py`.\n\n"
@@ -184,7 +281,10 @@ def main() -> None:
         "`jd_load_controller.docx`: Appendix A.2 to A.4 (RP-02 §9 is the deliberate "
         "prompt-injection test line).\n"
         "- `manual_extract.pdf`: parser test document — page 1 text, page 2 nearly empty "
-        "(treated as a scanned page), page 3 text with one embedded image.\n",
+        "(treated as a scanned page), page 3 text with one embedded image.\n"
+        "- `interview_transcript.txt`: Appendix A.1 verbatim (`[mm:ss] Speaker: text`); the same "
+        "interview as `.vtt` (voice tags), `.srt`, `.docx` (one paragraph per turn) and `.pdf` "
+        '(two pages, long turns wrapped onto continuation lines). "Priya Nair" is fictional.\n',
         encoding="utf-8",
     )
 

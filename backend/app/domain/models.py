@@ -268,3 +268,18 @@ class Readiness(BaseModel):
     next_step: str | None
     missing: list[str]
     ready_to_draft: bool
+
+
+# --- Redaction (PRD §3.8 G10) -------------------------------------------------------------------
+
+
+class NameReplacement(BaseModel):
+    """A term to hide and what to show instead (a role name, "Interviewer" or "[name]")."""
+
+    term: str
+    replacement: str = "[name]"
+
+
+class Redacted(BaseModel):
+    text: str
+    hits: int
