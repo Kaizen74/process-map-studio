@@ -271,3 +271,20 @@ select.registry__input {
 .name-form__actions {
   grid-column: 1 / -1;
 }
+.passage__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+.passage__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-10);
+}
+.passage__row .passage__text {
+  flex: 1;
+}
+.passage__tags .chip {
+  white-space: normal;
+}

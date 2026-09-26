@@ -1,9 +1,12 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button, Chip, ErrorState, Skeleton } from "../../components/common";
 import { useSegments, useSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
 import { kindLabel, sourceStatus } from "../../lib/sources";
+import { CorrectionEditor } from "./CorrectionEditor";
+
+const INSTRUCTION_LIKE = "Instruction-like text. Treated as data and ignored.";
 
 /** Full-width source viewer (PRD §5.4 Sources, §5.7.8): anchored passages, roles never names. */
 export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose: () => void }) {
@@ -11,6 +14,7 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
   const segments = useSegments(sourceId);
   const titleId = useId();
   const region = useRef<HTMLElement>(null);
+  const [correcting, setCorrecting] = useState(false);
 
   useEffect(() => {
     region.current?.scrollIntoView?.({ block: "start" });
@@ -20,6 +24,7 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
   const pages = segments.data?.pages ?? [];
   const passages = pages.flatMap((p) => p.segments);
   const total = pages[0]?.total ?? 0;
+  const correctable = data?.kind === "interview_transcript" && data.text_status === "ready";
 
   return (
     <section ref={region} className="viewer" aria-labelledby={titleId}>
@@ -40,6 +45,9 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
             <Chip tone={sourceStatus(data).tone} dashed={sourceStatus(data).dashed}>
               {sourceStatus(data).label}
             </Chip>
+          )}
+          {correctable && (
+            <Button onClick={() => setCorrecting((c) => !c)}>{correcting ? "Done correcting" : "Correct the text"}</Button>
           )}
           <Button onClick={onClose}>Close viewer</Button>
         </div>
@@ -71,17 +79,18 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
           }}
         />
       )}
-      {segments.isPending && !segments.isError && (
+      {correcting && correctable && <CorrectionEditor sourceId={sourceId} />}
+      {!correcting && segments.isPending && !segments.isError && (
         <div className="stack" aria-busy="true">
           <Skeleton height="18px" />
           <Skeleton height="18px" width="80%" />
           <Skeleton height="18px" width="90%" />
         </div>
       )}
-      {segments.isSuccess && passages.length === 0 && (
+      {!correcting && segments.isSuccess && passages.length === 0 && (
         <p className="viewer__empty">No passages yet. They appear here once the file has been read.</p>
       )}
-      {passages.length > 0 && (
+      {!correcting && passages.length > 0 && (
         <ol className="passages" aria-label="Passages">
           {passages.map((segment) => (
             <li key={segment.id} className="passage">
@@ -89,12 +98,18 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
               <div className="passage__body">
                 {segment.speaker_role && <span className="passage__role">{segment.speaker_role}</span>}
                 <p className="passage__text">{segment.text}</p>
+                {(segment.instruction_like || segment.corrected) && (
+                  <div className="passage__tags">
+                    {segment.instruction_like && <Chip dashed>{INSTRUCTION_LIKE}</Chip>}
+                    {segment.corrected && <Chip>Corrected</Chip>}
+                  </div>
+                )}
               </div>
             </li>
           ))}
         </ol>
       )}
-      {segments.hasNextPage && (
+      {!correcting && segments.hasNextPage && (
         <Button onClick={() => void segments.fetchNextPage()}>
           {segments.isFetchingNextPage ? "Loading…" : `Show more passages (${passages.length} of ${total} shown)`}
         </Button>

@@ -13,8 +13,8 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - [x] Increment 2 — jobs worker (contract first): migration 0002 (`source_segments.is_interviewer`), in-process worker thread, `GET /api/jobs/{id}`, uploads read as a job (all formats; instruction-like flag; name-like speaker labels become redaction terms), restart recovery and reading of P1 transcripts left pending
 - [x] Increment 3 — speakers, redaction terms, corrections (contract first): `GET/PUT /api/sources/{sid}/speakers`, `GET/POST /api/engagements/{id}/redaction-terms`, `DELETE /api/redaction-terms/{tid}`, `PATCH /api/segments/{segid}`, `?raw=1`; names replaced in every other response (segments, sources, readiness); readiness ignores Interviewer
 - [x] Increment 4 — UI: "Reading…" status with automatic refresh; speaker-mapping card; redaction list (owner-only places)
-- [ ] Increment 5 — IN PROGRESS: UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
-- [ ] Increment 6 — browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
+- [x] Increment 5 — UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
+- [ ] Increment 6 — IN PROGRESS: browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -42,6 +42,7 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - 2026-09-26 Background reading: uploads answer at once and a worker reads each file ("Reading…" on screen until done); transcripts in every format become speaker turns; name-like speaker labels become hidden names; unfinished work and P1 transcripts are read when the app starts; database update 0002
 - 2026-09-26 Speakers and hidden names: map each speaker to a role or Interviewer, a list of names to hide (automatic from speaker names, plus Eric's own), passages can be corrected; names are hidden in every response except the three owner-only places
 - 2026-09-26 Sources screen: speaker-mapping card for an open transcript and the Names to hide list (both owner-only), readiness line moved to the bottom
+- 2026-09-26 Correction editor for transcripts (owner-only), and passages tagged "Instruction-like text. Treated as data and ignored." or "Corrected"
 
 ## Not started yet
 - P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
