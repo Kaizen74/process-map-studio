@@ -5,7 +5,7 @@
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P0a (foundations) is complete and tagged `phase-p0a`: the app installs, starts and shows a placeholder page, and nothing secret can reach GitHub. Next: phase P0b.
+Phase P0a (foundations) is complete (commit `b78f2d1`, tagged `phase-p0a` locally; the cloud session cannot push tags, see Known issues): the app installs, starts and shows a placeholder page, and nothing secret can reach GitHub. Next: phase P0b.
 
 ## This session (2026-09-26) — goal: Phase P0a, then stop and report
 - [x] Increment 1 — safety net and memory files (.gitignore, .env.example, scripts/check_secrets.py, .githooks/pre-commit, scripts/check_readme.py, CLAUDE.md, state files, README.md, first run_checks.sh, tests)
@@ -32,5 +32,6 @@ Phase P0a (foundations) is complete and tagged `phase-p0a`: the app installs, st
 5. Run `./run_checks.sh` first — all 11 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p0a` tag could not be pushed from the cloud session (tag pushes refused; branch pushes work). The phase's last commit is `b78f2d1` on branch `claude/charming-davinci-sck1cq`. Eric can add the tag on github.com (see DECISIONS.md). Future phase tags will need the same.
 - Work is pushed to branch `claude/charming-davinci-sck1cq`; `main` on GitHub still has only the PRD until Eric merges it (see DECISIONS.md).
 - The Windows launchers (`setup.bat`, `start.bat`, `run_checks.bat`) and the macOS `.command` files have been checked for content and line endings by tests, but not yet run on a real Windows PC or Mac; the P12 clean-clone rehearsal covers this, and Eric's first double-click is the earlier real test.
