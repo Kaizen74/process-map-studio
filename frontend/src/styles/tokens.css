@@ -24,6 +24,7 @@
   --highlight-bg: rgba(83, 74, 183, 0.16);
   --highlight-line: #534AB7;
   --on-ink: #FFFFFF;
+  --scrim: rgba(30, 29, 26, 0.32);
   /* font */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;

@@ -1,0 +1,272 @@
+/* Common components (PRD §5.11). Tokens only. */
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  min-height: var(--layout-hit-target);
+  padding: 0 var(--space-12);
+  border: var(--line-hairline) solid transparent;
+  border-radius: var(--radius-button);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn--primary {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.btn--secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+.btn--secondary:hover {
+  background: var(--surface-2);
+}
+.btn--danger {
+  background: transparent;
+  color: var(--danger-text);
+  padding: 0 var(--space-8);
+}
+.btn--link {
+  background: transparent;
+  color: var(--ink);
+  padding: 0 var(--space-4);
+  text-decoration: underline;
+  font-weight: var(--weight-regular);
+}
+.btn[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* Chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-8);
+  min-height: 20px;
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-label);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+.chip--good {
+  background: var(--approval-fill);
+  border-color: var(--approval-stroke);
+  color: var(--approval-stroke);
+}
+.chip--danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+.chip--decision {
+  background: var(--decision-fill);
+  border-color: var(--decision-stroke);
+  color: var(--decision-stroke);
+}
+.chip--dashed {
+  border-style: dashed;
+  border-color: var(--ink-4);
+}
+.chip--mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-section);
+  padding: var(--space-16);
+}
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+}
+.card__title {
+  font-size: var(--text-popover-title);
+}
+.card__description {
+  color: var(--ink-3);
+  margin-top: var(--space-4);
+}
+
+/* Segmented control */
+.segmented {
+  display: inline-flex;
+  gap: var(--space-4);
+  padding: 2px;
+  background: var(--surface-2);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-button);
+}
+.segmented__item {
+  min-height: 24px;
+  padding: 0 var(--space-10);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--text-label);
+  cursor: pointer;
+}
+.segmented__item[aria-checked="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+  box-shadow: var(--shadow-segment);
+}
+
+/* Skeleton: static blocks in the shape of the content (no shimmer: PRD §5.2 motion rule) */
+.skeleton {
+  display: block;
+  background: var(--border-soft);
+  border-radius: var(--radius-control);
+}
+
+/* Empty and error states */
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+  padding: var(--space-24);
+  border: var(--line-hairline) dashed var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.state-message--error {
+  border-style: solid;
+  border-color: var(--danger-text);
+  background: var(--danger-bg);
+}
+.state-message__title {
+  font-size: var(--text-popover-title);
+  color: var(--ink);
+}
+.state-message--error .state-message__title {
+  color: var(--danger-text);
+}
+.state-message__actions {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+}
+.state-message__note {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+
+/* State glyph */
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.glyph svg {
+  flex: none;
+}
+.glyph--danger-text {
+  color: var(--danger-text);
+}
+.glyph .tone-good {
+  fill: var(--approval-stroke);
+  stroke: var(--approval-stroke);
+}
+.glyph .tone-neutral {
+  fill: none;
+  stroke: var(--ink-4);
+}
+.glyph .tone-danger {
+  fill: none;
+  stroke: var(--constraint);
+}
+.glyph .no-fill {
+  fill: none;
+}
+
+/* Dialog and popover */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrim);
+  z-index: 100;
+}
+.dialog,
+.popover {
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-section);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-20);
+  animation: appear var(--motion-duration) var(--motion-easing);
+}
+.dialog {
+  width: min(480px, calc(100vw - var(--space-32)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.dialog__title,
+.popover__title {
+  font-size: var(--text-popover-title);
+}
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.popover-anchor {
+  position: relative;
+  display: inline-block;
+}
+.popover {
+  position: absolute;
+  top: calc(100% + var(--space-6));
+  width: 360px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.popover--start {
+  left: 0;
+}
+.popover--end {
+  right: 0;
+}
+.popover__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
