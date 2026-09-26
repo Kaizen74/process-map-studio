@@ -94,6 +94,17 @@ def configured_port(root: Path = ROOT) -> int:
     return int(value) if value.isdigit() else DEFAULT_PORT
 
 
+def data_dir(root: Path = ROOT) -> Path:
+    """The private data folder: DATA_DIR from the environment, else from .env, else ./data.
+
+    Relative paths are inside the app folder. The app is started with the same absolute path,
+    so the launcher's safety copy and the app always use the same database.
+    """
+    value = os.environ.get("DATA_DIR") or read_env_file(root / ".env").get("DATA_DIR") or "./data"
+    path = Path(value)
+    return (path if path.is_absolute() else root / path).resolve()
+
+
 def port_is_free(port: int, host: str = "127.0.0.1") -> bool:
     """True if the app's server could listen on this port now.
 

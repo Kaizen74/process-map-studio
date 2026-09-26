@@ -10,10 +10,14 @@ export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { StateGlyph, type StateGlyphProps } from "./StateGlyph";
 export {
   CheckboxField,
+  ChipField,
   SelectField,
+  TextAreaField,
   TextField,
   type CheckboxFieldProps,
+  type ChipFieldProps,
   type SelectFieldProps,
   type SelectOption,
+  type TextAreaFieldProps,
   type TextFieldProps,
 } from "./Field";

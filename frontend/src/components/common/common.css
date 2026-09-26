@@ -317,3 +317,43 @@
   margin: 2px 0 0;
   accent-color: var(--ink);
 }
+.field__control--area {
+  padding: var(--space-6) var(--space-10);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+.chip-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.chip-field__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+.chip-field__chip {
+  min-height: var(--layout-hit-target);
+  padding-right: 0;
+}
+.chip-field__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--layout-hit-target);
+  min-height: var(--layout-hit-target);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+.chip-field__remove:hover {
+  background: var(--surface);
+  color: var(--ink);
+}

@@ -24,6 +24,16 @@ describe("request()", () => {
     expect(init?.body).toBe('{"owner_name":"E"}');
   });
 
+  it("sends form data (file uploads) as is, letting the browser set the Content-Type", async () => {
+    respond(201, { id: "s1" });
+    const form = new FormData();
+    form.append("file", new Blob(["hello"]), "notes.txt");
+    await expect(request("/engagements/e1/sources", { method: "POST", body: form })).resolves.toEqual({ id: "s1" });
+    const [, init] = vi.mocked(fetch).mock.calls[0] ?? [];
+    expect(init?.body).toBe(form);
+    expect(init?.headers).not.toHaveProperty("Content-Type");
+  });
+
   it("turns the standard error shape into ApiError with Copy details", async () => {
     respond(409, {
       error: { code: "PUBLISH_BLOCKED", message: "Publishing is blocked.", details: { request_id: "fromBody0001" } },

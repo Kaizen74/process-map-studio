@@ -7,3 +7,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PLW1510"]
 
 [lint.isort]
 known-first-party = ["app", "tests"]
+
+[lint.per-file-ignores]
+# Fixture documents quote PRD Appendix A sentences verbatim; don't force-wrap them.
+"backend/tests/fixtures/**" = ["E501"]

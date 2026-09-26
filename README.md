@@ -2,9 +2,9 @@
 
 Turn SME interview transcripts and process documents into a clear, evidence-backed swimlane process map. Claude drafts the map; you review every step and publish it. Everything runs on your own computer.
 
-> Version 0.1.0 (build phase P0b: design system, app shell and Settings) · Last updated 2026-09-26 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
+> Version 0.1.0 (build phase P1: engagements and documents) · Last updated 2026-09-26 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
 
-**Build status:** the app is being built in phases. Right now it installs and starts, and you can save your name and your Claude API key and test the connection. Creating engagements arrives in phase P1. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
+**Build status:** the app is being built in phases. Right now it installs and starts; you can save your name and your Claude API key, create engagements, describe the process and its roles, and upload and read Word and PDF documents. Interview transcripts are read from phase P2 and drafting arrives in phase P3. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
 
 ## What you need
 - A Mac (macOS 13 or later) or a Windows 10/11 PC, with at least 8 GB of memory and 2 GB of free disk space.
@@ -85,6 +85,7 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 | The browser doesn't open after Start | Open your browser and go to http://127.0.0.1:8000 |
 | "Port already in use" | The app is already running. Look for its window, or restart your computer and start again |
 | "Your API key was rejected" | Copy a fresh key from platform.claude.com → paste it in Settings → Test connection |
+| A file won't upload ("reads .docx, .pdf, .txt, .vtt and .srt files" or "larger than 50 MB") | Save the file as Word (.docx) or PDF, or split a very large file into parts, then upload again |
 | Drafting stops with an error | Click **Copy details** on the error, open Claude Code in the app folder, paste the Bug-fix prompt from the PRD and the copied details |
 | "Web search isn't enabled for your Anthropic organisation" (external best-practice analysis) | Sign in to platform.claude.com, open your organisation's settings and enable web search (or ask your organisation admin). Then in the app: Settings → **Test web search** |
 | Anything else | Open Claude Code in the app folder and paste the Bug-fix prompt from section 8 of [PRD_ProcessMapStudio.md](PRD_ProcessMapStudio.md), describing what you clicked and what you saw |

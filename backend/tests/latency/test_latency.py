@@ -1,0 +1,123 @@
+"""Latency gate (PRD §6.2 item 5): p95 < 200 ms on every non-AI endpoint on the fixture data set.
+
+The data set is the PRD Appendix A load-control fixture: the two SOPs, both job descriptions and the
+illustrative manual extract (PDF), plus three roles. Each endpoint is called REPEATS times through
+the real app (TestClient, real SQLite file); the 95th percentile must stay under the budget.
+"""
+
+from __future__ import annotations
+
+import statistics
+import time
+from collections.abc import Callable
+from typing import Any
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.config import AppConfig
+from app.main import create_app
+from tests.paths import BACKEND_ROOT
+
+FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
+DOCUMENTS = [
+    "sop_LC-07.docx",
+    "sop_RP-02.docx",
+    "jd_load_control_lead.docx",
+    "jd_load_controller.docx",
+    "manual_extract.pdf",
+]
+BUDGET_MS = 200.0
+REPEATS = 30
+
+Loaded = tuple[TestClient, dict[str, str]]
+
+
+def p95_ms(call: Callable[[], Any]) -> float:
+    call()  # warm-up: first call pays for imports and caches
+    timings = []
+    for _ in range(REPEATS):
+        start = time.perf_counter()
+        call()
+        timings.append((time.perf_counter() - start) * 1000)
+    return statistics.quantiles(timings, n=20)[18]
+
+
+@pytest.fixture(scope="module")
+def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
+    from app.config import load_config
+
+    folder = tmp_path_factory.mktemp("latency")
+    config: AppConfig = load_config(
+        {"PMS_ENV_FILE": str(folder / ".env"), "MOCK_CLAUDE": "1", "DATA_DIR": str(folder / "data")}
+    )
+    client = TestClient(create_app(config))
+    eid = client.post("/api/engagements", json={"name": "Load control"}).json()["id"]
+    role = ""
+    for name in ("Load controller", "Load control lead", "Ramp agent"):
+        role = client.post(f"/api/engagements/{eid}/roles", json={"name": name}).json()["id"]
+    source = ""
+    for name in DOCUMENTS:
+        response = client.post(
+            f"/api/engagements/{eid}/sources",
+            files={"file": (name, (FIXTURES / name).read_bytes(), "application/octet-stream")},
+        )
+        assert response.status_code == 201
+        source = response.json()["id"]
+    return client, {"eid": eid, "role": role, "source": source}
+
+
+ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
+    ("GET", "/api/health", None),
+    ("GET", "/api/settings", None),
+    ("GET", "/api/engagements", None),
+    ("GET", "/api/engagements/{eid}", None),
+    ("PATCH", "/api/engagements/{eid}", {"trigger": "Flight scheduled"}),
+    ("GET", "/api/engagements/{eid}/readiness", None),
+    ("GET", "/api/engagements/{eid}/roles", None),
+    ("PATCH", "/api/roles/{role}", {"aliases": ["RA"]}),
+    ("GET", "/api/engagements/{eid}/sources", None),
+    ("GET", "/api/sources/{source}", None),
+    ("PATCH", "/api/sources/{source}", {"owner": "Load Control"}),
+    ("GET", "/api/sources/{source}/segments", None),
+]
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body"), ENDPOINTS, ids=[f"{m} {p}" for m, p, _ in ENDPOINTS]
+)
+def test_endpoint_p95_under_budget(
+    loaded: Loaded, method: str, path: str, body: dict[str, Any] | None
+) -> None:
+    client, ids = loaded
+    url = path.format(**ids)
+
+    def call() -> None:
+        response = client.request(method, url, json=body)
+        assert response.status_code == 200, response.text
+
+    p95 = p95_ms(call)
+    print(f"\n{method} {path}: p95 {p95:.1f} ms")  # shown with pytest -s
+    assert p95 < BUDGET_MS, f"{method} {path}: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
+@pytest.mark.parametrize("name", ["sop_LC-07.docx", "manual_extract.pdf"])
+def test_upload_and_read_p95_under_budget(loaded: Loaded, name: str) -> None:
+    """Uploading reads Word and PDF files in the request (P1), so it is held to the same budget."""
+    client, ids = loaded
+    data = (FIXTURES / name).read_bytes()
+    created: list[str] = []
+
+    def call() -> None:
+        response = client.post(
+            f"/api/engagements/{ids['eid']}/sources",
+            files={"file": (name, data, "application/octet-stream")},
+        )
+        assert response.status_code == 201
+        created.append(response.json()["id"])
+
+    p95 = p95_ms(call)
+    print(f"\nupload {name}: p95 {p95:.1f} ms")  # shown with pytest -s
+    for source_id in created:
+        client.delete(f"/api/sources/{source_id}")
+    assert p95 < BUDGET_MS, f"upload {name}: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"

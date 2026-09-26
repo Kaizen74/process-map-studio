@@ -16,7 +16,7 @@ from app.routers.http import STATUS_BY_KIND, unwrap
 
 
 def make_client(dist: Path) -> TestClient:
-    config = dataclasses.replace(load_config({}), frontend_dist=dist)
+    config = dataclasses.replace(load_config(), frontend_dist=dist)
     return TestClient(create_app(config), raise_server_exceptions=False)
 
 
@@ -89,7 +89,7 @@ def test_missing_build_explains_to_run_setup(tmp_path: Path) -> None:
 
 
 def test_unexpected_error_is_plain_and_hides_internals(built_dist: Path) -> None:
-    app = create_app(dataclasses.replace(load_config({}), frontend_dist=built_dist))
+    app = create_app(dataclasses.replace(load_config(), frontend_dist=built_dist))
     boom = APIRouter()
 
     @boom.get("/api/test-boom")
@@ -105,7 +105,7 @@ def test_unexpected_error_is_plain_and_hides_internals(built_dist: Path) -> None
 
 
 def test_validation_error_uses_standard_shape(built_dist: Path) -> None:
-    app = create_app(dataclasses.replace(load_config({}), frontend_dist=built_dist))
+    app = create_app(dataclasses.replace(load_config(), frontend_dist=built_dist))
     extra = APIRouter()
 
     @extra.get("/api/test-number")
@@ -120,7 +120,7 @@ def test_validation_error_uses_standard_shape(built_dist: Path) -> None:
 
 
 def test_unwrap_raises_api_error_rendered_in_standard_shape(built_dist: Path) -> None:
-    app = create_app(dataclasses.replace(load_config({}), frontend_dist=built_dist))
+    app = create_app(dataclasses.replace(load_config(), frontend_dist=built_dist))
     extra = APIRouter()
 
     @extra.get("/api/test-blocked")

@@ -6,6 +6,7 @@
 - domain/ imports no other app layer
 - repositories/ never import actions, pipeline, routers or services (dependency flows downward)
 - actions/ and pipeline/ never import routers
+- only repositories/ import the table definitions (app.repositories.tables)
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ FORBIDDEN: dict[str, tuple[str, ...]] = {
     "pipeline": ("app.routers",),
 }
 AI_SDK = "anthropic"
+TABLES = "app.repositories.tables"
 AI_SERVICE = "app.services.ai_service"
 
 
@@ -72,6 +74,8 @@ def find_violations(app_root: Path) -> list[str]:
                 violations.append(f"{module} imports {name}: only {AI_SERVICE} may use the SDK")
             if layer == "domain" and matches(name, "app") and not matches(name, "app.domain"):
                 violations.append(f"{module} imports {name}: domain imports no other app layer")
+            if matches(name, TABLES) and layer != "repositories":
+                violations.append(f"{module} imports {name}: only repositories use the tables")
             for forbidden in FORBIDDEN.get(layer, ()):
                 if matches(name, forbidden):
                     violations.append(f"{module} imports {name}: {layer} must not use {forbidden}")
@@ -108,6 +112,8 @@ def write(root: Path, rel: str, source: str) -> None:
         ("domain/enums.py", "from ..actions import x\n", "domain imports no other"),
         ("repositories/jobs.py", "from app.actions import publish\n", "must not use app.actions"),
         ("actions/publish.py", "from app.routers import review\n", "must not use app.routers"),
+        ("actions/review.py", "from app.repositories.tables import Element\n", "only repositories"),
+        ("services/lint.py", "from app.repositories import tables\n", "only repositories"),
     ],
 )
 def test_checker_catches_violations(tmp_path: Path, rel: str, source: str, expected: str) -> None:

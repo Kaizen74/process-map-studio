@@ -12,10 +12,12 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse, Response
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app import db
 from app.config import AppConfig, load_config
-from app.routers import settings, system
+from app.routers import engagements, readiness, settings, sources, system
 from app.routers.http import ApiError, err_response, error_response
 
 NOT_BUILT_PAGE = """<!doctype html>
@@ -30,13 +32,26 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     config = config or load_config()
     app = FastAPI(title="Process Map Studio", version=config.app_version)
     app.state.config = config
+    app.state.sessions = _open_database(config)
 
     app.include_router(system.router)
     app.include_router(settings.router)
+    app.include_router(engagements.router)
+    app.include_router(sources.router)
+    app.include_router(readiness.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
     return app
+
+
+def _open_database(config: AppConfig) -> sessionmaker[Session]:
+    """Open data/app.db. A brand-new install gets its tables here; an existing database is only
+    ever updated by Start (scripts/start.py), which backs it up first (PRD §3.1)."""
+    path = db.db_path(config.data_dir)
+    if not path.exists():
+        db.upgrade(path)
+    return db.session_factory(db.make_engine(path))
 
 
 def request_id_of(request: Request) -> str:

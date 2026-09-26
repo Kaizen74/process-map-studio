@@ -29,6 +29,7 @@ from launcher_common import (
     NOT_SET_UP,
     ROOT,
     configured_port,
+    data_dir,
     exit_with,
     port_is_free,
     say,
@@ -52,10 +53,16 @@ def backup_database(data_dir: Path, now: dt.datetime) -> Path | None:
     return target
 
 
-def pending_migrations(python: Path) -> int:
+def backend_env(data: Path) -> dict[str, str]:
+    """Environment for the backend: the same data folder the launcher backs up."""
+    return {**os.environ, "DATA_DIR": str(data)}
+
+
+def pending_migrations(python: Path, data: Path) -> int:
     result = subprocess.run(
         [str(python), "-m", "app.manage", "pending-migrations"],
         cwd=BACKEND,
+        env=backend_env(data),
         capture_output=True,
         text=True,
         check=False,
@@ -68,14 +75,19 @@ def pending_migrations(python: Path) -> int:
     return int(result.stdout.strip() or "0")
 
 
-def apply_database_updates(python: Path, data_dir: Path) -> None:
-    if pending_migrations(python) == 0:
+def apply_database_updates(python: Path, data: Path) -> None:
+    if pending_migrations(python, data) == 0:
         return
-    backup = backup_database(data_dir, dt.datetime.now())
+    backup = backup_database(data, dt.datetime.now())
     if backup:
-        say(f"Saved a safety copy of your database: {backup.relative_to(ROOT)}")
+        say(f"Saved a safety copy of your database: {backup}")
     say("Applying a database update...")
-    result = subprocess.run([str(python), "-m", "app.manage", "upgrade"], cwd=BACKEND, check=False)
+    result = subprocess.run(
+        [str(python), "-m", "app.manage", "upgrade"],
+        cwd=BACKEND,
+        env=backend_env(data),
+        check=False,
+    )
     if result.returncode != 0:
         exit_with(
             "The database update did not finish. Your safety copy is in data/backups. "
@@ -124,13 +136,13 @@ def main(argv: list[str] | None = None) -> int:
             "already be running; look for its window, or restart your computer and start again."
         )
 
-    data_dir = ROOT / "data"
-    data_dir.mkdir(exist_ok=True)
-    apply_database_updates(python, data_dir)
+    data = data_dir(ROOT)
+    data.mkdir(parents=True, exist_ok=True)
+    apply_database_updates(python, data)
 
     url = f"http://127.0.0.1:{port}"
     say("Starting Process Map Studio...")
-    env = {**os.environ, "APP_PORT": str(port)}
+    env = {**backend_env(data), "APP_PORT": str(port)}
     server = subprocess.Popen(
         [
             str(python),

@@ -44,3 +44,142 @@ export interface ModelUpdate {
   effort: string;
   verifier_enabled: boolean;
 }
+
+export interface ScopeFields {
+  name?: string;
+  process_name?: string;
+  trigger?: string;
+  end_point?: string;
+  in_scope_roles?: string[];
+  out_of_scope?: string;
+  process_kpi?: string;
+  industry?: string;
+  adjacent_industries?: string[];
+  confidential_terms?: string[];
+}
+
+export interface Engagement {
+  id: string;
+  name: string;
+  process_name: string;
+  trigger: string;
+  end_point: string;
+  in_scope_roles: string[];
+  out_of_scope: string;
+  process_kpi: string;
+  industry: string;
+  adjacent_industries: string[];
+  confidential_terms: string[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EngagementSummary extends Engagement {
+  latest_version: { label: string; state: string } | null;
+  review_progress: { reviewed: number; total: number };
+  sources_count: number;
+}
+
+export type NavKey =
+  | "setup"
+  | "sources"
+  | "draft"
+  | "review"
+  | "published"
+  | "matrix"
+  | "gap_analysis"
+  | "registers"
+  | "leadership"
+  | "exports";
+
+export type NavState = "done" | "attention" | "not_started";
+
+export interface Readiness {
+  key_set: boolean;
+  transcripts_ready: boolean;
+  documents_ready: boolean;
+  speakers_unmapped: number;
+  draft_exists: boolean;
+  blockers_count: number;
+  nav: Record<NavKey, NavState>;
+  nav_counts: Partial<Record<NavKey, number>>;
+  next_step: NavKey | null;
+  missing: string[];
+  ready_to_draft: boolean;
+}
+
+export interface Role {
+  id: string;
+  engagement_id: string;
+  name: string;
+  aliases: string[];
+  is_system: boolean;
+  lane_order: number | null;
+}
+
+export interface RoleCreate {
+  name: string;
+  aliases?: string[];
+  is_system?: boolean;
+}
+
+export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system">> & { lane_order?: number };
+
+export type SourceKind =
+  | "interview_transcript"
+  | "sop"
+  | "manual"
+  | "job_description"
+  | "executed_artefact"
+  | "other";
+
+export interface Source {
+  id: string;
+  engagement_id: string;
+  kind: SourceKind | string;
+  filename: string;
+  format: string;
+  mime: string;
+  version_date: string;
+  owner: string;
+  controlled_copy: boolean;
+  text_status: "pending" | "ready" | "failed" | string;
+  error: string;
+  segment_count: number;
+  ocr_pages: number[];
+  suggested_images: number;
+  created_at: string;
+}
+
+export interface SourcePatch {
+  kind?: string;
+  version_date?: string;
+  owner?: string;
+  controlled_copy?: boolean;
+}
+
+export interface SourceUpload {
+  file: File;
+  kind?: string;
+}
+
+export interface Segment {
+  id: string;
+  seq: number;
+  anchor: string;
+  page: number | null;
+  section: string;
+  speaker_role: string | null;
+  text: string;
+  cited: boolean;
+  instruction_like: boolean;
+}
+
+export interface SegmentPage {
+  segments: Segment[];
+  total: number;
+  page: number;
+  pages: number;
+  coverage_pct: number | null;
+}
