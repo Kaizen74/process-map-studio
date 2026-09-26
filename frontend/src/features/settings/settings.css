@@ -1,0 +1,63 @@
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--space-20);
+  align-items: start;
+}
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.key-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--ink-2);
+}
+.key-status__mask {
+  font-family: var(--font-mono);
+  font-size: var(--text-card-value);
+  letter-spacing: 0.04em;
+}
+.results {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-10) var(--space-12);
+  background: var(--surface-2);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.results__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.results__message {
+  color: var(--ink-2);
+}
+.danger-note {
+  font-size: var(--text-label);
+  color: var(--danger-text);
+}
+.about {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-6) var(--space-16);
+  margin: 0;
+}
+.about dt {
+  color: var(--ink-3);
+}
+.about dd {
+  margin: 0;
+  font-family: var(--font-mono);
+}

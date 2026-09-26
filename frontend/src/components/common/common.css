@@ -270,3 +270,50 @@
     opacity: 1;
   }
 }
+
+/* Form fields: label above, help below, error in danger text with a coral border (PRD §5.7.6) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.field__label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-2);
+}
+.field__control {
+  min-height: var(--layout-hit-target);
+  padding: var(--space-4) var(--space-10);
+  border: var(--line-hairline) solid var(--border-input);
+  border-radius: var(--radius-node);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-body);
+}
+.field__control--mono {
+  font-family: var(--font-mono);
+}
+.field--invalid .field__control {
+  border-color: var(--constraint);
+  border-width: var(--line-outline);
+}
+.field__help {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.field__error {
+  font-size: var(--text-label);
+  color: var(--danger-text);
+}
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--ink);
+}
