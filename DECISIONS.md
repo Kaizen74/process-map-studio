@@ -1,0 +1,16 @@
+# Decisions Log
+One line per decision, including every library and SDK method verified. Settled decisions stay settled; a reversal needs new information and a new line.
+
+| Date | Decision | Why | Alternative rejected |
+|---|---|---|---|
+| 2026-09-26 | Designated repository is `github.com/Kaizen74/process-map-studio`; it was public at kickoff; Eric made it private before the first push (confirmed via the GitHub API, `private: true`) | PRD constraint 21 requires a private repository | Pushing to the public repository; creating a second repository |
+| 2026-09-26 | This cloud build session pushes to branch `claude/charming-davinci-sck1cq` instead of `main`; Eric merges into `main` when he chooses (PRD §3.10 says push to `origin main`) | The cloud environment only allows pushing to its assigned branch | Pushing straight to `main` (not permitted in this environment) |
+| 2026-09-26 | The mock-up `docs/design/Process Map Studio - Review Workbench.html` is treated as the PRD's optional reference mock-up (the PRD names it `Process Map Studio.dc.html`) | Same purpose, different file name; visual reference only, code never copied (PRD §5.1) | Ignoring it |
+| 2026-09-26 | CLAUDE.md is generated from PRD Appendix C with §2 items 1–22 copied by script, so the text is word for word | Guarantees an exact copy | Retyping by hand (risk of drift) |
+| 2026-09-26 | Secret check flags `sk-ant-` followed by 16+ key characters, any tracked or staged path under root `data/`, and any `.env`/`.env.*` file except `.env.example`; `--all` also scans file names in the whole history | Anthropic keys start with `sk-ant-`; history scan backs acceptance criterion 37 | Scanning only the working folder (misses what is actually committed) |
+| 2026-09-26 | Secret check reads the staged (index) version of each file via `git show :path` | Checks exactly what would be committed, not the working copy | Reading files from disk |
+| 2026-09-26 | README check keeps the Appendix D heading list in the script; a unit test compares it with the PRD template | Check works even without the PRD; the test catches drift | Parsing the PRD at every run |
+| 2026-09-26 | Python packages pinned to exact versions checked on PyPI today: fastapi 0.141.1, uvicorn 0.54.0 (runtime); pytest 9.1.1, pytest-cov 7.1.0, ruff 0.16.9, mypy 2.3.1, httpx 0.28.1 (checks). Installed versions confirmed with `pip show`; later phases add their own packages when needed | Reproducible installs; scope lock (only what P0a needs) | Unpinned ranges; installing every future dependency now |
+| 2026-09-26 | Licences of every installed Python package checked (all MIT, BSD, Apache-2.0, PSF or MPL-2.0); a unit test now fails if any GPL, LGPL or AGPL package is installed | Constraint 19, enforced automatically | Checking by hand once |
+| 2026-09-26 | One `ruff.toml` at the repository root governs backend and scripts; the rule `PLW1510` (explicit `check=` on subprocess calls) is on | One style for the whole codebase | Separate settings per folder (they drifted in the first run) |
+| 2026-09-26 | `run_checks.sh` runs every check even after a failure, prints one PASS/FAIL line each, then "X of Y checks passing", and exits non-zero on any failure | Eric can read it; one failure doesn't hide others | Stopping at the first failure |

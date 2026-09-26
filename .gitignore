@@ -1,0 +1,35 @@
+# Secrets: the API key lives only in .env on this computer (PRD constraint 12)
+.env
+.env.*
+!.env.example
+
+# Your confidential work: database, transcripts, documents, images, backups
+data/
+/data/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Node and build output
+node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+*.tsbuildinfo
+
+# Operating system and editor clutter
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
