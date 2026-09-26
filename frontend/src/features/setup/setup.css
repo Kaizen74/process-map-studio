@@ -1,0 +1,140 @@
+/* Setup screen (PRD §5.4). Tokens only. */
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: var(--space-20);
+  align-items: start;
+}
+.setup-form,
+.role-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+.setup-form__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-14);
+  align-items: start;
+}
+.setup-form__actions {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.role-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.role-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: start;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-12);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  background: var(--surface);
+}
+.role-row:first-child {
+  border-top: none;
+}
+.role-row:has(.role-form) {
+  display: block;
+}
+.role-row--dragging {
+  background: var(--surface-2);
+  outline: var(--line-outline) dashed var(--border-strong);
+}
+.role-row__handle {
+  cursor: grab;
+  color: var(--ink-3);
+  line-height: var(--layout-hit-target);
+  letter-spacing: -0.2em;
+}
+.role-row__lane {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+  line-height: var(--layout-hit-target);
+}
+.role-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+.role-row__name {
+  font-size: var(--text-card-value);
+  color: var(--ink);
+  line-height: var(--layout-hit-target);
+}
+.role-row__aliases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.role-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+.role-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding-top: var(--space-12);
+  border-top: var(--line-hairline) solid var(--border-soft);
+}
+.role-add__title {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+
+/* Mini lane preview: one band per lane, in map order. System lanes use a dashed edge and a tag. */
+.lane-preview {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.lane-preview__caption {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.lane-preview__lanes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+.lane-preview__lane {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 24px;
+  padding: 0 var(--space-10);
+  background: var(--surface-2);
+  border-top: var(--line-hairline) solid var(--border);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.lane-preview__lane:first-child {
+  border-top: none;
+}
+.lane-preview__lane--system {
+  background: var(--surface);
+  border-top-style: dashed;
+}
+.lane-preview__tag {
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+}

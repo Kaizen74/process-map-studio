@@ -12,7 +12,7 @@ export interface EngagementStep {
 }
 
 export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
-  { key: "setup", label: "Setup", slug: "setup", arrives: "P1" },
+  { key: "setup", label: "Setup", slug: "setup" },
   { key: "sources", label: "Sources", slug: "sources", arrives: "P1" },
   { key: "draft", label: "Draft", slug: "draft", arrives: "P3" },
   { key: "review", label: "Review", slug: "review", arrives: "P5" },

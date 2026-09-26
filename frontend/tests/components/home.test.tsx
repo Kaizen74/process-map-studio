@@ -144,6 +144,7 @@ describe("Engagement cards", () => {
     renderApp("/");
     await screen.findByText("No draft yet");
     expect(screen.getByText(/1 source · last updated/)).toBeInTheDocument();
+    expect(screen.getByText("Nothing to review until the first draft.")).toBeInTheDocument();
   });
 
   it("have no serious or critical accessibility violations", async () => {

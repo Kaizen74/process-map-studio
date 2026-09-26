@@ -32,15 +32,19 @@ export function EngagementCard({ engagement, onDelete }: EngagementCardProps) {
       {engagement.process_name && engagement.process_name !== engagement.name && (
         <p className="engagement-card__process">{engagement.process_name}</p>
       )}
-      <div className="engagement-card__progress">
-        <div className="progress-bar" aria-hidden="true">
-          <div className="progress-bar__fill" style={{ width: `${percent}%` }} />
+      {progress.total > 0 ? (
+        <div className="engagement-card__progress">
+          <div className="progress-bar" aria-hidden="true">
+            <div className="progress-bar__fill" style={{ width: `${percent}%` }} />
+          </div>
+          <span className="engagement-card__meta">
+            <span className="mono">{progress.reviewed}</span> of <span className="mono">{progress.total}</span>{" "}
+            reviewed
+          </span>
         </div>
-        <span className="engagement-card__meta">
-          <span className="mono">{progress.reviewed}</span> of <span className="mono">{progress.total}</span>{" "}
-          reviewed
-        </span>
-      </div>
+      ) : (
+        <span className="engagement-card__meta">Nothing to review until the first draft.</span>
+      )}
       <div className="engagement-card__footer">
         <span className="engagement-card__meta">
           {plural(engagement.sources_count, "source")} · last updated{" "}

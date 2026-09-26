@@ -1,4 +1,4 @@
-import { useId, type ChangeEvent, type ReactNode } from "react";
+import { useId, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
 import "./common.css";
 
 interface FieldShellProps {
@@ -144,5 +144,100 @@ export function CheckboxField({ label, checked, onChange, help }: CheckboxFieldP
         </span>
       )}
     </div>
+  );
+}
+
+export interface TextAreaFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  help?: ReactNode;
+  error?: string | null;
+  rows?: number;
+}
+
+/** A labelled multi-line text box. */
+export function TextAreaField({ label, value, onChange, help, error, rows = 3 }: TextAreaFieldProps) {
+  return (
+    <FieldShell label={label} help={help} error={error}>
+      {({ control, describedBy }) => (
+        <textarea
+          id={control}
+          className="field__control field__control--area"
+          value={value}
+          rows={rows}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )}
+    </FieldShell>
+  );
+}
+
+export interface ChipFieldProps {
+  label: string;
+  values: readonly string[];
+  onChange: (values: string[]) => void;
+  help?: ReactNode;
+  error?: string | null;
+  placeholder?: string;
+}
+
+/**
+ * A list of short entries shown as chips. Type and press Enter (or a comma) to add; each chip has
+ * its own Remove button. Duplicates (ignoring case) and blank entries are ignored.
+ */
+export function ChipField({ label, values, onChange, help, error, placeholder }: ChipFieldProps) {
+  const [draft, setDraft] = useState("");
+
+  function add() {
+    const item = draft.replace(/\s+/g, " ").trim();
+    setDraft("");
+    if (!item || values.some((v) => v.toLowerCase() === item.toLowerCase())) return;
+    onChange([...values, item]);
+  }
+
+  return (
+    <FieldShell label={label} help={help} error={error}>
+      {({ control, describedBy }) => (
+        <div className="chip-field">
+          {values.length > 0 && (
+            <ul className="chip-field__list" aria-label={`${label} added`}>
+              {values.map((value) => (
+                <li key={value} className="chip chip--neutral chip-field__chip">
+                  <span>{value}</span>
+                  <button
+                    type="button"
+                    className="chip-field__remove"
+                    aria-label={`Remove ${value}`}
+                    onClick={() => onChange(values.filter((v) => v !== value))}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <input
+            id={control}
+            className="field__control"
+            value={draft}
+            placeholder={placeholder ?? "Type and press Enter"}
+            autoComplete="off"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            onChange={(event) => setDraft(event.target.value.replace(/,/g, ""))}
+            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                add();
+              }
+            }}
+            onBlur={add}
+          />
+        </div>
+      )}
+    </FieldShell>
   );
 }

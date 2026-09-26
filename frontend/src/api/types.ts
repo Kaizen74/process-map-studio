@@ -108,3 +108,20 @@ export interface Readiness {
   missing: string[];
   ready_to_draft: boolean;
 }
+
+export interface Role {
+  id: string;
+  engagement_id: string;
+  name: string;
+  aliases: string[];
+  is_system: boolean;
+  lane_order: number | null;
+}
+
+export interface RoleCreate {
+  name: string;
+  aliases?: string[];
+  is_system?: boolean;
+}
+
+export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system">> & { lane_order?: number };

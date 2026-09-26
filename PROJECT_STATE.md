@@ -14,8 +14,8 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - [x] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
 - [x] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
 - [x] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup); engagement pages with the guided nav in the top bar (statuses from readiness) and "arrives in phase Pn" pages for later screens
-- [ ] Increment 7 — IN PROGRESS: UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview)
-- [ ] Increment 8 — UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
+- [x] Increment 7 — UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview)
+- [ ] Increment 8 — IN PROGRESS: UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
 - [ ] Increment 9 — browser checks (axe on the new screens, smoke path extended), GUIDE/README, close P1 (tag phase-p1, push, report card)
 
 ## Done (all sessions)
@@ -37,6 +37,7 @@ Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1
 - 2026-09-26 Sources backend: upload Word/PDF/transcript files (up to 50 MB), read Word and PDF on upload, registry list/edit/delete, paged passages with anchors, PDF images saved as suggestions
 - 2026-09-26 Readiness: one endpoint tells each screen what is done, what needs attention (with a count), the next recommended step and exactly what the draft still needs
 - 2026-09-26 Home: engagement cards (version, review progress, sources, last updated), New engagement opens Setup, Delete with a confirmation naming what goes; opening an engagement goes to its next step, with the guided path in the top bar
+- 2026-09-26 Setup screen: process scope (with chips for roles, industries and confidential terms), roles and lanes (add, edit, system role, reorder by drag or Move up/down) and a lane preview
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

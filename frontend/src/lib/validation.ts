@@ -23,3 +23,25 @@ export function validateEngagementName(value: string): string | null {
   if (!name || name.length > 120 || /[\r\n]/.test(name)) return ENGAGEMENT_NAME_MESSAGE;
   return null;
 }
+
+// Scope-card rules (API_CONTRACT.md → Engagements): the same limits the server applies.
+export const TEXT_LIMIT = 2000;
+export const LIST_LIMIT = 50;
+export const ITEM_LIMIT = 120;
+
+export function validateScopeText(label: string, value: string): string | null {
+  return value.trim().length > TEXT_LIMIT ? `${label}: at most ${TEXT_LIMIT} characters.` : null;
+}
+
+export function validateScopeList(label: string, values: readonly string[]): string | null {
+  if (values.length > LIST_LIMIT) return `${label}: at most ${LIST_LIMIT} entries.`;
+  if (values.some((v) => v.length > ITEM_LIMIT)) return `${label}: each entry must be one line of up to ${ITEM_LIMIT} characters.`;
+  return null;
+}
+
+export const ROLE_NAME_MESSAGE = "Please give the role a name (up to 80 characters).";
+
+export function validateRoleName(value: string): string | null {
+  const name = value.trim();
+  return !name || name.length > 80 || /[\r\n]/.test(name) ? ROLE_NAME_MESSAGE : null;
+}
