@@ -1,21 +1,22 @@
 # Project State
-*Last updated: 2026-09-26 (session 2) — update after EVERY increment*
+*Last updated: 2026-09-26 (session 3) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P0b (design system, app shell, Settings) is complete (tag `phase-p0b` created locally; tags can't be pushed from the cloud session). Next: phase P1 (engagements and documents).
+Phase P0b is complete and merged into `main` by Eric (pull request #2). Phase P1 (engagements and documents) in progress.
 
-## This session (2026-09-26, session 2) — goal: Phase P0b (design system, shell, Settings), then stop and report
-- [x] Increment 1 — design tokens (`shared/design_tokens.json` → `frontend/scripts/generate-tokens.mjs` → `src/styles/tokens.css`), self-hosted IBM Plex Sans/Mono, base styles; token-sync, no-raw-colour and contrast tests
-- [x] Increment 2 — common components (§5.11): Button, Chip, Card, SegmentedControl, Skeleton, EmptyState, ErrorState, StateGlyph, Dialog, Popover; component tests
-- [x] Increment 3 — Settings backend part 1 (contract first): `services/settings_store.py` (read_env, write_env_key, mask_key), settings actions and router (GET /settings, PUT /settings/profile, PUT /settings/key), request IDs; tests that the key is never unmasked in any response or log
-- [x] Increment 4 — Settings backend part 2: `services/ai_service.py` Models API (list_models, get_model; mock mode) after verifying the anthropic SDK; POST /settings/test-connection, PUT /settings/model, GET /settings/models; tests for every test-connection path
-- [x] Increment 5 — app shell and Home: TanStack Query, routing, `src/api/request.ts`, hooks, TopBar, EngagementNav, Toast, error pattern; Home with the first-run checklist
-- [x] Increment 6 — Settings screen: your name, Claude connection (masked key, Save, Test connection), model, about
-- [x] Increment 7 — browser checks: Playwright + axe-core on Home and Settings (0 serious/critical), a Settings smoke path; added to run_checks.sh
-- [x] Increment 8 — close P0b: README (step 5 now works), GUIDE.md, state files, tag phase-p0b, push, report card
+## This session (2026-09-26, session 3) — goal: Phase P1 (engagements and documents); likely continues next session
+- [ ] Increment 1 — IN PROGRESS: database foundation: SQLAlchemy 2 + Alembic (verify versions and licences), `app/db.py`, Appendix B enums in `domain/enums.py`, migration 0001 with every §3.5 table, `app/manage.py` reports real pending migrations and upgrades; tests (all tables created, downgrade removes only its own tables, Start backs up before an update)
+- [ ] Increment 2 — engagements backend (contract first): repositories, engagement and scope-card actions (incl. industry, adjacent industries, confidential terms), roles and lane order, DELETE removes files; list summary fields; audit rows for model changes
+- [ ] Increment 3 — document parsing service: `parsing.parse_docx` (paragraphs, headings as sections, anchors), `parse_pdf_text` (text per page, anchors, short pages flagged for OCR in P3), `extract_pdf_images` (suggestions with page numbers); A.2–A.4 fixture documents; parser anchor tests
+- [ ] Increment 4 — sources backend (contract first): upload (multipart) into `data/sources/`, registry (list, patch metadata, delete), parse on upload, suggested images stored in `data/images/`, GET segments with anchors
+- [ ] Increment 5 — readiness endpoint and guided-nav status logic (done / attention / not started, next step, plain "missing" list)
+- [ ] Increment 6 — UI: Home engagement cards and New engagement (creates it and opens Setup)
+- [ ] Increment 7 — UI: Setup screen (process scope card with chips, roles and lanes with lane order, mini lane preview) and the guided engagement nav in the top bar
+- [ ] Increment 8 — UI: Sources screen (drop zone, registry table with kind select and status chips, full-width source viewer)
+- [ ] Increment 9 — browser checks (axe on the new screens, smoke path extended), GUIDE/README, close P1 (tag phase-p1, push, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -35,7 +36,7 @@ Phase P0b (design system, app shell, Settings) is complete (tag `phase-p0b` crea
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: Phase P1 (PRD §6.3): migration 0001 creating all §3.5 tables (Alembic; `app/manage.py` then reports real pending migrations so Start backs up before updating), repositories, engagement and scope-card actions, readiness endpoint, `parsing` for DOCX and PDF text with anchors, PDF image suggestions; UI: Engagements home cards, Setup screen, Sources screen (drop zone, registry, full-width source viewer), guided nav status (the `EngagementNav` component already exists). Also in P1: audit rows for model changes (logged only, for now) and the AI usage card once `ai_calls` exists. Break it into ~30-minute increments here before starting; P1 will likely need two sessions.
+1. The next task is: the IN PROGRESS increment above. Phase P1 (PRD §6.3): migration 0001 creating all §3.5 tables (Alembic; `app/manage.py` then reports real pending migrations so Start backs up before updating), repositories, engagement and scope-card actions, readiness endpoint, `parsing` for DOCX and PDF text with anchors, PDF image suggestions; UI: Engagements home cards, Setup screen, Sources screen (drop zone, registry, full-width source viewer), guided nav status (the `EngagementNav` component already exists). Also in P1: audit rows for model changes (logged only, for now) and the AI usage card once `ai_calls` exists. Break it into ~30-minute increments here before starting; P1 will likely need two sessions.
 2. The relevant files are: CLAUDE.md, PRD_ProcessMapStudio.md §3.3, §3.5, §4 (Engagements, Sources, Readiness), §5.4 (Home, Setup, Sources), §6.3; `backend/app/manage.py`, `backend/app/db.py`, `frontend/src/features/home/`, `frontend/src/components/shell/EngagementNav.tsx`, API_CONTRACT.md (add endpoints first).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
@@ -43,8 +44,8 @@ Phase P0b (design system, app shell, Settings) is complete (tag `phase-p0b` crea
 6. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
-- The `phase-p0b` tag, like `phase-p0a`, exists only in the cloud session; Eric can add it on github.com (Releases → Create a new release → tag `phase-p0b`, target the branch). Not needed for anything to work.
+- The `phase-p0b` tag was never pushed (cloud sessions can't push tags); P0b's last commit is `0c2c0e5`, merged into `main` in pull request #2.
 - Model changes are written to the app log, not yet to an audit table (arrives with the database in P1).
 - The `phase-p0a` tag was never pushed (cloud sessions can't push tags); P0a's last commit is `b78f2d1`, merged into `main` in pull request #1.
-- Work is pushed to branch `claude/charming-davinci-sck1cq`; Eric merges it into `main` with a pull request (P0a merged as pull request #1).
+- Work is pushed to branch `claude/charming-davinci-sck1cq`; Eric merges it into `main` with a pull request (P0a: #1, P0b: #2).
 - The Windows launchers (`setup.bat`, `start.bat`, `run_checks.bat`) and the macOS `.command` files have been checked for content and line endings by tests, but not yet run on a real Windows PC or Mac; the P12 clean-clone rehearsal covers this, and Eric's first double-click is the earlier real test.
