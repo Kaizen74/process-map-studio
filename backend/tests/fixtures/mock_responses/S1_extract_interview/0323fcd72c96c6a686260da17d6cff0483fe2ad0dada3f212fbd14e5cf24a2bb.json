@@ -1,0 +1,85 @@
+{
+  "claims": [
+    {
+      "claim_type": "decision",
+      "text": "If something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "Airline ops",
+      "mechanism": "judgment",
+      "duration_text": "fifteen to forty minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "Ramp loads the aircraft, in forty minutes or so, and sends back the loading report.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "forty minutes or so",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "constraint",
+      "text": "The loading report is still on paper and the Load controller re-keys it.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "It's still on paper and I re-key it.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "duration",
+      "text": "The Load controller sometimes waits fifteen minutes for the loading report.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "fifteen minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "We sometimes wait fifteen minutes for it",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "constraint",
+      "text": "At peak times there is a shortage of containers.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "at peak we're short of containers",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": []
+}

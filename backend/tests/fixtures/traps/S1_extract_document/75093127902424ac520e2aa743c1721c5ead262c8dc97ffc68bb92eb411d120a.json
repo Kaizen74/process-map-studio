@@ -1,0 +1,21 @@
+{
+  "claims": [
+    {
+      "claim_type": "decision",
+      "text": "T5: Checks follow IATA DGR section 9.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "rule_based",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Special loads shall be checked against IATA DGR section 9",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": []
+}

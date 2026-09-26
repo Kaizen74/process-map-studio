@@ -398,3 +398,51 @@ class Prompt(BaseModel):
     name: str
     version: str
     text: str
+
+
+# --- Versions and claims (PRD §3.5) ----------------------------------------------------------
+
+
+class VersionView(BaseModel):
+    id: str
+    engagement_id: str
+    label: str
+    state: str
+    created_at: str
+
+
+class ClaimRecord(BaseModel):
+    """A claim as stored after the grounding gate (verified or rejected, with guardrail)."""
+
+    source_id: str
+    stage: str
+    claim_type: str
+    payload: dict[str, object]
+    segment_ids: list[str]
+    quote: str
+    provenance: str
+    basis: str
+    verification_status: str
+    rejection_reason: str = ""
+    rejection_guardrail: str = ""
+
+
+class UnknownRecord(BaseModel):
+    source_id: str
+    question: str
+    segment_ids: list[str]
+
+
+class StoredSegment(BaseModel):
+    """A stored passage with what a stage needs to send it (names not yet hidden)."""
+
+    id: str
+    seq: int
+    page: int | None
+    section: str
+    start_ms: int | None
+    text: str
+    speaker_label: str
+    speaker_role: str | None
+    is_interviewer: bool
+    instruction_like: bool

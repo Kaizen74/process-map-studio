@@ -81,13 +81,15 @@ def test_empty_sources_give_no_chunks() -> None:
 # --- Prompts ---------------------------------------------------------------------------------
 
 STAGES = ["S0_ocr_page", "S1_extract_interview", "S1_extract_document", "S1_extract_jd", "R_repair"]
+# A prompt's version goes up whenever its wording changes (it is stored with every AI call).
+VERSIONS = {"S1_extract_jd": "2"}
 
 
 @pytest.mark.parametrize("name", STAGES)
 def test_every_prompt_loads_with_its_version(name: str) -> None:
     result = prompts.load_prompt(name)
     assert isinstance(result, Ok)
-    assert (result.value.name, result.value.version) == (name, "1")
+    assert (result.value.name, result.value.version) == (name, VERSIONS.get(name, "1"))
     assert not result.value.text.startswith("<!--")
 
 
@@ -181,3 +183,9 @@ def test_an_s1_answer_with_provenance_r_is_invalid() -> None:
     }
     with pytest.raises(ValueError):
         ai_schemas.S1Output.model_validate(bad)
+
+
+def test_the_jd_prompt_asks_for_the_passage_that_names_the_role() -> None:
+    result = prompts.load_prompt("S1_extract_jd")
+    assert isinstance(result, Ok)
+    assert "include the segment that names the role" in result.value.text

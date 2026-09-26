@@ -1,0 +1,21 @@
+{
+  "claims": [
+    {
+      "claim_type": "handoff",
+      "text": "The Ramp Supervisor returns the loading report to Load Control within 10 minutes of loading completion.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "within 10 minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "The Ramp Supervisor shall return the loading report to Load Control within 10 minutes of loading completion.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": []
+}
