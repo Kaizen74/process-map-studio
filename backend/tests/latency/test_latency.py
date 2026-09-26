@@ -68,7 +68,10 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
         assert response.status_code == 201
         source, job = response.json()["id"], response.json()["job_id"]
     wait_for_jobs(client)
-    return client, {"eid": eid, "role": role, "source": source, "job": job}
+    # The last document is the interview transcript: map one speaker, find a passage to correct.
+    client.put(f"/api/sources/{source}/speakers", json={"Priya Nair": role})
+    segment = client.get(f"/api/sources/{source}/segments").json()["segments"][0]["id"]
+    return client, {"eid": eid, "role": role, "source": source, "job": job, "segment": segment}
 
 
 ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
@@ -85,6 +88,11 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("PATCH", "/api/sources/{source}", {"owner": "Load Control"}),
     ("GET", "/api/sources/{source}/segments", None),
     ("GET", "/api/jobs/{job}", None),
+    ("GET", "/api/sources/{source}/segments?raw=1", None),
+    ("GET", "/api/sources/{source}/speakers", None),
+    ("PUT", "/api/sources/{source}/speakers", {"Interviewer": "interviewer"}),
+    ("PATCH", "/api/segments/{segment}", {"text": "Walk me through the last flight you planned."}),
+    ("GET", "/api/engagements/{eid}/redaction-terms", None),
 ]
 
 
@@ -127,3 +135,24 @@ def test_upload_p95_under_budget(loaded: Loaded, name: str) -> None:
     for source_id in created:
         client.delete(f"/api/sources/{source_id}")
     assert p95 < BUDGET_MS, f"upload {name}: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
+def test_adding_and_removing_names_p95_under_budget(loaded: Loaded) -> None:
+    client, ids = loaded
+    added: list[str] = []
+
+    def add() -> None:
+        response = client.post(
+            f"/api/engagements/{ids['eid']}/redaction-terms", json={"term": f"Name {len(added)}"}
+        )
+        assert response.status_code == 201
+        added.append(response.json()["id"])
+
+    def remove() -> None:
+        response = client.delete(f"/api/redaction-terms/{added.pop()}")
+        assert response.status_code == 204
+
+    p95_add = p95_ms(add)
+    p95_remove = p95_ms(remove)
+    print(f"\nPOST redaction-terms: p95 {p95_add:.1f} ms; DELETE: p95 {p95_remove:.1f} ms")
+    assert p95_add < BUDGET_MS and p95_remove < BUDGET_MS

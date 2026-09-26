@@ -5,7 +5,7 @@
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P1 is complete and merged into `main` (pull request #3). Phase P2 (transcripts, speakers, redaction) in progress.
+Phase P2 (transcripts, speakers, redaction) is complete on branch `claude/charming-davinci-sck1cq` (tag `phase-p2` created locally; see Known issues). P1 was merged into `main` (pull request #3). Next: phase P3 (AI service and grounded extraction).
 
 ## This session (2026-09-26, session 4) — goal: Phase P2 (transcripts, speakers, redaction)
 P1 was merged into `main` by Eric (pull request #3); the working branch was restarted from `main`.
@@ -14,7 +14,7 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - [x] Increment 3 — speakers, redaction terms, corrections (contract first): `GET/PUT /api/sources/{sid}/speakers`, `GET/POST /api/engagements/{id}/redaction-terms`, `DELETE /api/redaction-terms/{tid}`, `PATCH /api/segments/{segid}`, `?raw=1`; names replaced in every other response (segments, sources, readiness); readiness ignores Interviewer
 - [x] Increment 4 — UI: "Reading…" status with automatic refresh; speaker-mapping card; redaction list (owner-only places)
 - [x] Increment 5 — UI: correction editor; "Instruction-like text" tag; speaker roles in the viewer
-- [ ] Increment 6 — IN PROGRESS: browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
+- [x] Increment 6 — browser checks (privacy scan of rendered pages, smoke path with the transcript and speaker mapping, axe), latency for new endpoints, GUIDE/README, close P2 (tag phase-p2, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -43,13 +43,14 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 - 2026-09-26 Speakers and hidden names: map each speaker to a role or Interviewer, a list of names to hide (automatic from speaker names, plus Eric's own), passages can be corrected; names are hidden in every response except the three owner-only places
 - 2026-09-26 Sources screen: speaker-mapping card for an open transcript and the Names to hide list (both owner-only), readiness line moved to the bottom
 - 2026-09-26 Correction editor for transcripts (owner-only), and passages tagged "Instruction-like text. Treated as data and ignored." or "Corrected"
+- 2026-09-26 Phase P2 closed: privacy scan of every rendered screen (with a planted-leak test), browser path through transcript upload, speaker mapping and correction, axe on the new cards, latency for the new endpoints (3–31 ms), GUIDE and README updated
 
 ## Not started yet
-- P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
+- P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: the IN PROGRESS increment above. Phase P2 (PRD §6.3): `parsing` for TXT (`Speaker:` and `[mm:ss] Speaker:`), VTT, SRT, DOCX and PDF transcripts; speaker detection; `GET/PUT /sources/{sid}/speakers`; redaction terms (auto from name-like labels, manual); redacted text in all other responses; `grounding.detect_instruction_like`; the jobs worker. UI: speaker-mapping card, redaction list, correction editor, "instruction-like" tag. Break it into ~30-minute increments here before starting. Transcripts uploaded in P1 are stored with `text_status: "pending"`; P2 must read them (on upload and for files already stored).
-2. The relevant files are: CLAUDE.md, PRD_ProcessMapStudio.md §3.7 (S0, speaker mapping), §3.8 G10, §4 (Sources, speakers), §5.4 Sources, Appendix A.1 (the transcript fixture), §6.3; `backend/app/services/parsing.py`, `backend/app/actions/sources.py`, `backend/app/actions/readiness.py`, `frontend/src/features/sources/`, API_CONTRACT.md (add endpoints first).
+1. The next task is: phase P3 (PRD §6.3): `ai_service.call_claude` (mock mode from fixtures, Pydantic schema validation, one R_repair attempt, retry rules, usage logged to `ai_calls` by the calling action); `chunking` (transcripts ~10-minute windows or ~60 turns with overlap; documents ≤ ~15 pages); `grounding` G3–G5 (`verify_segments`, `verify_quote`, `verify_numbers`, `verify_roles`) plus G10 scrubbing of AI output (`redact_text` exists); prompts S0 (OCR page), S1 ×3 (interview, document, JD) and R_repair with G1, G2 and G9 wording; the S1 stage action run by the jobs worker (`actions/jobs.run_job` dispatches by type); rejected claims with guardrail and stage; the A.6 trap fixtures T1–T6. UI: Draft screen with the readiness checklist, stage stepper and live counters (mocked job). Break it into ~30-minute increments here before starting. Verify the anthropic SDK version and structured-output support against the current docs first and log it (PRD §3.4).
+2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.4, §3.7, §3.8, §4 (Pipeline, jobs), §5.4 Draft, Appendix A.5–A.6, §6.3; `backend/app/services/ai_service.py`, `backend/app/services/grounding.py`, `backend/app/actions/jobs.py`, `backend/app/worker.py`, `backend/app/actions/readiness.py`, `frontend/src/features/` (add `draft/`), API_CONTRACT.md (add endpoints first).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
 5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
@@ -57,6 +58,7 @@ P1 was merged into `main` by Eric (pull request #3); the working branch was rest
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p2` tag was created locally but could not be pushed (cloud sessions can't push tags); P2's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub after merging.
 - The `phase-p1` tag was created locally but could not be pushed (cloud sessions can't push tags); P1's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub (Releases → Draft a new release → tag `phase-p1`) after merging.
 - The `phase-p0b` tag was never pushed (cloud sessions can't push tags); P0b's last commit is `0c2c0e5`, merged into `main` in pull request #2.
 - The `phase-p0a` tag was never pushed (cloud sessions can't push tags); P0a's last commit is `b78f2d1`, merged into `main` in pull request #1.
