@@ -14,8 +14,8 @@ Phase P0a is complete and merged into `main` by Eric (pull request #1). Phase P0
 - [x] Increment 4 — Settings backend part 2: `services/ai_service.py` Models API (list_models, get_model; mock mode) after verifying the anthropic SDK; POST /settings/test-connection, PUT /settings/model, GET /settings/models; tests for every test-connection path
 - [x] Increment 5 — app shell and Home: TanStack Query, routing, `src/api/request.ts`, hooks, TopBar, EngagementNav, Toast, error pattern; Home with the first-run checklist
 - [x] Increment 6 — Settings screen: your name, Claude connection (masked key, Save, Test connection), model, about
-- [ ] Increment 7 — IN PROGRESS: browser checks: Playwright + axe-core on Home and Settings (0 serious/critical), a Settings smoke path; added to run_checks.sh
-- [ ] Increment 8 — close P0b: README (step 5 now works), GUIDE.md, state files, tag phase-p0b, push, report card
+- [x] Increment 7 — browser checks: Playwright + axe-core on Home and Settings (0 serious/critical), a Settings smoke path; added to run_checks.sh
+- [ ] Increment 8 — IN PROGRESS: close P0b: README (step 5 now works), GUIDE.md, state files, tag phase-p0b, push, report card
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -28,6 +28,7 @@ Phase P0a is complete and merged into `main` by Eric (pull request #1). Phase P0
 - 2026-09-26 Test connection: ai_service Models API calls (anthropic 1.8.0, verified), mock fixtures, POST /api/settings/test-connection, GET /api/settings/models, PUT /api/settings/model (185 backend tests, 97% coverage on services and actions)
 - 2026-09-26 App shell and Home: TanStack Query + React Router, typed request wrapper with Copy details, top bar, guided engagement nav component, toasts, Home with the first-run checklist, not-found page (77 frontend tests)
 - 2026-09-26 Settings screen: your name, Claude connection (masked key, Save, Test connection results), model/effort/verifier, about; shared form fields and validation (103 frontend tests)
+- 2026-09-26 Browser checks: Playwright + axe (WCAG 2.1 AA, incl. real colour contrast) on Home, Settings and not-found, fonts load locally, no external requests, first-run smoke path (13 checks; 7 browser tests)
 
 ## Not started yet
 - P1 engagements and documents · P2 transcripts, speakers, redaction · P3 AI service and grounded extraction · P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
@@ -38,7 +39,7 @@ Phase P0a is complete and merged into `main` by Eric (pull request #1). Phase P0
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
 5. Before using the anthropic SDK or Models API in P0b, check the installed version and the current docs and log it in DECISIONS.md (PRD §3.4). New packages: check licences (the licence test will also catch GPL) and peer ranges; TypeScript must stay below 6.1 while typescript-eslint 8.70 is used.
-6. Run `./run_checks.sh` first — all 12 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
+6. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
 - The `phase-p0a` tag could not be pushed from the cloud session (tag pushes refused; branch pushes work). The phase's last commit is `b78f2d1` on branch `claude/charming-davinci-sck1cq`. Eric can add the tag on github.com (see DECISIONS.md). Future phase tags will need the same.

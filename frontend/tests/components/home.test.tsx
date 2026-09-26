@@ -29,7 +29,8 @@ describe("Home (Engagements) with the first-run checklist", () => {
   it("explains New engagement instead of disabling it", async () => {
     fakeApi({ "GET /api/settings": () => ({ body: SETTINGS }) });
     renderApp("/");
-    fireEvent.click(screen.getAllByRole("button", { name: "New engagement" })[0] as HTMLElement);
+    expect(screen.getAllByRole("button", { name: "New engagement" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "New engagement" }));
     expect(await screen.findByText(/arrives in the next build phase \(P1\)/)).toBeInTheDocument();
   });
 

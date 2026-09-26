@@ -40,9 +40,7 @@ export function EngagementsScreen() {
           <h1 id="home-title">Engagements</h1>
           <p className="screen__intro">Each engagement maps one process from its sources.</p>
         </div>
-        <Button variant="primary" onClick={() => setExplain(true)}>
-          New engagement
-        </Button>
+        {/* The "New engagement" primary action sits in the empty state until engagements exist (P1). */}
       </div>
 
       {settings.isPending && (
