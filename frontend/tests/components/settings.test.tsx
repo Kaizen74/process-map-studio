@@ -17,12 +17,26 @@ const MODELS = {
   message: "",
 };
 
+const NO_USAGE = { items: [], totals: { calls: 0, input_tokens: 0, output_tokens: 0 } };
+const USAGE = {
+  items: [
+    { id: "a2", created_at: "2026-09-26T10:05:00+00:00", job_id: "j1", stage_id: "S1_extract_interview",
+      prompt_version: "1", model: "claude-opus-5-5", input_tokens: 15120, output_tokens: 830,
+      duration_ms: 14200, status: "ok" },
+    { id: "a1", created_at: "2026-09-26T10:04:00+00:00", job_id: "j1", stage_id: "R_repair",
+      prompt_version: "1", model: "claude-opus-5-5", input_tokens: 900, output_tokens: 120,
+      duration_ms: 850, status: "error" },
+  ],
+  totals: { calls: 60, input_tokens: 1234567, output_tokens: 9800 },
+};
+
 function backend(overrides: Record<string, Handler> = {}) {
   let settings = { ...SETTINGS };
   return fakeApi({
     "GET /api/settings": () => ({ body: settings }),
     "GET /api/settings/models": () => ({ body: MODELS }),
     "GET /api/health": () => ({ body: { status: "ok", app_version: "0.1.0", prd_version: "1.5" } }),
+    "GET /api/settings/usage": () => ({ body: NO_USAGE }),
     "PUT /api/settings/profile": (body) => {
       settings = { ...settings, owner_name: (body as { owner_name: string }).owner_name };
       return { body: settings };
@@ -243,6 +257,51 @@ describe("Settings: page states", () => {
     await screen.findByLabelText("Effort");
     fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
     await screen.findByRole("group", { name: "Connection test results" });
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+});
+
+describe("Settings: AI usage", () => {
+  it("says there is nothing yet before the first draft", async () => {
+    backend();
+    await openSettings();
+    const card = await screen.findByRole("region", { name: "AI usage" });
+    expect(await within(card).findByText(/No AI calls yet/)).toBeInTheDocument();
+  });
+
+  it("lists each call in plain words with the all-time totals", async () => {
+    backend({ "GET /api/settings/usage": () => ({ body: USAGE }) });
+    await openSettings();
+    const card = await screen.findByRole("region", { name: "AI usage" });
+    const table = await within(card).findByRole("table");
+    const rows = within(table).getAllByRole("row");
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toHaveTextContent("Extracting steps (interview)");
+    expect(rows[1]).toHaveTextContent("15,120");
+    expect(rows[1]).toHaveTextContent("14.2 s");
+    expect(rows[1]).toHaveTextContent("OK");
+    expect(rows[2]).toHaveTextContent("Fixing an answer's format");
+    expect(rows[2]).toHaveTextContent("850 ms");
+    expect(rows[2]).toHaveTextContent("Failed");
+    expect(within(card).getByText(/All time: 60 calls/)).toHaveTextContent("1,234,567 input tokens");
+    expect(within(card).getByText("Showing the 2 most recent calls.")).toBeInTheDocument();
+  });
+
+  it("explains when usage can't be loaded", async () => {
+    backend({
+      "GET /api/settings/usage": () => ({
+        status: 500,
+        body: { error: { code: "IO", message: "The database couldn't be read.", details: {} } },
+      }),
+    });
+    await openSettings();
+    expect(await screen.findByText("AI usage couldn't be loaded")).toBeInTheDocument();
+  });
+
+  it("has no serious or critical accessibility violations with usage shown", async () => {
+    backend({ "GET /api/settings/usage": () => ({ body: USAGE }) });
+    const { container } = renderApp("/settings");
+    await screen.findByRole("table");
     expect(await seriousViolations(container)).toEqual([]);
   });
 });

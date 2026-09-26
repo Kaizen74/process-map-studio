@@ -83,3 +83,27 @@ export function draftChecklist(readiness: Readiness): ChecklistItem[] {
     },
   ];
 }
+
+const STAGE_NAMES: Readonly<Record<string, string>> = {
+  S0_ocr_page: "Reading a scanned page",
+  S1_extract_interview: "Extracting steps (interview)",
+  S1_extract_document: "Extracting steps (document)",
+  S1_extract_jd: "Extracting roles (job description)",
+  R_repair: "Fixing an answer's format",
+};
+
+/** A stage ID from the AI usage log in plain words; unknown IDs are shown as they are. */
+export function aiStageName(stageId: string): string {
+  return STAGE_NAMES[stageId] ?? stageId;
+}
+
+export const AI_CALL_STATUS: Readonly<Record<string, string>> = {
+  ok: "OK",
+  error: "Failed",
+  mock: "Test answer",
+};
+
+/** "14.2 s", "850 ms". */
+export function durationLabel(ms: number): string {
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+}

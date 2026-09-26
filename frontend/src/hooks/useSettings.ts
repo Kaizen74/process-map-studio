@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getAiUsage,
   getSettings,
   listModels,
   saveApiKey,
@@ -11,6 +12,7 @@ import type { ModelUpdate, Settings } from "../api/types";
 
 const SETTINGS = ["settings"] as const;
 const MODELS = ["settings", "models"] as const;
+const USAGE = ["settings", "usage"] as const;
 
 export function useSettings() {
   return useQuery({ queryKey: SETTINGS, queryFn: getSettings });
@@ -37,4 +39,9 @@ export const useSaveModel = () => useSettingsMutation((update: ModelUpdate) => s
 
 export function useTestConnection() {
   return useMutation({ mutationFn: testConnection });
+}
+
+/** The most recent AI calls and all-time totals (Settings, AI usage). */
+export function useAiUsage() {
+  return useQuery({ queryKey: USAGE, queryFn: () => getAiUsage() });
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, plural, sentence } from "../../src/lib/format";
+import { formatDate, formatDateTime, plural, sentence } from "../../src/lib/format";
 
 describe("display formats", () => {
   it("formats dates the same way in every browser", () => {
@@ -13,5 +13,13 @@ describe("display formats", () => {
     expect(plural(2, "speaker", "speakers")).toBe("2 speakers");
     expect(sentence("published")).toBe("Published");
     expect(sentence("")).toBe("");
+  });
+});
+
+describe("formatDateTime", () => {
+  it("shows the local date and time, or the raw text if it can't be read", () => {
+    const local = new Date(2026, 8, 26, 9, 5).toISOString();
+    expect(formatDateTime(local)).toBe("26 Sep 2026, 09:05");
+    expect(formatDateTime("soon")).toBe("soon");
   });
 });

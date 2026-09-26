@@ -61,3 +61,39 @@
   margin: 0;
   font-family: var(--font-mono);
 }
+
+/* AI usage (PRD §5.4 Settings) */
+.settings-grid__wide {
+  grid-column: 1 / -1;
+}
+.usage__totals,
+.usage__empty {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.usage__totals {
+  margin-bottom: var(--space-8);
+}
+.usage__scroll {
+  overflow-x: auto;
+}
+.usage {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+.usage th,
+.usage td {
+  text-align: left;
+  padding: var(--space-6) var(--space-8);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  white-space: nowrap;
+}
+.usage thead th {
+  border-top: none;
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.usage .usage__num {
+  text-align: right;
+}

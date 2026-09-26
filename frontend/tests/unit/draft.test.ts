@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { JobStage, Readiness } from "../../src/api/types";
-import { STAGE_LOOK, draftChecklist, elapsedLabel, groupDigits, stageElapsedMs } from "../../src/lib/draft";
+import {
+  STAGE_LOOK,
+  aiStageName,
+  draftChecklist,
+  durationLabel,
+  elapsedLabel,
+  groupDigits,
+  stageElapsedMs,
+} from "../../src/lib/draft";
 
 const stage = (extra: Partial<JobStage>): JobStage => ({
   id: "read",
@@ -75,4 +83,16 @@ describe("draft checklist", () => {
     const items = draftChecklist({ ...ready, speakers_unmapped: 2 });
     expect(items.filter((i) => !i.done).map((i) => i.key)).toEqual(["speakers"]);
   });
+});
+
+describe("AI usage wording", () => {
+  it("names stages in plain words and keeps unknown IDs", () => {
+    expect(aiStageName("S0_ocr_page")).toBe("Reading a scanned page");
+    expect(aiStageName("S9_new")).toBe("S9_new");
+  });
+
+  it.each([
+    [850, "850 ms"],
+    [14_200, "14.2 s"],
+  ])("%i ms reads %s", (ms, text) => expect(durationLabel(ms)).toBe(text));
 });

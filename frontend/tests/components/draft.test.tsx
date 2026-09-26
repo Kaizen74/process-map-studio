@@ -185,6 +185,7 @@ describe("Draft screen", () => {
     expect(within(summary).getByText("Claims verified").nextElementSibling).toHaveTextContent("21");
     expect(within(summary).getByText("Open questions").nextElementSibling).toHaveTextContent("3");
     expect(screen.getByRole("button", { name: "Draft again from sources" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Before drafting" })).not.toBeInTheDocument();
 
     const register = await screen.findByRole("region", { name: "Rejected claims (2)" });
     expect(within(register).getByText(/2 claims failed a check/)).toBeInTheDocument();
@@ -197,6 +198,14 @@ describe("Draft screen", () => {
       "/engagements/e1/sources?source=s2",
     );
     expect(within(register).getByText("T3: The plan takes 30 min.").tagName).toBe("S");
+  });
+
+  it("shows the checklist again when a draft exists but something is missing now", async () => {
+    draftApi(DONE, {}, { ...READY, documents_ready: false, missing: ["Add a process document"], ready_to_draft: false });
+    renderApp(PATH);
+    const checklist = await screen.findByRole("region", { name: "Before drafting" });
+    expect(within(checklist).getByText("Add a process document")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Draft v0.1" })).toBeInTheDocument();
   });
 
   it("says so when no claims were rejected", async () => {

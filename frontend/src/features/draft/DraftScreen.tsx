@@ -7,7 +7,6 @@ import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { draftChecklist, groupDigits } from "../../lib/draft";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import { plural } from "../../lib/format";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { RejectedClaimsList } from "./RejectedClaimsList";
 import { StageStepper } from "./StageStepper";
@@ -169,11 +168,19 @@ export function DraftScreen() {
         />
       )}
 
-      {!running && readiness.data && <Checklist engagementId={engagementId} readiness={readiness.data} />}
+      {!running && state && <Summary state={state} />}
+      {!running && state?.version && (
+        <RejectedClaimsList engagementId={engagementId} versionId={state.version.id} />
+      )}
+
+      {/* With a draft in place, the checklist only appears when something is missing again. */}
+      {!running && readiness.data && (!hasDraft || !readiness.data.ready_to_draft) && (
+        <Checklist engagementId={engagementId} readiness={readiness.data} />
+      )}
 
       {!running && !failed && draft.isSuccess && (
         <div className="draft-start">
-          <Button variant="primary" onClick={create}>
+          <Button variant={hasDraft ? "secondary" : "primary"} onClick={create}>
             {start.isPending ? "Starting…" : hasDraft ? "Draft again from sources" : "Create draft map"}
           </Button>
           <p className="draft-note">
@@ -205,17 +212,6 @@ export function DraftScreen() {
           details={`draft job · ${job.id}`}
           onRetry={create}
         />
-      )}
-
-      {!running && state && <Summary state={state} />}
-      {!running && state?.version && (
-        <RejectedClaimsList engagementId={engagementId} versionId={state.version.id} />
-      )}
-      {!running && state?.summary && state.summary.scrubbed > 0 && (
-        <p className="draft-note">
-          {plural(state.summary.scrubbed, "name")} in Claude's answers {state.summary.scrubbed === 1 ? "was" : "were"}{" "}
-          replaced by roles.
-        </p>
       )}
     </main>
   );
