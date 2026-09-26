@@ -1,0 +1,11 @@
+#!/bin/sh
+# Blocks any commit that contains an API key, the .env file or anything in data/.
+# Activated by scripts/setup.py with: git config core.hooksPath .githooks
+ROOT="$(git rev-parse --show-toplevel)"
+for PY in "$ROOT/.venv/bin/python" "$ROOT/.venv/Scripts/python.exe" python3.12 python3 python py; do
+  if command -v "$PY" >/dev/null 2>&1 || [ -x "$PY" ]; then
+    exec "$PY" "$ROOT/scripts/check_secrets.py"
+  fi
+done
+echo "FAIL secret check: Python was not found, so the commit was blocked to stay safe."
+exit 1

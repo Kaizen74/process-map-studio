@@ -1,0 +1,7 @@
+# Developer and check tools (used by run_checks.sh). Installed by: python scripts/setup.py --dev
+-r requirements.txt
+pytest==9.1.1
+pytest-cov==7.1.0
+ruff==0.16.9
+mypy==2.3.1
+httpx2==2.13.1
