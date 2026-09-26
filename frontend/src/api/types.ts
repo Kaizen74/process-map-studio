@@ -125,3 +125,61 @@ export interface RoleCreate {
 }
 
 export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system">> & { lane_order?: number };
+
+export type SourceKind =
+  | "interview_transcript"
+  | "sop"
+  | "manual"
+  | "job_description"
+  | "executed_artefact"
+  | "other";
+
+export interface Source {
+  id: string;
+  engagement_id: string;
+  kind: SourceKind | string;
+  filename: string;
+  format: string;
+  mime: string;
+  version_date: string;
+  owner: string;
+  controlled_copy: boolean;
+  text_status: "pending" | "ready" | "failed" | string;
+  error: string;
+  segment_count: number;
+  ocr_pages: number[];
+  suggested_images: number;
+  created_at: string;
+}
+
+export interface SourcePatch {
+  kind?: string;
+  version_date?: string;
+  owner?: string;
+  controlled_copy?: boolean;
+}
+
+export interface SourceUpload {
+  file: File;
+  kind?: string;
+}
+
+export interface Segment {
+  id: string;
+  seq: number;
+  anchor: string;
+  page: number | null;
+  section: string;
+  speaker_role: string | null;
+  text: string;
+  cited: boolean;
+  instruction_like: boolean;
+}
+
+export interface SegmentPage {
+  segments: Segment[];
+  total: number;
+  page: number;
+  pages: number;
+  coverage_pct: number | null;
+}

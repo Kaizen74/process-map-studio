@@ -16,8 +16,9 @@ export type Handler = (body: unknown) => FakeResponse;
 export function fakeApi(routes: Record<string, Handler>) {
   const calls: { key: string; body: unknown }[] = [];
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-    const key = `${init?.method ?? "GET"} ${url}`;
-    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    const key = `${init?.method ?? "GET"} ${url.split("?")[0] ?? url}`;
+    const body =
+      init?.body instanceof FormData ? init.body : init?.body ? JSON.parse(String(init.body)) : undefined;
     calls.push({ key, body });
     const handler = routes[key];
     const result = handler

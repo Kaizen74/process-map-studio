@@ -44,7 +44,10 @@ export async function request<T>(
     method: options.method ?? "GET",
     headers: { Accept: "application/json" },
   };
-  if (options.body !== undefined) {
+  if (options.body instanceof FormData) {
+    // File uploads: the browser sets the multipart Content-Type (with its boundary) itself.
+    init.body = options.body;
+  } else if (options.body !== undefined) {
     init.headers = { ...init.headers, "Content-Type": "application/json" };
     init.body = JSON.stringify(options.body);
   }
