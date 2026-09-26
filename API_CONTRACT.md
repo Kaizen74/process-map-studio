@@ -19,7 +19,7 @@ Response `200`:
 ```json
 {"status": "ok", "app_version": "0.1.0", "prd_version": "1.5"}
 ```
-Used by: `scripts/start.py` (waits for it before opening the browser); placeholder page (`frontend/src/App.tsx`).
+Used by: `scripts/start.py` (waits for it before opening the browser). No screen uses it yet; the P0a placeholder page is static.
 
 ### Unknown `/api/...` path
 Response `404` in the standard error shape with code `NOT_FOUND`.

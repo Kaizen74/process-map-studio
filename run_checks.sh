@@ -52,6 +52,19 @@ check "Backend type check (mypy app)" bash -c "cd backend && '$PY' -m mypy --no-
 check "Launch scripts type check (mypy scripts)" \
   bash -c "cd backend && '$PY' -m mypy --strict --no-incremental ../scripts"
 
+# 1-3. Frontend: static checks (0 warnings), unit and component tests, production build
+if [ -d frontend/node_modules ]; then
+  check "Frontend lint (eslint, incl. the components import rule)" \
+    npm --prefix frontend run --silent lint
+  check "Frontend type check (tsc --noEmit)" npm --prefix frontend run --silent typecheck
+  check "Frontend tests (vitest)" npm --prefix frontend run --silent test
+  check "Frontend build (the page the app serves)" npm --prefix frontend run --silent build
+else
+  TOTAL=$((TOTAL + 1))
+  FAILED_NAMES+=("Frontend checks")
+  echo "FAIL Frontend checks: packages not installed. Run: python3.12 scripts/setup.py --dev"
+fi
+
 # 2-3. Architecture, unit and action tests
 check "Backend tests (architecture, unit, actions; coverage >= 85% on services and actions)" \
   bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider --cov --cov-report=term"
