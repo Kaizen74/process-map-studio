@@ -32,13 +32,14 @@ from app.domain.graph import (
     GraphRole,
     GraphTime,
     GraphVersion,
+    LintReport,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import parsing
+from app.services import lint, parsing
 
 Sessions = sessionmaker[Session]
 
@@ -248,3 +249,14 @@ def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
     with session_scope(sessions) as session:
         graph = build_graph(session, version_id)
     return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+
+
+def lint_version(sessions: Sessions, version_id: str) -> Result[LintReport]:
+    """Run the lint rules on a version's graph and store the report on the version."""
+    with session_scope(sessions) as session:
+        graph = build_graph(session, version_id)
+        if graph is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        report = lint.run_lint(graph)
+        versions_repo.set_lint_report(session, version_id, report.model_dump(mode="json"))
+    return Ok(report)

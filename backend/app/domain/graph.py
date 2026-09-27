@@ -266,3 +266,19 @@ class Graph(Out):
     phases: list[GraphPhase]
     elements: list[GraphElement]
     edges: list[GraphEdge]
+
+
+# --- Lint (PRD §3.7 lint rules) ----------------------------------------------------------------
+
+
+class LintIssue(Out):
+    rule: str  # L1 … L12
+    element_id: str | None
+    message: str
+
+
+class LintReport(Out):
+    """Hard failures block publishing; warnings are listed beneath the quality card."""
+
+    failures: list[LintIssue]
+    warnings: list[LintIssue]

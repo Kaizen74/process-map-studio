@@ -308,3 +308,26 @@ def test_deleting_the_version_removes_its_map(built: Built) -> None:
 def test_missing_version_is_not_found(built: Built) -> None:
     result = versions_action.get_graph(built.sessions, "nope")
     assert isinstance(result, Err) and result.kind is ErrorKind.NOT_FOUND
+
+
+def test_lint_runs_on_the_graph_and_is_stored_on_the_version(built: Built) -> None:
+    result = versions_action.lint_version(built.sessions, built.version_id)
+    assert isinstance(result, Ok)
+    failures = {(f.rule, f.element_id) for f in result.value.failures}
+    # The hand-built map has gaps on purpose: an approval with no evidence and no RACI.
+    assert ("L2", built.ids["approve"]) in failures
+    assert ("L11", built.ids["approve"]) in failures
+    # The rejected step is left out entirely.
+    assert not any(element == built.ids["dropped"] for _, element in failures)
+    with session_scope(built.sessions) as session:
+        stored = versions.lint_report(session, built.version_id)
+    assert stored == result.value.model_dump(mode="json")
+    assert versions_action.lint_version(built.sessions, "nope") == Err(
+        ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING
+    )
+
+
+def test_a_version_without_lint_has_no_report(built: Built) -> None:
+    with session_scope(built.sessions) as session:
+        assert versions.lint_report(session, built.version_id) is None
+        assert versions.lint_report(session, "nope") is None
