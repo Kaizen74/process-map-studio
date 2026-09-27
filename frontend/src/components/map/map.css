@@ -346,6 +346,12 @@
   box-shadow: 0 0 0 1.5px var(--surface);
 }
 
+/* On a diamond, the dot sits on the turned square's top-right side, not the box's corner. */
+.map-node--diamond .map-marker--constraint {
+  top: 8px;
+  right: 8px;
+}
+
 .map-marker--images {
   top: -6px;
   left: -6px;

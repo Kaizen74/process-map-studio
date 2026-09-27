@@ -1,0 +1,25 @@
+/* Detail panel (PRD §5.7.5–§5.7.8). Tokens only. */
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.panel-header__overline {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+.panel-header__title {
+  font-size: var(--text-panel-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+.panel-header__lane {
+  color: var(--ink-3);
+}
+.panel-header__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}

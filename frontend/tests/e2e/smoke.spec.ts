@@ -173,6 +173,24 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p4-draft-summary.png"), fullPage: true });
     }
 
+    // Review: the draft map drawn from the backend layout (P5).
+    await summary.getByRole("link", { name: "Start reviewing" }).click();
+    await expect(page.getByText("0 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Activity, Draft load plan, Load controller/ })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-plain.png"), fullPage: true });
+    }
+    await page.getByRole("button", { name: /^Activity, Load and return LIR/ }).click();
+    const panel = page.getByRole("complementary", { name: "Step details" });
+    await expect(panel.getByRole("heading", { name: "Load and return LIR" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Review").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-selected.png"), fullPage: true });
+    }
+
     // Every AI call shows in Settings, as usage only.
     await page.goto("/settings");
     const usage = page.getByRole("region", { name: "AI usage" });

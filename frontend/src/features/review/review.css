@@ -1,0 +1,111 @@
+/* Review workbench layout (PRD §5.6). Tokens only. */
+.review {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--layout-min-width);
+}
+
+.review__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--layout-panel-width);
+  align-items: start;
+}
+
+.review__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-20);
+  min-width: 0;
+}
+
+.review__main > * {
+  flex: none;
+}
+
+.review__panel {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: var(--space-20);
+  background: var(--surface);
+  border-left: var(--line-hairline) solid var(--border);
+  align-self: stretch;
+}
+
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+
+.panel-card__title {
+  font-size: var(--text-popover-title);
+  font-weight: var(--weight-medium);
+}
+
+.how-to {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding-left: var(--space-16);
+  color: var(--ink-2);
+}
+
+.header-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-12);
+}
+
+.header-card {
+  padding: var(--space-12) var(--space-14);
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.header-card__label {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+
+.header-card__value {
+  margin-top: var(--space-4);
+  font-size: var(--text-card-value);
+  font-weight: var(--weight-medium);
+}
+
+.header-card__value--missing {
+  font-weight: var(--weight-regular);
+  color: var(--ink-4);
+}
+
+.header-card__danger {
+  margin-top: var(--space-4);
+  font-size: var(--text-label);
+  color: var(--danger-text);
+}
+
+.map-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.map-card__canvas {
+  overflow: hidden;
+}
+
+.map-card__canvas--scroll {
+  overflow-x: auto;
+}
