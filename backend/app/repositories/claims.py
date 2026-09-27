@@ -67,14 +67,23 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
     return {status: count for status, count in rows}
 
 
-def rejected_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
-    """Rejected claims of a version with their IDs, oldest first (the rejected-claims register)."""
+def _rows_with_ids(session: Session, version_id: str, status: str) -> list[tuple[str, ClaimRecord]]:
     rows = session.scalars(
         select(Claim)
-        .where(Claim.version_id == version_id, Claim.verification_status == "rejected")
+        .where(Claim.version_id == version_id, Claim.verification_status == status)
         .order_by(Claim.created_at, Claim.id)
     )
     return [(row.id, _record(row)) for row in rows]
+
+
+def rejected_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Rejected claims of a version with their IDs, oldest first (the rejected-claims register)."""
+    return _rows_with_ids(session, version_id, "rejected")
+
+
+def verified_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Verified claims of a version with their IDs, oldest first (what the map is built from)."""
+    return _rows_with_ids(session, version_id, "verified")
 
 
 def scrub_count(session: Session, version_id: str) -> int:

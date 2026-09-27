@@ -152,6 +152,14 @@ class Claim(Row):
     verifier_reason: Mapped[str] = mapped_column(Text, default="")
 
 
+class VersionSource(Row):
+    """Added in migration 0004: the sources a draft was made from (for silent stances)."""
+
+    __tablename__ = "version_sources"
+    version_id: Mapped[str] = fk("map_versions.id")
+    source_id: Mapped[str] = fk("sources.id")
+
+
 class Unknown(Row):
     __tablename__ = "unknowns"
     version_id: Mapped[str] = fk("map_versions.id")
@@ -231,6 +239,9 @@ class EvidenceLink(Row):
     source_kind: Mapped[str] = mapped_column(String(32))
     stance: Mapped[str] = mapped_column(String(16))
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Added in migration 0004: the cited words (for the highlight) and the divergence detail.
+    quote: Mapped[str] = mapped_column(Text, default="")
+    note: Mapped[str] = mapped_column(Text, default="")
 
 
 class Constraint(Row):

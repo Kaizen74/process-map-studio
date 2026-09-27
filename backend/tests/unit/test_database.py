@@ -23,6 +23,8 @@ PRD_TABLES = {
     "images", "cause_library", "audit_log", "jobs", "ai_calls", "gap_analyses", "gap_findings",
     "external_sources", "external_citations",
 }  # fmt: skip
+# Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
+ADDED_TABLES = {"version_sources"}  # 0004: the sources each draft was made from
 
 MIGRATION_COUNT = len(list((BACKEND_ROOT / "migrations" / "versions").glob("0*.py")))
 
@@ -41,7 +43,7 @@ def table_names(path: Path) -> set[str]:
 
 
 def test_migration_creates_every_prd_table(migrated: Path) -> None:
-    assert table_names(migrated) == PRD_TABLES
+    assert table_names(migrated) == PRD_TABLES | ADDED_TABLES
 
 
 def test_prd_columns_are_all_present(migrated: Path) -> None:
@@ -171,6 +173,19 @@ def test_downgrade_of_0003_removes_only_job_stages_and_keeps_jobs(migrated: Path
     db.upgrade(migrated)
     with sqlite3.connect(migrated) as conn:
         assert conn.execute("SELECT stages FROM jobs").fetchone() == ("[]",)
+
+
+def test_downgrade_of_0004_removes_only_evidence_quotes_and_version_sources(
+    migrated: Path,
+) -> None:
+    db.downgrade(migrated, "0003")
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(evidence_links)")}
+    assert {"quote", "note"}.isdisjoint(columns) and {"stance", "verified"} <= columns
+    assert "version_sources" not in table_names(migrated)
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    assert "version_sources" in table_names(migrated)
 
 
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
