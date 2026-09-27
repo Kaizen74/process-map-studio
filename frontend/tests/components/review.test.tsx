@@ -23,6 +23,9 @@ function backend(draft: DraftState = DRAFTED) {
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: SAMPLE.graph }),
     [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    ...Object.fromEntries(
+      Object.entries(SAMPLE.elements).map(([id, element]) => [`GET /api/elements/${id}`, () => ({ body: element })]),
+    ),
   });
 }
 
@@ -63,6 +66,28 @@ describe("Review screen (PRD §5.6)", () => {
     expect(within(panel).getByRole("heading", { name: "Approve deviation" })).toBeInTheDocument();
     fireEvent.click(within(panel).getByRole("button", { name: "Close details" }));
     expect(screen.getByRole("heading", { name: "How to review" })).toBeInTheDocument();
+  });
+
+  it("shows the selected step's evidence and details, read-only", async () => {
+    backend();
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("button", { name: /^Decision, Deviation in limits\?/ }));
+    const panel = screen.getByRole("complementary", { name: "Step details" });
+    const evidence = await within(panel).findByRole("region", { name: "Evidence" });
+    expect(within(evidence).getAllByRole("button")).toHaveLength(2); // two cited passages
+    expect(within(evidence).getAllByText(/Silence is not contradiction/)).toHaveLength(3);
+    expect(within(panel).getAllByText("A?")).toHaveLength(2);
+    expect(within(panel).getByRole("region", { name: "Decision rights and mechanism" })).toBeInTheDocument();
+    expect(within(panel).getByRole("region", { name: "How confidence was computed" })).toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: /Confirm/ })).toBeNull(); // review actions: P6
+  });
+
+  it("start and end explain they come from the scope, without evidence", async () => {
+    backend();
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("button", { name: "Start, Flight scheduled" }));
+    expect(screen.getByText(/Where the process starts, from the engagement's scope/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Evidence" })).toBeNull();
   });
 
   it("starts with the first step that needs attention", async () => {

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
-import { PanelHeader } from "../../components/panel";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
 import { useEngagement } from "../../hooks/useEngagements";
@@ -11,6 +10,7 @@ import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { firstNeedingAttention } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { DetailPanel } from "./DetailPanel";
 import { HeaderStrip } from "./HeaderStrip";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
@@ -145,16 +145,13 @@ export function ReviewScreen() {
         </main>
         <aside className="review__panel" aria-label={selected ? "Step details" : "How to review"}>
           {selected ? (
-            <div className="panel-stack">
-              <PanelHeader
-                element={selected}
-                laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
-                phaseName={phases.get(selected.phase_id ?? "") ?? ""}
-              />
-              <button type="button" className="btn btn--link" onClick={() => select(null)}>
-                Close details
-              </button>
-            </div>
+            <DetailPanel
+              element={selected}
+              laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
+              phaseName={phases.get(selected.phase_id ?? "") ?? ""}
+              onOpenEvidence={() => undefined}
+              onClose={() => select(null)}
+            />
           ) : (
             <HowToReview onStart={start ? () => select(start) : null} />
           )}
