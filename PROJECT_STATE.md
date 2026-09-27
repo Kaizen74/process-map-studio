@@ -5,7 +5,7 @@
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P4 is complete and merged into `main` (pull request #6). Phase P5 (layout and map view): everything is built, checked and pushed; waiting for Eric to approve the two Review screenshots in docs/screens/ before they become the visual baseline and the phase is tagged.
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Next: Phase P6 (review workbench).
 
 ## This session (2026-09-27, session 7) — goal: Phase P5 (layout and map view); likely two sessions
 P4 was merged into `main` (pull request #6); the working branch was fast-forwarded to `main`. Backend first (layout, then the element details the panel needs), then the screen in layers, so the map draws early. The visual baseline needs Eric's approval of a screenshot, so P5 is tagged only after he approves it.
@@ -17,7 +17,7 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 - [x] Increment 6 — detail panel, read-only (PRD §5.7.7): header and chips, evidence (silent cards not clickable), how confidence was computed, role and accountability (contested `A?`), decision rights, handoff and time, KPI, constraints, knowledge risk, AI flag; "How to review" when nothing is selected
 - [x] Increment 7 — source viewer in the panel (§5.7.8): opens at the passage with the quote highlighted, "← Back to [step]"; RACI tab (§5.7.10)
 - [x] Increment 8 — browser checks (select a step, open its evidence, axe, privacy scan), review screenshots at 1440 × 900 and 1080 × 800 for Eric's approval; GUIDE/README
-- [ ] Increment 9 — WAITING FOR ERIC'S APPROVAL of docs/screens/p5-review-1440x900.png and p5-review-1080x800.png; then: visual baseline check (0.5% threshold), close P5 (tag phase-p5, report card)
+- [x] Increment 9 — Eric approved the two Review screenshots (2026-09-27); visual baseline check (0.5% threshold) added; P5 closed (tag phase-p5)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -71,10 +71,11 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 - 2026-09-27 Review screen: the draft map drawn from the backend layout with the version banner and its progress segments, the header strip (trigger, end point, cycle time, KPI), lenses (remembered), Fit/100%, selecting a step from the map or the progress bar (kept in the address), the panel header and "How to review"; browser checks open Review after drafting (axe clean, no names)
 - 2026-09-27 Detail panel (read-only): evidence cards with quotes and divergence notes (silent sources grey and not clickable), how confidence was computed, role and accountability with contested `A?` and each side's sources, decision rights, handoff and time, KPI, constraints, knowledge risk and the AI flag
 - 2026-09-27 Evidence opens its source in the panel at the cited passage with the quote highlighted (Back and Esc return to the step); the RACI matrix tab (contested `A?`, row selects); browser checks open a piece of evidence (axe clean, no names)
-- 2026-09-27 Visual baseline candidates of Review at 1440 × 900 and 1080 × 800 in docs/screens/ (waiting for Eric's approval); GUIDE (Review step by step) and README updated
+- 2026-09-27 Visual baseline candidates of Review at 1440 × 900 and 1080 × 800 in docs/screens/ (approved by Eric); GUIDE (Review step by step) and README updated
+- 2026-09-27 Phase P5 closed: Eric approved the Review screenshots; the browser checks now compare Review with them at every run (0.5% pixel threshold, never rewritten by a test run). **Phase P5 complete**
 
 ## Not started yet
-- P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
+- P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
 1. The next task is: ask Eric whether he approves `docs/screens/p5-review-1440x900.png` and `docs/screens/p5-review-1080x800.png`. If he does, add the visual baseline check (PRD §6.2 item 9: Playwright `toHaveScreenshot` of the sample's Review screen, plain lens, nothing selected, at both sizes, 0.5% pixel threshold, Chromium, animations disabled, baselines stored from his approved images), run the checks, update GUIDE/PROJECT_STATE, tag `phase-p5` and give the report card. If he asks for changes, make them, retake the screenshots and ask again. Then Phase P6 (review workbench).
