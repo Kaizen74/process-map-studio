@@ -28,6 +28,7 @@ export interface DetailPanelProps {
         busy: boolean;
         error: unknown;
         onAction: (action: ReviewAction) => void;
+        onEdit: () => void;
       }
     | undefined;
   onOpenEvidence: (card: Card) => void;
@@ -36,7 +37,7 @@ export interface DetailPanelProps {
 
 const STEPS = new Set(["activity", "decision", "approval"]);
 
-/** The selected step, read-only (PRD §5.7.5, §5.7.7). Review actions arrive in P6. */
+/** The selected step with its review actions (PRD §5.7.5, §5.7.7). */
 export function DetailPanel({ element, laneName, phaseName, review, onOpenEvidence, onClose }: DetailPanelProps) {
   const detail = useElement(element.id);
   const step = STEPS.has(element.kind);
@@ -57,6 +58,7 @@ export function DetailPanel({ element, laneName, phaseName, review, onOpenEviden
           onConfirm={() => review.onAction("confirm")}
           onReject={() => review.onAction("reject")}
           onRestore={() => review.onAction("restore")}
+          onEdit={review.onEdit}
         />
       )}
       {step && review?.error != null && (

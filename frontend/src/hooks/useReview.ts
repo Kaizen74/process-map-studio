@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getGraph } from "../api/draft";
-import { getElement, getLayout, listSegmentsAround, reviewElement, type ReviewAction } from "../api/review";
+import {
+  getElement,
+  getLayout,
+  listSegmentsAround,
+  reviewElement,
+  updateElement,
+  type ReviewAction,
+} from "../api/review";
+import type { StepPatch } from "../lib/stepForm";
 import type { ElementDetail, Graph } from "../api/types";
 
 // Keys follow PRD §5.8 "invalidate graph, layout, quality-card and lint for the version".
@@ -80,5 +88,25 @@ export function useReviewStep(versionId: string, engagementId: string) {
     },
     onSuccess: (detail: ElementDetail) => client.setQueryData(["elements", detail.id], detail),
     onSettled: () => refreshReview(client, versionId, engagementId),
+  });
+}
+
+/**
+ * Save edits to a step. Not optimistic: the form stays open until the server accepts, so a
+ * refused field can show its message. When kind or lane changed, it waits for the new layout
+ * (PRD §5.7.6) before it counts as saved.
+ */
+export function useEditStep(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ elementId, patch }: { elementId: string; patch: Partial<StepPatch> }) =>
+      updateElement(elementId, patch),
+    onSuccess: async (detail: ElementDetail, { patch }) => {
+      client.setQueryData(["elements", detail.id], detail);
+      refreshReview(client, versionId, engagementId);
+      if ("kind" in patch || "lane_role_id" in patch) {
+        await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
+      }
+    },
   });
 }

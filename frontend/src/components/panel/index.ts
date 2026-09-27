@@ -13,3 +13,4 @@ export {
 } from "./PanelSections";
 export { SourceViewer, type SourceViewerProps, type ViewerPassage } from "./SourceViewer";
 export { AllReviewed, ReviewActions, type ReviewActionsProps } from "./ReviewActions";
+export { EditForm, type EditFormProps } from "./EditForm";

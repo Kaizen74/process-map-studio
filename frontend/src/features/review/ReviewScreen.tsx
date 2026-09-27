@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
@@ -15,6 +15,7 @@ import type { EvidenceCard } from "../../lib/mapTypes";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DetailPanel } from "./DetailPanel";
+import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
 import { SourcePanel } from "./SourcePanel";
 import { HowToReview } from "./HowToReview";
@@ -43,6 +44,10 @@ export function ReviewScreen() {
   // The source viewer replaces the panel's content; it belongs to the step it was opened from.
   const [viewing, setViewing] = useState<{ step: string; card: EvidenceCard } | null>(null);
   const openCard = viewing && viewing.step === selectedId ? viewing.card : null;
+  // The edit form, like the viewer, belongs to the step it was opened on.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = editingId !== null && editingId === selectedId;
+  const stopEditing = useCallback(() => setEditingId(null), []);
   useEffect(() => {
     if (!openCard) return;
     function onKey(event: KeyboardEvent) {
@@ -134,6 +139,11 @@ export function ReviewScreen() {
     if (action !== "restore") select(nextToReview(g, id));
   }
 
+  function saved(id: string) {
+    setEditingId(null);
+    select(nextToReview(g, id)); // auto-advance after Save (PRD §5.7.5)
+  }
+
   return (
     <div className="review">
       <VersionBanner
@@ -183,9 +193,22 @@ export function ReviewScreen() {
         </main>
         <aside
           className="review__panel"
-          aria-label={selected && openCard ? "Source" : selected ? "Step details" : "How to review"}
+          aria-label={
+            selected && editing ? "Edit step" : selected && openCard ? "Source" : selected ? "Step details" : "How to review"
+          }
         >
-          {selected && openCard ? (
+          {selected && editing && versionId ? (
+            <EditPanel
+              element={selected}
+              laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
+              phaseName={phases.get(selected.phase_id ?? "") ?? ""}
+              roles={g.roles}
+              versionId={versionId}
+              engagementId={engagementId}
+              onSaved={() => saved(selected.id)}
+              onCancel={stopEditing}
+            />
+          ) : selected && openCard ? (
             <SourcePanel card={openCard} stepLabel={selected.label} onBack={() => setViewing(null)} />
           ) : selected ? (
             <DetailPanel
@@ -194,7 +217,15 @@ export function ReviewScreen() {
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
               review={
                 editable
-                  ? { busy: reviewStep.isPending, error: reviewStep.error, onAction: act }
+                  ? {
+                      busy: reviewStep.isPending,
+                      error: reviewStep.error,
+                      onAction: act,
+                      onEdit: () => {
+                        reviewStep.reset();
+                        setEditingId(selected.id);
+                      },
+                    }
                   : undefined
               }
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}

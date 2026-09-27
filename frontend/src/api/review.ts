@@ -1,5 +1,6 @@
 import { request } from "./request";
 import type { ElementDetail, Layout, SegmentPage } from "./types";
+import type { StepPatch } from "../lib/stepForm";
 
 const enc = encodeURIComponent;
 
@@ -17,3 +18,7 @@ export type ReviewAction = "confirm" | "reject" | "restore";
 
 export const reviewElement = (elementId: string, action: ReviewAction) =>
   request<ElementDetail>(`/elements/${enc(elementId)}/${action}`, { method: "POST" });
+
+/** Edit a step: only the fields sent change (PATCH /elements/{eid}). */
+export const updateElement = (elementId: string, patch: Partial<StepPatch>) =>
+  request<ElementDetail>(`/elements/${enc(elementId)}`, { method: "PATCH", body: patch });
