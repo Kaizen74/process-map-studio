@@ -148,6 +148,7 @@ def latest_version(
     latest = session.scalars(
         select(MapVersion)
         .where(MapVersion.engagement_id == engagement_id)
+        .where(MapVersion.state != "building")  # a refresh's half-built version is never shown
         .order_by(MapVersion.created_at.desc(), MapVersion.id)
         .limit(1)
     ).first()

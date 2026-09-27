@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
@@ -136,3 +136,9 @@ def claims_by_id(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecor
         return {}
     rows = session.scalars(select(Claim).where(Claim.id.in_(claim_ids)))
     return {row.id: _record(row) for row in rows}
+
+
+def delete_claims(session: Session, claim_ids: list[str]) -> None:
+    if claim_ids:
+        session.execute(delete(Claim).where(Claim.id.in_(claim_ids)))
+        session.flush()

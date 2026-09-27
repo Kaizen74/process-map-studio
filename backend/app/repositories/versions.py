@@ -4,11 +4,26 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete as sql_delete
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.domain.models import VersionView
-from app.repositories.tables import Element, MapVersion
+from app.repositories.tables import (
+    Claim,
+    Edge,
+    Element,
+    ElementClaim,
+    MapVersion,
+    MergeProposal,
+    Phase,
+    Unknown,
+    ValidationQuestion,
+    VersionSource,
+)
+
+# Everything a draft holds, moved as a whole when a refresh is folded into the draft.
+CONTENT = (Claim, Unknown, Phase, Element, Edge, MergeProposal, ValidationQuestion, VersionSource)
 
 
 def _view(row: MapVersion) -> VersionView:
@@ -96,3 +111,55 @@ def reviewed_count(session: Session, version_id: str) -> int:
         )
         or 0
     )
+
+
+def set_label(session: Session, version_id: str, label: str) -> None:
+    row = session.get(MapVersion, version_id)
+    if row is not None:
+        row.label = label
+        session.flush()
+
+
+def building(session: Session, engagement_id: str) -> list[VersionView]:
+    """Versions a refresh is still building (state `building`)."""
+    rows = session.scalars(
+        select(MapVersion)
+        .where(MapVersion.engagement_id == engagement_id)
+        .where(MapVersion.state == "building")
+    )
+    return [_view(r) for r in rows]
+
+
+def move_content(session: Session, from_id: str, to_id: str) -> None:
+    """Hand every claim, step, line, phase, question, merge proposal and source link of one
+    version to another."""
+    for table in CONTENT:
+        session.execute(update(table).where(table.version_id == from_id).values(version_id=to_id))
+    session.flush()
+
+
+def clear_for_refresh(session: Session, version_id: str, keep: set[str]) -> None:
+    """Remove what a refresh replaces from a draft: questions, unknowns, merge proposals, the
+    source links, claims no kept step is built from, and phases no kept step uses. The steps and
+    lines themselves are handled by the caller."""
+    for table in (ValidationQuestion, Unknown, MergeProposal, VersionSource):
+        session.execute(sql_delete(table).where(table.version_id == version_id))
+    kept_claims = select(ElementClaim.claim_id).where(ElementClaim.element_id.in_(keep))
+    session.execute(
+        sql_delete(Claim).where(Claim.version_id == version_id).where(Claim.id.not_in(kept_claims))
+    )
+    used = select(Element.phase_id).where(Element.id.in_(keep)).where(Element.phase_id.is_not(None))
+    session.execute(
+        sql_delete(Phase).where(Phase.version_id == version_id).where(Phase.id.not_in(used))
+    )
+    session.flush()
+
+
+def delete_unused_phases(session: Session, version_id: str) -> None:
+    used = select(Element.phase_id).where(Element.version_id == version_id)
+    session.execute(
+        sql_delete(Phase)
+        .where(Phase.version_id == version_id)
+        .where(Phase.id.not_in(used.where(Element.phase_id.is_not(None))))
+    )
+    session.flush()

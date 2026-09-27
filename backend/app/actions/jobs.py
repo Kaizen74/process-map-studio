@@ -90,7 +90,7 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         repo.update(session, job_id, status="running", stage=first_stage, progress=0.0)
     if job.type == sources.READ_JOB:
         _run_read(config, sessions, job)
-    elif job.type == draft.DRAFT_JOB:
+    elif job.type in draft.MAP_JOBS:
         _run_draft(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
