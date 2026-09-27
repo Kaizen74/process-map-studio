@@ -460,6 +460,8 @@ class StoredSegment(BaseModel):
 
 
 class DraftSummary(BaseModel):
+    steps: int
+    needs_check: int
     verified: int
     rejected: int
     open_questions: int

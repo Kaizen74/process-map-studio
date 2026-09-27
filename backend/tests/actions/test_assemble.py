@@ -98,7 +98,7 @@ def test_the_sample_map_has_the_a5_details(sample: Verified) -> None:
     g = graph(sample)
     roles = {r.id: r.name for r in g.roles}
     by = {e.label: e for e in g.elements}
-    assert [e.kind for e in g.elements][-2:] == ["start", "end"]
+    assert (g.elements[0].kind, g.elements[-1].kind) == ("start", "end")  # process order
     assert by["Flight scheduled"].kind == "start" and by["Final load sheet issued"].kind == "end"
     assert [(p.name, p.time_window) for p in g.phases] == [
         ("Plan", "T-120 to T-90"),

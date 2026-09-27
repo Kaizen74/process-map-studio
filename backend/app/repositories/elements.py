@@ -263,3 +263,24 @@ def evidence(session: Session, version_id: str) -> list[EvidencePassage]:
         )
         for link, segment, source in rows
     ]
+
+
+def step_counts(session: Session, version_id: str) -> tuple[int, int]:
+    """(steps, steps needing a check): activities, decisions and approvals of a version."""
+    rows = session.execute(
+        select(Element.needs_check).where(
+            Element.version_id == version_id,
+            Element.kind.in_(("activity", "decision", "approval")),
+        )
+    ).all()
+    return len(rows), sum(1 for (needs_check,) in rows if needs_check)
+
+
+def open_question_count(session: Session, version_id: str) -> int:
+    return len(
+        session.scalars(
+            select(ValidationQuestion.id).where(
+                ValidationQuestion.version_id == version_id, ValidationQuestion.status == "open"
+            )
+        ).all()
+    )

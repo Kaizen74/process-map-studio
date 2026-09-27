@@ -488,14 +488,35 @@ def current_hashes() -> dict[tuple[str, int], tuple[str, str]]:
 
 
 def draft_version(app: Any, client: Any, built: Any) -> str:
-    """Run the draft job on the sample engagement (mock answers) and return its version ID."""
+    """A draft of the sample engagement taken up to S1 (claims extracted and checked), as the
+    draft job leaves it before the later stages; returns its version ID."""
+    from app.db import session_scope
+    from app.domain.result import Ok
+    from app.pipeline import s1_extract
+    from app.pipeline.context import ai_context
+    from app.repositories import elements, sources, versions
+
     key = "sk-" + "ant-" + "Fixture" * 5
     assert client.put("/api/settings/key", json={"anthropic_api_key": key}).status_code == 200
-    job = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
-    assert app.state.worker.drain(60)
-    body = client.get(f"/api/jobs/{job}").json()
-    assert body["status"] == "done", body
-    return str(body["target_id"])
+    ctx = ai_context(app.state.config)
+    assert isinstance(ctx, Ok), ctx
+    sessions = app.state.sessions
+    with session_scope(sessions) as session:
+        version = versions.create(
+            session, engagement_id=built.engagement_id, label="v0.1", state="draft"
+        )
+        ready = [
+            s.id
+            for s in sources.list_for_engagement(session, built.engagement_id)
+            if s.text_status == "ready"
+        ]
+        elements.add_version_sources(session, version.id, ready)
+    for source_id in ready:
+        result = s1_extract.extract_source(
+            app.state.config, sessions, ctx.value, version_id=version.id, source_id=source_id
+        )
+        assert isinstance(result, Ok), result
+    return version.id
 
 
 def s3_hashes(

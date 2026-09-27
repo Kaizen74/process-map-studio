@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { DraftState, Job, RejectedClaims } from "./types";
+import type { DraftState, Graph, Job, LintReport, RejectedClaims } from "./types";
 
 const enc = encodeURIComponent;
 
@@ -14,3 +14,7 @@ export const getJob = (jobId: string) => request<Job>(`/jobs/${enc(jobId)}`);
 
 export const getRejectedClaims = (versionId: string) =>
   request<RejectedClaims>(`/versions/${enc(versionId)}/rejected-claims`);
+
+export const getGraph = (versionId: string) => request<Graph>(`/versions/${enc(versionId)}/graph`);
+
+export const getLint = (versionId: string) => request<LintReport>(`/versions/${enc(versionId)}/lint`);

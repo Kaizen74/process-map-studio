@@ -20,6 +20,7 @@ function StageShape({ look }: { look: StageLook }) {
           <path d="M3.8 3.8 L8.2 8.2 M8.2 3.8 L3.8 8.2" className={tone} strokeWidth="1.5" />
         </>
       )}
+      {look.shape === "dash" && <path d="M2 6 H10" className={`${tone} no-fill`} strokeWidth="2" />}
       {look.shape === "outlined-square" && <rect x="1.75" y="1.75" width="8.5" height="8.5" className={`${tone} no-fill`} />}
     </svg>
   );

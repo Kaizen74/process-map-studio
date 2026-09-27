@@ -52,6 +52,7 @@ OFF_MAIN_PATH = {
     EdgeKind.EXCEPTION.value,
 }
 TIMED_KINDS = {ElementKind.ACTIVITY.value, ElementKind.APPROVAL.value}
+STRUCTURAL = {ElementKind.START.value, ElementKind.END.value}
 
 
 def main_path(elements: list[ElementRecord], edges: list[EdgeRecord]) -> list[ElementRecord]:
@@ -120,7 +121,9 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
         if (s := sources_repo.get(session, sid)) is not None
     ]
 
-    def evidence_for(element_id: str) -> list[GraphEvidence]:
+    def evidence_for(element_id: str, kind: str) -> list[GraphEvidence]:
+        if kind in STRUCTURAL:
+            return []  # start and end come from the scope card, not from the sources
         linked = [p for p in passages if p.evidence.element_id == element_id]
         out = [
             GraphEvidence(
@@ -156,6 +159,9 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
         ]
         return out
 
+    # Process order for reading: start first, end last, the steps as the pipeline made them.
+    rank = {ElementKind.START.value: 0, ElementKind.END.value: 2}
+    elements = sorted(elements, key=lambda e: rank.get(e.kind, 1))
     graph_elements = []
     for e in elements:
         flag = next((f for f in flags if f.element_id == e.id), None)
@@ -206,7 +212,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 )
                 if flag
                 else None,
-                evidence=evidence_for(e.id),
+                evidence=evidence_for(e.id, e.kind),
                 confidence=e.confidence,
                 confidence_breakdown=list(e.confidence_breakdown),
                 needs_check=e.needs_check,
@@ -260,3 +266,14 @@ def lint_version(sessions: Sessions, version_id: str) -> Result[LintReport]:
         report = lint.run_lint(graph)
         versions_repo.set_lint_report(session, version_id, report.model_dump(mode="json"))
     return Ok(report)
+
+
+def get_lint(sessions: Sessions, version_id: str) -> Result[LintReport]:
+    """The lint report stored with the version, or a fresh one if none was stored."""
+    with session_scope(sessions) as session:
+        if versions_repo.get(session, version_id) is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        stored = versions_repo.lint_report(session, version_id)
+    if stored is not None:
+        return Ok(LintReport.model_validate(stored))
+    return lint_version(sessions, version_id)

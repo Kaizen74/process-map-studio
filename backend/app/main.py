@@ -28,6 +28,7 @@ from app.routers import (
     settings,
     sources,
     system,
+    versions,
 )
 from app.routers.http import ApiError, err_response, error_response
 from app.worker import JobWorker
@@ -66,6 +67,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(jobs.router)
     app.include_router(redaction.router)
     app.include_router(draft.router)
+    app.include_router(versions.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

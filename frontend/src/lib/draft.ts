@@ -5,7 +5,7 @@ import type { JobStage, Readiness, StageStatus } from "../api/types";
 export interface StageLook {
   label: string;
   /** Shape drawn next to the stage: every status has its own shape as well as its text. */
-  shape: "filled-circle" | "half-circle" | "dashed-ring" | "ring-cross" | "outlined-square";
+  shape: "filled-circle" | "half-circle" | "dashed-ring" | "ring-cross" | "outlined-square" | "dash";
   tone: "good" | "neutral" | "danger";
 }
 
@@ -14,6 +14,7 @@ export const STAGE_LOOK: Readonly<Record<StageStatus, StageLook>> = {
   running: { label: "Running", shape: "half-circle", tone: "good" },
   waiting: { label: "Waiting", shape: "dashed-ring", tone: "neutral" },
   failed: { label: "Failed", shape: "ring-cross", tone: "danger" },
+  skipped: { label: "Switched off in Settings", shape: "dash", tone: "neutral" },
   later: { label: "Later build phase", shape: "outlined-square", tone: "neutral" },
 };
 
@@ -89,6 +90,11 @@ const STAGE_NAMES: Readonly<Record<string, string>> = {
   S1_extract_interview: "Extracting steps (interview)",
   S1_extract_document: "Extracting steps (document)",
   S1_extract_jd: "Extracting roles (job description)",
+  S2_canonicalise: "Grouping claims into steps",
+  S3_calibrate: "Comparing a source with the steps",
+  S3b_verify: "Independent verification of a step",
+  S4_assemble: "Building the map",
+  S5_questions: "Writing validation questions",
   R_repair: "Fixing an answer's format",
 };
 

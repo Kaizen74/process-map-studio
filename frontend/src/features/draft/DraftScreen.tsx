@@ -7,6 +7,7 @@ import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { draftChecklist, groupDigits } from "../../lib/draft";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import { plural } from "../../lib/format";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { RejectedClaimsList } from "./RejectedClaimsList";
 import { StageStepper } from "./StageStepper";
@@ -92,15 +93,22 @@ function Progress({ job }: { job: Job }) {
   );
 }
 
-function Summary({ state }: { state: DraftState }) {
+function Summary({ engagementId, state }: { engagementId: string; state: DraftState }) {
   const { version, summary } = state;
   if (!version || !summary) return null;
   return (
-    <Card title={`Draft ${version.label}`} description="What Claude found in your sources, after every check.">
+    <Card
+      title={`Draft ${version.label}`}
+      description={`Built from ${plural(summary.verified, "checked claim")}. Nothing is published until you have reviewed every step.`}
+    >
       <dl className="draft-summary">
         <div>
-          <dt>Claims verified</dt>
-          <dd className="mono">{summary.verified}</dd>
+          <dt>Steps drafted</dt>
+          <dd className="mono">{summary.steps}</dd>
+        </div>
+        <div>
+          <dt>Needs check</dt>
+          <dd className="mono">{summary.needs_check}</dd>
         </div>
         <div>
           <dt>Rejected claims</dt>
@@ -111,10 +119,12 @@ function Summary({ state }: { state: DraftState }) {
           <dd className="mono">{summary.open_questions}</dd>
         </div>
       </dl>
-      <p className="draft-note">
-        Comparing sources and building the map arrive in build phase P4. Then the verified claims become
-        steps you review here.
-      </p>
+      <div className="draft-start">
+        <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
+          Start reviewing
+        </Link>
+        <p className="draft-note">The map and the review workbench arrive in build phase P5.</p>
+      </div>
     </Card>
   );
 }
@@ -168,7 +178,7 @@ export function DraftScreen() {
         />
       )}
 
-      {!running && state && <Summary state={state} />}
+      {!running && state && <Summary engagementId={engagementId} state={state} />}
       {!running && state?.version && (
         <RejectedClaimsList engagementId={engagementId} versionId={state.version.id} />
       )}
