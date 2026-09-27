@@ -246,3 +246,59 @@ button.evidence:focus-visible {
   text-decoration-thickness: var(--line-highlight);
   text-underline-offset: 3px;
 }
+
+/* Review actions (PRD §5.7.5) */
+.review-well {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  width: 100%;
+  padding: var(--space-12) var(--space-14);
+  background: var(--surface-2);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+}
+.review-well__note {
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
+.review-well__title {
+  font-weight: var(--weight-medium);
+}
+.review-well__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.review-well--done {
+  background: var(--approval-fill);
+  border-color: var(--approval-stroke);
+}
+.review-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  width: 100%;
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--radius-card);
+  font-size: var(--text-label);
+}
+.review-strip--locked {
+  color: var(--approval-stroke);
+  background: var(--approval-fill);
+}
+.review-strip--rejected {
+  justify-content: space-between;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: var(--line-hairline) solid var(--border);
+}
+.review-strip__lock {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.review-strip__lock path {
+  fill: none;
+}

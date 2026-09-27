@@ -2,15 +2,17 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
+import { AllReviewed } from "../../components/panel";
 import { RaciMatrix } from "../../components/tabs";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useGraph, useLayout } from "../../hooks/useReview";
+import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import type { ReviewAction } from "../../api/review";
 import type { EvidenceCard } from "../../lib/mapTypes";
-import { firstNeedingAttention } from "../../lib/review";
+import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DetailPanel } from "./DetailPanel";
 import { HeaderStrip } from "./HeaderStrip";
@@ -37,6 +39,7 @@ export function ReviewScreen() {
   const [lens, setLens] = useLens();
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [mapBox, fit] = useFitScale(layout.data?.canvas.w ?? 0);
+  const reviewStep = useReviewStep(versionId ?? "", engagementId);
   // The source viewer replaces the panel's content; it belongs to the step it was opened from.
   const [viewing, setViewing] = useState<{ step: string; card: EvidenceCard } | null>(null);
   const openCard = viewing && viewing.step === selectedId ? viewing.card : null;
@@ -117,6 +120,19 @@ export function ReviewScreen() {
   const sources = new Set(g.elements.flatMap((e) => e.evidence.map((ev) => ev.source_id))).size;
   const lanes = drawing.lanes.length;
   const start = firstNeedingAttention(g);
+  const editable = g.version.state === "draft";
+
+  function act(action: ReviewAction) {
+    if (!selected) return;
+    const id = selected.id;
+    reviewStep.reset();
+    reviewStep.mutate(
+      { elementId: id, action },
+      { onError: () => select(id) }, // back to the step, shown as it was, with the message
+    );
+    // Auto-advance after Confirm or Reject (PRD §5.7.5); Restore stays on the step.
+    if (action !== "restore") select(nextToReview(g, id));
+  }
 
   return (
     <div className="review">
@@ -176,11 +192,19 @@ export function ReviewScreen() {
               element={selected}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
+              review={
+                editable
+                  ? { busy: reviewStep.isPending, error: reviewStep.error, onAction: act }
+                  : undefined
+              }
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
               onClose={() => select(null)}
             />
           ) : (
-            <HowToReview onStart={start ? () => select(start) : null} />
+            <div className="panel-stack">
+              {openSteps(g) === 0 && editable && <AllReviewed />}
+              <HowToReview onStart={start ? () => select(start) : null} />
+            </div>
           )}
         </aside>
       </div>

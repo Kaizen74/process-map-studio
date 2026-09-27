@@ -11,3 +11,9 @@ export const getElement = (elementId: string) => request<ElementDetail>(`/elemen
 /** The page of a source that holds one passage (the source viewer opened from evidence). */
 export const listSegmentsAround = (sourceId: string, segmentId: string, pageSize = 200) =>
   request<SegmentPage>(`/sources/${enc(sourceId)}/segments?around=${enc(segmentId)}&page_size=${pageSize}`);
+
+// Review actions (phase P6).
+export type ReviewAction = "confirm" | "reject" | "restore";
+
+export const reviewElement = (elementId: string, action: ReviewAction) =>
+  request<ElementDetail>(`/elements/${enc(elementId)}/${action}`, { method: "POST" });

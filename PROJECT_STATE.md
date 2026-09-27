@@ -14,8 +14,8 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - [x] Increment 3 — adding: `POST /versions/{vid}/elements` (placed after a chosen step; `O` needs a passage, `R` a reference; `added` status, evidence linked) and `POST · PATCH · DELETE /versions/{vid}/edges`
 - [x] Increment 4 — questions and merges: `GET /versions/{vid}/questions`, `PATCH /questions/{qid}` (answered/open), `GET /versions/{vid}/merge-proposals`, `POST /merge-proposals/{mid}/decision`
 - [x] Increment 5 — refresh draft from sources (AI job): `POST /versions/{vid}/refresh` re-runs the pipeline into the same draft (next draft number), rewriting only unreviewed steps; locked steps unchanged (test)
-- [ ] Increment 6 — IN PROGRESS: UI review actions: Confirm as drafted · Edit · Reject step · Restore, locked and rejected strips, auto-advance (needs check first, then process order), "All steps reviewed", progress and map refresh
-- [ ] Increment 7 — UI edit form (shared validation in `lib/validation.ts`), RACI editing, Esc cancels
+- [x] Increment 6 — UI review actions: Confirm as drafted · Edit · Reject step · Restore, locked and rejected strips, auto-advance (needs check first, then process order), "All steps reviewed", progress and map refresh
+- [ ] Increment 7 — IN PROGRESS: UI edit form (shared validation in `lib/validation.ts`), RACI editing, Esc cancels
 - [ ] Increment 8 — UI add missing step with the passage picker or a reference
 - [ ] Increment 9 — UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
 - [ ] Increment 10 — UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
@@ -80,6 +80,7 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - 2026-09-27 Adding a missing step after a chosen step (observed with a picked passage, or recommended with a reference; the flow is rejoined around it) and adding, changing or removing lines, with every exit of a decision or approval labelled
 - 2026-09-27 Validation questions (list, mark answered or reopen) and merge decisions (accept, keep separate, split back into the drafted steps), with database update 0005 recording the steps behind each merge proposal
 - 2026-09-27 Refresh draft from sources: the whole pipeline again, folded into the same draft (next number); confirmed, edited, added and rejected steps stay exactly as they were, everything else is replaced; a failed refresh changes nothing
+- 2026-09-27 Review actions on screen: Confirm as drafted, Reject step and Restore in the panel, locked and rejected strips, instant map and progress updates that roll back if refused, auto-advance to the next step needing attention, and "All steps reviewed"
 
 ## Not started yet
 - P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
