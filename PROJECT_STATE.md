@@ -1,23 +1,25 @@
 # Project State
-*Last updated: 2026-09-27 (session 7) — update after EVERY increment*
+*Last updated: 2026-09-27 (session 8) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Next: Phase P6 (review workbench).
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) in progress; it will take two or three sessions.
 
-## This session (2026-09-27, session 7) — goal: Phase P5 (layout and map view); likely two sessions
-P4 was merged into `main` (pull request #6); the working branch was fast-forwarded to `main`. Backend first (layout, then the element details the panel needs), then the screen in layers, so the map draws early. The visual baseline needs Eric's approval of a screenshot, so P5 is tagged only after he approves it.
-- [x] Increment 1 — `layout` service part 1 (PRD §3.9): contract first (`GET /versions/{vid}/layout`), layout models; lane order (approval-only lanes above the lane they approve), columns by longest path with back edges excluded, exception steps beside their decision, one node per cell, contiguous phases, label wrapping; tests for determinism, the lane rule, no overlaps, labels
-- [x] Increment 2 — `layout` part 2: orthogonal edge routes (same lane, other lane via the gutter, exception above/below, back edges on the track with ±14 offsets), edge-label and lens-line positions; the layout endpoint and latency; golden baseline G2; lint L12 "more than 3 edge crossings"
-- [x] Increment 3 — element details for the panel (contract first): `GET /elements/{eid}` with evidence cards (source name, anchor, quote, divergence note; names hidden), confidence breakdown, RACI with role names and the evidence behind a contested A, lane and phase names; opening a source at a passage
-- [x] Increment 4 — UI map pieces: api and hooks (graph, layout, element), `lib/edges.ts` (points → segments and arrowheads, all four routes), `lib/lens.ts` (each lens and state), map components (stage, lanes, phase band, nodes, markers, edges, labels, lens line, legend); tests incl. at most three markers for every lens × state
-- [x] Increment 5 — Review screen: version banner (read-only progress segments), header strip (trigger, end point, cycle time, KPI), map card with toolbar (lenses remembered, Fit/100%, counts), selecting a step; loading, empty and error states
-- [x] Increment 6 — detail panel, read-only (PRD §5.7.7): header and chips, evidence (silent cards not clickable), how confidence was computed, role and accountability (contested `A?`), decision rights, handoff and time, KPI, constraints, knowledge risk, AI flag; "How to review" when nothing is selected
-- [x] Increment 7 — source viewer in the panel (§5.7.8): opens at the passage with the quote highlighted, "← Back to [step]"; RACI tab (§5.7.10)
-- [x] Increment 8 — browser checks (select a step, open its evidence, axe, privacy scan), review screenshots at 1440 × 900 and 1080 × 800 for Eric's approval; GUIDE/README
-- [x] Increment 9 — Eric approved the two Review screenshots (2026-09-27); visual baseline check (0.5% threshold) added; P5 closed (tag phase-p5)
+## This session (2026-09-27, session 8) — goal: close P5, then Phase P6 (review workbench); P6 will take two or three sessions
+P5 closed at the start of this session (Eric approved the screenshots; tag `phase-p5`). P6 follows PRD §6.3: backend review rules first (contract first), then the workbench UI in layers. Changes that alter the approved Review screenshot (the Map | Table switch, the "How to review" text) are kept for the last UI increment, where new screenshots go to Eric for approval before the baseline is replaced.
+- [ ] Increment 1 — review actions (contract first): `POST /elements/{eid}/confirm · /reject · /restore` with the review-status rules (only a draft version can change; confirmed, edited and added steps are locked against pipeline runs), audit rows, `GET /versions/{vid}/audit`
+- [ ] Increment 2 — editing: `PATCH /elements/{eid}` (label, kind, lane, times, complexity, KPI, decision rights, handoffs, constraints, knowledge risk, AI flag) and `PUT /elements/{eid}/raci`, with the shared field rules (label and Accountable required, Responsible for activities, a judgment step never an automation candidate, no hidden names), `edited` status, before/after audit rows
+- [ ] Increment 3 — adding: `POST /versions/{vid}/elements` (placed after a chosen step; `O` needs a passage, `R` a reference; `added` status, evidence linked) and `POST · PATCH · DELETE /versions/{vid}/edges`
+- [ ] Increment 4 — questions and merges: `GET /versions/{vid}/questions`, `PATCH /questions/{qid}` (answered/open), `GET /versions/{vid}/merge-proposals`, `POST /merge-proposals/{mid}/decision`
+- [ ] Increment 5 — refresh draft from sources (AI job): `POST /versions/{vid}/refresh` re-runs the pipeline into the same draft (next draft number), rewriting only unreviewed steps; locked steps unchanged (test)
+- [ ] Increment 6 — UI review actions: Confirm as drafted · Edit · Reject step · Restore, locked and rejected strips, auto-advance (needs check first, then process order), "All steps reviewed", progress and map refresh
+- [ ] Increment 7 — UI edit form (shared validation in `lib/validation.ts`), RACI editing, Esc cancels
+- [ ] Increment 8 — UI add missing step with the passage picker or a reference
+- [ ] Increment 9 — UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
+- [ ] Increment 10 — UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
+- [ ] Increment 11 — refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -78,8 +80,8 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 - P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: ask Eric whether he approves `docs/screens/p5-review-1440x900.png` and `docs/screens/p5-review-1080x800.png`. If he does, add the visual baseline check (PRD §6.2 item 9: Playwright `toHaveScreenshot` of the sample's Review screen, plain lens, nothing selected, at both sizes, 0.5% pixel threshold, Chromium, animations disabled, baselines stored from his approved images), run the checks, update GUIDE/PROJECT_STATE, tag `phase-p5` and give the report card. If he asks for changes, make them, retake the screenshots and ask again. Then Phase P6 (review workbench).
-2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §5.5–§5.10, §6.2 item 9, §6.3; `frontend/tests/e2e/smoke.spec.ts` (takes the candidate screenshots when `PMS_SCREENSHOT_DIR` is set), `frontend/playwright.config.ts`; the Review screen: `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/edges.ts`, `lens.ts`, `quote.ts`; the layout: `backend/app/services/layout.py`, golden G2; the frontend sample `frontend/tests/fixtures/sample_map.json` (rewritten by the backend golden test with `PMS_UPDATE_GOLDEN=1`).
+1. The next task is: the first unchecked increment of Phase P6 in the list above (PRD §6.3 P6, §4 Review rows, §5.6–§5.8). Check the merge status of the working branch first (if merged, restart it from `main`).
+2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p5-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
 5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
@@ -87,6 +89,7 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p5` tag was created locally but could not be pushed (the connection is dropped for tags, as in every phase); P5's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub after merging.
 - The `phase-p4` tag: see the report card for whether it could be pushed. P4's last commit is on branch `claude/charming-davinci-sck1cq`.
 - Line crossings are not yet counted by lint (they need the layout, P5).
 - The `phase-p3` tag: see the report card for whether it could be pushed (earlier phases' tags could not be pushed from cloud sessions). P3's last commit is on branch `claude/charming-davinci-sck1cq`.
