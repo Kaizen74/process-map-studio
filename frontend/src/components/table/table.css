@@ -1,0 +1,70 @@
+/* The table view of the map (PRD §5.7.4). Tokens only. */
+.step-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16) var(--space-16);
+}
+.step-table__scroll {
+  overflow-x: auto;
+}
+.step-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+.step-table__table th,
+.step-table__table td {
+  padding: var(--space-6) var(--space-10);
+  border-bottom: var(--line-hairline) solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.step-table__table thead th {
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.step-table__row {
+  cursor: pointer;
+}
+.step-table__row--selected {
+  background: var(--surface-2);
+}
+.step-table__row--rejected,
+.step-table__row--rejected .step-table__step {
+  color: var(--ink-4);
+  text-decoration: line-through;
+}
+.step-table__step {
+  padding: 0;
+  font: inherit;
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.step-table__danger {
+  color: var(--danger-text);
+}
+.step-table__muted,
+.step-table__empty {
+  color: var(--ink-4);
+}
+.step-table__editor td {
+  white-space: normal;
+  background: var(--surface-2);
+}
+.inline-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-6) 0;
+}
+.inline-editor__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-10);
+}

@@ -1,7 +1,7 @@
 // The edit form's data (PRD §5.7.6): an element turned into form fields and back into the
 // PATCH /elements/{eid} body. Pure; the field rules are in validation.ts.
 
-import type { ElementDetail } from "./mapTypes";
+import type { GraphElement } from "./mapTypes";
 
 export interface ConstraintRow {
   text: string;
@@ -80,7 +80,13 @@ export const AI_BASES = [
 
 const minutes = (value: number | null) => (value === null ? "" : String(value));
 
-export function formFrom(e: ElementDetail): StepForm {
+/** What the form reads: a step from the graph (table view) or the panel's details (edit form). */
+export type StepSource = Pick<
+  GraphElement,
+  "label" | "kind" | "lane_role_id" | "time" | "complexity" | "kpi" | "decision" | "handoff" | "constraints" | "k_risk" | "ai_flag"
+> & { raci: readonly { role_id: string; letter: string }[] };
+
+export function formFrom(e: StepSource): StepForm {
   const letters = (letter: string) => e.raci.filter((r) => r.letter === letter).map((r) => r.role_id);
   return {
     label: e.label,

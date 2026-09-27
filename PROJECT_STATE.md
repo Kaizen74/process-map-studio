@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-09-27 (session 8) — update after EVERY increment*
+*Last updated: 2026-09-27 (session 9) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
@@ -7,7 +7,7 @@ Process Map Studio is a local app for Eric (non-technical owner) that turns SME 
 ## Current status
 Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) in progress; it will take two or three sessions.
 
-## This session (2026-09-27, session 8) — goal: close P5, then Phase P6 (review workbench); P6 will take two or three sessions
+## This session (2026-09-27, sessions 8–9) — goal: close P5, then Phase P6 (review workbench); session 9 finishes increments 10–11 and closes P6
 P5 closed at the start of this session (Eric approved the screenshots; tag `phase-p5`). P6 follows PRD §6.3: backend review rules first (contract first), then the workbench UI in layers. Changes that alter the approved Review screenshot (the Map | Table switch, the "How to review" text) are kept for the last UI increment, where new screenshots go to Eric for approval before the baseline is replaced.
 - [x] Increment 1 — review actions (contract first): `POST /elements/{eid}/confirm · /reject · /restore` with the review-status rules (only a draft version can change; confirmed, edited and added steps are locked against pipeline runs), audit rows, `GET /versions/{vid}/audit`
 - [x] Increment 2 — editing: `PATCH /elements/{eid}` (label, kind, lane, times, complexity, KPI, decision rights, handoffs, constraints, knowledge risk, AI flag) and `PUT /elements/{eid}/raci`, with the shared field rules (label and Accountable required, Responsible for activities, a judgment step never an automation candidate, no hidden names), `edited` status, before/after audit rows
@@ -18,8 +18,8 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - [x] Increment 7 — UI edit form (shared validation in `lib/validation.ts`), RACI editing, Esc cancels
 - [x] Increment 8 — UI add missing step with the passage picker or a reference
 - [x] Increment 9 — UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
-- [ ] Increment 10 — IN PROGRESS: UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
-- [ ] Increment 11 — refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
+- [x] Increment 10 — UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
+- [ ] Increment 11 — IN PROGRESS: refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -84,13 +84,14 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - 2026-09-27 Review: Edit opens the edit form in the panel (every field from PRD §5.7.6, RACI with role pickers); field rules shared with the server; Save sends only what changed, waits for the new layout when kind or lane changed and moves to the next step; Cancel or Esc discards (13 checks)
 - 2026-09-27 Review: Add a missing step after the selected one — observed (pick the passage in a source with "Use this passage") or recommended (typed reference); the new step is added as locked and selected (13 checks)
 - 2026-09-27 Review: tabs under the map — RACI matrix, Validation questions (Copy all, Download .md, Mark answered), Rejected claims (Open passage, Add as step from this passage), Audit log, Merge decisions (Accept merge, Keep separate, Split), Map checks (13 checks)
+- 2026-09-27 Review: Map | Table switch with a filterable table of steps and editing in place; keyboard shortcuts (J/K, C, E, R, Esc, 1–4, ? for the list) ignored while typing; Add missing step in the toolbar; new Review screenshots approved by Eric as the visual baseline (13 checks)
 
 ## Not started yet
 - P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
 1. The next task is: the first unchecked increment of Phase P6 in the list above (PRD §6.3 P6, §4 Review rows, §5.6–§5.8). Check the merge status of the working branch first (if merged, restart it from `main`).
-2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p5-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
+2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p6-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
 5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).

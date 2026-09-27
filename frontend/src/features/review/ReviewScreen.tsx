@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
-import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
+import { MapLegend, MapStage, MapToolbar, type MapView, type Zoom } from "../../components/map";
 import { AllReviewed } from "../../components/panel";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
@@ -13,12 +13,16 @@ import type { ReviewAction } from "../../api/review";
 import type { RejectedClaim } from "../../lib/reviewTypes";
 import { newStepForm, type AddStepForm } from "../../lib/addStep";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
+import { shortcutFor, stepAlong } from "../../lib/shortcuts";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
 import { SourcePanel, type OpenPassage } from "./SourcePanel";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { ShortcutsDialog } from "./ShortcutsDialog";
+import { TableView } from "./TableView";
 import { WorkbenchTabs } from "./WorkbenchTabs";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
@@ -54,14 +58,8 @@ export function ReviewScreen() {
   // Add missing step replaces the panel content until it is added or cancelled.
   const [adding, setAdding] = useState<AddStepForm | null>(null);
   const stopAdding = useCallback(() => setAdding(null), []);
-  useEffect(() => {
-    if (!openCard) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setViewing(null); // PRD §5.8: Esc closes the viewer
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [openCard]);
+  const view: MapView = params.get("view") === "table" ? "table" : "map";
+  const [helpOpen, setHelpOpen] = useState(false);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -147,16 +145,68 @@ export function ReviewScreen() {
     if (action !== "restore") select(nextToReview(g, id));
   }
 
+  function setView(next: MapView) {
+    setParams(
+      (current) => {
+        const params = new URLSearchParams(current);
+        if (next === "table") params.set("view", "table");
+        else params.delete("view");
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  /** Where Add missing step puts the new step: after the selected step, else after the start. */
+  function addAfter(): string {
+    if (selected && selected.kind !== "end" && selected.review_status !== "rejected") return selected.id;
+    return g.elements.find((e) => e.kind === "start")?.id ?? "";
+  }
+
+  // The keyboard (PRD §5.8).
+  function onShortcut(event: KeyboardEvent) {
+    if (helpOpen || event.defaultPrevented) return;
+    const shortcut = shortcutFor(event);
+    if (!shortcut) return;
+    const busy = adding !== null || editing; // a form is open: only lenses and help
+    const step = selected && STEPS.has(selected.kind) ? selected : null;
+    switch (shortcut.kind) {
+      case "lens":
+        setLens(shortcut.lens);
+        break;
+      case "help":
+        setHelpOpen(true);
+        break;
+      case "close":
+        if (openCard) setViewing(null); // the edit and add forms close themselves
+        return;
+      case "next":
+      case "previous":
+        if (busy) return;
+        select(stepAlong(g.elements.map((e) => e.id), selectedId, shortcut.kind === "next" ? 1 : -1));
+        break;
+      case "confirm":
+      case "reject":
+        if (busy || !editable || step?.review_status !== "draft") return;
+        act(shortcut.kind);
+        break;
+      case "edit":
+        if (busy || !editable || !step || step.review_status === "rejected") return;
+        reviewStep.reset();
+        setEditingId(step.id);
+        break;
+    }
+    event.preventDefault();
+  }
+
   function openClaim(claim: RejectedClaim) {
     select(null);
     setViewing({ step: null, card: { ...claim, quote: "" } });
   }
 
   function addFromClaim(claim: RejectedClaim) {
-    const after = selected && selected.kind !== "end" && selected.review_status !== "rejected" ? selected.id : null;
-    const startId = g.elements.find((e) => e.kind === "start")?.id ?? "";
     const passage = { id: claim.segment_id ?? "", anchor: claim.anchor, source_name: claim.source_name, text: "" };
-    setAdding(newStepForm(g, after ?? startId, passage));
+    setAdding(newStepForm(g, addAfter(), passage));
   }
 
   function saved(id: string) {
@@ -166,6 +216,8 @@ export function ReviewScreen() {
 
   return (
     <div className="review">
+      <KeyboardShortcuts onKey={onShortcut} />
+      <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
       <VersionBanner
         label={g.version.label}
         sources={sources}
@@ -181,6 +233,8 @@ export function ReviewScreen() {
           <HeaderStrip process={g.process} />
           <Card className="map-card">
             <MapToolbar
+              view={view}
+              onView={setView}
               lens={lens}
               onLens={setLens}
               zoom={zoom}
@@ -189,18 +243,38 @@ export function ReviewScreen() {
               lanes={lanes}
               phases={drawing.phases.length}
               large={steps.length > MAX_STEPS || lanes > MAX_LANES}
+              onAddStep={editable ? () => setAdding(newStepForm(g, addAfter())) : undefined}
             />
-            <div ref={mapBox} className={zoom === "full" ? "map-card__canvas map-card__canvas--scroll" : "map-card__canvas"}>
-              <MapStage
+            {view === "table" ? (
+              <TableView
                 graph={g}
-                layout={drawing}
-                lens={lens}
-                scale={zoom === "fit" ? fit : 1}
+                versionId={g.version.id}
+                engagementId={engagementId}
                 selectedId={selected?.id ?? null}
+                editable={editable}
                 onSelect={select}
+                onSaved={(id) => select(nextToReview(g, id))}
+                onOpenFullEdit={(id) => {
+                  select(id);
+                  setEditingId(id);
+                }}
+                onAddStep={() => setAdding(newStepForm(g, addAfter()))}
               />
-            </div>
-            <MapLegend lens={lens} />
+            ) : (
+              <>
+                <div ref={mapBox} className={zoom === "full" ? "map-card__canvas map-card__canvas--scroll" : "map-card__canvas"}>
+                  <MapStage
+                    graph={g}
+                    layout={drawing}
+                    lens={lens}
+                    scale={zoom === "fit" ? fit : 1}
+                    selectedId={selected?.id ?? null}
+                    onSelect={select}
+                  />
+                </div>
+                <MapLegend lens={lens} />
+              </>
+            )}
           </Card>
           <Card className="workbench-card">
             <WorkbenchTabs
