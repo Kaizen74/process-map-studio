@@ -24,7 +24,8 @@
     "highlight-bg": "rgba(83, 74, 183, 0.16)",
     "highlight-line": "#534AB7",
     "on-ink": "#FFFFFF",
-    "scrim": "rgba(30, 29, 26, 0.32)"
+    "scrim": "rgba(30, 29, 26, 0.32)",
+    "label-chip": "rgba(255, 255, 255, 0.92)"
   },
   "font": {
     "sans": "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
@@ -87,6 +88,8 @@
   "layout": {
     "min-width": "1080px",
     "panel-width": "400px",
-    "hit-target": "28px"
+    "hit-target": "28px",
+    "map-label-column": "120px",
+    "map-phase-band": "48px"
   }
 }

@@ -25,6 +25,7 @@
   --highlight-line: #534AB7;
   --on-ink: #FFFFFF;
   --scrim: rgba(30, 29, 26, 0.32);
+  --label-chip: rgba(255, 255, 255, 0.92);
   /* font */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -78,4 +79,6 @@
   --layout-min-width: 1080px;
   --layout-panel-width: 400px;
   --layout-hit-target: 28px;
+  --layout-map-label-column: 120px;
+  --layout-map-phase-band: 48px;
 }

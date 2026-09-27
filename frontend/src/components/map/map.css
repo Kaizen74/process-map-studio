@@ -1,0 +1,525 @@
+/* The swimlane map (PRD §5.5). Positions come from the backend layout; tokens only. */
+
+.map-viewport {
+  position: relative;
+  overflow: hidden;
+}
+
+.map-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  background: var(--surface);
+  font-size: var(--text-label);
+  color: var(--ink);
+}
+
+/* Phase band and lanes ------------------------------------------------------------------------ */
+
+.map-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface-2);
+  border-bottom: var(--line-hairline) solid var(--border);
+}
+
+.map-band__heading,
+.map-band__phase {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  padding: var(--space-8) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.map-band__heading {
+  left: 0;
+  width: var(--layout-map-label-column);
+  justify-content: center;
+  color: var(--ink-4);
+  border-right: var(--line-hairline) solid var(--border);
+}
+
+.map-band__name {
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.map-band__window {
+  font-size: var(--text-micro);
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+.map-lane {
+  position: absolute;
+  left: 0;
+  background: var(--surface);
+  border-bottom: var(--line-hairline) solid var(--border);
+}
+
+.map-lane--even {
+  background: var(--surface-2);
+}
+
+.map-lane__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--layout-map-label-column);
+  height: 100%;
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  border-right: var(--line-hairline) solid var(--border);
+}
+
+.map-lane__name {
+  font-weight: var(--weight-medium);
+  color: var(--ink-2);
+  line-height: var(--leading-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.map-lane__count {
+  font-size: var(--text-micro);
+  color: var(--ink-4);
+}
+
+.map-divider {
+  position: absolute;
+  top: 0;
+  width: 0;
+  border-left: var(--line-hairline) solid var(--border);
+  pointer-events: none;
+}
+
+/* Edges --------------------------------------------------------------------------------------- */
+
+.map-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-edge__segment {
+  position: absolute;
+  border: 0 solid var(--edge);
+}
+
+.map-edge__segment--horizontal {
+  height: 0;
+  border-top-width: var(--line-edge);
+  transform: translateY(-50%);
+}
+
+.map-edge__segment--vertical {
+  width: 0;
+  border-left-width: var(--line-edge);
+  transform: translateX(-50%);
+}
+
+.map-edge--back .map-edge__segment {
+  border-style: dashed;
+}
+
+.map-edge--active .map-edge__segment {
+  border-color: var(--ink);
+}
+
+.map-edge--active .map-edge__segment--horizontal {
+  border-top-width: var(--line-edge-selected);
+}
+
+.map-edge--active .map-edge__segment--vertical {
+  border-left-width: var(--line-edge-selected);
+}
+
+.map-edge__arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+}
+
+.map-edge__arrow--right {
+  border-right-width: 0;
+  border-left: 7px solid var(--edge);
+  transform: translate(-7px, -4px);
+}
+
+.map-edge__arrow--left {
+  border-left-width: 0;
+  border-right: 7px solid var(--edge);
+  transform: translate(0, -4px);
+}
+
+.map-edge__arrow--down {
+  border-bottom-width: 0;
+  border-top: 7px solid var(--edge);
+  transform: translate(-4px, -7px);
+}
+
+.map-edge__arrow--up {
+  border-top-width: 0;
+  border-bottom: 7px solid var(--edge);
+  transform: translate(-4px, 0);
+}
+
+.map-edge--active .map-edge__arrow--right {
+  border-left-color: var(--ink);
+}
+
+.map-edge--active .map-edge__arrow--left {
+  border-right-color: var(--ink);
+}
+
+.map-edge--active .map-edge__arrow--down {
+  border-top-color: var(--ink);
+}
+
+.map-edge--active .map-edge__arrow--up {
+  border-bottom-color: var(--ink);
+}
+
+.map-edge__label {
+  position: absolute;
+  padding: 0 var(--space-4);
+  height: 16px;
+  line-height: 16px;
+  font-size: 11px;
+  color: var(--ink-3);
+  background: var(--label-chip);
+  border-radius: var(--radius-control);
+  white-space: nowrap;
+}
+
+.map-edge--active .map-edge__label {
+  color: var(--ink);
+}
+
+/* Nodes --------------------------------------------------------------------------------------- */
+
+.map-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: var(--line-outline) solid var(--node-stroke);
+  border-radius: var(--radius-node);
+  cursor: pointer;
+  transition: box-shadow var(--motion-duration) var(--motion-easing);
+}
+
+.map-node:focus-visible,
+.map-node--selected {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+}
+
+.map-node--pill {
+  background: var(--approval-fill);
+  border-color: var(--approval-stroke);
+  border-radius: var(--radius-pill);
+}
+
+.map-node--diamond,
+.map-node--circle,
+.map-node--double_circle {
+  background: none;
+  border: 0;
+}
+
+.map-node--diamond:focus-visible,
+.map-node--diamond.map-node--selected,
+.map-node--circle:focus-visible,
+.map-node--circle.map-node--selected,
+.map-node--double_circle:focus-visible,
+.map-node--double_circle.map-node--selected {
+  box-shadow: none;
+}
+
+.map-node__diamond {
+  width: 36px;
+  height: 36px;
+  background: var(--decision-fill);
+  border: var(--line-outline) solid var(--decision-stroke);
+  transform: rotate(45deg);
+  transition: box-shadow var(--motion-duration) var(--motion-easing);
+}
+
+.map-node--diamond:focus-visible .map-node__diamond,
+.map-node--diamond.map-node--selected .map-node__diamond,
+.map-node--circle:focus-visible .map-node__circle,
+.map-node--circle.map-node--selected .map-node__circle,
+.map-node--double_circle:focus-visible .map-node__circle,
+.map-node--double_circle.map-node--selected .map-node__circle {
+  box-shadow: var(--shadow-selection);
+}
+
+.map-node__circle {
+  display: block;
+  border-radius: 50%;
+}
+
+.map-node__circle--start {
+  background: var(--ink-3);
+}
+
+.map-node__circle--end {
+  background: var(--surface);
+  border: var(--line-outline) solid var(--ink-2);
+  outline: var(--line-outline) solid var(--ink-2);
+  outline-offset: 2px;
+}
+
+.map-node--double_circle.map-node--selected .map-node__circle,
+.map-node--double_circle:focus-visible .map-node__circle {
+  outline-offset: 2px;
+}
+
+.map-node--unreviewed,
+.map-node--unreviewed .map-node__diamond {
+  border-style: dashed;
+}
+
+.map-node--rejected,
+.map-under--rejected,
+.map-faded {
+  opacity: 0.3;
+}
+
+.map-node--rejected .map-node__label,
+.map-under--rejected {
+  text-decoration: line-through;
+}
+
+.map-node__label,
+.map-under {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 15px;
+  text-wrap: balance;
+}
+
+.map-under {
+  position: absolute;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-under--left {
+  align-items: flex-start;
+}
+
+/* Markers (at most three: key constraint, has images, the unreviewed outline) ------------------ */
+
+.map-marker {
+  position: absolute;
+  pointer-events: none;
+}
+
+.map-marker--constraint {
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--constraint);
+  box-shadow: 0 0 0 1.5px var(--surface);
+}
+
+.map-marker--images {
+  top: -6px;
+  left: -6px;
+  width: 15px;
+  height: 12px;
+  background: var(--surface);
+  border: var(--line-outline) solid var(--ink-3);
+  border-radius: 2px;
+}
+
+/* Lens line ----------------------------------------------------------------------------------- */
+
+.map-lens {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-micro);
+  line-height: 14px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-lens__danger {
+  color: var(--danger-text);
+}
+
+.map-bar {
+  display: inline-block;
+  position: relative;
+  width: 46px;
+  height: 6px;
+  background: var(--border-soft);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.map-bar__fill {
+  display: block;
+  height: 100%;
+  background: var(--ink-3);
+}
+
+.map-bar__fill--low {
+  background: var(--constraint);
+}
+
+.map-bar__work,
+.map-bar__wait {
+  display: inline-block;
+  height: 6px;
+}
+
+.map-bar__work {
+  background: var(--ink-2);
+}
+
+.map-bar__wait {
+  box-sizing: border-box;
+  border: var(--line-hairline) solid var(--constraint);
+  background: repeating-linear-gradient(45deg, var(--constraint) 0 1.5px, transparent 1.5px 4px);
+}
+
+/* Legend and toolbar -------------------------------------------------------------------------- */
+
+.map-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border-top: var(--line-hairline) solid var(--border);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+
+.map-legend__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-20);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-legend__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.legend-sample {
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.legend-sample--activity,
+.legend-sample--unreviewed,
+.legend-sample--approval {
+  width: 18px;
+  height: 12px;
+  border: var(--line-outline) solid var(--node-stroke);
+  border-radius: 3px;
+  background: var(--surface);
+}
+
+.legend-sample--unreviewed {
+  border-style: dashed;
+}
+
+.legend-sample--approval {
+  border-color: var(--approval-stroke);
+  background: var(--approval-fill);
+  border-radius: var(--radius-pill);
+}
+
+.legend-sample--decision {
+  width: 10px;
+  height: 10px;
+  margin: 0 2px;
+  border: var(--line-outline) solid var(--decision-stroke);
+  background: var(--decision-fill);
+  transform: rotate(45deg);
+}
+
+.legend-sample--start {
+  width: 10px;
+  height: 10px;
+  border: var(--line-outline) solid var(--ink-2);
+  border-radius: 50%;
+}
+
+.legend-sample--constraint {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--constraint);
+}
+
+.legend-sample--images {
+  width: 13px;
+  height: 10px;
+  border: var(--line-outline) solid var(--ink-3);
+  border-radius: 2px;
+}
+
+.legend-sample--back {
+  width: 20px;
+  height: 0;
+  border-top: var(--line-edge) dashed var(--edge);
+}
+
+.map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-bottom: var(--line-hairline) solid var(--border);
+}
+
+.map-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.map-toolbar__label,
+.map-toolbar__counts {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+
+.map-toolbar__counts--large {
+  color: var(--danger-text);
+}
