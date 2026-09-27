@@ -261,6 +261,14 @@ def canonicalise(
             pass
     output = ai_schemas.S2Output.model_validate(answer.data)
     by_ref = {c.ref: c for c in refs}
+    # G10 first: a name anywhere in the answer becomes its mapped role before anything else.
+    new_roles = []
+    for listed in output.new_roles:
+        name, hits = _scrub(listed.name, terms)
+        aliases = [_scrub(a, terms) for a in listed.aliases]
+        tally.scrubbed += hits + sum(h for _, h in aliases)
+        new_roles.append(ai_schemas.S2Role(name=name, aliases=[a for a, _ in aliases]))
+    output = output.model_copy(update={"new_roles": new_roles})
     new_groups = groups + [[r.name, *r.aliases] for r in output.new_roles]
 
     # Check every step; scrub names from what is kept.
@@ -268,8 +276,9 @@ def canonicalise(
     rejected: list[ClaimRecord] = []
     for step in output.steps:
         label, hits = _scrub(step.label, terms)
-        tally.scrubbed += hits
-        step = step.model_copy(update={"label": label})
+        lane, lane_hits = _scrub(step.lane_role, terms)
+        tally.scrubbed += hits + lane_hits
+        step = step.model_copy(update={"label": label, "lane_role": lane})
         outcome = check_step(step, by_ref, new_groups)
         if outcome.passed and step.ref not in kept:
             kept[step.ref] = step

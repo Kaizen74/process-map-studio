@@ -312,3 +312,30 @@ def test_draft_jobs_are_found_again_after_waiting(client: TestClient) -> None:
     job_id = response.json()["job_id"]
     wait_for_jobs(client)
     assert draft_state(client, built.engagement_id)["job"]["id"] == job_id
+
+
+def test_the_register_hides_names_in_every_text_it_returns(client: TestClient) -> None:
+    """G10, defence in depth: even a stored reason that mentions a name is shown with the role."""
+    from app.domain.models import ClaimRecord
+    from app.repositories import claims
+
+    built = fixture_engagement.build(with_key(client))
+    job = run_draft(client, built.engagement_id)
+    sessions = client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        claims.add_claims(
+            session,
+            job["target_id"],
+            [
+                ClaimRecord(
+                    source_id=built.sources["interview_transcript.txt"], stage="S2",
+                    claim_type="activity", payload={"text": "Step"}, segment_ids=[], quote="",
+                    provenance="O", basis="", verification_status="rejected",
+                    rejection_reason="role not found in cited text: Priya Nair",
+                    rejection_guardrail="G5",
+                )
+            ],
+        )  # fmt: skip
+    response = client.get(f"/api/versions/{job['target_id']}/rejected-claims")
+    assert "Priya" not in response.text
+    assert "role not found in cited text: Load controller" in response.text

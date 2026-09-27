@@ -131,3 +131,77 @@ class S3bVerdict(BaseModel):
 
 class S3bOutput(BaseModel):
     verdicts: list[S3bVerdict]
+
+
+# --- S4 Assemble (PRD §3.7) ---------------------------------------------------------------------
+
+CauseType = Literal[
+    "decision_rights",
+    "system_fragmentation",
+    "single_point_knowledge",
+    "capacity_mismatch",
+    "policy_control",
+    "capability_gap",
+    "none",
+]
+
+
+class S4Raci(BaseModel):
+    role: str
+    letter: Literal["R", "A", "C", "I"]
+
+
+class S4Constraint(BaseModel):
+    text: str = Field(description="The challenge or constraint in one sentence")
+    cause_type: CauseType
+    is_key: bool = Field(description="True for the one or two constraints that matter most")
+    claim_refs: list[str] = Field(description="IDs of the claims that state it")
+
+
+class S4AiFlag(BaseModel):
+    component: Literal[
+        "perception", "knowledge_base", "reasoning", "learning", "communication", "action"
+    ]
+    input: str
+    output: str
+    handoff: str
+    basis: Literal["rule_based_automate_candidate", "judgment_support_only"]
+
+
+class S4Step(BaseModel):
+    step_ref: str = Field(description="The step's ID from the <steps> list")
+    claim_refs: list[str] = Field(description="Further claims this step's details come from")
+    decision_mechanism: Literal["rule_based", "judgment", "none"]
+    decider_role: str = Field(description="Decisions: the role that makes the call; else empty")
+    rule_or_threshold: str
+    escalation: str
+    work_min: float | None = Field(description="Minutes of work as stated, or null")
+    wait_min: float | None = Field(description="Minutes of waiting as stated, or null")
+    duration_text: str = Field(description="Time as the sources state it, or empty")
+    complexity: Literal["L", "M", "H", ""]
+    kpi: str
+    handoff_in: str
+    handoff_out: str
+    raci: list[S4Raci]
+    k_risk: str = Field(description="Knowledge risk the claims show, or empty")
+    constraints: list[S4Constraint]
+    ai_flags: list[S4AiFlag] = Field(description="At most one")
+
+
+class S4Edge(BaseModel):
+    from_ref: str = Field(description="start, a step ID, or end")
+    to_ref: str = Field(description="start, a step ID, or end")
+    kind: Literal["sequence", "yes", "no", "approve", "reject", "rework", "exception"]
+    label: str = Field(description="Required on every exit of a decision or approval")
+
+
+class S4Phase(BaseModel):
+    name: str
+    time_window: str = Field(description="As the sources state it, or empty")
+    step_refs: list[str]
+
+
+class S4Output(BaseModel):
+    phases: list[S4Phase]
+    steps: list[S4Step]
+    edges: list[S4Edge]

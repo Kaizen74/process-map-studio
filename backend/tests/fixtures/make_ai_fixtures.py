@@ -557,6 +557,33 @@ def verdicts(count: int, verdict: str = "supported", reason: str = "") -> dict[s
     }  # fmt: skip
 
 
+def s4_hash(sessions: Any, version_id: str) -> str:
+    """The input hash of the S4 call for a version, exactly as the stage sends it."""
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.pipeline import s4_assemble as s4
+    from app.pipeline.s2_canonicalise import claim_refs
+    from app.pipeline.s3_calibrate import step_refs
+    from app.repositories import elements, engagements, versions
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        assert version is not None
+        engagement = engagements.get(session, version.engagement_id)
+        assert engagement is not None
+        terms = redaction.name_replacements(session, version.engagement_id)
+        blocks = s4.blocks_for(
+            redaction.hide(engagement.trigger, terms),
+            redaction.hide(engagement.end_point, terms),
+            engagements.list_roles(session, version.engagement_id),
+            step_refs(session, version_id),
+            claim_refs(session, version_id),
+            elements.element_claims(session, version_id),
+        )
+    return ai_service.input_hash(s4.STAGE_ID, blocks)
+
+
 def run_stage(app: Any, stage: Any, version_id: str) -> None:
     """Run one later stage (S2, S3 …) on a version with the answers written so far."""
     from app.domain.result import Ok
@@ -600,6 +627,99 @@ TRAPS_S3B: dict[str, dict[str, Any]] = {
 }
 
 
+def s4_step(ref: str, **fields: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "step_ref": ref, "claim_refs": [], "decision_mechanism": "none", "decider_role": "",
+        "rule_or_threshold": "", "escalation": "", "work_min": None, "wait_min": None,
+        "duration_text": "", "complexity": "", "kpi": "", "handoff_in": "", "handoff_out": "",
+        "raci": [], "k_risk": "", "constraints": [], "ai_flags": [],
+    }  # fmt: skip
+    base.update(fields)
+    return base
+
+
+def raci(*pairs: tuple[str, str]) -> list[dict[str, str]]:
+    return [{"role": role, "letter": letter} for role, letter in pairs]
+
+
+def edge(a: str, b: str, kind: str = "sequence", label: str = "") -> dict[str, str]:
+    return {"from_ref": a, "to_ref": b, "kind": kind, "label": label}
+
+
+LC, LEAD = "Load controller", "Load control lead"
+# S4 for the sample (A.5): every exit labelled; "No" from the special-loads check goes to the
+# offload exception, which loops back to the plan; the captain's re-trim loops back to loading.
+# Times, thresholds, KPIs and constraints use only numbers and roles the step's claims state.
+S4_ANSWER: dict[str, Any] = {
+    "phases": [
+        {"name": "Plan", "time_window": "T-120 to T-90", "step_refs": ["e1", "e2"]},
+        {"name": "Check and load", "time_window": "", "step_refs": ["e3", "e4", "e5"]},
+        {"name": "Close out", "time_window": "T-15 to T-10", "step_refs": ["e6", "e7", "e8"]},
+    ],
+    "steps": [
+        s4_step("e1", raci=raci((LC, "R"), (LC, "A")), work_min=20, complexity="M",
+                duration_text="About twenty minutes, around T-120",
+                handoff_out="Preliminary load plan",
+                k_risk="Widebody plans rely on the Load controller and one other controller",
+                constraints=[{"text": "Only one other controller knows the widebody configurations",
+                              "cause_type": "single_point_knowledge", "is_key": False,
+                              "claim_refs": ["c2"]}]),
+        s4_step("e2", raci=raci((LEAD, "R"), (LEAD, "A")), decision_mechanism="judgment",
+                handoff_in="Preliminary load plan", handoff_out="Plan released to Ramp"),
+        s4_step("e3", raci=raci((LC, "A")), decision_mechanism="rule_based", decider_role=LC,
+                rule_or_threshold="Special loads checked against the acceptance checklist",
+                constraints=[{"text": "The cargo terminal's notification often comes late",
+                              "cause_type": "system_fragmentation", "is_key": True,
+                              "claim_refs": ["c4"]}],
+                ai_flags=[{"component": "reasoning",
+                           "input": "Special load notification and acceptance checklist",
+                           "output": "Accept or refuse each special load",
+                           "handoff": "Load controller", "basis": "rule_based_automate_candidate"}]),
+        s4_step("e4", raci=raci(("Airline ops", "R"), ("Airline ops", "A")), work_min=40,
+                duration_text="Fifteen to forty minutes"),
+        s4_step("e5", raci=raci(("Ramp", "R"), ("Ramp", "A")), work_min=40, wait_min=15,
+                duration_text="About forty minutes loading; up to fifteen minutes' wait for the "
+                              "report",
+                handoff_out="Loading report to the Load controller",
+                constraints=[
+                    {"text": "The loading report is on paper and re-keyed",
+                     "cause_type": "system_fragmentation", "is_key": True, "claim_refs": ["c7"]},
+                    {"text": "Containers run short at peak times", "cause_type": "capacity_mismatch",
+                     "is_key": True, "claim_refs": ["c9"]},
+                ],
+                ai_flags=[{"component": "perception", "input": "Paper loading report",
+                           "output": "Keyed loading data", "handoff": "Load controller",
+                           "basis": "rule_based_automate_candidate"}]),
+        s4_step("e6", raci=raci((LC, "R")), decision_mechanism="judgment", decider_role=LC,
+                rule_or_threshold="Weight deviation within the airline contract tolerance",
+                escalation="Outside tolerance the captain decides"),
+        s4_step("e7", raci=raci(("Captain", "A")), decision_mechanism="judgment", work_min=15,
+                duration_text="Five to fifteen minutes"),
+        s4_step("e8", raci=raci((LC, "R"), (LC, "A")), kpi="Final load sheet no later than T-10",
+                duration_text="Around T-15",
+                ai_flags=[{"component": "action", "input": "Final load figures",
+                           "output": "Load sheet issued through the departure control system",
+                           "handoff": "Captain", "basis": "rule_based_automate_candidate"}]),
+    ],
+    "edges": [
+        edge("start", "e1"),
+        edge("e1", "e2"),
+        edge("e2", "e3", "approve", "Approve"),
+        edge("e2", "e1", "reject", "Rework"),
+        edge("e3", "e5", "yes", "Yes"),
+        edge("e3", "e4", "no", "No"),
+        edge("e4", "e1", "rework", "Re-plan"),
+        edge("e5", "e6"),
+        edge("e6", "e8", "yes", "Within limits"),
+        edge("e6", "e7", "no", "Outside limits"),
+        edge("e7", "e8", "approve", "Accept"),
+        edge("e7", "e5", "rework", "Re-trim"),
+        edge("e8", "end"),
+    ],
+}  # fmt: skip
+S4_EMPTY: dict[str, list[Any]] = {"phases": [], "steps": [], "edges": []}
+
+
 def write(root: Path, stage: str, key: str, data: object) -> None:
     (root / stage).mkdir(parents=True, exist_ok=True)
     (root / stage / f"{key}.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -632,10 +752,14 @@ def main() -> None:
         shutil.rmtree(root / "S2_canonicalise", ignore_errors=True)
         write(root, "S2_canonicalise", "default", S2_EMPTY)
     for root in (MOCKS, TRAPS):
-        for stage, empty in (("S3_calibrate", S3_EMPTY), ("S3b_verify", S3B_EMPTY)):
+        for stage, empty in (
+            ("S3_calibrate", S3_EMPTY),
+            ("S3b_verify", S3B_EMPTY),
+            ("S4_assemble", S4_EMPTY),
+        ):
             shutil.rmtree(root / stage, ignore_errors=True)
             write(root, stage, "default", empty)
-    from app.pipeline import s2_canonicalise, s3_calibrate
+    from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify
 
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
@@ -648,6 +772,8 @@ def main() -> None:
         run_stage(app, s3_calibrate.calibrate, version_id)
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
+        run_stage(app, s3b_verify.verify, version_id)
+        write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), S4_ANSWER)
 
     # The trap run (interview and LC-07 with the trap S1 answers).
     with sample_app(TRAPS, TRAP_SOURCES) as (app, client, built):

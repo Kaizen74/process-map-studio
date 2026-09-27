@@ -214,3 +214,29 @@ def test_stable_keys_are_unique_and_readable() -> None:
     taken: set[str] = set()
     keys = [s2.stable_key(label, taken) for label in ("Draft load plan", "Draft load plan!", "?")]
     assert keys == ["draft-load-plan", "draft-load-plan-2", "step"]
+
+
+def test_a_person_named_as_a_lane_or_role_becomes_their_role(
+    settings_config: AppConfig, tmp_path: Path
+) -> None:
+    """G10: a name in Claude's answer is replaced by the mapped role before anything is checked
+    or stored, so it can never reach a role, a lane or the rejected-claims register."""
+    answer = {
+        "steps": [
+            make_ai_fixtures.step("a", "activity", "Re-key report", "Priya Nair", [7]),
+            make_ai_fixtures.step("b", "activity", "Plan by Priya Nair", "Priya Nair", [6]),
+        ],
+        "new_roles": [{"name": "Priya Nair", "aliases": ["Priya Nair"]}],
+        "merge_proposals": [],
+    }
+    for d in drafted_with(crafted(settings_config, tmp_path, answer)):
+        run(d)
+        with session_scope(d.sessions) as session:
+            stored = json.dumps(
+                [r.model_dump() for _, r in claims.rejected_rows(session, d.version_id)]
+            )
+            roles = [r.name for r in engagements.list_roles(session, d.engagement_id)]
+            labels = [e.label for e in map_repo.elements(session, d.version_id)]
+        assert "Priya" not in stored and "Priya Nair" not in roles
+        # Both steps are kept in the Load controller lane (the speaker of the cited passages).
+        assert labels == ["Re-key report", "Plan by Load controller"]

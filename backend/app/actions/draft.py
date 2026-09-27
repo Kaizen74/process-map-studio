@@ -321,7 +321,7 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
                     source_id=record.source_id,
                     source_name=redaction.hide(names[record.source_id], terms),
                     anchor=anchor,
-                    reason=record.rejection_reason,
+                    reason=redaction.hide(record.rejection_reason, terms),
                     guardrail=record.rejection_guardrail,
                     stage=record.stage,
                     passage_available=first is not None,
