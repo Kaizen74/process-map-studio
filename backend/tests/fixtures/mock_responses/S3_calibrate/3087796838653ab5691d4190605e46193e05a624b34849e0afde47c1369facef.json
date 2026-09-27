@@ -1,0 +1,34 @@
+{
+  "stances": [
+    {
+      "step_ref": "e1",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "I build the preliminary load plan off the booked figures",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e3",
+      "stance": "supports",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "I check special loads, dangerous goods and live animals, against the checklist",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e4",
+      "stance": "supports",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "If something can't be accepted, the airline decides what to offload.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

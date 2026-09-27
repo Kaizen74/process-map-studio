@@ -315,8 +315,78 @@ TRAPS_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     },
 }  # fmt: skip
 
+
+def stance(
+    step_ref: str, kind: str, refs: list[str], quote: str, divergence: str = "none", note: str = ""
+) -> dict[str, Any]:
+    return {
+        "step_ref": step_ref,
+        "stance": kind,
+        "segment_ids": refs,
+        "quote": quote,
+        "divergence_type": divergence,
+        "divergence_note": note,
+    }
+
+
+# S3 for the sample, per (source, chunk): the stances that give the A.5 source states. Steps are
+# e1 Draft load plan · e2 Approve load plan · e3 Special loads OK? · e4 Resolve or offload ·
+# e5 Load and return LIR · e6 Deviation in limits? · e7 Approve deviation · e8 Issue load sheet.
+# Anything not listed is silent. The RP-02 §9 instruction line is data and changes nothing.
+JD_CONTROLLER_QUOTE = (
+    "Prepares load plans; performs special load acceptance checks; issues load sheets."
+)
+S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
+    ("interview_transcript.txt", 0): {"stances": [
+        stance("e1", "supports", ["p2"], "I build the preliminary load plan off the booked figures"),
+        stance("e3", "supports", ["p4"],
+               "I check special loads, dangerous goods and live animals, against the checklist"),
+        stance("e4", "supports", ["p5"],
+               "If something can't be accepted, the airline decides what to offload."),
+    ]},
+    ("interview_transcript.txt", 1): {"stances": [
+        stance("e5", "supports", ["p6"],
+               "Ramp loads the aircraft, forty minutes or so, and sends back the loading report."),
+    ]},
+    ("interview_transcript.txt", 2): {"stances": [
+        stance("e6", "supports", ["p7"],
+               "If the weight deviation is outside tolerance, it's the captain who decides, not us."),
+        stance("e7", "supports", ["p8"], "The captain either accepts or asks for a re-trim."),
+        stance("e8", "supports", ["p9"], "Then I issue the final load sheet, around T-15."),
+    ]},
+    ("sop_LC-07.docx", 0): {"stances": [
+        stance("e1", "supports", ["p3"],
+               "The Load Controller shall prepare the preliminary load plan by T-90."),
+        stance("e2", "supports", ["p4"], "The preliminary load plan shall be approved by the Load "
+               "Control Lead before release to Ramp."),
+        stance("e3", "supports", ["p6"],
+               "Special loads shall be checked against the acceptance checklist before loading."),
+        stance("e6", "contradicts", ["p8"], "the Load Control Lead shall decide on corrective action",
+               "ownership", "Ownership divergence: the Load control lead decides in the SOP, the "
+               "Captain in practice."),
+        stance("e8", "supports", ["p10"], "The final load sheet shall be issued through the "
+               "departure control system no later than T-10."),
+    ]},
+    ("sop_RP-02.docx", 0): {"stances": [
+        stance("e5", "contradicts", ["p2"], "The Ramp Supervisor shall return the loading report "
+               "to Load Control within 10 minutes of loading completion.", "threshold",
+               "Threshold divergence: 10 min in the SOP vs up to 15 min wait in practice."),
+    ]},
+    ("jd_load_control_lead.docx", 0): {"stances": [
+        stance("e2", "supports", ["p2"],
+               "Accountable for approval of load plans and for load control compliance."),
+    ]},
+    ("jd_load_controller.docx", 0): {"stances": [
+        stance("e1", "supports", ["p2"], JD_CONTROLLER_QUOTE),
+        stance("e3", "supports", ["p2"], JD_CONTROLLER_QUOTE),
+        stance("e8", "supports", ["p2"], JD_CONTROLLER_QUOTE),
+    ]},
+}  # fmt: skip
+
+
 EMPTY: dict[str, list[Any]] = {"claims": [], "unknowns": []}
 S2_EMPTY: dict[str, list[Any]] = {"steps": [], "new_roles": [], "merge_proposals": []}
+S3_EMPTY: dict[str, list[Any]] = {"stances": []}
 
 
 def step(ref: str, kind: str, label: str, lane: str, claims: list[int]) -> dict[str, Any]:
@@ -415,6 +485,42 @@ def draft_version(app: Any, client: Any, built: Any) -> str:
     return str(body["target_id"])
 
 
+def s3_hashes(
+    sessions: Any, version_id: str, sources: dict[str, str]
+) -> dict[tuple[str, int], str]:
+    """(source file, chunk) → the input hash of that S3 call for a version."""
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.pipeline import s3_calibrate as s3
+    from app.repositories import versions
+    from app.services import ai_service
+
+    names = {sid: name for name, sid in sources.items()}
+    found: dict[tuple[str, int], str] = {}
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        assert version is not None
+        steps = s3.step_refs(session, version_id)
+        terms = redaction.name_replacements(session, version.engagement_id)
+        for source_id in names:
+            kind, chunks = s3.source_chunks(session, source_id, terms)
+            for index, chunk in enumerate(chunks):
+                blocks = s3.blocks_for(steps, kind, chunk)
+                found[(names[source_id], index)] = ai_service.input_hash(s3.STAGE_ID, blocks)
+    return found
+
+
+def run_stage(app: Any, stage: Any, version_id: str) -> None:
+    """Run one later stage (S2, S3 …) on a version with the answers written so far."""
+    from app.domain.result import Ok
+    from app.pipeline.context import ai_context
+
+    ctx = ai_context(app.state.config)
+    assert isinstance(ctx, Ok), ctx
+    result = stage(app.state.config, app.state.sessions, ctx.value, version_id=version_id)
+    assert isinstance(result, Ok), result
+
+
 def s2_hash(sessions: Any, version_id: str, engagement_id: str) -> str:
     """The input hash of the S2 call for a version, exactly as the stage sends it."""
     from app.db import session_scope
@@ -459,10 +565,19 @@ def main() -> None:
     for root in (MOCKS, TRAPS):
         shutil.rmtree(root / "S2_canonicalise", ignore_errors=True)
         write(root, "S2_canonicalise", "default", S2_EMPTY)
+    for root in (MOCKS, TRAPS):
+        shutil.rmtree(root / "S3_calibrate", ignore_errors=True)
+        write(root, "S3_calibrate", "default", S3_EMPTY)
+    from app.pipeline import s2_canonicalise
+
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
-        write(MOCKS, "S2_canonicalise", s2_hash(app.state.sessions, version_id,
-                                                built.engagement_id), S2_ANSWER)  # fmt: skip
+        sessions = app.state.sessions
+        write(MOCKS, "S2_canonicalise", s2_hash(sessions, version_id, built.engagement_id),
+              S2_ANSWER)  # fmt: skip
+        run_stage(app, s2_canonicalise.canonicalise, version_id)
+        for key, digest in s3_hashes(sessions, version_id, built.sources).items():
+            write(MOCKS, "S3_calibrate", digest, S3_ANSWERS.get(key, S3_EMPTY))
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
     )

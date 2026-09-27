@@ -33,6 +33,7 @@ from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline import s0_normalise, s1_extract
 from app.pipeline.context import ai_context
 from app.repositories import ai_calls, claims, versions
+from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import sources as sources_repo
@@ -193,6 +194,7 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             for s in sources_repo.list_for_engagement(session, engagement_id)
             if s.text_status == "ready"
         ]
+        map_repo.add_version_sources(session, version.id, [s.id for s in ready])
 
     def failed(err: Err) -> Err:
         progress.fail()

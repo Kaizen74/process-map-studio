@@ -1,0 +1,14 @@
+{
+  "stances": [
+    {
+      "step_ref": "e2",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "Accountable for approval of load plans and for load control compliance.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

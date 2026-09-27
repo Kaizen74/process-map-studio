@@ -1,0 +1,34 @@
+{
+  "stances": [
+    {
+      "step_ref": "e1",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e3",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e8",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

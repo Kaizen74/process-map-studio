@@ -96,3 +96,25 @@ class S2Output(BaseModel):
     steps: list[S2Step]
     new_roles: list[S2Role]
     merge_proposals: list[S2Merge]
+
+
+# --- S3 Calibrate (PRD §3.7) --------------------------------------------------------------------
+
+
+class S3Stance(BaseModel):
+    """What the supplied part of one source says about one step (G2: cited and quoted)."""
+
+    step_ref: str = Field(description="The step's ID from the <steps> list")
+    stance: Literal["supports", "contradicts"]
+    segment_ids: list[str] = Field(description="IDs of the segments that address the step")
+    quote: str = Field(description="Verbatim words copied from those segments, at most 40 words")
+    divergence_type: Literal[
+        "sequence", "ownership", "threshold", "trigger", "exception", "omission", "none"
+    ]
+    divergence_note: str = Field(
+        description="For a disagreement: one sentence saying what differs, or empty"
+    )
+
+
+class S3Output(BaseModel):
+    stances: list[S3Stance]
