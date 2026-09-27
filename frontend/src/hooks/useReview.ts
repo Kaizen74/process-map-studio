@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getGraph } from "../api/draft";
 import {
+  addStep,
   getElement,
   getLayout,
   listSegmentsAround,
@@ -8,6 +9,7 @@ import {
   updateElement,
   type ReviewAction,
 } from "../api/review";
+import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { ElementDetail, Graph } from "../api/types";
 
@@ -107,6 +109,20 @@ export function useEditStep(versionId: string, engagementId: string) {
       if ("kind" in patch || "lane_role_id" in patch) {
         await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
       }
+    },
+  });
+}
+
+/** Add a missing step; counts as done once the new layout (with the step placed) is in. */
+export function useAddStep(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: NewStepBody) => addStep(versionId, body),
+    onSuccess: async (detail: ElementDetail) => {
+      client.setQueryData(["elements", detail.id], detail);
+      refreshReview(client, versionId, engagementId);
+      await client.refetchQueries({ queryKey: ["versions", versionId, "graph"] });
+      await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
     },
   });
 }

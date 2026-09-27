@@ -12,8 +12,10 @@ import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { ReviewAction } from "../../api/review";
 import type { EvidenceCard } from "../../lib/mapTypes";
+import { newStepForm, type AddStepForm } from "../../lib/addStep";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
@@ -48,6 +50,9 @@ export function ReviewScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = editingId !== null && editingId === selectedId;
   const stopEditing = useCallback(() => setEditingId(null), []);
+  // Add missing step replaces the panel content until it is added or cancelled.
+  const [adding, setAdding] = useState<AddStepForm | null>(null);
+  const stopAdding = useCallback(() => setAdding(null), []);
   useEffect(() => {
     if (!openCard) return;
     function onKey(event: KeyboardEvent) {
@@ -62,6 +67,7 @@ export function ReviewScreen() {
   }
 
   function select(id: string | null) {
+    setAdding(null);
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -194,10 +200,27 @@ export function ReviewScreen() {
         <aside
           className="review__panel"
           aria-label={
-            selected && editing ? "Edit step" : selected && openCard ? "Source" : selected ? "Step details" : "How to review"
+            adding
+              ? "Add missing step"
+              : selected && editing
+                ? "Edit step"
+                : selected && openCard
+                  ? "Source"
+                  : selected
+                    ? "Step details"
+                    : "How to review"
           }
         >
-          {selected && editing && versionId ? (
+          {adding && versionId ? (
+            <AddStepPanel
+              graph={g}
+              initial={adding}
+              versionId={versionId}
+              engagementId={engagementId}
+              onAdded={(id) => select(id)}
+              onCancel={stopAdding}
+            />
+          ) : selected && editing && versionId ? (
             <EditPanel
               element={selected}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
@@ -229,6 +252,11 @@ export function ReviewScreen() {
                   : undefined
               }
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
+              onAddAfter={
+                editable && selected.kind !== "end" && selected.review_status !== "rejected"
+                  ? () => setAdding(newStepForm(g, selected.id))
+                  : undefined
+              }
               onClose={() => select(null)}
             />
           ) : (

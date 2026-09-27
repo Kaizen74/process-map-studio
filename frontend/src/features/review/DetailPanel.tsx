@@ -32,13 +32,23 @@ export interface DetailPanelProps {
       }
     | undefined;
   onOpenEvidence: (card: Card) => void;
+  /** Add missing step after this one; omitted where it can't be (the end, a rejected step, not a draft). */
+  onAddAfter?: (() => void) | undefined;
   onClose: () => void;
 }
 
 const STEPS = new Set(["activity", "decision", "approval"]);
 
 /** The selected step with its review actions (PRD §5.7.5, §5.7.7). */
-export function DetailPanel({ element, laneName, phaseName, review, onOpenEvidence, onClose }: DetailPanelProps) {
+export function DetailPanel({
+  element,
+  laneName,
+  phaseName,
+  review,
+  onOpenEvidence,
+  onAddAfter,
+  onClose,
+}: DetailPanelProps) {
   const detail = useElement(element.id);
   const step = STEPS.has(element.kind);
   return (
@@ -106,6 +116,11 @@ export function DetailPanel({ element, laneName, phaseName, review, onOpenEviden
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
         </>
+      )}
+      {onAddAfter && (
+        <button type="button" className="btn btn--link" onClick={onAddAfter}>
+          Add a missing step after this one
+        </button>
       )}
       <button type="button" className="btn btn--link" onClick={onClose}>
         Close details

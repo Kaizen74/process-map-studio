@@ -347,3 +347,60 @@ button.evidence:focus-visible {
   display: flex;
   gap: var(--space-8);
 }
+
+/* Add missing step (PRD §5.7.6) */
+.picked-passages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.picked-passage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-10);
+  background: var(--surface-2);
+  border-radius: var(--radius-node);
+}
+.picked-passage__anchor,
+.viewer-passage__picked {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.picked-passage__text {
+  line-height: var(--leading-normal);
+}
+.source-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.source-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-8) var(--space-10);
+  text-align: left;
+  color: var(--ink);
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-node);
+  cursor: pointer;
+}
+.source-choice:hover {
+  background: var(--surface-2);
+}
+.source-choice__meta {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}

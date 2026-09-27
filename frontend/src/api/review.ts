@@ -1,5 +1,6 @@
 import { request } from "./request";
 import type { ElementDetail, Layout, SegmentPage } from "./types";
+import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 
 const enc = encodeURIComponent;
@@ -22,3 +23,7 @@ export const reviewElement = (elementId: string, action: ReviewAction) =>
 /** Edit a step: only the fields sent change (PATCH /elements/{eid}). */
 export const updateElement = (elementId: string, patch: Partial<StepPatch>) =>
   request<ElementDetail>(`/elements/${enc(elementId)}`, { method: "PATCH", body: patch });
+
+/** Add a missing step: Eric's own, observed with passages or recommended with a reference. */
+export const addStep = (versionId: string, body: NewStepBody) =>
+  request<ElementDetail>(`/versions/${enc(versionId)}/elements`, { method: "POST", body });
