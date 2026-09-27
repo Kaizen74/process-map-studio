@@ -555,3 +555,17 @@ class Confidence(BaseModel):
 
     value: float
     breakdown: list[ConfidenceTerm]
+
+
+class AuditEntry(BaseModel):
+    """One row of a version's audit log (PRD §5.7.10 Audit tab); names hidden in the label."""
+
+    id: str
+    at: str
+    actor: str
+    action: str
+    target_type: str
+    target_id: str
+    target_label: str
+    before: object = None
+    after: object = None

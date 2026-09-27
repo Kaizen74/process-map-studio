@@ -383,6 +383,27 @@ Response `200`: the element exactly as in the graph (`id, stable_key, kind, labe
 - Names on the hidden list are replaced by roles in every text, including quotes and file names.
 Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
 
+### POST /api/elements/{eid}/confirm · /reject · /restore (phase P6)
+Review a step. Request: none. Response `200`: the element exactly as `GET /api/elements/{eid}` (with its new `review_status`).
+- **confirm**: an unreviewed step (`draft`) becomes `confirmed`. A step already `confirmed`, `edited` or `added` stays as it is (nothing changes, no audit row). A `rejected` step must be restored first (`409` "This step is rejected. Restore it before confirming it.").
+- **reject**: any step that isn't rejected becomes `rejected` (reversible; the map shows it faded, lint leaves it out).
+- **restore**: a `rejected` step goes back to `draft` (`409` "Only a rejected step can be restored." otherwise).
+- Confirmed, edited and added steps are **locked**: no pipeline run (refresh) ever writes to them.
+- Only a draft version can change: `409` "This version is published and can't be changed. Reopen it as a new draft." otherwise.
+- Start and end come from the scope card: `422` "Start and end come from the engagement's trigger and end point; change them on Setup."
+- Each change writes an audit row (`Confirmed step`, `Rejected step`, `Restored step`, with the status before and after) and refreshes the stored lint report.
+Errors: `404` ("That step doesn't exist."), `409`, `422`. Used by: Review panel actions and keyboard (P6).
+
+### GET /api/versions/{vid}/audit (phase P6)
+The version's audit log, newest first.
+Response `200`:
+```json
+[{"id": "…", "at": "2026-09-27T10:02:11.123456+00:00", "actor": "Eric", "action": "Confirmed step",
+  "target_type": "element", "target_id": "…", "target_label": "Draft load plan",
+  "before": {"review_status": "draft"}, "after": {"review_status": "confirmed"}}]
+```
+`target_label`: the step's current label (names hidden), `""` when the target no longer exists. Errors: `404` ("That version doesn't exist."). Used by: Review Audit tab (P6).
+
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.
 Response `200`:

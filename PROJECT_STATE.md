@@ -9,8 +9,8 @@ Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its wor
 
 ## This session (2026-09-27, session 8) — goal: close P5, then Phase P6 (review workbench); P6 will take two or three sessions
 P5 closed at the start of this session (Eric approved the screenshots; tag `phase-p5`). P6 follows PRD §6.3: backend review rules first (contract first), then the workbench UI in layers. Changes that alter the approved Review screenshot (the Map | Table switch, the "How to review" text) are kept for the last UI increment, where new screenshots go to Eric for approval before the baseline is replaced.
-- [ ] Increment 1 — review actions (contract first): `POST /elements/{eid}/confirm · /reject · /restore` with the review-status rules (only a draft version can change; confirmed, edited and added steps are locked against pipeline runs), audit rows, `GET /versions/{vid}/audit`
-- [ ] Increment 2 — editing: `PATCH /elements/{eid}` (label, kind, lane, times, complexity, KPI, decision rights, handoffs, constraints, knowledge risk, AI flag) and `PUT /elements/{eid}/raci`, with the shared field rules (label and Accountable required, Responsible for activities, a judgment step never an automation candidate, no hidden names), `edited` status, before/after audit rows
+- [x] Increment 1 — review actions (contract first): `POST /elements/{eid}/confirm · /reject · /restore` with the review-status rules (only a draft version can change; confirmed, edited and added steps are locked against pipeline runs), audit rows, `GET /versions/{vid}/audit`
+- [ ] Increment 2 — IN PROGRESS: editing: `PATCH /elements/{eid}` (label, kind, lane, times, complexity, KPI, decision rights, handoffs, constraints, knowledge risk, AI flag) and `PUT /elements/{eid}/raci`, with the shared field rules (label and Accountable required, Responsible for activities, a judgment step never an automation candidate, no hidden names), `edited` status, before/after audit rows
 - [ ] Increment 3 — adding: `POST /versions/{vid}/elements` (placed after a chosen step; `O` needs a passage, `R` a reference; `added` status, evidence linked) and `POST · PATCH · DELETE /versions/{vid}/edges`
 - [ ] Increment 4 — questions and merges: `GET /versions/{vid}/questions`, `PATCH /questions/{qid}` (answered/open), `GET /versions/{vid}/merge-proposals`, `POST /merge-proposals/{mid}/decision`
 - [ ] Increment 5 — refresh draft from sources (AI job): `POST /versions/{vid}/refresh` re-runs the pipeline into the same draft (next draft number), rewriting only unreviewed steps; locked steps unchanged (test)
@@ -75,6 +75,7 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - 2026-09-27 Evidence opens its source in the panel at the cited passage with the quote highlighted (Back and Esc return to the step); the RACI matrix tab (contested `A?`, row selects); browser checks open a piece of evidence (axe clean, no names)
 - 2026-09-27 Visual baseline candidates of Review at 1440 × 900 and 1080 × 800 in docs/screens/ (approved by Eric); GUIDE (Review step by step) and README updated
 - 2026-09-27 Phase P5 closed: Eric approved the Review screenshots; the browser checks now compare Review with them at every run (0.5% pixel threshold, never rewritten by a test run). **Phase P5 complete**
+- 2026-09-27 Review actions: confirm, reject and restore a step (locked once confirmed; published versions, start and end refused), each with an audit row and a fresh lint report; the version's audit log (names hidden); both in the latency gate
 
 ## Not started yet
 - P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

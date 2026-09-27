@@ -61,3 +61,25 @@ def list_recent(
         }
         for row in session.scalars(query)
     ]
+
+
+def list_for_version(session: Session, version_id: str) -> list[dict[str, Any]]:
+    """A version's audit rows, newest first (insertion order breaks timestamp ties)."""
+    query = (
+        select(AuditRow)
+        .where(AuditRow.version_id == version_id)
+        .order_by(AuditRow.created_at.desc(), literal_column("audit_log.rowid").desc())
+    )
+    return [
+        {
+            "id": row.id,
+            "at": row.created_at,
+            "actor": row.actor,
+            "action": row.action,
+            "target_type": row.target_type,
+            "target_id": row.target_id,
+            "before": row.before,
+            "after": row.after,
+        }
+        for row in session.scalars(query)
+    ]

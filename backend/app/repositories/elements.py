@@ -303,3 +303,8 @@ def image_count(session: Session, element_id: str) -> int:
         )
         or 0
     )
+
+
+def element(session: Session, element_id: str) -> ElementRecord | None:
+    row = session.get(Element, element_id)
+    return ElementRecord.model_validate(row) if row else None
