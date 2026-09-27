@@ -180,7 +180,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {
-      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-plain.png"), fullPage: true });
+      // Visual baseline candidates (PRD §6.2 item 9): plain lens, nothing selected, at the two
+      // sizes the baseline will use. Saved as baselines only after Eric approves them.
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-1440x900.png") });
+      await page.setViewportSize({ width: 1080, height: 800 });
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-1080x800.png") });
+      await page.setViewportSize({ width: 1440, height: 900 });
     }
     await page.getByRole("button", { name: /^Activity, Load and return LIR/ }).click();
     const panel = page.getByRole("complementary", { name: "Step details" });
