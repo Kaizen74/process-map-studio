@@ -17,8 +17,8 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - [x] Increment 6 — UI review actions: Confirm as drafted · Edit · Reject step · Restore, locked and rejected strips, auto-advance (needs check first, then process order), "All steps reviewed", progress and map refresh
 - [x] Increment 7 — UI edit form (shared validation in `lib/validation.ts`), RACI editing, Esc cancels
 - [x] Increment 8 — UI add missing step with the passage picker or a reference
-- [ ] Increment 9 — IN PROGRESS: UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
-- [ ] Increment 10 — UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
+- [x] Increment 9 — UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
+- [ ] Increment 10 — IN PROGRESS: UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
 - [ ] Increment 11 — refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
 
 ## Done (all sessions)
@@ -83,6 +83,7 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - 2026-09-27 Review actions on screen: Confirm as drafted, Reject step and Restore in the panel, locked and rejected strips, instant map and progress updates that roll back if refused, auto-advance to the next step needing attention, and "All steps reviewed"
 - 2026-09-27 Review: Edit opens the edit form in the panel (every field from PRD §5.7.6, RACI with role pickers); field rules shared with the server; Save sends only what changed, waits for the new layout when kind or lane changed and moves to the next step; Cancel or Esc discards (13 checks)
 - 2026-09-27 Review: Add a missing step after the selected one — observed (pick the passage in a source with "Use this passage") or recommended (typed reference); the new step is added as locked and selected (13 checks)
+- 2026-09-27 Review: tabs under the map — RACI matrix, Validation questions (Copy all, Download .md, Mark answered), Rejected claims (Open passage, Add as step from this passage), Audit log, Merge decisions (Accept merge, Keep separate, Split), Map checks (13 checks)
 
 ## Not started yet
 - P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

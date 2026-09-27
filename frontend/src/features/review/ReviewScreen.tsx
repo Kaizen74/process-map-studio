@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
 import { AllReviewed } from "../../components/panel";
-import { RaciMatrix } from "../../components/tabs";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
 import { useEngagement } from "../../hooks/useEngagements";
@@ -11,7 +10,7 @@ import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { ReviewAction } from "../../api/review";
-import type { EvidenceCard } from "../../lib/mapTypes";
+import type { RejectedClaim } from "../../lib/reviewTypes";
 import { newStepForm, type AddStepForm } from "../../lib/addStep";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
@@ -19,7 +18,8 @@ import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
-import { SourcePanel } from "./SourcePanel";
+import { SourcePanel, type OpenPassage } from "./SourcePanel";
+import { WorkbenchTabs } from "./WorkbenchTabs";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
 import { useLens } from "./useLens";
@@ -43,8 +43,9 @@ export function ReviewScreen() {
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [mapBox, fit] = useFitScale(layout.data?.canvas.w ?? 0);
   const reviewStep = useReviewStep(versionId ?? "", engagementId);
-  // The source viewer replaces the panel's content; it belongs to the step it was opened from.
-  const [viewing, setViewing] = useState<{ step: string; card: EvidenceCard } | null>(null);
+  // The source viewer replaces the panel's content; it belongs to the step it was opened from
+  // (or to no step, opened from a rejected claim) and closes when the selection changes.
+  const [viewing, setViewing] = useState<{ step: string | null; card: OpenPassage } | null>(null);
   const openCard = viewing && viewing.step === selectedId ? viewing.card : null;
   // The edit form, like the viewer, belongs to the step it was opened on.
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export function ReviewScreen() {
 
   function select(id: string | null) {
     setAdding(null);
+    setViewing(null);
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -145,6 +147,18 @@ export function ReviewScreen() {
     if (action !== "restore") select(nextToReview(g, id));
   }
 
+  function openClaim(claim: RejectedClaim) {
+    select(null);
+    setViewing({ step: null, card: { ...claim, quote: "" } });
+  }
+
+  function addFromClaim(claim: RejectedClaim) {
+    const after = selected && selected.kind !== "end" && selected.review_status !== "rejected" ? selected.id : null;
+    const startId = g.elements.find((e) => e.kind === "start")?.id ?? "";
+    const passage = { id: claim.segment_id ?? "", anchor: claim.anchor, source_name: claim.source_name, text: "" };
+    setAdding(newStepForm(g, after ?? startId, passage));
+  }
+
   function saved(id: string) {
     setEditingId(null);
     select(nextToReview(g, id)); // auto-advance after Save (PRD §5.7.5)
@@ -188,12 +202,17 @@ export function ReviewScreen() {
             </div>
             <MapLegend lens={lens} />
           </Card>
-          <Card title="RACI matrix" description="Questions, rejected claims, audit, merge decisions and lint arrive as tabs in build phase P6.">
-            <RaciMatrix
+          <Card className="workbench-card">
+            <WorkbenchTabs
               graph={g}
+              versionId={g.version.id}
+              engagementId={engagementId}
               laneOrder={drawing.lanes.map((lane) => lane.role_id)}
               selectedId={selected?.id ?? null}
+              editable={editable}
               onSelect={select}
+              onOpenPassage={openClaim}
+              onAddFromPassage={addFromClaim}
             />
           </Card>
         </main>
@@ -204,7 +223,7 @@ export function ReviewScreen() {
               ? "Add missing step"
               : selected && editing
                 ? "Edit step"
-                : selected && openCard
+                : openCard
                   ? "Source"
                   : selected
                     ? "Step details"
@@ -231,8 +250,12 @@ export function ReviewScreen() {
               onSaved={() => saved(selected.id)}
               onCancel={stopEditing}
             />
-          ) : selected && openCard ? (
-            <SourcePanel card={openCard} stepLabel={selected.label} onBack={() => setViewing(null)} />
+          ) : openCard ? (
+            <SourcePanel
+              card={openCard}
+              backLabel={selected ? selected.label : "how to review"}
+              onBack={() => setViewing(null)}
+            />
           ) : selected ? (
             <DetailPanel
               element={selected}

@@ -98,7 +98,7 @@ export function AddStepForm({
                     <span className="mono picked-passage__anchor">
                       {p.source_name} · {p.anchor}
                     </span>
-                    <p className="picked-passage__text">{p.text}</p>
+                    {p.text && <p className="picked-passage__text">{p.text}</p>}
                     <button
                       type="button"
                       className="btn btn--link"

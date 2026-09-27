@@ -3,17 +3,25 @@ import { SourceViewer } from "../../components/panel";
 import { useSegmentsAround } from "../../hooks/useReview";
 import { useSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import type { EvidenceCard } from "../../lib/mapTypes";
 import { SOURCE_KINDS } from "../../lib/panelText";
 
+/** The passage to open: from an evidence card or a rejected claim. */
+export interface OpenPassage {
+  source_id: string;
+  source_name: string;
+  segment_id: string | null;
+  quote: string;
+}
+
 export interface SourcePanelProps {
-  card: EvidenceCard;
-  stepLabel: string;
+  card: OpenPassage;
+  /** What "← Back to …" returns to. */
+  backLabel: string;
   onBack: () => void;
 }
 
-/** The evidence card's source, opened at its passage in the panel (PRD §5.7.8). */
-export function SourcePanel({ card, stepLabel, onBack }: SourcePanelProps) {
+/** A source opened at one passage in the panel (PRD §5.7.8). */
+export function SourcePanel({ card, backLabel, onBack }: SourcePanelProps) {
   const source = useSource(card.source_id);
   const page = useSegmentsAround(card.source_id, card.segment_id);
   const failed = source.isError ? source : page.isError ? page : null;
@@ -21,7 +29,7 @@ export function SourcePanel({ card, stepLabel, onBack }: SourcePanelProps) {
     return (
       <div className="panel-stack">
         <button type="button" className="btn btn--link" onClick={onBack}>
-          ← Back to {stepLabel}
+          ← Back to {backLabel}
         </button>
         <ErrorState
           title="This source couldn't be opened"
@@ -52,7 +60,7 @@ export function SourcePanel({ card, stepLabel, onBack }: SourcePanelProps) {
       passages={page.data.segments}
       targetId={card.segment_id ?? ""}
       quote={card.quote}
-      backLabel={stepLabel}
+      backLabel={backLabel}
       onBack={onBack}
     />
   );

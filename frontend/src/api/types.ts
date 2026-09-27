@@ -253,26 +253,6 @@ export interface DraftState {
   summary: DraftSummary | null;
 }
 
-export interface RejectedClaim {
-  id: string;
-  claim_text: string;
-  source_id: string;
-  source_name: string;
-  anchor: string;
-  reason: string;
-  guardrail: string;
-  stage: string;
-  passage_available: boolean;
-  segment_id: string | null;
-}
-
-export interface RejectedClaims {
-  items: RejectedClaim[];
-  total: number;
-  scrub_count: number;
-  instruction_like_count: number;
-}
-
 export interface AiUsageRow {
   id: string;
   created_at: string;
@@ -293,17 +273,6 @@ export interface AiUsage {
 
 // --- The map as a graph (API_CONTRACT.md → Draft: graph, lint) — phase P4 ------------------
 
-export interface LintIssue {
-  rule: string;
-  element_id: string | null;
-  message: string;
-}
-
-export interface LintReport {
-  failures: LintIssue[];
-  warnings: LintIssue[];
-}
-
 // Map, layout and panel shapes live in lib (components may import lib, not api).
 export type {
   SourceKind,
@@ -321,3 +290,15 @@ export type {
   RaciDetail,
   ElementDetail,
 } from "../lib/mapTypes";
+export type {
+  AuditEntry,
+  LintIssue,
+  LintReport,
+  MergeClaim,
+  MergeGroup,
+  MergeProposal,
+  MergeDecision,
+  Question,
+  RejectedClaim,
+  RejectedClaims,
+} from "../lib/reviewTypes";

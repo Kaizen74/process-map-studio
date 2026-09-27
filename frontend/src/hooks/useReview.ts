@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { getGraph } from "../api/draft";
+import { getGraph, getLint } from "../api/draft";
 import {
   addStep,
+  decideMerge,
+  getAudit,
   getElement,
   getLayout,
+  listMergeProposals,
+  listQuestions,
   listSegmentsAround,
   reviewElement,
+  setQuestionStatus,
   updateElement,
+  type MergeChoice,
   type ReviewAction,
 } from "../api/review";
 import type { NewStepBody } from "../lib/addStep";
@@ -54,7 +60,7 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 
 /** Everything that shows a version's review state, refreshed after a change (PRD §5.8). */
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals"]) {
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });
@@ -124,5 +130,61 @@ export function useAddStep(versionId: string, engagementId: string) {
       await client.refetchQueries({ queryKey: ["versions", versionId, "graph"] });
       await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
     },
+  });
+}
+
+// The workbench tabs (PRD §5.7.10). Keys under the version, so refreshReview reloads them.
+
+export function useQuestions(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "questions"],
+    queryFn: () => listQuestions(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+export function useSetQuestionStatus(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questionId, status }: { questionId: string; status: "open" | "answered" }) =>
+      setQuestionStatus(questionId, status),
+    onSettled: () => refreshReview(client, versionId, engagementId),
+  });
+}
+
+export function useMergeProposals(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "merge-proposals"],
+    queryFn: () => listMergeProposals(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+/** Accept, keep separate or split: the map changes, so it waits for the new layout. */
+export function useDecideMerge(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ proposalId, decision }: { proposalId: string; decision: MergeChoice }) =>
+      decideMerge(proposalId, decision),
+    onSuccess: async () => {
+      refreshReview(client, versionId, engagementId);
+      await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
+    },
+  });
+}
+
+export function useAudit(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "audit"],
+    queryFn: () => getAudit(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+export function useLint(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "lint"],
+    queryFn: () => getLint(versionId ?? ""),
+    enabled: Boolean(versionId),
   });
 }

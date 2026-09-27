@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { ElementDetail, Layout, SegmentPage } from "./types";
+import type { AuditEntry, ElementDetail, Layout, MergeProposal, Question, SegmentPage } from "./types";
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 
@@ -27,3 +27,19 @@ export const updateElement = (elementId: string, patch: Partial<StepPatch>) =>
 /** Add a missing step: Eric's own, observed with passages or recommended with a reference. */
 export const addStep = (versionId: string, body: NewStepBody) =>
   request<ElementDetail>(`/versions/${enc(versionId)}/elements`, { method: "POST", body });
+
+// The workbench tabs (phase P6).
+export const listQuestions = (versionId: string) => request<Question[]>(`/versions/${enc(versionId)}/questions`);
+
+export const setQuestionStatus = (questionId: string, status: "open" | "answered") =>
+  request<Question>(`/questions/${enc(questionId)}`, { method: "PATCH", body: { status } });
+
+export const listMergeProposals = (versionId: string) =>
+  request<MergeProposal[]>(`/versions/${enc(versionId)}/merge-proposals`);
+
+export type MergeChoice = "accepted" | "rejected" | "split";
+
+export const decideMerge = (proposalId: string, decision: MergeChoice) =>
+  request<MergeProposal>(`/merge-proposals/${enc(proposalId)}/decision`, { method: "POST", body: { decision } });
+
+export const getAudit = (versionId: string) => request<AuditEntry[]>(`/versions/${enc(versionId)}/audit`);
