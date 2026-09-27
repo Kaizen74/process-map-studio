@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.actions import versions
-from app.domain.graph import Graph, LintReport
+from app.domain.graph import ElementDetail, Graph, LintReport
 from app.domain.layout import Layout
 from app.routers.http import unwrap
 
@@ -25,3 +25,8 @@ def get_layout(request: Request, version_id: str) -> Layout:
 @router.get("/versions/{version_id}/lint")
 def get_lint(request: Request, version_id: str) -> LintReport:
     return unwrap(versions.get_lint(request.app.state.sessions, version_id))
+
+
+@router.get("/elements/{element_id}")
+def get_element(request: Request, element_id: str) -> ElementDetail:
+    return unwrap(versions.get_element(request.app.state.sessions, element_id))

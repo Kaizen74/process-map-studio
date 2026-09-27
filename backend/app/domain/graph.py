@@ -282,3 +282,67 @@ class LintReport(Out):
 
     failures: list[LintIssue]
     warnings: list[LintIssue]
+
+
+# --- One element for the detail panel (PRD §4 element responses, §5.7.7) ------------------------
+
+
+class EvidenceCard(Out):
+    segment_id: str | None
+    source_id: str
+    source_name: str
+    source_kind: str
+    stance: str
+    anchor: str
+    verified: bool
+    quote: str
+    note: str
+
+
+class RaciSource(Out):
+    source_name: str
+    source_kind: str
+    anchor: str
+
+
+class RaciDetail(Out):
+    role_id: str
+    role_name: str
+    letter: str
+    contested: bool
+    sources: list[RaciSource]
+
+
+class ElementDetail(Out):
+    """The graph element, with names, quotes and source names for the panel (never exported)."""
+
+    id: str
+    version_id: str
+    stable_key: str
+    kind: str
+    label: str
+    lane_role_id: str | None
+    lane_role_name: str
+    phase_id: str | None
+    phase_name: str
+    time: GraphTime
+    complexity: str | None
+    kpi: str
+    decision: GraphDecision
+    decider_role_name: str
+    handoff: GraphHandoff
+    raci: list[RaciDetail]
+    provenance: str
+    r_reference: str
+    source_state: str
+    divergence_types: list[str]
+    constraints: list[GraphConstraint]
+    k_risk: str
+    ai_flag: GraphAiFlag | None
+    evidence: list[EvidenceCard]
+    confidence: float | None
+    confidence_breakdown: list[dict[str, object]]
+    needs_check: bool
+    review_status: str
+    image_count: int
+    gap_findings: list[dict[str, object]]

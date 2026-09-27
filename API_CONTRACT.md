@@ -200,8 +200,9 @@ Response `200`:
 ```
 - `speaker_role`: the mapped role's name, `"Interviewer"`, or `null` when the speaker isn't mapped yet (never the label, which may be a name).
 - **Names are hidden** (PRD §3.8 G10): `text` and `section` have every redaction term replaced by its replacement (the mapped role, "Interviewer" or "[name]"). With `raw=1` the text is exactly as stored and `speaker_label` is filled; this is one of the three owner-only places where names appear.
+- `around=<segment_id>` (from P5): instead of `page`, return the page that holds this passage (the response's `page` says which). `404` "That passage isn't in this source." when it belongs to another source or doesn't exist.
 - `coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
-Used by: Sources screen (full-width source viewer; correction editor with `raw=1`).
+Used by: Sources screen (full-width source viewer; correction editor with `raw=1`); Review detail panel (source viewer opened at a passage with `around`, P5).
 
 ### PATCH /api/segments/{segid} (correction editor, owner-only)
 Request: `{"text": "…"}` — 1 to 5,000 characters. The passage is saved as typed, marked `corrected: true`, and checked again for instruction-like text.
@@ -356,6 +357,31 @@ The lint report of PRD §3.7 (L1–L12), stored on the version when the draft is
 ```
 Failures block publishing (P7); warnings are listed beneath the quality card. Since P5 the warnings include "The map has n line crossings; consider changing the lane order." (L12, more than 3 crossings in the layout). A version without a stored report is linted on request.
 Errors: `404`. Used by: Draft summary (P4), Review Lint tab (P6), quality card (P7).
+
+## Review (PRD §4 Review, §5.6–§5.8) — phase P5
+
+### GET /api/elements/{eid}
+One step with everything the detail panel shows (PRD §4: every element response carries these fields, so the panel renders without extra calls).
+Response `200`: the element exactly as in the graph (`id, stable_key, kind, label, lane_role_id, phase_id, time, complexity, kpi, decision, handoff, provenance, r_reference, source_state, divergence_types, constraints, k_risk, ai_flag, confidence, confidence_breakdown, needs_check, review_status`), plus:
+```json
+{"version_id": "…", "lane_role_name": "Load controller", "phase_name": "Plan",
+ "decider_role_name": "Load controller",
+ "evidence": [{"segment_id": "…", "source_id": "…", "source_name": "interview_transcript.txt",
+               "source_kind": "interview_transcript", "stance": "supports", "anchor": "06:40",
+               "verified": true, "quote": "I build the preliminary plan…", "note": ""},
+              {"segment_id": null, "source_id": "…", "source_name": "sop_RP-02.docx",
+               "source_kind": "sop", "stance": "silent", "anchor": "", "verified": false,
+               "quote": "", "note": ""}],
+ "raci": [{"role_id": "…", "role_name": "Captain", "letter": "A", "contested": true,
+           "sources": [{"source_name": "interview_transcript.txt", "source_kind": "interview_transcript", "anchor": "12:10"}]}],
+ "image_count": 0, "gap_findings": []}
+```
+- `evidence`: the graph's evidence in the same order, each with its source's file name and the verbatim `quote` (for the in-app highlight; quotes never leave the app); silent sources have `segment_id: null` and no quote.
+- `raci[].sources`: the passages behind that RACI entry (for a contested `A?`, the competing sources and anchors).
+- `lane_role_name`, `phase_name`, `decider_role_name`: `""` when there is none.
+- `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: `[]` until P10.
+- Names on the hidden list are replaced by roles in every text, including quotes and file names.
+Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
 
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.

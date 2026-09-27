@@ -116,7 +116,17 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     wait_for_jobs(client)
     sample = client.get(f"/api/jobs/{sample_job}").json()
     assert sample["status"] == "done", sample
-    return client, ids | {"draft_job": draft_job, "version": version, "map": sample["target_id"]}
+    graph = client.get(f"/api/versions/{sample['target_id']}/graph").json()
+    step = next(e for e in graph["elements"] if e["kind"] == "decision")
+    cited = next(c for c in step["evidence"] if c["segment_id"])
+    return client, ids | {
+        "draft_job": draft_job,
+        "version": version,
+        "map": sample["target_id"],
+        "element": step["id"],
+        "cited_source": cited["source_id"],
+        "cited": cited["segment_id"],
+    }
 
 
 ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
@@ -145,6 +155,8 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/versions/{map}/graph", None),
     ("GET", "/api/versions/{map}/layout", None),
     ("GET", "/api/versions/{map}/lint", None),
+    ("GET", "/api/elements/{element}", None),
+    ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]
 
 

@@ -17,7 +17,9 @@ from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance
 from app.domain.graph import (
     CycleTime,
     EdgeRecord,
+    ElementDetail,
     ElementRecord,
+    EvidenceCard,
     Graph,
     GraphAiFlag,
     GraphConstraint,
@@ -33,6 +35,8 @@ from app.domain.graph import (
     GraphTime,
     GraphVersion,
     LintReport,
+    RaciDetail,
+    RaciSource,
 )
 from app.domain.layout import Layout
 from app.domain.result import Err, ErrorKind, Ok, Result
@@ -45,6 +49,7 @@ from app.services import layout, lint, parsing
 Sessions = sessionmaker[Session]
 
 VERSION_MISSING = "That version doesn't exist."
+ELEMENT_MISSING = "That step doesn't exist."
 # Edges that leave the main path: exception routes and loops back.
 OFF_MAIN_PATH = {
     EdgeKind.NO.value,
@@ -285,3 +290,81 @@ def get_lint(sessions: Sessions, version_id: str) -> Result[LintReport]:
     if stored is not None:
         return Ok(LintReport.model_validate(stored))
     return lint_version(sessions, version_id)
+
+
+def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
+    """One step as the detail panel shows it: the graph element with role, lane and phase names,
+    each evidence card's source name and quote, and the passages behind each RACI entry. Names
+    are hidden everywhere (G10); quotes stay in the app and never reach an export."""
+    with session_scope(sessions) as session:
+        version_id = map_repo.element_version_id(session, element_id)
+        version = versions_repo.get(session, version_id) if version_id else None
+        graph = build_graph(session, version.id) if version else None
+        element = next((e for e in graph.elements if e.id == element_id), None) if graph else None
+        if version is None or graph is None or element is None:
+            return Err(ErrorKind.NOT_FOUND, ELEMENT_MISSING)
+        terms = redaction.name_replacements(session, version.engagement_id)
+        passages = map_repo.evidence(session, version.id)
+        raci = [r for r in map_repo.raci(session, version.id) if r.element_id == element_id]
+        sources = sources_repo.list_for_engagement(session, version.engagement_id)
+        names = {s.id: s.filename for s in sources}
+        images = map_repo.image_count(session, element_id)
+
+    def hide(text: str) -> str:
+        return redaction.hide(text, terms)
+
+    roles = {r.id: r.name for r in graph.roles}
+    phases = {p.id: p.name for p in graph.phases}
+    linked = [p for p in passages if p.evidence.element_id == element_id]
+    # build_graph lists the linked passages first, in this same order, then the silent sources.
+    cards = [
+        EvidenceCard(
+            segment_id=ev.segment_id,
+            source_id=ev.source_id,
+            source_name=hide(names.get(ev.source_id, "")),
+            source_kind=ev.source_kind,
+            stance=ev.stance,
+            anchor=ev.anchor,
+            verified=ev.verified,
+            quote=hide(linked[i].evidence.quote) if i < len(linked) else "",
+            note=ev.note,
+        )
+        for i, ev in enumerate(element.evidence)
+    ]
+
+    def sources_of(raci_id: str) -> list[RaciSource]:
+        return [
+            RaciSource(
+                source_name=hide(p.source_name),
+                source_kind=p.evidence.source_kind,
+                anchor=parsing.segment_anchor(fmt=p.source_format, seq=p.seq, page=p.page,
+                                              section=p.section, text=p.text,
+                                              start_ms=p.start_ms),
+            )
+            for p in passages
+            if p.evidence.raci_id == raci_id
+        ]  # fmt: skip
+
+    fields = element.model_dump(by_alias=False, exclude={"evidence", "raci"})
+    return Ok(
+        ElementDetail(
+            **fields,
+            version_id=version.id,
+            lane_role_name=roles.get(element.lane_role_id or "", ""),
+            phase_name=phases.get(element.phase_id or "", ""),
+            decider_role_name=roles.get(element.decision.decider_role_id or "", ""),
+            raci=[
+                RaciDetail(
+                    role_id=r.role_id,
+                    role_name=roles.get(r.role_id, ""),
+                    letter=r.letter,
+                    contested=r.contested,
+                    sources=sources_of(r.id),
+                )
+                for r in raci
+            ],
+            evidence=cards,
+            image_count=images,
+            gap_findings=[],
+        )
+    )
