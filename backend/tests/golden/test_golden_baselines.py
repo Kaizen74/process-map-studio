@@ -1,6 +1,7 @@
 """Golden baselines (PRD §6.2 item 4): byte-identical outcomes on the illustrative fixture.
 
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
+- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
 - G6: the outcome of the hallucination-trap run (Appendix A.6): what was rejected, where and why,
   and the map that is left. None of the traps may reach the graph.
 
@@ -66,6 +67,12 @@ def test_g1_graph_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         graph = client.get(f"/api/versions/{version_id}/graph").json()
         matches_baseline("G1_graph.json", graph)
+
+
+def test_g2_layout_of_the_sample(settings_config: AppConfig) -> None:
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        layout = client.get(f"/api/versions/{version_id}/layout").json()
+        matches_baseline("G2_layout.json", layout)
 
 
 def test_g6_trap_outcome(settings_config: AppConfig) -> None:

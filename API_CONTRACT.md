@@ -325,13 +325,36 @@ Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_
 - Start and end are elements of kind `start` and `end` (from the scope card's trigger and end point) with no confidence.
 Errors: `404` ("That version doesn't exist."). Used by: Review (P5), exports (P7).
 
+### GET /api/versions/{vid}/layout
+Where the UI draws the version's map (PRD §3.9), worked out on the server; the UI draws exactly these whole-pixel positions and never computes layout. The same graph always gives byte-identical JSON.
+Response `200`:
+```json
+{"canvas": {"w": 1112, "h": 668},
+ "lanes": [{"role_id": "…", "label": "Load controller", "step_count": 4, "y": 420, "h": 124}],
+ "phases": [{"phase_id": "…", "label": "Plan", "time_window": "T-120 to T-90", "x": 120, "w": 372}],
+ "nodes": [{"id": "…", "shape": "rounded_rect", "x": 256, "y": 442, "w": 100, "h": 44,
+            "label_lines": ["Draft load plan"],
+            "label_pos": {"x": 306, "y": 457, "align": "center"},
+            "lens_pos": {"x": 306, "y": 492, "align": "center"}}],
+ "edges": [{"id": "…", "kind": "reject", "is_back_edge": true,
+            "points": [[430, 70], [430, 62], [292, 62], [292, 442]],
+            "label": "Rework", "label_pos": {"x": 424, "y": 53, "align": "right"}}]}
+```
+- `nodes[].id` and `edges[].id` are the graph's element and edge IDs; every element is placed, rejected ones too (drawn faded).
+- `shape`: `rounded_rect` (activity) · `pill` (approval) · `diamond` (decision; `w`/`h` is the box around the 36 px square turned 45°) · `circle` (start) · `double_circle` (end).
+- `label_lines`: the label wrapped to at most two lines of 16 characters (ellipsis beyond); empty for start and end. `label_pos`: inside the node for activities and approvals, beneath the diamond for decisions; `y` is the top of the first line.
+- `lens_pos`: where the lens line goes (`y` = its top). `align` is `left` when a line leaves or enters the node's bottom, so the text sits beside it.
+- `points`: the corners of an orthogonal line from source to target. `is_back_edge`: drawn dashed along the track 14 px below the top of the upper lane.
+- `label_pos` of an edge: the centre line (`y`) and left, centre or right edge (`x`, per `align`) of its label chip; `null` when the edge has no label.
+Errors: `404` ("That version doesn't exist."). Used by: Review (P5).
+
 ### GET /api/versions/{vid}/lint
 The lint report of PRD §3.7 (L1–L12), stored on the version when the draft is built:
 ```json
 {"failures": [{"rule": "L4", "element_id": "…", "message": "Decision \"Deviation in limits?\" needs at least two labelled exits; it has 1."}],
  "warnings": [{"rule": "L12", "element_id": "…", "message": "Activity \"Issue load sheet\" has no time stated."}]}
 ```
-Failures block publishing (P7); warnings are listed beneath the quality card. A version without a stored report is linted on request.
+Failures block publishing (P7); warnings are listed beneath the quality card. Since P5 the warnings include "The map has n line crossings; consider changing the lane order." (L12, more than 3 crossings in the layout). A version without a stored report is linted on request.
 Errors: `404`. Used by: Draft summary (P4), Review Lint tab (P6), quality card (P7).
 
 ### GET /api/versions/{vid}/rejected-claims

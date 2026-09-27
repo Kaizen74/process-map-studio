@@ -34,12 +34,13 @@ from app.domain.graph import (
     GraphVersion,
     LintReport,
 )
+from app.domain.layout import Layout
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import lint, parsing
+from app.services import layout, lint, parsing
 
 Sessions = sessionmaker[Session]
 
@@ -257,13 +258,20 @@ def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
     return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
 
 
+def get_layout(sessions: Sessions, version_id: str) -> Result[Layout]:
+    """Where the UI draws the version's map (PRD §3.9)."""
+    with session_scope(sessions) as session:
+        graph = build_graph(session, version_id)
+    return Ok(layout.compute_layout(graph)) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+
+
 def lint_version(sessions: Sessions, version_id: str) -> Result[LintReport]:
-    """Run the lint rules on a version's graph and store the report on the version."""
+    """Run the lint rules on a version's graph and its layout; store the report on the version."""
     with session_scope(sessions) as session:
         graph = build_graph(session, version_id)
         if graph is None:
             return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
-        report = lint.run_lint(graph)
+        report = lint.run_lint(graph, layout.compute_layout(graph))
         versions_repo.set_lint_report(session, version_id, report.model_dump(mode="json"))
     return Ok(report)
 

@@ -1,7 +1,8 @@
 """Quality lint (PRD §3.7 lint rules L1-L12): deterministic checks over the graph, no database.
 
 Rejected elements are not on the map: they and their edges are left out before checking, so a
-step whose only connection was rejected shows up as an orphan (L9).
+step whose only connection was rejected shows up as an orphan (L9). Line crossings need the
+layout (`services/layout.py`), so that warning is checked only when a layout is given.
 """
 
 from __future__ import annotations
@@ -19,10 +20,13 @@ from app.domain.enums import (
     Stance,
 )
 from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
+from app.domain.layout import Layout
+from app.services.layout import count_crossings
 
 MAX_STEPS = 25
 MAX_LANES = 6
 AI_FLAGS_RANGE = (3, 7)
+MAX_CROSSINGS = 3
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 TIMED_KINDS = {ElementKind.ACTIVITY.value, ElementKind.APPROVAL.value}
 PROVENANCES = {p.value for p in Provenance}
@@ -50,7 +54,7 @@ def _reachable(start: str, edges: list[GraphEdge]) -> set[str]:
     return seen
 
 
-def run_lint(graph: Graph) -> LintReport:
+def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
     elements = [e for e in graph.elements if e.review_status != ReviewStatus.REJECTED.value]
     ids = {e.id for e in elements}
     edges = [e for e in graph.edges if e.from_ in ids and e.to in ids]
@@ -161,7 +165,7 @@ def run_lint(graph: Graph) -> LintReport:
             if e.id not in reached:
                 fail("L9", e, f"{_name(e)} can't be reached from the start.")
 
-    # L12 warnings: size, time, KPIs, number of AI flags.
+    # L12 warnings: size, time, KPIs, number of AI flags, line crossings.
     steps = [e for e in elements if e.kind in STEP_KINDS]
     lanes = {e.lane_role_id for e in steps if e.lane_role_id}
     if len(steps) > MAX_STEPS or len(lanes) > MAX_LANES:
@@ -177,4 +181,10 @@ def run_lint(graph: Graph) -> LintReport:
     low, high = AI_FLAGS_RANGE
     if not low <= flags <= high:
         warn("L12", None, f"{flags} AI flags; aim for {low} to {high}.")
+    if layout is not None:
+        shown = {e.id for e in edges}
+        crossings = count_crossings([e for e in layout.edges if e.id in shown])
+        if crossings > MAX_CROSSINGS:
+            warn("L12", None, f"The map has {crossings} line crossings; consider changing the "
+                              "lane order.")  # fmt: skip
     return LintReport(failures=failures, warnings=warnings)

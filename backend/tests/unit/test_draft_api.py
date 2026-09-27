@@ -363,7 +363,7 @@ def test_the_register_hides_names_in_every_text_it_returns(client: TestClient) -
     assert "role not found in cited text: Load controller" in response.text
 
 
-def test_graph_and_lint_endpoints(client: TestClient) -> None:
+def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     built = fixture_engagement.build(with_key(client))
     job = run_draft(client, built.engagement_id)
     graph = client.get(f"/api/versions/{job['target_id']}/graph")
@@ -372,7 +372,15 @@ def test_graph_and_lint_endpoints(client: TestClient) -> None:
     assert set(body) == {"version", "process", "roles", "phases", "elements", "edges"}
     assert set(body["edges"][0]) == {"id", "from", "to", "kind", "label"}
     assert "Priya" not in graph.text and "I build the preliminary" not in graph.text
-    for path in ("graph", "lint"):
+    layout = client.get(f"/api/versions/{job['target_id']}/layout")
+    assert layout.status_code == 200
+    drawn = layout.json()
+    assert set(drawn) == {"canvas", "lanes", "phases", "nodes", "edges"}
+    assert [n["id"] for n in drawn["nodes"]] == [e["id"] for e in body["elements"]]
+    assert [e["id"] for e in drawn["edges"]] == [e["id"] for e in body["edges"]]
+    assert set(drawn["edges"][3]) == {"id", "kind", "is_back_edge", "points", "label", "label_pos"}
+    assert "Priya" not in layout.text
+    for path in ("graph", "layout", "lint"):
         missing = client.get(f"/api/versions/nope/{path}")
         assert missing.status_code == 404
         assert missing.json()["error"]["message"] == "That version doesn't exist."
