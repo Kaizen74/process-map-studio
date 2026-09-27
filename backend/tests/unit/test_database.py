@@ -188,6 +188,18 @@ def test_downgrade_of_0004_removes_only_evidence_quotes_and_version_sources(
     assert "version_sources" in table_names(migrated)
 
 
+def test_downgrade_of_0005_removes_only_merge_groups(migrated: Path) -> None:
+    db.downgrade(migrated, "0004")
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(merge_proposals)")}
+    assert "claim_groups" not in columns and {"claim_ids", "decision"} <= columns
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(merge_proposals)")}
+    assert "claim_groups" in columns
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:

@@ -4,14 +4,18 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import map_edits, review
+from app.actions import map_edits, merges, questions, review
 from app.domain.graph import ElementDetail, GraphEdge
 from app.domain.models import (
     AuditEntry,
     EdgeInput,
     EdgePatch,
     ElementPatch,
+    MergeDecisionInput,
+    MergeProposalView,
     NewStep,
+    QuestionStatus,
+    QuestionView,
     RaciInput,
 )
 from app.routers.http import unwrap
@@ -81,3 +85,25 @@ def remove_edge(request: Request, version_id: str, edge_id: str) -> Response:
     state = request.app.state
     unwrap(map_edits.remove_edge(state.config, state.sessions, version_id, edge_id))
     return Response(status_code=204)
+
+
+@router.get("/versions/{version_id}/questions")
+def list_questions(request: Request, version_id: str) -> list[QuestionView]:
+    return unwrap(questions.list_questions(request.app.state.sessions, version_id))
+
+
+@router.patch("/questions/{question_id}")
+def set_question_status(request: Request, question_id: str, body: QuestionStatus) -> QuestionView:
+    state = request.app.state
+    return unwrap(questions.set_status(state.config, state.sessions, question_id, body.status))
+
+
+@router.get("/versions/{version_id}/merge-proposals")
+def list_merge_proposals(request: Request, version_id: str) -> list[MergeProposalView]:
+    return unwrap(merges.list_proposals(request.app.state.sessions, version_id))
+
+
+@router.post("/merge-proposals/{proposal_id}/decision")
+def decide_merge(request: Request, proposal_id: str, body: MergeDecisionInput) -> MergeProposalView:
+    state = request.app.state
+    return unwrap(merges.decide(state.config, state.sessions, proposal_id, body.decision))

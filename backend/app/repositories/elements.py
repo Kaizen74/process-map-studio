@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.domain.enums import ImageStatus
@@ -363,3 +363,70 @@ def delete_edge(session: Session, edge_id: str) -> None:
 
 def stable_keys(session: Session, version_id: str) -> set[str]:
     return set(session.scalars(select(Element.stable_key).where(Element.version_id == version_id)))
+
+
+def question(session: Session, question_id: str) -> tuple[str, QuestionRecord] | None:
+    """(version ID, question), or None."""
+    row = session.get(ValidationQuestion, question_id)
+    return (row.version_id, QuestionRecord.model_validate(row)) if row else None
+
+
+def set_question_status(session: Session, question_id: str, status: str) -> QuestionRecord:
+    row = session.get(ValidationQuestion, question_id)
+    assert row is not None
+    row.status = status
+    session.flush()
+    return QuestionRecord.model_validate(row)
+
+
+def move_questions(session: Session, from_ids: Sequence[str], to_id: str) -> None:
+    if from_ids:
+        session.execute(
+            update(ValidationQuestion)
+            .where(ValidationQuestion.element_id.in_(from_ids))
+            .values(element_id=to_id)
+        )
+
+
+def merge_proposal(session: Session, proposal_id: str) -> tuple[str, MergeProposalRecord] | None:
+    """(version ID, proposal), or None."""
+    row = session.get(MergeProposal, proposal_id)
+    return (row.version_id, MergeProposalRecord.model_validate(row)) if row else None
+
+
+def set_merge_decision(
+    session: Session, proposal_id: str, decision: str, decided_at: str
+) -> MergeProposalRecord:
+    row = session.get(MergeProposal, proposal_id)
+    assert row is not None
+    row.decision = decision
+    row.decided_at = decided_at
+    session.flush()
+    return MergeProposalRecord.model_validate(row)
+
+
+def move_evidence(session: Session, link_ids: Sequence[str], to_element_id: str) -> None:
+    """Hand element evidence links to another element; a second link to the same passage with
+    the same stance is dropped."""
+    for link_id in link_ids:
+        link = session.get(EvidenceLink, link_id)
+        if link is None:
+            continue
+        twin = session.scalars(
+            select(EvidenceLink.id).where(
+                EvidenceLink.element_id == to_element_id,
+                EvidenceLink.segment_id == link.segment_id,
+                EvidenceLink.stance == link.stance,
+            )
+        ).first()
+        if twin is not None:
+            session.delete(link)
+        else:
+            link.element_id = to_element_id
+    session.flush()
+
+
+def delete_evidence(session: Session, link_ids: Sequence[str]) -> None:
+    if link_ids:
+        session.execute(delete(EvidenceLink).where(EvidenceLink.id.in_(link_ids)))
+        session.flush()

@@ -440,6 +440,33 @@ Add, change or remove a line between two steps. Request (POST; PATCH sends any o
 - Audit rows "Added line", "Changed line", "Removed line"; the lint report is refreshed. Only a draft version changes (`409`).
 Errors: `404` ("That line doesn't exist."), `409`, `422`. Used by: Review edit form and Add step (P6).
 
+### GET /api/versions/{vid}/questions · PATCH /api/questions/{qid} (phase P6)
+The validation questions for the offline SME session (PRD §5.7.10).
+`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap. `status`: open · answered. Names hidden.
+`PATCH` request `{"status": "answered"}` (or `"open"` to reopen); response the question. Audit rows "Marked question answered" / "Reopened question". Only a draft version changes (`409`).
+Errors: `404` ("That version doesn't exist." / "That question doesn't exist."), `409`, `422`. Used by: Review Questions tab (P6).
+
+### GET /api/versions/{vid}/merge-proposals · POST /api/merge-proposals/{mid}/decision (phase P6)
+Steps Claude thought might be one step described differently (PRD §5.7.10 Merge decisions, §9 assumption 8).
+`GET` response `200`:
+```json
+[{"id": "…", "proposed_label": "Load and return LIR", "similarity": 0.86, "decision": "accepted",
+  "decided_at": "…", "element_id": "…",
+  "groups": [{"label": "Load aircraft", "kind": "activity", "lane_role_name": "Ramp",
+              "element_id": null,
+              "claims": [{"text": "Ramp loads the aircraft in about forty minutes.",
+                          "source_name": "interview_transcript.txt", "anchor": "21:50",
+                          "quote": "Ramp loads the aircraft, forty minutes or so"}]}]}]
+```
+- `decision`: `pending` (below 0.80: the steps are still separate and wait for Eric) · `accepted` (merged; at 0.80 or above this happened when drafting) · `rejected` (kept separate) · `split` (a merge undone).
+- `element_id`: the merged step while the proposal is accepted; each group's `element_id`: that step while they are separate (else `null`). Claims show the claim text, source, anchor and quote; names hidden.
+`POST` request `{"decision": "accepted" | "rejected" | "split"}`; response the proposal as in the list.
+- **accepted** (Accept merge, from `pending` or `rejected`): the separate steps become one step named `proposed_label` in the first one's place: claims and evidence joined, lines re-pointed (loops onto itself and duplicates dropped), questions moved; its source state is worked out again from the joined evidence; it is marked Needs check and has no confidence until the next refresh works it out.
+- **rejected** (Keep separate, from `pending`): nothing on the map changes.
+- **split** (from `accepted`): the merged step goes back to its separate steps as drafted (label, kind, lane, claims), one after the other in its place; each step's evidence becomes the passages its own verified claims cite, as supporting it (the stances were judged against the joined step), divergences found between the joined descriptions are cleared, and each needs a check and has no confidence until the next refresh.
+- A step that has been reviewed (confirmed, edited, added or rejected) is never merged or split (`409` "One of these steps has already been reviewed. Change it with Edit, Reject or Add step instead."). Keep separate on a merge in place is refused (`409` "These steps are merged. Use Split to separate them again."), and so is Split on steps that aren't merged (`409` "Only merged steps can be split."). The same decision again changes nothing. Audit rows "Accepted merge" / "Kept steps separate" / "Split merged step"; lint refreshed. Only a draft version changes.
+Errors: `404` ("That merge proposal doesn't exist."), `409`, `422`. Used by: Review Merge tab (P6); pending ones block publishing (P7).
+
 ### GET /api/versions/{vid}/audit (phase P6)
 The version's audit log, newest first.
 Response `200`:

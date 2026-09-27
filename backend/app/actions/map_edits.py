@@ -165,22 +165,7 @@ def add_step(
         )
         map_repo.add_evidence(session, [ln.model_copy(update={"element_id": added.id})
                                          for ln in links])  # fmt: skip
-        # Placement: take over the first main-path line out of `after`, then continue to where
-        # it went.
-        out = next(
-            (e for e in map_repo.edges(session, version_id)
-             if e.from_element_id == after.id and e.kind not in OFF_MAIN_PATH),
-            None,
-        )  # fmt: skip
-        if out is None:
-            map_repo.add_edges(session, version_id, [EdgeRecord(
-                from_element_id=after.id, to_element_id=added.id,
-                kind=EdgeKind.SEQUENCE.value)])  # fmt: skip
-        else:
-            map_repo.update_edge(session, out.id, {"to_element_id": added.id})
-            map_repo.add_edges(session, version_id, [EdgeRecord(
-                from_element_id=added.id, to_element_id=out.to_element_id,
-                kind=EdgeKind.SEQUENCE.value)])  # fmt: skip
+        insert_after(session, version_id, after.id, added.id)
         audit.record(
             session,
             actor=actor,
@@ -194,6 +179,27 @@ def add_step(
         )  # fmt: skip
     versions_action.lint_version(sessions, version_id)
     return versions_action.get_element(sessions, added.id)
+
+
+def insert_after(session: Session, version_id: str, after_id: str, new_id: str) -> None:
+    """Put a new step into the flow after another: it takes over the first main-path line out
+    of that step, and a sequence line continues to where that line went (else it just follows)."""
+    out = next(
+        (e for e in map_repo.edges(session, version_id)
+         if e.from_element_id == after_id and e.kind not in OFF_MAIN_PATH),
+        None,
+    )  # fmt: skip
+    if out is None:
+        line = EdgeRecord(
+            from_element_id=after_id, to_element_id=new_id, kind=EdgeKind.SEQUENCE.value
+        )
+        map_repo.add_edges(session, version_id, [line])
+        return
+    map_repo.update_edge(session, out.id, {"to_element_id": new_id})
+    line = EdgeRecord(
+        from_element_id=new_id, to_element_id=out.to_element_id, kind=EdgeKind.SEQUENCE.value
+    )
+    map_repo.add_edges(session, version_id, [line])
 
 
 # --- Lines between steps ---------------------------------------------------------------------

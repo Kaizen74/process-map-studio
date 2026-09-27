@@ -659,3 +659,51 @@ class EdgePatch(BaseModel):
     to: str | None = None
     kind: str | None = None
     label: str | None = None
+
+
+class QuestionView(BaseModel):
+    id: str
+    element_id: str | None
+    element_label: str
+    phase_id: str | None
+    phase_name: str
+    question: str
+    reason: str
+    status: str
+
+
+class QuestionStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str
+
+
+class MergeDecisionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str
+
+
+class MergeClaimView(BaseModel):
+    text: str
+    source_name: str
+    anchor: str
+    quote: str
+
+
+class MergeGroupView(BaseModel):
+    label: str
+    kind: str
+    lane_role_name: str
+    element_id: str | None
+    claims: list[MergeClaimView]
+
+
+class MergeProposalView(BaseModel):
+    id: str
+    proposed_label: str
+    similarity: float
+    decision: str
+    decided_at: str | None
+    element_id: str | None
+    groups: list[MergeGroupView]
