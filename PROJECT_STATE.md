@@ -5,7 +5,7 @@
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) in progress; it will take two or three sessions.
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally); its work is on branch `claude/charming-davinci-sck1cq`, waiting for Eric to merge it into `main`. Next: Phase P7 (quality card, publish, exports).
 
 ## This session (2026-09-27, sessions 8–9) — goal: close P5, then Phase P6 (review workbench); session 9 finishes increments 10–11 and closes P6
 P5 closed at the start of this session (Eric approved the screenshots; tag `phase-p5`). P6 follows PRD §6.3: backend review rules first (contract first), then the workbench UI in layers. Changes that alter the approved Review screenshot (the Map | Table switch, the "How to review" text) are kept for the last UI increment, where new screenshots go to Eric for approval before the baseline is replaced.
@@ -19,7 +19,7 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - [x] Increment 8 — UI add missing step with the passage picker or a reference
 - [x] Increment 9 — UI tabs: Questions (Copy all, Download .md), Rejected claims (Add as step from this passage), Audit log, Merge decisions, Lint
 - [x] Increment 10 — UI table view (Map | Table, filters, inline edits) and keyboard (J/K/C/E/R/Esc/1–4/?, ignored while typing); new Review screenshots for Eric's approval
-- [ ] Increment 11 — IN PROGRESS: refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
+- [x] Increment 11 — refresh draft on Review, browser checks (smoke: select from each entry point, confirm all with auto-advance), GUIDE/README, close P6 (tag phase-p6)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -85,12 +85,13 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 - 2026-09-27 Review: Add a missing step after the selected one — observed (pick the passage in a source with "Use this passage") or recommended (typed reference); the new step is added as locked and selected (13 checks)
 - 2026-09-27 Review: tabs under the map — RACI matrix, Validation questions (Copy all, Download .md, Mark answered), Rejected claims (Open passage, Add as step from this passage), Audit log, Merge decisions (Accept merge, Keep separate, Split), Map checks (13 checks)
 - 2026-09-27 Review: Map | Table switch with a filterable table of steps and editing in place; keyboard shortcuts (J/K, C, E, R, Esc, 1–4, ? for the list) ignored while typing; Add missing step in the toolbar; new Review screenshots approved by Eric as the visual baseline (13 checks)
+- 2026-09-27 Review: Refresh draft from sources (More menu) keeps every reviewed step; browser smoke path selects from every entry point, confirms all steps with auto-advance and refreshes; GUIDE and README updated; P6 closed (13 checks)
 
 ## Not started yet
-- P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
+- P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: the first unchecked increment of Phase P6 in the list above (PRD §6.3 P6, §4 Review rows, §5.6–§5.8). Check the merge status of the working branch first (if merged, restart it from `main`).
+1. The next task is: plan Phase P7 (PRD §6.3 P7: quality card Q1–Q10, publish and reopen, published mode §5.9, exports) into ~30-minute increments here, contract first. Check the merge status of the working branch first (if merged, restart it from `main`).
 2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p6-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
@@ -99,6 +100,7 @@ P5 closed at the start of this session (Eric approved the screenshots; tag `phas
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p6` tag: see the report card for whether it could be pushed (tags have never been pushable from cloud sessions). P6's last commit is on branch `claude/charming-davinci-sck1cq`.
 - The `phase-p5` tag was created locally but could not be pushed (the connection is dropped for tags, as in every phase); P5's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub after merging.
 - The `phase-p4` tag: see the report card for whether it could be pushed. P4's last commit is on branch `claude/charming-davinci-sck1cq`.
 - Line crossings are not yet counted by lint (they need the layout, P5).

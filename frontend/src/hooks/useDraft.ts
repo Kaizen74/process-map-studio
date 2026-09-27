@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { getDraft, getRejectedClaims, startDraft } from "../api/draft";
+import { getDraft, getRejectedClaims, startDraft, startRefresh } from "../api/draft";
 import type { DraftState } from "../api/types";
 
 const draftKey = (engagementId: string) => ["engagements", engagementId, "draft"] as const;
@@ -42,6 +42,15 @@ export function useStartDraft(engagementId: string) {
       void client.invalidateQueries({ queryKey: draftKey(engagementId) });
       void client.invalidateQueries({ queryKey: ["engagements", engagementId, "readiness"] });
     },
+  });
+}
+
+/** Refresh the current draft from its sources; progress shows on the Draft screen. */
+export function useStartRefresh(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (versionId: string) => startRefresh(versionId),
+    onSettled: () => void client.invalidateQueries({ queryKey: draftKey(engagementId) }),
   });
 }
 

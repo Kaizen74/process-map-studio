@@ -21,6 +21,7 @@ import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
 import { SourcePanel, type OpenPassage } from "./SourcePanel";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { RefreshDialog } from "./RefreshDialog";
 import { ShortcutsDialog } from "./ShortcutsDialog";
 import { TableView } from "./TableView";
 import { WorkbenchTabs } from "./WorkbenchTabs";
@@ -60,6 +61,7 @@ export function ReviewScreen() {
   const stopAdding = useCallback(() => setAdding(null), []);
   const view: MapView = params.get("view") === "table" ? "table" : "map";
   const [helpOpen, setHelpOpen] = useState(false);
+  const [refreshOpen, setRefreshOpen] = useState(false);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -165,7 +167,7 @@ export function ReviewScreen() {
 
   // The keyboard (PRD §5.8).
   function onShortcut(event: KeyboardEvent) {
-    if (helpOpen || event.defaultPrevented) return;
+    if (helpOpen || refreshOpen || event.defaultPrevented) return;
     const shortcut = shortcutFor(event);
     if (!shortcut) return;
     const busy = adding !== null || editing; // a form is open: only lenses and help
@@ -218,6 +220,14 @@ export function ReviewScreen() {
     <div className="review">
       <KeyboardShortcuts onKey={onShortcut} />
       <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <RefreshDialog
+        open={refreshOpen}
+        engagementId={engagementId}
+        versionId={g.version.id}
+        versionLabel={g.version.label}
+        kept={steps.filter((e) => e.review_status !== "draft").length}
+        onClose={() => setRefreshOpen(false)}
+      />
       <VersionBanner
         label={g.version.label}
         sources={sources}
@@ -244,6 +254,7 @@ export function ReviewScreen() {
               phases={drawing.phases.length}
               large={steps.length > MAX_STEPS || lanes > MAX_LANES}
               onAddStep={editable ? () => setAdding(newStepForm(g, addAfter())) : undefined}
+              onRefresh={editable ? () => setRefreshOpen(true) : undefined}
             />
             {view === "table" ? (
               <TableView

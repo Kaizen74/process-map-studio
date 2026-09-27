@@ -20,6 +20,8 @@ export interface MapToolbarProps {
   large: boolean;
   /** "Add missing step" in the overflow menu; omitted where the version can't change. */
   onAddStep?: (() => void) | undefined;
+  /** "Refresh draft from sources" in the overflow menu; omitted where it isn't offered. */
+  onRefresh?: (() => void) | undefined;
 }
 
 const VIEWS = [
@@ -34,7 +36,8 @@ const ZOOMS = [
 
 /**
  * Map | Table, the lens, Fit | 100% and the map's size (PRD §5.7.3). Lens and zoom apply to the
- * map only, so the table view leaves them out. "Add missing step" sits in the overflow (More).
+ * map only, so the table view leaves them out. "Add missing step" and "Refresh draft from sources"
+ * sit in the overflow (More).
  */
 export function MapToolbar({
   view,
@@ -48,6 +51,7 @@ export function MapToolbar({
   phases,
   large,
   onAddStep,
+  onRefresh,
 }: MapToolbarProps) {
   const [more, setMore] = useState(false);
   const counts = `${plural(steps, "step")} · ${plural(lanes, "lane")} · ${plural(phases, "phase")}`;
@@ -70,20 +74,34 @@ export function MapToolbar({
           {large ? `${counts}. Large map: consider splitting by phase` : counts}
         </span>
         {map && <SegmentedControl label="Zoom" options={ZOOMS} value={zoom} onChange={onZoom} />}
-        {onAddStep && (
+        {(onAddStep || onRefresh) && (
           <div className="popover-anchor">
             <Button aria-expanded={more} onClick={() => setMore(!more)}>
               More
             </Button>
             <Popover open={more} title="More" align="end" onClose={() => setMore(false)}>
-              <Button
-                onClick={() => {
-                  setMore(false);
-                  onAddStep();
-                }}
-              >
-                Add missing step
-              </Button>
+              <div className="map-toolbar__menu">
+                {onAddStep && (
+                  <Button
+                    onClick={() => {
+                      setMore(false);
+                      onAddStep();
+                    }}
+                  >
+                    Add missing step
+                  </Button>
+                )}
+                {onRefresh && (
+                  <Button
+                    onClick={() => {
+                      setMore(false);
+                      onRefresh();
+                    }}
+                  >
+                    Refresh draft from sources
+                  </Button>
+                )}
+              </div>
             </Popover>
           </div>
         )}
