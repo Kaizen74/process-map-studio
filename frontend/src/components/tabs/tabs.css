@@ -1,0 +1,70 @@
+/* Bottom tabs of the review workbench (PRD §5.7.10). Tokens only. */
+.raci {
+  overflow-x: auto;
+}
+.raci__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.raci__caption {
+  caption-side: bottom;
+  padding-top: var(--space-10);
+  text-align: left;
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+.raci__table th,
+.raci__table td {
+  padding: var(--space-6) var(--space-10);
+  border-bottom: var(--line-hairline) solid var(--border-soft);
+  text-align: center;
+  white-space: nowrap;
+}
+.raci__table thead th {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.raci__table th[scope="row"],
+.raci__table thead th:first-child {
+  text-align: left;
+}
+.raci__row {
+  cursor: pointer;
+}
+.raci__row--selected {
+  background: var(--surface-2);
+}
+.raci__row--rejected {
+  opacity: 0.3;
+  text-decoration: line-through;
+}
+.raci__step {
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.raci__step:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+  border-radius: var(--radius-control);
+}
+.raci__row--rejected .raci__step {
+  text-decoration: line-through;
+}
+.raci__letter + .raci__letter {
+  margin-left: var(--space-4);
+}
+.raci__letter--a {
+  font-weight: var(--weight-medium);
+}
+.raci__contested {
+  color: var(--danger-text);
+}
+.raci__none {
+  color: var(--border-strong);
+}

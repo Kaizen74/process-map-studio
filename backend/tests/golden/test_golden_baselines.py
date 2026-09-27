@@ -1,6 +1,7 @@
 """Golden baselines (PRD §6.2 item 4): byte-identical outcomes on the illustrative fixture.
 
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
+- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
 - G6: the outcome of the hallucination-trap run (Appendix A.6): what was rejected, where and why,
   and the map that is left. None of the traps may reach the graph.
 
@@ -27,6 +28,7 @@ from tests import fixture_engagement
 from tests.fixtures import make_ai_fixtures
 
 HERE = Path(__file__).resolve().parent
+FRONTEND_FIXTURES = HERE.parents[2] / "frontend" / "tests" / "fixtures"
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 KEY = "sk-" + "ant-" + "api03-" + "G0lden" * 7 + "Pq1z"
 
@@ -42,9 +44,9 @@ def stable_ids(data: Any) -> Any:
     return json.loads(UUID.sub(token, text))
 
 
-def matches_baseline(name: str, data: Any) -> None:
+def matches_baseline(name: str, data: Any, folder: Path = HERE) -> None:
     rendered = json.dumps(stable_ids(data), indent=2, ensure_ascii=False) + "\n"
-    path = HERE / name
+    path = folder / name
     if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
         path.write_text(rendered, encoding="utf-8")
     assert path.exists(), f"missing baseline {name}: run with PMS_UPDATE_GOLDEN=1 and review it"
@@ -66,6 +68,31 @@ def test_g1_graph_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         graph = client.get(f"/api/versions/{version_id}/graph").json()
         matches_baseline("G1_graph.json", graph)
+
+
+def test_g2_layout_of_the_sample(settings_config: AppConfig) -> None:
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        layout = client.get(f"/api/versions/{version_id}/layout").json()
+        matches_baseline("G2_layout.json", layout)
+
+
+def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> None:
+    """The frontend tests draw the sample map from this file (graph, layout, every step's panel
+    details and the cited sources' passages, one set of IDs). Not a PRD baseline: it keeps the
+    frontend fixture honest. Rewritten with PMS_UPDATE_GOLDEN=1 like the baselines."""
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        graph = client.get(f"/api/versions/{version_id}/graph").json()
+        layout = client.get(f"/api/versions/{version_id}/layout").json()
+        elements = {
+            e["id"]: client.get(f"/api/elements/{e['id']}").json() for e in graph["elements"]
+        }
+        # In order of first citation (IDs are random, so sorting them would reorder the file).
+        cited = dict.fromkeys(
+            c["source_id"] for e in elements.values() for c in e["evidence"] if c["segment_id"]
+        )
+        segments = {s: client.get(f"/api/sources/{s}/segments").json() for s in cited}
+        bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments}
+        matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 
 def test_g6_trap_outcome(settings_config: AppConfig) -> None:

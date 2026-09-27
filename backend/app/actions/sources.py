@@ -417,9 +417,19 @@ def _segment_view(
     )
 
 
+PASSAGE_ELSEWHERE = "That passage isn't in this source."
+
+
 def list_segments(
-    sessions: Sessions, source_id: str, page: int = 1, page_size: int = 200, *, raw: bool = False
+    sessions: Sessions,
+    source_id: str,
+    page: int = 1,
+    page_size: int = 200,
+    *,
+    raw: bool = False,
+    around: str | None = None,
 ) -> Result[SegmentPage]:
+    """One page of passages; with `around`, the page that holds that passage."""
     if page < 1 or not 1 <= page_size <= 500:
         return Err(
             ErrorKind.VALIDATION,
@@ -430,6 +440,11 @@ def list_segments(
         source = repo.get(session, source_id)
         if source is None:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        if around is not None:
+            position = repo.segment_position(session, source_id, around)
+            if position is None:
+                return Err(ErrorKind.NOT_FOUND, PASSAGE_ELSEWHERE)
+            page = position // page_size + 1
         items, total = repo.segment_page(session, source_id, page, page_size)
         terms = None if raw else redaction.name_replacements(session, source.engagement_id)
     segments = [_segment_view(source.format, item, terms) for item in items]

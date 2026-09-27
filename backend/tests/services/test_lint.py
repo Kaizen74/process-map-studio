@@ -281,3 +281,28 @@ def test_steps_without_time_kpi_or_enough_ai_flags_warn() -> None:
     assert 'Activity "Plan" has no time stated.' in messages
     assert "2 activities have no KPI while the process has one." in messages
     assert "2 AI flags; aim for 3 to 7." in messages
+
+
+def test_more_than_three_line_crossings_is_a_warning() -> None:
+    """L12 needs the layout: a crafted layout whose lines cross four times, then three."""
+    from app.domain.layout import Layout, LayoutCanvas, LayoutEdge
+
+    graph = clean()
+
+    def line(eid: str, *points: tuple[int, int]) -> LayoutEdge:
+        return LayoutEdge(id=eid, kind="sequence", is_back_edge=False, points=list(points),
+                          label="", label_pos=None)  # fmt: skip
+
+    ids = [e.id for e in graph.edges]
+    ladder = [line(ids[0], (0, 10 * k), (100, 10 * k)) for k in (1,)] + [
+        line(ids[i], (20 * i, 0), (20 * i, 50)) for i in range(1, 5)
+    ]  # one horizontal run crossed by four vertical ones
+    layout = Layout(canvas=LayoutCanvas(w=100, h=50), lanes=[], phases=[], nodes=[], edges=ladder)
+    warnings = [w.message for w in run_lint(graph, layout).warnings]
+    assert "The map has 4 line crossings; consider changing the lane order." in warnings
+    fewer = layout.model_copy(update={"edges": ladder[:4]})
+    assert not any("crossings" in w.message for w in run_lint(graph, fewer).warnings)
+    # A rejected step's lines are not on the map, so they don't count.
+    replace(graph, "check", review_status="rejected")  # ids[4] and ids[5] leave "check"
+    assert not any("crossings" in w.message for w in run_lint(graph, layout).warnings)
+    assert not any("crossings" in w.message for w in run_lint(clean()).warnings)  # no layout

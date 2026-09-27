@@ -2,9 +2,9 @@
 
 Turn SME interview transcripts and process documents into a clear, evidence-backed swimlane process map. Claude drafts the map; you review every step and publish it. Everything runs on your own computer.
 
-> Version 0.1.0 (build phase P4: a draft map from checked claims) · Last updated 2026-09-27 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
+> Version 0.1.0 (build phase P5 in progress: the map on screen) · Last updated 2026-09-27 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
 
-**Build status:** the app is being built in phases. Right now it installs and starts; you can save your name and your Claude API key, create engagements, describe the process and its roles, upload Word, PDF, text and subtitle files, map interview speakers to roles, keep a list of names the app hides, and create a draft map: Claude reads every source, each claim is checked against your documents, and the checked claims are built into a draft map with questions for your SME. Seeing and reviewing the map on screen arrives in phase P5. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
+**Build status:** the app is being built in phases. Right now it installs and starts; you can save your name and your Claude API key, create engagements, describe the process and its roles, upload Word, PDF, text and subtitle files, map interview speakers to roles, keep a list of names the app hides, and create a draft map: Claude reads every source, each claim is checked against your documents, and the checked claims are built into a draft map with questions for your SME. On Review you can read the map, open each step's details and follow its evidence to the exact passage; confirming and editing steps arrives in phase P6. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
 
 ## What you need
 - A Mac (macOS 13 or later) or a Windows 10/11 PC, with at least 8 GB of memory and 2 GB of free disk space.

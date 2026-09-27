@@ -123,7 +123,7 @@ function Summary({ engagementId, state }: { engagementId: string; state: DraftSt
         <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
           Start reviewing
         </Link>
-        <p className="draft-note">The map and the review workbench arrive in build phase P5.</p>
+        <p className="draft-note">Review shows the map now; confirming, editing and rejecting steps arrive in build phase P6.</p>
       </div>
     </Card>
   );

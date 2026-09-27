@@ -15,7 +15,7 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
   { key: "setup", label: "Setup", slug: "setup" },
   { key: "sources", label: "Sources", slug: "sources" },
   { key: "draft", label: "Draft", slug: "draft" },
-  { key: "review", label: "Review", slug: "review", arrives: "P5" },
+  { key: "review", label: "Review", slug: "review" },
   { key: "published", label: "Published", slug: "published", arrives: "P7" },
   { key: "matrix", label: "Matrix", slug: "matrix", arrives: "P9" },
   { key: "gap_analysis", label: "Gap analysis", slug: "gap-analysis", optional: true, arrives: "P10" },

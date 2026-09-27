@@ -1,3 +1,5 @@
+import type { SourceKind } from "../lib/mapTypes";
+
 // Response shapes, mirroring API_CONTRACT.md. Edit the contract first, then these.
 
 export interface Health {
@@ -125,14 +127,6 @@ export interface RoleCreate {
 }
 
 export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system">> & { lane_order?: number };
-
-export type SourceKind =
-  | "interview_transcript"
-  | "sop"
-  | "manual"
-  | "job_description"
-  | "executed_artefact"
-  | "other";
 
 export interface Source {
   id: string;
@@ -299,58 +293,6 @@ export interface AiUsage {
 
 // --- The map as a graph (API_CONTRACT.md → Draft: graph, lint) — phase P4 ------------------
 
-export interface GraphEvidence {
-  segment_id: string | null;
-  source_id: string;
-  source_kind: SourceKind;
-  stance: "supports" | "contradicts" | "silent";
-  anchor: string;
-  verified: boolean;
-  note: string;
-}
-
-export interface GraphElement {
-  id: string;
-  stable_key: string;
-  kind: "activity" | "decision" | "approval" | "start" | "end";
-  label: string;
-  lane_role_id: string | null;
-  phase_id: string | null;
-  time: { work_min: number | null; wait_min: number | null; text: string };
-  complexity: "L" | "M" | "H" | null;
-  kpi: string;
-  decision: { mechanism: string; decider_role_id: string | null; rule_or_threshold: string; escalation: string };
-  handoff: { in: string; out: string };
-  raci: { role_id: string; letter: "R" | "A" | "C" | "I"; contested: boolean }[];
-  provenance: "O" | "I" | "R";
-  r_reference: string;
-  source_state: string;
-  divergence_types: string[];
-  constraints: { text: string; provenance: string; cause_type: string | null; is_key: boolean }[];
-  k_risk: string;
-  ai_flag: { component: string; input: string; output: string; handoff: string; basis: string } | null;
-  evidence: GraphEvidence[];
-  confidence: number | null;
-  confidence_breakdown: { label: string; delta: number }[];
-  needs_check: boolean;
-  review_status: string;
-}
-
-export interface Graph {
-  version: { id: string; label: string; state: string; quality_card: Record<string, unknown> | null };
-  process: {
-    name: string;
-    trigger: string;
-    end_point: string;
-    kpi: string;
-    cycle_time: { elapsed_min: number; work_min: number; incomplete_steps: number };
-  };
-  roles: { id: string; name: string; is_system: boolean; lane_order: number | null }[];
-  phases: { id: string; name: string; time_window: string; order: number }[];
-  elements: GraphElement[];
-  edges: { id: string; from: string; to: string; kind: string; label: string }[];
-}
-
 export interface LintIssue {
   rule: string;
   element_id: string | null;
@@ -361,3 +303,21 @@ export interface LintReport {
   failures: LintIssue[];
   warnings: LintIssue[];
 }
+
+// Map, layout and panel shapes live in lib (components may import lib, not api).
+export type {
+  SourceKind,
+  GraphEvidence,
+  GraphElement,
+  Graph,
+  Align,
+  TextPos,
+  NodeShape,
+  LayoutNode,
+  Point,
+  LayoutEdge,
+  Layout,
+  EvidenceCard,
+  RaciDetail,
+  ElementDetail,
+} from "../lib/mapTypes";

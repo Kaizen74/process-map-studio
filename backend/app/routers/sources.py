@@ -75,10 +75,17 @@ def delete_source(request: Request, source_id: str) -> Response:
 
 @router.get("/sources/{source_id}/segments")
 def list_segments(
-    request: Request, source_id: str, page: int = 1, page_size: int = 200, raw: bool = False
+    request: Request,
+    source_id: str,
+    page: int = 1,
+    page_size: int = 200,
+    raw: bool = False,
+    around: str | None = None,
 ) -> SegmentPage:
     return unwrap(
-        sources.list_segments(request.app.state.sessions, source_id, page, page_size, raw=raw)
+        sources.list_segments(
+            request.app.state.sessions, source_id, page, page_size, raw=raw, around=around
+        )
     )
 
 

@@ -287,6 +287,22 @@ def segment_source(session: Session, segment_id: str) -> str | None:
     return row.source_id if row else None
 
 
+def segment_position(session: Session, source_id: str, segment_id: str) -> int | None:
+    """How many passages of the source come before this one in reading order (None if the
+    passage isn't in this source)."""
+    row = session.get(SourceSegment, segment_id)
+    if row is None or row.source_id != source_id:
+        return None
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(SourceSegment)
+            .where(SourceSegment.source_id == source_id, SourceSegment.seq < row.seq)
+        )
+        or 0
+    )
+
+
 def correct_segment(
     session: Session, segment_id: str, *, text: str, instruction_like: bool
 ) -> dict[str, Any] | None:

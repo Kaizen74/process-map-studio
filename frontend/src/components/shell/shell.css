@@ -122,3 +122,58 @@
   animation: appear var(--motion-duration) var(--motion-easing);
   max-width: 420px;
 }
+
+/* Version banner and review progress (PRD §5.7.1) */
+.version-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-12) var(--space-16);
+  padding: var(--space-10) var(--space-20);
+  background: var(--surface-2);
+  border-bottom: var(--line-hairline) solid var(--border);
+}
+.version-banner__text {
+  flex: 1;
+  min-width: 280px;
+  color: var(--ink-2);
+}
+.version-banner__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+.version-banner__count {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.review-progress {
+  display: flex;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.review-progress li {
+  display: flex;
+}
+.review-progress__segment {
+  width: 18px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  background: var(--border-strong);
+}
+.review-progress__segment--reviewed {
+  background: var(--approval-stroke);
+}
+.review-progress__segment--rejected {
+  background: var(--edge);
+}
+.review-progress__segment--selected,
+.review-progress__segment:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+}

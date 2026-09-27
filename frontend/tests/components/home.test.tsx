@@ -299,8 +299,8 @@ describe("Opening an engagement", () => {
       "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
       "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     });
-    renderApp("/engagements/e1/review");
-    expect(await screen.findByText(/The Review screen arrives in build phase P5/)).toBeInTheDocument();
+    renderApp("/engagements/e1/published");
+    expect(await screen.findByText(/The Published screen arrives in build phase P7/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Setup" })).toHaveAttribute("href", "/engagements/e1/setup");
   });
 

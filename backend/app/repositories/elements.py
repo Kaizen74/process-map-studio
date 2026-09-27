@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from app.domain.enums import ImageStatus
 from app.domain.graph import (
     AiFlagRecord,
     ConstraintRecord,
@@ -32,6 +33,7 @@ from app.repositories.tables import (
     Element,
     ElementClaim,
     EvidenceLink,
+    Image,
     MergeProposal,
     Phase,
     Raci,
@@ -283,4 +285,21 @@ def open_question_count(session: Session, version_id: str) -> int:
                 ValidationQuestion.version_id == version_id, ValidationQuestion.status == "open"
             )
         ).all()
+    )
+
+
+def element_version_id(session: Session, element_id: str) -> str | None:
+    """The version an element belongs to, or None if there is no such element."""
+    return session.scalar(select(Element.version_id).where(Element.id == element_id))
+
+
+def image_count(session: Session, element_id: str) -> int:
+    """Images on an element that haven't been discarded (PRD §5.5 marker, §5.7.7 section 10)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Image)
+            .where(Image.element_id == element_id, Image.status != ImageStatus.DISCARDED.value)
+        )
+        or 0
     )
