@@ -1,11 +1,11 @@
 # Project State
-*Last updated: 2026-09-27 (session 6) — update after EVERY increment*
+*Last updated: 2026-09-27 (session 6, phase P4 closed) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P3 is complete and merged into `main` (pull request #5). Phase P4 (canonicalise, calibrate, verify, assemble) in progress; it is large and will likely take two sessions.
+Phase P4 (canonicalise, calibrate, verify, assemble) is complete (2026-09-27, tag `phase-p4`) on branch `claude/charming-davinci-sck1cq`, waiting for Eric to merge it into `main`. Next: Phase P5 (layout and map view).
 
 ## This session (2026-09-27, session 6) — goal: Phase P4 (canonicalise, calibrate, verify, assemble); likely continues next session
 P3 was merged into `main` (pull request #5); the working branch was fast-forwarded to `main`. Deterministic parts first, so each AI stage lands on tested ground.
@@ -18,7 +18,7 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - [x] Increment 7a — S4 assemble: phases, edges with every exit labelled, RACI (JD test marks competing A as contested, with their evidence), times, KPIs, constraints, K-RISK and AI flags, every field checked against the step's verified claims; start and end; G7 confidence with its breakdown
 - [x] Increment 7b — S5 questions: from unknowns (every one), partial support, low confidence, contested, documented-only and inferred steps, 4–6 per phase; prompt, answer format, checks
 - [x] Increment 8 — the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
-- [ ] Increment 9 — IN PROGRESS: UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
+- [x] Increment 9 — UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -64,13 +64,14 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - 2026-09-27 S4 assemble: phases, labelled edges, RACI with contested accountability and its evidence, times, KPIs, constraints, K-RISK and AI flags, each field checked against the step's claims (failures listed with stage S4), start and end, G7 confidence; the sample passes lint with zero failures. Privacy fix: names in role fields are scrubbed before checks, and the register hides names in reasons
 - 2026-09-27 S5 validation questions: the app picks the steps (contested, documented only, inferred, partial support, low confidence; at most six per phase), Claude words them (template if a number isn't grounded), and every unknown becomes a gap question; trap T8 gets its question
 - 2026-09-27 The full draft: Create draft map runs every stage (verification shown as switched off when the verifier is off), lints the map and writes the questions; drafting again replaces a draft nobody has reviewed (v0.2 …); graph and lint endpoints; golden baselines G1 (sample graph) and G6 (trap outcome); the Draft summary shows steps drafted, needs check, rejected claims and open questions with Start reviewing
+- 2026-09-27 Phase P4 closed: review progress on the home card and the Review count in the top bar count steps only (start and end are not steps); browser checks cover the P4 Draft summary (axe clean, no names); review screenshots `docs/screens/p4-*.png`; the latency gate no longer counts garbage-collection pauses caused by objects earlier tests left in the process (one had pushed an upload to 263 ms; the app's uploads take 50–110 ms); GUIDE and README updated. **Phase P4 complete**
 
 ## Not started yet
-- P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
+- P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: Phase P4 (PRD §6.3): canonicalise (S2), calibrate (S3), independent verifier (S3b, G6) and assemble (S4) plus S5 validation questions, turning the verified S1 claims of a draft into map elements with evidence links, source states and confidence breakdowns; the draft job's `later` stages become real (`actions/draft.py` STAGES/BUILT). Break it into ~30-minute increments here before starting. Check the Merge status of P3 first (if merged, restart the branch from `main`).
-2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5–§3.8, §4, §5.4 Draft, Appendix A.5–A.6, §6.3; `backend/app/actions/draft.py` (the draft job), `backend/app/pipeline/` (S0, S1, context), `backend/app/services/ai_service.py` (`call_claude`, `StageCall`), `backend/app/services/grounding.py`, `backend/app/domain/ai_schemas.py`, `backend/app/prompts/`, `backend/tests/fixtures/make_ai_fixtures.py` (rerun after changing sample sources, roles or how passages are rendered), `frontend/src/features/draft/`, API_CONTRACT.md (add endpoints first).
+1. The next task is: Phase P5 (PRD §6.3): the `layout` service with the §3.9 constants (deterministic positions, lane rule, no overlaps, edge routes) and the map view: version banner, header strip, swimlane map (§5.5) with lenses and legend, Fit/100%, read-only detail panel (§5.7.7) with the source viewer (§5.7.8), RACI tab; golden baseline G2; a visual baseline candidate that Eric must approve before it is saved. Edge-crossing lint (deferred from P4) belongs here. Break it into ~30-minute increments here before starting. Check the merge status of P4 first (if merged, restart the branch from `main`).
+2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.6, §3.9, §5.5–§5.7, §6.3; the graph: `backend/app/domain/graph.py`, `backend/app/actions/versions.py` (`build_graph`, `get_graph`), `GET /api/versions/{vid}/graph` in API_CONTRACT.md; `backend/app/services/lint.py`; golden baselines in `backend/tests/golden/` (regenerate with `PMS_UPDATE_GOLDEN=1`, review the diff, log it); `frontend/src/api/types.ts` (Graph types), `frontend/src/features/`; the pipeline in `backend/app/pipeline/` and `backend/tests/fixtures/make_ai_fixtures.py` (rerun after changing sample sources, roles, prompts or how passages are rendered).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
 5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).
@@ -78,6 +79,8 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p4` tag: see the report card for whether it could be pushed. P4's last commit is on branch `claude/charming-davinci-sck1cq`.
+- Line crossings are not yet counted by lint (they need the layout, P5).
 - The `phase-p3` tag: see the report card for whether it could be pushed (earlier phases' tags could not be pushed from cloud sessions). P3's last commit is on branch `claude/charming-davinci-sck1cq`.
 - While a draft is being made, readiness already reports `draft_exists` (the version exists from the start of the job); see DECISIONS.md.
 - The `phase-p2` tag was created locally but could not be pushed (cloud sessions can't push tags); P2's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub after merging.

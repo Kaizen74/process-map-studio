@@ -10,7 +10,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.enums import ReviewStatus
+from app.domain.enums import ElementKind, ReviewStatus
 from app.domain.models import (
     EngagementSummary,
     EngagementView,
@@ -28,6 +28,7 @@ from app.repositories.tables import (
     now_iso,
 )
 
+STEPS = (ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value)
 CONFIDENTIAL_ORIGIN = "confidential_term"
 
 SCOPE_COLUMNS = (
@@ -140,7 +141,10 @@ def set_confidential_terms(session: Session, engagement_id: str, terms: list[str
 def latest_version(
     session: Session, engagement_id: str
 ) -> tuple[VersionLabel | None, ReviewProgress]:
-    """The newest map version's label and how many of its elements have been reviewed."""
+    """The newest map version's label and how many of its steps have been reviewed.
+
+    Start and end are structural, not steps, so they are not counted (PRD §3.7).
+    """
     latest = session.scalars(
         select(MapVersion)
         .where(MapVersion.engagement_id == engagement_id)
@@ -151,7 +155,10 @@ def latest_version(
         return None, ReviewProgress(reviewed=0, total=0)
     total = (
         session.scalar(
-            select(func.count()).select_from(Element).where(Element.version_id == latest.id)
+            select(func.count())
+            .select_from(Element)
+            .where(Element.version_id == latest.id)
+            .where(Element.kind.in_(STEPS))
         )
         or 0
     )
@@ -160,6 +167,7 @@ def latest_version(
             select(func.count())
             .select_from(Element)
             .where(Element.version_id == latest.id)
+            .where(Element.kind.in_(STEPS))
             .where(Element.review_status != ReviewStatus.DRAFT.value)
         )
         or 0

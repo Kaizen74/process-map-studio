@@ -8,6 +8,7 @@ stay under the budget.
 
 from __future__ import annotations
 
+import gc
 import statistics
 import time
 from collections.abc import Callable
@@ -42,11 +43,19 @@ Loaded = tuple[TestClient, dict[str, str]]
 
 def p95_ms(call: Callable[[], Any]) -> float:
     call()  # warm-up: first call pays for imports and caches
-    timings = []
-    for _ in range(REPEATS):
-        start = time.perf_counter()
-        call()
-        timings.append((time.perf_counter() - start) * 1000)
+    # The objects hundreds of earlier tests left in this process are not the app's: frozen, a full
+    # garbage collection doesn't scan them (it once paused a request for 363 ms). The app's own
+    # objects are still collected as usual.
+    gc.collect()
+    gc.freeze()
+    try:
+        timings = []
+        for _ in range(REPEATS):
+            start = time.perf_counter()
+            call()
+            timings.append((time.perf_counter() - start) * 1000)
+    finally:
+        gc.unfreeze()
     return statistics.quantiles(timings, n=20)[18]
 
 

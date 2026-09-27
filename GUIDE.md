@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-26 (build phase P3)*
+*Updated: 2026-09-27 (build phase P4)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -7,7 +7,7 @@ This guide explains how to **use** the app. How to install, start, stop, update,
 You give it the documents behind one process: an SME interview transcript, SOPs, job descriptions and supporting documents. Claude reads them and drafts a swimlane map of how the work is really done: steps, roles, who is responsible and accountable, decisions, approvals, timings, KPIs and constraints. Every step links to the exact passage it came from. The app checks the AI's work before you see it, and anything it can't find in your documents is thrown out and listed for you. You review every step, and nothing is published until you have.
 
 ## What you can do today
-The app is being built in phases. At the moment (phase P3, finished 2026-09-26) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, keep a list of names the app hides, and **create a draft**: Claude reads every source and every claim it makes is checked against your documents. Turning those checked claims into the map itself arrives in phase P4.
+The app is being built in phases. At the moment (phase P4, finished 2026-09-27) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, keep a list of names the app hides, and **create a draft map**: Claude reads every source, every claim it makes is checked against your documents, and the checked claims are grouped into steps, compared source by source, checked a second time by the independent verifier and built into a draft map with questions for your SME. You see the draft's totals now; the map on screen and the review workbench arrive in phase P5.
 
 **Start and stop** (full steps in [README.md](README.md)): double-click **Start.command** (Mac) or **start.bat** (Windows). Your browser opens the app at http://127.0.0.1:8000. Close the small window to stop it.
 
@@ -53,11 +53,21 @@ The app splits an interview into who said what and when. It reads `[06:40] Name:
 ### Draft, step by step
 1. Open **Draft** in the top bar (or **Go to Draft** on Sources). **Before drafting** lists four things: your Claude API key saved, at least one interview transcript read, at least one process document read (an SOP or manual), and every speaker mapped to a role. Each shows **Done** or **To do** with a link to fix it, and "Still needed" says exactly what is missing.
 2. Click **Create draft map**. If something is still missing, the app says what instead of starting.
-3. While Claude works you see each stage with its status and how long it has taken: **Reading the documents** (including scanned PDF pages), **Extracting steps from each source**, **Checking every quote against your documents**. The other four stages show **Later build phase** for now. Below them: **Claims verified**, **Rejected** and **Tokens used so far**, updating every second. You can leave the screen; drafting carries on, and the screen picks it up again when you come back.
-4. When it is done, **Draft v0.1** shows how many claims were verified, how many were rejected and how many open questions Claude raised. The map itself is built from these in phase P4.
+3. While Claude works you see all seven stages with their status and how long each has taken:
+   - **Reading the documents** (including scanned PDF pages);
+   - **Extracting steps from each source**;
+   - **Checking every quote against your documents**;
+   - **Comparing sources**: the claims are grouped into steps and each source is compared with them (agrees, adds detail, differs, contradicts, or says nothing);
+   - **Independent verification**: each step is checked a second time against only its own evidence;
+   - **Building the map**: lanes, phases, the order of steps, who is responsible and accountable, times, constraints and where AI might help;
+   - **Writing validation questions** for your SME.
+
+   If you switched off the independent verifier in Settings, that stage shows a dash and **Switched off in Settings**. Below the stages: **Claims verified**, **Rejected** and **Tokens used so far**, updating every second. You can leave the screen; drafting carries on, and the screen picks it up again when you come back.
+4. When it is done, **Draft v0.1** says how many checked claims it was built from and shows **Steps drafted**, **Needs check** (steps the verifier only partly supported), **Rejected claims** and **Open questions**. **Start reviewing** takes you to Review, where the map and the review workbench arrive in phase P5. The home screen card and the **Review** step in the top bar now show how many steps are waiting for your review.
 5. **Rejected claims** lists every claim that failed a check, struck through, with the reason in red (for example "number not found in cited text: 30"), the check that caught it (for example **G5 · S1**), the file and passage, and **Open source** (or "Passage missing" when Claude cited a passage that doesn't exist). These never reach the map. The line above the list also says how many names in Claude's answers were replaced by roles and how many instruction-like passages were ignored.
 6. If drafting stops, the stage that failed is marked **Failed**, the message says what happened and that nothing was saved, with **Try again** and **Copy details**.
-7. **Draft again from sources** makes a fresh draft that replaces this one. That is safe for now because nothing has been reviewed yet.
+7. **Draft again from sources** makes a fresh draft that replaces this one, with the next number (v0.2, v0.3 …). That is safe for now because nothing has been reviewed yet; once you have reviewed a step (phase P6), a draft is never replaced this way.
+8. Checks behind the scenes: a step is only kept if its claims passed every check; people's names never reach the map; a source that doesn't mention a step counts as silent, never as a contradiction; job descriptions never change how well a step is supported; every decision and approval is marked rule-based or judgment, and a judgment step is never suggested for automation. Each step's confidence is worked out from its evidence, not guessed by Claude.
 
 ### Settings, step by step
 1. Click **Settings** (top right), or **Add your Claude API key** on the home screen.
@@ -78,7 +88,7 @@ One Settings card arrives later: **Web research** (for the optional external bes
 | Settings | Your name, your Claude API key, model choice, connection test, AI usage log | Now (web research P10) |
 | Setup | The process scope card, roles and lanes | Now |
 | Sources | Upload and read documents and interviews, map speakers to roles, hide names, correct transcripts; scanned pages read while drafting (now); coverage (P9) | Now, P9 |
-| Draft | Create a draft and watch each stage; checked and rejected claims (now); comparing sources and building the map (P4) | Now, P4 |
+| Draft | Create a draft map and watch all seven stages; its steps, checks, rejected claims and open questions | Now |
 | Review | The workbench: map, lenses, detail panel, evidence, review actions | P5, P6 |
 | Published and Exports | Read-only published maps; Markdown, JSON, CSV and HTML exports | P7 |
 | Matrix and Registers | Source alignment and the registers | P9 |
@@ -89,6 +99,7 @@ One Settings card arrives later: **Web research** (for the optional external bes
 Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, export) are added here as each screen is built.
 
 ## What changed recently
+- 2026-09-27 (phase P4): The draft now becomes a map. After the claims are checked, Claude groups them into steps, compares every source with them, the independent verifier checks each step again, and the map is built with lanes, phases, responsibilities, times, constraints and validation questions. **Draft** shows steps drafted, steps to check, rejected claims and open questions; the home card and the **Review** step count the steps waiting for you. Viewing the map arrives in phase P5.
 - 2026-09-26 (phase P3): Drafting. On **Draft**, create a draft: Claude reads every source (and scanned PDF pages) and every claim it makes is checked against your documents; claims whose passage, quote, numbers or roles can't be found are rejected with the reason and listed. Watch each stage live; **Settings → AI usage** logs every call with its tokens.
 - 2026-09-26 (phase P2): Interviews. Transcripts in text, Word, PDF and subtitle files are split into who said what and when; map each speaker to a role on **Sources**; a **Names to hide** list keeps people's names out of view everywhere except three owner-only places; fix transcript text with **Correct the text**; passages that try to instruct an AI are tagged. Files are now read in the background ("Reading…").
 - 2026-09-26 (phase P1): Engagements. Create, open and delete engagements from the home screen; describe the process and its roles and lanes on **Setup**; upload Word and PDF documents on **Sources** and read them passage by passage with their anchors. The guided path in the top bar shows what is done and what to do next.
@@ -112,3 +123,6 @@ Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, ex
 - **Speaker mapping:** telling the app which role each speaker in an interview has (or that they are the interviewer).
 - **Names to hide (redaction list):** people's names the app replaces with their role or "[name]" everywhere except three owner-only places.
 - **Instruction-like text:** a passage that reads like an instruction to an AI; it is kept as ordinary text and never followed.
+- **Source state:** how well a step is supported: corroborated (interview and documents agree), practiced only (interview only), documented only (documents only), contested (sources disagree) or trace contradicted (a record of the work disagrees).
+- **Needs check:** a step the independent verifier found only partly supported by its evidence.
+- **Validation question:** a question for your SME about a step whose sources disagree, that only one kind of source describes, or that nobody could answer from the documents.

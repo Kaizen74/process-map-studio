@@ -398,3 +398,13 @@ def test_lint_is_worked_out_when_none_was_stored(client: TestClient) -> None:
 )
 def test_draft_labels_count_up(earlier: str | None, label: str) -> None:
     assert draft.next_label(earlier) == label
+
+
+def test_review_progress_counts_steps_not_start_and_end(client: TestClient) -> None:
+    built = fixture_engagement.build(with_key(client))
+    run_draft(client, built.engagement_id)
+    [card] = [e for e in client.get("/api/engagements").json() if e["id"] == built.engagement_id]
+    assert card["review_progress"] == {"reviewed": 0, "total": 8}
+    readiness = client.get(f"/api/engagements/{built.engagement_id}/readiness").json()
+    assert readiness["nav"]["review"] == "attention"
+    assert readiness["nav_counts"]["review"] == 8
