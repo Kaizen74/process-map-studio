@@ -423,6 +423,23 @@ Errors `422` name the field (`details.field`, for example `"label"`, `"raci"`, `
 ### PUT /api/elements/{eid}/raci (phase P6)
 Replace a step's RACI. Request: `[{"role_id": "…", "letter": "A", "contested": false}]`. Same rules as `raci` above; response and effects as `PATCH`. Entries that stay (same role and letter) keep the passages behind them. Used by: Review edit form (P6).
 
+### POST /api/versions/{vid}/elements (phase P6)
+Add a missing step (Eric's own, never an AI claim).
+Request: `{"kind": "activity", "label": "Check fuel figures", "lane_role_id": "…", "after_element_id": "…", "provenance": "O", "segment_ids": ["…"], "r_reference": "", "mechanism": "judgment"}`.
+Response `201`: the element as `GET /api/elements/{eid}`, with `review_status: "added"` (locked).
+- **Placement:** the step goes after `after_element_id` (any step or the start, not the end). The first outgoing line of that step that stays on the main path (not `no`, `reject`, `rework` or `exception`) now points at the new step, and a `sequence` line runs from the new step to where that line used to go. Without such a line, a `sequence` line joins them. The new step takes that step's phase. The layout is worked out afresh on the next `GET …/layout`.
+- **Provenance:** `O` needs at least one passage (`segment_ids` from this engagement's sources; each becomes a verified "supports" evidence link) — "Pick the passage this step comes from."; `R` needs a reference (`r_reference`, 1–500 characters) — "Type the reference this recommended step comes from."; `I` is refused ("Choose Observed (with a passage) or Recommended (with a reference).").
+- **RACI and decision rights:** the lane's role becomes Accountable (and Responsible for an activity; the decider for a decision or approval). `mechanism` (`rule_based` or `judgment`, default `judgment`) classifies a decision or approval (constraint 7). Everything else is added with Edit.
+- Field rules as `PATCH /api/elements/{eid}` (name, kind, lane, no hidden names). Source state `not_assessed` and no confidence: the step wasn't compared across sources. An audit row "Added step".
+Errors: `404` version or step; `409` published version; `422` naming the field (`after_element_id`, `segment_ids`, `r_reference`, …). Used by: Review Add step and "Add as step from this passage" (P6).
+
+### POST /api/versions/{vid}/edges · PATCH · DELETE /api/versions/{vid}/edges/{edge_id} (phase P6)
+Add, change or remove a line between two steps. Request (POST; PATCH sends any of them): `{"from": "…", "to": "…", "kind": "no", "label": "Outside limits"}`. Response: `201`/`200` `{"id", "from", "to", "kind", "label"}`; DELETE `204`.
+- Both ends are steps of this version; no line into the start or out of the end, no line from a step to itself, no second line with the same ends and kind.
+- `kind` from B.8 (`sequence`, `yes`, `no`, `approve`, `reject`, `rework`, `exception`); `label` up to 60 characters, required on every line leaving a decision or approval (constraint 6: every exit labelled); no hidden names.
+- Audit rows "Added line", "Changed line", "Removed line"; the lint report is refreshed. Only a draft version changes (`409`).
+Errors: `404` ("That line doesn't exist."), `409`, `422`. Used by: Review edit form and Add step (P6).
+
 ### GET /api/versions/{vid}/audit (phase P6)
 The version's audit log, newest first.
 Response `200`:

@@ -337,3 +337,29 @@ def replace_raci(session: Session, element_id: str, entries: Sequence[RaciRecord
             row.contested = entry.contested
     _add(session, Raci, list(wanted.values()))
     session.flush()
+
+
+def edge(session: Session, edge_id: str) -> tuple[str, EdgeRecord] | None:
+    """(version ID, edge), or None if there is no such edge."""
+    row = session.get(Edge, edge_id)
+    return (row.version_id, EdgeRecord.model_validate(row)) if row else None
+
+
+def update_edge(session: Session, edge_id: str, fields: dict[str, Any]) -> EdgeRecord | None:
+    row = session.get(Edge, edge_id)
+    if row is None:
+        return None
+    for name, value in fields.items():
+        if name not in EdgeRecord.model_fields or name == "id":
+            raise ValueError(f"not an edge field: {name}")
+        setattr(row, name, value)
+    session.flush()
+    return EdgeRecord.model_validate(row)
+
+
+def delete_edge(session: Session, edge_id: str) -> None:
+    session.execute(delete(Edge).where(Edge.id == edge_id))
+
+
+def stable_keys(session: Session, version_id: str) -> set[str]:
+    return set(session.scalars(select(Element.stable_key).where(Element.version_id == version_id)))

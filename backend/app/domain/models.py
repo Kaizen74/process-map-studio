@@ -626,3 +626,36 @@ class ElementPatch(BaseModel):
     k_risk: str | None = None
     ai_flag: AiFlagInput | None = None
     raci: list[RaciInput] | None = None
+
+
+class NewStep(BaseModel):
+    """Eric's own step (API_CONTRACT.md → Review: POST /versions/{vid}/elements)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    label: str
+    lane_role_id: str
+    after_element_id: str
+    provenance: str
+    segment_ids: list[str] = []
+    r_reference: str = ""
+    mechanism: str = "judgment"
+
+
+class EdgeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    from_: str = Field(validation_alias=AliasChoices("from", "from_"))
+    to: str
+    kind: str
+    label: str = ""
+
+
+class EdgePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    from_: str | None = Field(default=None, validation_alias=AliasChoices("from", "from_"))
+    to: str | None = None
+    kind: str | None = None
+    label: str | None = None
