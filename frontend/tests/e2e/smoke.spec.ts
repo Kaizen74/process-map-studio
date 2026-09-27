@@ -160,15 +160,17 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    await expect(summary.getByText("Claims verified").locator("xpath=following-sibling::dd")).toHaveText("21");
-    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("2");
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("8");
+    await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("5");
+    await expect(summary.getByText(/Built from 21 checked claims/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     const text = await publicText(page);
     expect(text.includes("Priya"), "a name shown on Draft").toBe(false);
     if (process.env.PMS_SCREENSHOT_DIR) {
-      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p3-draft-done.png"), fullPage: true });
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p4-draft-summary.png"), fullPage: true });
     }
 
     // Every AI call shows in Settings, as usage only.
@@ -180,7 +182,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {
-      await usage.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p3-settings-ai-usage.png") });
+      await usage.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p4-settings-ai-usage.png") });
     }
   } finally {
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);

@@ -67,14 +67,23 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
     return {status: count for status, count in rows}
 
 
-def rejected_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
-    """Rejected claims of a version with their IDs, oldest first (the rejected-claims register)."""
+def _rows_with_ids(session: Session, version_id: str, status: str) -> list[tuple[str, ClaimRecord]]:
     rows = session.scalars(
         select(Claim)
-        .where(Claim.version_id == version_id, Claim.verification_status == "rejected")
+        .where(Claim.version_id == version_id, Claim.verification_status == status)
         .order_by(Claim.created_at, Claim.id)
     )
     return [(row.id, _record(row)) for row in rows]
+
+
+def rejected_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Rejected claims of a version with their IDs, oldest first (the rejected-claims register)."""
+    return _rows_with_ids(session, version_id, "rejected")
+
+
+def verified_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Verified claims of a version with their IDs, oldest first (what the map is built from)."""
+    return _rows_with_ids(session, version_id, "verified")
 
 
 def scrub_count(session: Session, version_id: str) -> int:
@@ -92,3 +101,30 @@ def unknown_count(session: Session, version_id: str) -> int:
         )
         or 0
     )
+
+
+def set_verdict(
+    session: Session, claim_id: str, verdict: str, reason: str, *, reject: bool
+) -> None:
+    """Record the independent verifier's verdict (B.19); `reject` also rejects the claim (G6)."""
+    row = session.get(Claim, claim_id)
+    if row is None:
+        return
+    row.verifier_verdict = verdict
+    row.verifier_reason = reason
+    if reject:
+        row.verification_status = "rejected"
+        row.stage = "S3b"  # the register shows where a claim was rejected: "G6 · S3b"
+        row.rejection_guardrail = "G6"
+        row.rejection_reason = (
+            f"independent verifier: {reason}" if reason else "independent verifier"
+        )
+    session.flush()
+
+
+def verdicts(session: Session, claim_ids: list[str]) -> dict[str, str]:
+    """Claim ID → verifier verdict."""
+    if not claim_ids:
+        return {}
+    rows = session.execute(select(Claim.id, Claim.verifier_verdict).where(Claim.id.in_(claim_ids)))
+    return {claim_id: verdict for claim_id, verdict in rows}

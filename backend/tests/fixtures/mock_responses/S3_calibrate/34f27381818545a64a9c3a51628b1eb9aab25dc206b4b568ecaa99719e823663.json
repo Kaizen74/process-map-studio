@@ -1,0 +1,14 @@
+{
+  "stances": [
+    {
+      "step_ref": "e5",
+      "stance": "contradicts",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "The Ramp Supervisor shall return the loading report to Load Control within 10 minutes of loading completion.",
+      "divergence_type": "threshold",
+      "divergence_note": "Threshold divergence: 10 min in the SOP vs up to 15 min wait in practice."
+    }
+  ]
+}

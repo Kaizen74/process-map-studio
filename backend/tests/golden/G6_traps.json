@@ -1,0 +1,67 @@
+{
+  "rejected": [
+    {
+      "claim_text": "T1: The Load controller builds the plan.",
+      "guardrail": "G3",
+      "stage": "S1",
+      "reason": "cites a passage that wasn't provided",
+      "source_name": "interview_transcript.txt"
+    },
+    {
+      "claim_text": "T2: The Load controller checks fuel figures.",
+      "guardrail": "G4",
+      "stage": "S1",
+      "reason": "quote not found in source",
+      "source_name": "interview_transcript.txt"
+    },
+    {
+      "claim_text": "T3: The plan takes 30 min.",
+      "guardrail": "G5",
+      "stage": "S1",
+      "reason": "number not found in cited text: 30",
+      "source_name": "interview_transcript.txt"
+    },
+    {
+      "claim_text": "T4: The Duty manager approves the plan.",
+      "guardrail": "G5",
+      "stage": "S1",
+      "reason": "role not found in cited text: Duty manager",
+      "source_name": "interview_transcript.txt"
+    },
+    {
+      "claim_text": "Control: the Load controller builds the preliminary load plan.",
+      "guardrail": "G6",
+      "stage": "S3b",
+      "reason": "independent verifier: T7: the passage doesn't say this.",
+      "source_name": "interview_transcript.txt"
+    },
+    {
+      "claim_text": "T5: Checks follow IATA DGR section 9.",
+      "guardrail": "G4",
+      "stage": "S1",
+      "reason": "quote not found in source",
+      "source_name": "sop_LC-07.docx"
+    }
+  ],
+  "scrub_count": 1,
+  "map": [
+    {
+      "kind": "start",
+      "label": "Flight scheduled",
+      "needs_check": false,
+      "review_status": "draft"
+    },
+    {
+      "kind": "activity",
+      "label": "Build preliminary plan",
+      "needs_check": true,
+      "review_status": "draft"
+    },
+    {
+      "kind": "end",
+      "label": "Final load sheet issued",
+      "needs_check": false,
+      "review_status": "draft"
+    }
+  ]
+}

@@ -59,3 +59,161 @@ class S0OcrOutput(BaseModel):
     """S0_ocr_page: the words on one scanned page, transcribed verbatim in reading order."""
 
     lines: list[str]
+
+
+# --- S2 Canonicalise (PRD §3.7) -----------------------------------------------------------------
+
+
+class S2Step(BaseModel):
+    """One canonical step: the verified claims from any source that describe it."""
+
+    ref: str = Field(description="A short ID for this step, e.g. st1, unique in the answer")
+    kind: Literal["activity", "decision", "approval"]
+    label: str = Field(description="Short verb phrase in sentence case, at most 32 characters")
+    lane_role: str = Field(
+        description="Activity: the role that does it; approval: the role that approves; "
+        "decision: the role that makes the routing call"
+    )
+    claim_refs: list[str] = Field(description="IDs of the claims that describe this step")
+
+
+class S2Role(BaseModel):
+    """A role the claims name that is not in the supplied role list yet."""
+
+    name: str
+    aliases: list[str]
+
+
+class S2Merge(BaseModel):
+    """Steps that may be the same step described differently; Eric decides below 0.80."""
+
+    step_refs: list[str] = Field(description="Two or more step refs from this answer")
+    proposed_label: str = Field(description="Label for the merged step, at most 32 characters")
+    similarity: float = Field(description="How likely they are the same step, from 0 to 1")
+
+
+class S2Output(BaseModel):
+    steps: list[S2Step]
+    new_roles: list[S2Role]
+    merge_proposals: list[S2Merge]
+
+
+# --- S3 Calibrate (PRD §3.7) --------------------------------------------------------------------
+
+
+class S3Stance(BaseModel):
+    """What the supplied part of one source says about one step (G2: cited and quoted)."""
+
+    step_ref: str = Field(description="The step's ID from the <steps> list")
+    stance: Literal["supports", "contradicts"]
+    segment_ids: list[str] = Field(description="IDs of the segments that address the step")
+    quote: str = Field(description="Verbatim words copied from those segments, at most 40 words")
+    divergence_type: Literal[
+        "sequence", "ownership", "threshold", "trigger", "exception", "omission", "none"
+    ]
+    divergence_note: str = Field(
+        description="For a disagreement: one sentence saying what differs, or empty"
+    )
+
+
+class S3Output(BaseModel):
+    stances: list[S3Stance]
+
+
+# --- S3b Verify (PRD §3.8 G6) -------------------------------------------------------------------
+
+
+class S3bVerdict(BaseModel):
+    claim_ref: str = Field(description="The claim's ID from the <claim> list")
+    verdict: Literal["supported", "partial", "not_supported"]
+    reason: str = Field(description="One sentence: what the passages do or do not say")
+
+
+class S3bOutput(BaseModel):
+    verdicts: list[S3bVerdict]
+
+
+# --- S4 Assemble (PRD §3.7) ---------------------------------------------------------------------
+
+CauseType = Literal[
+    "decision_rights",
+    "system_fragmentation",
+    "single_point_knowledge",
+    "capacity_mismatch",
+    "policy_control",
+    "capability_gap",
+    "none",
+]
+
+
+class S4Raci(BaseModel):
+    role: str
+    letter: Literal["R", "A", "C", "I"]
+
+
+class S4Constraint(BaseModel):
+    text: str = Field(description="The challenge or constraint in one sentence")
+    cause_type: CauseType
+    is_key: bool = Field(description="True for the one or two constraints that matter most")
+    claim_refs: list[str] = Field(description="IDs of the claims that state it")
+
+
+class S4AiFlag(BaseModel):
+    component: Literal[
+        "perception", "knowledge_base", "reasoning", "learning", "communication", "action"
+    ]
+    input: str
+    output: str
+    handoff: str
+    basis: Literal["rule_based_automate_candidate", "judgment_support_only"]
+
+
+class S4Step(BaseModel):
+    step_ref: str = Field(description="The step's ID from the <steps> list")
+    claim_refs: list[str] = Field(description="Further claims this step's details come from")
+    decision_mechanism: Literal["rule_based", "judgment", "none"]
+    decider_role: str = Field(description="Decisions: the role that makes the call; else empty")
+    rule_or_threshold: str
+    escalation: str
+    work_min: float | None = Field(description="Minutes of work as stated, or null")
+    wait_min: float | None = Field(description="Minutes of waiting as stated, or null")
+    duration_text: str = Field(description="Time as the sources state it, or empty")
+    complexity: Literal["L", "M", "H", ""]
+    kpi: str
+    handoff_in: str
+    handoff_out: str
+    raci: list[S4Raci]
+    k_risk: str = Field(description="Knowledge risk the claims show, or empty")
+    constraints: list[S4Constraint]
+    ai_flags: list[S4AiFlag] = Field(description="At most one")
+
+
+class S4Edge(BaseModel):
+    from_ref: str = Field(description="start, a step ID, or end")
+    to_ref: str = Field(description="start, a step ID, or end")
+    kind: Literal["sequence", "yes", "no", "approve", "reject", "rework", "exception"]
+    label: str = Field(description="Required on every exit of a decision or approval")
+
+
+class S4Phase(BaseModel):
+    name: str
+    time_window: str = Field(description="As the sources state it, or empty")
+    step_refs: list[str]
+
+
+class S4Output(BaseModel):
+    phases: list[S4Phase]
+    steps: list[S4Step]
+    edges: list[S4Edge]
+
+
+# --- S5 Questions (PRD §3.7) --------------------------------------------------------------------
+
+
+class S5Question(BaseModel):
+    ref: str = Field(description="The item's ID from the <needed> list")
+    question: str = Field(description="One question for the subject-matter expert")
+
+
+class S5Output(BaseModel):
+    questions: list[S5Question]

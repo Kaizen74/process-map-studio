@@ -1,0 +1,108 @@
+{
+  "steps": [
+    {
+      "ref": "st1",
+      "kind": "activity",
+      "label": "Draft load plan",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c1",
+        "c2",
+        "c14",
+        "c21"
+      ]
+    },
+    {
+      "ref": "st2",
+      "kind": "approval",
+      "label": "Approve load plan",
+      "lane_role": "Load control lead",
+      "claim_refs": [
+        "c15",
+        "c20"
+      ]
+    },
+    {
+      "ref": "st3",
+      "kind": "decision",
+      "label": "Special loads OK?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c3",
+        "c4",
+        "c16"
+      ]
+    },
+    {
+      "ref": "st4",
+      "kind": "activity",
+      "label": "Resolve or offload",
+      "lane_role": "Airline ops",
+      "claim_refs": [
+        "c5"
+      ]
+    },
+    {
+      "ref": "st5",
+      "kind": "activity",
+      "label": "Load aircraft",
+      "lane_role": "Ramp",
+      "claim_refs": [
+        "c6",
+        "c7",
+        "c8",
+        "c9"
+      ]
+    },
+    {
+      "ref": "st6",
+      "kind": "activity",
+      "label": "Return loading report",
+      "lane_role": "Ramp",
+      "claim_refs": [
+        "c19"
+      ]
+    },
+    {
+      "ref": "st7",
+      "kind": "decision",
+      "label": "Deviation in limits?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c10",
+        "c11",
+        "c17"
+      ]
+    },
+    {
+      "ref": "st8",
+      "kind": "approval",
+      "label": "Approve deviation",
+      "lane_role": "Captain",
+      "claim_refs": [
+        "c12"
+      ]
+    },
+    {
+      "ref": "st9",
+      "kind": "activity",
+      "label": "Issue load sheet",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c13",
+        "c18"
+      ]
+    }
+  ],
+  "new_roles": [],
+  "merge_proposals": [
+    {
+      "step_refs": [
+        "st5",
+        "st6"
+      ],
+      "proposed_label": "Load and return LIR",
+      "similarity": 0.86
+    }
+  ]
+}

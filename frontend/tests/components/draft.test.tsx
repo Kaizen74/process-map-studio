@@ -57,7 +57,7 @@ const VERSION = { id: "v1", engagement_id: "e1", label: "v0.1", state: "draft" a
 const DONE: DraftState = {
   job: job({ status: "done", progress: 1, stages: stages(["done", "done", "done"]), message: "Draft v0.1 is ready" }),
   version: VERSION,
-  summary: { verified: 21, rejected: 2, open_questions: 3, scrubbed: 1 },
+  summary: { steps: 8, needs_check: 1, verified: 21, rejected: 2, open_questions: 5, scrubbed: 1 },
 };
 const REJECTED: RejectedClaims = {
   items: [
@@ -156,6 +156,13 @@ describe("Draft screen", () => {
     expect(screen.queryByRole("button", { name: "Create draft map" })).not.toBeInTheDocument();
   });
 
+  it("says when the independent verification was switched off", async () => {
+    draftApi({ ...EMPTY, job: job({ stages: stages(["done", "done", "done", "done", "skipped", "running"]) }) });
+    renderApp(PATH);
+    const stepper = await screen.findByRole("list", { name: "Drafting stages" });
+    expect(within(stepper).getAllByRole("listitem")[4]).toHaveTextContent("Switched off in Settings");
+  });
+
   it("explains a failed draft and offers Try again and Copy details", async () => {
     const failed = job({
       status: "failed",
@@ -182,8 +189,14 @@ describe("Draft screen", () => {
     draftApi(DONE);
     renderApp(PATH);
     const summary = await screen.findByRole("region", { name: "Draft v0.1" });
-    expect(within(summary).getByText("Claims verified").nextElementSibling).toHaveTextContent("21");
-    expect(within(summary).getByText("Open questions").nextElementSibling).toHaveTextContent("3");
+    expect(within(summary).getByText("Steps drafted").nextElementSibling).toHaveTextContent("8");
+    expect(within(summary).getByText("Needs check").nextElementSibling).toHaveTextContent("1");
+    expect(within(summary).getByText("Open questions").nextElementSibling).toHaveTextContent("5");
+    expect(within(summary).getByText(/Built from 21 checked claims/)).toBeInTheDocument();
+    expect(within(summary).getByRole("link", { name: "Start reviewing" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/review",
+    );
     expect(screen.getByRole("button", { name: "Draft again from sources" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Before drafting" })).not.toBeInTheDocument();
 

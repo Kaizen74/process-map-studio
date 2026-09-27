@@ -8,6 +8,7 @@ stay under the budget.
 
 from __future__ import annotations
 
+import gc
 import statistics
 import time
 from collections.abc import Callable
@@ -21,6 +22,7 @@ from app.db import session_scope
 from app.domain.models import ClaimRecord
 from app.main import create_app
 from app.repositories import claims
+from tests import fixture_engagement
 from tests.paths import BACKEND_ROOT
 from tests.uploads import wait_for_jobs
 
@@ -41,11 +43,19 @@ Loaded = tuple[TestClient, dict[str, str]]
 
 def p95_ms(call: Callable[[], Any]) -> float:
     call()  # warm-up: first call pays for imports and caches
-    timings = []
-    for _ in range(REPEATS):
-        start = time.perf_counter()
-        call()
-        timings.append((time.perf_counter() - start) * 1000)
+    # The objects hundreds of earlier tests left in this process are not the app's: frozen, a full
+    # garbage collection doesn't scan them (it once paused a request for 363 ms). The app's own
+    # objects are still collected as usual.
+    gc.collect()
+    gc.freeze()
+    try:
+        timings = []
+        for _ in range(REPEATS):
+            start = time.perf_counter()
+            call()
+            timings.append((time.perf_counter() - start) * 1000)
+    finally:
+        gc.unfreeze()
     return statistics.quantiles(timings, n=20)[18]
 
 
@@ -100,7 +110,13 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
         claims.add_claims(session, version, rejected)
     ids = {"eid": eid, "role": role, "source": source, "job": job, "segment": segment}
-    return client, ids | {"draft_job": draft_job, "version": version}
+    # The sample engagement fully drafted (its mock answers match): a real map for graph and lint.
+    built = fixture_engagement.build(client)
+    sample_job = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
+    wait_for_jobs(client)
+    sample = client.get(f"/api/jobs/{sample_job}").json()
+    assert sample["status"] == "done", sample
+    return client, ids | {"draft_job": draft_job, "version": version, "map": sample["target_id"]}
 
 
 ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
@@ -126,6 +142,8 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/jobs/{draft_job}", None),
     ("GET", "/api/versions/{version}/rejected-claims", None),
     ("GET", "/api/settings/usage", None),
+    ("GET", "/api/versions/{map}/graph", None),
+    ("GET", "/api/versions/{map}/lint", None),
 ]
 
 

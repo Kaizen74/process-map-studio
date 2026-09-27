@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "ref": "st1",
+      "kind": "activity",
+      "label": "Build preliminary plan",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c1"
+      ]
+    },
+    {
+      "ref": "st2",
+      "kind": "activity",
+      "label": "Draft load plan",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c2"
+      ]
+    }
+  ],
+  "new_roles": [],
+  "merge_proposals": []
+}

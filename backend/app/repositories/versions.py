@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -64,6 +66,33 @@ def element_count(session: Session, version_id: str) -> int:
     return (
         session.scalar(
             select(func.count()).select_from(Element).where(Element.version_id == version_id)
+        )
+        or 0
+    )
+
+
+def set_lint_report(session: Session, version_id: str, report: dict[str, Any]) -> None:
+    row = session.get(MapVersion, version_id)
+    if row is not None:
+        row.lint_report = report
+        session.flush()
+
+
+def lint_report(session: Session, version_id: str) -> dict[str, Any] | None:
+    row = session.get(MapVersion, version_id)
+    return dict(row.lint_report) if row is not None and row.lint_report is not None else None
+
+
+def reviewed_count(session: Session, version_id: str) -> int:
+    """Elements Eric has confirmed, edited or added: locked against any AI re-run."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Element)
+            .where(
+                Element.version_id == version_id,
+                Element.review_status.in_(("confirmed", "edited", "added")),
+            )
         )
         or 0
     )

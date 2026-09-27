@@ -287,14 +287,14 @@ Response `200`:
 `status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
-- `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `later` (the stage is built in a later phase and is skipped for now). Times are UTC ISO 8601; the screen shows the elapsed time.
+- `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.
 Errors: `404` ("That job doesn't exist."). Used by: Sources (reading status), Draft (from P3).
 
 ## Draft (PRD §3.7 pipeline, §4, §5.4 Draft) — phase P3
 
-Drafting is one background job of type `draft`. In phase P3 it runs the stages **Reading the documents** (S0: scanned PDF pages are read by Claude), **Extracting steps from each source** (S1, per source and chunk) and **Checking every quote against your documents** (G3–G5 and name scrubbing G10, on every claim as it arrives). **Comparing sources**, **Independent verification**, **Building the map** and **Writing validation questions** are listed with status `later` (phases P4 onwards). Every ready source of the engagement is used.
+Drafting is one background job of type `draft` running every stage of PRD §3.7 (phase P4): **Reading the documents** (S0: scanned PDF pages are read by Claude), **Extracting steps from each source** (S1, per source and chunk), **Checking every quote against your documents** (G3–G5 and name scrubbing G10, on every claim as it arrives), **Comparing sources** (S2 steps and merges, S3 stances and source states), **Independent verification** (S3b; `skipped` when switched off in Settings), **Building the map** (S4 phases, edges, RACI, details, confidence; then the lint rules, stored on the version) and **Writing validation questions** (S5). Every ready source of the engagement is used and recorded with the version.
 
-The draft version (`v0.1`, state `draft`) is created when the job starts. If any stage fails, the version and everything stored for it are deleted ("Nothing was saved."); the usage of the calls already made stays in the AI usage list. A draft that has no map elements yet (everything drafted in P3) is replaced by a new one when drafting succeeds; a draft with elements is never replaced here (refreshing arrives with the review workbench).
+The draft version (state `draft`) is created when the job starts: `v0.1` for the first draft, the next number (`v0.2` …) when it replaces an earlier draft. If any stage fails, the version and everything stored for it are deleted ("Nothing was saved."); the usage of the calls already made stays in the AI usage list. A successful draft replaces the earlier draft as long as none of its steps has been reviewed (confirmed, edited or added, from P6); a draft with reviewed steps is never replaced here (refreshing arrives with the review workbench).
 
 ### POST /api/engagements/{id}/draft
 **AI.** Starts drafting. Request: none.
@@ -302,7 +302,7 @@ Response `202`: `{"job_id": "…"}`.
 Errors:
 - `404` engagement missing.
 - `409 CONFLICT` "The draft can't start yet: <first missing item>." with `details.missing`: the readiness `missing` list (key, transcript, document, speakers).
-- `409 CONFLICT` "A draft map is already being made." (a draft job is queued or running) or "This engagement already has a draft map with steps on it. Refresh it from the sources on the Review screen instead." (from P4).
+- `409 CONFLICT` "A draft map is already being made." (a draft job is queued or running) or "This draft has steps you've already reviewed. Refresh it from the sources on the Review screen instead." (from P6, when a step is confirmed, edited or added).
 Used by: Draft screen (Create draft map, Retry).
 
 ### GET /api/engagements/{id}/draft
@@ -311,10 +311,28 @@ Response `200`:
 ```json
 {"job": {"…": "job object as GET /api/jobs/{job_id}"},
  "version": {"id": "…", "label": "v0.1", "state": "draft", "created_at": "…"},
- "summary": {"verified": 23, "rejected": 2, "open_questions": 3, "scrubbed": 0}}
+ "summary": {"steps": 8, "needs_check": 0, "verified": 21, "rejected": 0,
+             "open_questions": 5, "scrubbed": 0}}
 ```
-`job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `open_questions` counts the unknowns Claude raised (they become validation questions in P4).
+`job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `steps`: activities, decisions and approvals on the draft; `needs_check`: steps the independent verifier found only partly supported; `verified` / `rejected`: claims; `open_questions`: validation questions still open (including every gap Claude raised); `scrubbed`: names replaced by roles in Claude's answers.
 Errors: `404`. Used by: Draft screen.
+
+### GET /api/versions/{vid}/graph
+The version's map as the graph of PRD §3.6 (also the future `.json` export): `version`, `process` (name, trigger, end point, KPI, `cycle_time: {elapsed_min, work_min, incomplete_steps}` along the main path), `roles`, `phases`, `elements`, `edges` (`from`, `to`, `kind`, `label`).
+Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_min, wait_min, text}, complexity, kpi, decision: {mechanism, decider_role_id, rule_or_threshold, escalation}, handoff: {in, out}, raci: [{role_id, letter, contested}], provenance, r_reference, source_state, divergence_types, constraints: [{text, provenance, cause_type, is_key}], k_risk, ai_flag: {component, input, output, handoff, basis} | null, evidence: [{segment_id, source_id, source_kind, stance, anchor, verified, note}], confidence, confidence_breakdown: [{label, delta}], needs_check, review_status`.
+- Every source the draft was made from appears in each element's `evidence`; a source that says nothing about the element is `silent` with `segment_id: null` (constraint 4).
+- Names on the hidden list are replaced by roles in every text. Verbatim quotes and images are never included.
+- Start and end are elements of kind `start` and `end` (from the scope card's trigger and end point) with no confidence.
+Errors: `404` ("That version doesn't exist."). Used by: Review (P5), exports (P7).
+
+### GET /api/versions/{vid}/lint
+The lint report of PRD §3.7 (L1–L12), stored on the version when the draft is built:
+```json
+{"failures": [{"rule": "L4", "element_id": "…", "message": "Decision \"Deviation in limits?\" needs at least two labelled exits; it has 1."}],
+ "warnings": [{"rule": "L12", "element_id": "…", "message": "Activity \"Issue load sheet\" has no time stated."}]}
+```
+Failures block publishing (P7); warnings are listed beneath the quality card. A version without a stored report is linted on request.
+Errors: `404`. Used by: Draft summary (P4), Review Lint tab (P6), quality card (P7).
 
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.

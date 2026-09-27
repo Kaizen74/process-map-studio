@@ -88,6 +88,7 @@ describe("draft checklist", () => {
 describe("AI usage wording", () => {
   it("names stages in plain words and keeps unknown IDs", () => {
     expect(aiStageName("S0_ocr_page")).toBe("Reading a scanned page");
+    expect(aiStageName("S3b_verify")).toBe("Independent verification of a step");
     expect(aiStageName("S9_new")).toBe("S9_new");
   });
 

@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
+from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING
 from app.actions.readiness import get_readiness
 from app.config import AppConfig
@@ -30,9 +31,18 @@ from app.domain.models import (
     VersionView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
-from app.pipeline import s0_normalise, s1_extract
-from app.pipeline.context import ai_context
+from app.pipeline import (
+    s0_normalise,
+    s1_extract,
+    s2_canonicalise,
+    s3_calibrate,
+    s3b_verify,
+    s4_assemble,
+    s5_questions,
+)
+from app.pipeline.context import AiContext, ai_context
 from app.repositories import ai_calls, claims, versions
+from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import sources as sources_repo
@@ -52,13 +62,14 @@ STAGES = (
     ("build", "Building the map"),
     ("questions", "Writing validation questions"),
 )
-BUILT = {"read", "extract", "check"}  # the stages that run in phase P3
-READ_SHARE = 0.1  # share of the progress bar for reading scanned pages
+BUILT = {sid for sid, _ in STAGES}  # every stage runs since phase P4
+# Where the progress bar stands when each part of the run is done.
+READ_SHARE, EXTRACT_SHARE, COMPARE_SHARE, VERIFY_SHARE, BUILD_SHARE = 0.05, 0.55, 0.7, 0.8, 0.9
 
 BUSY = "A draft map is already being made."
 HAS_STEPS = (
-    "This engagement already has a draft map with steps on it. Refresh it from the sources on "
-    "the Review screen instead."
+    "This draft has steps you've already reviewed. Refresh it from the sources on the Review "
+    "screen instead."
 )
 VERSION_MISSING = "That version doesn't exist."
 UNEXPECTED = (
@@ -76,6 +87,34 @@ def initial_stages() -> list[JobStage]:
         JobStage(id=sid, name=name, status="waiting" if sid in BUILT else "later")
         for sid, name in STAGES
     ]
+
+
+def next_label(earlier: str | None) -> str:
+    """v0.1 for the first draft; v0.2, v0.3 … when a new draft replaces an earlier one."""
+    if earlier and earlier.startswith("v0.") and earlier[3:].isdigit():
+        return f"v0.{int(earlier[3:]) + 1}"
+    return FIRST_LABEL
+
+
+Stage = Callable[..., Result[object]]
+
+
+def _run(
+    stage: Stage,
+    config: AppConfig,
+    sessions: Sessions,
+    ctx: AiContext,
+    version_id: str,
+    job_id: str,
+) -> Result[object]:
+    return stage(config, sessions, ctx, version_id=version_id, job_id=job_id)  # fmt: skip
+
+
+def _lint(
+    _config: AppConfig, sessions: Sessions, _ctx: AiContext, *, version_id: str, job_id: str
+) -> Result[object]:
+    """The lint rules on the assembled map; the report is stored on the version."""
+    return versions_action.lint_version(sessions, version_id)
 
 
 def _plural(n: int, word: str) -> str:
@@ -103,7 +142,7 @@ def start_draft(
         if latest is not None and latest.status in jobs_repo.UNFINISHED:
             return Err(ErrorKind.CONFLICT, BUSY, {"job_id": latest.id})
         draft = versions.current_draft(session, engagement_id)
-        if draft is not None and versions.element_count(session, draft.id) > 0:
+        if draft is not None and versions.reviewed_count(session, draft.id) > 0:
             return Err(ErrorKind.CONFLICT, HAS_STEPS, {"version_id": draft.id})
         job = jobs_repo.create(
             session,
@@ -151,6 +190,11 @@ class _Progress:
     def progress(self, value: float) -> None:
         self._save(progress=round(min(max(value, 0.0), 1.0), 3))
 
+    def skip(self, sid: str) -> None:
+        now = now_iso()
+        self._set(sid, status="skipped", started_at=now, finished_at=now)
+        self._save()
+
     def fail(self) -> None:
         for stage in self.stages:
             if stage.status == "running":
@@ -184,8 +228,12 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             pass
     engagement_id = job.engagement_id
     with session_scope(sessions) as session:
+        earlier = versions.current_draft(session, engagement_id)
         version = versions.create(
-            session, engagement_id=engagement_id, label=FIRST_LABEL, state="draft"
+            session,
+            engagement_id=engagement_id,
+            label=next_label(earlier.label if earlier else None),
+            state="draft",
         )
         jobs_repo.update(session, job_id, target_id=version.id)
         ready = [
@@ -193,6 +241,7 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             for s in sources_repo.list_for_engagement(session, engagement_id)
             if s.text_status == "ready"
         ]
+        map_repo.add_version_sources(session, version.id, [s.id for s in ready])
 
     def failed(err: Err) -> Err:
         progress.fail()
@@ -222,22 +271,46 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
                     return failed(err)
                 case Ok():
                     pass
-            progress.progress(READ_SHARE + (1 - READ_SHARE) * index / max(len(ready), 1))
+            share = READ_SHARE + (EXTRACT_SHARE - READ_SHARE) * index / max(len(ready), 1)
+            progress.progress(share)
         progress.done("extract", "check")
+
+        # The later stages, each on everything stored so far (PRD §3.7).
+        later: list[tuple[str, list[Stage], float]] = [
+            ("compare", [s2_canonicalise.canonicalise, s3_calibrate.calibrate], COMPARE_SHARE),
+            ("verify", [s3b_verify.verify], VERIFY_SHARE),
+            ("build", [s4_assemble.assemble, _lint], BUILD_SHARE),
+            ("questions", [s5_questions.ask], 1.0),
+        ]
+        for sid, stages, share in later:
+            # With the verifier off, S3b only records "not run"; the stepper says it was skipped.
+            skipped = sid == "verify" and not ctx.verifier_enabled
+            if not skipped:
+                progress.start(sid)
+            for stage in stages:
+                if isinstance(
+                    outcome := _run(stage, config, sessions, ctx, version.id, job_id), Err
+                ):
+                    return failed(outcome)
+            if skipped:
+                progress.skip(sid)
+            else:
+                progress.done(sid)
+            progress.progress(share)
     except Exception:
         failed(Err(ErrorKind.IO, UNEXPECTED))
         raise
 
     with session_scope(sessions) as session:
-        # The new draft replaces an earlier one that has no steps on it yet.
+        # The new draft replaces an earlier one none of whose steps has been reviewed yet.
         for old in versions.drafts(session, engagement_id):
-            if old.id != version.id and versions.element_count(session, old.id) == 0:
+            if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
                 versions.delete(session, old.id)
         summary = _summary(session, version.id)
     return Ok(
-        f"Draft {FIRST_LABEL} is ready: {_plural(summary.verified, 'claim')} verified, "
-        f"{summary.rejected} rejected, {_plural(summary.open_questions, 'open question')}. "
-        "Comparing sources and building the map come in the next build phase."
+        f"Draft {version.label} is ready: {_plural(summary.steps, 'step')} drafted, "
+        f"{summary.needs_check} to check, {_plural(summary.rejected, 'rejected claim')}, "
+        f"{_plural(summary.open_questions, 'open question')}."
     )
 
 
@@ -246,10 +319,13 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
 
 def _summary(session: Session, version_id: str) -> DraftSummary:
     counts = claims.counts(session, version_id)
+    steps, needs_check = map_repo.step_counts(session, version_id)
     return DraftSummary(
+        steps=steps,
+        needs_check=needs_check,
         verified=counts.get("verified", 0),
         rejected=counts.get("rejected", 0),
-        open_questions=claims.unknown_count(session, version_id),
+        open_questions=map_repo.open_question_count(session, version_id),
         scrubbed=claims.scrub_count(session, version_id),
     )
 
@@ -319,7 +395,7 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
                     source_id=record.source_id,
                     source_name=redaction.hide(names[record.source_id], terms),
                     anchor=anchor,
-                    reason=record.rejection_reason,
+                    reason=redaction.hide(record.rejection_reason, terms),
                     guardrail=record.rejection_guardrail,
                     stage=record.stage,
                     passage_available=first is not None,

@@ -1,0 +1,16 @@
+{
+  "questions": [
+    {
+      "ref": "q1",
+      "question": "The SOP says the Load control lead approves the preliminary load plan before release to Ramp, but the interview never mentions it. Is this approval done in practice?"
+    },
+    {
+      "ref": "q2",
+      "question": "The SOP asks for the loading report within 10 minutes of loading, but in practice the wait can be 15 minutes. Which is right, and what causes the difference?"
+    },
+    {
+      "ref": "q3",
+      "question": "When the weight deviation is outside tolerance, who decides: the Load control lead, as the SOP says, or the captain, as happens in practice?"
+    }
+  ]
+}

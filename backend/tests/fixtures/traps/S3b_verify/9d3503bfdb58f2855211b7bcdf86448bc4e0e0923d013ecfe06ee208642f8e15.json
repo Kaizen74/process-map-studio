@@ -1,0 +1,9 @@
+{
+  "verdicts": [
+    {
+      "claim_ref": "k1",
+      "verdict": "not_supported",
+      "reason": "T7: the passage doesn't say this."
+    }
+  ]
+}

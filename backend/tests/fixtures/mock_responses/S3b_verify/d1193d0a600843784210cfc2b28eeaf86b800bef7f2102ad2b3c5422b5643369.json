@@ -1,0 +1,29 @@
+{
+  "verdicts": [
+    {
+      "claim_ref": "k1",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k2",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k3",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k4",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k5",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    }
+  ]
+}

@@ -210,7 +210,7 @@ export interface RedactionTerm {
 // --- Jobs and drafting (API_CONTRACT.md → Jobs, Draft) — phase P3 ---------------------------
 
 export type JobStatus = "queued" | "running" | "done" | "failed";
-export type StageStatus = "waiting" | "running" | "done" | "failed" | "later";
+export type StageStatus = "waiting" | "running" | "done" | "failed" | "skipped" | "later";
 
 export interface JobStage {
   id: string;
@@ -245,6 +245,8 @@ export interface Version {
 }
 
 export interface DraftSummary {
+  steps: number;
+  needs_check: number;
   verified: number;
   rejected: number;
   open_questions: number;
@@ -293,4 +295,69 @@ export interface AiUsageRow {
 export interface AiUsage {
   items: AiUsageRow[];
   totals: { calls: number; input_tokens: number; output_tokens: number };
+}
+
+// --- The map as a graph (API_CONTRACT.md → Draft: graph, lint) — phase P4 ------------------
+
+export interface GraphEvidence {
+  segment_id: string | null;
+  source_id: string;
+  source_kind: SourceKind;
+  stance: "supports" | "contradicts" | "silent";
+  anchor: string;
+  verified: boolean;
+  note: string;
+}
+
+export interface GraphElement {
+  id: string;
+  stable_key: string;
+  kind: "activity" | "decision" | "approval" | "start" | "end";
+  label: string;
+  lane_role_id: string | null;
+  phase_id: string | null;
+  time: { work_min: number | null; wait_min: number | null; text: string };
+  complexity: "L" | "M" | "H" | null;
+  kpi: string;
+  decision: { mechanism: string; decider_role_id: string | null; rule_or_threshold: string; escalation: string };
+  handoff: { in: string; out: string };
+  raci: { role_id: string; letter: "R" | "A" | "C" | "I"; contested: boolean }[];
+  provenance: "O" | "I" | "R";
+  r_reference: string;
+  source_state: string;
+  divergence_types: string[];
+  constraints: { text: string; provenance: string; cause_type: string | null; is_key: boolean }[];
+  k_risk: string;
+  ai_flag: { component: string; input: string; output: string; handoff: string; basis: string } | null;
+  evidence: GraphEvidence[];
+  confidence: number | null;
+  confidence_breakdown: { label: string; delta: number }[];
+  needs_check: boolean;
+  review_status: string;
+}
+
+export interface Graph {
+  version: { id: string; label: string; state: string; quality_card: Record<string, unknown> | null };
+  process: {
+    name: string;
+    trigger: string;
+    end_point: string;
+    kpi: string;
+    cycle_time: { elapsed_min: number; work_min: number; incomplete_steps: number };
+  };
+  roles: { id: string; name: string; is_system: boolean; lane_order: number | null }[];
+  phases: { id: string; name: string; time_window: string; order: number }[];
+  elements: GraphElement[];
+  edges: { id: string; from: string; to: string; kind: string; label: string }[];
+}
+
+export interface LintIssue {
+  rule: string;
+  element_id: string | null;
+  message: string;
+}
+
+export interface LintReport {
+  failures: LintIssue[];
+  warnings: LintIssue[];
 }
