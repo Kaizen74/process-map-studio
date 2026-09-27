@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request
 
 from app.actions import review
 from app.domain.graph import ElementDetail
-from app.domain.models import AuditEntry
+from app.domain.models import AuditEntry, ElementPatch, RaciInput
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["review"])
@@ -30,6 +30,18 @@ def reject(request: Request, element_id: str) -> ElementDetail:
 @router.post("/elements/{element_id}/restore")
 def restore(request: Request, element_id: str) -> ElementDetail:
     return _review(request, element_id, "restore")
+
+
+@router.patch("/elements/{element_id}")
+def edit(request: Request, element_id: str, patch: ElementPatch) -> ElementDetail:
+    state = request.app.state
+    return unwrap(review.edit(state.config, state.sessions, element_id, patch))
+
+
+@router.put("/elements/{element_id}/raci")
+def set_raci(request: Request, element_id: str, raci: list[RaciInput]) -> ElementDetail:
+    state = request.app.state
+    return unwrap(review.set_raci(state.config, state.sessions, element_id, raci))
 
 
 @router.get("/versions/{version_id}/audit")

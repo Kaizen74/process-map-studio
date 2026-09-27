@@ -394,6 +394,35 @@ Review a step. Request: none. Response `200`: the element exactly as `GET /api/e
 - Each change writes an audit row (`Confirmed step`, `Rejected step`, `Restored step`, with the status before and after) and refreshes the stored lint report.
 Errors: `404` ("That step doesn't exist."), `409`, `422`. Used by: Review panel actions and keyboard (P6).
 
+### PATCH /api/elements/{eid} (phase P6)
+Edit a step (the edit form and the table view's inline edits). Every field is optional; only the fields sent change.
+Request:
+```json
+{"label": "Draft load plan", "kind": "activity", "lane_role_id": "…",
+ "work_min": 20, "wait_min": 0, "duration_text": "~20 min, T-120 to T-90", "complexity": "M",
+ "kpi": "Plan issued by T-90",
+ "decision": {"mechanism": "rule_based", "decider_role_id": "…", "rule_or_threshold": "…", "escalation": "…"},
+ "handoff": {"in": "Load forecast", "out": "Plan for approval"},
+ "constraints": [{"text": "…", "cause_type": "single_point_knowledge", "is_key": true, "provenance": "O"}],
+ "k_risk": "…",
+ "ai_flag": {"component": "perception", "input": "…", "output": "…", "handoff": "…", "basis": "rule_based_automate_candidate"},
+ "raci": [{"role_id": "…", "letter": "R", "contested": false}]}
+```
+Response `200`: the element as `GET /api/elements/{eid}`, with `review_status: "edited"` (an `added` step stays `added`).
+Field rules (the same ones the edit form, the table view and Add step use; PRD §5.7.6):
+- `label` 1–120 characters on one line; `kind` activity, decision or approval; `lane_role_id` one of the engagement's roles.
+- `work_min`, `wait_min` 0–10,000 or `null`; `duration_text` ≤ 200 characters; `complexity` `L`, `M`, `H` or `null`; `kpi`, `handoff.in`, `handoff.out` ≤ 300; `rule_or_threshold`, `escalation`, `k_risk` ≤ 500.
+- Decisions and approvals must be `rule_based` or `judgment` (constraint 7); `decider_role_id` one of the engagement's roles or `null`.
+- `constraints` replace the list: text 1–300 characters, `cause_type` from B.9 or `null`, `provenance` O, I or R.
+- `ai_flag` (or `null` to remove it): component B.11, input, output and handoff required (≤ 300), basis B.12; a judgment step can never be an automation candidate (constraint 7).
+- `raci` (optional here, or `PUT …/raci`): roles of the engagement, letters R, A, C, I; at least one A, and several A's only when all are marked contested; activities need exactly one R.
+- No text may contain a name on the engagement's hidden-names list (constraint 10): "…contains a name from your list of names to hide. Use the role instead."
+- A rejected step must be restored before it is edited (`409`); a published version can't change (`409`); start and end come from Setup (`422`).
+Errors `422` name the field (`details.field`, for example `"label"`, `"raci"`, `"ai_flag.basis"`). An audit row "Edited step" records each changed field before and after; the stored lint report is refreshed. Used by: Review edit form and table view (P6).
+
+### PUT /api/elements/{eid}/raci (phase P6)
+Replace a step's RACI. Request: `[{"role_id": "…", "letter": "A", "contested": false}]`. Same rules as `raci` above; response and effects as `PATCH`. Entries that stay (same role and letter) keep the passages behind them. Used by: Review edit form (P6).
+
 ### GET /api/versions/{vid}/audit (phase P6)
 The version's audit log, newest first.
 Response `200`:

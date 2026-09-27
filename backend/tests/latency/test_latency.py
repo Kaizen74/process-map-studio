@@ -157,6 +157,7 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/versions/{map}/lint", None),
     ("GET", "/api/elements/{element}", None),
     ("POST", "/api/elements/{element}/confirm", None),
+    ("PATCH", "/api/elements/{element}", {"kpi": "Decided by T-15"}),
     ("GET", "/api/versions/{map}/audit", None),
     ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]

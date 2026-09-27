@@ -308,3 +308,32 @@ def image_count(session: Session, element_id: str) -> int:
 def element(session: Session, element_id: str) -> ElementRecord | None:
     row = session.get(Element, element_id)
     return ElementRecord.model_validate(row) if row else None
+
+
+def replace_constraints(
+    session: Session, element_id: str, constraints: Sequence[ConstraintRecord]
+) -> None:
+    session.execute(delete(Constraint).where(Constraint.element_id == element_id))
+    _add(session, Constraint, constraints)
+
+
+def replace_ai_flag(session: Session, element_id: str, flag: AiFlagRecord | None) -> None:
+    session.execute(delete(AiFlag).where(AiFlag.element_id == element_id))
+    if flag is not None:
+        _add(session, AiFlag, [flag])
+
+
+def replace_raci(session: Session, element_id: str, entries: Sequence[RaciRecord]) -> None:
+    """Set a step's RACI. An entry that stays (same role and letter) keeps its row and so the
+    passages behind it; entries that go are deleted with their evidence links."""
+    rows = list(session.scalars(select(Raci).where(Raci.element_id == element_id)))
+    wanted = {(e.role_id, e.letter): e for e in entries}
+    for row in rows:
+        entry = wanted.pop((row.role_id, row.letter), None)
+        if entry is None:
+            session.execute(delete(EvidenceLink).where(EvidenceLink.raci_id == row.id))
+            session.delete(row)
+        else:
+            row.contested = entry.contested
+    _add(session, Raci, list(wanted.values()))
+    session.flush()

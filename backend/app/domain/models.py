@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, SecretStr
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
 
 class HealthInfo(BaseModel):
@@ -569,3 +569,60 @@ class AuditEntry(BaseModel):
     target_label: str
     before: object = None
     after: object = None
+
+
+# --- Editing a step (API_CONTRACT.md → Review: PATCH /elements/{eid}) ---------------------------
+
+
+class DecisionInput(BaseModel):
+    mechanism: str
+    decider_role_id: str | None = None
+    rule_or_threshold: str = ""
+    escalation: str = ""
+
+
+class HandoffInput(BaseModel):
+    in_: str = Field(default="", validation_alias=AliasChoices("in", "in_"))
+    out: str = ""
+
+
+class ConstraintInput(BaseModel):
+    text: str
+    cause_type: str | None = None
+    is_key: bool = False
+    provenance: str = "O"
+
+
+class AiFlagInput(BaseModel):
+    component: str
+    input: str
+    output: str
+    handoff: str
+    basis: str
+
+
+class RaciInput(BaseModel):
+    role_id: str
+    letter: str
+    contested: bool = False
+
+
+class ElementPatch(BaseModel):
+    """Only the fields sent change (`model_fields_set`); `ai_flag: null` removes the flag."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str | None = None
+    kind: str | None = None
+    lane_role_id: str | None = None
+    work_min: float | None = None
+    wait_min: float | None = None
+    duration_text: str | None = None
+    complexity: str | None = None
+    kpi: str | None = None
+    decision: DecisionInput | None = None
+    handoff: HandoffInput | None = None
+    constraints: list[ConstraintInput] | None = None
+    k_risk: str | None = None
+    ai_flag: AiFlagInput | None = None
+    raci: list[RaciInput] | None = None
