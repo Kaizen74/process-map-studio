@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
+import { RaciMatrix } from "../../components/tabs";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGraph, useLayout } from "../../hooks/useReview";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import type { EvidenceCard } from "../../lib/mapTypes";
 import { firstNeedingAttention } from "../../lib/review";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DetailPanel } from "./DetailPanel";
 import { HeaderStrip } from "./HeaderStrip";
+import { SourcePanel } from "./SourcePanel";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
 import { useLens } from "./useLens";
@@ -34,6 +37,17 @@ export function ReviewScreen() {
   const [lens, setLens] = useLens();
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [mapBox, fit] = useFitScale(layout.data?.canvas.w ?? 0);
+  // The source viewer replaces the panel's content; it belongs to the step it was opened from.
+  const [viewing, setViewing] = useState<{ step: string; card: EvidenceCard } | null>(null);
+  const openCard = viewing && viewing.step === selectedId ? viewing.card : null;
+  useEffect(() => {
+    if (!openCard) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setViewing(null); // PRD §5.8: Esc closes the viewer
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openCard]);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -142,14 +156,27 @@ export function ReviewScreen() {
             </div>
             <MapLegend lens={lens} />
           </Card>
+          <Card title="RACI matrix" description="Questions, rejected claims, audit, merge decisions and lint arrive as tabs in build phase P6.">
+            <RaciMatrix
+              graph={g}
+              laneOrder={drawing.lanes.map((lane) => lane.role_id)}
+              selectedId={selected?.id ?? null}
+              onSelect={select}
+            />
+          </Card>
         </main>
-        <aside className="review__panel" aria-label={selected ? "Step details" : "How to review"}>
-          {selected ? (
+        <aside
+          className="review__panel"
+          aria-label={selected && openCard ? "Source" : selected ? "Step details" : "How to review"}
+        >
+          {selected && openCard ? (
+            <SourcePanel card={openCard} stepLabel={selected.label} onBack={() => setViewing(null)} />
+          ) : selected ? (
             <DetailPanel
               element={selected}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
-              onOpenEvidence={() => undefined}
+              onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
               onClose={() => select(null)}
             />
           ) : (

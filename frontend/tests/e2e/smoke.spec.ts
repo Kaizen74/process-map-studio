@@ -190,6 +190,17 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     if (process.env.PMS_SCREENSHOT_DIR) {
       await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-selected.png"), fullPage: true });
     }
+    // Evidence opens its source at the exact passage, quote highlighted, names hidden.
+    await panel.getByRole("button", { name: /Open interview_transcript.txt at 21:50/ }).click();
+    const viewer = page.getByRole("complementary", { name: "Source" });
+    await expect(viewer.locator("mark")).toContainText("Ramp loads the aircraft");
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown in the source viewer").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p5-review-evidence.png") });
+    }
+    await viewer.getByRole("button", { name: /Back to Load and return LIR/ }).click();
+    await expect(panel.getByRole("region", { name: "Evidence" })).toBeVisible();
 
     // Every AI call shows in Settings, as usage only.
     await page.goto("/settings");

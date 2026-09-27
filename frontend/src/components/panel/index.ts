@@ -11,3 +11,4 @@ export {
   PanelSection,
   RoleAccountability,
 } from "./PanelSections";
+export { SourceViewer, type SourceViewerProps, type ViewerPassage } from "./SourceViewer";

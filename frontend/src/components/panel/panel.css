@@ -187,3 +187,62 @@ button.evidence:focus-visible {
   background: none;
   border: var(--line-outline) solid var(--edge);
 }
+
+/* Source viewer in the panel (PRD §5.7.8) */
+.panel-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+.panel-viewer__title {
+  font-size: var(--text-viewer-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  word-break: break-word;
+}
+.panel-viewer__meta,
+.panel-viewer__footer {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+.viewer-passages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.viewer-passage {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-10);
+  border: var(--line-hairline) solid transparent;
+  border-radius: var(--radius-node);
+  line-height: var(--leading-normal);
+}
+.viewer-passage--target {
+  border-color: var(--decision-stroke);
+  background: var(--decision-fill);
+}
+.viewer-passage__anchor {
+  font-size: var(--text-micro);
+  color: var(--ink-4);
+  padding-top: 2px;
+}
+.viewer-passage__role {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.viewer-quote {
+  color: inherit;
+  background: var(--highlight-bg);
+  text-decoration: underline;
+  text-decoration-color: var(--highlight-line);
+  text-decoration-thickness: var(--line-highlight);
+  text-underline-offset: 3px;
+}

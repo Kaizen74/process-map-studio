@@ -15,8 +15,8 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 - [x] Increment 4 — UI map pieces: api and hooks (graph, layout, element), `lib/edges.ts` (points → segments and arrowheads, all four routes), `lib/lens.ts` (each lens and state), map components (stage, lanes, phase band, nodes, markers, edges, labels, lens line, legend); tests incl. at most three markers for every lens × state
 - [x] Increment 5 — Review screen: version banner (read-only progress segments), header strip (trigger, end point, cycle time, KPI), map card with toolbar (lenses remembered, Fit/100%, counts), selecting a step; loading, empty and error states
 - [x] Increment 6 — detail panel, read-only (PRD §5.7.7): header and chips, evidence (silent cards not clickable), how confidence was computed, role and accountability (contested `A?`), decision rights, handoff and time, KPI, constraints, knowledge risk, AI flag; "How to review" when nothing is selected
-- [ ] Increment 7 — IN PROGRESS: source viewer in the panel (§5.7.8): opens at the passage with the quote highlighted, "← Back to [step]"; RACI tab (§5.7.10)
-- [ ] Increment 8 — browser checks (select a step, open its evidence, axe, privacy scan), review screenshots at 1440 × 900 and 1080 × 800 for Eric's approval; GUIDE/README
+- [x] Increment 7 — source viewer in the panel (§5.7.8): opens at the passage with the quote highlighted, "← Back to [step]"; RACI tab (§5.7.10)
+- [ ] Increment 8 — IN PROGRESS: browser checks (select a step, open its evidence, axe, privacy scan), review screenshots at 1440 × 900 and 1080 × 800 for Eric's approval; GUIDE/README
 - [ ] Increment 9 — after Eric approves: visual baseline check (0.5% threshold), close P5 (tag phase-p5, report card)
 
 ## Done (all sessions)
@@ -70,6 +70,7 @@ P4 was merged into `main` (pull request #6); the working branch was fast-forward
 - 2026-09-27 Map drawing pieces in the app: the swimlane stage (lanes, phase band, lines with arrowheads and labels, nodes as named buttons with markers and lens lines), toolbar and legend, the four lenses and at-most-three markers; a shared sample of the real backend output for the frontend tests (229 frontend tests)
 - 2026-09-27 Review screen: the draft map drawn from the backend layout with the version banner and its progress segments, the header strip (trigger, end point, cycle time, KPI), lenses (remembered), Fit/100%, selecting a step from the map or the progress bar (kept in the address), the panel header and "How to review"; browser checks open Review after drafting (axe clean, no names)
 - 2026-09-27 Detail panel (read-only): evidence cards with quotes and divergence notes (silent sources grey and not clickable), how confidence was computed, role and accountability with contested `A?` and each side's sources, decision rights, handoff and time, KPI, constraints, knowledge risk and the AI flag
+- 2026-09-27 Evidence opens its source in the panel at the cited passage with the quote highlighted (Back and Esc return to the step); the RACI matrix tab (contested `A?`, row selects); browser checks open a piece of evidence (axe clean, no names)
 
 ## Not started yet
 - P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
