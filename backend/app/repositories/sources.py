@@ -396,3 +396,16 @@ def instruction_like_count(session: Session, engagement_id: str) -> int:
         )
         or 0
     )
+
+
+def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
+    """Passage ID → the role its speaker is mapped to (passages without a mapped speaker are
+    left out)."""
+    if not segment_ids:
+        return {}
+    rows = session.execute(
+        select(SourceSegment.id, Role.name)
+        .join(Role, Role.id == SourceSegment.speaker_role_id)
+        .where(SourceSegment.id.in_(segment_ids))
+    )
+    return {segment_id: name for segment_id, name in rows}

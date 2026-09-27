@@ -16,6 +16,8 @@ import os
 import shutil
 import sys
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -314,6 +316,39 @@ TRAPS_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
 }  # fmt: skip
 
 EMPTY: dict[str, list[Any]] = {"claims": [], "unknowns": []}
+S2_EMPTY: dict[str, list[Any]] = {"steps": [], "new_roles": [], "merge_proposals": []}
+
+
+def step(ref: str, kind: str, label: str, lane: str, claims: list[int]) -> dict[str, Any]:
+    return {
+        "ref": ref,
+        "kind": kind,
+        "label": label,
+        "lane_role": lane,
+        "claim_refs": [f"c{n}" for n in claims],
+    }
+
+
+# S2 for the sample: the eight steps of Appendix A.5, built from the 21 verified claims (c1-c13
+# interview, c14-c18 SOP LC-07, c19 SOP RP-02, c20-c21 job descriptions). "Load and return LIR"
+# comes from two steps merged at 0.86 (pre-merged, listed as accepted).
+S2_ANSWER: dict[str, Any] = {
+    "steps": [
+        step("st1", "activity", "Draft load plan", "Load controller", [1, 2, 14, 21]),
+        step("st2", "approval", "Approve load plan", "Load control lead", [15, 20]),
+        step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 16]),
+        step("st4", "activity", "Resolve or offload", "Airline ops", [5]),
+        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
+        step("st6", "activity", "Return loading report", "Ramp", [19]),
+        step("st7", "decision", "Deviation in limits?", "Load controller", [10, 11, 17]),
+        step("st8", "approval", "Approve deviation", "Captain", [12]),
+        step("st9", "activity", "Issue load sheet", "Load controller", [13, 18]),
+    ],
+    "new_roles": [],
+    "merge_proposals": [
+        {"step_refs": ["st5", "st6"], "proposed_label": "Load and return LIR", "similarity": 0.86}
+    ],
+}
 OCR_DEFAULT = {"lines": ["Section 2.4 Container checks (illustrative scanned page)"]}
 
 
@@ -340,8 +375,9 @@ def chunk_hashes(sessions: Any, built: Any) -> dict[tuple[str, int], tuple[str, 
     return found
 
 
-def current_hashes() -> dict[tuple[str, int], tuple[str, str]]:
-    """Build the sample engagement in a throwaway folder and return its chunk hashes."""
+@contextmanager
+def sample_app() -> Iterator[tuple[Any, Any, Any]]:
+    """The sample engagement built in a throwaway folder: (app, client, built engagement)."""
     folder = Path(tempfile.mkdtemp(prefix="pms-fixtures-"))
     # Before importing the app: never touch the real data folder or settings.
     os.environ.update(
@@ -355,10 +391,41 @@ def current_hashes() -> dict[tuple[str, int], tuple[str, str]]:
     from tests import fixture_engagement
 
     app = create_app(load_config())
-    with TestClient(app) as client:
-        found = chunk_hashes(app.state.sessions, fixture_engagement.build(client))
-    shutil.rmtree(folder, ignore_errors=True)
-    return found
+    try:
+        with TestClient(app) as client:
+            yield app, client, fixture_engagement.build(client)
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+
+
+def current_hashes() -> dict[tuple[str, int], tuple[str, str]]:
+    """Build the sample engagement in a throwaway folder and return its chunk hashes."""
+    with sample_app() as (app, _client, built):
+        return chunk_hashes(app.state.sessions, built)
+
+
+def draft_version(app: Any, client: Any, built: Any) -> str:
+    """Run the draft job on the sample engagement (mock answers) and return its version ID."""
+    key = "sk-" + "ant-" + "Fixture" * 5
+    assert client.put("/api/settings/key", json={"anthropic_api_key": key}).status_code == 200
+    job = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
+    assert app.state.worker.drain(60)
+    body = client.get(f"/api/jobs/{job}").json()
+    assert body["status"] == "done", body
+    return str(body["target_id"])
+
+
+def s2_hash(sessions: Any, version_id: str, engagement_id: str) -> str:
+    """The input hash of the S2 call for a version, exactly as the stage sends it."""
+    from app.db import session_scope
+    from app.pipeline import s2_canonicalise as s2
+    from app.repositories import engagements
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        refs = s2.claim_refs(session, version_id)
+        roles = engagements.list_roles(session, engagement_id)
+    return ai_service.input_hash(s2.STAGE_ID, s2.blocks_for(refs, roles))
 
 
 def write(root: Path, stage: str, key: str, data: object) -> None:
@@ -387,7 +454,18 @@ def main() -> None:
         "or role not found) or, for T6, have the name scrubbed.\n",
         encoding="utf-8",
     )
-    print(f"Wrote {len(hashes)} chunk answers and {len(TRAPS_ANSWERS)} trap answers.")
+    # Later stages depend on earlier answers: run the draft on the answers written so far, then
+    # work out the next stage's exact input.
+    for root in (MOCKS, TRAPS):
+        shutil.rmtree(root / "S2_canonicalise", ignore_errors=True)
+        write(root, "S2_canonicalise", "default", S2_EMPTY)
+    with sample_app() as (app, client, built):
+        version_id = draft_version(app, client, built)
+        write(MOCKS, "S2_canonicalise", s2_hash(app.state.sessions, version_id,
+                                                built.engagement_id), S2_ANSWER)  # fmt: skip
+    print(
+        f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
+    )
 
 
 if __name__ == "__main__":

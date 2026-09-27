@@ -61,6 +61,13 @@ test.describe("accessibility and offline assets", () => {
         multipart: { file: { name: "sop.docx", mimeType: "application/octet-stream", buffer: readFileSync(SOP) } },
       });
       const { id: sopId } = (await sop.json()) as { id: string };
+      // Files are read in the background, one after another; wait until this one has been read
+      // (under load this can take longer than a single expect's timeout).
+      await expect
+        .poll(async () => ((await (await request.get(`/api/sources/${sopId}`)).json()) as { text_status: string }).text_status, {
+          timeout: 30_000,
+        })
+        .toBe("ready");
       await page.goto(`/engagements/${id}/sources?source=${sopId}`);
       await expect(page.getByRole("list", { name: "Passages" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);

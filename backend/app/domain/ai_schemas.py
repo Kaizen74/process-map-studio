@@ -59,3 +59,40 @@ class S0OcrOutput(BaseModel):
     """S0_ocr_page: the words on one scanned page, transcribed verbatim in reading order."""
 
     lines: list[str]
+
+
+# --- S2 Canonicalise (PRD §3.7) -----------------------------------------------------------------
+
+
+class S2Step(BaseModel):
+    """One canonical step: the verified claims from any source that describe it."""
+
+    ref: str = Field(description="A short ID for this step, e.g. st1, unique in the answer")
+    kind: Literal["activity", "decision", "approval"]
+    label: str = Field(description="Short verb phrase in sentence case, at most 32 characters")
+    lane_role: str = Field(
+        description="Activity: the role that does it; approval: the role that approves; "
+        "decision: the role that makes the routing call"
+    )
+    claim_refs: list[str] = Field(description="IDs of the claims that describe this step")
+
+
+class S2Role(BaseModel):
+    """A role the claims name that is not in the supplied role list yet."""
+
+    name: str
+    aliases: list[str]
+
+
+class S2Merge(BaseModel):
+    """Steps that may be the same step described differently; Eric decides below 0.80."""
+
+    step_refs: list[str] = Field(description="Two or more step refs from this answer")
+    proposed_label: str = Field(description="Label for the merged step, at most 32 characters")
+    similarity: float = Field(description="How likely they are the same step, from 0 to 1")
+
+
+class S2Output(BaseModel):
+    steps: list[S2Step]
+    new_roles: list[S2Role]
+    merge_proposals: list[S2Merge]
