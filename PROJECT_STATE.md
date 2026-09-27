@@ -1,21 +1,23 @@
 # Project State
-*Last updated: 2026-09-26 (session 5) — update after EVERY increment*
+*Last updated: 2026-09-27 (session 6) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P3 (AI service and grounded extraction) is complete on branch `claude/charming-davinci-sck1cq` (all 13 checks pass), waiting for Eric to merge it into `main`. Three screenshots for Eric's review are in `docs/screens/` (p3-draft-done.png, p3-draft-rejected-claims.png, p3-settings-ai-usage.png); no visual baseline has been saved (none until Eric approves one). Next: phase P4.
+Phase P3 is complete and merged into `main` (pull request #5). Phase P4 (canonicalise, calibrate, verify, assemble) in progress; it is large and will likely take two sessions.
 
-## This session (2026-09-26, session 5) — goal: Phase P3 (AI service and grounded extraction) — done
-P2 was merged into `main` by Eric (pull request #4); the working branch was restarted from `main`.
-- [x] Increment 1 — verify the anthropic SDK and current API docs (Messages API, structured outputs, PDF blocks, streaming, effort) and log them; `ai_service.call_claude(stage_id, prompt_version, blocks, output_schema)`: mock mode (`<stage_id>/<input_hash>.json`, else `default.json`), Pydantic validation, one `R_repair` attempt, retry and error rules, usage returned for logging; tests against a fake Anthropic server
-- [x] Increment 2 — `grounding` G3–G5: `normalise_text`, `verify_segments`, `verify_quote` (≥ 0.90 similarity over a sliding window), `verify_numbers` (number words → digits, times such as T-90, "20 min", percentages), `verify_roles` (roles and confirmed aliases); table-driven tests including the shapes of traps T1–T5
-- [x] Increment 3 — `chunking` (transcripts in ~10-minute windows or ~60 turns with overlap; documents ≤ ~15 pages) and the prompts S0 (OCR page), S1 interview / document / JD and R_repair with the G1, G2 and G9 wording; source text wrapped in `<source>`/`<segment>` tags with names already hidden; S1 output schema; tests
-- [x] Increment 4 — S0 and S1 stage actions (contract first where needed): versions, claims, unknowns and ai_calls repositories; S0 reads scanned PDF pages through `S0_ocr_page`; S1 extracts claims per source and chunk, every claim goes through G3–G5 and name scrubbing (G10), failures are stored as rejected with guardrail and stage; mock responses for the load-control fixture and the A.6 trap fixtures T1–T6
-- [x] Increment 5 — draft job and API (contract first): `POST /api/engagements/{id}/draft` (202, job; creates draft v0.1), job progress by stage with usage and verified/rejected counts, `GET /api/versions/{vid}/rejected-claims`, `GET /api/settings/usage`; readiness shows the draft
-- [x] Increment 6 — UI: Draft screen (readiness checklist with links, Create draft map, stage stepper with status and elapsed time, live counters "Claims verified n · rejected n", tokens used, failure with Retry and Copy details), running against the mocked job
-- [x] Increment 7 — UI: Settings "AI usage" card; browser checks (axe on Draft, smoke path creates a mocked draft), latency for new non-AI endpoints, GUIDE/README, close P3 (tag phase-p3, report card)
+## This session (2026-09-27, session 6) — goal: Phase P4 (canonicalise, calibrate, verify, assemble); likely continues next session
+P3 was merged into `main` (pull request #5); the working branch was fast-forwarded to `main`. Deterministic parts first, so each AI stage lands on tested ground.
+- [ ] Increment 1 — IN PROGRESS: `calibration` service: `assign_source_state` (five states plus not_assessed, silence rule, JD stances excluded, trace_contradicted first), `jd_accountability_test`, `derive_confidence` with `confidence_breakdown` (G7; terms sum to the value); table-driven tests (A.6 note)
+- [ ] Increment 2 — the map in the database: migration 0004 (evidence quote and divergence note), `repositories/elements.py` (elements, element claims, phases, edges, RACI, evidence links, constraints, AI flags, merge proposals, validation questions), domain graph model per §3.6 and building it from the database
+- [ ] Increment 3 — `lint` service L1–L12 (hard failures and warnings) with one failing fixture per rule; lint report stored on the version
+- [ ] Increment 4 — S2 canonicalise: prompt, answer format, stage action (claims grouped into steps, only verified claims, roles resolved or created, merge proposals: ≥ 0.80 pre-merged and listed, below left for Eric); the mock-answer builder learns to follow the pipeline stage by stage
+- [ ] Increment 5 — S3 calibrate: prompt, answer format, stances per source chunk with the grounding checks re-applied, silence by default, source states, divergence types, JD accountability test
+- [ ] Increment 6 — S3b verifier: prompt, one call per step, `not_supported` rejects the claim (G6), `partial` sets needs_check and a question, verifier switch honoured; traps T7 and T8
+- [ ] Increment 7 — S4 assemble and S5 questions: phases, edges with every exit labelled, RACI, times, KPIs, constraints, K-RISK, AI flags (all checked against the step's verified claims), start and end, confidence; questions from unknowns, partial support, low confidence, contested, documented-only and inferred steps; lint run on the version
+- [ ] Increment 8 — the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
+- [ ] Increment 9 — UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
