@@ -95,9 +95,15 @@ export function WorkbenchTabs({
     { id: "questions", label: count("Validation questions", open, " open") },
     { id: "rejected", label: count("Rejected claims", rejected.data?.total) },
     { id: "audit", label: "Audit log" },
-    { id: "merges", label: count("Merge decisions", waiting, " waiting") },
-    { id: "lint", label: count("Map checks", checks) },
+    // A published version hides Merge and Map checks (PRD §5.9): nothing there can change.
+    ...(editable
+      ? [
+          { id: "merges" as const, label: count("Merge decisions", waiting, " waiting") },
+          { id: "lint" as const, label: count("Map checks", checks) },
+        ]
+      : []),
   ];
+  const shown = tabs.some((t) => t.id === tab) ? tab : "raci";
 
   const markdown = () => questionsMarkdown(questions.data ?? [], graph.process.name, graph.version.label);
 
@@ -111,9 +117,9 @@ export function WorkbenchTabs({
   }
 
   return (
-    <TabBar label="Review workbench" tabs={tabs} active={tab} onChange={setTab}>
-      {tab === "raci" && <RaciMatrix graph={graph} laneOrder={laneOrder} selectedId={selectedId} onSelect={onSelect} />}
-      {tab === "questions" && (
+    <TabBar label="Review workbench" tabs={tabs} active={shown} onChange={setTab}>
+      {shown === "raci" && <RaciMatrix graph={graph} laneOrder={laneOrder} selectedId={selectedId} onSelect={onSelect} />}
+      {shown === "questions" && (
         <Loaded query={questions} what="questions">
           {(data) => (
             <>
@@ -135,7 +141,7 @@ export function WorkbenchTabs({
           )}
         </Loaded>
       )}
-      {tab === "rejected" && (
+      {shown === "rejected" && (
         <Loaded query={rejected} what="rejected claims">
           {(data) => (
             <RejectedClaimsTab
@@ -146,8 +152,8 @@ export function WorkbenchTabs({
           )}
         </Loaded>
       )}
-      {tab === "audit" && <Loaded query={audit} what="audit log">{(data) => <AuditTab entries={data} />}</Loaded>}
-      {tab === "merges" && (
+      {shown === "audit" && <Loaded query={audit} what="audit log">{(data) => <AuditTab entries={data} />}</Loaded>}
+      {shown === "merges" && (
         <Loaded query={merges} what="merge decisions">
           {(data) => (
             <>
@@ -173,7 +179,7 @@ export function WorkbenchTabs({
           )}
         </Loaded>
       )}
-      {tab === "lint" && <Loaded query={lint} what="map checks">{(data) => <LintTab report={data} onGoTo={onSelect} />}</Loaded>}
+      {shown === "lint" && <Loaded query={lint} what="map checks">{(data) => <LintTab report={data} onGoTo={onSelect} />}</Loaded>}
     </TabBar>
   );
 }

@@ -224,12 +224,22 @@ describe("the workbench tabs (PRD §5.7.10)", () => {
     const questions = await openTab(/Validation questions/);
     await within(questions).findByText("Is the plan always drafted by T-120?");
     expect(within(questions).queryByRole("button", { name: "Mark answered" })).not.toBeInTheDocument();
-    const merges = await openTab(/Merge decisions/);
-    await within(merges).findByText("Resolve special loads");
-    expect(within(merges).queryByRole("button", { name: "Accept merge" })).not.toBeInTheDocument();
     const rejected = await openTab(/Rejected claims/);
     await within(rejected).findByText("number not found in cited text: 30");
     expect(within(rejected).queryByRole("button", { name: "Add as step from this passage" })).not.toBeInTheDocument();
+  });
+
+  it("hides Merge decisions and Map checks on a published version (PRD §5.9)", async () => {
+    backend("published");
+    renderApp(PATH);
+    const tabs = await tablist();
+    await within(tabs).findByRole("tab", { name: "Validation questions (2 open)" });
+    expect(within(tabs).getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "RACI matrix",
+      "Validation questions (2 open)",
+      "Rejected claims (2)",
+      "Audit log",
+    ]);
   });
 
   it.each([/RACI matrix/, /Validation questions/, /Rejected claims/, /Audit log/, /Merge decisions/, /Map checks/])(
