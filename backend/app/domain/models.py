@@ -514,3 +514,42 @@ class AiUsageRow(BaseModel):
 class AiUsage(BaseModel):
     items: list[AiUsageRow]
     totals: dict[str, int]
+
+
+# --- Calibration (PRD §3.7 S3, §3.8 G7) --------------------------------------------------------
+
+
+class StanceFact(BaseModel):
+    """What one source says about one element: supports, contradicts or silent (B.14)."""
+
+    source_id: str
+    source_kind: str  # B.1
+    stance: str  # B.14
+
+
+class AccountableFact(BaseModel):
+    """The Accountable role one source gives an element (for the JD accountability test)."""
+
+    source_id: str
+    source_kind: str  # B.1
+    role: str
+
+
+class AccountabilityTest(BaseModel):
+    """Result of the JD accountability test: the competing A roles, if the sources disagree."""
+
+    contested: bool
+    roles: list[str]  # every A role named, in first-seen order
+    sources_by_role: dict[str, list[str]]  # role → source IDs that name it
+
+
+class ConfidenceTerm(BaseModel):
+    label: str
+    delta: float
+
+
+class Confidence(BaseModel):
+    """G7 confidence: the value and the terms it is made of (the terms sum to the value)."""
+
+    value: float
+    breakdown: list[ConfidenceTerm]
