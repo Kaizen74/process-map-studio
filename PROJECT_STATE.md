@@ -14,8 +14,8 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - [x] Increment 3 — `lint` service L1–L12 (hard failures and warnings) with one failing fixture per rule; lint report stored on the version
 - [x] Increment 4 — S2 canonicalise: prompt, answer format, stage action (claims grouped into steps, only verified claims, roles resolved or created, merge proposals: ≥ 0.80 pre-merged and listed, below left for Eric); the mock-answer builder learns to follow the pipeline stage by stage
 - [x] Increment 5 — S3 calibrate: prompt, answer format, stances per source chunk with the grounding checks re-applied, silence by default, source states, divergence types, JD accountability test
-- [ ] Increment 6 — IN PROGRESS: S3b verifier: prompt, one call per step, `not_supported` rejects the claim (G6), `partial` sets needs_check and a question, verifier switch honoured; traps T7 and T8
-- [ ] Increment 7 — S4 assemble and S5 questions: phases, edges with every exit labelled, RACI, times, KPIs, constraints, K-RISK, AI flags (all checked against the step's verified claims), start and end, confidence; questions from unknowns, partial support, low confidence, contested, documented-only and inferred steps; lint run on the version
+- [x] Increment 6 — S3b verifier: prompt, one call per step, `not_supported` rejects the claim (G6), `partial` sets needs_check and a question, verifier switch honoured; traps T7 and T8
+- [ ] Increment 7 — IN PROGRESS: S4 assemble and S5 questions: phases, edges with every exit labelled, RACI, times, KPIs, constraints, K-RISK, AI flags (all checked against the step's verified claims), start and end, confidence; questions from unknowns, partial support, low confidence, contested, documented-only and inferred steps; lint run on the version
 - [ ] Increment 8 — the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
 - [ ] Increment 9 — UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
 
@@ -59,6 +59,7 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - 2026-09-27 Lint rules L1–L12: provenance and evidence, labelled exits, the lane rule, orphans and reachability, AI flags, one Accountable per step, plus size, time, KPI and AI-flag warnings; one crafted fault per rule; the report is stored on the version
 - 2026-09-27 S2 canonicalise: verified claims grouped into steps with lanes, roles and merge proposals (≥ 0.80 merged, below left for Eric); every step checked (claims supplied, numbers and lane role grounded, names scrubbed); the sample becomes the eight A.5 steps; test answers now built stage by stage
 - 2026-09-27 S3 calibrate: every source's stance on every step (supports or contradicts, with the exact passage; silence by default), each stance checked again, source states and divergence types, the JD accountability test; the sample gets exactly the A.5 source states and the RP-02 §9 instruction changes nothing
+- 2026-09-27 S3b independent verifier: one isolated call per step; not supported → the claim is rejected (G6) and listed, a step left without claims is removed; partial or no verdict → the step needs a check; switched off in Settings → no calls, verdict "not run"; traps T7 and T8 behave as A.6 requires
 
 ## Not started yet
 - P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

@@ -101,3 +101,30 @@ def unknown_count(session: Session, version_id: str) -> int:
         )
         or 0
     )
+
+
+def set_verdict(
+    session: Session, claim_id: str, verdict: str, reason: str, *, reject: bool
+) -> None:
+    """Record the independent verifier's verdict (B.19); `reject` also rejects the claim (G6)."""
+    row = session.get(Claim, claim_id)
+    if row is None:
+        return
+    row.verifier_verdict = verdict
+    row.verifier_reason = reason
+    if reject:
+        row.verification_status = "rejected"
+        row.stage = "S3b"  # the register shows where a claim was rejected: "G6 · S3b"
+        row.rejection_guardrail = "G6"
+        row.rejection_reason = (
+            f"independent verifier: {reason}" if reason else "independent verifier"
+        )
+    session.flush()
+
+
+def verdicts(session: Session, claim_ids: list[str]) -> dict[str, str]:
+    """Claim ID → verifier verdict."""
+    if not claim_ids:
+        return {}
+    rows = session.execute(select(Claim.id, Claim.verifier_verdict).where(Claim.id.in_(claim_ids)))
+    return {claim_id: verdict for claim_id, verdict in rows}

@@ -118,3 +118,16 @@ class S3Stance(BaseModel):
 
 class S3Output(BaseModel):
     stances: list[S3Stance]
+
+
+# --- S3b Verify (PRD §3.8 G6) -------------------------------------------------------------------
+
+
+class S3bVerdict(BaseModel):
+    claim_ref: str = Field(description="The claim's ID from the <claim> list")
+    verdict: Literal["supported", "partial", "not_supported"]
+    reason: str = Field(description="One sentence: what the passages do or do not say")
+
+
+class S3bOutput(BaseModel):
+    verdicts: list[S3bVerdict]

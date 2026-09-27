@@ -1,0 +1,9 @@
+{
+  "verdicts": [
+    {
+      "claim_ref": "k1",
+      "verdict": "partial",
+      "reason": "T8: the passage supports only part of it."
+    }
+  ]
+}

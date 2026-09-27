@@ -33,6 +33,7 @@ class AiContext:
     effort: str | None
     structured_outputs: bool
     pdf_input: bool
+    verifier_enabled: bool = True  # S3b, the independent verifier (Settings, on by default)
 
 
 def _flag(value: str) -> bool:
@@ -81,6 +82,7 @@ def ai_context(config: AppConfig) -> Result[AiContext]:
             effort=effort if effort in summary.effort_levels else None,
             structured_outputs=summary.structured_outputs,
             pdf_input=summary.pdf_input,
+            verifier_enabled=_flag(values["VERIFIER_ENABLED"]),
         )
     )
 

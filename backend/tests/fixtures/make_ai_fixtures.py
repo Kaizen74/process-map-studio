@@ -11,6 +11,7 @@ A test fails if a file is missing for the current data.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import shutil
@@ -387,6 +388,7 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
 EMPTY: dict[str, list[Any]] = {"claims": [], "unknowns": []}
 S2_EMPTY: dict[str, list[Any]] = {"steps": [], "new_roles": [], "merge_proposals": []}
 S3_EMPTY: dict[str, list[Any]] = {"stances": []}
+S3B_EMPTY: dict[str, list[Any]] = {"verdicts": []}
 
 
 def step(ref: str, kind: str, label: str, lane: str, claims: list[int]) -> dict[str, Any]:
@@ -446,7 +448,9 @@ def chunk_hashes(sessions: Any, built: Any) -> dict[tuple[str, int], tuple[str, 
 
 
 @contextmanager
-def sample_app() -> Iterator[tuple[Any, Any, Any]]:
+def sample_app(
+    fixtures_dir: Path | None = None, sources: list[str] | None = None
+) -> Iterator[tuple[Any, Any, Any]]:
     """The sample engagement built in a throwaway folder: (app, client, built engagement)."""
     folder = Path(tempfile.mkdtemp(prefix="pms-fixtures-"))
     # Before importing the app: never touch the real data folder or settings.
@@ -460,10 +464,19 @@ def sample_app() -> Iterator[tuple[Any, Any, Any]]:
     from app.main import create_app
     from tests import fixture_engagement
 
-    app = create_app(load_config())
+    config = load_config()
+    if fixtures_dir is not None:
+        config = dataclasses.replace(config, mock_fixtures_dir=fixtures_dir)
+    app = create_app(config)
     try:
         with TestClient(app) as client:
-            yield app, client, fixture_engagement.build(client)
+            yield (
+                app,
+                client,
+                fixture_engagement.build(
+                    client, sources if sources is not None else fixture_engagement.SOURCES
+                ),
+            )
     finally:
         shutil.rmtree(folder, ignore_errors=True)
 
@@ -510,6 +523,40 @@ def s3_hashes(
     return found
 
 
+def s3b_hashes(sessions: Any, version_id: str) -> dict[str, tuple[str, int]]:
+    """Step label → (input hash of its S3b call, number of claims) for a version."""
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.pipeline import s3b_verify as s3b
+    from app.pipeline.s3_calibrate import step_refs
+    from app.repositories import versions
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        assert version is not None
+        steps = [st for st in step_refs(session, version_id) if st.claims]
+        terms = redaction.name_replacements(session, version.engagement_id)
+        passages = s3b.cited_passages(session, steps, terms)
+        return {
+            st.element.label: (
+                ai_service.input_hash(s3b.STAGE_ID, s3b.blocks_for(st, passages)),
+                len(st.claims),
+            )
+            for st in steps
+        }
+
+
+def verdicts(count: int, verdict: str = "supported", reason: str = "") -> dict[str, Any]:
+    return {
+        "verdicts": [
+            {"claim_ref": f"k{n}", "verdict": verdict,
+             "reason": reason or "The cited passages state it."}
+            for n in range(1, count + 1)
+        ]
+    }  # fmt: skip
+
+
 def run_stage(app: Any, stage: Any, version_id: str) -> None:
     """Run one later stage (S2, S3 …) on a version with the answers written so far."""
     from app.domain.result import Ok
@@ -532,6 +579,25 @@ def s2_hash(sessions: Any, version_id: str, engagement_id: str) -> str:
         refs = s2.claim_refs(session, version_id)
         roles = engagements.list_roles(session, engagement_id)
     return ai_service.input_hash(s2.STAGE_ID, s2.blocks_for(refs, roles))
+
+
+TRAP_SOURCES = ["interview_transcript.txt", "sop_LC-07.docx"]
+# Traps T7 and T8 (PRD A.6): of the trap run's verified claims (c1 = T6 after its name was
+# scrubbed, c2 = the control claim), each becomes a step; the verifier answers `partial` for the
+# first (T8: kept with needs_check and a question) and `not_supported` for the second (T7:
+# rejected by the verifier, listed in the register, the step removed).
+TRAPS_S2: dict[str, Any] = {
+    "steps": [
+        step("st1", "activity", "Build preliminary plan", "Load controller", [1]),
+        step("st2", "activity", "Draft load plan", "Load controller", [2]),
+    ],
+    "new_roles": [],
+    "merge_proposals": [],
+}
+TRAPS_S3B: dict[str, dict[str, Any]] = {
+    "Build preliminary plan": verdicts(1, "partial", "T8: the passage supports only part of it."),
+    "Draft load plan": verdicts(1, "not_supported", "T7: the passage doesn't say this."),
+}
 
 
 def write(root: Path, stage: str, key: str, data: object) -> None:
@@ -566,9 +632,10 @@ def main() -> None:
         shutil.rmtree(root / "S2_canonicalise", ignore_errors=True)
         write(root, "S2_canonicalise", "default", S2_EMPTY)
     for root in (MOCKS, TRAPS):
-        shutil.rmtree(root / "S3_calibrate", ignore_errors=True)
-        write(root, "S3_calibrate", "default", S3_EMPTY)
-    from app.pipeline import s2_canonicalise
+        for stage, empty in (("S3_calibrate", S3_EMPTY), ("S3b_verify", S3B_EMPTY)):
+            shutil.rmtree(root / stage, ignore_errors=True)
+            write(root, stage, "default", empty)
+    from app.pipeline import s2_canonicalise, s3_calibrate
 
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
@@ -578,6 +645,20 @@ def main() -> None:
         run_stage(app, s2_canonicalise.canonicalise, version_id)
         for key, digest in s3_hashes(sessions, version_id, built.sources).items():
             write(MOCKS, "S3_calibrate", digest, S3_ANSWERS.get(key, S3_EMPTY))
+        run_stage(app, s3_calibrate.calibrate, version_id)
+        for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
+            write(MOCKS, "S3b_verify", digest, verdicts(count))
+
+    # The trap run (interview and LC-07 with the trap S1 answers).
+    with sample_app(TRAPS, TRAP_SOURCES) as (app, client, built):
+        version_id = draft_version(app, client, built)
+        sessions = app.state.sessions
+        write(TRAPS, "S2_canonicalise", s2_hash(sessions, version_id, built.engagement_id),
+              TRAPS_S2)  # fmt: skip
+        run_stage(app, s2_canonicalise.canonicalise, version_id)
+        run_stage(app, s3_calibrate.calibrate, version_id)
+        for label, (digest, _count) in s3b_hashes(sessions, version_id).items():
+            write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
     )
