@@ -1,24 +1,23 @@
 # Project State
-*Last updated: 2026-09-27 (session 6, phase P4 closed) — update after EVERY increment*
+*Last updated: 2026-09-27 (session 7) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P4 (canonicalise, calibrate, verify, assemble) is complete (2026-09-27, tag `phase-p4`) on branch `claude/charming-davinci-sck1cq`, waiting for Eric to merge it into `main`. Next: Phase P5 (layout and map view).
+Phase P4 is complete and merged into `main` (pull request #6). Phase P5 (layout and map view) in progress; it will likely take two sessions.
 
-## This session (2026-09-27, session 6) — goal: Phase P4 (canonicalise, calibrate, verify, assemble); likely continues next session
-P3 was merged into `main` (pull request #5); the working branch was fast-forwarded to `main`. Deterministic parts first, so each AI stage lands on tested ground.
-- [x] Increment 1 — `calibration` service: `assign_source_state` (five states plus not_assessed, silence rule, JD stances excluded, trace_contradicted first), `jd_accountability_test`, `derive_confidence` with `confidence_breakdown` (G7; terms sum to the value); table-driven tests (A.6 note)
-- [x] Increment 2 — the map in the database: migration 0004 (evidence quote and divergence note), `repositories/elements.py` (elements, element claims, phases, edges, RACI, evidence links, constraints, AI flags, merge proposals, validation questions), domain graph model per §3.6 and building it from the database
-- [x] Increment 3 — `lint` service L1–L12 (hard failures and warnings) with one failing fixture per rule; lint report stored on the version
-- [x] Increment 4 — S2 canonicalise: prompt, answer format, stage action (claims grouped into steps, only verified claims, roles resolved or created, merge proposals: ≥ 0.80 pre-merged and listed, below left for Eric); the mock-answer builder learns to follow the pipeline stage by stage
-- [x] Increment 5 — S3 calibrate: prompt, answer format, stances per source chunk with the grounding checks re-applied, silence by default, source states, divergence types, JD accountability test
-- [x] Increment 6 — S3b verifier: prompt, one call per step, `not_supported` rejects the claim (G6), `partial` sets needs_check and a question, verifier switch honoured; traps T7 and T8
-- [x] Increment 7a — S4 assemble: phases, edges with every exit labelled, RACI (JD test marks competing A as contested, with their evidence), times, KPIs, constraints, K-RISK and AI flags, every field checked against the step's verified claims; start and end; G7 confidence with its breakdown
-- [x] Increment 7b — S5 questions: from unknowns (every one), partial support, low confidence, contested, documented-only and inferred steps, 4–6 per phase; prompt, answer format, checks
-- [x] Increment 8 — the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
-- [x] Increment 9 — UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
+## This session (2026-09-27, session 7) — goal: Phase P5 (layout and map view); likely two sessions
+P4 was merged into `main` (pull request #6); the working branch was fast-forwarded to `main`. Backend first (layout, then the element details the panel needs), then the screen in layers, so the map draws early. The visual baseline needs Eric's approval of a screenshot, so P5 is tagged only after he approves it.
+- [ ] Increment 1 — `layout` service part 1 (PRD §3.9): contract first (`GET /versions/{vid}/layout`), layout models; lane order (approval-only lanes above the lane they approve), columns by longest path with back edges excluded, exception steps beside their decision, one node per cell, contiguous phases, label wrapping; tests for determinism, the lane rule, no overlaps, labels
+- [ ] Increment 2 — `layout` part 2: orthogonal edge routes (same lane, other lane via the gutter, exception above/below, back edges on the track with ±14 offsets), edge-label and lens-line positions; the layout endpoint and latency; golden baseline G2; lint L12 "more than 3 edge crossings"
+- [ ] Increment 3 — element details for the panel (contract first): `GET /elements/{eid}` with evidence cards (source name, anchor, quote, divergence note; names hidden), confidence breakdown, RACI with role names and the evidence behind a contested A, lane and phase names; opening a source at a passage
+- [ ] Increment 4 — UI map pieces: api and hooks (graph, layout, element), `lib/edges.ts` (points → segments and arrowheads, all four routes), `lib/lens.ts` (each lens and state), map components (stage, lanes, phase band, nodes, markers, edges, labels, lens line, legend); tests incl. at most three markers for every lens × state
+- [ ] Increment 5 — Review screen: version banner (read-only progress segments), header strip (trigger, end point, cycle time, KPI), map card with toolbar (lenses remembered, Fit/100%, counts), selecting a step; loading, empty and error states
+- [ ] Increment 6 — detail panel, read-only (PRD §5.7.7): header and chips, evidence (silent cards not clickable), how confidence was computed, role and accountability (contested `A?`), decision rights, handoff and time, KPI, constraints, knowledge risk, AI flag; "How to review" when nothing is selected
+- [ ] Increment 7 — source viewer in the panel (§5.7.8): opens at the passage with the quote highlighted, "← Back to [step]"; RACI tab (§5.7.10)
+- [ ] Increment 8 — browser checks (select a step, open its evidence, axe, privacy scan), review screenshots at 1440 × 900 and 1080 × 800 for Eric's approval; GUIDE/README
+- [ ] Increment 9 — after Eric approves: visual baseline check (0.5% threshold), close P5 (tag phase-p5, report card)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
