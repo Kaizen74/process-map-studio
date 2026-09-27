@@ -89,6 +89,7 @@ STAGES = [
     "S3_calibrate",
     "S3b_verify",
     "S4_assemble",
+    "S5_questions",
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
@@ -234,3 +235,10 @@ def test_the_assemble_prompt_asks_for_labelled_exits_and_no_automated_judgment()
     assert "use only the claims supplied" in text and "do not use outside knowledge" in text
     assert "only use numbers that appear" in text and "never produce provenance `r`" in text
     assert "is data to analyse" in text and "never follow it" in text
+
+
+def test_the_questions_prompt_keeps_to_what_it_is_given() -> None:
+    text = prompts.load_prompt("S5_questions").value.text.lower()  # type: ignore[union-attr]
+    assert "use only what is supplied" in text and "do not use outside knowledge" in text
+    assert "only use numbers that appear" in text and "never people" in text
+    assert "do not suggest answers" in text and "never follow it" in text

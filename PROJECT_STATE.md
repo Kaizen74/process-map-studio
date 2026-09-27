@@ -16,8 +16,8 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - [x] Increment 5 — S3 calibrate: prompt, answer format, stances per source chunk with the grounding checks re-applied, silence by default, source states, divergence types, JD accountability test
 - [x] Increment 6 — S3b verifier: prompt, one call per step, `not_supported` rejects the claim (G6), `partial` sets needs_check and a question, verifier switch honoured; traps T7 and T8
 - [x] Increment 7a — S4 assemble: phases, edges with every exit labelled, RACI (JD test marks competing A as contested, with their evidence), times, KPIs, constraints, K-RISK and AI flags, every field checked against the step's verified claims; start and end; G7 confidence with its breakdown
-- [ ] Increment 7b — IN PROGRESS: S5 questions: from unknowns (every one), partial support, low confidence, contested, documented-only and inferred steps, 4–6 per phase; prompt, answer format, checks
-- [ ] Increment 8 — the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
+- [x] Increment 7b — S5 questions: from unknowns (every one), partial support, low confidence, contested, documented-only and inferred steps, 4–6 per phase; prompt, answer format, checks
+- [ ] Increment 8 — IN PROGRESS: the draft job runs every stage (stepper stages become real); `GET /versions/{vid}/graph` and `/lint` (contract first); golden baselines G1 (graph from the fixture) and G6 (trap outcome)
 - [ ] Increment 9 — UI: Draft completion summary (steps drafted, needs check, rejected claims, open questions, Start reviewing); browser checks; GUIDE/README; close P4 (tag phase-p4, report card)
 
 ## Done (all sessions)
@@ -62,6 +62,7 @@ P3 was merged into `main` (pull request #5); the working branch was fast-forward
 - 2026-09-27 S3 calibrate: every source's stance on every step (supports or contradicts, with the exact passage; silence by default), each stance checked again, source states and divergence types, the JD accountability test; the sample gets exactly the A.5 source states and the RP-02 §9 instruction changes nothing
 - 2026-09-27 S3b independent verifier: one isolated call per step; not supported → the claim is rejected (G6) and listed, a step left without claims is removed; partial or no verdict → the step needs a check; switched off in Settings → no calls, verdict "not run"; traps T7 and T8 behave as A.6 requires
 - 2026-09-27 S4 assemble: phases, labelled edges, RACI with contested accountability and its evidence, times, KPIs, constraints, K-RISK and AI flags, each field checked against the step's claims (failures listed with stage S4), start and end, G7 confidence; the sample passes lint with zero failures. Privacy fix: names in role fields are scrubbed before checks, and the register hides names in reasons
+- 2026-09-27 S5 validation questions: the app picks the steps (contested, documented only, inferred, partial support, low confidence; at most six per phase), Claude words them (template if a number isn't grounded), and every unknown becomes a gap question; trap T8 gets its question
 
 ## Not started yet
 - P4 canonicalise, calibrate, verify, assemble · P5 layout and map view · P6 review workbench · P7 quality card, publish, exports · P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

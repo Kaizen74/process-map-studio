@@ -584,6 +584,16 @@ def s4_hash(sessions: Any, version_id: str) -> str:
     return ai_service.input_hash(s4.STAGE_ID, blocks)
 
 
+def s5_hash(sessions: Any, version_id: str) -> str:
+    """The input hash of the S5 call for a version, exactly as the stage sends it."""
+    from app.db import session_scope
+    from app.pipeline import s5_questions as s5
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        return ai_service.input_hash(s5.STAGE_ID, s5.blocks_for(s5.needed(session, version_id)))
+
+
 def run_stage(app: Any, stage: Any, version_id: str) -> None:
     """Run one later stage (S2, S3 …) on a version with the answers written so far."""
     from app.domain.result import Ok
@@ -718,6 +728,23 @@ S4_ANSWER: dict[str, Any] = {
     ],
 }  # fmt: skip
 S4_EMPTY: dict[str, list[Any]] = {"phases": [], "steps": [], "edges": []}
+# S5 for the sample: the three steps that need checking with the SME, in process order
+# (q1 Approve load plan: documented only; q2 Load and return LIR and q3 Deviation in limits?:
+# contested). The two unknowns from S1 become questions as asked, without a call.
+S5_ANSWER: dict[str, Any] = {
+    "questions": [
+        {"ref": "q1", "question": "The SOP says the Load control lead approves the preliminary "
+                                 "load plan before release to Ramp, but the interview never "
+                                 "mentions it. Is this approval done in practice?"},
+        {"ref": "q2", "question": "The SOP asks for the loading report within 10 minutes of "
+                                 "loading, but in practice the wait can be 15 minutes. Which is "
+                                 "right, and what causes the difference?"},
+        {"ref": "q3", "question": "When the weight deviation is outside tolerance, who decides: "
+                                 "the Load control lead, as the SOP says, or the captain, as "
+                                 "happens in practice?"},
+    ]
+}  # fmt: skip
+S5_EMPTY: dict[str, list[Any]] = {"questions": []}
 
 
 def write(root: Path, stage: str, key: str, data: object) -> None:
@@ -756,10 +783,11 @@ def main() -> None:
             ("S3_calibrate", S3_EMPTY),
             ("S3b_verify", S3B_EMPTY),
             ("S4_assemble", S4_EMPTY),
+            ("S5_questions", S5_EMPTY),
         ):
             shutil.rmtree(root / stage, ignore_errors=True)
             write(root, stage, "default", empty)
-    from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify
+    from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify, s4_assemble
 
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
@@ -774,6 +802,8 @@ def main() -> None:
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), S4_ANSWER)
+        run_stage(app, s4_assemble.assemble, version_id)
+        write(MOCKS, "S5_questions", s5_hash(sessions, version_id), S5_ANSWER)
 
     # The trap run (interview and LC-07 with the trap S1 answers).
     with sample_app(TRAPS, TRAP_SOURCES) as (app, client, built):

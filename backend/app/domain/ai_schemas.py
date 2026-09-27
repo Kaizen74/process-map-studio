@@ -205,3 +205,15 @@ class S4Output(BaseModel):
     phases: list[S4Phase]
     steps: list[S4Step]
     edges: list[S4Edge]
+
+
+# --- S5 Questions (PRD §3.7) --------------------------------------------------------------------
+
+
+class S5Question(BaseModel):
+    ref: str = Field(description="The item's ID from the <needed> list")
+    question: str = Field(description="One question for the subject-matter expert")
+
+
+class S5Output(BaseModel):
+    questions: list[S5Question]
