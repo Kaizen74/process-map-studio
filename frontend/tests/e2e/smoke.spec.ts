@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FAKE_KEY, publicText, seriousViolations } from "./helpers";
@@ -276,6 +277,46 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Review after refresh").toBe(false);
 
+    // P8: a photo on a step. The form explains what is missing; the stored copy keeps no camera
+    // or GPS details; the step gets the has-images marker and the walkthrough strip appears.
+    const CAPTION = "Load sheet on the ramp printer";
+    const photo = join(FIXTURES, "photo_with_gps.jpg");
+    expect(readFileSync(photo).includes("CameraCo"), "the fixture photo carries camera details").toBe(true);
+    await page.getByRole("button", { name: /^Activity, Issue load sheet,/ }).click();
+    const pictures = page.getByRole("complementary", { name: "Step details" }).getByRole("region", { name: "Images" });
+    await expect(pictures).toContainText("In-app only · never exported · metadata stripped");
+    await expect(pictures.getByText("No pictures on this step yet.")).toBeVisible();
+    await pictures.getByRole("button", { name: "Add image to this step" }).click();
+    const imageForm = pictures.getByRole("form", { name: "Add image to this step" });
+    await imageForm.getByRole("button", { name: "Add picture" }).click();
+    await expect(imageForm.getByText("4 things to fix before saving.")).toBeVisible();
+    await imageForm.getByLabel("Picture", { exact: true }).setInputFiles(photo);
+    await imageForm.getByLabel("Caption").fill(CAPTION);
+    await imageForm.getByLabel("Type of picture").selectOption("workplace_photo");
+    await imageForm.getByLabel(/Faces, names, badge numbers and flight identifiers/).check();
+    expect(await seriousViolations(page)).toEqual([]);
+    await imageForm.getByRole("button", { name: "Add picture" }).click();
+    await expect(pictures.getByRole("img", { name: CAPTION })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Activity, Issue load sheet,.*, has images$/ })).toBeVisible();
+    const walkthrough = page.getByRole("region", { name: "Visual walkthrough" });
+    await expect(walkthrough.getByRole("button", { name: new RegExp(`Issue load sheet ${CAPTION}`) })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p8-review-images.png"), fullPage: true });
+    }
+    const draftVersion = ((await (await request.get(`/api/engagements/${id}/draft`)).json()) as { version: { id: string } })
+      .version.id;
+    const listed = (await (await request.get(`/api/versions/${draftVersion}/images`)).json()) as { id: string }[];
+    expect(listed).toHaveLength(1);
+    const stored = await (await request.get(`/api/images/${listed[0]?.id ?? ""}/file`)).body();
+    expect(stored.length).toBeGreaterThan(0);
+    for (const trace of ["CameraCo", "Ramp phone", "Exif"]) {
+      expect(stored.includes(trace), `"${trace}" left in the stored photo`).toBe(false);
+    }
+
     // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
     await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
     await page.getByRole("button", { name: "Publish" }).click();
@@ -286,6 +327,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.locator(".map-node--unreviewed")).toHaveCount(0);
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Published").toBe(false);
+    // P8: the picture is shown on Published, with no way to change it.
+    await page.getByRole("region", { name: "Visual walkthrough" }).getByRole("button", { name: /Issue load sheet/ }).click();
+    const publishedPictures = page.getByRole("complementary", { name: "Step details" }).getByRole("region", { name: "Images" });
+    await expect(publishedPictures.getByRole("img", { name: CAPTION })).toBeVisible();
+    await expect(publishedPictures.getByRole("button")).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {
       await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-published.png"), fullPage: true });
     }
@@ -315,6 +362,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     for (const [format, text] of Object.entries(files)) {
       expect(text.includes("Priya"), `a hidden name in the ${format} export`).toBe(false);
       expect(/<img\b|data:image\//i.test(text), `an image in the ${format} export`).toBe(false);
+      expect(text.includes(CAPTION), `a picture's caption in the ${format} export`).toBe(false);
+      expect(/\/api\/images\/|photo_with_gps/.test(text), `a picture reference in the ${format} export`).toBe(false);
     }
     expect(files.md).toContain("## 3. Recommendation: enablement and gaps");
     const offline = await page.context().newPage();
@@ -341,6 +390,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
     await expect(page.getByText("Draft v1.1 draft")).toBeVisible();
     await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Visual walkthrough" })).toContainText(CAPTION);
     expect(await seriousViolations(page)).toEqual([]);
 
     // Every AI call shows in Settings, as usage only.

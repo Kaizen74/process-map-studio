@@ -267,6 +267,26 @@ def write_transcripts() -> None:
     )
 
 
+def write_photo(name: str) -> None:
+    """A made-up ramp photo carrying camera and GPS details (fictional coordinates), for the
+    browser check that an upload keeps none of them (constraint 11)."""
+    from PIL import ExifTags, Image, ImageDraw
+
+    picture = Image.new("RGB", (320, 240), (214, 222, 230))
+    draw = ImageDraw.Draw(picture)
+    draw.rectangle((40, 150, 280, 200), fill=(90, 100, 110))  # a baggage cart, roughly
+    draw.rectangle((110, 60, 210, 150), fill=(240, 240, 235))  # a load sheet on a clipboard
+    exif = Image.Exif()
+    exif[ExifTags.Base.Make] = "CameraCo"
+    exif[ExifTags.Base.Model] = "Ramp phone"
+    gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+    gps[ExifTags.GPS.GPSLatitudeRef] = "N"
+    gps[ExifTags.GPS.GPSLatitude] = (1.0, 21.0, 30.0)
+    gps[ExifTags.GPS.GPSLongitudeRef] = "E"
+    gps[ExifTags.GPS.GPSLongitude] = (103.0, 59.0, 20.0)
+    picture.save(HERE / name, format="JPEG", quality=85, exif=exif)
+
+
 def main() -> None:
     write_docx("sop_LC-07.docx", SOP_LC07)
     write_docx("sop_RP-02.docx", SOP_RP02)
@@ -274,6 +294,7 @@ def main() -> None:
     write_docx("jd_load_controller.docx", JD_CONTROLLER)
     write_pdf("manual_extract.pdf")
     write_transcripts()
+    write_photo("photo_with_gps.jpg")
     (HERE / "README.md").write_text(
         "# Illustrative load-control engagement (PRD Appendix A)\n\n"
         "ILLUSTRATIVE ONLY — not SATS data. Built by `make_fixtures.py`.\n\n"
@@ -284,7 +305,9 @@ def main() -> None:
         "(treated as a scanned page), page 3 text with one embedded image.\n"
         "- `interview_transcript.txt`: Appendix A.1 verbatim (`[mm:ss] Speaker: text`); the same "
         "interview as `.vtt` (voice tags), `.srt`, `.docx` (one paragraph per turn) and `.pdf` "
-        '(two pages, long turns wrapped onto continuation lines). "Priya Nair" is fictional.\n',
+        '(two pages, long turns wrapped onto continuation lines). "Priya Nair" is fictional.\n'
+        "- `photo_with_gps.jpg`: a drawn, made-up ramp photo whose file carries camera details and "
+        "fictional GPS coordinates, to check that an upload keeps none of them.\n",
         encoding="utf-8",
     )
 

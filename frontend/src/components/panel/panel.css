@@ -488,3 +488,6 @@ button.evidence:focus-visible {
   display: flex;
   gap: var(--space-8);
 }
+.panel-section > .btn--link {
+  align-self: flex-start;
+}
