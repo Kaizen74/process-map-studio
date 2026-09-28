@@ -39,6 +39,8 @@ function Shape({ shape, tone }: { shape: GlyphShape; tone: string }) {
       );
     case "outlined-square":
       return <rect x="1.75" y="1.75" width="8.5" height="8.5" className={toneClass} />;
+    case "dash":
+      return <path d="M2.5 6 H9.5" className={toneClass} strokeWidth="1.5" />;
   }
 }
 

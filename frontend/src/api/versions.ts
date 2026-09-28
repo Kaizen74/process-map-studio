@@ -1,5 +1,6 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
+import type { AlignmentRow } from "../lib/matrix";
 
 const enc = encodeURIComponent;
 
@@ -16,3 +17,7 @@ export const publishVersion = (versionId: string) =>
 
 export const reopenVersion = (versionId: string) =>
   request<VersionDetail>(`/versions/${enc(versionId)}/reopen`, { method: "POST" });
+
+// API_CONTRACT.md → Views (phase P9).
+export const getAlignmentMatrix = (versionId: string) =>
+  request<AlignmentRow[]>(`/versions/${enc(versionId)}/alignment-matrix`);

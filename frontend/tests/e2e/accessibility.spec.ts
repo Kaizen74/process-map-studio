@@ -85,7 +85,11 @@ test.describe("accessibility and offline assets", () => {
       expect(await seriousViolations(page)).toEqual([]);
 
       await page.goto(`/engagements/${id}/matrix`);
-      await expect(page.getByText(/arrives in build phase P9/)).toBeVisible();
+      await expect(page.getByText(/No draft map yet/)).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.goto(`/engagements/${id}/leadership`);
+      await expect(page.getByText(/arrives in build phase P11/)).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     } finally {
       expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);

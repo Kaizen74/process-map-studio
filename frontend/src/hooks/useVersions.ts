@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { getQualityCard, getVersion, listVersions, publishVersion, reopenVersion } from "../api/versions";
+import {
+  getAlignmentMatrix,
+  getQualityCard,
+  getVersion,
+  listVersions,
+  publishVersion,
+  reopenVersion,
+} from "../api/versions";
 import { refreshReview } from "./useReview";
 
 export function useQualityCard(versionId: string | null) {
@@ -47,5 +54,13 @@ export function useReopen(engagementId: string) {
   return useMutation({
     mutationFn: (versionId: string) => reopenVersion(versionId),
     onSuccess: () => refreshVersions(client, engagementId),
+  });
+}
+
+export function useAlignmentMatrix(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "alignment-matrix"],
+    queryFn: () => getAlignmentMatrix(versionId ?? ""),
+    enabled: Boolean(versionId),
   });
 }

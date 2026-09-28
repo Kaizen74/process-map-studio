@@ -10,7 +10,8 @@ export type StanceOrState =
   | "practiced_only"
   | "contested"
   | "trace_contradicted"
-  | "not_assessed";
+  | "not_assessed"
+  | "not_applicable";
 
 export type GlyphShape =
   | "filled-circle"
@@ -19,7 +20,8 @@ export type GlyphShape =
   | "left-half"
   | "right-half"
   | "ring-cross"
-  | "outlined-square";
+  | "outlined-square"
+  | "dash";
 
 export type GlyphTone = "good" | "neutral" | "danger";
 
@@ -46,6 +48,8 @@ export const STATE_GLYPHS: Readonly<Record<StanceOrState, GlyphSpec>> = {
     dangerText: false,
   },
   not_assessed: { shape: "outlined-square", tone: "neutral", label: "Not assessed", dangerText: false },
+  // Alignment matrix (P9): the engagement has no source of that kind.
+  not_applicable: { shape: "dash", tone: "neutral", label: "No source of this kind", dangerText: false },
 };
 
 export function glyphFor(state: StanceOrState): GlyphSpec {
