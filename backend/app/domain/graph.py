@@ -7,7 +7,7 @@ writes. `Graph` is the intermediate representation: the graph endpoint, the lint
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 # --- Stored records ----------------------------------------------------------------------------
 
@@ -143,9 +143,12 @@ class EvidencePassage(BaseModel):
 
 
 class Out(BaseModel):
-    """Graph parts: field names that are Python keywords are written with their JSON name."""
+    """Graph parts: field names that are Python keywords are written with their JSON name, and
+    read by either name (so an export or a stored graph can be read back)."""
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(
+        serialize_by_alias=True, validate_by_name=True, validate_by_alias=True
+    )
 
 
 class GraphVersion(Out):
@@ -197,7 +200,7 @@ class GraphDecision(Out):
 
 
 class GraphHandoff(Out):
-    in_: str = Field(serialization_alias="in")
+    in_: str = Field(serialization_alias="in", validation_alias=AliasChoices("in", "in_"))
     out: str
 
 
@@ -263,7 +266,7 @@ class GraphElement(Out):
 
 class GraphEdge(Out):
     id: str
-    from_: str = Field(serialization_alias="from")
+    from_: str = Field(serialization_alias="from", validation_alias=AliasChoices("from", "from_"))
     to: str
     kind: str
     label: str

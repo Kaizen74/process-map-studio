@@ -126,6 +126,8 @@ const DRAFT_SOURCES = [
 ];
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
+  // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
+  test.setTimeout(90_000);
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });
@@ -180,26 +182,36 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
     // Visual baseline (PRD §6.2 item 9): the sample's Review screen, plain lens, nothing
-    // selected, at both sizes; at most 0.5% of pixels may differ. P6 added Map | Table, More and
-    // the new "How to review" text; with PMS_SCREENSHOT_DIR the run first saves candidates for
+    // selected, at both sizes; at most 0.5% of pixels may differ. P7 added the quality card button
+    // and Publish to the banner; with PMS_SCREENSHOT_DIR the run first saves candidates for
     // Eric to approve (a baseline is never written by a test run).
     const shots = process.env.PMS_SCREENSHOT_DIR;
     const still = { animations: "disabled", caret: "hide" } as const;
     if (shots) {
-      await page.screenshot({ path: join(shots, "p6-review-1440x900.png"), ...still });
+      await page.screenshot({ path: join(shots, "p7-review-1440x900.png"), ...still });
       await page.setViewportSize({ width: 1080, height: 800 });
-      await page.screenshot({ path: join(shots, "p6-review-1080x800.png"), ...still });
+      await page.screenshot({ path: join(shots, "p7-review-1080x800.png"), ...still });
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.getByRole("radio", { name: "Table" }).click();
       await expect(page.getByRole("table", { name: "Steps in process order" })).toBeVisible();
-      await page.screenshot({ path: join(shots, "p6-review-table.png"), fullPage: true, ...still });
+      await page.screenshot({ path: join(shots, "p7-review-table.png"), fullPage: true, ...still });
       await page.getByRole("radio", { name: "Map" }).click();
       await expect(page.getByRole("radiogroup", { name: "Lens" })).toBeVisible();
     }
-    await expect(page).toHaveScreenshot("p6-review-1440x900.png");
+    await expect(page).toHaveScreenshot("p7-review-1440x900.png");
     await page.setViewportSize({ width: 1080, height: 800 });
-    await expect(page).toHaveScreenshot("p6-review-1080x800.png");
+    await expect(page).toHaveScreenshot("p7-review-1080x800.png");
     await page.setViewportSize({ width: 1440, height: 900 });
+    // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.
+    await page.getByRole("button", { name: "Publish" }).click();
+    const blocked = page.getByRole("dialog", { name: "Publish blocked" });
+    await expect(blocked.getByRole("list", { name: "What to fix before publishing" })).toContainText(
+      "hasn't been reviewed yet",
+    );
+    await expect(blocked.getByRole("list", { name: "Quality checks" })).toContainText("Fully reviewed");
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "p7-publish-blocked.png"), ...still });
+    await blocked.getByRole("button", { name: "Close" }).click();
     await page.getByRole("button", { name: /^Activity, Load and return LIR/ }).click();
     const panel = page.getByRole("complementary", { name: "Step details" });
     await expect(panel.getByRole("heading", { name: "Load and return LIR" })).toBeVisible();
@@ -263,6 +275,73 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("tabpanel").getByRole("row", { name: /Refreshed draft from sources/ })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Review after refresh").toBe(false);
+
+    // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
+    await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Published" })).toBeAttached();
+    await expect(page.getByText("Published v1.0")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Changes in this version" })).toContainText("Confirmed");
+    await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+    await expect(page.locator(".map-node--unreviewed")).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Published").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-published.png"), fullPage: true });
+    }
+    // Exports: the four files of v1.0, privacy-scanned; the HTML map makes no requests and no errors.
+    await page.getByRole("link", { name: "Exports" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Exports" })).toBeVisible();
+    await expect(page.getByText("No images, verbatim quotes or names.")).toHaveCount(4);
+    await expect(page.getByText(/Quality card: 9 of 9 green/).first()).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-exports.png"), fullPage: true });
+    }
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("link", { name: "Download Master Process Map (.md) of v1.0" }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("load-control-v1-0-master-map.md");
+    const files: Record<string, string> = {};
+    for (const format of ["md", "json", "csv", "html"]) {
+      const href = await page
+        .getByRole("link", { name: new RegExp(`^Download .*\\(\\.${format}\\) of v1\\.0$`) })
+        .getAttribute("href");
+      const response = await request.get(href ?? "");
+      expect(response.status(), format).toBe(200);
+      files[format] = await response.text();
+    }
+    for (const [format, text] of Object.entries(files)) {
+      expect(text.includes("Priya"), `a hidden name in the ${format} export`).toBe(false);
+      expect(/<img\b|data:image\//i.test(text), `an image in the ${format} export`).toBe(false);
+    }
+    expect(files.md).toContain("## 3. Recommendation: enablement and gaps");
+    const offline = await page.context().newPage();
+    const requests: string[] = [];
+    const errors: string[] = [];
+    offline.on("request", (r) => {
+      if (!r.url().startsWith("data:") && r.url() !== "about:blank") requests.push(r.url());
+    });
+    offline.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    offline.on("pageerror", (e) => errors.push(String(e)));
+    await offline.setContent(files.html ?? "", { waitUntil: "load" });
+    await expect(offline.getByRole("group", { name: "Swimlane map" })).toBeVisible();
+    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).click();
+    await expect(offline.locator(".step:target")).toContainText("Draft load plan");
+    expect(requests, "the HTML map asked for something outside itself").toEqual([]);
+    expect(errors, "the HTML map logged errors").toEqual([]);
+    expect(await seriousViolations(offline)).toEqual([]);
+    await offline.close();
+    await page.getByRole("link", { name: "Published" }).click();
+
+    // Reopen: a new draft with every reviewed step locked.
+    await page.getByRole("button", { name: "Reopen as new draft" }).click();
+    await expect(page.getByText("Draft v1.1 draft")).toBeVisible();
+    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
 
     // Every AI call shows in Settings, as usage only.
     await page.goto("/settings");

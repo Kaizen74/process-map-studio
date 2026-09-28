@@ -1,0 +1,24 @@
+/* Published screen (PRD §5.9). Tokens only. */
+.change-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.change-log li {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--space-10);
+}
+.change-log__change {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.change-log__change--rejected {
+  color: var(--danger-text);
+}
+.version-banner__actions .field {
+  min-width: 220px;
+}

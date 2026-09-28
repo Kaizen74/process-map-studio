@@ -19,6 +19,9 @@ PRD_VERSION = "1.5"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
 DEFAULT_ENV_FILE = REPO_ROOT / ".env"
+# The HTML export uses the same design tokens and self-hosted fonts as the app (PRD §3.10).
+DESIGN_TOKENS_FILE = REPO_ROOT / "shared" / "design_tokens.json"
+FONTS_DIR = REPO_ROOT / "frontend" / "public" / "fonts"
 # Canned AI answers used when MOCK_CLAUDE=1 (PRD §3.7).
 MOCK_FIXTURES_DIR = REPO_ROOT / "backend" / "tests" / "fixtures" / "mock_responses"
 

@@ -245,6 +245,9 @@
   position: absolute;
   top: calc(100% + var(--space-6));
   width: 360px;
+  /* A long list (the quality card with every blocker) scrolls inside the popover. */
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
   z-index: 90;
   display: flex;
   flex-direction: column;

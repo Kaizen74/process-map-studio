@@ -2,6 +2,9 @@
 
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
 - G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
+- G3: the Master Process Map Markdown of the sample, fully confirmed and published (PRD §7.3).
+- G5: the single-file HTML map of the same published version (the embedded font data, which is the
+  unchanged font files, is replaced by its size so the baseline stays readable).
 - G6: the outcome of the hallucination-trap run (Appendix A.6): what was rejected, where and why,
   and the map that is left. None of the traps may reach the graph.
 
@@ -20,8 +23,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.actions import publish as publish_action
 from app.config import AppConfig
 from app.main import create_app
 from tests import fixture_engagement
@@ -93,6 +98,61 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
         segments = {s: client.get(f"/api/sources/{s}/segments").json() for s in cited}
         bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments}
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
+
+
+PUBLISHED_AT = "2026-09-28T09:00:00+00:00"
+FONT_DATA = re.compile(r"data:font/woff2;base64,([A-Za-z0-9+/=]+)")
+
+
+def matches_text_baseline(name: str, text: str) -> None:
+    tokens: dict[str, str] = {}
+
+    def token(match: re.Match[str]) -> str:
+        return tokens.setdefault(match.group(0), f"id-{len(tokens) + 1}")
+
+    rendered = UUID.sub(token, text)
+    rendered = FONT_DATA.sub(
+        lambda m: f"data:font/woff2;base64,<{len(m.group(1))} characters>", rendered
+    )
+    path = HERE / name
+    if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
+        path.write_text(rendered, encoding="utf-8")
+    assert path.exists(), f"missing baseline {name}: run with PMS_UPDATE_GOLDEN=1 and review it"
+    assert rendered == path.read_text(encoding="utf-8"), f"{name} differs from the baseline"
+
+
+def published_exports(
+    config: AppConfig, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[tuple[TestClient, str]]:
+    """The sample draft with every step confirmed, published at a fixed time by "Owner"."""
+    monkeypatch.setattr(publish_action, "now", lambda: PUBLISHED_AT)
+    for client, version_id in drafted(config, fixture_engagement.SOURCES):
+        client.put("/api/settings/profile", json={"owner_name": "Owner"})
+        graph = client.get(f"/api/versions/{version_id}/graph").json()
+        for element in graph["elements"]:
+            if element["kind"] not in ("start", "end"):
+                assert client.post(f"/api/elements/{element['id']}/confirm").status_code == 200
+        response = client.post(f"/api/versions/{version_id}/publish")
+        assert response.status_code == 200, response.text
+        yield client, version_id
+
+
+def test_g3_master_map_of_the_sample(
+    settings_config: AppConfig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for client, version_id in published_exports(settings_config, monkeypatch):
+        md = client.get(f"/api/versions/{version_id}/export/md").text
+        matches_text_baseline("G3_master_map.md", md)
+        assert "Priya" not in md
+
+
+def test_g5_html_map_of_the_sample(
+    settings_config: AppConfig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for client, version_id in published_exports(settings_config, monkeypatch):
+        html = client.get(f"/api/versions/{version_id}/export/html").text
+        matches_text_baseline("G5_map.html", html)
+        assert "Priya" not in html
 
 
 def test_g6_trap_outcome(settings_config: AppConfig) -> None:

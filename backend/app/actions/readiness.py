@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import quality as quality_action
 from app.actions import redaction
 from app.actions.engagements import ENGAGEMENT_MISSING
 from app.actions.settings import get_settings
@@ -15,8 +16,10 @@ from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import SourceKind
 from app.domain.models import Readiness, ReadinessFacts, SourceFacts
+from app.domain.quality import QualityCard
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import readiness as repo
+from app.services import quality
 
 Sessions = sessionmaker[Session]
 
@@ -84,8 +87,18 @@ def _speaker_items(sources: list[SourceFacts]) -> list[str]:
     return items
 
 
-def assess(facts: ReadinessFacts, *, key_set: bool) -> Readiness:
-    """Turn stored facts into nav statuses, the next step and the plain 'missing' list."""
+def _fails(card: QualityCard, check_id: str) -> bool:
+    return any(c.id == check_id and c.status == "fail" for c in card.checks)
+
+
+def assess(
+    facts: ReadinessFacts, *, key_set: bool, blockers: int = 0, other_blockers: int = 0
+) -> Readiness:
+    """Turn stored facts into nav statuses, the next step and the plain 'missing' list.
+
+    `blockers`: failing hard checks on the draft's quality card; `other_blockers`: those other
+    than Q6 "Fully reviewed", which the steps left to review already count on the Review step.
+    """
     sources = facts.sources
     transcripts_ready, transcript_item, named_t = _kind_missing(
         sources, TRANSCRIPTS, ADD_TRANSCRIPT, "interview transcript"
@@ -105,7 +118,6 @@ def assess(facts: ReadinessFacts, *, key_set: bool) -> Readiness:
     source_issues = len(source_items) + len(failed_unnamed)
 
     draft_exists = facts.version_count > 0
-    blockers = 0  # Hard checks on the quality card arrive in phase P7.
     progress = facts.latest_progress
     left_to_review = progress.total - progress.reviewed
 
@@ -127,7 +139,7 @@ def assess(facts: ReadinessFacts, *, key_set: bool) -> Readiness:
     if not draft_exists or progress.total == 0:
         nav["review"] = NOT_STARTED
     elif left_to_review or blockers:
-        attention("review", left_to_review + blockers)
+        attention("review", left_to_review + other_blockers)
     else:
         nav["review"] = DONE
     nav["published"] = DONE if facts.published else NOT_STARTED
@@ -135,7 +147,7 @@ def assess(facts: ReadinessFacts, *, key_set: bool) -> Readiness:
     nav["gap_analysis"] = DONE if facts.gap_finalised else NOT_STARTED
     nav["registers"] = DONE if draft_exists else NOT_STARTED
     nav["leadership"] = DONE if facts.published else NOT_STARTED
-    nav["exports"] = NOT_STARTED  # Exports are recorded from phase P7.
+    nav["exports"] = DONE if facts.exported else NOT_STARTED
 
     next_step = next(
         (key for key in NAV_ORDER if key not in OPTIONAL and nav[key] != DONE),
@@ -162,6 +174,9 @@ def get_readiness(config: AppConfig, sessions: Sessions, engagement_id: str) -> 
         if facts is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
         terms = redaction.name_replacements(session, engagement_id)
+        card = quality_action.draft_card(config, session, engagement_id)
+    blockers = quality.hard_failures(card) if card else 0
+    other_blockers = blockers - (1 if card and _fails(card, "Q6") else 0)
     # File names appear in the "missing" list, so names in them are hidden (G10).
     facts = facts.model_copy(
         update={
@@ -175,4 +190,11 @@ def get_readiness(config: AppConfig, sessions: Sessions, engagement_id: str) -> 
         case Err() as err:
             return err
         case Ok(value=settings):
-            return Ok(assess(facts, key_set=settings.key_set))
+            return Ok(
+                assess(
+                    facts,
+                    key_set=settings.key_set,
+                    blockers=blockers,
+                    other_blockers=other_blockers,
+                )
+            )

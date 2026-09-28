@@ -71,6 +71,7 @@ READ_SHARE, EXTRACT_SHARE, COMPARE_SHARE, VERIFY_SHARE, BUILD_SHARE = 0.05, 0.55
 
 BUSY = "A draft map is already being made."
 NOT_CURRENT = "Only the current draft can be refreshed."
+PUBLISHED = "This process has a published map. Reopen it as a new draft on the Published screen."
 HAS_STEPS = (
     "This draft has steps you've already reviewed. Refresh it from the sources on the Review "
     "screen instead."
@@ -94,7 +95,10 @@ def initial_stages() -> list[JobStage]:
 
 
 def next_label(earlier: str | None) -> str:
-    """v0.1 for the first draft; v0.2, v0.3 … when a new draft replaces an earlier one."""
+    """v0.1 for the first draft; v0.2, v0.3 … when a new draft replaces an earlier one. A draft
+    reopened from a published version ("v1.1 draft") keeps its label when it is refreshed."""
+    if earlier and earlier.endswith(" draft"):
+        return earlier
     if earlier and earlier.startswith("v0.") and earlier[3:].isdigit():
         return f"v0.{int(earlier[3:]) + 1}"
     return FIRST_LABEL
@@ -148,6 +152,8 @@ def start_draft(
         draft = versions.current_draft(session, engagement_id)
         if draft is not None and versions.reviewed_count(session, draft.id) > 0:
             return Err(ErrorKind.CONFLICT, HAS_STEPS, {"version_id": draft.id})
+        if draft is None and versions.latest_published(session, engagement_id) is not None:
+            return Err(ErrorKind.CONFLICT, PUBLISHED)
         job = jobs_repo.create(
             session,
             engagement_id=engagement_id,

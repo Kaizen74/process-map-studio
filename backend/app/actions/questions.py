@@ -22,7 +22,7 @@ QUESTION_MISSING = "That question doesn't exist."
 STATUSES = {"open": "Reopened question", "answered": "Marked question answered"}
 
 
-def _views(session: Session, version_id: str, engagement_id: str) -> list[QuestionView]:
+def question_views(session: Session, version_id: str, engagement_id: str) -> list[QuestionView]:
     terms = redaction.name_replacements(session, engagement_id)
     labels = {e.id: e.label for e in map_repo.elements(session, version_id)}
     phases = {p.id: p.name for p in map_repo.phases(session, version_id)}
@@ -46,7 +46,7 @@ def list_questions(sessions: Sessions, version_id: str) -> Result[list[QuestionV
         version = versions_repo.get(session, version_id)
         if version is None:
             return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
-        return Ok(_views(session, version.id, version.engagement_id))
+        return Ok(question_views(session, version.id, version.engagement_id))
 
 
 def set_status(
@@ -76,6 +76,6 @@ def set_status(
                 before={"status": before},
                 after={"status": status},
             )
-        view = next(q for q in _views(session, version.id, version.engagement_id)
+        view = next(q for q in question_views(session, version.id, version.engagement_id)
                     if q.id == question_id)  # fmt: skip
     return Ok(view)

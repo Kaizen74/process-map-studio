@@ -282,6 +282,7 @@ class ReadinessFacts(BaseModel):
     published: bool
     latest_progress: ReviewProgress
     gap_finalised: bool
+    exported: bool = False
 
 
 class Readiness(BaseModel):
@@ -707,3 +708,46 @@ class MergeProposalView(BaseModel):
     decided_at: str | None
     element_id: str | None
     groups: list[MergeGroupView]
+
+
+# --- Versions, publish and exports (API_CONTRACT.md → Versions, publish and exports; P7) --------
+
+
+class VersionSummary(BaseModel):
+    id: str
+    engagement_id: str
+    label: str
+    state: str
+    created_at: str
+    published_at: str | None
+    published_by: str | None
+    parent_version_id: str | None
+
+
+class ChangeEntry(BaseModel):
+    """What was done to a step while the version was the draft."""
+
+    change: str  # confirmed · edited · rejected · added
+    step: str
+    stable_key: str
+
+
+class VersionDetail(VersionSummary):
+    review: ReviewProgress
+    change_log: list[ChangeEntry]
+    quality_card: dict[str, object] | None
+
+
+class PublishBlocker(BaseModel):
+    #: unreviewed_element · needs_check · pending_merge · suggested_image · lint_failure ·
+    #: quality_check
+    type: str
+    id: str
+    element_id: str | None
+    message: str
+
+
+class ExportFile(BaseModel):
+    filename: str
+    media_type: str
+    content: str

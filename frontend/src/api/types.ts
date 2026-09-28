@@ -301,4 +301,10 @@ export type {
   Question,
   RejectedClaim,
   RejectedClaims,
+  QualityCard,
+  QualityCheck,
+  PublishBlocker,
+  VersionSummary,
+  VersionDetail,
+  ChangeEntry,
 } from "../lib/reviewTypes";

@@ -12,7 +12,14 @@ from sqlalchemy.orm import Session
 from app.domain.enums import GapStatus, VersionState
 from app.domain.models import ReadinessFacts, SourceFacts
 from app.repositories import engagements
-from app.repositories.tables import Engagement, GapAnalysis, MapVersion, Source, SourceSegment
+from app.repositories.tables import (
+    AuditRow,
+    Engagement,
+    GapAnalysis,
+    MapVersion,
+    Source,
+    SourceSegment,
+)
 
 
 def _unmapped_speakers(session: Session, engagement_id: str) -> dict[str, int]:
@@ -63,6 +70,11 @@ def facts(session: Session, engagement_id: str) -> ReadinessFacts | None:
         .where(versions)
         .where(GapAnalysis.status == GapStatus.FINALISED.value)
     )
+    exported = session.scalar(
+        select(func.count())
+        .select_from(AuditRow)
+        .where(AuditRow.engagement_id == engagement_id, AuditRow.action.like("Exported %"))
+    )
     _, progress = engagements.latest_version(session, engagement_id)
     return ReadinessFacts(
         trigger=row.trigger,
@@ -72,4 +84,5 @@ def facts(session: Session, engagement_id: str) -> ReadinessFacts | None:
         published=bool(published),
         latest_progress=progress,
         gap_finalised=bool(finalised),
+        exported=bool(exported),
     )
