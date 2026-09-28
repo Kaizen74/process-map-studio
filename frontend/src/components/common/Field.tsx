@@ -119,19 +119,23 @@ export interface CheckboxFieldProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   help?: ReactNode;
+  error?: string | null | undefined;
 }
 
-export function CheckboxField({ label, checked, onChange, help }: CheckboxFieldProps) {
+export function CheckboxField({ label, checked, onChange, help, error }: CheckboxFieldProps) {
   const id = useId();
   const helpId = useId();
+  const errorId = useId();
+  const describedBy = [help ? helpId : "", error ? errorId : ""].filter(Boolean).join(" ") || undefined;
   return (
-    <div className="field">
+    <div className={["field", error ? "field--invalid" : ""].filter(Boolean).join(" ")}>
       <span className="checkbox">
         <input
           id={id}
           type="checkbox"
           checked={checked}
-          aria-describedby={help ? helpId : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
           onChange={(event) => onChange(event.target.checked)}
         />
         <label className="field__label" htmlFor={id}>
@@ -141,6 +145,11 @@ export function CheckboxField({ label, checked, onChange, help }: CheckboxFieldP
       {help && (
         <span id={helpId} className="field__help">
           {help}
+        </span>
+      )}
+      {error && (
+        <span id={errorId} className="field__error">
+          {error}
         </span>
       )}
     </div>

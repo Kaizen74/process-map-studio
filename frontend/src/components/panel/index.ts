@@ -16,3 +16,5 @@ export { AllReviewed, ReviewActions, type ReviewActionsProps } from "./ReviewAct
 export { EditForm, type EditFormProps } from "./EditForm";
 export { AddStepForm, type AddStepFormProps } from "./AddStepForm";
 export { SourceChoices, type SourceChoice, type SourceChoicesProps } from "./SourceChoices";
+export { ImageGallery, type ImageGalleryProps } from "./ImageGallery";
+export { ImageUploadForm, type ImageUploadFormProps } from "./ImageUploadForm";

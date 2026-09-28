@@ -341,6 +341,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     }
                   : undefined
               }
+              images={{ versionId: g.version.id, engagementId, editable }}
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
               onAddAfter={
                 editable && selected.kind !== "end" && selected.review_status !== "rejected"

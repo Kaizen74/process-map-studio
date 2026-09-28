@@ -12,7 +12,13 @@ export interface FakeResponse {
 
 export type Handler = (body: unknown) => FakeResponse;
 
-/** A fake backend: "METHOD /api/path" → handler. Unknown routes answer 404 in the standard shape. */
+/** Steps and versions have no pictures unless a test gives them some (phase P8). */
+const NO_PICTURES = /^GET \/api\/(elements|versions)\/[^/]+\/images$/;
+
+/**
+ * A fake backend: "METHOD /api/path" → handler. Unknown routes answer 404 in the standard shape,
+ * except a step's or version's pictures, which default to none.
+ */
 export function fakeApi(routes: Record<string, Handler>) {
   const calls: { key: string; body: unknown }[] = [];
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -23,7 +29,9 @@ export function fakeApi(routes: Record<string, Handler>) {
     const handler = routes[key];
     const result = handler
       ? handler(body)
-      : { status: 404, body: { error: { code: "NOT_FOUND", message: "Not found.", details: {} } } };
+      : NO_PICTURES.test(key)
+        ? { body: [] }
+        : { status: 404, body: { error: { code: "NOT_FOUND", message: "Not found.", details: {} } } };
     if (result.status === 204) return new Response(null, { status: 204, headers: { "X-Request-ID": "req000000001" } });
     return new Response(JSON.stringify(result.body), {
       status: result.status ?? 200,
