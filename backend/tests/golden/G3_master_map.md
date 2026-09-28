@@ -1,0 +1,177 @@
+# Load control — Master Process Map
+
+Version v1.0 · published 28 Sep 2026 · validated by Owner
+
+**Quality card**
+
+| Check | Status | Detail |
+|---|---|---|
+| Q1 Provenance green | Pass | All 8 steps are tagged O, I or R. |
+| Q2 Evidence verified | Pass | Every observed or inferred step has a verified passage. |
+| Q3 Diamonds closed | Pass | Every decision and approval has all its exits, each labelled. |
+| Q4 Lanes and ownership | Pass | Every step sits in the right lane, has one Accountable role and is connected. |
+| Q5 Flags executable | Pass | Every AI flag is complete, and none is on a judgment step. |
+| Q6 Fully reviewed | Pass | Every step, merge and suggested image has been reviewed. |
+| Q7 Facts, interpretation and recommendation separated | Pass | The exports keep facts, interpretation and recommendation in their own sections. |
+| Q8 Anonymised | Pass | No name from your list of names to hide appears in any export. |
+| Q9 Images contained | Pass | No image or image reference in any export. |
+| Q10 60-minute validatable | Pass | 8 steps and 5 lanes: fits a one-hour session. |
+
+All hard checks green: yes.
+
+Warnings:
+- Approval "Approve load plan" has no time stated.
+- Activity "Issue load sheet" has no time stated.
+
+## 1. Facts: what the sources tell us
+
+### Source registry
+
+| Source | Kind | Version date | Owner | Controlled copy |
+|---|---|---|---|---|
+| interview_transcript.txt | Interview | — | — | No |
+| sop_LC-07.docx | SOP | — | — | No |
+| sop_RP-02.docx | SOP | — | — | No |
+| jd_load_control_lead.docx | Job description | — | — | No |
+| jd_load_controller.docx | Job description | — | — | No |
+
+### Pain points as stated in the sources
+
+- [O] Only one other controller knows the widebody configurations (step: Draft load plan · interview_transcript.txt 06:40; sop_LC-07.docx §3.1; jd_load_controller.docx ¶ 2)
+- [O] The cargo terminal's notification often comes late (step: Special loads OK? · interview_transcript.txt 14:05; sop_LC-07.docx §4; jd_load_controller.docx ¶ 2)
+- [O] The loading report is on paper and re-keyed (step: Load and return LIR · interview_transcript.txt 21:50)
+- [O] Containers run short at peak times (step: Load and return LIR · interview_transcript.txt 21:50)
+
+### How well the sources agree
+
+| Source state | Steps |
+|---|---|
+| Corroborated | 3 |
+| Documented only | 1 |
+| Practiced only | 2 |
+| Contested | 2 |
+| Trace contradicted | 0 |
+| Not assessed | 0 |
+
+## 2. Interpretation: how the process works
+
+### Phase 1: Plan
+
+Time window: T-120 to T-90.
+Purpose: covers 2 steps, from “Draft load plan” to “Approve load plan”.
+
+| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|
+| Draft load plan | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
+
+Decisions and approvals:
+
+- [O] Approve load plan (approval, judgment, approver: Load control lead). Exits: Approve → Special loads OK?; Rework → Draft load plan.
+
+This phase has 1 activity and 1 decision or approval, involving Load controller, Load control lead.
+
+### Phase 2: Check and load
+
+Time window: not stated.
+Purpose: covers 3 steps, from “Special loads OK?” to “Load and return LIR”.
+
+| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|
+| Resolve or offload | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
+| Load and return LIR | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
+
+Decisions and approvals:
+
+- [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: Yes → Load and return LIR; No → Resolve or offload.
+
+This phase has 2 activities and 1 decision or approval, involving Load controller, Airline ops, Ramp.
+
+### Phase 3: Close out
+
+Time window: T-15 to T-10.
+Purpose: covers 3 steps, from “Deviation in limits?” to “Issue load sheet”.
+
+| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|
+| Issue load sheet | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
+
+Decisions and approvals:
+
+- [O] Deviation in limits? (decision, judgment, decider: Load controller). Exits: Within limits → Issue load sheet; Outside limits → Approve deviation.
+- [O] Approve deviation (approval, judgment, approver: Captain). Exits: Accept → Issue load sheet; Re-trim → Load and return LIR.
+
+This phase has 1 activity and 2 decisions or approvals, involving Load controller, Captain.
+
+### RACI
+
+| Step | Load controller | Load control lead | Ramp | Airline ops | Captain |
+|---|---|---|---|---|---|
+| [O] Draft load plan | R A | · | · | · | · |
+| [O] Approve load plan | · | R A | · | · | · |
+| [O] Special loads OK? | A | · | · | · | · |
+| [O] Resolve or offload | · | · | · | R A | · |
+| [O] Load and return LIR | · | · | R A | · | · |
+| [O] Deviation in limits? | R | A? | · | · | A? |
+| [O] Approve deviation | · | · | · | · | A |
+| [O] Issue load sheet | R A | · | · | · | · |
+
+A? means the sources disagree about who is accountable.
+
+### Divergences between sources
+
+| Divergence | Steps |
+|---|---|
+| Ownership | Deviation in limits? |
+| Threshold | Load and return LIR |
+
+## 3. Recommendation: enablement and gaps
+
+### AI flags
+
+**[O] Special loads OK?**
+
+- Component: Reasoning
+- Input: Special load notification and acceptance checklist
+- Output: Accept or refuse each special load
+- Handoff: Load controller
+- Basis: Rule-based: an automation candidate
+
+**[O] Load and return LIR**
+
+- Component: Perception
+- Input: Paper loading report
+- Output: Keyed loading data
+- Handoff: Load controller
+- Basis: Rule-based: an automation candidate
+
+**[O] Issue load sheet**
+
+- Component: Action
+- Input: Final load figures
+- Output: Load sheet issued through the departure control system
+- Handoff: Captain
+- Basis: Rule-based: an automation candidate
+
+### Knowledge-risk register
+
+- [O] Draft load plan: Widebody plans rely on the Load controller and one other controller
+
+### External-practice register
+
+No steps from external practice.
+
+### Open validation questions
+
+1. The SOP says the Load control lead approves the preliminary load plan before release to Ramp, but the interview never mentions it. Is this approval done in practice? (step: Approve load plan · Plan) · documented only
+2. The SOP asks for the loading report within 10 minutes of loading, but in practice the wait can be 15 minutes. Which is right, and what causes the difference? (step: Load and return LIR · Check and load) · contested
+3. When the weight deviation is outside tolerance, who decides: the Load control lead, as the SOP says, or the captain, as happens in practice? (step: Deviation in limits? · Close out) · contested
+4. Who approves the preliminary load plan before it is released? · gap
+5. Which role issues the final load sheet? · gap
+
+### Cause library entries (pending validation)
+
+No cause library entries yet.
+
+### Gap analyses
+
+No finalised gap analyses.

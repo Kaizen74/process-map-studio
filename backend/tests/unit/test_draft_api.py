@@ -402,7 +402,8 @@ def test_lint_is_worked_out_when_none_was_stored(client: TestClient) -> None:
 
 @pytest.mark.parametrize(
     ("earlier", "label"),
-    [(None, "v0.1"), ("v0.1", "v0.2"), ("v0.9", "v0.10"), ("v1.1 draft", "v0.1")],
+    # A reopened draft keeps its label when refreshed (P7 requirement change, DECISIONS.md).
+    [(None, "v0.1"), ("v0.1", "v0.2"), ("v0.9", "v0.10"), ("v1.1 draft", "v1.1 draft")],
 )
 def test_draft_labels_count_up(earlier: str | None, label: str) -> None:
     assert draft.next_label(earlier) == label

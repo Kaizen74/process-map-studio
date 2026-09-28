@@ -147,7 +147,7 @@ def assess(
     nav["gap_analysis"] = DONE if facts.gap_finalised else NOT_STARTED
     nav["registers"] = DONE if draft_exists else NOT_STARTED
     nav["leadership"] = DONE if facts.published else NOT_STARTED
-    nav["exports"] = NOT_STARTED  # Exports are recorded from phase P7.
+    nav["exports"] = DONE if facts.exported else NOT_STARTED
 
     next_step = next(
         (key for key in NAV_ORDER if key not in OPTIONAL and nav[key] != DONE),
