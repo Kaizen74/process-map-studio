@@ -217,3 +217,67 @@ class S5Question(BaseModel):
 
 class S5Output(BaseModel):
     questions: list[S5Question]
+
+
+# --- Gap analysis A: documents vs practice (PRD §3.11.1; phase P10) ----------------------------
+
+InternalFindingType = Literal[
+    "dead_control_candidate",
+    "undocumented_work",
+    "ownership_mismatch",
+    "threshold_gap",
+    "sequence_gap",
+    "trigger_gap",
+    "exception_gap",
+    "stale_documentation",
+    "documentation_update",
+]
+
+
+class GAEvidence(BaseModel):
+    segment_id: str = Field(description="ID of one <segment> the finding rests on")
+    quote: str = Field(description="Verbatim words copied from that segment, at most 40 words")
+
+
+class GAFinding(BaseModel):
+    """One difference between the documents and practice, a pattern or likely cause behind
+    differences, or a documentation update, tied to the passages of every side it compares."""
+
+    finding_type: InternalFindingType
+    section: Literal["fact", "interpretation", "recommendation"] = Field(
+        description="fact: a difference; interpretation: a pattern or likely cause; "
+        "recommendation: a documentation update"
+    )
+    title: str = Field(description="Short title in sentence case, naming roles, never people")
+    text: str = Field(description="Plain-language description, one to three sentences")
+    step_refs: list[str] = Field(description="IDs of the <divergence> items it is about")
+    evidence: list[GAEvidence]
+    basis: str = Field(
+        description="For interpretation: how the SME passages show it; otherwise empty"
+    )
+    basis_segment_ids: list[str] = Field(
+        description="For interpretation: the interview segments the basis cites; otherwise empty"
+    )
+
+
+class GAUnknown(BaseModel):
+    """A cause the passages don't explain: a question for the SMEs, never a guess."""
+
+    finding_type: InternalFindingType = Field(description="The kind of difference it is about")
+    step_refs: list[str]
+    question: str = Field(description="One short question an SME can answer")
+
+
+class GAInternalOutput(BaseModel):
+    findings: list[GAFinding]
+    unknowns: list[GAUnknown]
+
+
+class GAVerdict(BaseModel):
+    finding_ref: str = Field(description="The finding's ID from the <finding> list")
+    verdict: Literal["supported", "partial", "not_supported"]
+    reason: str = Field(description="One sentence: what the passages do or do not say")
+
+
+class GAVerifyOutput(BaseModel):
+    verdicts: list[GAVerdict]

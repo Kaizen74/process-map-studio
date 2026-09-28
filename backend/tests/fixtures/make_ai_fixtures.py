@@ -768,6 +768,140 @@ S5_ANSWER: dict[str, Any] = {
 S5_EMPTY: dict[str, list[Any]] = {"questions": []}
 
 
+# Gap analysis A (PRD Appendix A.7): the four expected findings and the unexplained cause. The
+# divergence IDs (d1 …) and passage IDs (e1 …) are the ones the app gives the sample map's
+# divergence set: d1 Approve load plan, d2 Resolve or offload, d3 Load and return LIR,
+# d4 Deviation in limits?, d5 Approve deviation.
+def ga_finding(
+    finding_type: str, title: str, text: str, refs: list[str], evidence: list[tuple[str, str]]
+) -> dict[str, Any]:
+    return {
+        "finding_type": finding_type,
+        "section": "fact",
+        "title": title,
+        "text": text,
+        "step_refs": refs,
+        "evidence": [{"segment_id": seg, "quote": quote} for seg, quote in evidence],
+        "basis": "",
+        "basis_segment_ids": [],
+    }
+
+
+GA_INTERNAL_ANSWER: dict[str, Any] = {
+    "findings": [
+        ga_finding(
+            "dead_control_candidate",
+            "Plan approval by the Load control lead is documented but never mentioned in practice",
+            "SOP LC-07 §3.2 and the Load control lead's job description say the Load control lead "
+            "approves the load plan before release to Ramp. The interview never mentions this "
+            "approval.",
+            ["d1"],
+            [
+                (
+                    "e2",
+                    "The preliminary load plan shall be approved by the Load Control Lead "
+                    "before release to Ramp",
+                ),
+                ("e1", "Accountable for approval of load plans"),
+            ],
+        ),
+        ga_finding(
+            "threshold_gap",
+            "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
+            "SOP RP-02 §2 has the Ramp Supervisor return the loading report within 10 minutes of "
+            "loading completion; the Load controller says they sometimes wait fifteen minutes "
+            "for it.",
+            ["d3"],
+            [
+                (
+                    "e5",
+                    "return the loading report to Load Control within 10 minutes of loading "
+                    "completion",
+                ),
+                ("e4", "We sometimes wait fifteen minutes for it"),
+            ],
+        ),
+        ga_finding(
+            "ownership_mismatch",
+            "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in "
+            "practice",
+            "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights "
+            "deviate beyond the airline tolerance; in practice the captain decides. The job "
+            "descriptions are silent.",
+            ["d4"],
+            [
+                ("e7", "the Load Control Lead shall decide on corrective action"),
+                ("e6", "it's the captain who decides, not us"),
+            ],
+        ),
+        ga_finding(
+            "undocumented_work",
+            "Offload resolution is undocumented work",
+            "When something can't be accepted, the airline decides what to offload, which takes "
+            "fifteen to forty minutes before the Load controller re-plans. No SOP or job "
+            "description covers it.",
+            ["d2"],
+            [("e3", "If something can't be accepted, the airline decides what to offload")],
+        ),
+    ],
+    "unknowns": [
+        {
+            "finding_type": "dead_control_candidate",
+            "step_refs": ["d1"],
+            "question": "Is the load plan approved by the Load control lead before release to "
+            "Ramp, and if not, why not?",
+        }
+    ],
+}
+
+
+def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
+    """The input hashes of the GA_internal call and, with its answer as filed, the GA_verify call."""
+    from app.db import session_scope
+    from app.domain.ai_schemas import GAInternalOutput
+    from app.pipeline import ga_internal as ga
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        dset = ga.divergence_set(session, version_id)
+    assert dset is not None
+    output = GAInternalOutput.model_validate(GA_INTERNAL_ANSWER)
+    checked = [ga.check(dset, f) for f in output.findings]
+    rejected = [c.finding.rejection_reason for c in checked if c.finding.rejection_reason]
+    assert not rejected, rejected  # every A.7 finding passes the gate
+    return (
+        ai_service.input_hash(ga.STAGE_ID, ga.blocks_for(dset)),
+        ai_service.input_hash(ga.VERIFY_STAGE, ga.verify_blocks(dset, checked)),
+    )
+
+
+def ga_verdicts(count: int) -> dict[str, Any]:
+    return {
+        "verdicts": [
+            {"finding_ref": f"f{n}", "verdict": "supported",
+             "reason": "The cited passages state it."}
+            for n in range(1, count + 1)
+        ]
+    }  # fmt: skip
+
+
+def write_gap() -> None:
+    """The Analysis A answers for the drafted sample (after the draft answers are written)."""
+    for stage in ("GA_internal", "GA_verify"):
+        shutil.rmtree(MOCKS / stage, ignore_errors=True)
+    with sample_app() as (app, client, built):
+        key = "sk-" + "ant-" + "Fixture" * 5
+        assert client.put("/api/settings/key", json={"anthropic_api_key": key}).status_code == 200
+        job_id = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
+        assert app.state.worker.drain(60)
+        version_id = client.get(f"/api/jobs/{job_id}").json()["target_id"]
+        synthesis, verification = ga_hashes(app.state.sessions, version_id)
+    write(MOCKS, "GA_internal", "default", {"findings": [], "unknowns": []})
+    write(MOCKS, "GA_verify", "default", {"verdicts": []})
+    write(MOCKS, "GA_internal", synthesis, GA_INTERNAL_ANSWER)
+    write(MOCKS, "GA_verify", verification, ga_verdicts(len(GA_INTERNAL_ANSWER["findings"])))
+
+
 def write(root: Path, stage: str, key: str, data: object) -> None:
     (root / stage).mkdir(parents=True, exist_ok=True)
     (root / stage / f"{key}.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -836,10 +970,14 @@ def main() -> None:
         run_stage(app, s3_calibrate.calibrate, version_id)
         for label, (digest, _count) in s3b_hashes(sessions, version_id).items():
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
+    write_gap()
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
     )
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["gap"]:  # only the gap-analysis answers
+        write_gap()
+    else:
+        main()

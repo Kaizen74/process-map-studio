@@ -63,3 +63,130 @@ class CitationCheck(BaseModel):
     tiers_by_domain: dict[str, str] = Field(default_factory=dict)
     element_ids: list[str] = Field(default_factory=list)  # GX6: the references that exist
     dropped_element_ids: list[str] = Field(default_factory=list)
+
+
+# --- Reports (API_CONTRACT → Gap analysis) -----------------------------------------------------
+
+
+class GapEvidence(BaseModel):
+    """One side of a comparison: a passage with its quote, or a source that is silent."""
+
+    side: str  # documents · practice
+    source_kind: str
+    source_name: str
+    stance: str
+    segment_id: str | None = None
+    anchor: str = ""
+    quote: str = ""
+
+
+class GapElementRef(BaseModel):
+    id: str
+    label: str
+
+
+class GapFindingView(BaseModel):
+    id: str
+    section: str  # fact · interpretation · recommendation
+    finding_type: str  # B.22 or B.23
+    title: str
+    text: str
+    element_ids: list[str]
+    elements: list[GapElementRef]
+    evidence: list[GapEvidence]
+    basis: str
+    provenance: str  # O · I · R, or empty for a question
+    severity: str | None
+    evidence_strength: str
+    comparison: str | None
+    verification_status: str
+    rejection_guardrail: str
+    rejection_reason: str
+    verifier_verdict: str
+    needs_check: bool
+    question: str
+    disposition: str
+    disposition_note: str
+    created_item_ref: str
+
+
+class GapCounts(BaseModel):
+    kept: int = 0
+    rejected: int = 0
+    open: int = 0
+    needs_check: int = 0
+
+
+class GapAnalysisView(BaseModel):
+    id: str
+    version_id: str
+    version_label: str
+    mode: str  # B.21
+    status: str  # B.27
+    job_id: str | None
+    error: str
+    created_at: str
+    completed_at: str | None
+    finalised_at: str | None
+    counts: GapCounts
+
+
+class GapUsage(BaseModel):
+    calls: int
+    input_tokens: int
+    output_tokens: int
+
+
+class GapReport(BaseModel):
+    analysis: GapAnalysisView
+    findings: list[GapFindingView]
+    rejected: list[GapFindingView]
+    sources: list[dict[str, object]]
+    questions: list[GapFindingView]
+    usage: GapUsage | None
+    search_count: int
+
+
+class GapStarted(BaseModel):
+    analysis_id: str
+    job_id: str
+
+
+class NewGapFinding(BaseModel):
+    """A finding as a pipeline stores it (the repository adds the ID)."""
+
+    section: str
+    finding_type: str
+    title: str
+    text: str
+    element_ids: list[str] = Field(default_factory=list)
+    evidence: list[GapEvidence] = Field(default_factory=list)
+    basis: str = ""
+    provenance: str = ""
+    severity: str | None = None
+    evidence_strength: str = "strong"
+    comparison: str | None = None
+    verification_status: str = "verified"
+    rejection_guardrail: str = ""
+    rejection_reason: str = ""
+    verifier_verdict: str = "not_run"
+    question: str = ""
+
+
+class StoredGapFinding(NewGapFinding):
+    id: str
+    disposition: str = "open"
+    disposition_note: str = ""
+    created_item_ref: str = ""
+
+
+class GapAnalysisRecord(BaseModel):
+    id: str
+    version_id: str
+    mode: str
+    status: str
+    model: str = ""
+    search_count: int = 0
+    created_at: str
+    completed_at: str | None = None
+    finalised_at: str | None = None

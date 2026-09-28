@@ -200,6 +200,18 @@ def test_downgrade_of_0005_removes_only_merge_groups(migrated: Path) -> None:
     assert "claim_groups" in columns
 
 
+def test_downgrade_of_0006_removes_only_gap_questions(migrated: Path) -> None:
+    db.downgrade(migrated, "0005")
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "question" not in columns and {"finding_type", "disposition"} <= columns
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "question" in columns
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:

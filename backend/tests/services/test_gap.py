@@ -207,7 +207,13 @@ def test_internal_severity_follows_the_a7_table() -> None:
     assert gap.severity_internal("undocumented_work", ["activity"]) == "medium"
     assert gap.severity_internal("sequence_gap", ["activity"]) == "low"
     assert gap.severity_internal("sequence_gap", ["activity"], trace_contradicted=True) == "high"
-    assert gap.severity_internal("undocumented_work", ["activity"], on_main_path=False) == "low"
+    # A.7: "Resolve or offload" sits on the exception path (reached by "No"): an exception-path
+    # gap is Medium, like practiced-only work on the main path.
+    assert gap.severity_internal("undocumented_work", ["activity"]) == "medium"
+    # A documented-only step that isn't a control is an omission of a non-control step: Low.
+    assert gap.severity_internal("dead_control_candidate", ["activity"]) == "low"
+    assert gap.severity_internal("trigger_gap", ["activity"]) == "low"
+    assert gap.severity_internal("exception_gap", ["activity"]) == "medium"
 
 
 def test_external_severity_and_the_compliance_note() -> None:

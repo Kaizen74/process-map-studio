@@ -291,7 +291,7 @@ Response `200`:
              "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
 - `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.
@@ -423,6 +423,41 @@ All entries, in the order they were added. Errors: `404` ("That engagement doesn
 
 ### PATCH /api/cause-library/{cid}
 Request `{"validation_result": "pending" | "confirmed" | "refuted"}` → the entry. Audit rows "Confirmed cause" · "Refuted cause" · "Reopened cause". Errors: `404` ("That cause-library entry doesn't exist."); `422` (field `validation_result`: "Choose pending, confirmed or refuted.").
+
+## Gap analysis (PRD §3.11, §4 Gap analysis, §5.4) — phase P10
+
+Two advisory analyses Eric starts himself on any draft or published version. They produce a report of findings and **never change the map** (constraint 22); every kept finding waits for Eric's disposition.
+
+A report as returned by `GET /api/gap-analyses/{gid}`:
+```json
+{"analysis": {"id", "version_id", "version_label", "mode": "internal" | "external",
+              "status": "brief_draft" | "queued" | "running" | "draft_report" | "finalised" | "failed",
+              "job_id", "error", "created_at", "completed_at", "finalised_at",
+              "counts": {"kept", "rejected", "open", "needs_check"}},
+ "findings": [finding, …], "rejected": [finding, …], "sources": [], "questions": [finding, …],
+ "usage": {"calls", "input_tokens", "output_tokens"} | null, "search_count": 0}
+```
+A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison", "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "disposition" (B.25), "disposition_note", "created_item_ref"}`.
+- `findings`: kept findings in report order (facts, then interpretation, then recommendation; high severity first within a section). `rejected`: findings a guardrail or the verifier turned down, with the guardrail (`G3` passage, `G4` quote, `G5` number or role, `GAV` gap verifier); shown in a collapsible section, never as findings. `questions`: causes the sources don't explain (`question` holds the suggested SME question; `provenance` and `severity` empty) — they are dispositioned like findings.
+- `needs_check`: the verifier found the finding only partly supported (`partial`).
+- Names on the hidden list are replaced by roles in every text; `quote` is the passage words the finding cites (names hidden); a silent side has `segment_id: null` and no quote.
+- `usage`: tokens of the analysis's AI calls. `search_count`: web searches used (Analysis B).
+
+### POST /api/versions/{vid}/gap-analyses/internal
+**AI.** Analysis A, documents vs practice (PRD §3.11.1). Request: none. Response `202`: `{"analysis_id", "job_id"}`; the job (type `gap_internal`, target the analysis) runs:
+1. **Finding where the sources differ** (no AI): every step whose source state is `contested`, `documented_only`, `practiced_only` or `trace_contradicted`, or that has a contested RACI entry, with each source's stance, the passages behind it and the divergence notes (threshold, timing, ownership, trigger).
+2. **Explaining the differences** (`GA_internal`): Claude sees only that set and the passages it cites (names hidden) and returns findings of the B.22 types, each with evidence, plus causes it can't explain as questions.
+3. **Checking every quote against your documents** (no AI): every evidence item must cite a passage it was given (G3) and quote it (G4); numbers and roles in a finding must be in its passages (G5); every step it names must be in the set (G3); it must have evidence from both sides — the documents and practice — where a side's silence (from the set) counts as that side's evidence; a pattern or likely cause (`interpretation`) needs a basis citing what the SMEs said (interview passages), else it is rejected (G3). Names are replaced by roles (G10).
+4. **Independent verification** (`GA_verify`, follows the verifier switch; `skipped` when it is off): sees each finding and its passages only; `not_supported` → rejected `GAV`; `partial` → kept with `needs_check`.
+5. **Writing the report** (no AI): severity by the §3.11.1 rules; provenance `O` for facts, `I` for interpretation and recommendation.
+With no step that differs, the report is empty and no AI call is made. If a stage fails, the analysis is `failed` with the job's plain error and no findings. The map is not changed.
+Errors: `404` ("That version doesn't exist."); `409` "A gap analysis is already running for this version." (one of its analyses is queued or running).
+
+### GET /api/versions/{vid}/gap-analyses
+Every analysis of the version, newest first: the `analysis` objects above. Errors: `404`.
+
+### GET /api/gap-analyses/{gid}
+The report above. Errors: `404` ("That gap analysis doesn't exist.").
 
 ## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
 

@@ -11,11 +11,12 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import draft, sources
+from app.actions import draft, gap, sources
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.repositories import ai_calls
 from app.repositories import jobs as repo
 from app.repositories import sources as sources_repo
 
@@ -36,6 +37,8 @@ def get_job(sessions: Sessions, job_id: str) -> Result[JobView]:
         job = repo.get(session, job_id)
         if job is None:
             return Err(ErrorKind.NOT_FOUND, JOB_MISSING)
+        if job.type in gap.GAP_JOBS:
+            return Ok(job.model_copy(update={"usage": ai_calls.usage_for_job(session, job.id)}))
         return Ok(draft.with_progress(session, job))
 
 
@@ -80,6 +83,20 @@ def _run_draft(config: AppConfig, sessions: Sessions, job: JobView) -> None:
                 repo.update(session, job.id, status="failed", error=message)
 
 
+def _run_gap(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = gap.run_internal(config, sessions, job.id)
+    except Exception as exc:  # the analysis was already marked failed by run_internal
+        log.exception("Gap analysis job %s failed", job.id)
+        result = Err(ErrorKind.IO, gap.UNEXPECTED, {"type": type(exc).__name__})
+    with session_scope(sessions) as session:
+        match result:
+            case Ok(value=message):
+                repo.update(session, job.id, status="done", progress=1.0, message=message)
+            case Err(message=message):
+                repo.update(session, job.id, status="failed", error=message)
+
+
 def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
     """Run one job and record how it went. Jobs already finished are left alone."""
     with session_scope(sessions) as session:
@@ -92,6 +109,8 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         _run_read(config, sessions, job)
     elif job.type in draft.MAP_JOBS:
         _run_draft(config, sessions, job)
+    elif job.type in gap.GAP_JOBS:
+        _run_gap(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
 

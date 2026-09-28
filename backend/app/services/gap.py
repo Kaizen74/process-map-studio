@@ -246,25 +246,28 @@ def severity_internal(
     kinds: Sequence[str],
     *,
     trace_contradicted: bool = False,
-    on_main_path: bool = True,
-    k_risk: bool = False,
 ) -> str:
     """High: ownership or threshold divergence on a decision or approval; a documented-only
     control; any trace-contradicted step. Medium: practiced-only work on the main path or with
-    K-RISK; exception-path gaps. Low: sequence or trigger differences on activities; omissions
-    of non-control steps."""
+    K-RISK, and exception-path gaps (practiced-only work off the main path is on an exception
+    route; A.7 "Resolve or offload"); ownership or threshold differences on activities. Low:
+    sequence or trigger differences on activities; omissions of non-control steps."""
     control = any(k in CONTROL_KINDS for k in kinds)
     if trace_contradicted:
         return "high"
-    if finding_type in {"ownership_mismatch", "threshold_gap"} and control:
+    if control and finding_type in {
+        "ownership_mismatch",
+        "threshold_gap",
+        "dead_control_candidate",
+    }:
         return "high"
-    if finding_type == "dead_control_candidate" and control:
-        return "high"
-    if finding_type == "undocumented_work" and (on_main_path or k_risk):
-        return "medium"
-    if finding_type in {"exception_gap", "threshold_gap", "ownership_mismatch"}:
-        return "medium"
-    if finding_type == "dead_control_candidate":
+    # Practiced-only work is on the main path or on an exception route: Medium either way.
+    if finding_type in {
+        "undocumented_work",
+        "exception_gap",
+        "threshold_gap",
+        "ownership_mismatch",
+    }:
         return "medium"
     return "low"
 

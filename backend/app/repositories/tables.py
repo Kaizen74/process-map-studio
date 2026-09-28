@@ -395,6 +395,7 @@ class GapFinding(Row):
     disposition: Mapped[str] = mapped_column(String(16), default="open")
     disposition_note: Mapped[str] = mapped_column(Text, default="")
     created_item_ref: Mapped[str] = mapped_column(Text, default="")
+    question: Mapped[str] = mapped_column(Text, default="")  # a cause not explained (0006)
 
 
 class ExternalSource(Row):

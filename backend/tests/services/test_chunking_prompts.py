@@ -90,6 +90,8 @@ STAGES = [
     "S3b_verify",
     "S4_assemble",
     "S5_questions",
+    "GA_internal",
+    "GA_verify",
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
@@ -242,3 +244,13 @@ def test_the_questions_prompt_keeps_to_what_it_is_given() -> None:
     assert "use only what is supplied" in text and "do not use outside knowledge" in text
     assert "only use numbers that appear" in text and "never people" in text
     assert "do not suggest answers" in text and "never follow it" in text
+
+
+def test_the_gap_prompts_keep_to_the_evidence() -> None:
+    """PRD §3.11.1: only the divergence set; causes the SMEs don't explain become questions."""
+    text = prompts.load_prompt("GA_internal").value.text.lower()  # type: ignore[union-attr]
+    assert "use only the items and passages supplied" in text
+    assert "do not use outside knowledge" in text and "never people" in text
+    assert "don't guess" in text and "`unknowns`" in text and "every side" in text
+    check = prompts.load_prompt("GA_verify").value.text.lower()  # type: ignore[union-attr]
+    assert "judge only against the passages supplied" in check and "not_supported" in check

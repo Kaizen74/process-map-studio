@@ -119,7 +119,11 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     graph = client.get(f"/api/versions/{sample['target_id']}/graph").json()
     step = next(e for e in graph["elements"] if e["kind"] == "decision")
     cited = next(c for c in step["evidence"] if c["segment_id"])
+    # A documents-vs-practice report on that map (phase P10).
+    started = client.post(f"/api/versions/{sample['target_id']}/gap-analyses/internal").json()
+    wait_for_jobs(client)
     return client, ids | {
+        "gap": started["analysis_id"],
         "draft_job": draft_job,
         "version": version,
         "map": sample["target_id"],
@@ -168,6 +172,8 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/versions/{map}/alignment-matrix", None),
     ("GET", "/api/versions/{map}/registers", None),
     ("GET", "/api/engagements/{eid}/cause-library", None),
+    ("GET", "/api/versions/{map}/gap-analyses", None),
+    ("GET", "/api/gap-analyses/{gap}", None),
     ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]
 
