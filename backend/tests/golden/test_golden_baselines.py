@@ -8,6 +8,9 @@
   unchanged font files, is replaced by its size so the baseline stays readable).
 - G6: the outcome of the hallucination-trap run (Appendix A.6): what was rejected, where and why,
   and the map that is left. None of the traps may reach the graph.
+- G7: the gap-analysis reports of the sample (Appendix A.7): Analysis A, and Analysis B from the
+  mocked web search with traps TE1-TE9, as reported and, after a fixed set of decisions, as
+  exported (run and finalise times replaced).
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
 first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the
@@ -186,3 +189,53 @@ def test_g6_trap_outcome(settings_config: AppConfig) -> None:
             assert trap not in text, trap
         assert "Priya" not in text
         assert {r["guardrail"] for r in rejected} == {"G3", "G4", "G5", "G6"}
+
+
+# --- G7: the gap-analysis reports of the sample (PRD Appendix A.7; phase P10) -------------------
+
+TIMES = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(\+00:00|Z)?")
+DATES = re.compile(r"\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b")
+
+
+def without_times(data: Any) -> Any:
+    """Run and finalise times change on every run: each becomes "<time>"."""
+    return json.loads(TIMES.sub("<time>", json.dumps(data, ensure_ascii=False)))
+
+
+def test_g7_gap_reports_of_the_sample(settings_config: AppConfig) -> None:
+    """Analysis A on the sample draft and Analysis B from the mocked web search (the A.7 traps),
+    as reported; then both finalised after a fixed set of decisions, as exported."""
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        drain = client.app.state.worker.drain  # type: ignore[attr-defined]
+        [engagement] = client.get("/api/engagements").json()
+        started = client.post(f"/api/versions/{version_id}/gap-analyses/internal").json()
+        assert drain(60)
+        internal = client.get(f"/api/gap-analyses/{started['analysis_id']}").json()
+        url = f"/api/engagements/{engagement['id']}"
+        assert client.patch(url, json=fixture_engagement.GAP_SETUP).status_code == 200
+        brief = client.post(f"/api/versions/{version_id}/gap-analyses/external").json()
+        gid = brief["analysis"]["id"]
+        body = {"brief": brief["brief"]["brief"], "confirmed": True}
+        assert client.patch(f"/api/gap-analyses/{gid}/brief", json=body).status_code == 200
+        client.put("/api/settings/research", json={"web_research_enabled": True})
+        assert client.post(f"/api/gap-analyses/{gid}/run").status_code == 202
+        assert drain(60)
+        external = client.get(f"/api/gap-analyses/{gid}").json()
+        matches_baseline(
+            "G7_gap_reports.json", without_times({"internal": internal, "external": external})
+        )
+
+        exports = []
+        for report in (internal, external):
+            for f in report["findings"] + report["questions"]:
+                decision = (
+                    {"disposition": "added_question"}
+                    if f["severity"] in ("high", None)
+                    else {"disposition": "dismissed", "note": "Checked with the process owner."}
+                )
+                response = client.patch(f"/api/gap-findings/{f['id']}", json=decision)
+                assert response.status_code == 200, response.text
+            analysis = report["analysis"]["id"]
+            assert client.post(f"/api/gap-analyses/{analysis}/finalise").status_code == 200
+            exports.append(client.get(f"/api/gap-analyses/{analysis}/export").text)
+        matches_text_baseline("G7_gap_exports.md", DATES.sub("<date>", "\n---\n\n".join(exports)))

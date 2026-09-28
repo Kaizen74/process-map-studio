@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 
 from app.actions import gap
-from app.domain.gap import BriefPatch, GapAnalysisView, GapBriefView, GapReport, GapStarted
+from app.domain.gap import (
+    BriefPatch,
+    FindingDecision,
+    GapAnalysisView,
+    GapBriefView,
+    GapFindingView,
+    GapReport,
+    GapStarted,
+)
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["gap analysis"])
@@ -41,3 +49,25 @@ def list_analyses(request: Request, version_id: str) -> list[GapAnalysisView]:
 @router.get("/gap-analyses/{analysis_id}")
 def get_report(request: Request, analysis_id: str) -> GapReport:
     return unwrap(gap.get_report(request.app.state.sessions, analysis_id))
+
+
+@router.patch("/gap-findings/{finding_id}")
+def decide(request: Request, finding_id: str, body: FindingDecision) -> GapFindingView:
+    state = request.app.state
+    return unwrap(gap.decide(state.config, state.sessions, finding_id, body))
+
+
+@router.post("/gap-analyses/{analysis_id}/finalise")
+def finalise(request: Request, analysis_id: str) -> GapReport:
+    state = request.app.state
+    return unwrap(gap.finalise(state.config, state.sessions, analysis_id))
+
+
+@router.get("/gap-analyses/{analysis_id}/export")
+def export_report(request: Request, analysis_id: str) -> Response:
+    file = unwrap(gap.export_report(request.app.state.sessions, analysis_id))
+    return Response(
+        content=file.content.encode("utf-8"),
+        media_type=file.media_type,
+        headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
+    )

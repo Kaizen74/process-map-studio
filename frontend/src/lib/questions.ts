@@ -10,6 +10,7 @@ export const REASONS: Readonly<Record<string, string>> = {
   partial_support: "Partial support",
   low_confidence: "Low confidence",
   gap: "Gap",
+  gap_analysis: "Gap analysis",
 };
 
 /** Reasons shown in the danger outline; the others are neutral. */

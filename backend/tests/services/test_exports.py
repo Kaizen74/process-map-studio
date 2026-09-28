@@ -11,7 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from app.domain.exports import ExportInput, ExportQuestion, SourceEntry
+from app.domain.exports import (
+    ExportCause,
+    ExportGapReport,
+    ExportInput,
+    ExportQuestion,
+    SourceEntry,
+)
 from app.domain.graph import Graph
 from app.domain.quality import QualityCard, QualityCheck
 from app.services import exports
@@ -209,3 +215,36 @@ def test_a_map_without_pain_points_flags_or_divergences_says_so() -> None:
             "No steps from external practice.", "No divergences between the sources."]  # fmt: skip
     for line in said:
         assert line in md
+
+
+def test_section_3_lists_pending_causes_and_finalised_gap_reports() -> None:
+    """PRD §7.3: cause library entries (pending validation) and gap analyses (finalised only)."""
+    causes = [
+        ExportCause(element_label="Load and return LIR", divergence_type="threshold",
+                    pattern="Threshold divergence: 10 min in the SOP vs up to 15 min in practice.",
+                    inferred_cause=""),
+        ExportCause(element_label="Deviation in limits?", divergence_type="ownership",
+                    pattern="The sources disagree about “Deviation in limits?”.",
+                    inferred_cause="Airline contracts set the tolerance."),
+    ]  # fmt: skip
+    reports = [
+        ExportGapReport(mode="internal", finalised_at="2026-09-28T10:00:00+00:00",
+                        accepted=["Offload resolution is undocumented work", "Plan approval"]),
+    ]  # fmt: skip
+    md = exports.render_master_map_md(data(causes=causes, gap_reports=reports))
+    recommendation = md.split(exports.RECOMMENDATION)[1]
+    assert (
+        "- [O] Load and return LIR · threshold: Threshold divergence: 10 min in the SOP vs up to "
+        "15 min in practice. Likely cause: not known yet: ask your SMEs." in recommendation
+    )
+    assert (
+        "- [O] Deviation in limits? · ownership: The sources disagree about “Deviation in "
+        "limits?”. [I] Likely cause: Airline contracts set the tolerance." in recommendation
+    )
+    assert (
+        "- Documents vs practice · finalised 28 Sep 2026 · 2 accepted findings: Offload "
+        "resolution is undocumented work; Plan approval" in recommendation
+    )
+    assert "No cause library entries yet." not in md and "No finalised gap analyses." not in md
+    empty = exports.render_master_map_md(data())
+    assert "No cause library entries yet." in empty and "No finalised gap analyses." in empty

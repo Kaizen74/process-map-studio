@@ -43,6 +43,7 @@ from app.domain.layout import Layout
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
+from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import alignment, layout, lint, parsing
@@ -319,6 +320,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         sources = sources_repo.list_for_engagement(session, version.engagement_id)
         names = {s.id: s.filename for s in sources}
         images = map_repo.image_count(session, element_id)
+        found = gap_repo.step_findings(session, version.engagement_id, element.stable_key)
 
     def hide(text: str) -> str:
         return redaction.hide(text, terms)
@@ -375,6 +377,16 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
             ],
             evidence=cards,
             image_count=images,
-            gap_findings=[],
+            gap_findings=[
+                {
+                    "id": f.id,
+                    "analysis_id": a.id,
+                    "mode": a.mode,
+                    "title": hide(f.title),
+                    "severity": f.severity,
+                    "disposition": f.disposition,
+                }
+                for a, f in found
+            ],
         )
     )

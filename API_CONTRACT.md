@@ -486,6 +486,45 @@ Every analysis of the version, newest first: the `analysis` objects above. Error
 ### GET /api/gap-analyses/{gid}
 The report above. Errors: `404` ("That gap analysis doesn't exist.").
 
+### PATCH /api/gap-findings/{fid}
+Eric's decision on one kept finding or question (PRD §3.11.3). Nothing changes the map without this. Request:
+`{"disposition": "added_question" | "added_cause" | "added_step" | "dismissed", "note": "", "step": {"kind", "label", "lane_role_id", "after_element_id", "mechanism"}}` (`step` only for `added_step`).
+Response `200`: the finding, with `disposition`, `disposition_note` and `created_item_ref` (`question:<id>`, `cause:<id>` or `element:<id>`).
+- **added_question**: a validation question (reason `gap_analysis`, `origin_ref` the finding) in the engagement's **current draft**, on the draft's step with the same key as the finding's first step (if any). The wording: the finding's `question` for a cause the sources don't explain; otherwise "<title>: which account is right in practice?" (documents vs practice) or "Should the process include this practice: <title>?" (external).
+- **added_cause** (documents vs practice only): a cause-library entry for the finding's first step and divergence type (`threshold_gap` → threshold, `ownership_mismatch` → ownership, `sequence_gap` → sequence, `trigger_gap` → trigger, `exception_gap` → exception, otherwise omission): pattern = the finding's text (`O`), likely cause = its basis (`I`) for an interpretation. An entry that already exists for that step and type is reused, never doubled.
+- **added_step**: the step is added to the current draft exactly as `POST /versions/{vid}/elements`, with the provenance and evidence taken from the finding: an external finding makes an `R` step whose reference is "<source title> <URL>" (its first source); a documents-vs-practice finding makes an `O` step on its passages. `step` gives what Eric chose in the Add step form (kind, label, lane, where it goes, and for a decision or approval rule-based or judgment).
+- **dismissed**: needs a `note` (why), 1–1000 characters.
+- Each decision writes an audit row: "Added gap finding as question" · "Added gap finding to cause library" · "Added step from gap finding" (with the "Added step" row of the step itself) · "Dismissed gap finding".
+Errors: `404` ("That finding doesn't exist."); `409` "This report is finalised and can't be changed." · "This finding already has a decision." · "A rejected finding can't be used." · "Reopen this map as a new draft first: questions and steps are added to the draft." (the analysis ran on a published map and no draft exists); `422` (field `note`) "Say why you're dismissing this finding." · (field `disposition`) "Only documents-vs-practice findings go to the cause library." · "This finding isn't tied to a step, so it can't go to the cause library." · "Choose added_question, added_cause, added_step or dismissed." · (field `step`) "Choose where the new step goes." · and the Add step field errors.
+
+### POST /api/gap-analyses/{gid}/finalise
+Finalises a draft report once every kept finding and question has a decision: status `finalised`, `finalised_at` set, read-only from then on (re-running means a new analysis). Response `200`: the report. Audit row "Finalised gap report".
+Errors: `404`; `409` "Decide on every finding first: <n> still open." · "Only a draft report can be finalised."
+
+### GET /api/gap-analyses/{gid}/export
+The finalised report as Markdown (`text/markdown`, attachment `gap-analysis-<mode>-<version>.md`), a fixed template:
+```
+# <Process> — Gap analysis: documents vs practice | external best practice
+Version <label> · run <date> · finalised <date>
+Advisory evidence summary: not a legal, regulatory or audit opinion.
+
+## 1. Facts
+## 2. Interpretation
+## 3. Recommendation
+## Rejected findings   (counts by guardrail only)
+## Notes               (analysis notes, if any)
+```
+- Documents vs practice: **Facts** lists each difference with its severity, steps and every side's sources by name, place and stance (never a passage's words); **Interpretation** the patterns and likely causes with their basis; **Recommendation** documentation updates, SME questions and each finding's decision.
+- External: **Facts** what the sources say, each source with title, link, tier, date and an excerpt of at most 25 words; **Interpretation** how the map compares (absent, or different from named steps), weak or dated evidence and the compliance note; **Recommendation** each candidate change with its decision.
+- Every line carries its provenance tag (`[O]`, `[I]`, `[R]`). Role names only; the text is scanned for names on the hidden list (0 hits, or the export isn't made). Confidential terms may appear (they only restrict what is sent to web search).
+Errors: `404`; `409` "Finalise the report first."
+
+### Gap findings on a step
+`GET /api/elements/{eid}` `gap_findings`: `[{"id", "analysis_id", "mode", "title", "severity", "disposition"}]` — the kept findings and questions of every analysis in the engagement that name a step with this step's key, newest analysis first.
+
+### Master Process Map section 3 (phase P10)
+"Cause library entries (pending validation)" lists the engagement's pending entries for the map's steps: `- [O] <step> · <type>: <pattern>` and the likely cause (`[I]`) or "not known yet: ask your SMEs". "Gap analyses" lists the version's finalised reports: `- <mode> · finalised <date> · <n> accepted findings: <title>; <title>` (accepted = added as a question, cause or step). The HTML map shows the same.
+
 ## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
 
 Images live only in the app: never in any export (Q9). Every image needs a caption, a type (B.16: `workplace_photo` · `system_screenshot` · `executed_artefact` · `illustrative_diagram` · `document_extract`) and the confirmation that faces, names, badge numbers and flight identifiers are removed or not shown. Metadata (EXIF, including GPS) is removed from the stored file. Changes are made on a draft version only (`409` "This version is published and can't be changed. Reopen it as a new draft."); start and end carry no images (`422`).
@@ -568,7 +607,7 @@ Response `200`: the element exactly as in the graph (`id, stable_key, kind, labe
 - `evidence`: the graph's evidence in the same order, each with its source's file name and the verbatim `quote` (for the in-app highlight; quotes never leave the app); silent sources have `segment_id: null` and no quote.
 - `raci[].sources`: the passages behind that RACI entry (for a contested `A?`, the competing sources and anchors).
 - `lane_role_name`, `phase_name`, `decider_role_name`: `""` when there is none.
-- `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: `[]` until P10.
+- `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: see Gap analysis → Gap findings on a step (P10).
 - Names on the hidden list are replaced by roles in every text, including quotes and file names.
 Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
 
@@ -631,7 +670,7 @@ Errors: `404` ("That line doesn't exist."), `409`, `422`. Used by: Review edit f
 
 ### GET /api/versions/{vid}/questions · PATCH /api/questions/{qid} (phase P6)
 The validation questions for the offline SME session (PRD §5.7.10).
-`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap. `status`: open · answered. Names hidden.
+`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap · gap_analysis (added from a gap finding, P10). `status`: open · answered. Names hidden.
 `PATCH` request `{"status": "answered"}` (or `"open"` to reopen); response the question. Audit rows "Marked question answered" / "Reopened question". Only a draft version changes (`409`).
 Errors: `404` ("That version doesn't exist." / "That question doesn't exist."), `409`, `422`. Used by: Review Questions tab (P6).
 

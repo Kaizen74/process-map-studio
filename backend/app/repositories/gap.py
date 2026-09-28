@@ -15,10 +15,12 @@ from app.domain.gap import (
     StoredGapFinding,
 )
 from app.repositories.tables import (
+    Element,
     ExternalCitation,
     ExternalSource,
     GapAnalysis,
     GapFinding,
+    MapVersion,
     now_iso,
 )
 
@@ -196,4 +198,62 @@ def sources(session: Session, analysis_id: str) -> list[GapSourceView]:
             returned_in_results=r.returned_in_results,
         )
         for r in rows
+    ]
+
+
+def finding(session: Session, finding_id: str) -> tuple[str, StoredGapFinding] | None:
+    """(analysis ID, finding)."""
+    row = session.get(GapFinding, finding_id)
+    return (row.analysis_id, _finding(row)) if row else None
+
+
+def set_disposition(
+    session: Session, finding_id: str, disposition: str, note: str, created_item_ref: str
+) -> StoredGapFinding:
+    row = session.get(GapFinding, finding_id)
+    assert row is not None
+    row.disposition = disposition
+    row.disposition_note = note
+    row.created_item_ref = created_item_ref
+    session.flush()
+    return _finding(row)
+
+
+def finalise(session: Session, analysis_id: str) -> None:
+    row = session.get(GapAnalysis, analysis_id)
+    if row is None:
+        return
+    row.status = "finalised"
+    row.finalised_at = now_iso()
+    session.flush()
+
+
+def step_findings(
+    session: Session, engagement_id: str, stable_key: str
+) -> list[tuple[GapAnalysisRecord, StoredGapFinding]]:
+    """Kept findings of every analysis in the engagement that name a step with this key, newest
+    analysis first."""
+    ids = set(
+        session.scalars(
+            select(Element.id)
+            .join(MapVersion, MapVersion.id == Element.version_id)
+            .where(MapVersion.engagement_id == engagement_id, Element.stable_key == stable_key)
+        )
+    )
+    rows = session.execute(
+        select(GapAnalysis, GapFinding)
+        .join(GapFinding, GapFinding.analysis_id == GapAnalysis.id)
+        .join(MapVersion, MapVersion.id == GapAnalysis.version_id)
+        .where(MapVersion.engagement_id == engagement_id)
+        .where(GapFinding.verification_status != "rejected")
+        .order_by(
+            GapAnalysis.created_at.desc(),
+            GapAnalysis.id.desc(),
+            literal_column("gap_findings.rowid"),
+        )
+    )
+    return [
+        (_record(analysis), _finding(found))
+        for analysis, found in rows
+        if ids & set(found.element_ids or [])
     ]

@@ -13,8 +13,8 @@ P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 
 - [x] Increment 2 — `services/gap.py` (pure): research brief builder, confidentiality scan (redaction list, confidential terms, map numbers and times, 8+ word passages), source tiers by domain, severity rules for both analyses; `grounding.verify_citations` (GX1–GX6)
 - [x] Increment 3 — Analysis A backend (contract first): divergence set, `GA_internal` synthesis, grounding gate, `GA_verify` verifier, severity, stored report; `POST /versions/{vid}/gap-analyses/internal` (job), list and detail endpoints; A.7 expected findings
 - [x] Increment 4 — Analysis B backend: create with a brief (nothing sent), edit brief with live scan, run gates (`BRIEF_NOT_APPROVED`, `WEB_RESEARCH_DISABLED`), research → structuring → GX1–GX6 → verifier → comparison and severity; traps TE1–TE9 (mocked)
-- [ ] Increment 5 — IN PROGRESS: dispositions (question, cause-library entry, step pre-fill, dismiss with reason; audit rows), finalise, report export `.md` (0 redaction-term hits), Master Process Map section 3 lines (G3 update), `gap_findings` on element details; **G7 golden baseline**
-- [ ] Increment 6 — UI: Gap analysis screen (two cards, history, report with Facts · Interpretation · Recommendation, finding cards with dispositions, rejected findings)
+- [x] Increment 5 — dispositions (question, cause-library entry, step pre-fill, dismiss with reason; audit rows), finalise, report export `.md` (0 redaction-term hits), Master Process Map section 3 lines (G3 update), `gap_findings` on element details; **G7 golden baseline**
+- [ ] Increment 6 — IN PROGRESS: UI: Gap analysis screen (two cards, history, report with Facts · Interpretation · Recommendation, finding cards with dispositions, rejected findings)
 - [ ] Increment 7 — UI: research brief editor with the live confidentiality scan, run and progress, external report (source cards with tier, date, excerpt ≤ 25 words)
 - [ ] Increment 8 — UI: Settings web research card and test; "Gap findings" panel section and the Review toolbar chip; Exports card for finalised reports
 - [ ] Increment 9 — browser checks (axe on the new screens, both analyses mocked end to end, nothing on the map changes), GUIDE/README (web search troubleshooting row), close P10 (tag phase-p10)
@@ -106,6 +106,7 @@ P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 
 - 2026-09-28 P10 increment 2: research brief builder, confidentiality scan, source tiers, severity rules and the external grounding checks GX1-GX6 (TE1-TE5, TE7). 13 of 13 checks green.
 - 2026-09-28 P10 increment 3: documents-vs-practice analysis backend (divergence set, GA_internal, grounding gate with two-sided evidence, GA_verify, severity, report; start, list and report endpoints). A.7 findings and severities reproduced; the unexplained cause becomes an SME question. 13 of 13 checks green.
 - 2026-09-28 P10 increment 4: external best-practice analysis backend (brief drafted and scanned, run gated by the web research switch, confirmation and a clean scan; web search with only the brief; citations captured; structuring; GX1-GX6; verifier; severity, compliance note, notes). Traps TE1-TE9 give the PRD results. 13 of 13 checks green.
+- 2026-09-28 P10 increment 5: decisions on findings (question, cause library, step, dismiss) in the current draft with audit rows; finalise; Markdown report export (0 name hits); Master Map section 3 lists pending causes (P9 gap fixed) and finalised reports (G3, G5 updated); step panel gap findings; G7 baseline. 13 of 13 checks green.
 
 ## Not started yet
 - P10 gap analysis · P11 leadership view · P12 live run, polish and handover

@@ -14,8 +14,9 @@ from datetime import date
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction
+from app.actions import map_edits, redaction
 from app.actions.draft import now_iso
+from app.actions.engagements import actor_name
 from app.actions.settings import effective_settings
 from app.config import AppConfig
 from app.db import session_scope
@@ -24,6 +25,7 @@ from app.domain.gap import (
     Brief,
     BriefPatch,
     BriefState,
+    FindingDecision,
     GapAnalysisRecord,
     GapAnalysisView,
     GapBriefView,
@@ -32,21 +34,25 @@ from app.domain.gap import (
     GapFindingView,
     GapReport,
     GapStarted,
+    GapStep,
     GapUsage,
     ScanResult,
     StoredGapFinding,
 )
-from app.domain.models import JobStage
+from app.domain.graph import QuestionRecord
+from app.domain.models import CauseRecord, ExportFile, JobStage, NewStep
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline import ga_internal, gb_external
 from app.pipeline.context import AiContext, ai_context
-from app.repositories import ai_calls
+from app.repositories import ai_calls, audit
+from app.repositories import causes as causes_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
 from app.services import gap as gap_rules
+from app.services import gap_report, grounding
 
 Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
@@ -545,5 +551,221 @@ def get_report(sessions: Sessions, analysis_id: str) -> Result[GapReport]:
             brief=_brief_state(analysis),
             usage=GapUsage(**usage) if usage else None,
             search_count=analysis.search_count,
+        )
+    )
+
+
+# --- Dispositions, finalising and the export (PRD §3.11.3) --------------------------------------
+
+FINDING_MISSING = "That finding doesn't exist."
+FINALISED = "This report is finalised and can't be changed."
+DECIDED = "This finding already has a decision."
+REJECTED = "A rejected finding can't be used."
+NO_DRAFT = "Reopen this map as a new draft first: questions and steps are added to the draft."
+NOTE_NEEDED = "Say why you're dismissing this finding."
+CAUSE_EXTERNAL = "Only documents-vs-practice findings go to the cause library."
+CAUSE_NO_STEP = "This finding isn't tied to a step, so it can't go to the cause library."
+BAD_DISPOSITION = "Choose added_question, added_cause, added_step or dismissed."
+STEP_NEEDED = "Choose where the new step goes."
+NOT_DRAFT_REPORT = "Only a draft report can be finalised."
+NOT_FINALISED = "Finalise the report first."
+NAME_IN_EXPORT = (
+    "The report still contained a name from your list of names to hide, so it wasn't exported. "
+    "Use Copy details to report it."
+)
+DIVERGENCE_OF = {
+    "threshold_gap": "threshold",
+    "ownership_mismatch": "ownership",
+    "sequence_gap": "sequence",
+    "trigger_gap": "trigger",
+    "exception_gap": "exception",
+}
+AUDIT_ACTIONS = {
+    "added_question": "Added gap finding as question",
+    "added_cause": "Added gap finding to cause library",
+    "added_step": "Added step from gap finding",
+    "dismissed": "Dismissed gap finding",
+}
+
+
+def _question_text(mode: str, f: StoredGapFinding) -> str:
+    if f.question:
+        return f.question
+    if mode == "internal":
+        return f"{f.title}: which account is right in practice?"
+    return f"Should the process include this practice: {f.title}?"
+
+
+def _new_step(mode: str, f: StoredGapFinding, step: GapStep) -> NewStep:
+    """The Add step request, with provenance and evidence from the finding (Eric's step)."""
+    if mode == "external":
+        first = next((e for e in f.evidence if e.url), None)
+        reference = f"{first.source_name} {first.url}".strip() if first else f.title
+        return NewStep(**step.model_dump(), provenance="R", r_reference=reference[:500])
+    segments = [e.segment_id for e in f.evidence if e.segment_id]
+    return NewStep(**step.model_dump(), provenance="O", segment_ids=segments)
+
+
+def decide(
+    config: AppConfig, sessions: Sessions, finding_id: str, decision: FindingDecision
+) -> Result[GapFindingView]:
+    kind = decision.disposition
+    if kind not in AUDIT_ACTIONS:
+        return Err(ErrorKind.VALIDATION, BAD_DISPOSITION, {"field": "disposition"})
+    note = decision.note.strip()
+    if kind == "dismissed" and not note:
+        return Err(ErrorKind.VALIDATION, NOTE_NEEDED, {"field": "note"})
+    with session_scope(sessions) as session:
+        found = repo.finding(session, finding_id)
+        if found is None:
+            return Err(ErrorKind.NOT_FOUND, FINDING_MISSING)
+        analysis_id, f = found
+        analysis = repo.get(session, analysis_id)
+        version = versions_repo.get(session, analysis.version_id) if analysis else None
+        if analysis is None or version is None:
+            return Err(ErrorKind.NOT_FOUND, FINDING_MISSING)
+        if analysis.status == "finalised":
+            return Err(ErrorKind.CONFLICT, FINALISED)
+        if f.verification_status == "rejected":
+            return Err(ErrorKind.CONFLICT, REJECTED)
+        if f.disposition != "open":
+            return Err(ErrorKind.CONFLICT, DECIDED)
+        keys = {e.id: e.stable_key for e in map_repo.elements(session, version.id)}
+        first_key = next((keys[e] for e in f.element_ids if e in keys), None)
+        draft = versions_repo.current_draft(session, version.engagement_id)
+        if kind in {"added_question", "added_step"} and draft is None:
+            return Err(ErrorKind.CONFLICT, NO_DRAFT)
+        if kind == "added_cause" and analysis.mode != "internal":
+            return Err(ErrorKind.VALIDATION, CAUSE_EXTERNAL, {"field": "disposition"})
+        if kind == "added_cause" and first_key is None:
+            return Err(ErrorKind.VALIDATION, CAUSE_NO_STEP, {"field": "disposition"})
+        if kind == "added_step" and decision.step is None:
+            return Err(ErrorKind.VALIDATION, STEP_NEEDED, {"field": "step"})
+    ref = ""
+    if kind == "added_step":
+        assert draft is not None and decision.step is not None
+        added = map_edits.add_step(
+            config, sessions, draft.id, _new_step(analysis.mode, f, decision.step)
+        )
+        if isinstance(added, Err):
+            return added
+        ref = f"element:{added.value.id}"
+    with session_scope(sessions) as session:
+        if kind == "added_question":
+            assert draft is not None
+            target = next(
+                (e for e in map_repo.elements(session, draft.id) if e.stable_key == first_key),
+                None,
+            )
+            [question] = map_repo.add_questions(
+                session,
+                draft.id,
+                [
+                    QuestionRecord(
+                        element_id=target.id if target else None,
+                        phase_id=target.phase_id if target else None,
+                        question=_question_text(analysis.mode, f),
+                        reason="gap_analysis",
+                        origin_ref=f.id,
+                    )
+                ],
+            )
+            ref = f"question:{question.id}"
+        elif kind == "added_cause":
+            assert first_key is not None
+            divergence = DIVERGENCE_OF.get(f.finding_type, "omission")
+            existing = next(
+                (
+                    c
+                    for c in causes_repo.for_engagement(session, version.engagement_id)
+                    if (c.element_stable_key, c.divergence_type) == (first_key, divergence)
+                ),
+                None,
+            )
+            cause = existing or causes_repo.add(
+                session,
+                CauseRecord(
+                    engagement_id=version.engagement_id,
+                    element_stable_key=first_key,
+                    divergence_type=divergence,
+                    pattern=f.text,
+                    inferred_cause=f.basis if f.section == "interpretation" else "",
+                    provenance="I" if f.section == "interpretation" else "O",
+                ),
+            )
+            ref = f"cause:{cause.id}"
+        saved = repo.set_disposition(session, f.id, kind, note, ref)
+        audit.record(
+            session,
+            actor=actor_name(config),
+            action=AUDIT_ACTIONS[kind],
+            target_type="gap_finding",
+            target_id=f.id,
+            engagement_id=version.engagement_id,
+            version_id=draft.id if draft and kind != "dismissed" else version.id,
+            before={"disposition": "open"},
+            after={"disposition": kind, "note": note, "created_item_ref": ref},
+        )
+        terms = redaction.name_replacements(session, version.engagement_id)
+        labels = {
+            e.id: redaction.hide(e.label, terms) for e in map_repo.elements(session, version.id)
+        }
+    return Ok(_finding_view(saved, labels))
+
+
+def finalise(config: AppConfig, sessions: Sessions, analysis_id: str) -> Result[GapReport]:
+    with session_scope(sessions) as session:
+        analysis = repo.get(session, analysis_id)
+        if analysis is None:
+            return Err(ErrorKind.NOT_FOUND, ANALYSIS_MISSING)
+        if analysis.status != "draft_report":
+            return Err(ErrorKind.CONFLICT, NOT_DRAFT_REPORT)
+        still = [
+            f
+            for f in repo.findings(session, analysis_id)
+            if f.verification_status != "rejected" and f.disposition == "open"
+        ]
+        if still:
+            return Err(
+                ErrorKind.CONFLICT,
+                f"Decide on every finding first: {len(still)} still open.",
+                {"open": len(still)},
+            )
+        repo.finalise(session, analysis_id)
+        version = versions_repo.get(session, analysis.version_id)
+        audit.record(
+            session,
+            actor=actor_name(config),
+            action="Finalised gap report",
+            target_type="gap_analysis",
+            target_id=analysis_id,
+            engagement_id=version.engagement_id if version else None,
+            version_id=analysis.version_id,
+        )
+    return get_report(sessions, analysis_id)
+
+
+def export_report(sessions: Sessions, analysis_id: str) -> Result[ExportFile]:
+    match get_report(sessions, analysis_id):
+        case Err() as err:
+            return err
+        case Ok(value=report):
+            pass
+    if report.analysis.status != "finalised":
+        return Err(ErrorKind.CONFLICT, NOT_FINALISED)
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, report.analysis.version_id)
+        engagement = engagements_repo.get(session, version.engagement_id) if version else None
+        terms = redaction.name_replacements(session, version.engagement_id) if version else []
+    name = (engagement.process_name or engagement.name) if engagement else "Process"
+    text = gap_report.render_report_md(report, redaction.hide(name, terms))
+    if grounding.scan_redaction_terms(text, [t.term for t in terms]):
+        return Err(ErrorKind.IO, NAME_IN_EXPORT)
+    label = report.analysis.version_label.replace(" ", "-")
+    return Ok(
+        ExportFile(
+            filename=f"gap-analysis-{report.analysis.mode}-{label}.md",
+            media_type="text/markdown; charset=utf-8",
+            content=text,
         )
     )

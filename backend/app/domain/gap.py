@@ -248,3 +248,25 @@ class NewExternalSource(BaseModel):
     page_age: str
     tier: str
     returned_in_results: bool
+
+
+class GapStep(BaseModel):
+    """Where and how Eric adds a finding as a step (the Add step form, pre-filled)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    label: str
+    lane_role_id: str
+    after_element_id: str
+    mechanism: str = "judgment"
+
+
+class FindingDecision(BaseModel):
+    """PATCH /gap-findings/{fid}."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    disposition: str
+    note: str = Field(default="", max_length=1000)
+    step: GapStep | None = None
