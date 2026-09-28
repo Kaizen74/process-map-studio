@@ -1,15 +1,18 @@
 """Grounding mechanics (PRD §3.8): deterministic checks shared by every stage. No database access.
 
 Phase P2: name redaction (G10) and the instruction-like text flag (G9). Phase P3: segment, quote,
-number and role verification (G3-G5), all deterministic so they can be tested offline.
+number and role verification (G3-G5), all deterministic so they can be tested offline. Phase
+P10: the external grounding gate GX1-GX6 (`verify_citations`) for gap analysis B.
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from difflib import SequenceMatcher
+from urllib.parse import urlsplit
 
+from app.domain.gap import CitationCheck, CitedSource
 from app.domain.models import CheckOutcome, NameReplacement, Redacted
 
 DEFAULT_REPLACEMENT = "[name]"
@@ -233,3 +236,66 @@ def verify_roles(
                 passed=False, guardrail="G5", reason=f"role not found in cited text: {role}"
             )
     return PASSED
+
+
+# --- External grounding gate GX1-GX6 (PRD §3.11.2 step 4; phase P10) --------------------------
+
+_YEAR = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _year(page_age: str) -> int | None:
+    found = _YEAR.search(page_age or "")
+    return int(found.group(0)) if found else None
+
+
+def verify_citations(
+    *,
+    claim: str,
+    quote: str,
+    citation_ids: Sequence[str],
+    citations: Mapping[str, CitedSource],
+    search_urls: Collection[str],
+    element_ids: Sequence[str],
+    known_elements: Collection[str],
+    recency_years: int,
+    this_year: int,
+    tier_of: Callable[[str], str],
+) -> CitationCheck:
+    """GX1 at least one citation ID; GX2 every cited URL was returned by the search in the same
+    request; GX3 the claim is supported by the cited text (the quote found with the G4 similarity,
+    every number found as in G5); GX4 weak when only vendor or unknown sources back it; GX5 dated
+    when every cited source is older than the recency limit; GX6 unknown step references dropped."""
+    kept = [e for e in element_ids if e in known_elements]
+    dropped = [e for e in element_ids if e not in known_elements]
+
+    def refused(guardrail: str, reason: str) -> CitationCheck:
+        return CitationCheck(
+            outcome=CheckOutcome(passed=False, guardrail=guardrail, reason=reason),
+            element_ids=kept,
+            dropped_element_ids=dropped,
+        )
+
+    if not citation_ids:
+        return refused("GX1", "no source cited")
+    cited = [citations[c] for c in citation_ids if c in citations]
+    if len(cited) != len(citation_ids) or any(c.url not in search_urls for c in cited):
+        return refused("GX2", "source not returned by the search")
+    text = " ".join(c.cited_text for c in cited)
+    supported = verify_quote(quote, text).passed and verify_numbers(claim, text).passed
+    if not supported:
+        return refused("GX3", "claim not found in the cited source text")
+    tiers = {domain: tier_of(c.url) for c in cited for domain in [_domain(c.url)]}
+    years = [_year(c.page_age) for c in cited]
+    dated = all(y is not None and y < this_year - recency_years for y in years)
+    return CitationCheck(
+        outcome=PASSED,
+        weak=all(t in {"vendor", "other"} for t in tiers.values()),
+        dated=dated,
+        tiers_by_domain=tiers,
+        element_ids=kept,
+        dropped_element_ids=dropped,
+    )
+
+
+def _domain(url: str) -> str:
+    return (urlsplit(url).hostname or "").lower().removeprefix("www.")
