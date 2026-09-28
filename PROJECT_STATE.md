@@ -9,10 +9,10 @@ Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its wor
 
 ## This session (2026-09-28, session 10) — goal: Phase P7 (quality card, publish, exports); P7 will take about two sessions
 P7 follows PRD §6.3: pure export renderers first (they feed the quality card's structural checks Q7–Q9), then the quality card, then publish and reopen (contract first), then the UI. The banner's quality card button and Publish change the approved Review screenshot, so new screenshots go to Eric for approval in the UI increment that adds them.
-- [ ] Increment 1 — IN PROGRESS: exports service (contract first): Master Process Map Markdown per §7.3 (Facts · Interpretation · Recommendation, provenance tag on every line, role names only, no quotes, no images), graph JSON, RACI CSV; **G3 golden baseline**
-- [ ] Increment 2 — HTML export: single-file offline map drawn from the backend layout, shared design tokens and embedded IBM Plex fonts, no external requests; **G5 golden baseline**
+- [x] Increment 1 — exports service (contract first): Master Process Map Markdown per §7.3 (Facts · Interpretation · Recommendation, provenance tag on every line, role names only, no quotes, no images), graph JSON, RACI CSV (G3 moves to increment 4, when a version can be published)
+- [ ] Increment 2 — IN PROGRESS: HTML export: single-file offline map drawn from the backend layout, shared design tokens and embedded IBM Plex fonts, no external requests (G5 in increment 4)
 - [ ] Increment 3 — `quality` service Q1–Q10 (Q7–Q9 checked on the rendered exports) with the extra warnings; `GET /versions/{vid}/quality-card`; readiness `blockers_count`; each check turns red on a crafted fixture
-- [ ] Increment 4 — publish and reopen: `POST /versions/{vid}/publish` (`409 PUBLISH_BLOCKED` with every blocker), `POST /versions/{vid}/reopen` (deep copy, statuses carried over as confirmed), `GET /engagements/{id}/versions`, `GET /versions/{vid}`, change log, `GET /versions/{vid}/export/{fmt}` (published and green only); "validated by" from Settings
+- [ ] Increment 4 — publish and reopen: `POST /versions/{vid}/publish` (`409 PUBLISH_BLOCKED` with every blocker), `POST /versions/{vid}/reopen` (deep copy, statuses carried over as confirmed), `GET /engagements/{id}/versions`, `GET /versions/{vid}`, change log, `GET /versions/{vid}/export/{fmt}` (published and green only); "validated by" from Settings; **G3 and G5 golden baselines**
 - [ ] Increment 5 — UI: quality card button and popover in the banner, Publish, the "Publish blocked" list whose rows go to the step; new Review screenshots for Eric's approval
 - [ ] Increment 6 — UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
 - [ ] Increment 7 — UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
@@ -82,6 +82,7 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - 2026-09-27 Review: tabs under the map — RACI matrix, Validation questions (Copy all, Download .md, Mark answered), Rejected claims (Open passage, Add as step from this passage), Audit log, Merge decisions (Accept merge, Keep separate, Split), Map checks (13 checks)
 - 2026-09-27 Review: Map | Table switch with a filterable table of steps and editing in place; keyboard shortcuts (J/K, C, E, R, Esc, 1–4, ? for the list) ignored while typing; Add missing step in the toolbar; new Review screenshots approved by Eric as the visual baseline (13 checks)
 - 2026-09-27 Review: Refresh draft from sources (More menu) keeps every reviewed step; browser smoke path selects from every entry point, confirms all steps with auto-advance and refreshes; GUIDE and README updated; P6 closed (13 checks)
+- 2026-09-28 Exports: the Master Process Map (Markdown, the fixed three-section template), graph JSON and RACI CSV renderers, with rejected steps left out and no quotes (13 checks)
 
 ## Not started yet
 - P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
