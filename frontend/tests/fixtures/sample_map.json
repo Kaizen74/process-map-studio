@@ -2925,7 +2925,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "First thing, I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -2938,7 +2938,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "For widebodies, honestly only me and one other controller really know the configurations.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -2951,7 +2951,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "Then I check special loads, dangerous goods and live animals, against the checklist. The notification from the cargo terminal often comes late.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -2964,7 +2964,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes. Then I re-plan.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -2977,7 +2977,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report. It's still on paper and I re-key it. We sometimes wait fifteen minutes for it, and at peak we're short of containers.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -2990,7 +2990,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "If the weight deviation is outside tolerance, it's the captain who decides, not us. The tolerance depends on the airline contract.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3003,7 +3003,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3016,7 +3016,7 @@
           "section": "",
           "speaker_role": "Load controller",
           "text": "Then I issue the final load sheet, around T-15.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3025,7 +3025,7 @@
       "total": 9,
       "page": 1,
       "pages": 1,
-      "coverage_pct": null
+      "coverage_pct": 100.0
     },
     "id-15": {
       "segments": [
@@ -3063,7 +3063,7 @@
           "section": "3 Load planning",
           "speaker_role": null,
           "text": "§3.1 The Load Controller shall prepare the preliminary load plan by T-90.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3076,7 +3076,7 @@
           "section": "3 Load planning",
           "speaker_role": null,
           "text": "§3.2 The preliminary load plan shall be approved by the Load Control Lead before release to Ramp.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3102,7 +3102,7 @@
           "section": "4 Special loads",
           "speaker_role": null,
           "text": "§4 Special loads shall be checked against the acceptance checklist before loading.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3128,7 +3128,7 @@
           "section": "5 Weight deviations",
           "speaker_role": null,
           "text": "§5 Where actual weights deviate from planned beyond the airline tolerance, the Load Control Lead shall decide on corrective action.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3154,7 +3154,7 @@
           "section": "6 Load sheet",
           "speaker_role": null,
           "text": "§6 The final load sheet shall be issued through the departure control system no later than T-10.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3163,7 +3163,7 @@
       "total": 10,
       "page": 1,
       "pages": 1,
-      "coverage_pct": null
+      "coverage_pct": 50.0
     },
     "id-17": {
       "segments": [
@@ -3175,7 +3175,7 @@
           "section": "Job description: Load Controller",
           "speaker_role": null,
           "text": "Job description: Load Controller",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3188,7 +3188,7 @@
           "section": "Job description: Load Controller",
           "speaker_role": null,
           "text": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3236,7 +3236,7 @@
       "total": 5,
       "page": 1,
       "pages": 1,
-      "coverage_pct": null
+      "coverage_pct": 40.0
     },
     "id-19": {
       "segments": [
@@ -3248,7 +3248,7 @@
           "section": "Job description: Load Control Lead",
           "speaker_role": null,
           "text": "Job description: Load Control Lead",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3261,7 +3261,7 @@
           "section": "Job description: Load Control Lead",
           "speaker_role": null,
           "text": "Accountable for approval of load plans and for load control compliance.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3270,7 +3270,7 @@
       "total": 2,
       "page": 1,
       "pages": 1,
-      "coverage_pct": null
+      "coverage_pct": 100.0
     },
     "id-18": {
       "segments": [
@@ -3295,7 +3295,7 @@
           "section": "SOP RP-02 Ramp loading",
           "speaker_role": null,
           "text": "§2 The Ramp Supervisor shall return the loading report to Load Control within 10 minutes of loading completion.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false
@@ -3330,7 +3330,7 @@
       "total": 4,
       "page": 1,
       "pages": 1,
-      "coverage_pct": null
+      "coverage_pct": 25.0
     }
   }
 }

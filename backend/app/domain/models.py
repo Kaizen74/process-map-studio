@@ -203,6 +203,9 @@ class SourceView(BaseModel):
     ocr_pages: list[int]
     suggested_images: int
     created_at: str
+    # G11 (P9): the share of the source's passages the current map cites; None without a map
+    # made from this source.
+    coverage_pct: float | None = None
     # Only on the upload response: the background job reading the file.
     job_id: str | None = None
 

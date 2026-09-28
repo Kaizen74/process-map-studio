@@ -63,10 +63,11 @@ export function useSource(sourceId: string | null) {
   });
 }
 
-export function useSegments(sourceId: string | null) {
+/** A source's passages; `uncitedOnly` lists only those the current map doesn't cite (G11). */
+export function useSegments(sourceId: string | null, uncitedOnly = false) {
   return useInfiniteQuery({
-    queryKey: segmentsKey(sourceId ?? ""),
-    queryFn: ({ pageParam }) => listSegments(sourceId ?? "", pageParam),
+    queryKey: uncitedOnly ? [...segmentsKey(sourceId ?? ""), "uncited"] : segmentsKey(sourceId ?? ""),
+    queryFn: ({ pageParam }) => listSegments(sourceId ?? "", pageParam, 200, false, uncitedOnly),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page < last.pages ? last.page + 1 : undefined),
     enabled: Boolean(sourceId),

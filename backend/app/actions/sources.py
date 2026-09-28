@@ -34,10 +34,13 @@ from app.domain.models import (
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
+from app.repositories import claims as claims_repo
+from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import redaction as redaction_repo
 from app.repositories import sources as repo
+from app.repositories import versions as versions_repo
 from app.services import grounding, parsing
 from app.services import images as pictures
 from app.services.grounding import DEFAULT_REPLACEMENT
@@ -310,13 +313,22 @@ def list_sources(sessions: Sessions, engagement_id: str) -> Result[list[SourceVi
     with session_scope(sessions) as session:
         if not engagements_repo.exists(session, engagement_id):
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
-        return Ok([_public(session, v) for v in repo.list_for_engagement(session, engagement_id)])
+        views = repo.list_for_engagement(session, engagement_id)
+        found = _current_map_citations(session, engagement_id)
+        coverage = _coverage(session, [v.id for v in views], found)
+        return Ok(
+            [_public(session, v).model_copy(update={"coverage_pct": coverage[v.id]}) for v in views]
+        )
 
 
 def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:
     with session_scope(sessions) as session:
         view = repo.get(session, source_id)
-        return Ok(_public(session, view)) if view else Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        if view is None:
+            return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        found = _current_map_citations(session, view.engagement_id)
+        coverage = _coverage(session, [source_id], found)[source_id]
+        return Ok(_public(session, view).model_copy(update={"coverage_pct": coverage}))
 
 
 def _reading_changes(fmt: str, old_kind: str, new_kind: str) -> bool:
@@ -401,7 +413,7 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
 
 
 def _segment_view(
-    fmt: str, item: dict[str, Any], terms: list[NameReplacement] | None
+    fmt: str, item: dict[str, Any], terms: list[NameReplacement] | None, cited: set[str]
 ) -> SegmentView:
     """One passage; `terms` hides names, `None` means raw (owner-only correction editor)."""
     role = item["speaker_role"] or ("Interviewer" if item["is_interviewer"] else None)
@@ -420,7 +432,7 @@ def _segment_view(
         section=item["section"] if terms is None else redaction.hide(item["section"], terms),
         speaker_role=role,
         text=item["text"] if terms is None else redaction.hide(item["text"], terms),
-        cited=False,
+        cited=item["id"] in cited,
         instruction_like=item["instruction_like"],
         speaker_label=item["speaker_label"] if terms is None else None,
         corrected=item["corrected"],
@@ -428,6 +440,39 @@ def _segment_view(
 
 
 PASSAGE_ELSEWHERE = "That passage isn't in this source."
+AROUND_OR_UNCITED = "Show uncited passages can't be used when opening a passage."
+
+
+# --- Coverage (PRD §3.8 G11, phase P9) ---------------------------------------------------------
+
+
+def _current_map_citations(
+    session: Session, engagement_id: str
+) -> tuple[set[str], set[str]] | None:
+    """(passages the current map cites, sources it was made from), or None without a map."""
+    map_id = versions_repo.current_map_id(session, engagement_id)
+    if map_id is None:
+        return None
+    drafted_from = set(map_repo.version_source_ids(session, map_id))
+    return claims_repo.cited_segment_ids(session, map_id), drafted_from
+
+
+def _coverage(
+    session: Session, source_ids: list[str], found: tuple[set[str], set[str]] | None
+) -> dict[str, float | None]:
+    """Share of each source's passages (interviewer turns left out) the current map cites, as a
+    percentage with one decimal; None without a map made from that source."""
+    if found is None:
+        return {sid: None for sid in source_ids}
+    cited, drafted_from = found
+    measured = [sid for sid in source_ids if sid in drafted_from]
+    counts = repo.coverage_counts(session, measured, cited)
+    return {
+        sid: round(100 * counts[sid][0] / counts[sid][1], 1)
+        if sid in counts and counts[sid][1]
+        else None
+        for sid in source_ids
+    }
 
 
 def list_segments(
@@ -438,14 +483,18 @@ def list_segments(
     *,
     raw: bool = False,
     around: str | None = None,
+    uncited_only: bool = False,
 ) -> Result[SegmentPage]:
-    """One page of passages; with `around`, the page that holds that passage."""
+    """One page of passages; with `around`, the page that holds that passage; with
+    `uncited_only`, only the passages the current map doesn't cite (G11)."""
     if page < 1 or not 1 <= page_size <= 500:
         return Err(
             ErrorKind.VALIDATION,
             "Page must be 1 or more, and page size 1 to 500.",
             {"field": "page"},
         )
+    if uncited_only and around is not None:
+        return Err(ErrorKind.VALIDATION, AROUND_OR_UNCITED, {"field": "uncited_only"})
     with session_scope(sessions) as session:
         source = repo.get(session, source_id)
         if source is None:
@@ -455,12 +504,17 @@ def list_segments(
             if position is None:
                 return Err(ErrorKind.NOT_FOUND, PASSAGE_ELSEWHERE)
             page = position // page_size + 1
-        items, total = repo.segment_page(session, source_id, page, page_size)
+        found = _current_map_citations(session, source.engagement_id)
+        cited = found[0] if found else set()
+        items, total = repo.segment_page(
+            session, source_id, page, page_size, uncited_besides=cited if uncited_only else None
+        )
+        coverage = _coverage(session, [source_id], found).get(source_id)
         terms = None if raw else redaction.name_replacements(session, source.engagement_id)
-    segments = [_segment_view(source.format, item, terms) for item in items]
+    segments = [_segment_view(source.format, item, terms, cited) for item in items]
     pages = max(1, math.ceil(total / page_size))
     return Ok(
-        SegmentPage(segments=segments, total=total, page=page, pages=pages, coverage_pct=None)
+        SegmentPage(segments=segments, total=total, page=page, pages=pages, coverage_pct=coverage)
     )
 
 
@@ -551,4 +605,5 @@ def correct_segment(
             target_id=segment_id,
             engagement_id=source.engagement_id,
         )
-    return Ok(_segment_view(source.format, item, None))
+        found = _current_map_citations(session, source.engagement_id)
+    return Ok(_segment_view(source.format, item, None, found[0] if found else set()))

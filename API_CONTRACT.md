@@ -182,7 +182,7 @@ Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pd
 Used by: Sources screen (drop zone).
 
 ### GET /api/engagements/{id}/sources
-Response `200`: source objects, oldest first. Errors: `404`. Used by: Sources screen (registry), readiness.
+Response `200`: source objects, oldest first. From P9 each source object also has `coverage_pct` (as on the passages page below: the share of its passages the current map cites, or `null`). Errors: `404`. Used by: Sources screen (registry), readiness.
 
 ### GET /api/sources/{sid} · PATCH /api/sources/{sid} · DELETE /api/sources/{sid}
 GET → source object. PATCH → any of `kind`, `version_date`, `owner`, `controlled_copy` → source object. DELETE → `204`; removes the file, its passages and its suggested images.
@@ -190,7 +190,7 @@ Errors: `404` ("That source doesn't exist. It may have been deleted."); `422`.
 Used by: Sources screen (registry row edits, delete, viewer header).
 
 ### GET /api/sources/{sid}/segments
-Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (from P9; ignored until then), `raw` (`1` only for the owner-only correction editor).
+Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (P9: `1` lists only the passages no verified claim of the current map cites, interviewer turns left out; `total` and `pages` then count those; can't be combined with `around`: `422` field `uncited_only`), `raw` (`1` only for the owner-only correction editor).
 Response `200`:
 ```json
 {"segments": [{"id": "…", "seq": 3, "anchor": "§3.1", "page": null, "section": "3 Load planning",
@@ -201,7 +201,7 @@ Response `200`:
 - `speaker_role`: the mapped role's name, `"Interviewer"`, or `null` when the speaker isn't mapped yet (never the label, which may be a name).
 - **Names are hidden** (PRD §3.8 G10): `text` and `section` have every redaction term replaced by its replacement (the mapped role, "Interviewer" or "[name]"). With `raw=1` the text is exactly as stored and `speaker_label` is filled; this is one of the three owner-only places where names appear.
 - `around=<segment_id>` (from P5): instead of `page`, return the page that holds this passage (the response's `page` says which). `404` "That passage isn't in this source." when it belongs to another source or doesn't exist.
-- `coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
+- **Coverage (G11, P9):** the *current map* is the engagement's draft, else its latest published version. A passage is `cited` when a verified claim of the current map cites it (the map's own claims, or the claims behind its steps, which a reopened draft keeps from the version it came from). `coverage_pct` = cited passages ÷ all passages except interviewer turns, as a percentage with one decimal; `null` when there is no current map or the map wasn't made from this source (for example a source added after the draft). Errors: `404`, `422` for a bad page.
 Used by: Sources screen (full-width source viewer; correction editor with `raw=1`); Review detail panel (source viewer opened at a passage with `around`, P5).
 
 ### PATCH /api/segments/{segid} (correction editor, owner-only)

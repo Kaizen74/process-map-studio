@@ -45,3 +45,11 @@ export function sourceStatus(source: Pick<Source, "text_status">): SourceStatus 
       return { label: "Reading…", tone: "neutral", dashed: true };
   }
 }
+
+/** Coverage (PRD §3.8 G11) as shown: "50%", "33.3%"; null when not measured yet. */
+export function coverageText(pct: number | null | undefined): string | null {
+  if (pct === null || pct === undefined) return null;
+  return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
+}
+
+export const NOT_MEASURED = "Measured after a draft that uses this file";
