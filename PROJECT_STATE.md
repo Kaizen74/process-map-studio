@@ -1,20 +1,23 @@
 # Project State
-*Last updated: 2026-09-28 (session 12) — update after EVERY increment*
+*Last updated: 2026-09-28 (session 13) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) is complete (2026-09-28, tag `phase-p9` created locally); it is on branch `claude/charming-davinci-sck1cq`, not yet merged into `main`. Next: Phase P10 (gap analysis, optional feature).
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) is complete (2026-09-28, tag `phase-p9` created locally); merged into `main` (pull request #11). Phase P10 (gap analysis) in progress.
 
-## This session (2026-09-28, session 12) — goal: Phase P9 (matrix, registers, cause library)
-P9 follows PRD §6.3 P9, §4 Views and Cause library rows, §5.4 Matrix and Registers, §3.8 G11 and §3.7 Stage 3 (classify, never reconcile; silence is not contradiction). Everything is read from what the draft already holds; no new AI calls. The approved Review screenshots should not change.
-- [x] Increment 1 — alignment matrix (contract first): `services/alignment.py` (pure) builds one row per step with SOP/manual · Interview · JD · Executed artefact cells (`supports` · `contradicts` · `silent` · `not_applicable` when the engagement has no source of that kind), state and divergence types; `GET /versions/{vid}/alignment-matrix`; names hidden; **G4 golden baseline**
-- [x] Increment 2 — coverage (G11): share of each source's passages cited by a verified claim of the current map, `coverage_pct` on sources and on the passages page, `uncited_only` filter; UI: Coverage column on Sources and a coverage bar with "Show uncited passages" in the source viewer
-- [x] Increment 3 — registers and cause library backend (contract first): `GET /versions/{vid}/registers` (K-RISK, AI flags, constraints by cause, external practice, validation questions, rejected claims); cause-library entries created when a draft is made or refreshed for contested and trace-contradicted steps (pattern from the verified divergence notes, cause only from the step's own constraints, otherwise "not known yet"); `GET /engagements/{id}/cause-library`, `PATCH /cause-library/{cid}` (confirmed/refuted, audit row)
-- [x] Increment 4 — UI: Matrix screen (divergence filter chips, sort by severity, sticky step column and header, state glyphs with words, row opens the step on Review, empty state linking to Draft)
-- [x] Increment 5 — UI: Registers screen (segmented control: K-RISK · AI flags · Constraints by cause · External practice · Validation questions · Rejected claims · Cause library; card lists with Go to step; one-line empty states; Confirm/Refute on causes)
-- [x] Increment 6 — browser checks (axe on Matrix and Registers, coverage on Sources, smoke path), GUIDE/README, close P9 (tag phase-p9)
+## This session (2026-09-28, session 13) — goal: Phase P10 (gap analysis, optional feature)
+P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 11, §6.3 P10, Appendix A.7 and constraint 22: analyses are advisory and on demand, never change the map, and every finding needs Eric's disposition. Analysis A uses only the engagement's own verified evidence; Analysis B sends only an approved, scan-clean brief to web search. Every AI call is mocked in the tests (no key, no network).
+- [x] Increment 1 — `ai_service.call_claude_with_web_search` (web search tool verified against the current docs and SDK 1.8.0; `pause_turn` continued, tool-error blocks kept as partial results, disabled search as a plain error; every search result and citation captured) with mock fixtures; web research settings (`PUT /settings/research`, `POST /settings/test-web-search`)
+- [ ] Increment 2 — IN PROGRESS: `services/gap.py` (pure): research brief builder, confidentiality scan (redaction list, confidential terms, map numbers and times, 8+ word passages), source tiers by domain, severity rules for both analyses; `grounding.verify_citations` (GX1–GX6)
+- [ ] Increment 3 — Analysis A backend (contract first): divergence set, `GA_internal` synthesis, grounding gate, `GA_verify` verifier, severity, stored report; `POST /versions/{vid}/gap-analyses/internal` (job), list and detail endpoints; A.7 expected findings
+- [ ] Increment 4 — Analysis B backend: create with a brief (nothing sent), edit brief with live scan, run gates (`BRIEF_NOT_APPROVED`, `WEB_RESEARCH_DISABLED`), research → structuring → GX1–GX6 → verifier → comparison and severity; traps TE1–TE9 (mocked)
+- [ ] Increment 5 — dispositions (question, cause-library entry, step pre-fill, dismiss with reason; audit rows), finalise, report export `.md` (0 redaction-term hits), Master Process Map section 3 lines (G3 update), `gap_findings` on element details; **G7 golden baseline**
+- [ ] Increment 6 — UI: Gap analysis screen (two cards, history, report with Facts · Interpretation · Recommendation, finding cards with dispositions, rejected findings)
+- [ ] Increment 7 — UI: research brief editor with the live confidentiality scan, run and progress, external report (source cards with tier, date, excerpt ≤ 25 words)
+- [ ] Increment 8 — UI: Settings web research card and test; "Gap findings" panel section and the Review toolbar chip; Exports card for finalised reports
+- [ ] Increment 9 — browser checks (axe on the new screens, both analyses mocked end to end, nothing on the map changes), GUIDE/README (web search troubleshooting row), close P10 (tag phase-p10)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -99,6 +102,7 @@ P9 follows PRD §6.3 P9, §4 Views and Cause library rows, §5.4 Matrix and Regi
 - 2026-09-28 P9 increment 4: the Matrix screen (every step against every kind of source, filter by divergence, sort most serious first, click to open the step). 13 of 13 checks green.
 - 2026-09-28 P9 increment 5: the Registers screen (seven registers including the cause library with Confirm, Refute and Reopen; every entry links to its step). 13 of 13 checks green.
 - 2026-09-28 P9 increment 6: browser checks (coverage on Sources, Matrix filters and opening a step, every register and the cause library, axe and privacy on each); GUIDE updated; P9 closed (13 of 13 checks green).
+- 2026-09-28 P10 increment 1: web search connection (verified against the current Anthropic docs and SDK 1.8.0; paused turns continued, tool errors kept as partial results, a switched-off search explained), research switch and web search test in Settings. 13 of 13 checks green.
 
 ## Not started yet
 - P10 gap analysis · P11 leadership view · P12 live run, polish and handover

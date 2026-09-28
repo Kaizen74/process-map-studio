@@ -61,3 +61,11 @@ def test_error_kinds_match_prd() -> None:
         "grounding_failed",
         "publish_blocked",
     }
+
+
+def test_an_error_can_carry_the_api_code_the_prd_names() -> None:
+    # PRD §4 names codes such as 409 BRIEF_NOT_APPROVED for cases of an existing kind.
+    plain = Err(ErrorKind.CONFLICT, "Refused.")
+    specific = Err(ErrorKind.CONFLICT, "Approve the brief first.", api_code="BRIEF_NOT_APPROVED")
+    assert (plain.code, specific.code) == ("CONFLICT", "BRIEF_NOT_APPROVED")
+    assert specific.kind is ErrorKind.CONFLICT

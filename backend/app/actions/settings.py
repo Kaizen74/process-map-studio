@@ -15,12 +15,14 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import SETTING_DEFAULTS, AppConfig
 from app.db import session_scope
 from app.domain.models import (
+    AiCallRecord,
     AiUsage,
     ConnectionCapabilities,
     ConnectionTest,
     ModelChoices,
     ModelSummary,
     SettingsView,
+    WebSearchTest,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import ai_calls, audit
@@ -284,3 +286,59 @@ def list_usage(sessions: sessionmaker[Session], limit: int) -> Result[AiUsage]:
         return Err(ErrorKind.VALIDATION, BAD_LIMIT, {"field": "limit"})
     with session_scope(sessions) as session:
         return Ok(AiUsage(items=ai_calls.recent(session, limit), totals=ai_calls.totals(session)))
+
+
+# --- Web research (PRD §3.11.2; phase P10) -------------------------------------------------------
+
+TEST_SEARCH_BRIEF = "Find one published source of guidance on aircraft load control."
+TEST_SEARCH_SYSTEM = "Answer in one sentence using only the search results, with a citation."
+SEARCH_WORKS = "Web search works for your Anthropic organisation."
+
+
+def set_research(config: AppConfig, enabled: bool) -> Result[SettingsView]:
+    """Turn external research (gap analysis B) on or off; off means nothing is ever searched."""
+    return _save(config, "WEB_RESEARCH_ENABLED", "true" if enabled else "false")
+
+
+def test_web_search(
+    config: AppConfig, sessions: sessionmaker[Session] | None = None
+) -> Result[WebSearchTest]:
+    """One small, generic search (max one use) to show whether web search works for this key.
+    The call is logged in AI usage like any other (web searches are billed per search)."""
+    match effective_settings(config):
+        case Err() as err:
+            return err
+        case Ok(value=values):
+            pass
+    if not values["ANTHROPIC_API_KEY"].strip():
+        return Ok(WebSearchTest(available=False, message=NO_KEY))
+    call = ai_service.ResearchCall(
+        stage_id="GB_test",
+        prompt_version="1",
+        system=TEST_SEARCH_SYSTEM,
+        brief=TEST_SEARCH_BRIEF,
+        model=values["ANTHROPIC_MODEL"],
+        max_uses=1,
+        effort="low",
+        max_tokens=2000,
+    )
+    outcome = ai_service.call_claude_with_web_search(_connection(config, values), call)
+    if sessions is not None:
+        records = outcome.value.calls if isinstance(outcome, Ok) else _records(outcome)
+        if records:
+            with session_scope(sessions) as session:
+                ai_calls.add(session, None, records)
+    match outcome:
+        case Ok():
+            return Ok(WebSearchTest(available=True, message=SEARCH_WORKS))
+        case Err(api_code=ai_service.SEARCH_OFF_CODE, message=message):
+            return Ok(WebSearchTest(available=False, message=message))
+        case Err(kind=ErrorKind.AI_AUTH):
+            return Ok(WebSearchTest(available=False, message=KEY_REJECTED))
+        case Err() as err:
+            return _ai_failure(err)
+
+
+def _records(err: Err) -> list[AiCallRecord]:
+    calls = err.details.get("calls", [])
+    return [AiCallRecord.model_validate(c) for c in calls] if isinstance(calls, list) else []

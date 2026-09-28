@@ -89,6 +89,12 @@ Response `200`: the settings object.
 Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
 Used by: Settings screen, "Model" card.
 
+### PUT /api/settings/research (phase P10)
+Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
+
+### POST /api/settings/test-web-search (phase P10)
+Checks that web search works for this key: one small search with a generic question ("published guidance on aircraft load control"), `max_uses` 1 (billed as one search by Anthropic). Mocked in tests. Response `200`: `{"available": true, "message": "Web search works for your Anthropic organisation."}`, or `available: false` with a plain message: no key saved; "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." (the organisation has web search switched off in the Claude Console: Anthropic answers 400 saying web search is not enabled); key rejected. Errors: `503 AI_RATE_LIMIT`; `500 IO` (Anthropic couldn't be reached).
+
 ### GET /api/settings/usage
 The AI calls the app has made, newest first, for the "AI usage" card. Usage only: never prompt or document text.
 Request: `?limit=50` (1 to 500; default 50).

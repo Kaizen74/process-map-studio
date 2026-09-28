@@ -1,7 +1,8 @@
 """AI service (PRD §3.2, §3.7): the only module that imports the anthropic SDK.
 
 Phase P0b provides the Models API calls used by Settings (list_models, get_model); phase P3 adds
-`call_claude`, the one Messages API call every pipeline stage uses. Web search arrives in P10.
+`call_claude`, the one Messages API call every pipeline stage uses; phase P10 adds
+`call_claude_with_web_search` for the research call of gap analysis B (only the brief is sent).
 
 Verified against anthropic 1.8.0 (see DECISIONS.md): `Anthropic(api_key=, max_retries=,
 timeout=, http_client=)`, `client.models.retrieve(model_id)` and `client.models.list()` return
@@ -37,7 +38,15 @@ from anthropic import Omit, omit
 from anthropic.types import ContentBlockParam, MessageParam, ModelInfo, OutputConfigParam
 from pydantic import BaseModel, ValidationError
 
-from app.domain.models import AiAnswer, AiCallRecord, ModelSummary
+from app.domain.models import (
+    AiAnswer,
+    AiCallRecord,
+    ModelSummary,
+    ResearchAnswer,
+    ResearchCitation,
+    ResearchPassage,
+    SearchResult,
+)
 from app.domain.result import Err, ErrorKind, Ok, Result
 
 EFFORT_ORDER = ("low", "medium", "high", "xhigh", "max")
@@ -405,4 +414,211 @@ def call_claude(conn: AiConnection, call: StageCall) -> Result[AiAnswer]:
         ErrorKind.AI_FORMAT,
         "Claude's answer didn't match the expected format twice.",
         {"calls": [c.model_dump() for c in calls]},
+    )
+
+
+# --- Web research: call_claude_with_web_search (PRD §3.11.2 step 2; phase P10) ---------------
+
+# Verified against the current web search tool documentation and anthropic 1.8.0 (DECISIONS.md):
+# `web_search_20260318` is the newest version (dynamic filtering, plus `response_inclusion`, left
+# at its default "full" so every result block comes back); `max_uses`; `allowed_domains` or
+# `blocked_domains`, never both (the API answers 400); results are `web_search_tool_result`
+# blocks whose `content` is a list of `web_search_result` (url, title, page_age,
+# encrypted_content) or one `web_search_tool_result_error` object (`error_code`), inside a normal
+# 200 answer; text blocks carry `web_search_result_location` citations (url, title, cited_text);
+# `usage.server_tool_use.web_search_requests` counts the searches; a paused turn
+# (`stop_reason: "pause_turn"`) is continued by sending the assistant content back unchanged; an
+# organisation with web search switched off gets a 400 saying web search is not enabled.
+WEB_SEARCH_TOOL = "web_search_20260318"
+MAX_CONTINUATIONS = 5
+RESEARCH_MAX_TOKENS = 16000
+SEARCH_OFF = (
+    "Web search isn't enabled for your Anthropic organisation. "
+    "See the README, 'If something goes wrong'."
+)
+BOTH_DOMAIN_LISTS = "Use either allowed domains or blocked domains, not both."
+SEARCH_OFF_CODE = "WEB_SEARCH_UNAVAILABLE"  # a `conflict` (409) with its own API code
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchCall:
+    """One web research request. `brief` is the only content sent (PRD §3.11.2)."""
+
+    stage_id: str
+    prompt_version: str
+    system: str
+    brief: str
+    model: str
+    max_uses: int
+    allowed_domains: tuple[str, ...] = ()
+    blocked_domains: tuple[str, ...] = ()
+    effort: str | None = None
+    max_tokens: int = RESEARCH_MAX_TOKENS
+
+
+def _search_tool(call: ResearchCall) -> dict[str, object]:
+    tool: dict[str, object] = {
+        "type": WEB_SEARCH_TOOL,
+        "name": "web_search",
+        "max_uses": call.max_uses,
+    }
+    if call.allowed_domains:
+        tool["allowed_domains"] = list(call.allowed_domains)
+    if call.blocked_domains:
+        tool["blocked_domains"] = list(call.blocked_domains)
+    return tool
+
+
+def research_key(call: ResearchCall) -> str:
+    """The mock-fixture key: the stage and exactly what is sent (the brief and the tool limits)."""
+    return input_hash(call.stage_id, [{"type": "text", "text": call.brief}, _search_tool(call)])
+
+
+def _search_disabled(exc: anthropic.AnthropicError) -> bool:
+    if not isinstance(exc, anthropic.BadRequestError):
+        return False
+    text = str(exc).lower()
+    return "web search" in text and "not enabled" in text
+
+
+def _read_answer(messages: Sequence[anthropic.types.Message]) -> tuple[
+    list[ResearchPassage], list[SearchResult], list[str], int
+]:  # fmt: skip
+    """Everything the research turn produced, across its continuations."""
+    passages: list[ResearchPassage] = []
+    results: list[SearchResult] = []
+    errors: list[str] = []
+    searches = 0
+    seen: set[str] = set()
+    for message in messages:
+        usage = message.usage.server_tool_use
+        searches += usage.web_search_requests if usage else 0
+        for block in message.content:
+            if block.type == "text":
+                cites = [
+                    ResearchCitation(url=c.url, title=c.title or "", cited_text=c.cited_text)
+                    for c in block.citations or []
+                    if c.type == "web_search_result_location"
+                ]
+                passages.append(ResearchPassage(text=block.text, citations=cites))
+            elif block.type == "web_search_tool_result":
+                if isinstance(block.content, list):
+                    for result in block.content:
+                        if result.url not in seen:
+                            seen.add(result.url)
+                            results.append(
+                                SearchResult(
+                                    url=result.url,
+                                    title=result.title,
+                                    page_age=result.page_age or "",
+                                )
+                            )
+                else:
+                    errors.append(block.content.error_code)
+    return passages, results, errors, searches
+
+
+def _mock_research(
+    conn: AiConnection, call: ResearchCall, key: str
+) -> Result[list[anthropic.types.Message]]:
+    """Mock answers: `{"responses": [<Messages API response>, …]}` (several for a paused turn),
+    validated with the SDK's own Message type; `{"error": "web_search_disabled"}` stands for an
+    organisation with web search switched off."""
+    match _fixture(conn, call.stage_id, key):
+        case Err() as err:
+            return err
+        case Ok(value=data):
+            pass
+    if isinstance(data, dict) and data.get("error") == "web_search_disabled":
+        return Err(ErrorKind.CONFLICT, SEARCH_OFF, api_code=SEARCH_OFF_CODE)
+    try:
+        responses = data["responses"] if isinstance(data, dict) else None
+        if not isinstance(responses, list):
+            raise ValueError("responses")
+        return Ok([anthropic.types.Message.model_validate(r) for r in responses])
+    except (KeyError, ValueError, ValidationError) as exc:
+        return Err(
+            ErrorKind.IO, "A mock fixture could not be read.", {"reason": type(exc).__name__}
+        )
+
+
+def call_claude_with_web_search(conn: AiConnection, call: ResearchCall) -> Result[ResearchAnswer]:
+    """Send the research brief with the web search tool and capture every search result and
+    citation (PRD §3.11.2 step 2). A paused turn is continued (at most MAX_CONTINUATIONS times);
+    tool errors such as `max_uses_exceeded` are kept as partial results, never raised; web search
+    switched off for the organisation is `Err(web_search_unavailable)` with the README pointer.
+    Only the brief is sent: no sources, map or names ever reach this call."""
+    if call.allowed_domains and call.blocked_domains:
+        return Err(ErrorKind.VALIDATION, BOTH_DOMAIN_LISTS, {"field": "domains"})
+    key = research_key(call)
+    calls: list[AiCallRecord] = []
+    messages: list[anthropic.types.Message] = []
+    if conn.mock:
+        match _mock_research(conn, call, key):
+            case Err() as err:
+                return err
+            case Ok(value=mocked):
+                messages = mocked
+        calls = [
+            AiCallRecord(stage_id=call.stage_id, prompt_version=call.prompt_version,
+                         model=call.model, status="mock", input_hash=key)
+            for _ in messages
+        ]  # fmt: skip
+    else:
+        effort = cast(Literal["low", "medium", "high", "xhigh", "max"], call.effort)
+        config: OutputConfigParam | Omit = (
+            {"effort": effort} if call.effort in EFFORT_ORDER else omit
+        )
+        tools = cast(list[anthropic.types.ToolUnionParam], [_search_tool(call)])
+        sent: list[object] = []  # the assistant content so far, sent back unchanged when paused
+        for _ in range(MAX_CONTINUATIONS + 1):
+            history: list[MessageParam] = [{"role": "user", "content": call.brief}]
+            if sent:
+                history.append(
+                    {"role": "assistant", "content": cast(list[ContentBlockParam], sent)}
+                )
+            record = AiCallRecord(stage_id=call.stage_id, prompt_version=call.prompt_version,
+                                  model=call.model, status="ok", input_hash=key)  # fmt: skip
+            started = time.monotonic()
+            try:
+                with _client(conn, MESSAGES_TIMEOUT_S).messages.stream(
+                    model=call.model,
+                    max_tokens=call.max_tokens,
+                    system=call.system,
+                    messages=history,
+                    tools=tools,
+                    output_config=config,
+                ) as stream:
+                    message = stream.get_final_message()
+            except anthropic.AnthropicError as exc:
+                record.status = "error"
+                record.duration_ms = int((time.monotonic() - started) * 1000)
+                calls.append(record)
+                if _search_disabled(exc):
+                    logged = {"calls": [c.model_dump() for c in calls]}
+                    return Err(ErrorKind.CONFLICT, SEARCH_OFF, logged, api_code=SEARCH_OFF_CODE)
+                err = _classify(exc)
+                return Err(err.kind, err.message,
+                           {**err.details, "calls": [c.model_dump() for c in calls]})  # fmt: skip
+            record.duration_ms = int((time.monotonic() - started) * 1000)
+            record.input_tokens = message.usage.input_tokens
+            record.output_tokens = message.usage.output_tokens
+            calls.append(record)
+            messages.append(message)
+            if message.stop_reason != "pause_turn":
+                break
+            sent += [block.to_dict() for block in message.content]
+    last = messages[-1].stop_reason if messages else ""
+    if last == "refusal":
+        calls[-1].status = "refused"
+    passages, results, errors, searches = _read_answer(messages)
+    return Ok(
+        ResearchAnswer(
+            passages=passages,
+            results=results,
+            tool_errors=errors,
+            search_count=searches,
+            stop_reason=last or "",
+            calls=calls,
+        )
     )

@@ -96,6 +96,13 @@ const STAGE_NAMES: Readonly<Record<string, string>> = {
   S4_assemble: "Building the map",
   S5_questions: "Writing validation questions",
   R_repair: "Fixing an answer's format",
+  // Gap analysis (P10).
+  GA_internal: "Comparing documents with practice",
+  GA_verify: "Independent check of a gap finding",
+  GB_research: "Web research (searches your approved brief)",
+  GB_structure: "Sorting the research into findings",
+  GB_verify: "Independent check of a research finding",
+  GB_test: "Web search test",
 };
 
 /** A stage ID from the AI usage log in plain words; unknown IDs are shown as they are. */

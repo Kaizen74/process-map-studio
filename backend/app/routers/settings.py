@@ -12,7 +12,9 @@ from app.domain.models import (
     ModelChoices,
     ModelUpdate,
     ProfileUpdate,
+    ResearchSetting,
     SettingsView,
+    WebSearchTest,
 )
 from app.routers.http import unwrap
 
@@ -57,6 +59,17 @@ def update_model(request: Request, body: ModelUpdate) -> SettingsView:
             sessions=request.app.state.sessions,
         )
     )
+
+
+@router.put("/research")
+def set_research(request: Request, body: ResearchSetting) -> SettingsView:
+    return unwrap(settings.set_research(request.app.state.config, body.web_research_enabled))
+
+
+@router.post("/test-web-search")
+def test_web_search(request: Request) -> WebSearchTest:
+    state = request.app.state
+    return unwrap(settings.test_web_search(state.config, state.sessions))
 
 
 @router.get("/usage")
