@@ -1,0 +1,171 @@
+{
+  "responses": [
+    {
+      "id": "msg_mock_gap_research",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-5-5",
+      "content": [
+        {
+          "type": "server_tool_use",
+          "id": "srvtoolu_gap_1",
+          "name": "web_search",
+          "input": {
+            "query": "load control second person check load sheet guidance"
+          }
+        },
+        {
+          "type": "web_search_tool_result",
+          "tool_use_id": "srvtoolu_gap_1",
+          "content": [
+            {
+              "type": "web_search_result",
+              "url": "https://www.iata.org/illustrative/load-control-guidance",
+              "title": "Illustrative industry guidance on load control",
+              "encrypted_content": "MOCK",
+              "page_age": "March 2024"
+            },
+            {
+              "type": "web_search_result",
+              "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+              "title": "Illustrative regulator material on mass and balance",
+              "encrypted_content": "MOCK",
+              "page_age": "January 2025"
+            },
+            {
+              "type": "web_search_result",
+              "url": "https://loadplanning-software.example.com/blog/automation",
+              "title": "Illustrative vendor blog on automated load planning",
+              "encrypted_content": "MOCK",
+              "page_age": "June 2025"
+            }
+          ]
+        },
+        {
+          "type": "server_tool_use",
+          "id": "srvtoolu_gap_2",
+          "name": "web_search",
+          "input": {
+            "query": "loading report return time benchmark"
+          }
+        },
+        {
+          "type": "web_search_tool_result",
+          "tool_use_id": "srvtoolu_gap_2",
+          "content": {
+            "type": "web_search_tool_result_error",
+            "error_code": "max_uses_exceeded"
+          }
+        },
+        {
+          "type": "text",
+          "text": "Comparable operations have a second qualified person check the load sheet before it is signed.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.iata.org/illustrative/load-control-guidance",
+              "title": "Illustrative industry guidance on load control",
+              "encrypted_index": "MOCK",
+              "cited_text": "The load sheet shall be checked by a second qualified person before it is signed."
+            },
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+              "title": "Illustrative regulator material on mass and balance",
+              "encrypted_index": "MOCK",
+              "cited_text": "Operators shall ensure that mass and balance documentation is checked by a second qualified person before it is signed."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " Guidance sets a time for the final load sheet.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.iata.org/illustrative/load-control-guidance",
+              "title": "Illustrative industry guidance on load control",
+              "encrypted_index": "MOCK",
+              "cited_text": "The final load sheet is issued no later than 15 minutes before departure."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " Vendors describe automated checks.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://loadplanning-software.example.com/blog/automation",
+              "title": "Illustrative vendor blog on automated load planning",
+              "encrypted_index": "MOCK",
+              "cited_text": "Automated tools check the load sheet and flag deviations."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " The loading report return time is tracked.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.unlisted.example.org/loading-kpi",
+              "title": "Unlisted page",
+              "encrypted_index": "MOCK",
+              "cited_text": "Loading report return time is tracked as a key performance indicator."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " Tolerances are agreed with each airline.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+              "title": "Illustrative regulator material on mass and balance",
+              "encrypted_index": "MOCK",
+              "cited_text": "Deviation tolerances are agreed with each airline in writing."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " A final walk-round is described.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.iata.org/illustrative/load-control-guidance",
+              "title": "Illustrative industry guidance on load control",
+              "encrypted_index": "MOCK",
+              "cited_text": "A final walk-round confirms the hold doors and loading before departure."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " The load plan is approved before release.",
+          "citations": [
+            {
+              "type": "web_search_result_location",
+              "url": "https://www.iata.org/illustrative/load-control-guidance",
+              "title": "Illustrative industry guidance on load control",
+              "encrypted_index": "MOCK",
+              "cited_text": "The load plan is approved before it is released to the ramp."
+            }
+          ]
+        }
+      ],
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 3100,
+        "output_tokens": 420,
+        "server_tool_use": {
+          "web_search_requests": 2,
+          "web_fetch_requests": 0
+        }
+      }
+    }
+  ]
+}

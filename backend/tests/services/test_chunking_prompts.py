@@ -92,6 +92,9 @@ STAGES = [
     "S5_questions",
     "GA_internal",
     "GA_verify",
+    "GB_research",
+    "GB_structure",
+    "GB_verify",
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
@@ -254,3 +257,13 @@ def test_the_gap_prompts_keep_to_the_evidence() -> None:
     assert "don't guess" in text and "`unknowns`" in text and "every side" in text
     check = prompts.load_prompt("GA_verify").value.text.lower()  # type: ignore[union-attr]
     assert "judge only against the passages supplied" in check and "not_supported" in check
+
+
+def test_the_research_prompts_forbid_general_knowledge() -> None:
+    """PRD §3.11.2 steps 2-3: only what the search results say; only the captured citations."""
+    research = prompts.load_prompt("GB_research").value.text.lower()  # type: ignore[union-attr]
+    assert "use only what the search results say" in research
+    assert "no findings from general knowledge" in research
+    assert "no reliable source found" in research and "vendor marketing" in research
+    structure = prompts.load_prompt("GB_structure").value.text.lower()  # type: ignore[union-attr]
+    assert "only ids from the `<citation>` list" in structure and "never invent" in structure

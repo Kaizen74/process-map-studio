@@ -7,19 +7,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions.settings import effective_settings
 from app.config import AppConfig
+from app.db import session_scope
 from app.domain.models import AiCallRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import ai_calls
 from app.repositories import engagements as engagements_repo
-from app.services import ai_service
+from app.services import ai_service, prompts
 
 NO_KEY = "Add your Claude API key in Settings first."
 KEY_REJECTED = "Your API key was rejected — check Settings."
 BUSY = "Anthropic is busy at the moment. Nothing was saved. Try again in a few minutes."
+FORMAT_FAILED = (
+    "Claude's answer for '{stage}' didn't match the expected format twice. Nothing was saved. "
+    "Try again, or use Copy details to report it."
+)
 UNREACHABLE = (
     "The app couldn't reach Anthropic. Check your internet connection, then try again. "
     "Nothing was saved."
@@ -100,3 +106,49 @@ def calls_in(err: Err) -> list[AiCallRecord]:
     """The usage records a failed call still carries (they cost tokens too)."""
     raw = err.details.get("calls", [])
     return [AiCallRecord.model_validate(c) for c in raw] if isinstance(raw, list) else []
+
+
+def call_stage(
+    sessions: sessionmaker[Session],
+    ctx: AiContext,
+    stage_id: str,
+    stage_name: str,
+    blocks: list[dict[str, object]],
+    output_model: type[BaseModel],
+    job_id: str | None,
+) -> Result[BaseModel]:
+    """One stage call with its prompt and repair prompt; its usage is recorded either way, and a
+    failure comes back in plain words (used by the gap analyses, phase P10)."""
+    match prompts.load_prompt(stage_id):
+        case Err() as err:
+            return err
+        case Ok(value=prompt):
+            pass
+    match prompts.load_prompt(ai_service.REPAIR_STAGE):
+        case Err() as err:
+            return err
+        case Ok(value=repair):
+            pass
+    call = ai_service.StageCall(
+        stage_id=stage_id,
+        prompt_version=prompt.version,
+        system=prompt.text,
+        blocks=blocks,
+        output_model=output_model,
+        model=ctx.model,
+        repair_prompt=repair.text,
+        effort=ctx.effort,
+        structured_outputs=ctx.structured_outputs,
+    )
+    result = ai_service.call_claude(ctx.conn, call)
+    used = result.value.calls if isinstance(result, Ok) else calls_in(result)
+    with session_scope(sessions) as session:
+        record_calls(session, job_id, used)
+    match result:
+        case Err(kind=ErrorKind.AI_FORMAT) as err:
+            message = FORMAT_FAILED.format(stage=stage_name)
+            return Err(ErrorKind.AI_FORMAT, message, err.details)
+        case Err() as err:
+            return ai_failure(err)
+        case Ok(value=answer):
+            return Ok(output_model.model_validate(answer.data))

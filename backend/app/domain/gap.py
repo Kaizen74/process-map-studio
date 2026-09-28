@@ -78,6 +78,11 @@ class GapEvidence(BaseModel):
     segment_id: str | None = None
     anchor: str = ""
     quote: str = ""
+    # External evidence only (Analysis B): side "external", source_kind the tier (B.24).
+    url: str = ""
+    tier: str = ""
+    page_age: str = ""
+    citation_id: str = ""
 
 
 class GapElementRef(BaseModel):
@@ -105,6 +110,7 @@ class GapFindingView(BaseModel):
     verifier_verdict: str
     needs_check: bool
     question: str
+    notes: list[str]
     disposition: str
     disposition_note: str
     created_item_ref: str
@@ -128,6 +134,7 @@ class GapAnalysisView(BaseModel):
     created_at: str
     completed_at: str | None
     finalised_at: str | None
+    notes: list[str]
     counts: GapCounts
 
 
@@ -137,12 +144,49 @@ class GapUsage(BaseModel):
     output_tokens: int
 
 
+class ScanResult(BaseModel):
+    hits: list[ScanHit]
+
+
+class BriefState(BaseModel):
+    """The research brief, exactly what would be sent, whether Eric ticked "This brief contains no
+    confidential information", and the confidentiality scan of the text."""
+
+    brief: Brief
+    text: str
+    confirmed: bool
+    scan: ScanResult
+
+
+class GapBriefView(BaseModel):
+    analysis: GapAnalysisView
+    brief: BriefState
+
+
+class BriefPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    brief: Brief
+    confirmed: bool
+
+
+class GapSourceView(BaseModel):
+    id: str
+    url: str
+    title: str
+    domain: str
+    page_age: str
+    tier: str
+    returned_in_results: bool
+
+
 class GapReport(BaseModel):
     analysis: GapAnalysisView
     findings: list[GapFindingView]
     rejected: list[GapFindingView]
-    sources: list[dict[str, object]]
     questions: list[GapFindingView]
+    sources: list[GapSourceView]
+    brief: BriefState | None
     usage: GapUsage | None
     search_count: int
 
@@ -171,6 +215,7 @@ class NewGapFinding(BaseModel):
     rejection_reason: str = ""
     verifier_verdict: str = "not_run"
     question: str = ""
+    notes: list[str] = Field(default_factory=list)
 
 
 class StoredGapFinding(NewGapFinding):
@@ -190,3 +235,16 @@ class GapAnalysisRecord(BaseModel):
     created_at: str
     completed_at: str | None = None
     finalised_at: str | None = None
+    brief: dict[str, object] | None = None
+    brief_confirmed: bool = False
+    brief_scan: dict[str, object] | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class NewExternalSource(BaseModel):
+    url: str
+    title: str
+    domain: str
+    page_age: str
+    tier: str
+    returned_in_results: bool

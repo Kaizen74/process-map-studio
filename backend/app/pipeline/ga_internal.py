@@ -21,23 +21,23 @@ import re
 from dataclasses import dataclass, field
 from pathlib import PurePath
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
 from app.actions import versions as versions_action
-from app.db import session_scope
 from app.domain import ai_schemas
 from app.domain.enums import Guardrail, VerifierVerdict
 from app.domain.gap import GapEvidence, NewGapFinding
 from app.domain.graph import GraphElement
-from app.domain.models import AiCallRecord, NameReplacement, PromptSegment
-from app.domain.result import Err, ErrorKind, Ok, Result
+from app.domain.models import NameReplacement, PromptSegment
+from app.domain.result import Err, Ok, Result
 from app.pipeline import s1_extract
-from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
+from app.pipeline.context import AiContext, call_stage, role_groups
 from app.repositories import elements as map_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import ai_service, gap, grounding, prompts
+from app.services import gap, grounding, prompts
 
 Sessions = sessionmaker[Session]
 
@@ -49,10 +49,6 @@ SIDES = ("documents", "practice")
 INTERVIEW = "interview_transcript"
 NO_VERDICT = "the verifier gave no verdict for this finding"
 QUESTION_TITLE = "Cause not explained by the sources"
-FORMAT_FAILED = (
-    "Claude's answer for '{stage}' didn't match the expected format twice. Nothing was saved. "
-    "Try again, or use Copy details to report it."
-)
 STAGE_NAMES = {STAGE_ID: "Explaining the differences", VERIFY_STAGE: "Independent verification"}
 
 
@@ -287,42 +283,10 @@ def _call(
     ctx: AiContext,
     stage_id: str,
     blocks: list[dict[str, object]],
-    output_model: type[ai_schemas.GAInternalOutput] | type[ai_schemas.GAVerifyOutput],
+    output_model: type[BaseModel],
     job_id: str | None,
-) -> Result[object]:
-    match prompts.load_prompt(stage_id):
-        case Err() as err:
-            return err
-        case Ok(value=prompt):
-            pass
-    match prompts.load_prompt(ai_service.REPAIR_STAGE):
-        case Err() as err:
-            return err
-        case Ok(value=repair):
-            pass
-    call = ai_service.StageCall(
-        stage_id=stage_id,
-        prompt_version=prompt.version,
-        system=prompt.text,
-        blocks=blocks,
-        output_model=output_model,
-        model=ctx.model,
-        repair_prompt=repair.text,
-        effort=ctx.effort,
-        structured_outputs=ctx.structured_outputs,
-    )
-    result = ai_service.call_claude(ctx.conn, call)
-    used: list[AiCallRecord] = result.value.calls if isinstance(result, Ok) else calls_in(result)
-    with session_scope(sessions) as session:
-        record_calls(session, job_id, used)
-    match result:
-        case Err(kind=ErrorKind.AI_FORMAT) as err:
-            message = FORMAT_FAILED.format(stage=STAGE_NAMES[stage_id])
-            return Err(ErrorKind.AI_FORMAT, message, err.details)
-        case Err() as err:
-            return ai_failure(err)
-        case Ok(value=answer):
-            return Ok(output_model.model_validate(answer.data))
+) -> Result[BaseModel]:
+    return call_stage(sessions, ctx, stage_id, STAGE_NAMES[stage_id], blocks, output_model, job_id)
 
 
 def synthesise(

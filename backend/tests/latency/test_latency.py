@@ -122,8 +122,10 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     # A documents-vs-practice report on that map (phase P10).
     started = client.post(f"/api/versions/{sample['target_id']}/gap-analyses/internal").json()
     wait_for_jobs(client)
+    external = client.post(f"/api/versions/{sample['target_id']}/gap-analyses/external").json()
     return client, ids | {
         "gap": started["analysis_id"],
+        "brief": external["analysis"]["id"],
         "draft_job": draft_job,
         "version": version,
         "map": sample["target_id"],
@@ -174,6 +176,15 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/engagements/{eid}/cause-library", None),
     ("GET", "/api/versions/{map}/gap-analyses", None),
     ("GET", "/api/gap-analyses/{gap}", None),
+    ("GET", "/api/gap-analyses/{brief}", None),
+    (
+        "PATCH",
+        "/api/gap-analyses/{brief}/brief",
+        {
+            "brief": {"process_name": "Load control", "steps": ["Draft load plan"]},
+            "confirmed": True,
+        },
+    ),
     ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]
 

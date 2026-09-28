@@ -291,7 +291,7 @@ Response `200`:
              "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
 - `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.
@@ -432,12 +432,17 @@ A report as returned by `GET /api/gap-analyses/{gid}`:
 ```json
 {"analysis": {"id", "version_id", "version_label", "mode": "internal" | "external",
               "status": "brief_draft" | "queued" | "running" | "draft_report" | "finalised" | "failed",
-              "job_id", "error", "created_at", "completed_at", "finalised_at",
+              "job_id", "error", "created_at", "completed_at", "finalised_at", "notes": [],
               "counts": {"kept", "rejected", "open", "needs_check"}},
- "findings": [finding, …], "rejected": [finding, …], "sources": [], "questions": [finding, …],
+ "findings": [finding, …], "rejected": [finding, …], "questions": [finding, …],
+ "sources": [{"id", "url", "title", "domain", "page_age", "tier", "returned_in_results"}],
+ "brief": {"brief": {…}, "text", "confirmed", "scan": {"hits": [{"text", "reason"}]}} | null,
  "usage": {"calls", "input_tokens", "output_tokens"} | null, "search_count": 0}
 ```
-A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison", "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "disposition" (B.25), "disposition_note", "created_item_ref"}`.
+- `notes` (analysis): plain-language notes about the run, e.g. "The search limit was reached before the research finished, so this report may be incomplete." (a web search tool error, kept as a partial result) or "Left out as not a gap (the map already does this): “…”." `sources` and `brief` are for Analysis B (`[]` and `null` for A).
+A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice" | "external", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote", "url", "tier", "page_age", "citation_id"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison": "absent" | "different" | null, "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "notes": [], "disposition" (B.25), "disposition_note", "created_item_ref"}`.
+- External evidence (Analysis B): `side` `external`, `source_kind` and `tier` the source tier (B.24), `source_name` the page title, `url`, `page_age`, `citation_id` (c1 …), and `quote` the cited text cut to at most 25 words. `url`, `tier`, `page_age` and `citation_id` are empty for internal evidence.
+- Finding `notes`: plain-language flags, e.g. "A link to a step that isn't on this map was removed." (GX6) or "Confirm with your compliance team; this is not legal advice." (a legal or regulatory finding).
 - `findings`: kept findings in report order (facts, then interpretation, then recommendation; high severity first within a section). `rejected`: findings a guardrail or the verifier turned down, with the guardrail (`G3` passage, `G4` quote, `G5` number or role, `GAV` gap verifier); shown in a collapsible section, never as findings. `questions`: causes the sources don't explain (`question` holds the suggested SME question; `provenance` and `severity` empty) — they are dispositioned like findings.
 - `needs_check`: the verifier found the finding only partly supported (`partial`).
 - Names on the hidden list are replaced by roles in every text; `quote` is the passage words the finding cites (names hidden); a silent side has `segment_id: null` and no quote.
@@ -452,6 +457,28 @@ A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "fin
 5. **Writing the report** (no AI): severity by the §3.11.1 rules; provenance `O` for facts, `I` for interpretation and recommendation.
 With no step that differs, the report is empty and no AI call is made. If a stage fails, the analysis is `failed` with the job's plain error and no findings. The map is not changed.
 Errors: `404` ("That version doesn't exist."); `409` "A gap analysis is already running for this version." (one of its analyses is queued or running).
+
+### POST /api/versions/{vid}/gap-analyses/external
+Analysis B, external best practice (PRD §3.11.2): creates the analysis (status `brief_draft`) with a research brief drafted from the version, deterministically (`gap.build_brief`). **No AI call; nothing is sent.** Request: none.
+Response `201`: `{"analysis": {…}, "brief": {"brief", "text", "confirmed": false, "scan": {"hits": [...]}}}`.
+- `brief`: `{"process_name", "industry", "adjacent_industries": [...], "region", "steps": [...], "questions": [...], "max_searches": 10, "allowed_domains": [], "blocked_domains": [], "recency_years": 5}` — the process name and step labels (activities, decisions and approvals, not rejected ones) made generic: every confidential term (Setup), every name on the hidden list and every figure removed; industry and adjacent industries from Setup; the four default research questions.
+- `text`: exactly what would be sent to web search (process, industry, adjacent industries, region focus, steps, questions). The search limit and domain lists go to the search tool's settings, not the text.
+- `scan`: the confidentiality scan of `text` (PRD §3.11.2): every name on the hidden list ("A name from your list of names to hide"), every confidential term ("A confidential term from Setup"), every number or time copied from the map ("A number or time copied from the map") and every run of 8+ consecutive words found in a transcript or document passage ("Words copied from your sources").
+Errors: `404` ("That version doesn't exist.").
+
+### PATCH /api/gap-analyses/{gid}/brief
+Request `{"brief": {…brief as above}, "confirmed": true | false}` (`confirmed`: "This brief contains no confidential information" is ticked). Saves the brief and returns the same shape as the POST above, with a fresh scan. Allowed while the analysis is `brief_draft` or `failed`.
+Errors: `404` ("That gap analysis doesn't exist."); `409` "This analysis has already run. Start a new one to change the brief." (or it is Analysis A); `422` with the field: search limit 3–20, recency 1–30 years, "Use allowed domains or blocked domains, not both." (the API rejects requests with both).
+
+### POST /api/gap-analyses/{gid}/run
+**AI with web search.** Runs Analysis B from the saved brief. Request: none. Response `202`: `{"analysis_id", "job_id"}`; the job (type `gap_external`) runs:
+1. **Searching the web with your brief** (`GB_research`, the web search tool; `max_uses` = the brief's search limit, at most `WEB_SEARCH_MAX_USES_CAP`): only the brief text is sent — never sources, the map, names or confidential terms. Every search result (URL, title, page age) and every citation on the answer (URL, title, cited text) is captured; citations get IDs `c1` … . A tool error (e.g. `max_uses_exceeded`) is kept as a partial result with a plain note on the analysis.
+2. **Organising the findings** (`GB_structure`, no tools): the cited answer becomes findings of the B.23 types, each citing only captured citation IDs, with the steps of the map it concerns and whether the practice is `absent`, `different` or `aligned` (the step list with labels, names hidden, is sent here as in drafting — never to web search).
+3. **Checking every finding against its sources** (no AI): GX1–GX6 (`grounding.verify_citations`): no citation → rejected `GX1`; a cited URL the search didn't return → `GX2`; claim or quote not in the cited text → `GX3`; vendor or unknown sources only → kept, weak evidence (`GX4`); every source older than the recency limit → kept, dated (`GX5`); a step reference not on the map → link removed with a note (`GX6`).
+4. **Independent verification** (`GB_verify`, follows the verifier switch): `not_supported` → rejected `GAV`; `partial` → kept with `needs_check`.
+5. **Writing the report** (no AI): findings the map already follows (`aligned`) are left out as "not a gap" (a note on the analysis); severity by `gap.severity_external`; provenance always `R`; the compliance note on legal or regulatory findings; `search_count` stored.
+If a stage fails, the analysis is `failed` with the job's plain error and no findings; it can be run again. The map is not changed.
+Errors: `404`; `409 BRIEF_NOT_APPROVED` "Tick “This brief contains no confidential information” before running the research." or "Remove the highlighted items from the brief before running the research." (scan hits); `409 WEB_RESEARCH_DISABLED` "Web research is switched off. Turn it on in Settings first."; `409` "A gap analysis is already running for this version."; `409` "This analysis has already run. Start a new one to run the research again." (a `draft_report` or `finalised` analysis, or Analysis A). A web search switched off for Eric's Anthropic organisation fails the job with "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'."
 
 ### GET /api/versions/{vid}/gap-analyses
 Every analysis of the version, newest first: the `analysis` objects above. Errors: `404`.

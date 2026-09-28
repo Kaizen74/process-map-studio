@@ -85,8 +85,8 @@ def _run_draft(config: AppConfig, sessions: Sessions, job: JobView) -> None:
 
 def _run_gap(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     try:
-        result = gap.run_internal(config, sessions, job.id)
-    except Exception as exc:  # the analysis was already marked failed by run_internal
+        result = gap.run_analysis(config, sessions, job.id)
+    except Exception as exc:  # the analysis was already marked failed by run_analysis
         log.exception("Gap analysis job %s failed", job.id)
         result = Err(ErrorKind.IO, gap.UNEXPECTED, {"type": type(exc).__name__})
     with session_scope(sessions) as session:

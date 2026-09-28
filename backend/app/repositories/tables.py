@@ -371,6 +371,7 @@ class GapAnalysis(Row):
     usage: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     completed_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
     finalised_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # about the run (0007)
 
 
 class GapFinding(Row):
@@ -396,6 +397,7 @@ class GapFinding(Row):
     disposition_note: Mapped[str] = mapped_column(Text, default="")
     created_item_ref: Mapped[str] = mapped_column(Text, default="")
     question: Mapped[str] = mapped_column(Text, default="")  # a cause not explained (0006)
+    notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # flags on the finding (0007)
 
 
 class ExternalSource(Row):

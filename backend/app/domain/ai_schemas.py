@@ -281,3 +281,37 @@ class GAVerdict(BaseModel):
 
 class GAVerifyOutput(BaseModel):
     verdicts: list[GAVerdict]
+
+
+# --- Gap analysis B: external best practice (PRD §3.11.2; phase P10) ---------------------------
+
+ExternalFindingType = Literal[
+    "missing_step",
+    "missing_control",
+    "sequence_difference",
+    "decision_rights_difference",
+    "time_or_threshold_benchmark",
+    "kpi_practice",
+    "technology_enabler",
+    "other_difference",
+]
+
+
+class GBFinding(BaseModel):
+    """One practice the cited answer describes, compared with the current map. It may cite only the
+    citation IDs it was given; it can't introduce URLs or text of its own."""
+
+    finding_type: ExternalFindingType
+    title: str = Field(description="Short title in sentence case")
+    claim: str = Field(description="What the cited sources say, in one or two plain sentences")
+    quote: str = Field(description="Verbatim words copied from the cited text, at most 40 words")
+    citation_ids: list[str] = Field(description="IDs of the <citation> items that support it")
+    step_refs: list[str] = Field(description="IDs of the map <step> items it concerns, or empty")
+    comparison: Literal["absent", "different", "aligned"] = Field(
+        description="absent: the map lacks it; different: the map does it differently; "
+        "aligned: the map already does it"
+    )
+
+
+class GBStructureOutput(BaseModel):
+    findings: list[GBFinding]

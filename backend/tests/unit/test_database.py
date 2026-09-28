@@ -212,6 +212,17 @@ def test_downgrade_of_0006_removes_only_gap_questions(migrated: Path) -> None:
     assert "question" in columns
 
 
+def test_downgrade_of_0007_removes_only_gap_notes(migrated: Path) -> None:
+    db.downgrade(migrated, "0006")
+    with sqlite3.connect(migrated) as conn:
+        analyses = {row[1] for row in conn.execute("PRAGMA table_info(gap_analyses)")}
+        findings = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "notes" not in analyses and "notes" not in findings
+    assert "question" in findings and "brief" in analyses
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:
