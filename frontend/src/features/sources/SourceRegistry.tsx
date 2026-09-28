@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from "react";
 import type { Source, SourcePatch } from "../../api/types";
 import { Button, Chip } from "../../components/common";
-import { KIND_OPTIONS, sourceStatus } from "../../lib/sources";
+import { KIND_OPTIONS, NOT_MEASURED, coverageText, sourceStatus } from "../../lib/sources";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -138,8 +138,12 @@ export function SourceRegistry({ sources, selectedId, onOpen, onChange, onDelete
                   </div>
                 </td>
                 <td className="mono">
-                  <span aria-hidden="true">–</span>
-                  <span className="visually-hidden">Measured after a draft</span>
+                  {coverageText(source.coverage_pct) ?? (
+                    <>
+                      <span aria-hidden="true">–</span>
+                      <span className="visually-hidden">{NOT_MEASURED}</span>
+                    </>
+                  )}
                 </td>
                 <td>
                   <Button variant="danger" aria-label={`Delete ${source.filename}`} onClick={() => onDelete(source)}>

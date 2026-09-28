@@ -3,6 +3,7 @@
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
 - G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
 - G3: the Master Process Map Markdown of the sample, fully confirmed and published (PRD §7.3).
+- G4: the alignment-matrix payload of that draft (PRD §4 Views, §5.4 Matrix).
 - G5: the single-file HTML map of the same published version (the embedded font data, which is the
   unchanged font files, is replaced by its size so the baseline stays readable).
 - G6: the outcome of the hallucination-trap run (Appendix A.6): what was rejected, where and why,
@@ -79,6 +80,12 @@ def test_g2_layout_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         layout = client.get(f"/api/versions/{version_id}/layout").json()
         matches_baseline("G2_layout.json", layout)
+
+
+def test_g4_alignment_matrix_of_the_sample(settings_config: AppConfig) -> None:
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        matrix = client.get(f"/api/versions/{version_id}/alignment-matrix").json()
+        matches_baseline("G4_alignment_matrix.json", matrix)
 
 
 def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> None:

@@ -81,10 +81,17 @@ def list_segments(
     page_size: int = 200,
     raw: bool = False,
     around: str | None = None,
+    uncited_only: bool = False,
 ) -> SegmentPage:
     return unwrap(
         sources.list_segments(
-            request.app.state.sessions, source_id, page, page_size, raw=raw, around=around
+            request.app.state.sessions,
+            source_id,
+            page,
+            page_size,
+            raw=raw,
+            around=around,
+            uncited_only=uncited_only,
         )
     )
 

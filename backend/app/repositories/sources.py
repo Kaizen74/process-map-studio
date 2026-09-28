@@ -190,21 +190,26 @@ def replace_segments(session: Session, source_id: str, segments: list[ParsedSegm
 
 
 def segment_page(
-    session: Session, source_id: str, page: int, page_size: int
+    session: Session,
+    source_id: str,
+    page: int,
+    page_size: int,
+    *,
+    uncited_besides: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
-    """One page of segments in reading order, with the mapped role name (if any)."""
-    total = (
-        session.scalar(
-            select(func.count())
-            .select_from(SourceSegment)
-            .where(SourceSegment.source_id == source_id)
-        )
-        or 0
-    )
+    """One page of segments in reading order, with the mapped role name (if any). With
+    `uncited_besides`, only the passages not in that set, interviewer turns left out (G11)."""
+    where = [SourceSegment.source_id == source_id]
+    if uncited_besides is not None:
+        where += [
+            SourceSegment.id.not_in(uncited_besides),
+            SourceSegment.is_interviewer.is_(False),
+        ]
+    total = session.scalar(select(func.count()).select_from(SourceSegment).where(*where)) or 0
     rows = session.execute(
         select(SourceSegment, Role.name)
         .outerjoin(Role, Role.id == SourceSegment.speaker_role_id)
-        .where(SourceSegment.source_id == source_id)
+        .where(*where)
         .order_by(SourceSegment.seq)
         .offset((page - 1) * page_size)
         .limit(page_size)
@@ -437,3 +442,19 @@ def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
         .where(SourceSegment.id.in_(segment_ids))
     )
     return {segment_id: name for segment_id, name in rows}
+
+
+def coverage_counts(
+    session: Session, source_ids: list[str], cited: set[str]
+) -> dict[str, tuple[int, int]]:
+    """For each source: (cited passages, passages), interviewer turns left out (G11)."""
+    counts = {sid: (0, 0) for sid in source_ids}
+    rows = session.execute(
+        select(SourceSegment.id, SourceSegment.source_id).where(
+            SourceSegment.source_id.in_(source_ids), SourceSegment.is_interviewer.is_(False)
+        )
+    )
+    for segment_id, source_id in rows:
+        hit, total = counts[source_id]
+        counts[source_id] = (hit + (segment_id in cited), total + 1)
+    return counts

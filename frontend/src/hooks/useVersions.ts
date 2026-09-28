@@ -1,5 +1,16 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { getQualityCard, getVersion, listVersions, publishVersion, reopenVersion } from "../api/versions";
+import {
+  getAlignmentMatrix,
+  getQualityCard,
+  getRegisters,
+  getVersion,
+  listCauses,
+  listVersions,
+  publishVersion,
+  reopenVersion,
+  validateCause,
+} from "../api/versions";
+import type { ValidationResult } from "../lib/registers";
 import { refreshReview } from "./useReview";
 
 export function useQualityCard(versionId: string | null) {
@@ -47,5 +58,40 @@ export function useReopen(engagementId: string) {
   return useMutation({
     mutationFn: (versionId: string) => reopenVersion(versionId),
     onSuccess: () => refreshVersions(client, engagementId),
+  });
+}
+
+export function useAlignmentMatrix(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "alignment-matrix"],
+    queryFn: () => getAlignmentMatrix(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+export function useRegisters(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "registers"],
+    queryFn: () => getRegisters(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+export function useCauseLibrary(engagementId: string) {
+  return useQuery({
+    queryKey: ["engagements", engagementId, "cause-library"],
+    queryFn: () => listCauses(engagementId),
+  });
+}
+
+/** Confirm, refute or reopen a cause-library entry; the audit log changes too. */
+export function useValidateCause(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ causeId, result }: { causeId: string; result: ValidationResult }) => validateCause(causeId, result),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "cause-library"] });
+      void client.invalidateQueries({ queryKey: ["versions"], predicate: (q) => q.queryKey[2] === "audit" });
+    },
   });
 }

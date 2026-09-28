@@ -13,8 +13,8 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import causes, redaction, refresh
 from app.actions import images as images_action
-from app.actions import redaction, refresh
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.actions.readiness import get_readiness
@@ -390,6 +390,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             result_id = version.id
         # PDF pictures suggested on the steps whose verified evidence cites their page (P8).
         images_action.attach_suggestions(session, result_id)
+        # Cause-library entries for contested and trace-contradicted steps (P9).
+        causes.collect(session, result_id)
     if refreshing:
         versions_action.lint_version(sessions, result_id)
     with session_scope(sessions) as session:

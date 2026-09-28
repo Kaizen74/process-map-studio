@@ -1,0 +1,53 @@
+/* Registers (PRD §5.4 Registers): card lists like the review tabs. Tokens only. */
+.register-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: var(--space-10) var(--space-12);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.register-card p {
+  margin: 0;
+}
+.register-card__title {
+  font-weight: var(--weight-medium);
+}
+.register-card__lane {
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+.register-card__meta {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.register-constraint {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+}
+.register-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--constraint);
+}
+.register-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-4) var(--space-12);
+  margin: 0;
+}
+.register-fields > div {
+  display: contents;
+}
+.register-fields dt {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.register-fields dd {
+  margin: 0;
+}

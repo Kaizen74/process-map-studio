@@ -331,3 +331,67 @@ describe("Sources: viewer", () => {
     expect(screen.queryByRole("button", { name: /Show more passages/ })).not.toBeInTheDocument();
   });
 });
+
+describe("Sources: coverage (PRD §3.8 G11)", () => {
+  const MEASURED = { ...SOP, coverage_pct: 50 };
+  const cited = (seq: number, anchor: string, text: string) => ({ ...segment(seq, anchor, text), cited: true });
+
+  it("the registry shows each file's coverage once a draft uses it", async () => {
+    sourcesApi([MEASURED, { ...MANUAL, coverage_pct: 33.3 }, TRANSCRIPT]);
+    renderApp(PATH);
+    const table = await screen.findByRole("table", { name: "Sources for this engagement" });
+    const rows = within(table).getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("50%");
+    expect(rows[2]).toHaveTextContent("33.3%");
+    expect(within(rows[3] as HTMLElement).getByText("Measured after a draft that uses this file")).toHaveClass(
+      "visually-hidden",
+    );
+  });
+
+  it("the viewer shows n% cited, tags uncited passages and can list only those", async () => {
+    const { fetchMock } = sourcesApi([MEASURED], {
+      "GET /api/sources/s1/segments": () => ({
+        body: {
+          segments: [cited(1, "§3.1", "§3.1 The Load Controller shall check."), segment(2, "¶ 2", "Nobody cites this.")],
+          total: 2,
+          page: 1,
+          pages: 1,
+          coverage_pct: 50,
+        },
+      }),
+    });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("button", { name: "sop_LC-07.docx" }));
+    const viewer = await screen.findByRole("region", { name: "sop_LC-07.docx" });
+    expect(await within(viewer).findByText("cited by the map")).toBeInTheDocument();
+    expect(viewer).toHaveTextContent("50% cited by the map");
+    const [first, second] = within(await within(viewer).findByRole("list", { name: "Passages" })).getAllByRole(
+      "listitem",
+    );
+    expect(first).not.toHaveTextContent("Uncited");
+    expect(within(second as HTMLElement).getByText("Uncited")).toHaveClass("chip--dashed");
+    const toggle = within(viewer).getByRole("button", { name: "Show uncited passages" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute("aria-pressed", "true"));
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/sources/s1/segments?") && String(url).includes("uncited_only=1"))).toBe(true),
+    );
+    expect(await seriousViolations(viewer)).toEqual([]);
+  });
+
+  it("before a draft the viewer says coverage comes later, with no toggle", async () => {
+    sourcesApi([SOP], {
+      "GET /api/sources/s1/segments": () => ({
+        body: { segments: [segment(1, "¶ 1", "Text")], total: 1, page: 1, pages: 1, coverage_pct: null },
+      }),
+    });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("button", { name: "sop_LC-07.docx" }));
+    const viewer = await screen.findByRole("region", { name: "sop_LC-07.docx" });
+    expect(await within(viewer).findByText(/measured after a draft map is made from it/)).toBeInTheDocument();
+    expect(within(viewer).queryByRole("button", { name: "Show uncited passages" })).toBeNull();
+    expect(within(viewer).queryByText("Uncited")).toBeNull();
+  });
+});
+

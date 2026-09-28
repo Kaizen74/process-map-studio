@@ -359,3 +359,21 @@ class ElementDetail(Out):
     review_status: str
     image_count: int
     gap_findings: list[dict[str, object]]
+
+
+# --- Alignment matrix (PRD §4 Views, §5.4 Matrix; phase P9) ------------------------------------
+
+
+class AlignmentRow(Out):
+    """How each kind of source stands on one step: supports · contradicts · silent ·
+    not_applicable (no source of that kind)."""
+
+    element_id: str
+    label: str
+    kind: str
+    sop: str
+    interview: str
+    jd: str
+    artefact: str
+    state: str
+    divergence_types: list[str]

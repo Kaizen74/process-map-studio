@@ -288,3 +288,29 @@ select.registry__input {
 .passage__tags .chip {
   white-space: normal;
 }
+
+/* Coverage (PRD §3.8 G11, §5.7.8): an approval-coloured bar, "n% cited by the map" in words. */
+.coverage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-10);
+}
+.coverage__bar {
+  position: relative;
+  width: 160px;
+  height: 8px;
+  overflow: hidden;
+  border: var(--line-hairline) solid var(--approval-stroke);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+.coverage__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--approval-stroke);
+}
+.coverage__text {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}

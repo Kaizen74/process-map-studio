@@ -144,6 +144,8 @@ export interface Source {
   ocr_pages: number[];
   suggested_images: number;
   created_at: string;
+  /** G11 (P9): the share of its passages the current map cites; null before a draft uses it. */
+  coverage_pct?: number | null;
   /** Only on upload (and kind changes that re-read the file): the background reading job. */
   job_id?: string | null;
 }

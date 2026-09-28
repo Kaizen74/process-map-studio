@@ -164,6 +164,10 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/versions/{map}/audit", None),
     ("GET", "/api/versions/{map}/questions", None),
     ("GET", "/api/versions/{map}/merge-proposals", None),
+    ("GET", "/api/versions/{map}/images", None),
+    ("GET", "/api/versions/{map}/alignment-matrix", None),
+    ("GET", "/api/versions/{map}/registers", None),
+    ("GET", "/api/engagements/{eid}/cause-library", None),
     ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]
 

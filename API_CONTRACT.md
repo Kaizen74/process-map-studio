@@ -182,7 +182,7 @@ Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pd
 Used by: Sources screen (drop zone).
 
 ### GET /api/engagements/{id}/sources
-Response `200`: source objects, oldest first. Errors: `404`. Used by: Sources screen (registry), readiness.
+Response `200`: source objects, oldest first. From P9 each source object also has `coverage_pct` (as on the passages page below: the share of its passages the current map cites, or `null`). Errors: `404`. Used by: Sources screen (registry), readiness.
 
 ### GET /api/sources/{sid} · PATCH /api/sources/{sid} · DELETE /api/sources/{sid}
 GET → source object. PATCH → any of `kind`, `version_date`, `owner`, `controlled_copy` → source object. DELETE → `204`; removes the file, its passages and its suggested images.
@@ -190,7 +190,7 @@ Errors: `404` ("That source doesn't exist. It may have been deleted."); `422`.
 Used by: Sources screen (registry row edits, delete, viewer header).
 
 ### GET /api/sources/{sid}/segments
-Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (from P9; ignored until then), `raw` (`1` only for the owner-only correction editor).
+Query: `page` (1-based, default 1), `page_size` (default 200, max 500), `uncited_only` (P9: `1` lists only the passages no verified claim of the current map cites, interviewer turns left out; `total` and `pages` then count those; can't be combined with `around`: `422` field `uncited_only`), `raw` (`1` only for the owner-only correction editor).
 Response `200`:
 ```json
 {"segments": [{"id": "…", "seq": 3, "anchor": "§3.1", "page": null, "section": "3 Load planning",
@@ -201,7 +201,7 @@ Response `200`:
 - `speaker_role`: the mapped role's name, `"Interviewer"`, or `null` when the speaker isn't mapped yet (never the label, which may be a name).
 - **Names are hidden** (PRD §3.8 G10): `text` and `section` have every redaction term replaced by its replacement (the mapped role, "Interviewer" or "[name]"). With `raw=1` the text is exactly as stored and `speaker_label` is filled; this is one of the three owner-only places where names appear.
 - `around=<segment_id>` (from P5): instead of `page`, return the page that holds this passage (the response's `page` says which). `404` "That passage isn't in this source." when it belongs to another source or doesn't exist.
-- `coverage_pct` stays `null` until a draft exists (P9). Errors: `404`, `422` for a bad page.
+- **Coverage (G11, P9):** the *current map* is the engagement's draft, else its latest published version. A passage is `cited` when a verified claim of the current map cites it (the map's own claims, or the claims behind its steps, which a reopened draft keeps from the version it came from). `coverage_pct` = cited passages ÷ all passages except interviewer turns, as a percentage with one decimal; `null` when there is no current map or the map wasn't made from this source (for example a source added after the draft). Errors: `404`, `422` for a bad page.
 Used by: Sources screen (full-width source viewer; correction editor with `raw=1`); Review detail panel (source viewer opened at a passage with `around`, P5).
 
 ### PATCH /api/segments/{segid} (correction editor, owner-only)
@@ -382,6 +382,41 @@ Response `200`:
 - Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
 - `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
 Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
+
+## Views: alignment matrix, registers, cause library (PRD §4 Views, §5.4 Matrix and Registers) — phase P9
+
+### GET /api/versions/{vid}/alignment-matrix
+How each kind of source stands on each step (PRD §3.7 Stage 3: classified, never reconciled). One row per step (activity, decision, approval; not start, end or rejected steps), in process order:
+`{"element_id", "label", "kind", "sop", "interview", "jd", "artefact", "state", "divergence_types": [...]}`.
+- Columns: `sop` = SOPs, manuals and other documents · `interview` = interview transcripts · `jd` = job descriptions · `artefact` = executed artefacts.
+- Each cell is `supports` · `contradicts` · `silent` · `not_applicable`: `contradicts` if any source of that kind contradicts the step, else `supports` if any supports it, else `silent` if the draft was made from a source of that kind (silence is never contradiction), else `not_applicable` (no source of that kind). A recommended (`R`) step is not assessed: every cell is `not_applicable`. Cells count the same stances as the step's source state.
+- `state` and `divergence_types` are the step's own (B.4, B.5). Labels have names hidden. Works for drafts and published versions.
+Errors: `404` ("That version doesn't exist.").
+
+### GET /api/versions/{vid}/registers
+Everything a register lists for one version (PRD §4 Views, §5.4 Registers), from its own steps (not rejected ones), names hidden:
+```json
+{"k_risk": [{"element_id", "label", "lane", "k_risk"}],
+ "ai_flags": [{"element_id", "label", "lane", "mechanism", "component", "input", "output", "handoff", "basis"}],
+ "constraints_by_cause": [{"cause_type": "single_point_knowledge" | … | null,
+                           "constraints": [{"element_id", "label", "text", "is_key", "provenance"}]}],
+ "external_practice": [{"element_id", "label", "r_reference"}],
+ "questions": [question objects as GET /versions/{vid}/questions],
+ "rejected_claims": {rejected claims as GET /versions/{vid}/rejected-claims}}
+```
+Steps in process order. `constraints_by_cause`: one group per cause type that has constraints, in B.9 order, then `null` (no cause type recorded); key constraints first within a group. `lane` is the lane role's name; `mechanism` the step's decision mechanism (so a judgment step's flag reads as support only). Errors: `404` ("That version doesn't exist.").
+
+### Cause library (PRD §3.5 `cause_library`, §3.11)
+Engagement-level entries, one per step and divergence type, pending until Eric confirms or refutes them. When a draft is made or refreshed, an entry is added (never twice for the same step key and divergence type; existing entries and their validation are kept) for each step on the map whose source state is `contested` or `trace_contradicted`:
+- `pattern`: the divergence notes on the step's contradicting evidence (for example "Threshold divergence: 10 min in SOP vs up to 15 min in practice"), else "The sources disagree about “<step>”." Observed fact, provenance `O`.
+- `inferred_cause` and `cause_type`: only from a constraint recorded on the same step with a cause type (key constraints first), provenance `I`; otherwise empty, meaning "not known yet: ask your SME". No AI call and no guess.
+An entry as returned: `{"id", "element_stable_key", "element_id", "element_label", "divergence_type", "pattern", "inferred_cause", "cause_type", "provenance", "validation_result": "pending" | "confirmed" | "refuted", "created_at"}` — `element_id` and `element_label` are the step with that key on the current map (`null` and the last known label if it is no longer there); names hidden.
+
+### GET /api/engagements/{id}/cause-library
+All entries, in the order they were added. Errors: `404` ("That engagement doesn't exist. It may have been deleted.").
+
+### PATCH /api/cause-library/{cid}
+Request `{"validation_result": "pending" | "confirmed" | "refuted"}` → the entry. Audit rows "Confirmed cause" · "Refuted cause" · "Reopened cause". Errors: `404` ("That cause-library entry doesn't exist."); `422` (field `validation_result`: "Choose pending, confirmed or refuted.").
 
 ## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
 

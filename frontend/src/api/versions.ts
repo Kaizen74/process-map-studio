@@ -1,5 +1,7 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
+import type { AlignmentRow } from "../lib/matrix";
+import type { CauseEntry, Registers, ValidationResult } from "../lib/registers";
 
 const enc = encodeURIComponent;
 
@@ -16,3 +18,15 @@ export const publishVersion = (versionId: string) =>
 
 export const reopenVersion = (versionId: string) =>
   request<VersionDetail>(`/versions/${enc(versionId)}/reopen`, { method: "POST" });
+
+// API_CONTRACT.md → Views (phase P9).
+export const getAlignmentMatrix = (versionId: string) =>
+  request<AlignmentRow[]>(`/versions/${enc(versionId)}/alignment-matrix`);
+
+export const getRegisters = (versionId: string) => request<Registers>(`/versions/${enc(versionId)}/registers`);
+
+export const listCauses = (engagementId: string) =>
+  request<CauseEntry[]>(`/engagements/${enc(engagementId)}/cause-library`);
+
+export const validateCause = (causeId: string, result: ValidationResult) =>
+  request<CauseEntry>(`/cause-library/${enc(causeId)}`, { method: "PATCH", body: { validation_result: result } });

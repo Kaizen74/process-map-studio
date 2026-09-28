@@ -3,6 +3,8 @@ import { DraftScreen } from "./features/draft/DraftScreen";
 import { EngagementIndex } from "./features/engagement/EngagementIndex";
 import { ExportsScreen } from "./features/exports/ExportsScreen";
 import { StepPlaceholder } from "./features/engagement/StepPlaceholder";
+import { MatrixScreen } from "./features/matrix/MatrixScreen";
+import { RegistersScreen } from "./features/registers/RegistersScreen";
 import { EngagementsScreen } from "./features/home/EngagementsScreen";
 import { PublishedScreen } from "./features/published/PublishedScreen";
 import { ReviewScreen } from "./features/review/ReviewScreen";
@@ -24,6 +26,8 @@ export function App() {
         <Route path="engagements/:engagementId/draft" element={<DraftScreen />} />
         <Route path="engagements/:engagementId/review" element={<ReviewScreen />} />
         <Route path="engagements/:engagementId/published" element={<PublishedScreen />} />
+        <Route path="engagements/:engagementId/matrix" element={<MatrixScreen />} />
+        <Route path="engagements/:engagementId/registers" element={<RegistersScreen />} />
         <Route path="engagements/:engagementId/exports" element={<ExportsScreen />} />
         <Route path="engagements/:engagementId/:step" element={<StepPlaceholder />} />
         <Route path="*" element={<NotFoundScreen />} />

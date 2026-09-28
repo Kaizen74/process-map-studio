@@ -375,3 +375,12 @@ def create_reopened(
     session.add(found)
     session.flush()
     return _view(found)
+
+
+def current_map_id(session: Session, engagement_id: str) -> str | None:
+    """The map Eric is working on: the draft if there is one, else the latest published version."""
+    draft = current_draft(session, engagement_id)
+    if draft is not None:
+        return draft.id
+    published = latest_published(session, engagement_id)
+    return str(published["id"]) if published else None

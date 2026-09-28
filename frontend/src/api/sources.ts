@@ -19,9 +19,11 @@ export const updateSource = (sourceId: string, patch: SourcePatch) =>
 
 export const deleteSource = (sourceId: string) => request<null>(`/sources/${enc(sourceId)}`, { method: "DELETE" });
 
-export const listSegments = (sourceId: string, page: number, pageSize = 200, raw = false) =>
+export const listSegments = (sourceId: string, page: number, pageSize = 200, raw = false, uncitedOnly = false) =>
   request<SegmentPage>(
-    `/sources/${enc(sourceId)}/segments?page=${page}&page_size=${pageSize}${raw ? "&raw=1" : ""}`,
+    `/sources/${enc(sourceId)}/segments?page=${page}&page_size=${pageSize}${raw ? "&raw=1" : ""}${
+      uncitedOnly ? "&uncited_only=1" : ""
+    }`,
   );
 
 // Owner-only places (PRD §3.8 G10): speaker labels and raw text may contain names.

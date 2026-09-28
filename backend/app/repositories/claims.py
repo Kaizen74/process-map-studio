@@ -8,7 +8,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
-from app.repositories.tables import Claim, Unknown
+from app.repositories.tables import Claim, Element, ElementClaim, Unknown
 
 
 def _record(row: Claim) -> ClaimRecord:
@@ -142,3 +142,20 @@ def delete_claims(session: Session, claim_ids: list[str]) -> None:
     if claim_ids:
         session.execute(delete(Claim).where(Claim.id.in_(claim_ids)))
         session.flush()
+
+
+def cited_segment_ids(session: Session, version_id: str) -> set[str]:
+    """Passages cited by a verified claim of the version: its own claims and the claims behind its
+    steps (a reopened draft keeps those of the version it came from). G11 coverage."""
+    behind_steps = (
+        select(ElementClaim.claim_id)
+        .join(Element, Element.id == ElementClaim.element_id)
+        .where(Element.version_id == version_id)
+    )
+    rows = session.scalars(
+        select(Claim.segment_ids).where(
+            Claim.verification_status == "verified",
+            (Claim.version_id == version_id) | Claim.id.in_(behind_steps),
+        )
+    )
+    return {segment for ids in rows for segment in ids}

@@ -317,6 +317,70 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       expect(stored.includes(trace), `"${trace}" left in the stored photo`).toBe(false);
     }
 
+    // P9: coverage on Sources (G11): the share of each file the map cites, uncited passages on request.
+    await page.goto(`/engagements/${id}/sources`);
+    const registry = page.getByRole("table", { name: "Sources for this engagement" });
+    await expect(registry.getByRole("row", { name: /interview_transcript\.txt/ })).toContainText("100%");
+    await expect(registry.getByRole("row", { name: /sop_LC-07\.docx/ })).toContainText("50%");
+    await registry.getByRole("button", { name: "sop_LC-07.docx", exact: true }).click();
+    const lc07 = page.getByRole("region", { name: "sop_LC-07.docx" });
+    await expect(lc07).toContainText("50% cited by the map");
+    await expect(lc07.getByText("Uncited", { exact: true })).toHaveCount(5);
+    await lc07.getByRole("button", { name: "Show uncited passages" }).click();
+    await expect(lc07.getByRole("button", { name: "Show uncited passages" })).toHaveAttribute("aria-pressed", "true");
+    await expect(lc07.getByRole("list", { name: "Passages" }).getByRole("listitem")).toHaveCount(5);
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p9-sources-coverage.png"), fullPage: true });
+    }
+
+    // P9: the Matrix, every step against every kind of source; silence shown as silent.
+    await page.getByRole("link", { name: /^Matrix/ }).click();
+    const matrixTable = page.getByRole("table", { name: "How each kind of source stands on each step" });
+    await expect(matrixTable.getByRole("row")).toHaveCount(9);
+    const lirRow = matrixTable.getByRole("row", { name: /Load and return LIR/ });
+    await expect(lirRow).toContainText("Contradicts");
+    await expect(lirRow).toContainText("Contested");
+    await expect(lirRow).toContainText("Threshold");
+    await expect(matrixTable.getByRole("row", { name: /Approve load plan/ })).toContainText("Silent");
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Matrix").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p9-matrix.png"), fullPage: true });
+    }
+    await page.getByRole("button", { name: "Ownership 1" }).click();
+    await expect(matrixTable.getByRole("row")).toHaveCount(2);
+    await matrixTable.getByRole("button", { name: "Deviation in limits?" }).click();
+    await expect(
+      page.getByRole("complementary", { name: "Step details" }).getByRole("heading", { name: "Deviation in limits?" }),
+    ).toBeVisible();
+
+    // P9: Registers, including the cause library (confirm an entry).
+    await page.getByRole("link", { name: /^Registers/ }).click();
+    const registerChoice = page.getByRole("radiogroup", { name: "Register" });
+    await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims"]) {
+      await registerChoice.getByRole("radio", { name }).click();
+      await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
+      expect(await seriousViolations(page)).toEqual([]);
+    }
+    await registerChoice.getByRole("radio", { name: "Cause library" }).click();
+    const lirCause = page.getByRole("listitem").filter({ hasText: "Threshold divergence" });
+    await expect(lirCause).toContainText("Possible cause (inferred from this step's constraints");
+    await expect(page.getByRole("listitem").filter({ hasText: "Ownership divergence" })).toContainText(
+      "Cause not known yet",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p9-registers-causes.png"), fullPage: true });
+    }
+    await lirCause.getByRole("button", { name: "Confirm" }).click();
+    await expect(lirCause.getByRole("button", { name: "Reopen" })).toBeVisible();
+    expect((await publicText(page)).includes("Priya"), "a name shown on Registers").toBe(false);
+    await page.goto(`/engagements/${id}/review`);
+    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+
     // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
     await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
     await page.getByRole("button", { name: "Publish" }).click();

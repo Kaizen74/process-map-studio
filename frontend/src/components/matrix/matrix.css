@@ -1,0 +1,94 @@
+/* Alignment matrix (PRD §5.4 Matrix): sticky step column and header. Tokens only. */
+.matrix {
+  max-height: 70vh;
+  overflow: auto;
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-section);
+  background: var(--surface);
+}
+.matrix:focus-visible {
+  outline: var(--line-outline) solid var(--ink);
+  outline-offset: 2px;
+}
+.matrix__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-body);
+}
+.matrix__table th,
+.matrix__table td {
+  padding: var(--space-8) var(--space-12);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: var(--surface);
+}
+.matrix__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-top: none;
+  border-bottom: var(--line-hairline) solid var(--border);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.matrix__table .matrix__step {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 180px;
+  border-right: var(--line-hairline) solid var(--border-soft);
+  font-weight: var(--weight-regular);
+  white-space: normal;
+}
+.matrix__table thead .matrix__step {
+  z-index: 2;
+}
+.matrix__row {
+  cursor: pointer;
+}
+.matrix__row:hover th,
+.matrix__row:hover td {
+  background: var(--surface-2);
+}
+.matrix__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.matrix__none {
+  color: var(--ink-4);
+}
+.matrix-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+.matrix-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.matrix-filters legend {
+  float: left;
+  margin-right: var(--space-6);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.matrix-filter[aria-pressed="true"] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 var(--line-hairline) var(--ink);
+  font-weight: var(--weight-medium);
+}
