@@ -21,7 +21,7 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
   { key: "gap_analysis", label: "Gap analysis", slug: "gap-analysis", optional: true, arrives: "P10" },
   { key: "registers", label: "Registers", slug: "registers", arrives: "P9" },
   { key: "leadership", label: "Leadership", slug: "leadership", arrives: "P11" },
-  { key: "exports", label: "Exports", slug: "exports", arrives: "P7" },
+  { key: "exports", label: "Exports", slug: "exports" },
 ];
 
 export function engagementPath(id: string, key?: NavKey | null): string {

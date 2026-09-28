@@ -126,6 +126,8 @@ const DRAFT_SOURCES = [
 ];
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
+  // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
+  test.setTimeout(90_000);
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });
@@ -287,6 +289,54 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     if (process.env.PMS_SCREENSHOT_DIR) {
       await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-published.png"), fullPage: true });
     }
+    // Exports: the four files of v1.0, privacy-scanned; the HTML map makes no requests and no errors.
+    await page.getByRole("link", { name: "Exports" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Exports" })).toBeVisible();
+    await expect(page.getByText("No images, verbatim quotes or names.")).toHaveCount(4);
+    await expect(page.getByText(/Quality card: 9 of 9 green/).first()).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-exports.png"), fullPage: true });
+    }
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("link", { name: "Download Master Process Map (.md) of v1.0" }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("load-control-v1-0-master-map.md");
+    const files: Record<string, string> = {};
+    for (const format of ["md", "json", "csv", "html"]) {
+      const href = await page
+        .getByRole("link", { name: new RegExp(`^Download .*\\(\\.${format}\\) of v1\\.0$`) })
+        .getAttribute("href");
+      const response = await request.get(href ?? "");
+      expect(response.status(), format).toBe(200);
+      files[format] = await response.text();
+    }
+    for (const [format, text] of Object.entries(files)) {
+      expect(text.includes("Priya"), `a hidden name in the ${format} export`).toBe(false);
+      expect(/<img\b|data:image\//i.test(text), `an image in the ${format} export`).toBe(false);
+    }
+    expect(files.md).toContain("## 3. Recommendation: enablement and gaps");
+    const offline = await page.context().newPage();
+    const requests: string[] = [];
+    const errors: string[] = [];
+    offline.on("request", (r) => {
+      if (!r.url().startsWith("data:") && r.url() !== "about:blank") requests.push(r.url());
+    });
+    offline.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    offline.on("pageerror", (e) => errors.push(String(e)));
+    await offline.setContent(files.html ?? "", { waitUntil: "load" });
+    await expect(offline.getByRole("group", { name: "Swimlane map" })).toBeVisible();
+    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).click();
+    await expect(offline.locator(".step:target")).toContainText("Draft load plan");
+    expect(requests, "the HTML map asked for something outside itself").toEqual([]);
+    expect(errors, "the HTML map logged errors").toEqual([]);
+    expect(await seriousViolations(offline)).toEqual([]);
+    await offline.close();
+    await page.getByRole("link", { name: "Published" }).click();
+
     // Reopen: a new draft with every reviewed step locked.
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
     await expect(page.getByText("Draft v1.1 draft")).toBeVisible();

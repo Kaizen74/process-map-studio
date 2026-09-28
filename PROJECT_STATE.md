@@ -5,9 +5,9 @@
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) in progress; it will take about two sessions.
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally); its work is on branch `claude/charming-davinci-sck1cq`, waiting for Eric to merge it into `main`. Next: Phase P8 (images).
 
-## This session (2026-09-28, session 10) — goal: Phase P7 (quality card, publish, exports); P7 will take about two sessions
+## This session (2026-09-28, session 10) — goal: Phase P7 (quality card, publish, exports) — done in one session
 P7 follows PRD §6.3: pure export renderers first (they feed the quality card's structural checks Q7–Q9), then the quality card, then publish and reopen (contract first), then the UI. The banner's quality card button and Publish change the approved Review screenshot, so new screenshots go to Eric for approval in the UI increment that adds them.
 - [x] Increment 1 — exports service (contract first): Master Process Map Markdown per §7.3 (Facts · Interpretation · Recommendation, provenance tag on every line, role names only, no quotes, no images), graph JSON, RACI CSV (G3 moves to increment 4, when a version can be published)
 - [x] Increment 2 — HTML export: single-file offline map drawn from the backend layout, shared design tokens and embedded IBM Plex fonts, no external requests (G5 in increment 4)
@@ -15,7 +15,7 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - [x] Increment 4 — publish and reopen: `POST /versions/{vid}/publish` (`409 PUBLISH_BLOCKED` with every blocker), `POST /versions/{vid}/reopen` (deep copy, statuses carried over as confirmed), `GET /engagements/{id}/versions`, `GET /versions/{vid}`, change log, `GET /versions/{vid}/export/{fmt}` (published and green only); "validated by" from Settings; **G3 and G5 golden baselines**
 - [x] Increment 5 — UI: quality card button and popover in the banner, Publish, the "Publish blocked" list whose rows go to the step; new Review screenshots for Eric's approval
 - [x] Increment 6 — UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
-- [ ] Increment 7 — IN PROGRESS: UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
+- [x] Increment 7 — UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -88,12 +88,13 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - 2026-09-28 Publish and reopen: publishing refused with every blocker until the card is green, then v1.0, v1.1 …; reopen as a locked copy; versions list and detail with change log; exports of published versions (md, json, csv, html); G3 and G5 golden baselines (13 checks)
 - 2026-09-28 Review: the quality card button (n of 9 green) and popover, Publish, and the "Publish blocked" list whose rows open the step; Eric approved the new Review screenshots as the visual baseline (13 checks)
 - 2026-09-28 Published: the published version read-only in the workbench, with a version picker (superseded ones labelled), its change log and Reopen as new draft; the browser path publishes and reopens the sample (13 checks)
+- 2026-09-28 Exports: the Exports screen (four downloads of a published version, what each leaves out, its quality card); browser checks of every export (no hidden names or images; the HTML map makes no requests and logs no errors); GUIDE and README; P7 closed (13 checks)
 
 ## Not started yet
 - P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
-1. The next task is: the first unchecked increment of Phase P7 in the list above (PRD §6.3 P7, §7.2 quality card, §7.3 export template, §3.5 versions and locking, §5.7.1, §5.7.9, §5.9). Check the merge status of the working branch first (if merged, restart it from `main`).
+1. The next task is: plan Phase P8 (PRD §6.3 P8: images, constraint 11 — suggested images from PDFs, uploads with caption, type and redaction confirmation, EXIF stripped, walkthrough strip, Keep/Discard; never in exports) into ~30-minute increments here, contract first. Check the merge status of the working branch first (if merged, restart it from `main`).
 2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p7-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
@@ -102,6 +103,7 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- The `phase-p7` tag: see the report card for whether it could be pushed (tags have never been pushable from cloud sessions). P7's last commit is on branch `claude/charming-davinci-sck1cq`.
 - The `phase-p6` tag: see the report card for whether it could be pushed (tags have never been pushable from cloud sessions). P6's last commit is on branch `claude/charming-davinci-sck1cq`.
 - The `phase-p5` tag was created locally but could not be pushed (the connection is dropped for tags, as in every phase); P5's last commit is on branch `claude/charming-davinci-sck1cq`. Eric can create the tag on GitHub after merging.
 - The `phase-p4` tag: see the report card for whether it could be pushed. P4's last commit is on branch `claude/charming-davinci-sck1cq`.

@@ -16,9 +16,3 @@ export const publishVersion = (versionId: string) =>
 
 export const reopenVersion = (versionId: string) =>
   request<VersionDetail>(`/versions/${enc(versionId)}/reopen`, { method: "POST" });
-
-export type ExportFormat = "md" | "json" | "csv" | "html";
-
-/** The download address of an export (a plain link: the browser saves the file). */
-export const exportUrl = (versionId: string, format: ExportFormat) =>
-  `/api/versions/${enc(versionId)}/export/${format}`;

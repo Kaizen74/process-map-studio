@@ -1,0 +1,27 @@
+/* Exports screen (PRD §5.4). Tokens only. */
+.exports__version {
+  max-width: 320px;
+}
+.exports__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-16);
+}
+.export-card .card__body,
+.export-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.export-card__excluded,
+.export-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.export-card__download {
+  align-self: flex-start;
+  text-decoration: none;
+}

@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-27 (build phase P6)*
+*Updated: 2026-09-28 (build phase P7)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -7,7 +7,7 @@ This guide explains how to **use** the app. How to install, start, stop, update,
 You give it the documents behind one process: an SME interview transcript, SOPs, job descriptions and supporting documents. Claude reads them and drafts a swimlane map of how the work is really done: steps, roles, who is responsible and accountable, decisions, approvals, timings, KPIs and constraints. Every step links to the exact passage it came from. The app checks the AI's work before you see it, and anything it can't find in your documents is thrown out and listed for you. You review every step, and nothing is published until you have.
 
 ## What you can do today
-The app is being built in phases. At the moment (phase P6, finished 2026-09-27) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, keep a list of names the app hides, and **create a draft map**: Claude reads every source, every claim it makes is checked against your documents, and the checked claims are grouped into steps, compared source by source, checked a second time by the independent verifier and built into a draft map with questions for your SME. On **Review** you see the draft as a swimlane map or a table, open any step's details, follow each piece of evidence to the exact passage, and **review every step**: confirm it, edit it, reject it or add a step that is missing. Questions for your SME, rejected claims, the audit log, merge decisions and the map checks sit in tabs under the map. **Refresh draft from sources** redrafts only the steps you haven't reviewed. Publishing arrives in phase P7.
+The app is being built in phases. At the moment (phase P7, finished 2026-09-28) you can start it, save your name and your Claude API key, create an engagement for each process, describe its scope and roles, upload documents and interview transcripts and read them inside the app, map each interview speaker to a role, keep a list of names the app hides, and **create a draft map**: Claude reads every source, every claim it makes is checked against your documents, and the checked claims are grouped into steps, compared source by source, checked a second time by the independent verifier and built into a draft map with questions for your SME. On **Review** you see the draft as a swimlane map or a table, open any step's details, follow each piece of evidence to the exact passage, and **review every step**: confirm it, edit it, reject it or add a step that is missing. Questions for your SME, rejected claims, the audit log, merge decisions and the map checks sit in tabs under the map. **Refresh draft from sources** redrafts only the steps you haven't reviewed. When every step is reviewed and the **quality card** is green, **Publish** the map: it becomes read-only on **Published**, and **Exports** gives it to you as the Master Process Map, a JSON file, a RACI spreadsheet and a single-file interactive map.
 
 **Start and stop** (full steps in [README.md](README.md)): double-click **Start.command** (Mac) or **start.bat** (Windows). Your browser opens the app at http://127.0.0.1:8000. Close the small window to stop it.
 
@@ -108,6 +108,22 @@ The app splits an interview into who said what and when. It reads `[06:40] Name:
 7. **Keyboard:** **J** and **K** move to the next and previous step, **C** confirms, **E** edits, **R** rejects, **1** to **4** switch lens, **Esc** closes the source or a form, and **?** shows the list. They do nothing while you are typing in a field.
 8. **More → Refresh draft from sources** (for example after adding a source): Claude reads every source again and redrafts only the steps you haven't reviewed. Steps you confirmed, edited, added or rejected stay exactly as they are, questions you marked answered stay answered, and the draft gets the next number (v0.2). The Draft screen shows its progress.
 
+### Quality card and publishing, step by step
+1. The Review banner shows **Quality card: n of 9 green** with a dot (orange until everything is green). Click it to see all ten checks: provenance, verified evidence, labelled exits, lanes and ownership, AI flags, fully reviewed, facts/interpretation/recommendation kept apart, no hidden names in the exports, no images in the exports, and map size (a size warning never stops you publishing). A failing check says in red what to fix; warnings such as steps without a time are listed beneath.
+2. Click **Publish**. If anything still stops it, the same box opens as **Publish blocked** and lists every item (for example "“Draft load plan” hasn't been reviewed yet"). Click an item to go straight to its step.
+3. When everything is green, **Publish** makes the first published version **v1.0** (then v1.1, v1.2 …), records you as the validator and opens the **Published** screen. A published version never changes.
+
+### Published, step by step
+1. **Published** shows the published map exactly like Review, but read-only: no review buttons, no outlines, no editing, and no Merge or Map checks tabs. The banner says who validated it and when.
+2. **Version** switches between published versions; earlier ones are marked **superseded**.
+3. **Changes in this version** lists what was confirmed, edited, rejected or added while it was the draft.
+4. **Reopen as new draft** (on the latest version) makes a new draft, for example **v1.1 draft**, with every step you reviewed still locked, and opens it on Review. Review it, then publish it as v1.1. While a draft is open, the button becomes a link to it.
+
+### Exports, step by step
+1. **Exports** offers four downloads of a published version (choose the **Version** at the top): **Master Process Map (.md)** (the full write-up in three sections: facts, interpretation, recommendation), **Graph (.json)** (the map as data, for other tools), **RACI (.csv)** (opens in a spreadsheet) and **Interactive map (.html)** (the swimlane map in one file that opens in any browser, even offline; click a step to jump to its details).
+2. Every export uses role names only and leaves out images, verbatim quotes and the names on your hidden-names list. Rejected steps are left out. The quality card is printed at the top.
+3. Before anything is published, the screen explains that you need a published version with a green quality card first.
+
 ### Settings, step by step
 1. Click **Settings** (top right), or **Add your Claude API key** on the home screen.
 2. **Claude connection:** paste your key into **Claude API key** and click **Save key**. The box empties and the card shows "Saved key ••••••••" followed by the key's last 4 characters. That is all the app will ever show of it. To get a key: sign in at platform.claude.com → API keys → Create key → copy it once.
@@ -129,7 +145,7 @@ One Settings card arrives later: **Web research** (for the optional external bes
 | Sources | Upload and read documents and interviews, map speakers to roles, hide names, correct transcripts; scanned pages read while drafting (now); coverage (P9) | Now, P9 |
 | Draft | Create a draft map and watch all seven stages; its steps, checks, rejected claims and open questions | Now |
 | Review | The draft map and table, the detail panel, evidence opened at the passage; confirm, edit, reject and add steps; questions, rejected claims, audit, merges and map checks; refresh the draft | Now |
-| Published and Exports | Read-only published maps; Markdown, JSON, CSV and HTML exports | P7 |
+| Published and Exports | Read-only published maps with versions, change log and Reopen; Markdown, JSON, CSV and HTML exports | Now |
 | Matrix and Registers | Source alignment and the registers | P9 |
 | Gap analysis (optional) | Documents vs practice, and external best practice | P10 |
 | Leadership | Where the process jams and why | P11 |
@@ -138,6 +154,7 @@ One Settings card arrives later: **Web research** (for the optional external bes
 Step-by-step workflows (set up, upload, draft, review, publish, gap analysis, export) are added here as each screen is built.
 
 ## What changed recently
+- 2026-09-28 (phase P7): **Publishing.** The Review banner shows the quality card (ten checks) and **Publish**; if something is missing, Publish lists every item and each one opens its step. Published maps are read-only on the new **Published** screen, with a version picker, what changed, and **Reopen as new draft**. The new **Exports** screen downloads the Master Process Map, JSON, a RACI spreadsheet and a single-file interactive map, all without images, quotes or names. You approved the new Review screenshots.
 - 2026-09-27 (phase P6): **Review** is now the review workbench. Confirm, edit, reject or restore each step, and the next one opens by itself. Add a missing step from a passage or a reference. Switch between the map and a table (with filters and editing in place). Tabs under the map hold the validation questions (copy or download them for the SME session), rejected claims, the audit log, merge decisions and the map checks. Keyboard shortcuts (press ?). **Refresh draft from sources** keeps every step you reviewed. You approved the new Review screenshots, which are checked automatically at every run.
 - 2026-09-27 (phase P5): **Review** draws the draft as a swimlane map with four lenses, Fit and 100%, a progress bar per step and the process cards. Clicking a step shows its evidence (with the quoted words), how its confidence was worked out, who is responsible and accountable (disputes marked A?), decision rights, time, constraints and AI flags; each piece of evidence opens the source at the exact passage. A RACI matrix sits under the map. The Review screen you approved is now checked automatically at every run, so an accidental change to how the map looks is caught.
 - 2026-09-27 (phase P4): The draft now becomes a map. After the claims are checked, Claude groups them into steps, compares every source with them, the independent verifier checks each step again, and the map is built with lanes, phases, responsibilities, times, constraints and validation questions. **Draft** shows steps drafted, steps to check, rejected claims and open questions; the home card and the **Review** step count the steps waiting for you. Viewing the map arrives in phase P5.
