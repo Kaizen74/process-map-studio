@@ -84,3 +84,39 @@ export function checkImageDetails(details: ImageDetails, needFile: boolean): Ima
 }
 
 export const EMPTY_DETAILS: ImageDetails = { file: null, caption: "", imageType: "", confirmed: false };
+
+/** One card of the walkthrough strip (PRD §5.7.11). */
+export interface WalkthroughCard {
+  image: StepImage;
+  elementId: string;
+  /** Position among the steps (start and end not counted), from 1. */
+  stepNumber: number;
+  stepName: string;
+}
+
+const STEP_KINDS = new Set(["activity", "decision", "approval"]);
+
+/**
+ * The strip's cards: kept pictures only (a suggestion joins once kept, PRD §5.8), in process
+ * order, which is the order of the graph's elements. Pictures on rejected steps are left out.
+ */
+export function walkthroughCards(
+  elements: readonly { id: string; kind: string; label: string; review_status: string }[],
+  images: readonly StepImage[],
+): WalkthroughCard[] {
+  const steps = elements.filter((e) => STEP_KINDS.has(e.kind) && e.review_status !== "rejected");
+  const number = new Map(steps.map((e, i) => [e.id, i + 1]));
+  const name = new Map(steps.map((e) => [e.id, e.label]));
+  return images
+    .filter((image) => image.status === "kept" && number.has(image.element_id ?? ""))
+    .map((image) => {
+      const id = image.element_id ?? "";
+      return { image, elementId: id, stepNumber: number.get(id) ?? 0, stepName: name.get(id) ?? "" };
+    })
+    .sort((a, b) => a.stepNumber - b.stepNumber);
+}
+
+/** The steps that show the has-images marker: any picture that isn't discarded. */
+export function stepsWithImages(images: readonly StepImage[]): Set<string> {
+  return new Set(images.filter((i) => i.status !== "discarded" && i.element_id).map((i) => i.element_id ?? ""));
+}

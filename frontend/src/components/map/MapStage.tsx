@@ -12,7 +12,7 @@ export interface MapStageProps {
   scale: number;
   selectedId: string | null;
   onSelect: (elementId: string) => void;
-  /** Steps that have images to show (P8); none until then. */
+  /** Steps with a picture that isn't discarded: the has-images marker (PRD §5.5). */
   withImages?: ReadonlySet<string>;
 }
 
@@ -80,13 +80,15 @@ export function MapStage({ graph, layout, lens, scale, selectedId, onSelect, wit
         {layout.nodes.map((node) => {
           const element = elements.get(node.id);
           if (!element) return null;
+          const hasImages = withImages?.has(node.id) ?? false;
+          const name = nodeName(element, roles.get(element.lane_role_id ?? "") ?? "");
           return (
             <MapNode
               key={node.id}
               element={element}
               node={node}
-              name={nodeName(element, roles.get(element.lane_role_id ?? "") ?? "")}
-              markers={markersFor(element, { hasImages: withImages?.has(node.id) ?? false })}
+              name={hasImages ? `${name}, has images` : name}
+              markers={markersFor(element, { hasImages })}
               lens={lensLine(element, lens, longest)}
               selected={node.id === selectedId}
               onSelect={onSelect}

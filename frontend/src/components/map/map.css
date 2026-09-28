@@ -536,3 +536,84 @@
   align-items: stretch;
   gap: var(--space-8);
 }
+
+/* Visual walkthrough strip (PRD §5.7.11) ------------------------------------------------------- */
+
+.walkthrough {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.walkthrough__title {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.walkthrough__note {
+  font-weight: var(--weight-regular);
+  color: var(--ink-4);
+}
+.walkthrough__list {
+  display: flex;
+  gap: var(--space-10);
+  margin: 0;
+  padding: 0 0 var(--space-6);
+  overflow-x: auto;
+  list-style: none;
+}
+.walkthrough__card {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 200px;
+  height: 100%;
+  padding: var(--space-6);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.walkthrough__card:hover {
+  border-color: var(--border-strong);
+}
+.walkthrough__card--selected,
+.walkthrough__card--selected:hover {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 var(--line-hairline) var(--ink);
+}
+.walkthrough__img,
+.walkthrough__placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  object-fit: cover;
+}
+.walkthrough__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, var(--border-soft) 0 6px, var(--surface-2) 6px 12px);
+}
+.walkthrough__placeholder-text {
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-size: var(--text-micro);
+  color: var(--ink-2);
+}
+.walkthrough__step {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+}
+.walkthrough__caption {
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
