@@ -124,7 +124,11 @@ def test_draft_review_publish_and_gap_analysis(client: TestClient, engagement: s
     )
     body = readiness(client, engagement)
     assert body["draft_exists"] is True and body["nav"]["draft"] == "done"
-    assert body["nav"]["review"] == "attention" and body["nav_counts"]["review"] == 3
+    # 3 steps left to review, plus the quality card's other blockers (P7): these bare steps have
+    # no verified passage (Q2) and no roles or connections (Q4). Q6 "Fully reviewed" is the
+    # 3 steps themselves, so it isn't counted twice.
+    assert body["blockers_count"] == 3
+    assert body["nav"]["review"] == "attention" and body["nav_counts"]["review"] == 3 + 2
     assert (
         body["nav"]["published"] == "not_started" and body["nav"]["gap_analysis"] == "not_started"
     )

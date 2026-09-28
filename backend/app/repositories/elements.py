@@ -305,6 +305,21 @@ def image_count(session: Session, element_id: str) -> int:
     )
 
 
+def suggested_image_count(session: Session, version_id: str) -> int:
+    """Suggested images on the version's steps still waiting for Keep or Discard (Q6)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Image)
+            .where(
+                Image.element_id.in_(_for_elements(version_id)),
+                Image.status == ImageStatus.SUGGESTED.value,
+            )
+        )
+        or 0
+    )
+
+
 def element(session: Session, element_id: str) -> ElementRecord | None:
     row = session.get(Element, element_id)
     return ElementRecord.model_validate(row) if row else None

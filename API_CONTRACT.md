@@ -259,7 +259,7 @@ Response `200`:
 - `transcripts_ready`: at least one `interview_transcript` source has `text_status: "ready"`.
 - `documents_ready`: at least one SOP, manual, executed artefact or other document is ready (a job description alone doesn't describe the steps).
 - `speakers_unmapped`: speaker labels in ready transcripts with no role and not marked Interviewer.
-- `blockers_count`: failing hard checks on the latest draft's quality card (from P7; `0` until then).
+- `blockers_count`: failing hard checks on the current draft's quality card (phase P7; `0` without a draft), worked out when asked.
 - `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · process document · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true. File names are shown with names hidden.
 - `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** stays not started until exports are recorded (P7).
 - `nav_counts` has an entry only for items in `attention`.
@@ -365,6 +365,22 @@ The lint report of PRD §3.7 (L1–L12), stored on the version when the draft is
 ```
 Failures block publishing (P7); warnings are listed beneath the quality card. Since P5 the warnings include "The map has n line crossings; consider changing the lane order." (L12, more than 3 crossings in the layout). A version without a stored report is linted on request.
 Errors: `404`. Used by: Draft summary (P4), Review Lint tab (P6), quality card (P7).
+
+### GET /api/versions/{vid}/quality-card (phase P7)
+The publish quality card of PRD §7.2, worked out afresh for a draft (and stored with it); a published version returns the card stored when it was published.
+Response `200`:
+```json
+{"checks": [{"id": "Q1", "name": "Provenance green", "status": "pass", "hard": true,
+             "detail": "All 8 steps are tagged O, I or R."},
+            {"id": "Q10", "name": "60-minute validatable", "status": "warning", "hard": false,
+             "detail": "30 steps and 5 lanes: consider splitting by phase."}],
+ "warnings": ["Activity \"Issue load sheet\" has no time stated."],
+ "all_green": false}
+```
+- `status`: `pass` · `fail` (hard checks Q1–Q9) · `warning` (Q10 only, when above 25 steps or 6 lanes). `all_green`: every hard check passes.
+- Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
+- `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
+Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
 
 ## Review (PRD §4 Review, §5.6–§5.8) — phase P5
 

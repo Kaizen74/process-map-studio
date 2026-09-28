@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from app.domain.graph import Out
+from pydantic import BaseModel
+
+from app.domain.graph import Graph, LintReport, Out
 
 CheckStatus = Literal["pass", "fail", "warning"]
 
@@ -24,3 +26,18 @@ class QualityCard(Out):
     warnings: list[str]
     #: True when every hard check passes (Q10 is only a warning).
     all_green: bool
+
+
+class QualityInput(BaseModel):
+    """What the quality card is worked out from (`services/quality.build_quality_card`)."""
+
+    graph: Graph
+    lint: LintReport
+    pending_merges: int
+    open_image_suggestions: int
+    #: Claims behind the map's steps that are not verified (should always be 0).
+    unverified_claims: int
+    #: The rendered exports, by format: md, json, csv, html.
+    exports: dict[str, str]
+    #: Names on the redaction list (the owner-only list; never shown by the card).
+    hidden_terms: list[str]

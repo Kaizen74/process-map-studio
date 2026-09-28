@@ -163,3 +163,19 @@ def delete_unused_phases(session: Session, version_id: str) -> None:
         .where(Phase.id.not_in(used.where(Element.phase_id.is_not(None))))
     )
     session.flush()
+
+
+def publication(session: Session, version_id: str) -> tuple[str, str]:
+    """(published_at, published_by) of a version; empty strings while it is a draft."""
+    row = session.get(MapVersion, version_id)
+    if row is None:
+        return "", ""
+    return row.published_at or "", row.published_by or ""
+
+
+def set_quality_card(session: Session, version_id: str, card: dict[str, Any]) -> None:
+    session.execute(update(MapVersion).where(MapVersion.id == version_id).values(quality_card=card))
+
+
+def quality_card(session: Session, version_id: str) -> dict[str, Any] | None:
+    return session.scalar(select(MapVersion.quality_card).where(MapVersion.id == version_id))
