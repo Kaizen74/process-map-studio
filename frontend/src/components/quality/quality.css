@@ -1,0 +1,93 @@
+/* Quality card and publish blockers (PRD §5.7.9). Tokens only. */
+.quality {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.quality__checks,
+.quality__warnings ul,
+.blockers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.quality__check {
+  display: grid;
+  grid-template-columns: 28px 14px 1fr;
+  align-items: start;
+  gap: var(--space-6);
+}
+.quality__id {
+  font-size: var(--text-label);
+  color: var(--ink-4);
+}
+.quality__body {
+  display: flex;
+  flex-direction: column;
+}
+.quality__name {
+  font-weight: var(--weight-medium);
+}
+.quality__detail,
+.quality__legend,
+.quality__warnings {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.quality__detail--fail {
+  color: var(--danger-text);
+}
+.quality__heading {
+  font-weight: var(--weight-medium);
+  color: var(--ink-2);
+  margin-bottom: var(--space-4);
+}
+.quality__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding-top: var(--space-8);
+  border-top: var(--line-hairline) solid var(--border-soft);
+}
+.check-glyph {
+  flex: none;
+  margin-top: 2px;
+}
+.check-glyph--pass {
+  fill: var(--approval-stroke);
+}
+.check-glyph--fail {
+  stroke: var(--constraint);
+}
+.check-glyph--warning {
+  fill: var(--surface);
+  stroke: var(--ink-4);
+}
+.blockers__row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--space-6) var(--space-10);
+  font: inherit;
+  text-align: left;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 0;
+  border-radius: var(--radius-control);
+}
+button.blockers__row {
+  cursor: pointer;
+}
+button.blockers__row:hover {
+  box-shadow: var(--shadow-selection);
+}
+.blockers__type {
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+}

@@ -180,26 +180,36 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
     // Visual baseline (PRD §6.2 item 9): the sample's Review screen, plain lens, nothing
-    // selected, at both sizes; at most 0.5% of pixels may differ. P6 added Map | Table, More and
-    // the new "How to review" text; with PMS_SCREENSHOT_DIR the run first saves candidates for
+    // selected, at both sizes; at most 0.5% of pixels may differ. P7 added the quality card button
+    // and Publish to the banner; with PMS_SCREENSHOT_DIR the run first saves candidates for
     // Eric to approve (a baseline is never written by a test run).
     const shots = process.env.PMS_SCREENSHOT_DIR;
     const still = { animations: "disabled", caret: "hide" } as const;
     if (shots) {
-      await page.screenshot({ path: join(shots, "p6-review-1440x900.png"), ...still });
+      await page.screenshot({ path: join(shots, "p7-review-1440x900.png"), ...still });
       await page.setViewportSize({ width: 1080, height: 800 });
-      await page.screenshot({ path: join(shots, "p6-review-1080x800.png"), ...still });
+      await page.screenshot({ path: join(shots, "p7-review-1080x800.png"), ...still });
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.getByRole("radio", { name: "Table" }).click();
       await expect(page.getByRole("table", { name: "Steps in process order" })).toBeVisible();
-      await page.screenshot({ path: join(shots, "p6-review-table.png"), fullPage: true, ...still });
+      await page.screenshot({ path: join(shots, "p7-review-table.png"), fullPage: true, ...still });
       await page.getByRole("radio", { name: "Map" }).click();
       await expect(page.getByRole("radiogroup", { name: "Lens" })).toBeVisible();
     }
-    await expect(page).toHaveScreenshot("p6-review-1440x900.png");
+    await expect(page).toHaveScreenshot("p7-review-1440x900.png");
     await page.setViewportSize({ width: 1080, height: 800 });
-    await expect(page).toHaveScreenshot("p6-review-1080x800.png");
+    await expect(page).toHaveScreenshot("p7-review-1080x800.png");
     await page.setViewportSize({ width: 1440, height: 900 });
+    // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.
+    await page.getByRole("button", { name: "Publish" }).click();
+    const blocked = page.getByRole("dialog", { name: "Publish blocked" });
+    await expect(blocked.getByRole("list", { name: "What to fix before publishing" })).toContainText(
+      "hasn't been reviewed yet",
+    );
+    await expect(blocked.getByRole("list", { name: "Quality checks" })).toContainText("Fully reviewed");
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "p7-publish-blocked.png"), ...still });
+    await blocked.getByRole("button", { name: "Close" }).click();
     await page.getByRole("button", { name: /^Activity, Load and return LIR/ }).click();
     const panel = page.getByRole("complementary", { name: "Step details" });
     await expect(panel.getByRole("heading", { name: "Load and return LIR" })).toBeVisible();

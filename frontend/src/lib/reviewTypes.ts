@@ -82,3 +82,49 @@ export interface AuditEntry {
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
 }
+
+// Quality card, publish and versions (phase P7; API_CONTRACT.md → Versions, publish and exports).
+
+export interface QualityCheck {
+  id: string;
+  name: string;
+  status: "pass" | "fail" | "warning";
+  hard: boolean;
+  detail: string;
+}
+
+export interface QualityCard {
+  checks: QualityCheck[];
+  warnings: string[];
+  all_green: boolean;
+}
+
+export interface PublishBlocker {
+  type: string;
+  id: string;
+  element_id: string | null;
+  message: string;
+}
+
+export interface VersionSummary {
+  id: string;
+  engagement_id: string;
+  label: string;
+  state: "draft" | "published" | "superseded" | string;
+  created_at: string;
+  published_at: string | null;
+  published_by: string | null;
+  parent_version_id: string | null;
+}
+
+export interface ChangeEntry {
+  change: "confirmed" | "edited" | "rejected" | "added" | string;
+  step: string;
+  stable_key: string;
+}
+
+export interface VersionDetail extends VersionSummary {
+  review: { reviewed: number; total: number };
+  change_log: ChangeEntry[];
+  quality_card: QualityCard | null;
+}

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Chip } from "../common";
 import "./shell.css";
 
@@ -14,6 +15,8 @@ export interface VersionBannerProps {
   steps: readonly ProgressStep[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Quality card and Publish (phase P7), on the right. */
+  actions?: ReactNode;
 }
 
 const REVIEWED = new Set(["confirmed", "edited", "added"]);
@@ -27,9 +30,9 @@ const SEGMENT_WORDS = { reviewed: "reviewed", rejected: "rejected", open: "not r
 
 /**
  * The draft's banner (PRD §5.7.1): version chip, what it means, and one progress segment per step
- * in process order. Clicking a segment selects that step. Quality card and Publish arrive in P7.
+ * in process order. Clicking a segment selects that step. Quality card and Publish come in `actions`.
  */
-export function VersionBanner({ label, sources, steps, selectedId, onSelect }: VersionBannerProps) {
+export function VersionBanner({ label, sources, steps, selectedId, onSelect, actions }: VersionBannerProps) {
   const reviewed = steps.filter((s) => REVIEWED.has(s.review_status)).length;
   return (
     <div className="version-banner">
@@ -63,6 +66,7 @@ export function VersionBanner({ label, sources, steps, selectedId, onSelect }: V
           })}
         </ol>
       </div>
+      {actions && <div className="version-banner__actions">{actions}</div>}
     </div>
   );
 }

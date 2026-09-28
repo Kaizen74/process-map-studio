@@ -21,6 +21,7 @@ import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
 import { SourcePanel, type OpenPassage } from "./SourcePanel";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { PublishControls } from "./PublishControls";
 import { RefreshDialog } from "./RefreshDialog";
 import { ShortcutsDialog } from "./ShortcutsDialog";
 import { TableView } from "./TableView";
@@ -168,6 +169,8 @@ export function ReviewScreen() {
   // The keyboard (PRD §5.8).
   function onShortcut(event: KeyboardEvent) {
     if (helpOpen || refreshOpen || event.defaultPrevented) return;
+    // Keys pressed inside a popover or dialog belong to it (the quality card, the More menu).
+    if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return;
     const shortcut = shortcutFor(event);
     if (!shortcut) return;
     const busy = adding !== null || editing; // a form is open: only lenses and help
@@ -234,6 +237,11 @@ export function ReviewScreen() {
         steps={steps}
         selectedId={selected?.id ?? null}
         onSelect={select}
+        actions={
+          editable ? (
+            <PublishControls versionId={g.version.id} engagementId={engagementId} onSelect={(id) => select(id)} />
+          ) : undefined
+        }
       />
       <div className="review__body">
         <main className="review__main" aria-labelledby="review-title">

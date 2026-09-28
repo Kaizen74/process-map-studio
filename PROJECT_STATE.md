@@ -13,8 +13,8 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - [x] Increment 2 — HTML export: single-file offline map drawn from the backend layout, shared design tokens and embedded IBM Plex fonts, no external requests (G5 in increment 4)
 - [x] Increment 3 — `quality` service Q1–Q10 (Q7–Q9 checked on the rendered exports) with the extra warnings; `GET /versions/{vid}/quality-card`; readiness `blockers_count`; each check turns red on a crafted fixture
 - [x] Increment 4 — publish and reopen: `POST /versions/{vid}/publish` (`409 PUBLISH_BLOCKED` with every blocker), `POST /versions/{vid}/reopen` (deep copy, statuses carried over as confirmed), `GET /engagements/{id}/versions`, `GET /versions/{vid}`, change log, `GET /versions/{vid}/export/{fmt}` (published and green only); "validated by" from Settings; **G3 and G5 golden baselines**
-- [ ] Increment 5 — IN PROGRESS: UI: quality card button and popover in the banner, Publish, the "Publish blocked" list whose rows go to the step; new Review screenshots for Eric's approval
-- [ ] Increment 6 — UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
+- [x] Increment 5 — UI: quality card button and popover in the banner, Publish, the "Publish blocked" list whose rows go to the step; new Review screenshots for Eric's approval
+- [ ] Increment 6 — IN PROGRESS: UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
 - [ ] Increment 7 — UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
 
 ## Done (all sessions)
@@ -86,13 +86,14 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - 2026-09-28 Exports: the single-file HTML map (drawn from the backend layout, shared tokens, embedded IBM Plex fonts, no outside requests, no script; each step links to its details) (13 checks)
 - 2026-09-28 Quality card: the ten publish checks Q1-Q10 (Q7-Q9 read the real exports), GET /versions/{vid}/quality-card, and readiness counting the draft's blockers; each check turns red on a crafted case (13 checks)
 - 2026-09-28 Publish and reopen: publishing refused with every blocker until the card is green, then v1.0, v1.1 …; reopen as a locked copy; versions list and detail with change log; exports of published versions (md, json, csv, html); G3 and G5 golden baselines (13 checks)
+- 2026-09-28 Review: the quality card button (n of 9 green) and popover, Publish, and the "Publish blocked" list whose rows open the step; Eric approved the new Review screenshots as the visual baseline (13 checks)
 
 ## Not started yet
 - P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
 1. The next task is: the first unchecked increment of Phase P7 in the list above (PRD §6.3 P7, §7.2 quality card, §7.3 export template, §3.5 versions and locking, §5.7.1, §5.7.9, §5.9). Check the merge status of the working branch first (if merged, restart it from `main`).
-2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p6-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
+2. The relevant files are: CLAUDE.md; PRD_ProcessMapStudio.md §3.5 (versions and locking), §4 Review rows, §5.6–§5.9, §6.3 P6; API_CONTRACT.md → Review; `backend/app/actions/versions.py` (graph, layout, element details), `backend/app/repositories/elements.py`, `backend/app/services/lint.py`; the Review screen `frontend/src/features/review/`, `frontend/src/components/map|panel|tabs/`, `frontend/src/lib/validation.ts`; the visual baseline `docs/screens/p7-review-*.png` (compared in `frontend/tests/e2e/smoke.spec.ts`; replacing it needs Eric's approval).
 3. Watch out for: the GitHub repository was public at kickoff; Eric made it private on 2026-09-26 (confirmed via the GitHub API). Never push if it is public again. This cloud session pushes to branch `claude/charming-davinci-sck1cq`, not `main` (see DECISIONS.md).
 4. Privacy (G10): names are hidden by the actions that build responses (`actions/redaction.py`). Any new endpoint that returns source text, file names, quotes, claims, elements or audit rows must apply `redaction.name_replacements` + `hide`; the Audit tab (P6) must hide names in audit rows (the "Added source" row keeps the uploaded file name).
 5. Process trap (2026-09-26): never chain `./run_checks.sh | tail … && git commit`; the pipe hides the failure code. Run the checks alone, confirm exit code 0, then commit. Fake keys in tests must be built by concatenation (the secret check blocks key-shaped literals).

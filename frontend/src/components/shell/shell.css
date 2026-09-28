@@ -177,3 +177,19 @@
   outline: none;
   box-shadow: var(--shadow-selection);
 }
+.version-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.quality-button__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-6);
+  border-radius: 50%;
+  background: var(--constraint);
+}
+.quality-button__dot--green {
+  background: var(--approval-stroke);
+}
