@@ -274,6 +274,25 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Review after refresh").toBe(false);
 
+    // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
+    await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Published" })).toBeAttached();
+    await expect(page.getByText("Published v1.0")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Changes in this version" })).toContainText("Confirmed");
+    await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+    await expect(page.locator(".map-node--unreviewed")).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Published").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p7-published.png"), fullPage: true });
+    }
+    // Reopen: a new draft with every reviewed step locked.
+    await page.getByRole("button", { name: "Reopen as new draft" }).click();
+    await expect(page.getByText("Draft v1.1 draft")).toBeVisible();
+    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
     // Every AI call shows in Settings, as usage only.
     await page.goto("/settings");
     const usage = page.getByRole("region", { name: "AI usage" });

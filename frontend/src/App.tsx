@@ -3,6 +3,7 @@ import { DraftScreen } from "./features/draft/DraftScreen";
 import { EngagementIndex } from "./features/engagement/EngagementIndex";
 import { StepPlaceholder } from "./features/engagement/StepPlaceholder";
 import { EngagementsScreen } from "./features/home/EngagementsScreen";
+import { PublishedScreen } from "./features/published/PublishedScreen";
 import { ReviewScreen } from "./features/review/ReviewScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { SetupScreen } from "./features/setup/SetupScreen";
@@ -21,6 +22,7 @@ export function App() {
         <Route path="engagements/:engagementId/sources" element={<SourcesScreen />} />
         <Route path="engagements/:engagementId/draft" element={<DraftScreen />} />
         <Route path="engagements/:engagementId/review" element={<ReviewScreen />} />
+        <Route path="engagements/:engagementId/published" element={<PublishedScreen />} />
         <Route path="engagements/:engagementId/:step" element={<StepPlaceholder />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>

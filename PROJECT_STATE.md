@@ -14,8 +14,8 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - [x] Increment 3 — `quality` service Q1–Q10 (Q7–Q9 checked on the rendered exports) with the extra warnings; `GET /versions/{vid}/quality-card`; readiness `blockers_count`; each check turns red on a crafted fixture
 - [x] Increment 4 — publish and reopen: `POST /versions/{vid}/publish` (`409 PUBLISH_BLOCKED` with every blocker), `POST /versions/{vid}/reopen` (deep copy, statuses carried over as confirmed), `GET /engagements/{id}/versions`, `GET /versions/{vid}`, change log, `GET /versions/{vid}/export/{fmt}` (published and green only); "validated by" from Settings; **G3 and G5 golden baselines**
 - [x] Increment 5 — UI: quality card button and popover in the banner, Publish, the "Publish blocked" list whose rows go to the step; new Review screenshots for Eric's approval
-- [ ] Increment 6 — IN PROGRESS: UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
-- [ ] Increment 7 — UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
+- [x] Increment 6 — UI: published mode (§5.9: no review controls, outlines, Merge or Map checks tabs), Reopen as new draft, the Published screen with version picker and change log
+- [ ] Increment 7 — IN PROGRESS: UI Exports screen (four cards, what each leaves out, Download); browser checks (HTML export makes no external requests and logs no console errors; privacy scan of every export); GUIDE/README; close P7 (tag phase-p7)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -87,6 +87,7 @@ P7 follows PRD §6.3: pure export renderers first (they feed the quality card's 
 - 2026-09-28 Quality card: the ten publish checks Q1-Q10 (Q7-Q9 read the real exports), GET /versions/{vid}/quality-card, and readiness counting the draft's blockers; each check turns red on a crafted case (13 checks)
 - 2026-09-28 Publish and reopen: publishing refused with every blocker until the card is green, then v1.0, v1.1 …; reopen as a locked copy; versions list and detail with change log; exports of published versions (md, json, csv, html); G3 and G5 golden baselines (13 checks)
 - 2026-09-28 Review: the quality card button (n of 9 green) and popover, Publish, and the "Publish blocked" list whose rows open the step; Eric approved the new Review screenshots as the visual baseline (13 checks)
+- 2026-09-28 Published: the published version read-only in the workbench, with a version picker (superseded ones labelled), its change log and Reopen as new draft; the browser path publishes and reopens the sample (13 checks)
 
 ## Not started yet
 - P8 images · P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
