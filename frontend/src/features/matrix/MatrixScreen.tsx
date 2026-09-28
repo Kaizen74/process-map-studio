@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../compon
 import { AlignmentTable } from "../../components/matrix";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useAlignmentMatrix, useVersions } from "../../hooks/useVersions";
+import { currentMap, stepPath } from "../../lib/currentMap";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import {
@@ -33,8 +34,7 @@ export function MatrixScreen() {
   const [types, setTypes] = useState<ReadonlySet<string>>(new Set());
   const [sort, setSort] = useState<MatrixSort>("process");
 
-  const list = versions.data ?? [];
-  const current = list.find((v) => v.state === "draft") ?? list.find((v) => v.state === "published") ?? null;
+  const current = currentMap(versions.data ?? []);
   const matrix = useAlignmentMatrix(current?.id ?? null);
 
   if (engagement.isError) {
@@ -42,13 +42,7 @@ export function MatrixScreen() {
   }
 
   function open(elementId: string) {
-    if (!current) return;
-    const step = encodeURIComponent(elementId);
-    void navigate(
-      current.state === "draft"
-        ? `${engagementPath(engagementId, "review")}?step=${step}`
-        : `${engagementPath(engagementId, "published")}?version=${encodeURIComponent(current.id)}&step=${step}`,
-    );
+    if (current) void navigate(stepPath(engagementPath(engagementId), current, elementId));
   }
 
   function toggle(type: string) {

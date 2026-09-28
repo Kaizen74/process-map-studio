@@ -13,8 +13,8 @@ P9 follows PRD §6.3 P9, §4 Views and Cause library rows, §5.4 Matrix and Regi
 - [x] Increment 2 — coverage (G11): share of each source's passages cited by a verified claim of the current map, `coverage_pct` on sources and on the passages page, `uncited_only` filter; UI: Coverage column on Sources and a coverage bar with "Show uncited passages" in the source viewer
 - [x] Increment 3 — registers and cause library backend (contract first): `GET /versions/{vid}/registers` (K-RISK, AI flags, constraints by cause, external practice, validation questions, rejected claims); cause-library entries created when a draft is made or refreshed for contested and trace-contradicted steps (pattern from the verified divergence notes, cause only from the step's own constraints, otherwise "not known yet"); `GET /engagements/{id}/cause-library`, `PATCH /cause-library/{cid}` (confirmed/refuted, audit row)
 - [x] Increment 4 — UI: Matrix screen (divergence filter chips, sort by severity, sticky step column and header, state glyphs with words, row opens the step on Review, empty state linking to Draft)
-- [ ] Increment 5 — IN PROGRESS: UI: Registers screen (segmented control: K-RISK · AI flags · Constraints by cause · External practice · Validation questions · Rejected claims · Cause library; card lists with Go to step; one-line empty states; Confirm/Refute on causes)
-- [ ] Increment 6 — browser checks (axe on Matrix and Registers, coverage on Sources, smoke path), GUIDE/README, close P9 (tag phase-p9)
+- [x] Increment 5 — UI: Registers screen (segmented control: K-RISK · AI flags · Constraints by cause · External practice · Validation questions · Rejected claims · Cause library; card lists with Go to step; one-line empty states; Confirm/Refute on causes)
+- [ ] Increment 6 — IN PROGRESS: browser checks (axe on Matrix and Registers, coverage on Sources, smoke path), GUIDE/README, close P9 (tag phase-p9)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -97,6 +97,7 @@ P9 follows PRD §6.3 P9, §4 Views and Cause library rows, §5.4 Matrix and Regi
 - 2026-09-28 P9 increment 2: coverage (G11): the share of each source the current map cites on the Sources table and in the viewer, uncited passages tagged and listable on their own. 13 of 13 checks green.
 - 2026-09-28 P9 increment 3: registers endpoint (K-RISK, AI flags, constraints by cause, external practice, questions, rejected claims) and the cause library (entries for contested and trace-contradicted steps when a draft is made or refreshed; confirm, refute or reopen). 13 of 13 checks green.
 - 2026-09-28 P9 increment 4: the Matrix screen (every step against every kind of source, filter by divergence, sort most serious first, click to open the step). 13 of 13 checks green.
+- 2026-09-28 P9 increment 5: the Registers screen (seven registers including the cause library with Confirm, Refute and Reopen; every entry links to its step). 13 of 13 checks green.
 
 ## Not started yet
 - P10 gap analysis · P11 leadership view · P12 live run, polish and handover
