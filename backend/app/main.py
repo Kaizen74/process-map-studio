@@ -22,6 +22,7 @@ from app.config import AppConfig, load_config
 from app.routers import (
     draft,
     engagements,
+    images,
     jobs,
     publish,
     readiness,
@@ -72,6 +73,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(versions.router)
     app.include_router(review.router)
     app.include_router(publish.router)
+    app.include_router(images.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
