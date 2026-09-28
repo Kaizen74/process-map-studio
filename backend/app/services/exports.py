@@ -151,6 +151,16 @@ def raci_cell(element: GraphElement, role_id: str) -> str:
     return " ".join(letters)
 
 
+def cited_passages(element: GraphElement, names: dict[str, str]) -> str:
+    """ "file.txt 06:40; sop.docx §3.1": the verified passages that support a step."""
+    cited = [
+        f"{names.get(ev.source_id, SOURCE_KINDS.get(ev.source_kind, 'Document'))} {ev.anchor}"
+        for ev in element.evidence
+        if ev.stance == Stance.SUPPORTS.value and ev.segment_id and ev.verified
+    ]
+    return "; ".join(dict.fromkeys(cited)) or "no passage recorded"
+
+
 def steps(graph: Graph) -> list[GraphElement]:
     return [e for e in graph.elements if e.kind in STEP_KINDS]
 
@@ -191,12 +201,7 @@ def _facts(data: ExportInput, graph: Graph) -> list[str]:
     lines += ["", "### Pain points as stated in the sources", ""]
     pains = []
     for element in steps(graph):
-        cited = [
-            f"{names.get(ev.source_id, SOURCE_KINDS.get(ev.source_kind, 'Document'))} {ev.anchor}"
-            for ev in element.evidence
-            if ev.stance == Stance.SUPPORTS.value and ev.segment_id and ev.verified
-        ]
-        where = "; ".join(dict.fromkeys(cited)) or "no passage recorded"
+        where = cited_passages(element, names)
         pains += [
             f"- [O] {c.text} (step: {element.label} · {where})"
             for c in element.constraints
