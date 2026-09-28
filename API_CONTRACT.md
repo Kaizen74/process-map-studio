@@ -393,6 +393,31 @@ How each kind of source stands on each step (PRD §3.7 Stage 3: classified, neve
 - `state` and `divergence_types` are the step's own (B.4, B.5). Labels have names hidden. Works for drafts and published versions.
 Errors: `404` ("That version doesn't exist.").
 
+### GET /api/versions/{vid}/registers
+Everything a register lists for one version (PRD §4 Views, §5.4 Registers), from its own steps (not rejected ones), names hidden:
+```json
+{"k_risk": [{"element_id", "label", "lane", "k_risk"}],
+ "ai_flags": [{"element_id", "label", "lane", "mechanism", "component", "input", "output", "handoff", "basis"}],
+ "constraints_by_cause": [{"cause_type": "single_point_knowledge" | … | null,
+                           "constraints": [{"element_id", "label", "text", "is_key", "provenance"}]}],
+ "external_practice": [{"element_id", "label", "r_reference"}],
+ "questions": [question objects as GET /versions/{vid}/questions],
+ "rejected_claims": {rejected claims as GET /versions/{vid}/rejected-claims}}
+```
+Steps in process order. `constraints_by_cause`: one group per cause type that has constraints, in B.9 order, then `null` (no cause type recorded); key constraints first within a group. `lane` is the lane role's name; `mechanism` the step's decision mechanism (so a judgment step's flag reads as support only). Errors: `404` ("That version doesn't exist.").
+
+### Cause library (PRD §3.5 `cause_library`, §3.11)
+Engagement-level entries, one per step and divergence type, pending until Eric confirms or refutes them. When a draft is made or refreshed, an entry is added (never twice for the same step key and divergence type; existing entries and their validation are kept) for each step on the map whose source state is `contested` or `trace_contradicted`:
+- `pattern`: the divergence notes on the step's contradicting evidence (for example "Threshold divergence: 10 min in SOP vs up to 15 min in practice"), else "The sources disagree about “<step>”." Observed fact, provenance `O`.
+- `inferred_cause` and `cause_type`: only from a constraint recorded on the same step with a cause type (key constraints first), provenance `I`; otherwise empty, meaning "not known yet: ask your SME". No AI call and no guess.
+An entry as returned: `{"id", "element_stable_key", "element_id", "element_label", "divergence_type", "pattern", "inferred_cause", "cause_type", "provenance", "validation_result": "pending" | "confirmed" | "refuted", "created_at"}` — `element_id` and `element_label` are the step with that key on the current map (`null` and the last known label if it is no longer there); names hidden.
+
+### GET /api/engagements/{id}/cause-library
+All entries, in the order they were added. Errors: `404` ("That engagement doesn't exist. It may have been deleted.").
+
+### PATCH /api/cause-library/{cid}
+Request `{"validation_result": "pending" | "confirmed" | "refuted"}` → the entry. Audit rows "Confirmed cause" · "Refuted cause" · "Reopened cause". Errors: `404` ("That cause-library entry doesn't exist."); `422` (field `validation_result`: "Choose pending, confirmed or refuted.").
+
 ## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
 
 Images live only in the app: never in any export (Q9). Every image needs a caption, a type (B.16: `workplace_photo` · `system_screenshot` · `executed_artefact` · `illustrative_diagram` · `document_extract`) and the confirmation that faces, names, badge numbers and flight identifiers are removed or not shown. Metadata (EXIF, including GPS) is removed from the stored file. Changes are made on a draft version only (`409` "This version is published and can't be changed. Reopen it as a new draft."); start and end carry no images (`422`).

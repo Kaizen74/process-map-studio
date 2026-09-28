@@ -797,3 +797,90 @@ class ImagePatch(BaseModel):
     caption: str | None = None
     image_type: str | None = None
     redaction_confirmed: bool | None = None
+
+
+# --- Registers and cause library (PRD §4 Views, §5.4 Registers, §3.5 cause_library; P9) --------
+
+
+class KRiskItem(BaseModel):
+    element_id: str
+    label: str
+    lane: str
+    k_risk: str
+
+
+class AiFlagItem(BaseModel):
+    element_id: str
+    label: str
+    lane: str
+    mechanism: str  # B.6: a judgment step's flag is support only
+    component: str
+    input: str
+    output: str
+    handoff: str
+    basis: str
+
+
+class ConstraintItem(BaseModel):
+    element_id: str
+    label: str
+    text: str
+    is_key: bool
+    provenance: str
+
+
+class ConstraintGroup(BaseModel):
+    cause_type: str | None  # B.9, or None when no cause type was recorded
+    constraints: list[ConstraintItem]
+
+
+class ExternalPracticeItem(BaseModel):
+    element_id: str
+    label: str
+    r_reference: str
+
+
+class Registers(BaseModel):
+    k_risk: list[KRiskItem]
+    ai_flags: list[AiFlagItem]
+    constraints_by_cause: list[ConstraintGroup]
+    external_practice: list[ExternalPracticeItem]
+    questions: list[QuestionView]
+    rejected_claims: RejectedClaims
+
+
+class CauseRecord(BaseModel):
+    """A cause-library row as stored."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str = ""
+    engagement_id: str
+    element_stable_key: str
+    divergence_type: str
+    pattern: str
+    inferred_cause: str = ""
+    cause_type: str = ""
+    provenance: str
+    validation_result: str = "pending"
+    created_at: str = ""
+
+
+class CauseView(BaseModel):
+    id: str
+    element_stable_key: str
+    element_id: str | None  # the step with that key on the current map, if it is still there
+    element_label: str
+    divergence_type: str
+    pattern: str
+    inferred_cause: str
+    cause_type: str | None
+    provenance: str
+    validation_result: str
+    created_at: str
+
+
+class CausePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    validation_result: str

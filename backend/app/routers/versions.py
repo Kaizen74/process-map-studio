@@ -1,13 +1,14 @@
 """Version endpoints (API_CONTRACT.md → Draft: graph, layout, lint; quality card; Views: the
-alignment matrix)."""
+alignment matrix and registers)."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.actions import quality, versions
+from app.actions import quality, registers, versions
 from app.domain.graph import AlignmentRow, ElementDetail, Graph, LintReport
 from app.domain.layout import Layout
+from app.domain.models import Registers
 from app.domain.quality import QualityCard
 from app.routers.http import unwrap
 
@@ -27,6 +28,11 @@ def get_layout(request: Request, version_id: str) -> Layout:
 @router.get("/versions/{version_id}/alignment-matrix")
 def get_alignment_matrix(request: Request, version_id: str) -> list[AlignmentRow]:
     return unwrap(versions.get_alignment_matrix(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/registers")
+def get_registers(request: Request, version_id: str) -> Registers:
+    return unwrap(registers.get_registers(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/lint")
