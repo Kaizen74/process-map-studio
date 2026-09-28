@@ -10,8 +10,8 @@ Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its wor
 ## This session (2026-09-28, session 11) — goal: Phase P8 (images)
 P8 follows PRD §6.3 P8 and constraint 11: images live only in the app (never in any export), need a caption, a type and a redaction confirmation, and lose their metadata (EXIF, GPS) on the way in. Backend first (contract first), then the panel gallery, the map marker and the walkthrough strip. The sample map has no PDF images, so the approved Review screenshot should not change.
 - [x] Increment 1 — `services/images.py` (validate jpg/png/webp up to 10 MB, strip metadata, thumbnail) and the image endpoints (contract first): upload with caption, type and redaction confirmation (422 naming the field), list, keep/discard or caption change, remove, file and thumbnail; draft versions only; audit rows; hidden names refused in captions
-- [ ] Increment 2 — IN PROGRESS: suggested images from PDFs: metadata stripped when extracted; attached to the step whose verified evidence cites the same source page when a draft is built or refreshed; kept by reopen; `GET /versions/{vid}/images` for the map and the strip; Q6 and Publish count open suggestions
-- [ ] Increment 3 — UI: the panel's Images section (two-column gallery, suggested ones dashed with source and Keep/Discard, Remove with a confirmation, Add image form with the privacy checkbox; read-only when published)
+- [x] Increment 2 — suggested images from PDFs: metadata stripped when extracted; attached to the step whose verified evidence cites the same source page when a draft is built or refreshed; kept by reopen; `GET /versions/{vid}/images` for the map and the strip; Q6 and Publish count open suggestions
+- [ ] Increment 3 — IN PROGRESS: UI: the panel's Images section (two-column gallery, suggested ones dashed with source and Keep/Discard, Remove with a confirmation, Add image form with the privacy checkbox; read-only when published)
 - [ ] Increment 4 — UI: the has-images marker on the map (only when a visible image exists) and the walkthrough strip (process order, placeholder by type, selecting a step); published mode shows them read-only
 - [ ] Increment 5 — browser checks (upload a photo with GPS: none left; keep a suggestion; exports still image-free), GUIDE/README, close P8 (tag phase-p8)
 
@@ -88,6 +88,7 @@ P8 follows PRD §6.3 P8 and constraint 11: images live only in the app (never in
 - 2026-09-28 Published: the published version read-only in the workbench, with a version picker (superseded ones labelled), its change log and Reopen as new draft; the browser path publishes and reopens the sample (13 checks)
 - 2026-09-28 Exports: the Exports screen (four downloads of a published version, what each leaves out, its quality card); browser checks of every export (no hidden names or images; the HTML map makes no requests and logs no errors); GUIDE and README; P7 closed (13 checks)
 - 2026-09-28 P8 increment 1: picture service and endpoints (upload with metadata removed, thumbnail, keep/discard suggestions, remove, serve the file; drafts only; exports stay picture-free). 13 of 13 checks green.
+- 2026-09-28 P8 increment 2: pictures in PDFs are saved without metadata and suggested on the steps whose checked evidence cites their page, when a draft is made or refreshed; refresh keeps decisions on pictures; the version's pictures in process order for the map and strip. 13 of 13 checks green.
 
 ## Not started yet
 - P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover

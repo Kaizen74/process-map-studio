@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import io
 import warnings
+from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel
@@ -40,6 +41,12 @@ class ImageFacts(BaseModel):
     height: int
 
 
+def thumb_path(stored_path: str) -> Path:
+    """Where a stored picture's thumbnail sits: next to it, as `{stem}.thumb{suffix}`."""
+    path = Path(stored_path)
+    return path.with_name(f"{path.stem}.thumb{path.suffix}")
+
+
 def _invalid(message: str) -> Err:
     return Err(ErrorKind.VALIDATION, message, {"field": "file"})
 
@@ -61,6 +68,12 @@ def validate_image(data: bytes) -> Result[ImageFacts]:
     """A JPG, PNG or WebP picture of at most 10 MB and 40 million pixels that opens."""
     if len(data) > MAX_BYTES:
         return _invalid(TOO_BIG)
+    return picture_facts(data)
+
+
+def picture_facts(data: bytes) -> Result[ImageFacts]:
+    """A JPG, PNG or WebP picture of at most 40 million pixels that opens, of any byte size (a
+    stored picture: an upload already under 10 MB, or one saved from a PDF)."""
     match _open(data):
         case Err() as err:
             return err
@@ -111,17 +124,37 @@ def strip_metadata(data: bytes) -> Result[bytes]:
             return Ok(_encode(_clean(picture), facts.format))
 
 
-def make_thumbnail(data: bytes, side: int = THUMB_SIDE) -> Result[bytes]:
-    """A smaller copy (longest side `side` px) in the same format, with no metadata."""
-    match validate_image(data):
-        case Err() as err:
-            return err
-        case Ok(value=facts):
-            pass
+def clean_extracted(data: bytes) -> Result[tuple[bytes, ImageFacts]]:
+    """A picture taken out of a PDF (any format Pillow reads), upright and with no metadata:
+    re-encoded in its own format when that is JPG, PNG or WebP, otherwise as PNG. No byte limit
+    (PDFs often hold pictures uncompressed); the pixel limit still applies."""
     match _open(data):
         case Err() as err:
             return err
         case Ok(value=picture):
-            small = _clean(picture)
-            small.thumbnail((side, side))
-            return Ok(_encode(small, facts.format))
+            pass
+    width, height = picture.size
+    if width * height > MAX_PIXELS:
+        return _invalid(TOO_MANY_PIXELS)
+    fmt = picture.format if picture.format in FORMATS else "PNG"
+    clean = _clean(picture)
+    extension, media_type = FORMATS[fmt]
+    facts = ImageFacts(format=fmt, extension=extension, media_type=media_type,
+                       width=clean.width, height=clean.height)  # fmt: skip
+    return Ok((_encode(clean, fmt), facts))
+
+
+def make_thumbnail(data: bytes, side: int = THUMB_SIDE) -> Result[bytes]:
+    """A smaller copy (longest side `side` px) in the same format, with no metadata. For stored
+    pictures, already checked: no byte limit (a PDF picture saved as PNG may be large)."""
+    match _open(data):
+        case Err() as err:
+            return err
+        case Ok(value=picture):
+            pass
+    if picture.format not in FORMATS:
+        return _invalid(WRONG_TYPE)
+    fmt = picture.format
+    small = _clean(picture)
+    small.thumbnail((side, side))
+    return Ok(_encode(small, fmt))

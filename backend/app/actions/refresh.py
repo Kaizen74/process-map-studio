@@ -2,7 +2,8 @@
 
 The draft job runs every stage again into a temporary version (state `building`); `fold` then
 moves the fresh map into the draft being refreshed. Steps Eric confirmed, edited, added or
-rejected stay exactly as they are (constraint 8); everything else is replaced by the fresh run.
+rejected stay exactly as they are (constraint 8); everything else is replaced by the fresh run,
+and a replaced step's pictures follow it to its fresh successor.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.domain.enums import ReviewStatus
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
+from app.repositories import images as images_repo
 from app.repositories import versions as versions_repo
 
 KEPT = {
@@ -70,6 +72,9 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> int:
     twin_claims = [c for step in dropped for c in fresh_claims.get(step, [])]
     map_repo.delete_elements(session, list(dropped))
     claims_repo.delete_claims(session, twin_claims)
+
+    # A replaced step's pictures (and Eric's keep or discard of them) go to its fresh successor.
+    images_repo.move(session, successor)
 
     # Out with the draft's replaced content, in with the fresh.
     versions_repo.clear_for_refresh(session, draft_id, set(keep))

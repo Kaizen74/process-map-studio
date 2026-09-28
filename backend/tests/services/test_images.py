@@ -9,6 +9,7 @@ import io
 import pytest
 from PIL import ExifTags, Image, PngImagePlugin
 
+from app.domain.result import Ok
 from app.services import images
 
 
@@ -105,3 +106,43 @@ def test_the_facts_of_a_good_picture() -> None:
     facts = images.validate_image(encoded("WEBP", size=(64, 32))).value  # type: ignore[union-attr]
     assert (facts.format, facts.extension, facts.media_type, facts.width, facts.height) == (
         "WEBP", "webp", "image/webp", 64, 32)  # fmt: skip
+
+
+# --- Pictures taken out of PDFs (P8 increment 2) --------------------------------------------------
+
+
+def test_a_pdf_picture_keeps_a_web_format_and_loses_its_metadata() -> None:
+    clean, facts = images.clean_extracted(jpeg_with_gps()).value  # type: ignore[union-attr,misc]
+    picture = opened(clean)
+    assert (picture.format, facts.extension, facts.media_type) == ("JPEG", "jpg", "image/jpeg")
+    assert dict(picture.getexif()) == {} and b"CameraCo" not in clean
+    assert picture.size == (20, 40) == (facts.width, facts.height)
+
+
+def test_other_pdf_picture_formats_become_png_without_metadata() -> None:
+    exif = Image.Exif()
+    exif[ExifTags.Base.Make] = "ScannerCo"
+    tiff = encoded("TIFF", exif=exif)
+    assert b"ScannerCo" in tiff
+    clean, facts = images.clean_extracted(tiff).value  # type: ignore[union-attr,misc]
+    assert (opened(clean).format, facts.extension) == ("PNG", "png")
+    assert b"ScannerCo" not in clean
+    assert images.clean_extracted(encoded("BMP")).value[1].extension == "png"  # type: ignore[union-attr]
+
+
+def test_pdf_pictures_have_no_byte_limit_but_the_pixel_limit_holds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(images, "MAX_BYTES", 10)
+    png = encoded("PNG")
+    assert isinstance(images.clean_extracted(png), Ok)
+    assert isinstance(images.picture_facts(png), Ok)
+    assert isinstance(images.make_thumbnail(png), Ok)
+    assert images.validate_image(png).message == images.TOO_BIG  # type: ignore[union-attr]
+    monkeypatch.setattr(images, "MAX_PIXELS", 100)
+    assert images.clean_extracted(png).message == images.TOO_MANY_PIXELS  # type: ignore[union-attr]
+    assert images.clean_extracted(b"%PDF not a picture").message == images.UNREADABLE  # type: ignore[union-attr]
+
+
+def test_the_thumbnail_sits_next_to_the_picture() -> None:
+    assert images.thumb_path("/data/images/e/p3-1.png").name == "p3-1.thumb.png"

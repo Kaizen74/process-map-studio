@@ -16,16 +16,18 @@ from typing import BinaryIO
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
+from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.actions.review import DRAFT_STATE, NOT_A_DRAFT
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import ElementKind, ImageStatus, ImageType
-from app.domain.models import ImagePatch, ImageRecord, ImageView
+from app.domain.models import ImagePatch, ImageRecord, ImageView, NameReplacement
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import images as repo
+from app.repositories import versions as versions_repo
 from app.services import grounding
 from app.services import images as pictures
 
@@ -50,14 +52,17 @@ def _invalid(field: str, message: str) -> Err:
     return Err(ErrorKind.VALIDATION, message, {"field": field})
 
 
-def thumb_path(stored_path: str) -> Path:
-    path = Path(stored_path)
-    return path.with_name(f"{path.stem}.thumb{path.suffix}")
-
-
 def _view(session: Session, image: ImageRecord, engagement_id: str) -> ImageView:
+    return _views(session, [image], engagement_id)[0]
+
+
+def _views(session: Session, found: list[ImageRecord], engagement_id: str) -> list[ImageView]:
     terms = redaction.name_replacements(session, engagement_id)
-    names = repo.source_names(session, [image.source_id] if image.source_id else [])
+    names = repo.source_names(session, sorted({i.source_id for i in found if i.source_id}))
+    return [_one_view(image, terms, names) for image in found]
+
+
+def _one_view(image: ImageRecord, terms: list[NameReplacement], names: dict[str, str]) -> ImageView:
     return ImageView(
         id=image.id,
         element_id=image.element_id,
@@ -147,7 +152,7 @@ def upload(
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(clean)
-        thumb_path(str(target)).write_bytes(thumb)
+        pictures.thumb_path(str(target)).write_bytes(thumb)
     except OSError as exc:
         return Err(ErrorKind.IO, "The picture couldn't be saved in the app's data folder.",
                    {"reason": type(exc).__name__})  # fmt: skip
@@ -176,7 +181,7 @@ def list_images(sessions: Sessions, element_id: str) -> Result[list[ImageView]]:
         found = repo.owner(session, element_id)
         if found is None:
             return Err(ErrorKind.NOT_FOUND, STEP_MISSING)
-        return Ok([_view(session, i, found[2]) for i in repo.for_element(session, element_id)])
+        return Ok(_views(session, repo.for_element(session, element_id), found[2]))
 
 
 def _image_on_draft(session: Session, image_id: str) -> Result[tuple[ImageRecord, str, str]]:
@@ -262,7 +267,7 @@ def remove(config: AppConfig, sessions: Sessions, image_id: str) -> Result[None]
                      version_id=version_id)  # fmt: skip
     if last:
         Path(image.stored_path).unlink(missing_ok=True)
-        thumb_path(image.stored_path).unlink(missing_ok=True)
+        pictures.thumb_path(image.stored_path).unlink(missing_ok=True)
     return Ok(None)
 
 
@@ -277,14 +282,14 @@ def image_file(sessions: Sessions, image_id: str, thumb: bool) -> Result[tuple[b
         data = path.read_bytes()
     except OSError:
         return Err(ErrorKind.NOT_FOUND, IMAGE_MISSING)
-    match pictures.validate_image(data):
+    match pictures.picture_facts(data):
         case Err():
             return Err(ErrorKind.NOT_FOUND, IMAGE_MISSING)
         case Ok(value=facts):
             pass
     if not thumb:
         return Ok((data, facts.media_type))
-    small = thumb_path(image.stored_path)
+    small = pictures.thumb_path(image.stored_path)
     if small.exists():
         return Ok((small.read_bytes(), facts.media_type))
     match pictures.make_thumbnail(data):
@@ -294,3 +299,77 @@ def image_file(sessions: Sessions, image_id: str, thumb: bool) -> Result[tuple[b
             with suppress(OSError):  # a thumbnail that can't be saved is simply made again
                 small.write_bytes(made)
             return Ok((made, facts.media_type))
+
+
+# --- Suggestions from PDFs and the version's pictures (P8 increment 2) ---------------------------
+
+
+def _ensure_clean(stored_path: str) -> bool:
+    """A PDF picture saved before P8 was stored as found: re-encode it without metadata the first
+    time it is suggested (a saved thumbnail marks a clean file). False if it can't be opened."""
+    small = pictures.thumb_path(stored_path)
+    if small.exists():
+        return True
+    try:
+        data = Path(stored_path).read_bytes()
+    except OSError:
+        return False
+    match pictures.clean_extracted(data):
+        case Err():
+            return False
+        case Ok(value=(clean, _facts)):
+            pass
+    match pictures.make_thumbnail(clean):
+        case Err():
+            return False
+        case Ok(value=thumb):
+            pass
+    try:
+        Path(stored_path).write_bytes(clean)
+        small.write_bytes(thumb)
+    except OSError:
+        return False
+    return True
+
+
+def attach_suggestions(session: Session, version_id: str) -> int:
+    """Suggest each PDF picture on the steps whose verified evidence cites its page (API_CONTRACT
+    → Suggested images from PDFs). A step never gets the same picture twice, so a picture Eric
+    kept or discarded there isn't suggested again. Returns how many suggestions were added."""
+    placed = repo.placed(session, version_id)
+    added = 0
+    for element_id, picture in repo.page_matches(session, version_id):
+        key = (element_id, picture.stored_path)
+        if key in placed or not _ensure_clean(picture.stored_path):
+            continue
+        repo.add(
+            session,
+            ImageRecord(
+                element_id=element_id,
+                stored_path=picture.stored_path,
+                caption=picture.caption,
+                origin="extracted",
+                status=ImageStatus.SUGGESTED.value,
+                source_id=picture.source_id,
+                page=picture.page,
+            ),
+        )
+        placed.add(key)
+        added += 1
+    return added
+
+
+def version_images(sessions: Sessions, version_id: str) -> Result[list[ImageView]]:
+    """The version's pictures in process order, for the map marker and the walkthrough strip."""
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
+        rank = {ElementKind.START.value: 0, ElementKind.END.value: 2}
+        steps = sorted(map_repo.elements(session, version_id), key=lambda e: rank.get(e.kind, 1))
+        order = {e.id: n for n, e in enumerate(steps)}
+        found = sorted(
+            repo.for_version(session, version_id),
+            key=lambda i: order.get(i.element_id or "", len(order)),
+        )
+        return Ok(_views(session, found, version.engagement_id))

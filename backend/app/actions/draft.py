@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import images as images_action
 from app.actions import redaction, refresh
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
@@ -387,6 +388,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
                 if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
                     versions.delete(session, old.id)
             result_id = version.id
+        # PDF pictures suggested on the steps whose verified evidence cites their page (P8).
+        images_action.attach_suggestions(session, result_id)
     if refreshing:
         versions_action.lint_version(sessions, result_id)
     with session_scope(sessions) as session:

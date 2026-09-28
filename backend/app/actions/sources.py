@@ -39,6 +39,7 @@ from app.repositories import jobs as jobs_repo
 from app.repositories import redaction as redaction_repo
 from app.repositories import sources as repo
 from app.services import grounding, parsing
+from app.services import images as pictures
 from app.services.grounding import DEFAULT_REPLACEMENT
 
 Sessions = sessionmaker[Session]
@@ -280,8 +281,16 @@ def read_source(config: AppConfig, sessions: Sessions, source_id: str) -> Result
             folder = config.data_dir / "images" / info.engagement_id
             folder.mkdir(parents=True, exist_ok=True)
             for number, image in enumerate(images.value, start=1):
-                path = folder / f"{source_id}-p{image.page}-{number}.{image.extension}"
-                path.write_bytes(image.data)
+                # Saved already re-encoded without metadata (constraint 11), with a thumbnail.
+                match pictures.clean_extracted(image.data):
+                    case Err():
+                        continue  # a picture that can't be opened isn't worth suggesting
+                    case Ok(value=(clean, facts)):
+                        pass
+                path = folder / f"{source_id}-p{image.page}-{number}.{facts.extension}"
+                path.write_bytes(clean)
+                if isinstance(thumb := pictures.make_thumbnail(clean), Ok):
+                    pictures.thumb_path(str(path)).write_bytes(thumb.value)
                 repo.add_suggested_image(
                     session,
                     source_id=source_id,
@@ -383,7 +392,8 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
         )
     file_path, image_paths = removed
     data_root = config.data_dir.resolve()
-    for name in (file_path, *image_paths):
+    thumbs = [str(pictures.thumb_path(name)) for name in image_paths]
+    for name in (file_path, *image_paths, *thumbs):
         path = Path(name).resolve()
         if path.is_relative_to(data_root):  # never delete anything outside the data folder
             path.unlink(missing_ok=True)

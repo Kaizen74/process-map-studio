@@ -41,6 +41,11 @@ def list_images(request: Request, element_id: str) -> list[ImageView]:
     return unwrap(images.list_images(request.app.state.sessions, element_id))
 
 
+@router.get("/versions/{version_id}/images")
+def version_images(request: Request, version_id: str) -> list[ImageView]:
+    return unwrap(images.version_images(request.app.state.sessions, version_id))
+
+
 @router.patch("/images/{image_id}")
 def change_image(request: Request, image_id: str, body: ImagePatch) -> ImageView:
     state = request.app.state

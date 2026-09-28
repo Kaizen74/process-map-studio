@@ -389,6 +389,9 @@ Images live only in the app: never in any export (Q9). Every image needs a capti
 
 An image as returned: `{"id", "element_id", "caption", "image_type", "origin": "uploaded" | "extracted", "status": "suggested" | "kept" | "discarded", "redaction_confirmed", "source_name", "page", "created_at"}` — `source_name` and `page` for images suggested from a PDF (else `""` and `null`); captions and file names with names hidden.
 
+### Suggested images from PDFs
+When a PDF is read, each embedded picture at least 48 px on its shorter side is saved once for the source, already re-encoded without metadata (formats other than JPG, PNG and WebP become PNG), with a thumbnail. When a draft is made or refreshed, each such picture is suggested (`origin: "extracted"`, `status: "suggested"`, caption "Image from <file>, page <n>") on every step, decision or approval whose **verified** evidence cites a passage on the same page of the same PDF; not on start, end or rejected steps. A step never gets the same picture twice: one already kept or discarded there isn't suggested again. On a refresh, the pictures of a step that is replaced move to the fresh step with the same key (decisions carry over). Reopen copies every image row with its decision. Open suggestions on steps that aren't rejected count in Q6 and block Publish (`suggested_image`).
+
 ### POST /api/elements/{eid}/images
 Upload an image to a step (multipart: `file`, `caption`, `image_type`, `redaction_confirmed`). Response `201`: the image, `origin: "uploaded"`, `status: "kept"`.
 - `file`: JPG, PNG or WebP, up to 10 MB and 40 million pixels, and it must open as a picture ("Choose a JPG, PNG or WebP picture." · "Pictures can be up to 10 MB." · "Pictures can be up to 40 million pixels. Save a smaller copy and upload that." · "That picture couldn't be opened. Save it again and upload the copy."). The stored copy is re-encoded with the picture's orientation applied and no metadata; a thumbnail (longest side 480 px) is stored with it.
@@ -407,6 +410,9 @@ Response `200`: the image. Audit rows "Kept suggested image" · "Discarded sugge
 
 ### DELETE /api/images/{iid}
 Remove an uploaded image (`204`). A suggestion is discarded instead (`422` "Discard a suggested picture instead of removing it."). The file is deleted when no other version still uses it. An audit row "Removed image". Errors: `404`; `409`.
+
+### GET /api/versions/{vid}/images
+Every image on the version's steps that isn't discarded (rejected steps left out), in process order (the order of the steps, then as for one step), for the map's has-images marker and the walkthrough strip. Works for drafts and published versions. Errors: `404` ("That version doesn't exist.").
 
 ### GET /api/images/{iid}/file
 The stored picture (`image/jpeg`, `image/png` or `image/webp`); `?size=thumb` for the thumbnail (made on first request if missing). Only the app shows it; no export links to it. Errors: `404`.
