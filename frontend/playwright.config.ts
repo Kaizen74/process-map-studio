@@ -26,6 +26,13 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   reporter: [["list"]],
+  // Visual baselines (PRD §6.2 item 9) are the screenshots Eric approved, kept in docs/screens/.
+  // They are never written by a test run: a missing or different image fails the check.
+  snapshotPathTemplate: "{testDir}/../../../docs/screens/{arg}{ext}",
+  updateSnapshots: "none",
+  expect: {
+    toHaveScreenshot: { maxDiffPixelRatio: 0.005, animations: "disabled", caret: "hide" },
+  },
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     browserName: "chromium",

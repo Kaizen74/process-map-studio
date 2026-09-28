@@ -9,25 +9,46 @@ import {
   Kpi,
   PanelHeader,
   PanelSection,
+  ReviewActions,
   RoleAccountability,
 } from "../../components/panel";
 import { ErrorState, Skeleton } from "../../components/common";
 import { useElement } from "../../hooks/useReview";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
+import type { ReviewAction } from "../../api/review";
 
 export interface DetailPanelProps {
   element: GraphElement;
   laneName: string;
   phaseName: string;
+  /** Review actions; omitted where the version can't change. */
+  review?:
+    | {
+        busy: boolean;
+        error: unknown;
+        onAction: (action: ReviewAction) => void;
+        onEdit: () => void;
+      }
+    | undefined;
   onOpenEvidence: (card: Card) => void;
+  /** Add missing step after this one; omitted where it can't be (the end, a rejected step, not a draft). */
+  onAddAfter?: (() => void) | undefined;
   onClose: () => void;
 }
 
 const STEPS = new Set(["activity", "decision", "approval"]);
 
-/** The selected step, read-only (PRD §5.7.5, §5.7.7). Review actions arrive in P6. */
-export function DetailPanel({ element, laneName, phaseName, onOpenEvidence, onClose }: DetailPanelProps) {
+/** The selected step with its review actions (PRD §5.7.5, §5.7.7). */
+export function DetailPanel({
+  element,
+  laneName,
+  phaseName,
+  review,
+  onOpenEvidence,
+  onAddAfter,
+  onClose,
+}: DetailPanelProps) {
   const detail = useElement(element.id);
   const step = STEPS.has(element.kind);
   return (
@@ -39,9 +60,20 @@ export function DetailPanel({ element, laneName, phaseName, onOpenEvidence, onCl
           scope. It has no evidence of its own.
         </p>
       )}
-      {step && element.needs_check && (
-        <p className="panel-danger">
-          The independent verifier found only partial support. Check the evidence before confirming.
+      {step && review && (
+        <ReviewActions
+          status={element.review_status}
+          needsCheck={element.needs_check}
+          busy={review.busy}
+          onConfirm={() => review.onAction("confirm")}
+          onReject={() => review.onAction("reject")}
+          onRestore={() => review.onAction("restore")}
+          onEdit={review.onEdit}
+        />
+      )}
+      {step && review?.error != null && (
+        <p className="panel-danger" role="alert">
+          {messageOf(review.error)} The step is shown as it was.
         </p>
       )}
       {step && detail.isPending && (
@@ -84,6 +116,11 @@ export function DetailPanel({ element, laneName, phaseName, onOpenEvidence, onCl
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
         </>
+      )}
+      {onAddAfter && (
+        <button type="button" className="btn btn--link" onClick={onAddAfter}>
+          Add a missing step after this one
+        </button>
       )}
       <button type="button" className="btn btn--link" onClick={onClose}>
         Close details

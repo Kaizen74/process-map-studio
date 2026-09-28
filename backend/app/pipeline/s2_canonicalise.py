@@ -24,7 +24,7 @@ from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
 from app.domain.enums import MergeDecision, Provenance
-from app.domain.graph import ElementRecord, MergeProposalRecord
+from app.domain.graph import ElementRecord, MergeGroup, MergeProposalRecord
 from app.domain.models import AiCallRecord, CheckOutcome, ClaimRecord, NameReplacement, RoleView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
@@ -365,6 +365,18 @@ def canonicalise(
             )
             map_repo.link_claims(session, element.id, claim_ids)
             tally.steps += 1
+
+        def group_of(ref: str) -> MergeGroup:
+            """One merged step as drafted, so the Merge tab can show it and Split restore it."""
+            step = kept[ref]
+            role, _ = _role_for(step.lane_role, known, output.new_roles)
+            return MergeGroup(
+                label=step.label,
+                kind=step.kind,
+                lane_role_id=role.id if role else None,
+                claim_ids=list(dict.fromkeys(by_ref[c].claim_id for c in step.claim_refs)),
+            )
+
         map_repo.add_merge_proposals(
             session,
             version_id,
@@ -381,6 +393,7 @@ def canonicalise(
                         else MergeDecision.PENDING.value
                     ),
                     decided_at=now if similarity >= PRE_MERGE else None,
+                    claim_groups=[group_of(r) for r in steps],
                 )
                 for steps, label, similarity in proposals
             ],

@@ -401,6 +401,18 @@ def segment_rows(session: Session, segment_ids: list[str]) -> dict[str, tuple[So
     return {seg.id: (seg, fmt) for seg, fmt in rows}
 
 
+def segment_owners(session: Session, segment_ids: list[str]) -> dict[str, tuple[str, str, str]]:
+    """Passage ID → (source ID, engagement ID, source kind); missing IDs are left out."""
+    if not segment_ids:
+        return {}
+    rows = session.execute(
+        select(SourceSegment.id, Source.id, Source.engagement_id, Source.kind)
+        .join(Source, Source.id == SourceSegment.source_id)
+        .where(SourceSegment.id.in_(segment_ids))
+    )
+    return {seg: (src, eng, kind) for seg, src, eng, kind in rows}
+
+
 def instruction_like_count(session: Session, engagement_id: str) -> int:
     """Passages in an engagement's sources that looked like instructions (treated as data, G9)."""
     return (

@@ -19,6 +19,14 @@ def start_draft(request: Request, engagement_id: str) -> DraftStarted:
     )
 
 
+@router.post("/versions/{version_id}/refresh", status_code=202)
+def start_refresh(request: Request, version_id: str) -> DraftStarted:
+    state = request.app.state
+    return unwrap(
+        draft.start_refresh(state.config, state.sessions, version_id, state.worker.submit)
+    )
+
+
 @router.get("/engagements/{engagement_id}/draft")
 def get_draft(request: Request, engagement_id: str) -> DraftState:
     return unwrap(draft.get_draft(request.app.state.sessions, engagement_id))

@@ -148,7 +148,7 @@ describe("MapToolbar and MapLegend", () => {
   it("switch lens and zoom, and warn about a large map in text", () => {
     const onLens = vi.fn();
     const onZoom = vi.fn();
-    const props = { lens: "plain" as Lens, onLens, zoom: "fit" as const, onZoom, steps: 8, lanes: 5, phases: 3 };
+    const props = { view: "map" as const, onView: vi.fn(), lens: "plain" as Lens, onLens, zoom: "fit" as const, onZoom, steps: 8, lanes: 5, phases: 3 };
     const { rerender } = render(<MapToolbar {...props} large={false} />);
     expect(screen.getByText("8 steps · 5 lanes · 3 phases")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: "Confidence" }));
@@ -157,6 +157,24 @@ describe("MapToolbar and MapLegend", () => {
     expect(onZoom).toHaveBeenCalledWith("full");
     rerender(<MapToolbar {...props} steps={30} large />);
     expect(screen.getByText(/Large map: consider splitting by phase/)).toHaveClass("map-toolbar__counts--large");
+  });
+
+  it("switches between map and table; the table leaves out lens and zoom; More offers Add missing step", () => {
+    const onView = vi.fn();
+    const onAddStep = vi.fn();
+    const props = { onView, lens: "plain" as Lens, onLens: vi.fn(), zoom: "fit" as const, onZoom: vi.fn(), steps: 8, lanes: 5, phases: 3, large: false };
+    const { rerender } = render(<MapToolbar {...props} view="map" />);
+    expect(screen.queryByRole("button", { name: "More" })).toBeNull(); // not offered: can't change
+    fireEvent.click(screen.getByRole("radio", { name: "Table" }));
+    expect(onView).toHaveBeenCalledWith("table");
+    rerender(<MapToolbar {...props} view="table" onAddStep={onAddStep} />);
+    expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
+    expect(screen.queryByRole("radiogroup", { name: "Zoom" })).toBeNull();
+    expect(screen.getByText("8 steps · 5 lanes · 3 phases")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "More" })).getByRole("button", { name: "Add missing step" }));
+    expect(onAddStep).toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "More" })).toBeNull();
   });
 
   it("the legend always lists shapes and markers, plus the active lens's key", () => {

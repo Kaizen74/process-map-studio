@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { quoteRange } from "../../lib/quote";
-import { Chip } from "../common";
+import { Button, Chip } from "../common";
 
 export interface ViewerPassage {
   id: string;
@@ -20,6 +20,11 @@ export interface SourceViewerProps {
   quote: string;
   backLabel: string;
   onBack: () => void;
+  /** Pick mode (Add missing step): a "Use this passage" button on each passage. */
+  onPick?: ((passage: ViewerPassage) => void) | undefined;
+  pickedIds?: readonly string[] | undefined;
+  /** Below the passages, e.g. "Show more passages". */
+  footer?: ReactNode;
 }
 
 const INSTRUCTION_LIKE = "Instruction-like text. Treated as data and ignored.";
@@ -50,7 +55,19 @@ function scroller(element: HTMLElement): HTMLElement | null {
  * A source opened at one passage, inside the detail panel (PRD §5.7.8): the target passage is
  * framed, the exact quote highlighted, and the panel scrolls to it with its own scrollTop.
  */
-export function SourceViewer({ kind, name, meta, passages, targetId, quote, backLabel, onBack }: SourceViewerProps) {
+export function SourceViewer({
+  kind,
+  name,
+  meta,
+  passages,
+  targetId,
+  quote,
+  backLabel,
+  onBack,
+  onPick,
+  pickedIds = [],
+  footer,
+}: SourceViewerProps) {
   const target = useRef<HTMLLIElement>(null);
   useEffect(() => {
     const element = target.current;
@@ -86,11 +103,20 @@ export function SourceViewer({ kind, name, meta, passages, targetId, quote, back
                 {p.speaker_role && <span className="viewer-passage__role">{p.speaker_role}</span>}
                 <p>{isTarget ? <Highlighted text={p.text} quote={quote} /> : p.text}</p>
                 {p.instruction_like && <Chip dashed>{INSTRUCTION_LIKE}</Chip>}
+                {onPick &&
+                  (pickedIds.includes(p.id) ? (
+                    <p className="viewer-passage__picked">Picked for the new step</p>
+                  ) : (
+                    <Button onClick={() => onPick(p)} aria-label={`Use this passage, ${p.anchor}`}>
+                      Use this passage
+                    </Button>
+                  ))}
               </div>
             </li>
           );
         })}
       </ol>
+      {footer}
       <p className="panel-viewer__footer">
         Speaker names are replaced by roles. Quotes stay in the app and never appear in exports.
       </p>

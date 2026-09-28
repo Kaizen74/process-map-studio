@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.domain.enums import ImageStatus
@@ -303,3 +303,130 @@ def image_count(session: Session, element_id: str) -> int:
         )
         or 0
     )
+
+
+def element(session: Session, element_id: str) -> ElementRecord | None:
+    row = session.get(Element, element_id)
+    return ElementRecord.model_validate(row) if row else None
+
+
+def replace_constraints(
+    session: Session, element_id: str, constraints: Sequence[ConstraintRecord]
+) -> None:
+    session.execute(delete(Constraint).where(Constraint.element_id == element_id))
+    _add(session, Constraint, constraints)
+
+
+def replace_ai_flag(session: Session, element_id: str, flag: AiFlagRecord | None) -> None:
+    session.execute(delete(AiFlag).where(AiFlag.element_id == element_id))
+    if flag is not None:
+        _add(session, AiFlag, [flag])
+
+
+def replace_raci(session: Session, element_id: str, entries: Sequence[RaciRecord]) -> None:
+    """Set a step's RACI. An entry that stays (same role and letter) keeps its row and so the
+    passages behind it; entries that go are deleted with their evidence links."""
+    rows = list(session.scalars(select(Raci).where(Raci.element_id == element_id)))
+    wanted = {(e.role_id, e.letter): e for e in entries}
+    for row in rows:
+        entry = wanted.pop((row.role_id, row.letter), None)
+        if entry is None:
+            session.execute(delete(EvidenceLink).where(EvidenceLink.raci_id == row.id))
+            session.delete(row)
+        else:
+            row.contested = entry.contested
+    _add(session, Raci, list(wanted.values()))
+    session.flush()
+
+
+def edge(session: Session, edge_id: str) -> tuple[str, EdgeRecord] | None:
+    """(version ID, edge), or None if there is no such edge."""
+    row = session.get(Edge, edge_id)
+    return (row.version_id, EdgeRecord.model_validate(row)) if row else None
+
+
+def update_edge(session: Session, edge_id: str, fields: dict[str, Any]) -> EdgeRecord | None:
+    row = session.get(Edge, edge_id)
+    if row is None:
+        return None
+    for name, value in fields.items():
+        if name not in EdgeRecord.model_fields or name == "id":
+            raise ValueError(f"not an edge field: {name}")
+        setattr(row, name, value)
+    session.flush()
+    return EdgeRecord.model_validate(row)
+
+
+def delete_edge(session: Session, edge_id: str) -> None:
+    session.execute(delete(Edge).where(Edge.id == edge_id))
+
+
+def stable_keys(session: Session, version_id: str) -> set[str]:
+    return set(session.scalars(select(Element.stable_key).where(Element.version_id == version_id)))
+
+
+def question(session: Session, question_id: str) -> tuple[str, QuestionRecord] | None:
+    """(version ID, question), or None."""
+    row = session.get(ValidationQuestion, question_id)
+    return (row.version_id, QuestionRecord.model_validate(row)) if row else None
+
+
+def set_question_status(session: Session, question_id: str, status: str) -> QuestionRecord:
+    row = session.get(ValidationQuestion, question_id)
+    assert row is not None
+    row.status = status
+    session.flush()
+    return QuestionRecord.model_validate(row)
+
+
+def move_questions(session: Session, from_ids: Sequence[str], to_id: str) -> None:
+    if from_ids:
+        session.execute(
+            update(ValidationQuestion)
+            .where(ValidationQuestion.element_id.in_(from_ids))
+            .values(element_id=to_id)
+        )
+
+
+def merge_proposal(session: Session, proposal_id: str) -> tuple[str, MergeProposalRecord] | None:
+    """(version ID, proposal), or None."""
+    row = session.get(MergeProposal, proposal_id)
+    return (row.version_id, MergeProposalRecord.model_validate(row)) if row else None
+
+
+def set_merge_decision(
+    session: Session, proposal_id: str, decision: str, decided_at: str
+) -> MergeProposalRecord:
+    row = session.get(MergeProposal, proposal_id)
+    assert row is not None
+    row.decision = decision
+    row.decided_at = decided_at
+    session.flush()
+    return MergeProposalRecord.model_validate(row)
+
+
+def move_evidence(session: Session, link_ids: Sequence[str], to_element_id: str) -> None:
+    """Hand element evidence links to another element; a second link to the same passage with
+    the same stance is dropped."""
+    for link_id in link_ids:
+        link = session.get(EvidenceLink, link_id)
+        if link is None:
+            continue
+        twin = session.scalars(
+            select(EvidenceLink.id).where(
+                EvidenceLink.element_id == to_element_id,
+                EvidenceLink.segment_id == link.segment_id,
+                EvidenceLink.stance == link.stance,
+            )
+        ).first()
+        if twin is not None:
+            session.delete(link)
+        else:
+            link.element_id = to_element_id
+    session.flush()
+
+
+def delete_evidence(session: Session, link_ids: Sequence[str]) -> None:
+    if link_ids:
+        session.execute(delete(EvidenceLink).where(EvidenceLink.id.in_(link_ids)))
+        session.flush()

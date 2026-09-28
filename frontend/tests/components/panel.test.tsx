@@ -2,12 +2,14 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   AiFlag,
+  AllReviewed,
   ConfidenceBreakdown,
   ConstraintList,
   DecisionRights,
   EvidenceCard,
   HandoffTime,
   PanelHeader,
+  ReviewActions,
   RoleAccountability,
 } from "../../src/components/panel";
 import type { ElementDetail } from "../../src/lib/mapTypes";
@@ -143,5 +145,48 @@ describe("panel sections", () => {
       </div>,
     );
     expect(await seriousViolations(container)).toEqual([]);
+  });
+});
+
+describe("review actions (PRD §5.7.5)", () => {
+  function draw(status: string, needsCheck = false) {
+    const handlers = { onConfirm: vi.fn(), onReject: vi.fn(), onRestore: vi.fn(), onEdit: vi.fn() };
+    render(<ReviewActions status={status} needsCheck={needsCheck} busy={false} {...handlers} />);
+    return handlers;
+  }
+
+  it("an unreviewed step offers Confirm as drafted, Edit and Reject step", () => {
+    const h = draw("draft");
+    expect(screen.getByText(/Confirming locks this step/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm as drafted" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reject step" }));
+    expect([h.onConfirm, h.onEdit, h.onReject].map((f) => f.mock.calls.length)).toEqual([1, 1, 1]);
+    expect(screen.queryByText(/only partial support/)).toBeNull();
+  });
+
+  it("warns before confirming a step the verifier only partly supported", () => {
+    draw("draft", true);
+    expect(screen.getByText(/found only partial support/)).toHaveClass("panel-danger");
+  });
+
+  it("a reviewed step is locked, with an Edit link", () => {
+    const h = draw("edited");
+    expect(screen.getByRole("status")).toHaveTextContent("Edited · locked against AI re-runs");
+    expect(screen.queryByRole("button", { name: "Confirm as drafted" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(h.onEdit).toHaveBeenCalled();
+  });
+
+  it("a rejected step explains itself and can be restored", () => {
+    const h = draw("rejected");
+    expect(screen.getByRole("status")).toHaveTextContent(/Rejected\. Its connected steps may now be orphaned/);
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    expect(h.onRestore).toHaveBeenCalled();
+  });
+
+  it("says when every step is reviewed", () => {
+    render(<AllReviewed />);
+    expect(screen.getByText("All steps reviewed")).toBeInTheDocument();
   });
 });

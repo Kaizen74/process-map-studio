@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, SecretStr
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
 
 class HealthInfo(BaseModel):
@@ -555,3 +555,155 @@ class Confidence(BaseModel):
 
     value: float
     breakdown: list[ConfidenceTerm]
+
+
+class AuditEntry(BaseModel):
+    """One row of a version's audit log (PRD §5.7.10 Audit tab); names hidden in the label."""
+
+    id: str
+    at: str
+    actor: str
+    action: str
+    target_type: str
+    target_id: str
+    target_label: str
+    before: object = None
+    after: object = None
+
+
+# --- Editing a step (API_CONTRACT.md → Review: PATCH /elements/{eid}) ---------------------------
+
+
+class DecisionInput(BaseModel):
+    mechanism: str
+    decider_role_id: str | None = None
+    rule_or_threshold: str = ""
+    escalation: str = ""
+
+
+class HandoffInput(BaseModel):
+    in_: str = Field(default="", validation_alias=AliasChoices("in", "in_"))
+    out: str = ""
+
+
+class ConstraintInput(BaseModel):
+    text: str
+    cause_type: str | None = None
+    is_key: bool = False
+    provenance: str = "O"
+
+
+class AiFlagInput(BaseModel):
+    component: str
+    input: str
+    output: str
+    handoff: str
+    basis: str
+
+
+class RaciInput(BaseModel):
+    role_id: str
+    letter: str
+    contested: bool = False
+
+
+class ElementPatch(BaseModel):
+    """Only the fields sent change (`model_fields_set`); `ai_flag: null` removes the flag."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str | None = None
+    kind: str | None = None
+    lane_role_id: str | None = None
+    work_min: float | None = None
+    wait_min: float | None = None
+    duration_text: str | None = None
+    complexity: str | None = None
+    kpi: str | None = None
+    decision: DecisionInput | None = None
+    handoff: HandoffInput | None = None
+    constraints: list[ConstraintInput] | None = None
+    k_risk: str | None = None
+    ai_flag: AiFlagInput | None = None
+    raci: list[RaciInput] | None = None
+
+
+class NewStep(BaseModel):
+    """Eric's own step (API_CONTRACT.md → Review: POST /versions/{vid}/elements)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    label: str
+    lane_role_id: str
+    after_element_id: str
+    provenance: str
+    segment_ids: list[str] = []
+    r_reference: str = ""
+    mechanism: str = "judgment"
+
+
+class EdgeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    from_: str = Field(validation_alias=AliasChoices("from", "from_"))
+    to: str
+    kind: str
+    label: str = ""
+
+
+class EdgePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    from_: str | None = Field(default=None, validation_alias=AliasChoices("from", "from_"))
+    to: str | None = None
+    kind: str | None = None
+    label: str | None = None
+
+
+class QuestionView(BaseModel):
+    id: str
+    element_id: str | None
+    element_label: str
+    phase_id: str | None
+    phase_name: str
+    question: str
+    reason: str
+    status: str
+
+
+class QuestionStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str
+
+
+class MergeDecisionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str
+
+
+class MergeClaimView(BaseModel):
+    text: str
+    source_name: str
+    anchor: str
+    quote: str
+
+
+class MergeGroupView(BaseModel):
+    label: str
+    kind: str
+    lane_role_name: str
+    element_id: str | None
+    claims: list[MergeClaimView]
+
+
+class MergeProposalView(BaseModel):
+    id: str
+    proposed_label: str
+    similarity: float
+    decision: str
+    decided_at: str | None
+    element_id: str | None
+    groups: list[MergeGroupView]

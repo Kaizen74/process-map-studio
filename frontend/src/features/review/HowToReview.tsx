@@ -6,11 +6,14 @@ export function HowToReview({ onStart }: { onStart: (() => void) | null }) {
     <div className="panel-card">
       <h2 className="panel-card__title">How to review</h2>
       <ul className="how-to">
-        <li>Click a step on the map, or a segment of the progress bar, to see its details and evidence.</li>
+        <li>Click a step on the map, a row of the table, or a segment of the progress bar to see its details and evidence.</li>
         <li>Each piece of evidence opens its source at the exact passage.</li>
         <li>A dashed outline means the step hasn't been reviewed yet. An orange dot marks a key constraint.</li>
-        <li>Lenses change only the line under each step: time, how well sources agree, or confidence.</li>
-        <li>Confirming, editing and rejecting steps arrive in build phase P6.</li>
+        <li>Confirm, edit or reject each step; the next step that needs you opens by itself.</li>
+        <li>
+          Press <kbd className="mono">?</kbd> for keyboard shortcuts: J and K move between steps, C confirms, E edits, R
+          rejects.
+        </li>
       </ul>
       {onStart && (
         <Button variant="primary" onClick={onStart}>

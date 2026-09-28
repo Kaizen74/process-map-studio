@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
@@ -128,3 +128,17 @@ def verdicts(session: Session, claim_ids: list[str]) -> dict[str, str]:
         return {}
     rows = session.execute(select(Claim.id, Claim.verifier_verdict).where(Claim.id.in_(claim_ids)))
     return {claim_id: verdict for claim_id, verdict in rows}
+
+
+def claims_by_id(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
+    """Claims by ID (missing IDs are left out)."""
+    if not claim_ids:
+        return {}
+    rows = session.scalars(select(Claim).where(Claim.id.in_(claim_ids)))
+    return {row.id: _record(row) for row in rows}
+
+
+def delete_claims(session: Session, claim_ids: list[str]) -> None:
+    if claim_ids:
+        session.execute(delete(Claim).where(Claim.id.in_(claim_ids)))
+        session.flush()

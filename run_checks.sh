@@ -65,7 +65,7 @@ if [ -d frontend/node_modules ]; then
   if [ -z "${PMS_CHROMIUM_PATH:-}" ] && [ -x /opt/pw-browsers/chromium ]; then
     export PMS_CHROMIUM_PATH=/opt/pw-browsers/chromium
   fi
-  check "Browser checks (accessibility on every screen, fonts offline, first-run path)" \
+  check "Browser checks (accessibility on every screen, fonts offline, smoke path, visual baseline)" \
     npm --prefix frontend run --silent e2e
 else
   TOTAL=$((TOTAL + 1))

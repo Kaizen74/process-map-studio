@@ -88,7 +88,7 @@ describe("Review screen (PRD §5.6)", () => {
     expect(within(panel).getAllByText("A?")).toHaveLength(2);
     expect(within(panel).getByRole("region", { name: "Decision rights and mechanism" })).toBeInTheDocument();
     expect(within(panel).getByRole("region", { name: "How confidence was computed" })).toBeInTheDocument();
-    expect(within(panel).queryByRole("button", { name: /Confirm/ })).toBeNull(); // review actions: P6
+    expect(within(panel).getByRole("button", { name: "Confirm as drafted" })).toBeInTheDocument(); // P6
   });
 
   it("opens a piece of evidence at its passage with the quote highlighted, and goes back", async () => {

@@ -271,6 +271,8 @@ class MergeProposal(Row):
     similarity: Mapped[float] = mapped_column(Float)
     decision: Mapped[str] = mapped_column(String(16), default="pending")
     decided_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Added in migration 0005: the steps behind the proposal, as S2 drafted them.
+    claim_groups: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
 
 
 class ValidationQuestion(Row):

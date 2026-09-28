@@ -18,3 +18,7 @@ export const getRejectedClaims = (versionId: string) =>
 export const getGraph = (versionId: string) => request<Graph>(`/versions/${enc(versionId)}/graph`);
 
 export const getLint = (versionId: string) => request<LintReport>(`/versions/${enc(versionId)}/lint`);
+
+/** Refresh draft from sources (phase P6): reviewed steps stay exactly as they are. */
+export const startRefresh = (versionId: string) =>
+  request<{ job_id: string }>(`/versions/${enc(versionId)}/refresh`, { method: "POST" });

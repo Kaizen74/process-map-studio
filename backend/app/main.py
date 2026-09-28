@@ -25,6 +25,7 @@ from app.routers import (
     jobs,
     readiness,
     redaction,
+    review,
     settings,
     sources,
     system,
@@ -68,6 +69,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(redaction.router)
     app.include_router(draft.router)
     app.include_router(versions.router)
+    app.include_router(review.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

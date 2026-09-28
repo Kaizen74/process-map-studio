@@ -98,12 +98,22 @@ class AiFlagRecord(Record):
     basis: str  # B.12
 
 
+class MergeGroup(BaseModel):
+    """One step a merge proposal covers, as S2 drafted it."""
+
+    label: str
+    kind: str
+    lane_role_id: str | None = None
+    claim_ids: list[str]
+
+
 class MergeProposalRecord(Record):
     claim_ids: list[str]
     proposed_label: str
     similarity: float
     decision: str = "pending"  # B.15
     decided_at: str | None = None
+    claim_groups: list[MergeGroup] = []
 
 
 class QuestionRecord(Record):

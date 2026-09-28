@@ -1,20 +1,30 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
-import { MapLegend, MapStage, MapToolbar, type Zoom } from "../../components/map";
-import { RaciMatrix } from "../../components/tabs";
+import { MapLegend, MapStage, MapToolbar, type MapView, type Zoom } from "../../components/map";
+import { AllReviewed } from "../../components/panel";
 import { VersionBanner } from "../../components/shell";
 import { useDraft } from "../../hooks/useDraft";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useGraph, useLayout } from "../../hooks/useReview";
+import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import type { EvidenceCard } from "../../lib/mapTypes";
-import { firstNeedingAttention } from "../../lib/review";
+import type { ReviewAction } from "../../api/review";
+import type { RejectedClaim } from "../../lib/reviewTypes";
+import { newStepForm, type AddStepForm } from "../../lib/addStep";
+import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
+import { shortcutFor, stepAlong } from "../../lib/shortcuts";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
+import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
-import { SourcePanel } from "./SourcePanel";
+import { SourcePanel, type OpenPassage } from "./SourcePanel";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { RefreshDialog } from "./RefreshDialog";
+import { ShortcutsDialog } from "./ShortcutsDialog";
+import { TableView } from "./TableView";
+import { WorkbenchTabs } from "./WorkbenchTabs";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
 import { useLens } from "./useLens";
@@ -37,23 +47,29 @@ export function ReviewScreen() {
   const [lens, setLens] = useLens();
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [mapBox, fit] = useFitScale(layout.data?.canvas.w ?? 0);
-  // The source viewer replaces the panel's content; it belongs to the step it was opened from.
-  const [viewing, setViewing] = useState<{ step: string; card: EvidenceCard } | null>(null);
+  const reviewStep = useReviewStep(versionId ?? "", engagementId);
+  // The source viewer replaces the panel's content; it belongs to the step it was opened from
+  // (or to no step, opened from a rejected claim) and closes when the selection changes.
+  const [viewing, setViewing] = useState<{ step: string | null; card: OpenPassage } | null>(null);
   const openCard = viewing && viewing.step === selectedId ? viewing.card : null;
-  useEffect(() => {
-    if (!openCard) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setViewing(null); // PRD §5.8: Esc closes the viewer
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [openCard]);
+  // The edit form, like the viewer, belongs to the step it was opened on.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = editingId !== null && editingId === selectedId;
+  const stopEditing = useCallback(() => setEditingId(null), []);
+  // Add missing step replaces the panel content until it is added or cancelled.
+  const [adding, setAdding] = useState<AddStepForm | null>(null);
+  const stopAdding = useCallback(() => setAdding(null), []);
+  const view: MapView = params.get("view") === "table" ? "table" : "map";
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [refreshOpen, setRefreshOpen] = useState(false);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
   }
 
   function select(id: string | null) {
+    setAdding(null);
+    setViewing(null);
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -117,9 +133,101 @@ export function ReviewScreen() {
   const sources = new Set(g.elements.flatMap((e) => e.evidence.map((ev) => ev.source_id))).size;
   const lanes = drawing.lanes.length;
   const start = firstNeedingAttention(g);
+  const editable = g.version.state === "draft";
+
+  function act(action: ReviewAction) {
+    if (!selected) return;
+    const id = selected.id;
+    reviewStep.reset();
+    reviewStep.mutate(
+      { elementId: id, action },
+      { onError: () => select(id) }, // back to the step, shown as it was, with the message
+    );
+    // Auto-advance after Confirm or Reject (PRD §5.7.5); Restore stays on the step.
+    if (action !== "restore") select(nextToReview(g, id));
+  }
+
+  function setView(next: MapView) {
+    setParams(
+      (current) => {
+        const params = new URLSearchParams(current);
+        if (next === "table") params.set("view", "table");
+        else params.delete("view");
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  /** Where Add missing step puts the new step: after the selected step, else after the start. */
+  function addAfter(): string {
+    if (selected && selected.kind !== "end" && selected.review_status !== "rejected") return selected.id;
+    return g.elements.find((e) => e.kind === "start")?.id ?? "";
+  }
+
+  // The keyboard (PRD §5.8).
+  function onShortcut(event: KeyboardEvent) {
+    if (helpOpen || refreshOpen || event.defaultPrevented) return;
+    const shortcut = shortcutFor(event);
+    if (!shortcut) return;
+    const busy = adding !== null || editing; // a form is open: only lenses and help
+    const step = selected && STEPS.has(selected.kind) ? selected : null;
+    switch (shortcut.kind) {
+      case "lens":
+        setLens(shortcut.lens);
+        break;
+      case "help":
+        setHelpOpen(true);
+        break;
+      case "close":
+        if (openCard) setViewing(null); // the edit and add forms close themselves
+        return;
+      case "next":
+      case "previous":
+        if (busy) return;
+        select(stepAlong(g.elements.map((e) => e.id), selectedId, shortcut.kind === "next" ? 1 : -1));
+        break;
+      case "confirm":
+      case "reject":
+        if (busy || !editable || step?.review_status !== "draft") return;
+        act(shortcut.kind);
+        break;
+      case "edit":
+        if (busy || !editable || !step || step.review_status === "rejected") return;
+        reviewStep.reset();
+        setEditingId(step.id);
+        break;
+    }
+    event.preventDefault();
+  }
+
+  function openClaim(claim: RejectedClaim) {
+    select(null);
+    setViewing({ step: null, card: { ...claim, quote: "" } });
+  }
+
+  function addFromClaim(claim: RejectedClaim) {
+    const passage = { id: claim.segment_id ?? "", anchor: claim.anchor, source_name: claim.source_name, text: "" };
+    setAdding(newStepForm(g, addAfter(), passage));
+  }
+
+  function saved(id: string) {
+    setEditingId(null);
+    select(nextToReview(g, id)); // auto-advance after Save (PRD §5.7.5)
+  }
 
   return (
     <div className="review">
+      <KeyboardShortcuts onKey={onShortcut} />
+      <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <RefreshDialog
+        open={refreshOpen}
+        engagementId={engagementId}
+        versionId={g.version.id}
+        versionLabel={g.version.label}
+        kept={steps.filter((e) => e.review_status !== "draft").length}
+        onClose={() => setRefreshOpen(false)}
+      />
       <VersionBanner
         label={g.version.label}
         sources={sources}
@@ -135,6 +243,8 @@ export function ReviewScreen() {
           <HeaderStrip process={g.process} />
           <Card className="map-card">
             <MapToolbar
+              view={view}
+              onView={setView}
               lens={lens}
               onLens={setLens}
               zoom={zoom}
@@ -143,44 +253,125 @@ export function ReviewScreen() {
               lanes={lanes}
               phases={drawing.phases.length}
               large={steps.length > MAX_STEPS || lanes > MAX_LANES}
+              onAddStep={editable ? () => setAdding(newStepForm(g, addAfter())) : undefined}
+              onRefresh={editable ? () => setRefreshOpen(true) : undefined}
             />
-            <div ref={mapBox} className={zoom === "full" ? "map-card__canvas map-card__canvas--scroll" : "map-card__canvas"}>
-              <MapStage
+            {view === "table" ? (
+              <TableView
                 graph={g}
-                layout={drawing}
-                lens={lens}
-                scale={zoom === "fit" ? fit : 1}
+                versionId={g.version.id}
+                engagementId={engagementId}
                 selectedId={selected?.id ?? null}
+                editable={editable}
                 onSelect={select}
+                onSaved={(id) => select(nextToReview(g, id))}
+                onOpenFullEdit={(id) => {
+                  select(id);
+                  setEditingId(id);
+                }}
+                onAddStep={() => setAdding(newStepForm(g, addAfter()))}
               />
-            </div>
-            <MapLegend lens={lens} />
+            ) : (
+              <>
+                <div ref={mapBox} className={zoom === "full" ? "map-card__canvas map-card__canvas--scroll" : "map-card__canvas"}>
+                  <MapStage
+                    graph={g}
+                    layout={drawing}
+                    lens={lens}
+                    scale={zoom === "fit" ? fit : 1}
+                    selectedId={selected?.id ?? null}
+                    onSelect={select}
+                  />
+                </div>
+                <MapLegend lens={lens} />
+              </>
+            )}
           </Card>
-          <Card title="RACI matrix" description="Questions, rejected claims, audit, merge decisions and lint arrive as tabs in build phase P6.">
-            <RaciMatrix
+          <Card className="workbench-card">
+            <WorkbenchTabs
               graph={g}
+              versionId={g.version.id}
+              engagementId={engagementId}
               laneOrder={drawing.lanes.map((lane) => lane.role_id)}
               selectedId={selected?.id ?? null}
+              editable={editable}
               onSelect={select}
+              onOpenPassage={openClaim}
+              onAddFromPassage={addFromClaim}
             />
           </Card>
         </main>
         <aside
           className="review__panel"
-          aria-label={selected && openCard ? "Source" : selected ? "Step details" : "How to review"}
+          aria-label={
+            adding
+              ? "Add missing step"
+              : selected && editing
+                ? "Edit step"
+                : openCard
+                  ? "Source"
+                  : selected
+                    ? "Step details"
+                    : "How to review"
+          }
         >
-          {selected && openCard ? (
-            <SourcePanel card={openCard} stepLabel={selected.label} onBack={() => setViewing(null)} />
+          {adding && versionId ? (
+            <AddStepPanel
+              graph={g}
+              initial={adding}
+              versionId={versionId}
+              engagementId={engagementId}
+              onAdded={(id) => select(id)}
+              onCancel={stopAdding}
+            />
+          ) : selected && editing && versionId ? (
+            <EditPanel
+              element={selected}
+              laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
+              phaseName={phases.get(selected.phase_id ?? "") ?? ""}
+              roles={g.roles}
+              versionId={versionId}
+              engagementId={engagementId}
+              onSaved={() => saved(selected.id)}
+              onCancel={stopEditing}
+            />
+          ) : openCard ? (
+            <SourcePanel
+              card={openCard}
+              backLabel={selected ? selected.label : "how to review"}
+              onBack={() => setViewing(null)}
+            />
           ) : selected ? (
             <DetailPanel
               element={selected}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
+              review={
+                editable
+                  ? {
+                      busy: reviewStep.isPending,
+                      error: reviewStep.error,
+                      onAction: act,
+                      onEdit: () => {
+                        reviewStep.reset();
+                        setEditingId(selected.id);
+                      },
+                    }
+                  : undefined
+              }
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
+              onAddAfter={
+                editable && selected.kind !== "end" && selected.review_status !== "rejected"
+                  ? () => setAdding(newStepForm(g, selected.id))
+                  : undefined
+              }
               onClose={() => select(null)}
             />
           ) : (
-            <HowToReview onStart={start ? () => select(start) : null} />
+            <div className="panel-stack">
+              {openSteps(g) === 0 && editable && <AllReviewed />}
+              <HowToReview onStart={start ? () => select(start) : null} />
+            </div>
           )}
         </aside>
       </div>

@@ -13,9 +13,9 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction
+from app.actions import redaction, refresh
 from app.actions import versions as versions_action
-from app.actions.engagements import ENGAGEMENT_MISSING
+from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.actions.readiness import get_readiness
 from app.config import AppConfig
 from app.db import session_scope
@@ -41,7 +41,7 @@ from app.pipeline import (
     s5_questions,
 )
 from app.pipeline.context import AiContext, ai_context
-from app.repositories import ai_calls, claims, versions
+from app.repositories import ai_calls, audit, claims, versions
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
@@ -52,6 +52,9 @@ Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
 
 DRAFT_JOB = "draft"
+REFRESH_JOB = "refresh"
+MAP_JOBS = (DRAFT_JOB, REFRESH_JOB)
+BUILDING = "building"  # the state of the version a refresh is building
 FIRST_LABEL = "v0.1"
 STAGES = (
     ("read", "Reading the documents"),
@@ -67,6 +70,7 @@ BUILT = {sid for sid, _ in STAGES}  # every stage runs since phase P4
 READ_SHARE, EXTRACT_SHARE, COMPARE_SHARE, VERIFY_SHARE, BUILD_SHARE = 0.05, 0.55, 0.7, 0.8, 0.9
 
 BUSY = "A draft map is already being made."
+NOT_CURRENT = "Only the current draft can be refreshed."
 HAS_STEPS = (
     "This draft has steps you've already reviewed. Refresh it from the sources on the Review "
     "screen instead."
@@ -138,7 +142,7 @@ def start_draft(
             ErrorKind.CONFLICT, f"The draft can't start yet: {missing[0]}.", {"missing": missing}
         )
     with session_scope(sessions) as session:
-        latest = jobs_repo.latest(session, engagement_id, DRAFT_JOB)
+        latest = _latest_map_job(session, engagement_id)
         if latest is not None and latest.status in jobs_repo.UNFINISHED:
             return Err(ErrorKind.CONFLICT, BUSY, {"job_id": latest.id})
         draft = versions.current_draft(session, engagement_id)
@@ -153,6 +157,48 @@ def start_draft(
         )
     enqueue(job.id)
     return Ok(DraftStarted(job_id=job.id))
+
+
+def start_refresh(
+    config: AppConfig, sessions: Sessions, version_id: str, enqueue: Enqueue
+) -> Result[DraftStarted]:
+    """Refresh draft from sources (PRD §3.5): the whole pipeline again, folded into this draft."""
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        current = versions.current_draft(session, version.engagement_id)
+        if current is None or current.id != version.id:
+            return Err(ErrorKind.CONFLICT, NOT_CURRENT)
+    match get_readiness(config, sessions, version.engagement_id):
+        case Err() as err:
+            return err
+        case Ok(value=ready):
+            pass
+    if not ready.ready_to_draft:
+        missing = ready.missing
+        return Err(
+            ErrorKind.CONFLICT, f"The draft can't start yet: {missing[0]}.", {"missing": missing}
+        )
+    with session_scope(sessions) as session:
+        latest = _latest_map_job(session, version.engagement_id)
+        if latest is not None and latest.status in jobs_repo.UNFINISHED:
+            return Err(ErrorKind.CONFLICT, BUSY, {"job_id": latest.id})
+        job = jobs_repo.create(
+            session,
+            engagement_id=version.engagement_id,
+            job_type=REFRESH_JOB,
+            target_id=version.id,
+            stages=initial_stages(),
+        )
+    enqueue(job.id)
+    return Ok(DraftStarted(job_id=job.id))
+
+
+def _latest_map_job(session: Session, engagement_id: str) -> JobView | None:
+    """The newest draft or refresh job of an engagement."""
+    jobs = [j for t in MAP_JOBS if (j := jobs_repo.latest(session, engagement_id, t))]
+    return max(jobs, key=lambda j: j.created_at, default=None)
 
 
 # --- Running -----------------------------------------------------------------------------------
@@ -204,10 +250,14 @@ class _Progress:
 
 
 def discard_unfinished(sessions: Sessions, job: JobView) -> None:
-    """A draft job that is run again (after a restart) first removes its half-built version."""
+    """A job run again (after a restart) first removes its half-built version."""
     if job.type == DRAFT_JOB and job.target_id:
         with session_scope(sessions) as session:
             versions.delete(session, job.target_id)
+    elif job.type == REFRESH_JOB and job.engagement_id:
+        with session_scope(sessions) as session:
+            for half in versions.building(session, job.engagement_id):
+                versions.delete(session, half.id)
 
 
 def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]:
@@ -227,15 +277,20 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         case Ok(value=ctx):
             pass
     engagement_id = job.engagement_id
+    refreshing = job.type == REFRESH_JOB
     with session_scope(sessions) as session:
         earlier = versions.current_draft(session, engagement_id)
+        if refreshing and (earlier is None or earlier.id != job.target_id):
+            progress.fail()
+            return Err(ErrorKind.CONFLICT, NOT_CURRENT)
         version = versions.create(
             session,
             engagement_id=engagement_id,
             label=next_label(earlier.label if earlier else None),
-            state="draft",
+            state=BUILDING if refreshing else "draft",
         )
-        jobs_repo.update(session, job_id, target_id=version.id)
+        if not refreshing:
+            jobs_repo.update(session, job_id, target_id=version.id)
         ready = [
             s
             for s in sources_repo.list_for_engagement(session, engagement_id)
@@ -301,16 +356,39 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         failed(Err(ErrorKind.IO, UNEXPECTED))
         raise
 
+    kept_note = ""
     with session_scope(sessions) as session:
-        # The new draft replaces an earlier one none of whose steps has been reviewed yet.
-        for old in versions.drafts(session, engagement_id):
-            if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
-                versions.delete(session, old.id)
-        summary = _summary(session, version.id)
+        if refreshing and earlier is not None:
+            kept = refresh.fold(session, earlier.id, version.id)
+            versions.set_label(session, earlier.id, version.label)
+            versions.delete(session, version.id)
+            audit.record(
+                session,
+                actor=actor_name(config),
+                action="Refreshed draft from sources",
+                target_type="version",
+                target_id=earlier.id,
+                engagement_id=engagement_id,
+                version_id=earlier.id,
+                before={"label": earlier.label},
+                after={"label": version.label, "kept_steps": kept},
+            )
+            result_id = earlier.id
+            kept_note = f" {_plural(kept, 'step')} you reviewed stayed as they were."
+        else:
+            # The new draft replaces an earlier one none of whose steps has been reviewed yet.
+            for old in versions.drafts(session, engagement_id):
+                if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
+                    versions.delete(session, old.id)
+            result_id = version.id
+    if refreshing:
+        versions_action.lint_version(sessions, result_id)
+    with session_scope(sessions) as session:
+        summary = _summary(session, result_id)
     return Ok(
         f"Draft {version.label} is ready: {_plural(summary.steps, 'step')} drafted, "
         f"{summary.needs_check} to check, {_plural(summary.rejected, 'rejected claim')}, "
-        f"{_plural(summary.open_questions, 'open question')}."
+        f"{_plural(summary.open_questions, 'open question')}.{kept_note}"
     )
 
 
@@ -332,12 +410,16 @@ def _summary(session: Session, version_id: str) -> DraftSummary:
 
 def with_progress(session: Session, job: JobView) -> JobView:
     """A draft job with its token usage and the claims checked so far (API_CONTRACT → Jobs)."""
-    if job.type != DRAFT_JOB:
+    if job.type not in MAP_JOBS:
         return job
     usage = ai_calls.usage_for_job(session, job.id)
     checked = JobClaims()
-    if job.target_id and versions.get(session, job.target_id) is not None:
-        counts = claims.counts(session, job.target_id)
+    target = job.target_id
+    if job.type == REFRESH_JOB and job.engagement_id:  # claims are checked into the new version
+        half = versions.building(session, job.engagement_id)
+        target = half[0].id if half else None
+    if target and versions.get(session, target) is not None:
+        counts = claims.counts(session, target)
         checked = JobClaims(verified=counts.get("verified", 0), rejected=counts.get("rejected", 0))
     return job.model_copy(update={"usage": usage, "claims": checked})
 
@@ -346,8 +428,10 @@ def get_draft(sessions: Sessions, engagement_id: str) -> Result[DraftState]:
     with session_scope(sessions) as session:
         if engagements_repo.get(session, engagement_id) is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
-        job = jobs_repo.latest(session, engagement_id, DRAFT_JOB)
-        building = job.target_id if job and job.status in jobs_repo.UNFINISHED else None
+        job = _latest_map_job(session, engagement_id)
+        unfinished = job is not None and job.status in jobs_repo.UNFINISHED
+        # A new draft being made isn't shown until it is done; a refreshed draft stays shown.
+        building = job.target_id if job and unfinished and job.type == DRAFT_JOB else None
         current: VersionView | None = next(
             (v for v in versions.drafts(session, engagement_id) if v.id != building), None
         )

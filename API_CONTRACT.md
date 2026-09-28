@@ -306,6 +306,14 @@ Errors:
 - `409 CONFLICT` "A draft map is already being made." (a draft job is queued or running) or "This draft has steps you've already reviewed. Refresh it from the sources on the Review screen instead." (from P6, when a step is confirmed, edited or added).
 Used by: Draft screen (Create draft map, Retry).
 
+### POST /api/versions/{vid}/refresh (phase P6)
+**AI.** Refresh draft from sources: runs every stage again on the engagement's ready sources and folds the result into the same draft, whose number goes up (`v0.1` → `v0.2`). Request: none. Response `202`: `{"job_id": "…"}` (job type `refresh`, target the draft; progress and stages as the draft job, shown on the Draft screen).
+- Steps Eric confirmed, edited, added or rejected stay exactly as they are (constraint 8: locked steps are never written by a pipeline run; a rejection stands): same ID, fields, RACI, evidence and review status. A fresh step with the same key as one of them is dropped in its favour; the fresh lines into it point at it, and its own lines stay (a line whose other end was replaced follows the fresh step with the same key).
+- Every other step, line, phase, claim (and the rejected-claims register), gap, question and merge proposal is replaced by the fresh run. A question with exactly the same wording as one already answered stays answered.
+- The draft being refreshed stays visible on Review while the run builds (its temporary version has state `building` and is never listed). If a stage fails, nothing changes ("Nothing was saved.").
+- An audit row "Refreshed draft from sources" records the labels before and after and how many steps were kept.
+Errors: `404` ("That version doesn't exist."); `409` "Only the current draft can be refreshed." · "A draft map is already being made." · "The draft can't start yet: …" (readiness). Used by: Draft screen and Review (P6).
+
 ### GET /api/engagements/{id}/draft
 The latest draft job and the current draft, so the Draft screen can pick up a running job after a reload.
 Response `200`:
@@ -316,7 +324,7 @@ Response `200`:
              "open_questions": 5, "scrubbed": 0}}
 ```
 `job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `steps`: activities, decisions and approvals on the draft; `needs_check`: steps the independent verifier found only partly supported; `verified` / `rejected`: claims; `open_questions`: validation questions still open (including every gap Claude raised); `scrubbed`: names replaced by roles in Claude's answers.
-Errors: `404`. Used by: Draft screen.
+`job` is the newest draft or refresh job. Errors: `404`. Used by: Draft screen.
 
 ### GET /api/versions/{vid}/graph
 The version's map as the graph of PRD §3.6 (also the future `.json` export): `version`, `process` (name, trigger, end point, KPI, `cycle_time: {elapsed_min, work_min, incomplete_steps}` along the main path), `roles`, `phases`, `elements`, `edges` (`from`, `to`, `kind`, `label`).
@@ -382,6 +390,100 @@ Response `200`: the element exactly as in the graph (`id, stable_key, kind, labe
 - `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: `[]` until P10.
 - Names on the hidden list are replaced by roles in every text, including quotes and file names.
 Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
+
+### POST /api/elements/{eid}/confirm · /reject · /restore (phase P6)
+Review a step. Request: none. Response `200`: the element exactly as `GET /api/elements/{eid}` (with its new `review_status`).
+- **confirm**: an unreviewed step (`draft`) becomes `confirmed`. A step already `confirmed`, `edited` or `added` stays as it is (nothing changes, no audit row). A `rejected` step must be restored first (`409` "This step is rejected. Restore it before confirming it.").
+- **reject**: any step that isn't rejected becomes `rejected` (reversible; the map shows it faded, lint leaves it out).
+- **restore**: a `rejected` step goes back to `draft` (`409` "Only a rejected step can be restored." otherwise).
+- Confirmed, edited and added steps are **locked**: no pipeline run (refresh) ever writes to them.
+- Only a draft version can change: `409` "This version is published and can't be changed. Reopen it as a new draft." otherwise.
+- Start and end come from the scope card: `422` "Start and end come from the engagement's trigger and end point; change them on Setup."
+- Each change writes an audit row (`Confirmed step`, `Rejected step`, `Restored step`, with the status before and after) and refreshes the stored lint report.
+Errors: `404` ("That step doesn't exist."), `409`, `422`. Used by: Review panel actions and keyboard (P6).
+
+### PATCH /api/elements/{eid} (phase P6)
+Edit a step (the edit form and the table view's inline edits). Every field is optional; only the fields sent change.
+Request:
+```json
+{"label": "Draft load plan", "kind": "activity", "lane_role_id": "…",
+ "work_min": 20, "wait_min": 0, "duration_text": "~20 min, T-120 to T-90", "complexity": "M",
+ "kpi": "Plan issued by T-90",
+ "decision": {"mechanism": "rule_based", "decider_role_id": "…", "rule_or_threshold": "…", "escalation": "…"},
+ "handoff": {"in": "Load forecast", "out": "Plan for approval"},
+ "constraints": [{"text": "…", "cause_type": "single_point_knowledge", "is_key": true, "provenance": "O"}],
+ "k_risk": "…",
+ "ai_flag": {"component": "perception", "input": "…", "output": "…", "handoff": "…", "basis": "rule_based_automate_candidate"},
+ "raci": [{"role_id": "…", "letter": "R", "contested": false}]}
+```
+Response `200`: the element as `GET /api/elements/{eid}`, with `review_status: "edited"` (an `added` step stays `added`).
+Field rules (the same ones the edit form, the table view and Add step use; PRD §5.7.6):
+- `label` 1–120 characters on one line; `kind` activity, decision or approval; `lane_role_id` one of the engagement's roles.
+- `work_min`, `wait_min` 0–10,000 or `null`; `duration_text` ≤ 200 characters; `complexity` `L`, `M`, `H` or `null`; `kpi`, `handoff.in`, `handoff.out` ≤ 300; `rule_or_threshold`, `escalation`, `k_risk` ≤ 500.
+- Decisions and approvals must be `rule_based` or `judgment` (constraint 7); `decider_role_id` one of the engagement's roles or `null`.
+- `constraints` replace the list: text 1–300 characters, `cause_type` from B.9 or `null`, `provenance` O, I or R.
+- `ai_flag` (or `null` to remove it): component B.11, input, output and handoff required (≤ 300), basis B.12; a judgment step can never be an automation candidate (constraint 7).
+- `raci` (optional here, or `PUT …/raci`): roles of the engagement, letters R, A, C, I; at least one A, and several A's only when all are marked contested; activities need exactly one R.
+- No text may contain a name on the engagement's hidden-names list (constraint 10): "…contains a name from your list of names to hide. Use the role instead."
+- A rejected step must be restored before it is edited (`409`); a published version can't change (`409`); start and end come from Setup (`422`).
+Errors `422` name the field (`details.field`, for example `"label"`, `"raci"`, `"ai_flag.basis"`). An audit row "Edited step" records each changed field before and after; the stored lint report is refreshed. Used by: Review edit form and table view (P6).
+
+### PUT /api/elements/{eid}/raci (phase P6)
+Replace a step's RACI. Request: `[{"role_id": "…", "letter": "A", "contested": false}]`. Same rules as `raci` above; response and effects as `PATCH`. Entries that stay (same role and letter) keep the passages behind them. Used by: Review edit form (P6).
+
+### POST /api/versions/{vid}/elements (phase P6)
+Add a missing step (Eric's own, never an AI claim).
+Request: `{"kind": "activity", "label": "Check fuel figures", "lane_role_id": "…", "after_element_id": "…", "provenance": "O", "segment_ids": ["…"], "r_reference": "", "mechanism": "judgment"}`.
+Response `201`: the element as `GET /api/elements/{eid}`, with `review_status: "added"` (locked).
+- **Placement:** the step goes after `after_element_id` (any step or the start, not the end). The first outgoing line of that step that stays on the main path (not `no`, `reject`, `rework` or `exception`) now points at the new step, and a `sequence` line runs from the new step to where that line used to go. Without such a line, a `sequence` line joins them. The new step takes that step's phase. The layout is worked out afresh on the next `GET …/layout`.
+- **Provenance:** `O` needs at least one passage (`segment_ids` from this engagement's sources; each becomes a verified "supports" evidence link) — "Pick the passage this step comes from."; `R` needs a reference (`r_reference`, 1–500 characters) — "Type the reference this recommended step comes from."; `I` is refused ("Choose Observed (with a passage) or Recommended (with a reference).").
+- **RACI and decision rights:** the lane's role becomes Accountable (and Responsible for an activity; the decider for a decision or approval). `mechanism` (`rule_based` or `judgment`, default `judgment`) classifies a decision or approval (constraint 7). Everything else is added with Edit.
+- Field rules as `PATCH /api/elements/{eid}` (name, kind, lane, no hidden names). Source state `not_assessed` and no confidence: the step wasn't compared across sources. An audit row "Added step".
+Errors: `404` version or step; `409` published version; `422` naming the field (`after_element_id`, `segment_ids`, `r_reference`, …). Used by: Review Add step and "Add as step from this passage" (P6).
+
+### POST /api/versions/{vid}/edges · PATCH · DELETE /api/versions/{vid}/edges/{edge_id} (phase P6)
+Add, change or remove a line between two steps. Request (POST; PATCH sends any of them): `{"from": "…", "to": "…", "kind": "no", "label": "Outside limits"}`. Response: `201`/`200` `{"id", "from", "to", "kind", "label"}`; DELETE `204`.
+- Both ends are steps of this version; no line into the start or out of the end, no line from a step to itself, no second line with the same ends and kind.
+- `kind` from B.8 (`sequence`, `yes`, `no`, `approve`, `reject`, `rework`, `exception`); `label` up to 60 characters, required on every line leaving a decision or approval (constraint 6: every exit labelled); no hidden names.
+- Audit rows "Added line", "Changed line", "Removed line"; the lint report is refreshed. Only a draft version changes (`409`).
+Errors: `404` ("That line doesn't exist."), `409`, `422`. Used by: Review edit form and Add step (P6).
+
+### GET /api/versions/{vid}/questions · PATCH /api/questions/{qid} (phase P6)
+The validation questions for the offline SME session (PRD §5.7.10).
+`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap. `status`: open · answered. Names hidden.
+`PATCH` request `{"status": "answered"}` (or `"open"` to reopen); response the question. Audit rows "Marked question answered" / "Reopened question". Only a draft version changes (`409`).
+Errors: `404` ("That version doesn't exist." / "That question doesn't exist."), `409`, `422`. Used by: Review Questions tab (P6).
+
+### GET /api/versions/{vid}/merge-proposals · POST /api/merge-proposals/{mid}/decision (phase P6)
+Steps Claude thought might be one step described differently (PRD §5.7.10 Merge decisions, §9 assumption 8).
+`GET` response `200`:
+```json
+[{"id": "…", "proposed_label": "Load and return LIR", "similarity": 0.86, "decision": "accepted",
+  "decided_at": "…", "element_id": "…",
+  "groups": [{"label": "Load aircraft", "kind": "activity", "lane_role_name": "Ramp",
+              "element_id": null,
+              "claims": [{"text": "Ramp loads the aircraft in about forty minutes.",
+                          "source_name": "interview_transcript.txt", "anchor": "21:50",
+                          "quote": "Ramp loads the aircraft, forty minutes or so"}]}]}]
+```
+- `decision`: `pending` (below 0.80: the steps are still separate and wait for Eric) · `accepted` (merged; at 0.80 or above this happened when drafting) · `rejected` (kept separate) · `split` (a merge undone).
+- `element_id`: the merged step while the proposal is accepted; each group's `element_id`: that step while they are separate (else `null`). Claims show the claim text, source, anchor and quote; names hidden.
+`POST` request `{"decision": "accepted" | "rejected" | "split"}`; response the proposal as in the list.
+- **accepted** (Accept merge, from `pending` or `rejected`): the separate steps become one step named `proposed_label` in the first one's place: claims and evidence joined, lines re-pointed (loops onto itself and duplicates dropped), questions moved; its source state is worked out again from the joined evidence; it is marked Needs check and has no confidence until the next refresh works it out.
+- **rejected** (Keep separate, from `pending`): nothing on the map changes.
+- **split** (from `accepted`): the merged step goes back to its separate steps as drafted (label, kind, lane, claims), one after the other in its place; each step's evidence becomes the passages its own verified claims cite, as supporting it (the stances were judged against the joined step), divergences found between the joined descriptions are cleared, and each needs a check and has no confidence until the next refresh.
+- A step that has been reviewed (confirmed, edited, added or rejected) is never merged or split (`409` "One of these steps has already been reviewed. Change it with Edit, Reject or Add step instead."). Keep separate on a merge in place is refused (`409` "These steps are merged. Use Split to separate them again."), and so is Split on steps that aren't merged (`409` "Only merged steps can be split."). The same decision again changes nothing. Audit rows "Accepted merge" / "Kept steps separate" / "Split merged step"; lint refreshed. Only a draft version changes.
+Errors: `404` ("That merge proposal doesn't exist."), `409`, `422`. Used by: Review Merge tab (P6); pending ones block publishing (P7).
+
+### GET /api/versions/{vid}/audit (phase P6)
+The version's audit log, newest first.
+Response `200`:
+```json
+[{"id": "…", "at": "2026-09-27T10:02:11.123456+00:00", "actor": "Eric", "action": "Confirmed step",
+  "target_type": "element", "target_id": "…", "target_label": "Draft load plan",
+  "before": {"review_status": "draft"}, "after": {"review_status": "confirmed"}}]
+```
+`target_label`: the step's current label (names hidden), `""` when the target no longer exists. Errors: `404` ("That version doesn't exist."). Used by: Review Audit tab (P6).
 
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.
