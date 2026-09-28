@@ -17,6 +17,7 @@ import { useElement } from "../../hooks/useReview";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
+import { ImagesSection } from "./ImagesSection";
 
 export interface DetailPanelProps {
   element: GraphElement;
@@ -31,6 +32,8 @@ export interface DetailPanelProps {
         onEdit: () => void;
       }
     | undefined;
+  /** Section 10, pictures: always shown on a step; changed only where the version is a draft. */
+  images: { versionId: string; engagementId: string; editable: boolean };
   onOpenEvidence: (card: Card) => void;
   /** Add missing step after this one; omitted where it can't be (the end, a rejected step, not a draft). */
   onAddAfter?: (() => void) | undefined;
@@ -45,6 +48,7 @@ export function DetailPanel({
   laneName,
   phaseName,
   review,
+  images,
   onOpenEvidence,
   onAddAfter,
   onClose,
@@ -116,6 +120,14 @@ export function DetailPanel({
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
         </>
+      )}
+      {step && (
+        <ImagesSection
+          elementId={element.id}
+          versionId={images.versionId}
+          engagementId={images.engagementId}
+          editable={images.editable}
+        />
       )}
       {onAddAfter && (
         <button type="button" className="btn btn--link" onClick={onAddAfter}>

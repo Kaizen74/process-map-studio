@@ -201,6 +201,30 @@ describe("Sources: registry", () => {
     expect(reads).toBeGreaterThanOrEqual(2);
   });
 
+  it("shows a speaker's name in the names to hide once the transcript has been read", async () => {
+    // Reading a transcript adds name-like speaker labels to the names to hide (G10). A list loaded
+    // while the file was still being read must be refreshed when it is ready (a P8 browser run
+    // caught it staying empty).
+    let ready = false;
+    sourcesApi([], {
+      "GET /api/engagements/e1/sources": () => ({
+        body: [ready ? { ...TRANSCRIPT, text_status: "ready", segment_count: 9 } : TRANSCRIPT],
+      }),
+      "GET /api/engagements/e1/redaction-terms": () => ({
+        body: ready
+          ? [{ id: "n1", engagement_id: "e1", term: "Priya Nair", replacement: "[name]", origin: "speaker_map" }]
+          : [],
+      }),
+    });
+    renderApp(PATH);
+    expect(await screen.findByText("Reading…")).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "Names to hide" });
+    ready = true;
+    expect(await screen.findByText("Ready", {}, { timeout: 3000 })).toBeInTheDocument();
+    const names = await screen.findByRole("list", { name: "Names hidden in this engagement" }, { timeout: 3000 });
+    expect(names).toHaveTextContent("Priya Nair → shown as [name]");
+  });
+
   it("does not save a field that didn't change", async () => {
     const { calls } = sourcesApi([SOP]);
     renderApp(PATH);

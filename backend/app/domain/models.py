@@ -751,3 +751,46 @@ class ExportFile(BaseModel):
     filename: str
     media_type: str
     content: str
+
+
+# --- Images (API_CONTRACT.md → Images; phase P8) -----------------------------------------------
+
+
+class ImageRecord(BaseModel):
+    """An image row as stored."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str = ""
+    element_id: str | None = None
+    stored_path: str
+    caption: str = ""
+    image_type: str | None = None
+    origin: str  # uploaded · extracted
+    status: str = "suggested"  # B.17
+    redaction_confirmed: bool = False
+    source_id: str | None = None
+    page: int | None = None
+    created_at: str = ""
+
+
+class ImageView(BaseModel):
+    id: str
+    element_id: str | None
+    caption: str
+    image_type: str | None
+    origin: str
+    status: str
+    redaction_confirmed: bool
+    source_name: str
+    page: int | None
+    created_at: str
+
+
+class ImagePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None = None
+    caption: str | None = None
+    image_type: str | None = None
+    redaction_confirmed: bool | None = None

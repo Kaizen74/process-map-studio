@@ -2,9 +2,11 @@ import { useCallback, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { ReactNode } from "react";
 import { Card, ErrorState, Skeleton } from "../../components/common";
-import { MapLegend, MapStage, MapToolbar, type MapView, type Zoom } from "../../components/map";
+import { MapLegend, MapStage, MapToolbar, WalkthroughStrip, type MapView, type Zoom } from "../../components/map";
 import { AllReviewed } from "../../components/panel";
+import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
+import { stepsWithImages, walkthroughCards } from "../../lib/images";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { ReviewAction } from "../../api/review";
 import type { Graph } from "../../lib/mapTypes";
@@ -49,6 +51,7 @@ export interface WorkbenchProps {
 export function Workbench({ engagementId, versionId, title, banner, below }: WorkbenchProps) {
   const graph = useGraph(versionId);
   const layout = useLayout(versionId);
+  const pictures = useVersionImages(versionId);
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("step");
   const [lens, setLens] = useLens();
@@ -119,6 +122,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const lanes = drawing.lanes.length;
   const start = firstNeedingAttention(g);
   const editable = g.version.state === "draft";
+  const walkthrough = walkthroughCards(g.elements, pictures.data ?? []);
 
   function act(action: ReviewAction) {
     if (!selected) return;
@@ -262,12 +266,18 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     scale={zoom === "fit" ? fit : 1}
                     selectedId={selected?.id ?? null}
                     onSelect={select}
+                    withImages={stepsWithImages(pictures.data ?? [])}
                   />
                 </div>
                 <MapLegend lens={lens} />
               </>
             )}
           </Card>
+          {walkthrough.length > 0 && (
+            <Card className="workbench-card">
+              <WalkthroughStrip cards={walkthrough} selectedId={selected?.id ?? null} onSelect={select} />
+            </Card>
+          )}
           <Card className="workbench-card">
             <WorkbenchTabs
               graph={g}
@@ -341,6 +351,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     }
                   : undefined
               }
+              images={{ versionId: g.version.id, engagementId, editable }}
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
               onAddAfter={
                 editable && selected.kind !== "end" && selected.review_status !== "rejected"

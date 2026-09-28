@@ -64,8 +64,10 @@ def test_pdf_flags_scanned_pages_and_suggests_its_image(
     source = upload(client, engagement, "manual_extract.pdf").json()
     assert source["kind"] == "manual" and source["text_status"] == "ready"
     assert source["ocr_pages"] == [2] and source["suggested_images"] == 1
-    images = list((settings_config.data_dir / "images" / engagement).iterdir())
-    assert len(images) == 1 and images[0].name.startswith(f"{source['id']}-p3-")
+    # The picture, saved without metadata, and its thumbnail beside it (P8 requirement change).
+    images = sorted(p.name for p in (settings_config.data_dir / "images" / engagement).iterdir())
+    assert len(images) == 2 and all(n.startswith(f"{source['id']}-p3-") for n in images)
+    assert images[0].endswith("-1.png") and images[1].endswith("-1.thumb.png")
     segments = client.get(f"/api/sources/{source['id']}/segments").json()["segments"]
     assert {s["anchor"] for s in segments} == {"p. 1", "p. 3"}
 

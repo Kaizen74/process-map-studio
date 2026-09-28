@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
-from app.domain.enums import ImageStatus
+from app.domain.enums import ImageStatus, ReviewStatus
 from app.domain.graph import (
     AiFlagRecord,
     ConstraintRecord,
@@ -306,13 +306,16 @@ def image_count(session: Session, element_id: str) -> int:
 
 
 def suggested_image_count(session: Session, version_id: str) -> int:
-    """Suggested images on the version's steps still waiting for Keep or Discard (Q6)."""
+    """Suggested images still waiting for Keep or Discard on the version's steps that aren't
+    rejected (Q6; a rejected step isn't on the map, so its pictures aren't reviewed)."""
     return (
         session.scalar(
             select(func.count())
             .select_from(Image)
+            .join(Element, Element.id == Image.element_id)
             .where(
-                Image.element_id.in_(_for_elements(version_id)),
+                Element.version_id == version_id,
+                Element.review_status != ReviewStatus.REJECTED.value,
                 Image.status == ImageStatus.SUGGESTED.value,
             )
         )

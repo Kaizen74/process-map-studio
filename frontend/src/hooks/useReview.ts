@@ -60,7 +60,8 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 
 /** Everything that shows a version's review state, refreshed after a change (PRD §5.8). */
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card"]) {
+  // "images": rejecting or restoring a step hides or shows its pictures (marker and strip).
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });

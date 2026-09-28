@@ -404,3 +404,90 @@ button.evidence:focus-visible {
   font-size: var(--text-label);
   color: var(--ink-4);
 }
+
+/* Section 10: pictures (PRD §5.7.7 item 10). Suggested = dashed border and the word "Suggested". */
+.image-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-10);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.image-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+  padding: var(--space-6);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.image-card--suggested {
+  border: var(--line-outline) dashed var(--border-strong);
+}
+.image-card__figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+}
+.image-card__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+.image-card__caption {
+  font-size: var(--text-label);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.image-card__meta {
+  margin: 0;
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.image-card__tag {
+  font-weight: var(--weight-medium);
+  color: var(--ink-2);
+}
+.image-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.image-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  padding: var(--space-12);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+}
+.image-form__title {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+.image-form__from {
+  margin: 0;
+  color: var(--ink-3);
+}
+.image-form__file {
+  padding: var(--space-6);
+}
+.image-form__actions {
+  display: flex;
+  gap: var(--space-8);
+}
+.panel-section > .btn--link {
+  align-self: flex-start;
+}

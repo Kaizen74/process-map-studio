@@ -38,12 +38,14 @@ export function useSources(engagementId: string) {
     queryFn: () => listSources(engagementId),
     refetchInterval: (q) => (reading(q.state.data) ? READING_POLL_MS : false),
   });
-  // When a file finishes reading, what the draft needs (readiness) and the passages change too.
+  // When a file finishes reading, what the draft needs (readiness), the passages and the names to
+  // hide (reading adds name-like speaker labels, G10) change too.
   const readingCount = query.data?.filter((s) => s.text_status === "pending").length ?? 0;
   const previous = useRef(readingCount);
   useEffect(() => {
     if (readingCount < previous.current) {
       void client.invalidateQueries({ queryKey: ["engagements", engagementId, "readiness"] });
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "redaction-terms"] });
       void client.invalidateQueries({ queryKey: ["engagements"], exact: true });
       void client.invalidateQueries({ queryKey: ["sources"] });
     }

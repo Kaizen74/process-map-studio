@@ -383,6 +383,40 @@ Response `200`:
 - `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
 Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
 
+## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
+
+Images live only in the app: never in any export (Q9). Every image needs a caption, a type (B.16: `workplace_photo` · `system_screenshot` · `executed_artefact` · `illustrative_diagram` · `document_extract`) and the confirmation that faces, names, badge numbers and flight identifiers are removed or not shown. Metadata (EXIF, including GPS) is removed from the stored file. Changes are made on a draft version only (`409` "This version is published and can't be changed. Reopen it as a new draft."); start and end carry no images (`422`).
+
+An image as returned: `{"id", "element_id", "caption", "image_type", "origin": "uploaded" | "extracted", "status": "suggested" | "kept" | "discarded", "redaction_confirmed", "source_name", "page", "created_at"}` — `source_name` and `page` for images suggested from a PDF (else `""` and `null`); captions and file names with names hidden.
+
+### Suggested images from PDFs
+When a PDF is read, each embedded picture at least 48 px on its shorter side is saved once for the source, already re-encoded without metadata (formats other than JPG, PNG and WebP become PNG), with a thumbnail. When a draft is made or refreshed, each such picture is suggested (`origin: "extracted"`, `status: "suggested"`, caption "Image from <file>, page <n>") on every step, decision or approval whose **verified** evidence cites a passage on the same page of the same PDF; not on start, end or rejected steps. A step never gets the same picture twice: one already kept or discarded there isn't suggested again. On a refresh, the pictures of a step that is replaced move to the fresh step with the same key (decisions carry over). Reopen copies every image row with its decision. Open suggestions on steps that aren't rejected count in Q6 and block Publish (`suggested_image`).
+
+### POST /api/elements/{eid}/images
+Upload an image to a step (multipart: `file`, `caption`, `image_type`, `redaction_confirmed`). Response `201`: the image, `origin: "uploaded"`, `status: "kept"`.
+- `file`: JPG, PNG or WebP, up to 10 MB and 40 million pixels, and it must open as a picture ("Choose a JPG, PNG or WebP picture." · "Pictures can be up to 10 MB." · "Pictures can be up to 40 million pixels. Save a smaller copy and upload that." · "That picture couldn't be opened. Save it again and upload the copy."). The stored copy is re-encoded with the picture's orientation applied and no metadata; a thumbnail (longest side 480 px) is stored with it.
+- `caption`: 1-300 characters, one line ("Add a caption of up to 300 characters."); a name from the redaction list is refused ("The caption contains a name from your list of names to hide. Use the role instead.").
+- `image_type`: one of B.16 ("Choose what kind of picture this is.").
+- `redaction_confirmed`: must be true ("Confirm that faces, names, badge numbers and flight identifiers are removed or not shown.").
+Errors: `404` ("That step doesn't exist."); `409`; `422` naming the field (`details.field`). An audit row "Added image".
+
+### GET /api/elements/{eid}/images
+The step's images that aren't discarded, suggested ones first, then in the order they were added. Errors: `404`.
+
+### PATCH /api/images/{iid}
+Keep or discard a suggested image, or change a caption. Request: any of `{"status": "kept" | "discarded", "caption": "…", "image_type": "…", "redaction_confirmed": true}`.
+- `kept` (a suggestion): needs its caption, a type and `redaction_confirmed: true`, the same rules as an upload. `discarded` (a suggestion): hides it; its file stays for other drafts that use it. A kept or uploaded image can't go back to suggested (`422`).
+Response `200`: the image. Audit rows "Kept suggested image" · "Discarded suggested image" · "Changed image caption". Errors: `404` ("That image doesn't exist."); `409`; `422`.
+
+### DELETE /api/images/{iid}
+Remove an uploaded image (`204`). A suggestion is discarded instead (`422` "Discard a suggested picture instead of removing it."). The file is deleted when no other version still uses it. An audit row "Removed image". Errors: `404`; `409`.
+
+### GET /api/versions/{vid}/images
+Every image on the version's steps that isn't discarded (rejected steps left out), in process order (the order of the steps, then as for one step), for the map's has-images marker and the walkthrough strip. Works for drafts and published versions. Errors: `404` ("That version doesn't exist.").
+
+### GET /api/images/{iid}/file
+The stored picture (`image/jpeg`, `image/png` or `image/webp`); `?size=thumb` for the thumbnail (made on first request if missing). Only the app shows it; no export links to it. Errors: `404`.
+
 ## Versions, publish and exports (PRD §3.5 versions and locking, §5.9, §7.2, §7.3) — phase P7
 
 ### GET /api/engagements/{id}/versions
