@@ -1,19 +1,20 @@
 # Project State
-*Last updated: 2026-09-28 (session 11) — update after EVERY increment*
+*Last updated: 2026-09-28 (session 12) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally); it is on branch `claude/charming-davinci-sck1cq`, not yet merged into `main`. Next: Phase P9 (matrix, registers, cause library).
+Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) in progress.
 
-## This session (2026-09-28, session 11) — goal: Phase P8 (images)
-P8 follows PRD §6.3 P8 and constraint 11: images live only in the app (never in any export), need a caption, a type and a redaction confirmation, and lose their metadata (EXIF, GPS) on the way in. Backend first (contract first), then the panel gallery, the map marker and the walkthrough strip. The sample map has no PDF images, so the approved Review screenshot should not change.
-- [x] Increment 1 — `services/images.py` (validate jpg/png/webp up to 10 MB, strip metadata, thumbnail) and the image endpoints (contract first): upload with caption, type and redaction confirmation (422 naming the field), list, keep/discard or caption change, remove, file and thumbnail; draft versions only; audit rows; hidden names refused in captions
-- [x] Increment 2 — suggested images from PDFs: metadata stripped when extracted; attached to the step whose verified evidence cites the same source page when a draft is built or refreshed; kept by reopen; `GET /versions/{vid}/images` for the map and the strip; Q6 and Publish count open suggestions
-- [x] Increment 3 — UI: the panel's Images section (two-column gallery, suggested ones dashed with source and Keep/Discard, Remove with a confirmation, Add image form with the privacy checkbox; read-only when published)
-- [x] Increment 4 — UI: the has-images marker on the map (only when a visible image exists) and the walkthrough strip (process order, placeholder by type, selecting a step); published mode shows them read-only
-- [x] Increment 5 — browser checks (upload a photo with GPS: none left; keep a suggestion; exports still image-free), GUIDE/README, close P8 (tag phase-p8)
+## This session (2026-09-28, session 12) — goal: Phase P9 (matrix, registers, cause library)
+P9 follows PRD §6.3 P9, §4 Views and Cause library rows, §5.4 Matrix and Registers, §3.8 G11 and §3.7 Stage 3 (classify, never reconcile; silence is not contradiction). Everything is read from what the draft already holds; no new AI calls. The approved Review screenshots should not change.
+- [x] Increment 1 — alignment matrix (contract first): `services/alignment.py` (pure) builds one row per step with SOP/manual · Interview · JD · Executed artefact cells (`supports` · `contradicts` · `silent` · `not_applicable` when the engagement has no source of that kind), state and divergence types; `GET /versions/{vid}/alignment-matrix`; names hidden; **G4 golden baseline**
+- [ ] Increment 2 — IN PROGRESS: coverage (G11): share of each source's passages cited by a verified claim of the current map, `coverage_pct` on sources and on the passages page, `uncited_only` filter; UI: Coverage column on Sources and a coverage bar with "Show uncited passages" in the source viewer
+- [ ] Increment 3 — registers and cause library backend (contract first): `GET /versions/{vid}/registers` (K-RISK, AI flags, constraints by cause, external practice, validation questions, rejected claims); cause-library entries created when a draft is made or refreshed for contested and trace-contradicted steps (pattern from the verified divergence notes, cause only from the step's own constraints, otherwise "not known yet"); `GET /engagements/{id}/cause-library`, `PATCH /cause-library/{cid}` (confirmed/refuted, audit row)
+- [ ] Increment 4 — UI: Matrix screen (divergence filter chips, sort by severity, sticky step column and header, state glyphs with words, row opens the step on Review, empty state linking to Draft)
+- [ ] Increment 5 — UI: Registers screen (segmented control: K-RISK · AI flags · Constraints by cause · External practice · Validation questions · Rejected claims · Cause library; card lists with Go to step; one-line empty states; Confirm/Refute on causes)
+- [ ] Increment 6 — browser checks (axe on Matrix and Registers, coverage on Sources, smoke path), GUIDE/README, close P9 (tag phase-p9)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -92,9 +93,10 @@ P8 follows PRD §6.3 P8 and constraint 11: images live only in the app (never in
 - 2026-09-28 P8 increment 3: the step panel's Images section (gallery, Keep/Discard for suggestions, Remove with a confirmation, Add image form with the privacy checkbox; read-only when published). 13 of 13 checks green.
 - 2026-09-28 P8 increment 4: the has-images marker on the map and the visual walkthrough strip (kept pictures in process order; clicking a card selects the step). 13 of 13 checks green.
 - 2026-09-28 P8 increment 5: browser checks (a photo with camera and GPS details is stored clean; marker, walkthrough, published read-only; exports carry no caption or picture reference); fixed the Names to hide list not refreshing after reading; GUIDE updated; P8 closed (13 of 13 checks green).
+- 2026-09-28 P9 increment 1: alignment matrix endpoint (one row per step, each kind of source as supports, contradicts, silent or not applicable) and the G4 golden baseline. 13 of 13 checks green.
 
 ## Not started yet
-- P9 matrix, registers, cause library · P10 gap analysis · P11 leadership view · P12 live run, polish and handover
+- P10 gap analysis · P11 leadership view · P12 live run, polish and handover
 
 ## How to resume (write this as if for a stranger)
 1. The next task is: Phase P9 (PRD §6.3 P9: alignment matrix endpoint and screen, Registers screen, coverage G11 on Sources, cause-library entries, G4 baseline). Break it into ~30-minute increments in the section above first. Check the merge status of the working branch first (if merged, restart it from `main`).

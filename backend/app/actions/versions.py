@@ -15,6 +15,7 @@ from app.actions import redaction
 from app.db import session_scope
 from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance
 from app.domain.graph import (
+    AlignmentRow,
     CycleTime,
     EdgeRecord,
     ElementDetail,
@@ -44,7 +45,7 @@ from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import layout, lint, parsing
+from app.services import alignment, layout, lint, parsing
 
 Sessions = sessionmaker[Session]
 
@@ -261,6 +262,15 @@ def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
     with session_scope(sessions) as session:
         graph = build_graph(session, version_id)
     return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+
+
+def get_alignment_matrix(sessions: Sessions, version_id: str) -> Result[list[AlignmentRow]]:
+    """How each kind of source stands on each step (API_CONTRACT → Views; PRD §5.4 Matrix)."""
+    with session_scope(sessions) as session:
+        graph = build_graph(session, version_id)
+    if graph is None:
+        return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+    return Ok(alignment.alignment_matrix(graph))
 
 
 def get_layout(sessions: Sessions, version_id: str) -> Result[Layout]:
