@@ -201,6 +201,15 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     }
     await expect(page).toHaveScreenshot("p7-review-1440x900.png");
     await page.setViewportSize({ width: 1080, height: 800 });
+    // P12 visual pass: every step of the guided path stays in view at the smaller size (the bar
+    // wraps instead of cutting off Registers, Leadership and Exports).
+    const bar = page.getByRole("navigation", { name: "Engagement steps" });
+    const barBox = await bar.boundingBox();
+    for (const step of await bar.getByRole("link").all()) {
+      const box = await step.boundingBox();
+      const name = await step.getAttribute("aria-label");
+      expect(box && barBox && box.x + box.width <= barBox.x + barBox.width + 0.5, `${name} is cut off`).toBe(true);
+    }
     await expect(page).toHaveScreenshot("p7-review-1080x800.png");
     await page.setViewportSize({ width: 1440, height: 900 });
     // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.

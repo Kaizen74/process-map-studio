@@ -2,11 +2,11 @@
 
 Every screen with the illustrative sample engagement (Claude mocked), at 1440 × 900 and 1080 × 800, as the app looks today. Nothing here is a new baseline yet: the approved Review screenshots (`p7-review-*.png`) are unchanged.
 
-## One change for your decision: the step bar at the top
+## One change, approved and applied (2026-09-29): the step bar at the top
 
 When the engagement name is long, or the window is narrower, the row of steps at the top (Setup · Sources · … · Exports) is cut off: at 1440 wide "Exports" shows as "Exp", and at 1080 wide Registers, Leadership and Exports are out of sight. They can still be reached by scrolling the bar sideways, but nothing shows that they are there.
 
-**Proposed fix:** the bar continues on a second line when it doesn't fit, so every step is always visible. With a short name at 1440 wide nothing changes. This changes your approved Review screenshot at 1080 × 800 (the top bar becomes two lines), so it needs your approval.
+**Proposed fix:** the bar continues on a second line when it doesn't fit, so every step is always visible. With a short name at 1440 wide nothing changes. This changes your approved Review screenshot at 1080 × 800 (the top bar becomes two lines), Eric approved it; it is applied, and `p7-review-1080x800.png` is the new approved baseline (the 1440 × 900 baseline is unchanged). The screenshots under "Every screen today" were taken before the fix.
 
 | Today (1080 × 800) | With the fix (1080 × 800) |
 |---|---|

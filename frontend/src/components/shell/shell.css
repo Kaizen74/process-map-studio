@@ -56,8 +56,9 @@
 
 .engagement-nav {
   display: flex;
+  /* Wraps rather than cutting off the last steps when space runs short (P12 visual pass). */
+  flex-wrap: wrap;
   gap: var(--space-4);
-  overflow-x: auto;
   padding: var(--space-6) 0;
   margin: 0;
   list-style: none;
