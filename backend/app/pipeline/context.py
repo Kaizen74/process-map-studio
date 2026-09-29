@@ -26,6 +26,14 @@ FORMAT_FAILED = (
     "Claude's answer for '{stage}' didn't match the expected format twice. Nothing was saved. "
     "Try again, or use Copy details to report it."
 )
+CUT_OFF = (
+    "Claude's answer for '{stage}' was too long and was cut off. Nothing was saved. "
+    "Try again, or use Copy details to report it."
+)
+DECLINED = (
+    "Claude declined to answer '{stage}'. Nothing was saved. "
+    "Try again, or use Copy details to report it."
+)
 UNREACHABLE = (
     "The app couldn't reach Anthropic. Check your internet connection, then try again. "
     "Nothing was saved."
@@ -146,8 +154,11 @@ def call_stage(
         record_calls(session, job_id, used)
     match result:
         case Err(kind=ErrorKind.AI_FORMAT) as err:
-            message = FORMAT_FAILED.format(stage=stage_name)
-            return Err(ErrorKind.AI_FORMAT, message, err.details)
+            # Say what happened: a cut-off or declined answer isn't a format problem.
+            template = {"max_tokens": CUT_OFF, "refusal": DECLINED}.get(
+                str(err.details.get("stop_reason", "")), FORMAT_FAILED
+            )
+            return Err(ErrorKind.AI_FORMAT, template.format(stage=stage_name), err.details)
         case Err() as err:
             return ai_failure(err)
         case Ok(value=answer):

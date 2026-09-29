@@ -46,11 +46,20 @@ def segments(client: TestClient, engagement_id: str) -> dict[str, dict[str, Any]
     return found
 
 
-def internal(client: TestClient, version_id: str) -> dict[str, Any]:
+def internal(client: TestClient, version_id: str) -> tuple[dict[str, Any] | None, str]:
+    """Analysis A: (report, "") or (None, the job's plain error)."""
     started = client.post(f"/api/versions/{version_id}/gap-analyses/internal")
     assert started.status_code == 202, started.text
-    job(client, started.json()["job_id"])
-    return dict(client.get(f"/api/gap-analyses/{started.json()['analysis_id']}").json())
+    drain(client)
+    ran = client.get(f"/api/jobs/{started.json()['job_id']}").json()
+    if ran["status"] != "done":
+        return None, str(ran["error"])
+    return dict(client.get(f"/api/gap-analyses/{started.json()['analysis_id']}").json()), ""
+
+
+def usage(client: TestClient) -> list[dict[str, Any]]:
+    """Every AI call made so far (stage, status and tokens only; never any text)."""
+    return list(client.get("/api/settings/usage", params={"limit": 500}).json()["items"])
 
 
 def external(client: TestClient, version_id: str) -> tuple[dict[str, Any] | None, str]:
@@ -81,6 +90,17 @@ def capture(client: TestClient, analyses: bool = True) -> RunCapture:
         questions=client.get(f"/api/versions/{vid}/questions").json(),
     )
     if analyses:
-        run.internal = internal(client, vid)
+        run.internal, run.internal_error = internal(client, vid)
         run.external, run.external_note = external(client, vid)
     return run
+
+
+def capture_runs(client: TestClient, runs: int) -> list[RunCapture]:
+    """The runs, each with the AI calls it made (newest first in the usage list)."""
+    captured: list[RunCapture] = []
+    for n in range(runs):
+        seen = {c["id"] for c in usage(client)}
+        run = capture(client, analyses=(n == 0))
+        run.calls = [c for c in usage(client) if c["id"] not in seen]
+        captured.append(run)
+    return captured

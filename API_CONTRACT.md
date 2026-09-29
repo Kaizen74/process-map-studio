@@ -105,7 +105,7 @@ Response `200`:
             "output_tokens": 830, "duration_ms": 14200, "status": "ok"}],
  "totals": {"calls": 12, "input_tokens": 61000, "output_tokens": 9800}}
 ```
-`status`: `ok` · `error` · `mock` (answered from the offline test answers). `totals` cover every call ever made, not just the rows returned.
+`status`: `ok` · `error` · `mock` (answered from the offline test answers) · `invalid` (the answer didn't match the format; a repair call follows) · `repaired` (the repair call's answer matched) · `truncated` (the answer was cut off at the length limit) · `refused` (Claude declined to answer). Shown on the card as OK, Failed, Test answer, Wrong format, Repaired, Cut off and Declined. `totals` cover every call ever made, not just the rows returned.
 Errors: `422 VALIDATION` (limit out of range). Used by: Settings screen, "AI usage" card (phase P3).
 
 ## Engagements and roles (PRD §4, §5.4 Setup) — phase P1

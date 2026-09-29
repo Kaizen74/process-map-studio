@@ -27,7 +27,8 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, cast
@@ -73,13 +74,21 @@ class AiConnection:
         return f"AiConnection(mock={self.mock}, fixtures_dir={self.fixtures_dir!s})"
 
 
-def _client(conn: AiConnection, timeout: float = MODELS_TIMEOUT_S) -> anthropic.Anthropic:
-    return anthropic.Anthropic(
+@contextmanager
+def _client(conn: AiConnection, timeout: float = MODELS_TIMEOUT_S) -> Iterator[anthropic.Anthropic]:
+    """A client for one call. Its connection is closed afterwards, unless the caller passed its
+    own HTTP client (tests), which stays open for its owner."""
+    client = anthropic.Anthropic(
         api_key=conn.api_key,
         max_retries=MAX_RETRIES,
         timeout=timeout,
         http_client=conn.http_client,
     )
+    try:
+        yield client
+    finally:
+        if conn.http_client is None:
+            client.close()
 
 
 def _summary(info: ModelInfo) -> ModelSummary:
@@ -157,7 +166,8 @@ def get_model(conn: AiConnection, model_id: str) -> Result[ModelSummary]:
             case Ok(value=data):
                 return Ok(_summary(ModelInfo.model_validate(data)))
     try:
-        return Ok(_summary(_client(conn).models.retrieve(model_id)))
+        with _client(conn) as client:
+            return Ok(_summary(client.models.retrieve(model_id)))
     except anthropic.AnthropicError as exc:
         return _classify(exc)
 
@@ -172,7 +182,8 @@ def list_models(conn: AiConnection) -> Result[list[ModelSummary]]:
                 items = data.get("data", []) if isinstance(data, dict) else []
                 return Ok([_summary(ModelInfo.model_validate(item)) for item in items])
     try:
-        return Ok([_summary(info) for info in _client(conn).models.list()])
+        with _client(conn) as client:
+            return Ok([_summary(info) for info in client.models.list()])
     except anthropic.AnthropicError as exc:
         return _classify(exc)
 
@@ -288,13 +299,16 @@ def _send(
     content = cast(list[ContentBlockParam], [dict(b) for b in blocks])
     messages: list[MessageParam] = [{"role": "user", "content": content}]
     try:
-        with _client(conn, MESSAGES_TIMEOUT_S).messages.stream(
-            model=call.model,
-            max_tokens=call.max_tokens,
-            system=_system(call, system, schema),
-            messages=messages,
-            output_config=_output_config(call, schema),
-        ) as stream:
+        with (
+            _client(conn, MESSAGES_TIMEOUT_S) as client,
+            client.messages.stream(
+                model=call.model,
+                max_tokens=call.max_tokens,
+                system=_system(call, system, schema),
+                messages=messages,
+                output_config=_output_config(call, schema),
+            ) as stream,
+        ):
             message = stream.get_final_message()
     except anthropic.AnthropicError as exc:
         err = _classify(exc)
@@ -581,14 +595,17 @@ def call_claude_with_web_search(conn: AiConnection, call: ResearchCall) -> Resul
                                   model=call.model, status="ok", input_hash=key)  # fmt: skip
             started = time.monotonic()
             try:
-                with _client(conn, MESSAGES_TIMEOUT_S).messages.stream(
-                    model=call.model,
-                    max_tokens=call.max_tokens,
-                    system=call.system,
-                    messages=history,
-                    tools=tools,
-                    output_config=config,
-                ) as stream:
+                with (
+                    _client(conn, MESSAGES_TIMEOUT_S) as client,
+                    client.messages.stream(
+                        model=call.model,
+                        max_tokens=call.max_tokens,
+                        system=call.system,
+                        messages=history,
+                        tools=tools,
+                        output_config=config,
+                    ) as stream,
+                ):
                     message = stream.get_final_message()
             except anthropic.AnthropicError as exc:
                 record.status = "error"

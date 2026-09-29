@@ -120,3 +120,31 @@ def test_gap_analysis_thresholds(mocked: RunCapture) -> None:
         "Web search is off.",
     )
     assert evaluation.passed(checks)
+
+
+def test_a_failed_analysis_and_unusual_calls_are_reported(mocked: RunCapture) -> None:
+    run = copy.deepcopy(mocked)
+    run.internal = None
+    run.internal_error = (
+        "Claude's answer for 'Explaining the differences' was too long and was cut off."
+    )
+    run.calls = [
+        {"stage_id": "S1_extract_interview", "status": "ok", "output_tokens": 900},
+        {"stage_id": "GA_internal", "status": "truncated", "output_tokens": 32000},
+    ]
+    checks = evaluation.evaluate_run(run)
+    assert (result(checks, "A1").passed, result(checks, "A1").detail) == (
+        False,
+        "failed: Claude's answer for 'Explaining the differences' was too long and was cut off.",
+    )
+    report = evaluation.render([run], [checks], "live")
+    assert "- GA_internal · truncated · 32000" in report
+    assert "S1_extract_interview" not in report
+
+
+def test_a_draft_that_stops_still_leaves_a_report() -> None:
+    calls = [{"stage_id": "S4_assemble", "status": "invalid", "output_tokens": 1200}]
+    report = evaluation.render_failure("draft job ended failed: Building the map\nmore", calls, "m")
+    assert "result: the run stopped" in report
+    assert "Error: draft job ended failed: Building the map" in report
+    assert "- S4_assemble · invalid · 1200" in report

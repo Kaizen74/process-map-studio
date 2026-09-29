@@ -97,6 +97,8 @@ class RunCapture:
     internal: dict[str, Any] | None = None  # the Analysis A report
     external: dict[str, Any] | None = None  # the Analysis B report
     external_note: str = ""  # why Analysis B didn't run, when it didn't
+    internal_error: str = ""  # why Analysis A failed, when it did
+    calls: list[dict[str, Any]] = field(default_factory=list)  # this run's AI usage rows
 
 
 @dataclass(frozen=True)
@@ -243,7 +245,13 @@ def _names_check(run: RunCapture) -> Check:
 
 def _internal_check(run: RunCapture) -> Check:
     if run.internal is None:
-        return Check("A1", "Analysis A finds the A.7 divergences", None, "not run")
+        failed = f"failed: {run.internal_error}" if run.internal_error else "not run"
+        return Check(
+            "A1",
+            "Analysis A finds the A.7 divergences",
+            False if run.internal_error else None,
+            failed,
+        )
     found = find_expected(run.graph)
     ids = {label: e["id"] for label, e in found.items()}
     kept = run.internal["findings"]
@@ -352,6 +360,10 @@ def render(runs: Sequence[RunCapture], per_run: Sequence[Sequence[Check]], model
     for n, checks in enumerate(per_run, start=1):
         lines += [f"## Run {n}", "", "| Check | Result | Detail |", "|---|---|---|"]
         lines += [f"| {c.code} {c.name} | {_mark(c)} | {c.detail} |" for c in checks]
+        unusual = [c for c in runs[n - 1].calls if c["status"] not in ("ok", "repaired")]
+        if unusual:
+            lines += ["", "AI calls that did not end normally (stage · status · output tokens):"]
+            lines += [f"- {c['stage_id']} · {c['status']} · {c['output_tokens']}" for c in unusual]
         steps_found = find_expected(runs[n - 1].graph)
         lines += ["", "Steps: " + "; ".join(
             f"{x.label} → {steps_found[x.label]['label']} ({steps_found[x.label]['source_state']})"
@@ -361,3 +373,20 @@ def render(runs: Sequence[RunCapture], per_run: Sequence[Sequence[Check]], model
     check = stability(runs)
     lines += ["## Both runs", "", f"{check.code} {check.name}: {_mark(check)} ({check.detail})", ""]
     return "\n".join(lines)
+
+
+def render_failure(error: str, calls: Sequence[Mapping[str, Any]], model: str) -> str:
+    """The report when a draft itself failed: the plain error and the unusual AI calls."""
+    unusual = [c for c in calls if c["status"] not in ("ok", "repaired")]
+    lines = [
+        "# Live evaluation (PRD §6.3 P12)",
+        "",
+        f"Model: {model} · result: the run stopped",
+        "",
+    ]
+    lines += [f"Error: {error.splitlines()[0] if error else 'unknown'}", ""]
+    lines += ["AI calls that did not end normally (stage · status · output tokens):"]
+    lines += [f"- {c['stage_id']} · {c['status']} · {c['output_tokens']}" for c in unusual] or [
+        "- none"
+    ]
+    return "\n".join([*lines, ""])
