@@ -99,6 +99,7 @@ class RunCapture:
     external_note: str = ""  # why Analysis B didn't run, when it didn't
     internal_error: str = ""  # why Analysis A failed, when it did
     calls: list[dict[str, Any]] = field(default_factory=list)  # this run's AI usage rows
+    format_problems: list[str] = field(default_factory=list)  # why answers failed the format
 
 
 @dataclass(frozen=True)
@@ -302,7 +303,8 @@ def _external_checks(run: RunCapture) -> list[Check]:
             "B1",
             "External findings all cite a source",
             not uncited,
-            f"{len(kept)} findings, {len(uncited)} without a citation",
+            f"{len(kept)} findings, {len(uncited)} without a citation, "
+            f"{len(report['rejected'])} rejected, {len(report['analysis']['notes'])} notes",
         ),
         Check(
             "B2",
@@ -364,6 +366,16 @@ def render(runs: Sequence[RunCapture], per_run: Sequence[Sequence[Check]], model
         if unusual:
             lines += ["", "AI calls that did not end normally (stage · status · output tokens):"]
             lines += [f"- {c['stage_id']} · {c['status']} · {c['output_tokens']}" for c in unusual]
+        if runs[n - 1].format_problems:
+            lines += ["", "Why answers failed the format check (field and rule only):"]
+            lines += [f"- {problem}" for problem in runs[n - 1].format_problems]
+        lanes = _lanes(runs[n - 1].graph)
+        lines += ["", "All steps on the map (label · kind · lane · source state):"]
+        lines += [
+            f"- {e['label']} · {e['kind']} · {lanes.get(e['lane_role_id'] or '', 'no lane')} · "
+            f"{e['source_state']}"
+            for e in steps(runs[n - 1].graph)
+        ]
         steps_found = find_expected(runs[n - 1].graph)
         lines += ["", "Steps: " + "; ".join(
             f"{x.label} → {steps_found[x.label]['label']} ({steps_found[x.label]['source_state']})"
