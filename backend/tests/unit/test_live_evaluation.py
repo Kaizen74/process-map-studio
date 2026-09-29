@@ -148,3 +148,12 @@ def test_a_draft_that_stops_still_leaves_a_report() -> None:
     assert "result: the run stopped" in report
     assert "Error: draft job ended failed: Building the map" in report
     assert "- S4_assemble · invalid · 1200" in report
+
+
+def test_the_report_lists_every_step_and_each_format_problem(mocked: RunCapture) -> None:
+    run = copy.deepcopy(mocked)
+    run.format_problems = ["GAInternalOutput: Does not match the schema: findings.0.section: …"]
+    report = evaluation.render([run], [evaluation.evaluate_run(run)], "live")
+    assert "- GAInternalOutput: Does not match the schema: findings.0.section: …" in report
+    assert "- Special loads OK? · decision · Load controller · corroborated" in report
+    assert "findings, 0 without a citation, " in report

@@ -19,11 +19,12 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 from app.config import SETTING_DEFAULTS, load_config
-from app.domain.result import Ok
+from app.domain.result import Err, Ok, Result
 from app.main import create_app
-from app.services import settings_store
+from app.services import ai_service, settings_store
 from tests.conftest import REAL_ENV_FILE
 from tests.live import capture, evaluation
 
@@ -42,8 +43,22 @@ def eric_settings() -> dict[str, str]:
     }
 
 
+def record_format_problems(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep why an answer failed validation (the field and the rule, cut to 300 characters)."""
+    validate = ai_service._validate
+
+    def recording(model: type[BaseModel], text: str) -> Result[dict[str, object]]:
+        result = validate(model, text)
+        if isinstance(result, Err):
+            capture.FORMAT_PROBLEMS.append(f"{model.__name__}: {result.message[:300]}")
+        return result
+
+    monkeypatch.setattr(ai_service, "_validate", recording)
+
+
 @pytest.fixture()
-def live_client(tmp_path: Path) -> Iterator[TestClient]:
+def live_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
+    record_format_problems(monkeypatch)
     settings = eric_settings()
     if not settings["ANTHROPIC_API_KEY"].strip():
         pytest.skip("No Claude API key: add it in Settings (or ANTHROPIC_API_KEY) first.")

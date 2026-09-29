@@ -12,6 +12,9 @@ from tests.live.evaluation import RunCapture
 
 # A live draft makes dozens of calls at high effort; the mocked one finishes in seconds.
 JOB_TIMEOUT_S = 3600
+# Why answers failed the format check: the field and the rule broken (JSON position or Pydantic
+# message), never the answer's text. Filled by the live test's wrapper around the validation.
+FORMAT_PROBLEMS: list[str] = []
 
 
 def drain(client: TestClient) -> None:
@@ -100,7 +103,9 @@ def capture_runs(client: TestClient, runs: int) -> list[RunCapture]:
     captured: list[RunCapture] = []
     for n in range(runs):
         seen = {c["id"] for c in usage(client)}
+        problems = len(FORMAT_PROBLEMS)
         run = capture(client, analyses=(n == 0))
         run.calls = [c for c in usage(client) if c["id"] not in seen]
+        run.format_problems = FORMAT_PROBLEMS[problems:]
         captured.append(run)
     return captured
