@@ -43,7 +43,7 @@ def assert_error_shape(body: dict[str, object], code: str) -> None:
 def test_health_reports_versions(built_dist: Path) -> None:
     response = make_client(built_dist).get("/api/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "app_version": "0.1.0", "prd_version": "1.5"}
+    assert response.json() == {"status": "ok", "app_version": "1.0.0", "prd_version": "1.5"}
 
 
 def test_unknown_api_path_uses_standard_error_shape(built_dist: Path) -> None:

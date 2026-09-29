@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "1.0.0"
 PRD_VERSION = "1.5"
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

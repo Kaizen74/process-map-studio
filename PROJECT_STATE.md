@@ -11,8 +11,8 @@ Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its wor
 P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §6.2 (the live test runs only when Eric asks). Parts that need Eric (his API key for the live run, approval of the final screenshots, creating the release on GitHub) come last so everything else is ready when he is.
 - [x] Increment 1 — live evaluation harness: a scorer for the P12 thresholds (evidence verified, numbers found in sources, ≥ 7 of 8 A.5 elements, injection without effect, stability across two runs, no hidden names, Analysis A finds the A.7 divergences, Analysis B citation checks), tested offline on the mocked run; `pytest -m live` runs the fixture twice with the real key and writes an evaluation report
 - [x] Increment 2 — clean-clone rehearsal (PRD §3.10): clone into an empty folder, follow README.md literally with the launchers, start the app with `MOCK_CLAUDE=1`, draft the fixture engagement, delete the folder; fix README and log anything that didn't work as written
-- [ ] Increment 3 — IN PROGRESS: handover documents: README.md and GUIDE.md complete (no build-phase wording or placeholders left), app version 1.0.0, plain-language release notes for v1.0.0
-- [ ] Increment 4 — final visual pass: screenshots of every screen at 1440 × 900 and 1080 × 800 in `docs/screens/p12-*.png` for Eric's approval (baselines change only if he approves)
+- [x] Increment 3 — handover documents: README.md and GUIDE.md complete (no build-phase wording or placeholders left), app version 1.0.0, plain-language release notes for v1.0.0
+- [ ] Increment 4 — IN PROGRESS: final visual pass: screenshots of every screen at 1440 × 900 and 1080 × 800 in `docs/screens/p12-*.png` for Eric's approval (baselines change only if he approves)
 - [ ] Increment 5 — live run with Eric's key (only when he asks): run the fixture twice, record the evaluation in DECISIONS.md, tune prompts only if a threshold is missed
 - [ ] Increment 6 — close P12: tag `phase-p12` and `v1.0.0`, GitHub release with the notes (Eric creates it if the cloud session can't), report card
 
@@ -114,6 +114,7 @@ P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §
 - 2026-09-29 P11 increment 4: browser smoke on the published sample (Leadership columns, axe, no hidden names, a decision saved and kept after reload, a figure opening its step on Published); GUIDE updated (Leadership step by step, glossary); reference screenshot docs/screens/p11-leadership.png. **Phase P11 complete** (tag `phase-p11`). 13 of 13 checks green.
 - 2026-09-29 P12 increment 1: live evaluation harness: a scorer for every P12 threshold (evidence verified, numbers in sources, 7 of 8 A.5 steps, injection without effect, no hidden names, stability, Analysis A divergences, Analysis B citations), tested offline on the mocked run; pytest -m live drafts the fixture twice with Eric's key and writes the report. 13 of 13 checks green.
 - 2026-09-29 P12 increment 2: clean-clone rehearsal passes (second pass): setup, start with the mock, key and connection test, the fixture drafted (21 claims, 8 steps), clean stop, folder deleted. The first pass found and fixed three things: the settings template now has blank values (so environment settings apply), the private settings file has its own header, and closing the start window stops the server too. 13 of 13 checks green.
+- 2026-09-29 P12 increment 3: handover documents: app version 1.0.0, README without build-phase wording and linking the release notes (docs/RELEASE_NOTES_v1.0.0.md), GUIDE complete (How to use it: a typical engagement start to finish, screens table, what changed). 13 of 13 checks green.
 
 ## Not started yet
 - P12 live run, polish and handover

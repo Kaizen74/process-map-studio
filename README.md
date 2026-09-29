@@ -2,9 +2,7 @@
 
 Turn SME interview transcripts and process documents into a clear, evidence-backed swimlane process map. Claude drafts the map; you review every step and publish it. Everything runs on your own computer.
 
-> Version 0.1.0 (build phase P7: publish and exports) · Last updated 2026-09-27 · For how to *use* the app, see [GUIDE.md](GUIDE.md).
-
-**Build status:** the app is being built in phases. Right now it installs and starts; you can save your name and your Claude API key, create engagements, describe the process and its roles, upload Word, PDF, text and subtitle files, map interview speakers to roles, keep a list of names the app hides, and create a draft map: Claude reads every source, each claim is checked against your documents, and the checked claims are built into a draft map with questions for your SME. On Review you can read the map (or a table), follow each step's evidence to the exact passage, and confirm, edit, reject or add steps; refreshing the draft keeps every step you reviewed. Once every step is reviewed and the quality card is green you can publish the map and download it as Markdown, JSON, a RACI spreadsheet or a single-file HTML map. Steps marked "available from phase …" below will work once that phase is finished; [PROJECT_STATE.md](PROJECT_STATE.md) always shows where the build is.
+> Version 1.0.0 · Last updated 2026-09-29 · For how to *use* the app, see [GUIDE.md](GUIDE.md). What changed in this version: [release notes](docs/RELEASE_NOTES_v1.0.0.md).
 
 ## What you need
 - A Mac (macOS 13 or later) or a Windows 10/11 PC, with at least 8 GB of memory and 2 GB of free disk space.
@@ -26,8 +24,6 @@ Turn SME interview transcripts and process documents into a clear, evidence-back
 2. Choose the **GitHub.com** tab, select `Kaizen74/process-map-studio`.
 3. Under **Local path**, choose where to keep it (for example your Documents folder). Click **Clone**.
 4. When it finishes, click **Show in Finder** (Mac) or **Show in Explorer** (Windows). This is your app folder.
-
-While the build is in progress, the newest work may sit on a separate branch until it is merged into `main`. Claude Code tells you in each report card whether that has happened.
 
 ### 3. Run setup (one time, and again after each update)
 - **Mac:** double-click **Setup.command**. If macOS says it can't be opened, right-click (or Control-click) the file → **Open** → **Open**.
