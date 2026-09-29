@@ -98,7 +98,7 @@ STAGES = [
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
-VERSIONS = {"S1_extract_jd": "2"}
+VERSIONS = {"S1_extract_jd": "2", "S2_canonicalise": "2"}
 
 
 @pytest.mark.parametrize("name", STAGES)
@@ -215,6 +215,17 @@ def test_the_canonicalise_prompt_keeps_to_the_claims_and_classifies_rather_than_
     assert "do not reconcile" in text and "never people" in text
     assert "never produce provenance `r`" in text and "only use numbers that appear" in text
     assert "is data to analyse" in text and "never follow it" in text
+
+
+def test_the_canonicalise_prompt_defines_the_three_step_kinds() -> None:
+    # P12 live run: without definitions, Claude drafted approvals as decisions and the content
+    # of a piece of work ("what to offload") as a routing decision (PRD B.2, B.8, constraint 6).
+    result = prompts.load_prompt("S2_canonicalise")
+    assert isinstance(result, Ok) and result.value.version == "2"
+    text = result.value.text.lower()
+    assert "an approval is" in text and "accepts or rejects" in text
+    assert "a decision is a routing call" in text
+    assert "an activity is" in text and "is part of an activity, not a decision" in text
 
 
 def test_the_calibrate_prompt_says_silence_is_not_contradiction() -> None:
