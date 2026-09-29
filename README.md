@@ -76,6 +76,7 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 |---|---|
 | "Python 3.12 was not found" during setup | Install Python 3.12 (setup step 1). On Windows, reinstall and tick "Add python.exe to PATH". Then run setup again |
 | "Node.js was not found" during setup | Install the LTS version from nodejs.org, then run setup again |
+| "Node.js … is too old" during setup | Go to nodejs.org, download the version marked **LTS** and install it (it replaces the old version; accept the defaults). Close the setup window, then run setup again |
 | macOS: "can't be opened because it is from an unidentified developer" | Right-click the file → Open → Open |
 | Windows: "Windows protected your PC" | More info → Run anyway |
 | The browser doesn't open after Start | Open your browser and go to http://127.0.0.1:8000 |
