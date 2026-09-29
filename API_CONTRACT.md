@@ -163,7 +163,7 @@ Now also writes an audit row (`target_type: "settings"`, before/after model, eff
 
 Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:
 - `.vtt`, `.srt`: caption cues become speaker turns with start and end times.
-- `.txt`: an interview transcript (`kind: "interview_transcript"`) is split into speaker turns (`Speaker: text` or `[mm:ss] Speaker: text`); any other `.txt` is split into paragraphs.
+- `.txt`: an interview transcript (`kind: "interview_transcript"`) is split into speaker turns (`Speaker: text` or `[mm:ss] Speaker: text`, or an Otter.ai export: the speaker and time on their own line, e.g. `Speaker 1  0:06`, the words on the lines below, the "Transcribed by https://otter.ai" footer dropped); any other `.txt` is split into paragraphs.
 - `.docx`, `.pdf`: read as documents (paragraphs, headings as sections; PDF text per page); for an interview transcript the lines are then joined into speaker turns.
 - Every passage is checked for instruction-like text (PRD §3.8 G9) and flagged `instruction_like: true`.
 - Speaker labels that look like a person's name ("Priya Nair") are added to the engagement's redaction terms automatically (origin `speaker_map`, shown as "[name]" until the speaker is mapped).
