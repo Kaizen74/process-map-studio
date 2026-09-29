@@ -26,6 +26,7 @@ from app.routers import (
     gap,
     images,
     jobs,
+    leadership,
     publish,
     readiness,
     redaction,
@@ -78,6 +79,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(images.router)
     app.include_router(causes.router)
     app.include_router(gap.router)
+    app.include_router(leadership.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

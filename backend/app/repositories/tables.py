@@ -417,3 +417,12 @@ class ExternalCitation(Row):
     source_id: Mapped[str] = fk("external_sources.id")
     citation_ref: Mapped[str] = mapped_column(String(16))
     cited_text: Mapped[str] = mapped_column(Text)
+
+
+class LeadershipDecision(Row):
+    """A "Decision needed" line for one systemic cause type of a version (0008)."""
+
+    __tablename__ = "leadership_decisions"
+    version_id: Mapped[str] = fk("map_versions.id")
+    cause_type: Mapped[str] = mapped_column(String(32))
+    text: Mapped[str] = mapped_column(Text, default="")

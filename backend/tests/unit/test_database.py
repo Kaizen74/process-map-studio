@@ -24,7 +24,8 @@ PRD_TABLES = {
     "external_sources", "external_citations",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
-ADDED_TABLES = {"version_sources"}  # 0004: the sources each draft was made from
+# 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
+ADDED_TABLES = {"version_sources", "leadership_decisions"}
 
 MIGRATION_COUNT = len(list((BACKEND_ROOT / "migrations" / "versions").glob("0*.py")))
 
@@ -221,6 +222,15 @@ def test_downgrade_of_0007_removes_only_gap_notes(migrated: Path) -> None:
     assert "question" in findings and "brief" in analyses
     db.upgrade(migrated)
     assert db.pending_migrations(migrated) == 0
+
+
+def test_downgrade_of_0008_removes_only_leadership_decisions(migrated: Path) -> None:
+    db.downgrade(migrated, "0007")
+    assert "leadership_decisions" not in table_names(migrated)
+    assert "gap_findings" in table_names(migrated)
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    assert "leadership_decisions" in table_names(migrated)
 
 
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
