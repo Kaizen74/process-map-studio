@@ -449,7 +449,38 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(errors, "the HTML map logged errors").toEqual([]);
     expect(await seriousViolations(offline)).toEqual([]);
     await offline.close();
-    await page.getByRole("link", { name: "Published" }).click();
+
+    // P11: Leadership on v1.0: facts, interpretation and recommendation kept apart, each figure
+    // opening its steps, and one decision line for the systemic cause.
+    await page.goto(`/engagements/${id}/leadership`);
+    await expect(page.getByRole("heading", { level: 1, name: "Leadership" })).toBeVisible();
+    for (const part of ["Facts", "Interpretation", "Recommendation"]) {
+      await expect(page.getByRole("heading", { level: 2, name: part })).toBeVisible();
+    }
+    await expect(page.getByText("Work 80 min")).toBeVisible();
+    await expect(page.getByText("Systemic", { exact: true })).toBeVisible();
+    await expect(page.getByText("Recoverable wait: 15 min")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Leadership").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p11-leadership.png"), fullPage: true });
+    }
+    await page
+      .getByRole("textbox", { name: "Decision needed: System fragmentation" })
+      .fill("Fund one digital loading report across Ramp and Load control.");
+    await page.getByRole("button", { name: "Save decisions" }).click();
+    const saved = page.locator(".toast", { hasText: "Decisions saved." });
+    await expect(saved).toBeVisible();
+    await expect(saved).toHaveCount(0, { timeout: 10_000 });
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: "Decision needed: System fragmentation" })).toHaveValue(
+      "Fund one digital loading report across Ramp and Load control.",
+    );
+    const recoverable = page.locator("details", { hasText: "Recoverable wait: 15 min" });
+    await recoverable.getByText("Recoverable wait: 15 min").click();
+    await recoverable.getByRole("button", { name: "Open Load and return LIR" }).click();
+    await expect(page).toHaveURL(/\/review|\/published/);
+    await page.goto(`/engagements/${id}/published`);
 
     // Reopen: a new draft with every reviewed step locked.
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
