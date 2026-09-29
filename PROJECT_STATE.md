@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-09-28 (session 13) — update after EVERY increment*
+*Last updated: 2026-09-29 (session 14) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.5).
@@ -7,17 +7,12 @@ Process Map Studio is a local app for Eric (non-technical owner) that turns SME 
 ## Current status
 Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) is complete (2026-09-28, tag `phase-p9` created locally); merged into `main` (pull request #11). Phase P10 (gap analysis, optional feature) is complete (2026-09-29, tag `phase-p10` created locally); its work is on branch `claude/charming-davinci-sck1cq`, waiting to be merged into `main`. Next: Phase P11 (leadership view).
 
-## This session (2026-09-28, session 13) — goal: Phase P10 (gap analysis, optional feature)
-P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 11, §6.3 P10, Appendix A.7 and constraint 22: analyses are advisory and on demand, never change the map, and every finding needs Eric's disposition. Analysis A uses only the engagement's own verified evidence; Analysis B sends only an approved, scan-clean brief to web search. Every AI call is mocked in the tests (no key, no network).
-- [x] Increment 1 — `ai_service.call_claude_with_web_search` (web search tool verified against the current docs and SDK 1.8.0; `pause_turn` continued, tool-error blocks kept as partial results, disabled search as a plain error; every search result and citation captured) with mock fixtures; web research settings (`PUT /settings/research`, `POST /settings/test-web-search`)
-- [x] Increment 2 — `services/gap.py` (pure): research brief builder, confidentiality scan (redaction list, confidential terms, map numbers and times, 8+ word passages), source tiers by domain, severity rules for both analyses; `grounding.verify_citations` (GX1–GX6)
-- [x] Increment 3 — Analysis A backend (contract first): divergence set, `GA_internal` synthesis, grounding gate, `GA_verify` verifier, severity, stored report; `POST /versions/{vid}/gap-analyses/internal` (job), list and detail endpoints; A.7 expected findings
-- [x] Increment 4 — Analysis B backend: create with a brief (nothing sent), edit brief with live scan, run gates (`BRIEF_NOT_APPROVED`, `WEB_RESEARCH_DISABLED`), research → structuring → GX1–GX6 → verifier → comparison and severity; traps TE1–TE9 (mocked)
-- [x] Increment 5 — dispositions (question, cause-library entry, step pre-fill, dismiss with reason; audit rows), finalise, report export `.md` (0 redaction-term hits), Master Process Map section 3 lines (G3 update), `gap_findings` on element details; **G7 golden baseline**
-- [x] Increment 6 — UI: Gap analysis screen (two cards, history, report with Facts · Interpretation · Recommendation, finding cards with dispositions, rejected findings)
-- [x] Increment 7 — UI: research brief editor with the live confidentiality scan, run and progress, external report (source cards with tier, date, excerpt ≤ 25 words)
-- [x] Increment 8 — UI: Settings web research card and test; "Gap findings" panel section and the Review toolbar chip; Exports card for finalised reports
-- [x] Increment 9 — browser checks (axe on the new screens, both analyses mocked end to end, nothing on the map changes), GUIDE/README (web search troubleshooting row), close P10 (tag phase-p10)
+## This session (2026-09-29, session 14) — goal: Phase P11 (leadership view)
+P11 follows PRD §4 Views (`GET /versions/{vid}/leadership`, `PUT …/leadership/decisions`), §5.4 Leadership, §6.3 P11 and constraints 9 (facts, interpretation and recommendation kept apart), 10 (roles, never people; nobody scored) and 17 (visual restraint): three columns with text headers, every figure links back to the steps behind it, systemic vs local causes by a written rule, no AI calls.
+- [x] Increment 1 — contract first; `services/leadership.py` (pure, deterministic, from the published graph): per-phase work and wait minutes, rework loops, cross-lane handoffs and divergence counts; one entry per cause type with the systemic-or-local rule, evidence weight ("supported by n of m sources") and confidence; recoverable wait, rework loops and top AI flags; every figure with the steps behind it; unit tests on the sample map
+- [ ] Increment 2 — IN PROGRESS: migration 0008 (saved "Decision needed" lines), repository, action and endpoints `GET /versions/{vid}/leadership` (published versions only) and `PUT /versions/{vid}/leadership/decisions` (systemic causes only, audit row); API, privacy and latency tests
+- [ ] Increment 3 — UI: Leadership screen: version picker, three columns (Facts: phase bars with work solid and wait hatched, counts; Interpretation: one card per cause with Systemic or Local chip, evidence weight, confidence; Recommendation: recoverable wait, rework loops, AI flags in the five-field block, editable "Decision needed" per systemic cause), every figure opening its steps; loading, empty and error states; component tests and axe
+- [ ] Increment 4 — browser checks (smoke on the published sample, accessibility sweep), GUIDE/README, close P11 (tag phase-p11)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -111,6 +106,7 @@ P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 
 - 2026-09-28 P10 increment 7: research brief editor built with increment 6: every brief field, confidentiality check with Remove per hit, the no-confidential-information tick, Save and check, Run research (saves first; says why it can't run). 13 of 13 checks green.
 - 2026-09-28 P10 increment 8: Settings web research card with Test web search; Gap findings section in the step panel; Review toolbar chip for open gap findings; Exports lists finalised gap reports; browser checks cover the new screen and both analyses. 13 of 13 checks green.
 - 2026-09-28 P10 increment 9: GUIDE.md (Gap analysis step by step, Settings web research, Exports reports, glossary), README troubleshooting row for the search limit, phase P10 closed. 13 of 13 checks green.
+- 2026-09-29 P11 increment 1: Leadership contract and the pure leadership service (per-phase work, wait, rework loops, handoffs and divergences; systemic-or-local rule; evidence weight and confidence; recoverable wait, rework loops, top AI flags; every figure with its steps), tested on the sample map. 13 of 13 checks green.
 
 ## Not started yet
 - P11 leadership view · P12 live run, polish and handover

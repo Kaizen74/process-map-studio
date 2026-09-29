@@ -424,6 +424,37 @@ All entries, in the order they were added. Errors: `404` ("That engagement doesn
 ### PATCH /api/cause-library/{cid}
 Request `{"validation_result": "pending" | "confirmed" | "refuted"}` → the entry. Audit rows "Confirmed cause" · "Refuted cause" · "Reopened cause". Errors: `404` ("That cause-library entry doesn't exist."); `422` (field `validation_result`: "Choose pending, confirmed or refuted.").
 
+## Leadership view (PRD §4 Views, §5.4 Leadership) — phase P11
+
+Where the process jams and why, for a **published** version: worked out from its map every time it is asked for (no AI call), kept in three separate parts (constraint 9). Only steps count (activities, decisions and approvals), never rejected ones. Every figure carries the IDs of the steps behind it (`element_ids`), so the screen can open them. Roles only; no person is named, scored or rated (constraint 10).
+
+### GET /api/versions/{vid}/leadership
+Response `200`:
+```json
+{"version": {"id", "label", "state"},
+ "facts": {"phases": [{"phase_id", "name", "work_min", "wait_min", "rework_loops", "handoffs",
+                       "divergence_counts": {"threshold": 1},
+                       "links": {"work": [...], "wait": [...], "rework_loops": [...], "handoffs": [...],
+                                 "divergence": {"threshold": [...]}}}],
+           "sources": 5},
+ "interpretation": {"causes": [{"cause_type", "systemic": true, "reason", "phases": [{"phase_id", "name"}],
+                                "lanes": ["…"], "evidence_weight": {"supporting": 3, "sources": 5},
+                                "confidence": 0.72, "constraints": [{"element_id", "label", "text", "is_key"}],
+                                "element_ids": [...]}]},
+ "recommendation": {"recoverable_wait_min": 15, "recoverable_wait_element_ids": [...],
+                    "rework_loops": 3, "rework_element_ids": [...],
+                    "ai_flags": [{"element_id", "label", "lane", "mechanism", "component", "input", "output", "handoff", "basis"}],
+                    "decisions_needed": [{"cause_type", "text"}]}}
+```
+- **Facts, per phase** (in phase order; steps with no phase under "No phase"): `work_min` and `wait_min` add up the steps' times (steps without a time add nothing; `links.work` / `links.wait` list the steps that do); `rework_loops`: lines of kind `rework` or `reject` leaving a step of the phase; `handoffs`: lines of any kind between two steps in different lanes, counted in the phase of the step they leave; `divergence_counts`: steps of the phase by divergence type (B.5). `sources`: the sources the version was drafted from.
+- **Interpretation, one entry per cause type** (B.9) found on the steps' constraints, in B.9 order. **Systemic** when the cause constrains 2 or more steps that sit in different lanes or different phases (it is not one team's local issue); otherwise **Local**. `reason` says which in plain words (for example "On 2 steps in 2 lanes: Load controller, Ramp."). `evidence_weight`: how many of the version's sources support at least one of those steps (a verified "supports" passage), of all its sources. `confidence`: the average confidence of those steps (their own confidence, worked out when the map was built), rounded to 2 places; `null` if none has one. Constraint texts have names hidden.
+- **Recommendation:** `recoverable_wait_min`: waiting time on steps constrained by a systemic cause (time a fix to that cause could win back); `rework_loops`: all rework and reject lines; `ai_flags`: up to 3 steps with an AI flag, rule-based decisions first (automation candidates), then by confidence, in the fixed five-field block (a judgment step's flag is support only); `decisions_needed`: one line per **systemic** cause, with the text Eric saved (empty until he writes one).
+Errors: `404` ("That version doesn't exist."); `409` "The leadership view shows a published map. Publish this draft first, then open Leadership." (a draft).
+
+### PUT /api/versions/{vid}/leadership/decisions
+Request: `[{"cause_type": "system_fragmentation", "text": "Fund one digital loading report across ramp and load control."}]` — the "Decision needed" lines (up to 500 characters each; an empty text clears a line). Replaces the version's saved lines. Response `200`: the `decisions_needed` list as above. An audit row "Saved leadership decisions". Allowed on published and superseded versions (the lines are Eric's notes about the map, not map content).
+Errors: `404`; `409` (a draft, as above); `422` (field `cause_type`) "Decisions are recorded for systemic causes only." or (field `text`) "Keep each decision under 500 characters."
+
 ## Gap analysis (PRD §3.11, §4 Gap analysis, §5.4) — phase P10
 
 Two advisory analyses Eric starts himself on any draft or published version. They produce a report of findings and **never change the map** (constraint 22); every kept finding waits for Eric's disposition.
