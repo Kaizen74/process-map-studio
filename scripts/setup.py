@@ -94,9 +94,26 @@ def ensure_data_and_env(root: Path) -> list[str]:
     env_file = root / ".env"
     example = root / ".env.example"
     if not env_file.exists() and example.is_file():
-        shutil.copyfile(example, env_file)
+        env_file.write_text(private_env(example.read_text(encoding="utf-8")), encoding="utf-8")
         created.append(".env settings file")
     return created
+
+
+PRIVATE_HEADER = (
+    "# Your private Process Map Studio settings. The app saves your API key here.\n"
+    "# This file stays on this computer: it is never uploaded to GitHub.\n"
+)
+
+
+def private_env(example: str) -> str:
+    """The example's settings under a header for the private copy (the example's own header
+    says it is committed to GitHub, which is true of the example only)."""
+    lines = example.splitlines(keepends=True)
+    if not lines or not lines[0].startswith("#"):
+        return example
+    while lines and lines[0].startswith("#"):
+        lines.pop(0)
+    return PRIVATE_HEADER + "".join(lines)
 
 
 def activate_hook(root: Path) -> str:
