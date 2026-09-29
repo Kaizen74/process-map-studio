@@ -16,8 +16,8 @@ P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 
 - [x] Increment 5 — dispositions (question, cause-library entry, step pre-fill, dismiss with reason; audit rows), finalise, report export `.md` (0 redaction-term hits), Master Process Map section 3 lines (G3 update), `gap_findings` on element details; **G7 golden baseline**
 - [x] Increment 6 — UI: Gap analysis screen (two cards, history, report with Facts · Interpretation · Recommendation, finding cards with dispositions, rejected findings)
 - [x] Increment 7 — UI: research brief editor with the live confidentiality scan, run and progress, external report (source cards with tier, date, excerpt ≤ 25 words)
-- [ ] Increment 8 — IN PROGRESS: UI: Settings web research card and test; "Gap findings" panel section and the Review toolbar chip; Exports card for finalised reports
-- [ ] Increment 9 — browser checks (axe on the new screens, both analyses mocked end to end, nothing on the map changes), GUIDE/README (web search troubleshooting row), close P10 (tag phase-p10)
+- [x] Increment 8 — UI: Settings web research card and test; "Gap findings" panel section and the Review toolbar chip; Exports card for finalised reports
+- [ ] Increment 9 — IN PROGRESS: browser checks (axe on the new screens, both analyses mocked end to end, nothing on the map changes), GUIDE/README (web search troubleshooting row), close P10 (tag phase-p10)
 
 ## Done (all sessions)
 - 2026-09-26 Safety net: a secret check and pre-commit hook block API keys, the .env file and the data folder from git; README check; CLAUDE.md, state files and README created; run_checks.sh (5 checks)
@@ -109,6 +109,7 @@ P10 follows PRD §3.11, §4 Gap analysis rows, §5.4 Gap analysis, §5.7.7 item 
 - 2026-09-28 P10 increment 5: decisions on findings (question, cause library, step, dismiss) in the current draft with audit rows; finalise; Markdown report export (0 name hits); Master Map section 3 lists pending causes (P9 gap fixed) and finalised reports (G3, G5 updated); step panel gap findings; G7 baseline. 13 of 13 checks green.
 - 2026-09-28 P10 increment 6: Gap analysis screen: both analyses, history, run progress, report in Facts/Interpretation/Recommendation with filters, finding and source cards, decisions (question, cause, step form, dismiss with reason), rejected findings, finalise and export. 13 of 13 checks green.
 - 2026-09-28 P10 increment 7: research brief editor built with increment 6: every brief field, confidentiality check with Remove per hit, the no-confidential-information tick, Save and check, Run research (saves first; says why it can't run). 13 of 13 checks green.
+- 2026-09-28 P10 increment 8: Settings web research card with Test web search; Gap findings section in the step panel; Review toolbar chip for open gap findings; Exports lists finalised gap reports; browser checks cover the new screen and both analyses. 13 of 13 checks green.
 
 ## Not started yet
 - P10 gap analysis · P11 leadership view · P12 live run, polish and handover

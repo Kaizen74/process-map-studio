@@ -20,6 +20,11 @@ export interface Settings {
   key_last4: string;
 }
 
+export interface WebSearchTest {
+  available: boolean;
+  message: string;
+}
+
 export interface ConnectionTest {
   key_valid: boolean;
   model_available: boolean;

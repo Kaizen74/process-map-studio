@@ -6,7 +6,9 @@ import {
   saveApiKey,
   saveModel,
   saveProfile,
+  saveResearch,
   testConnection,
+  testWebSearch,
 } from "../api/settings";
 import type { ModelUpdate, Settings } from "../api/types";
 
@@ -36,6 +38,17 @@ function useSettingsMutation<TInput>(save: (input: TInput) => Promise<Settings>,
 export const useSaveProfile = () => useSettingsMutation(saveProfile);
 export const useSaveApiKey = () => useSettingsMutation(saveApiKey, true);
 export const useSaveModel = () => useSettingsMutation((update: ModelUpdate) => saveModel(update));
+
+export const useSaveResearch = () => useSettingsMutation((enabled: boolean) => saveResearch(enabled));
+
+/** One small search (billed as one search); the AI usage list gains the call. */
+export function useTestWebSearch() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: testWebSearch,
+    onSettled: () => void client.invalidateQueries({ queryKey: USAGE }),
+  });
+}
 
 export function useTestConnection() {
   return useMutation({ mutationFn: testConnection });

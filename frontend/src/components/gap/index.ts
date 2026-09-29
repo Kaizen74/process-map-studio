@@ -14,3 +14,4 @@ export {
   type GapStepFormProps,
 } from "./DecisionForms";
 export { BriefEditor, type BriefEditorProps } from "./BriefEditor";
+export { GapFindingsSection, type GapFindingsSectionProps } from "./GapFindingsSection";

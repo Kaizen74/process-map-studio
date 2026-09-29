@@ -1,14 +1,18 @@
 import { useCallback, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import type { ReactNode } from "react";
 import { Card, ErrorState, Skeleton } from "../../components/common";
 import { MapLegend, MapStage, MapToolbar, WalkthroughStrip, type MapView, type Zoom } from "../../components/map";
 import { AllReviewed } from "../../components/panel";
+import { useGapAnalyses } from "../../hooks/useGap";
 import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
+import { engagementPath } from "../../lib/engagementSteps";
+import { plural } from "../../lib/format";
 import { stepsWithImages, walkthroughCards } from "../../lib/images";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { ReviewAction } from "../../api/review";
+import type { GapAnalysis } from "../../lib/gap";
 import type { Graph } from "../../lib/mapTypes";
 import type { RejectedClaim } from "../../lib/reviewTypes";
 import { newStepForm, type AddStepForm } from "../../lib/addStep";
@@ -44,6 +48,17 @@ export interface WorkbenchProps {
   below?: ReactNode;
 }
 
+/** The toolbar's "n open gap findings" chip (PRD §5.7.7 item 11): no map marker is added. */
+function openGapChip(analyses: readonly GapAnalysis[], to: string): ReactNode {
+  const open = analyses.filter((a) => a.status === "draft_report").reduce((n, a) => n + a.counts.open, 0);
+  if (open === 0) return null;
+  return (
+    <Link className="chip chip--decision gap-chip" to={to}>
+      {plural(open, "open gap finding")}
+    </Link>
+  );
+}
+
 /**
  * The review workbench (PRD §5.6-§5.9): header strip, map or table, tabs and the panel, for one
  * version. A draft can be reviewed; a published version is the same view, read-only (§5.9).
@@ -52,6 +67,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const graph = useGraph(versionId);
   const layout = useLayout(versionId);
   const pictures = useVersionImages(versionId);
+  const analyses = useGapAnalyses(versionId);
+  const navigate = useNavigate();
+  const gapPath = engagementPath(engagementId, "gap_analysis");
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("step");
   const [lens, setLens] = useLens();
@@ -239,6 +257,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               phases={drawing.phases.length}
               large={steps.length > MAX_STEPS || lanes > MAX_LANES}
               onAddStep={editable ? () => setAdding(newStepForm(g, addAfter())) : undefined}
+              extra={openGapChip(analyses.data ?? [], `${gapPath}?version=${encodeURIComponent(versionId)}`)}
               onRefresh={editable ? () => setRefreshOpen(true) : undefined}
             />
             {view === "table" ? (
@@ -353,6 +372,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               }
               images={{ versionId: g.version.id, engagementId, editable }}
               onOpenEvidence={(card) => setViewing({ step: selected.id, card })}
+              onOpenGapReport={(analysisId) =>
+                void navigate(`${gapPath}?analysis=${encodeURIComponent(analysisId)}`)
+              }
               onAddAfter={
                 editable && selected.kind !== "end" && selected.review_status !== "rejected"
                   ? () => setAdding(newStepForm(g, selected.id))

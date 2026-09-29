@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { AiUsage, ConnectionTest, ModelChoices, ModelUpdate, Settings } from "./types";
+import type { AiUsage, ConnectionTest, ModelChoices, ModelUpdate, Settings, WebSearchTest } from "./types";
 
 export const getSettings = () => request<Settings>("/settings");
 
@@ -18,3 +18,9 @@ export const saveModel = (update: ModelUpdate) =>
   request<Settings>("/settings/model", { method: "PUT", body: update });
 
 export const getAiUsage = (limit = 50) => request<AiUsage>(`/settings/usage?limit=${limit}`);
+
+// Web research for gap analysis B (phase P10).
+export const saveResearch = (enabled: boolean) =>
+  request<Settings>("/settings/research", { method: "PUT", body: { web_research_enabled: enabled } });
+
+export const testWebSearch = () => request<WebSearchTest>("/settings/test-web-search", { method: "POST" });

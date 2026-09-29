@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BriefEditor, FindingCard, SourceCard } from "../../src/components/gap";
+import { MapToolbar } from "../../src/components/map";
+import { BriefEditor, FindingCard, GapFindingsSection, SourceCard } from "../../src/components/gap";
 import type { GapEvidence, GapReport } from "../../src/lib/gap";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp } from "../renderApp";
@@ -256,5 +257,60 @@ describe("Gap analysis screen (PRD §5.4)", () => {
     renderApp("/engagements/e1/gap-analysis");
     fireEvent.click(await screen.findByRole("button", { name: "Run analysis" }));
     await waitFor(() => expect(calls.some((c) => c.key === "POST /api/versions/v1/gap-analyses/internal")).toBe(true));
+  });
+});
+
+describe("gap findings elsewhere in the app (PRD §5.7.7 item 11, §5.4 Settings)", () => {
+  it("the step panel lists each finding with mode, severity, title and decision, and opens its report", async () => {
+    const onOpen = vi.fn();
+    const { container, rerender } = render(
+      <GapFindingsSection
+        items={[{ id: "f1", analysis_id: "g1", mode: "internal", title: "Plan approval is documented but never mentioned",
+          severity: "high", disposition: "open" }]} // prettier-ignore
+        onOpen={onOpen}
+      />,
+    );
+    const section = screen.getByRole("region", { name: "Gap findings" });
+    expect(section).toHaveTextContent("Documents vs practice");
+    expect(section).toHaveTextContent("High severity");
+    expect(section).toHaveTextContent("Decision: Open");
+    fireEvent.click(within(section).getByRole("button", { name: /Open the report/ }));
+    expect(onOpen).toHaveBeenCalledWith("g1");
+    expect(await seriousViolations(container)).toEqual([]);
+    rerender(<GapFindingsSection items={[]} onOpen={onOpen} />);
+    expect(screen.queryByRole("region", { name: "Gap findings" })).toBeNull();
+  });
+
+  it("the map toolbar shows what it is given before the counts, adding no marker", () => {
+    render(
+      <MapToolbar view="map" onView={vi.fn()} lens="plain" onLens={vi.fn()} zoom="fit" onZoom={vi.fn()} steps={8}
+        lanes={5} phases={3} large={false} extra={<a href="/gap">2 open gap findings</a>} />, // prettier-ignore
+    );
+    expect(screen.getByRole("link", { name: "2 open gap findings" })).toBeInTheDocument();
+  });
+
+  it("Settings: web research switch and Test web search", async () => {
+    let enabled = false;
+    const { calls } = fakeApi({
+      "GET /api/settings": () => ({ body: { ...SETTINGS, web_research_enabled: enabled } }),
+      "PUT /api/settings/research": (body) => {
+        enabled = (body as { web_research_enabled: boolean }).web_research_enabled;
+        return { body: { ...SETTINGS, web_research_enabled: enabled } };
+      },
+      "POST /api/settings/test-web-search": () => ({
+        body: { available: false, message: "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." },
+      }),
+    });
+    renderApp("/settings");
+    const card = await screen.findByRole("region", { name: "Web research" });
+    const box = within(card).getByRole("checkbox", { name: "Allow web research" });
+    expect(box).not.toBeChecked();
+    fireEvent.click(box);
+    await waitFor(() => expect(calls.find((c) => c.key === "PUT /api/settings/research")?.body).toEqual({ web_research_enabled: true }));
+    await waitFor(() => expect(within(card).getByRole("checkbox", { name: "Allow web research" })).toBeChecked());
+    fireEvent.click(within(card).getByRole("button", { name: "Test web search" }));
+    expect(await within(card).findByRole("status")).toHaveTextContent(
+      "Not available. Web search isn't enabled for your Anthropic organisation.",
+    );
   });
 });

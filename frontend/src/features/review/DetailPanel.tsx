@@ -17,6 +17,7 @@ import { useElement } from "../../hooks/useReview";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
+import { GapFindingsSection } from "../../components/gap";
 import { ImagesSection } from "./ImagesSection";
 
 export interface DetailPanelProps {
@@ -37,6 +38,8 @@ export interface DetailPanelProps {
   onOpenEvidence: (card: Card) => void;
   /** Add missing step after this one; omitted where it can't be (the end, a rejected step, not a draft). */
   onAddAfter?: (() => void) | undefined;
+  /** Opens a gap analysis report from the step's "Gap findings" section. */
+  onOpenGapReport: (analysisId: string) => void;
   onClose: () => void;
 }
 
@@ -51,6 +54,7 @@ export function DetailPanel({
   images,
   onOpenEvidence,
   onAddAfter,
+  onOpenGapReport,
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
@@ -119,6 +123,7 @@ export function DetailPanel({
           <ConstraintList element={detail.data} />
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
+          <GapFindingsSection items={detail.data.gap_findings} onOpen={onOpenGapReport} />
         </>
       )}
       {step && (

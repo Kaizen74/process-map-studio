@@ -378,6 +378,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await lirCause.getByRole("button", { name: "Confirm" }).click();
     await expect(lirCause.getByRole("button", { name: "Reopen" })).toBeVisible();
     expect((await publicText(page)).includes("Priya"), "a name shown on Registers").toBe(false);
+
     await page.goto(`/engagements/${id}/review`);
     await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
 
@@ -469,6 +470,41 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     if (process.env.PMS_SCREENSHOT_DIR) {
       await usage.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p4-settings-ai-usage.png") });
     }
+
+    // P10: Gap analysis, last so its AI calls don't push the rows above out of the usage list.
+    // Documents vs practice on the published map (Claude mocked), then an external brief:
+    // refused while web research is off, run with the mocked web search once it is on.
+    await page.goto(`/engagements/${id}/gap-analysis`);
+    await expect(page.getByRole("heading", { level: 1, name: /Gap analysis/ })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("button", { name: "Run analysis" }).click();
+    await expect(page.getByText(/2 AI calls/)).toBeVisible({ timeout: 30_000 });
+    // The "started" toast can be caught mid-way in; the report is checked once it has gone.
+    await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Gap analysis").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p10-gap-report.png"), fullPage: true });
+    }
+    await page.getByRole("button", { name: "Prepare research brief" }).click();
+    let brief = page.getByRole("form", { name: "Research brief" });
+    await expect(brief.getByRole("region", { name: "Confidentiality check" })).toBeVisible();
+    await brief.getByRole("checkbox", { name: "This brief contains no confidential information" }).check();
+    await brief.getByRole("button", { name: "Run research" }).click();
+    await expect(brief.getByRole("alert")).toContainText("Web research is switched off");
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p10-gap-brief.png"), fullPage: true });
+    }
+    expect((await request.put("/api/settings/research", { data: { web_research_enabled: true } })).status()).toBe(200);
+    await page.reload();
+    brief = page.getByRole("form", { name: "Research brief" });
+    await brief.getByRole("checkbox", { name: "This brief contains no confidential information" }).check();
+    await brief.getByRole("button", { name: "Run research" }).click();
+    await expect(page.getByText(/1 web search used/)).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
   } finally {
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
