@@ -20,7 +20,7 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
   { key: "matrix", label: "Matrix", slug: "matrix" },
   { key: "gap_analysis", label: "Gap analysis", slug: "gap-analysis", optional: true },
   { key: "registers", label: "Registers", slug: "registers" },
-  { key: "leadership", label: "Leadership", slug: "leadership", arrives: "P11" },
+  { key: "leadership", label: "Leadership", slug: "leadership" },
   { key: "exports", label: "Exports", slug: "exports" },
 ];
 

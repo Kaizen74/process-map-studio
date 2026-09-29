@@ -1,3 +1,4 @@
+import { ENGAGEMENT_STEPS } from "../../src/lib/engagementSteps";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { seriousViolations } from "../axe";
@@ -294,14 +295,16 @@ describe("Opening an engagement", () => {
     expect(screen.getByText(/It may have been deleted/)).toBeInTheDocument();
   });
 
-  it("screens from later phases say when they arrive", async () => {
+  it("every screen on the guided path is built (P11 was the last to arrive)", async () => {
+    expect(ENGAGEMENT_STEPS.filter((step) => step.arrives)).toEqual([]);
     fakeApi({
       "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
       "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
+      "GET /api/engagements/e1/versions": () => ({ body: [] }),
     });
     renderApp("/engagements/e1/leadership");
-    expect(await screen.findByText(/The Leadership screen arrives in build phase P11/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go to Setup" })).toHaveAttribute("href", "/engagements/e1/setup");
+    expect(await screen.findByRole("heading", { level: 1, name: "Leadership" })).toBeInTheDocument();
+    expect(screen.queryByText(/arrives in build phase/)).toBeNull();
   });
 
   it("unknown engagement screens are not found", async () => {

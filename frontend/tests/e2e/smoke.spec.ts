@@ -479,8 +479,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("button", { name: "Run analysis" }).click();
     await expect(page.getByText(/2 AI calls/)).toBeVisible({ timeout: 30_000 });
-    // The "started" toast can be caught mid-way in; the report is checked once it has gone.
-    await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
+    // The "started" toast can be caught mid-way in (it may even appear after the report), so
+    // the page is checked once that toast has come and gone.
+    const started = page.locator(".toast", { hasText: "Documents-vs-practice analysis started." });
+    await expect(started).toBeVisible();
+    await expect(started).toHaveCount(0, { timeout: 10_000 });
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Gap analysis").toBe(false);
     if (process.env.PMS_SCREENSHOT_DIR) {
@@ -502,7 +505,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await brief.getByRole("checkbox", { name: "This brief contains no confidential information" }).check();
     await brief.getByRole("button", { name: "Run research" }).click();
     await expect(page.getByText(/1 web search used/)).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
+    const research = page.locator(".toast", { hasText: "Research started." });
+    await expect(research).toBeVisible();
+    await expect(research).toHaveCount(0, { timeout: 10_000 });
     expect(await seriousViolations(page)).toEqual([]);
     expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
   } finally {
