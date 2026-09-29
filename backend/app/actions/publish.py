@@ -27,6 +27,7 @@ from app.domain.models import (
     ExportFile,
     PublishBlocker,
     ReviewProgress,
+    SignalStrength,
     VersionDetail,
     VersionSummary,
 )
@@ -36,7 +37,7 @@ from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import versions as versions_repo
-from app.services import exports, layout, lint
+from app.services import exports, layout, lint, signal
 
 Sessions = sessionmaker[Session]
 
@@ -81,6 +82,7 @@ def _detail(session: Session, version_id: str) -> VersionDetail | None:
     ]
     return VersionDetail(
         **found,
+        signal=version_signal(session, version_id),
         review=ReviewProgress(reviewed=reviewed, total=total),
         change_log=log,
         quality_card=versions_repo.quality_card(session, version_id),
@@ -91,7 +93,17 @@ def list_versions(sessions: Sessions, engagement_id: str) -> Result[list[Version
     with session_scope(sessions) as session:
         if engagements_repo.get(session, engagement_id) is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
-        return Ok([VersionSummary(**r) for r in versions_repo.rows(session, engagement_id)])
+        return Ok(
+            [
+                VersionSummary(**r, signal=version_signal(session, r["id"]))
+                for r in versions_repo.rows(session, engagement_id)
+            ]
+        )
+
+
+def version_signal(session: Session, version_id: str) -> SignalStrength | None:
+    """The version's signal strength, from the sources it was drafted from (P12)."""
+    return signal.signal_strength(versions_repo.source_kinds(session, version_id))
 
 
 def get_version(sessions: Sessions, version_id: str) -> Result[VersionDetail]:

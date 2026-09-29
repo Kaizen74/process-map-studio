@@ -20,12 +20,14 @@ export function useDraft(engagementId: string) {
     queryFn: () => getDraft(engagementId),
     refetchInterval: (q) => (drafting(q.state.data) ? DRAFT_POLL_MS : false),
   });
-  // When a draft finishes, the guided path, the Home card and the AI usage change too.
+  // When a draft finishes, the guided path, the Home card, the versions (and their signal
+  // strength) and the AI usage change too.
   const running = drafting(query.data);
   const wasRunning = useRef(running);
   useEffect(() => {
     if (wasRunning.current && !running) {
       void client.invalidateQueries({ queryKey: ["engagements", engagementId, "readiness"] });
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "versions"] });
       void client.invalidateQueries({ queryKey: ["engagements"], exact: true });
       void client.invalidateQueries({ queryKey: ["settings", "usage"] });
     }

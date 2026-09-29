@@ -3,3 +3,5 @@
 *.command text eol=lf
 *.sh      text eol=lf
 .githooks/* text eol=lf
+# Eric's sample interview is kept byte for byte as Otter.ai exported it (CRLF line endings).
+backend/tests/fixtures/interview_pei_fen/*.txt -text

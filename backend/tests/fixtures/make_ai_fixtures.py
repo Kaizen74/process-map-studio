@@ -1122,6 +1122,98 @@ def write_gap() -> None:
     write(MOCKS, "GB_verify", checked, GB_VERIFY_ANSWER)
 
 
+# The interview-only sample (P12): the same engagement with the transcript as its only source, so
+# the draft, review, publish and export path is tested without documents. Its S1 answers are the
+# full sample's (same passages sent); the later stages keep only what the interview says: seven
+# steps (no plan approval and no loading report, which only the SOPs describe), every exit
+# labelled, and the S3 stances and S4 details of the full sample for those steps.
+INTERVIEW_ONLY = ["interview_transcript.txt"]
+INTERVIEW_ONLY_S2: dict[str, Any] = {
+    "steps": [
+        step("st1", "activity", "Draft load plan", "Load controller", [1, 2]),
+        step("st2", "decision", "Special loads OK?", "Load controller", [3, 4]),
+        step("st3", "activity", "Resolve or offload", "Airline ops", [5]),
+        step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
+        step("st5", "decision", "Deviation in limits?", "Load controller", [10, 11]),
+        step("st6", "approval", "Approve deviation", "Captain", [12]),
+        step("st7", "activity", "Issue load sheet", "Load controller", [13]),
+    ],
+    "new_roles": [],
+    "merge_proposals": [],
+}
+# The full sample's step refs (see S3_ANSWERS) → labels in the interview-only draft.
+FULL_LABELS = {
+    "e1": "Draft load plan", "e3": "Special loads OK?", "e4": "Resolve or offload",
+    "e5": "Load aircraft", "e6": "Deviation in limits?", "e7": "Approve deviation",
+    "e8": "Issue load sheet",
+}  # fmt: skip
+
+
+def step_ref_by_label(sessions: Any, version_id: str) -> dict[str, str]:
+    from app.db import session_scope
+    from app.pipeline.s3_calibrate import step_refs
+
+    with session_scope(sessions) as session:
+        return {st.element.label: st.ref for st in step_refs(session, version_id)}
+
+
+def remap(full_ref: str, refs: dict[str, str]) -> str:
+    return refs[FULL_LABELS[full_ref]] if full_ref in FULL_LABELS else full_ref
+
+
+def interview_only_s3(refs: dict[str, str]) -> dict[tuple[str, int], dict[str, Any]]:
+    return {
+        key: {"stances": [{**s, "step_ref": remap(s["step_ref"], refs)} for s in a["stances"]]}
+        for key, a in S3_ANSWERS.items()
+        if key[0] in INTERVIEW_ONLY
+    }
+
+
+def interview_only_s4(refs: dict[str, str]) -> dict[str, Any]:
+    """S4_ANSWER without the plan approval (e2): the plan goes straight to the special-loads
+    check, and the constraints and flags stay on the steps whose interview claims state them.
+    The deviation check is the Load controller's (in the full sample the SOP names its
+    Accountable role); the T-10 KPI stays in, and is rejected, because only the SOP states it."""
+    steps = [
+        {**s, "step_ref": remap(s["step_ref"], refs)}
+        | ({"raci": raci((LC, "R"), (LC, "A"))} if s["step_ref"] == "e6" else {})
+        for s in S4_ANSWER["steps"]
+        if s["step_ref"] != "e2"
+    ]
+    edges = [
+        {**e, "from_ref": remap(e["from_ref"], refs), "to_ref": remap(e["to_ref"], refs)}
+        for e in S4_ANSWER["edges"]
+        if "e2" not in (e["from_ref"], e["to_ref"])
+    ]
+    edges.insert(1, edge(remap("e1", refs), remap("e3", refs)))
+    phases = [
+        {**p, "step_refs": [remap(r, refs) for r in p["step_refs"] if r != "e2"]}
+        for p in S4_ANSWER["phases"]
+    ]
+    return {"phases": phases, "steps": steps, "edges": edges}
+
+
+def write_interview_only() -> None:
+    """The later-stage answers for the interview-only sample (after the draft answers exist)."""
+    with sample_app(sources=INTERVIEW_ONLY) as (app, client, built):
+        from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify
+
+        version_id = draft_version(app, client, built)
+        sessions = app.state.sessions
+        write(MOCKS, "S2_canonicalise", s2_hash(sessions, version_id, built.engagement_id),
+              INTERVIEW_ONLY_S2)  # fmt: skip
+        run_stage(app, s2_canonicalise.canonicalise, version_id)
+        refs = step_ref_by_label(sessions, version_id)
+        answers = interview_only_s3(refs)
+        for key, digest in s3_hashes(sessions, version_id, built.sources).items():
+            write(MOCKS, "S3_calibrate", digest, answers.get(key, S3_EMPTY))
+        run_stage(app, s3_calibrate.calibrate, version_id)
+        for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
+            write(MOCKS, "S3b_verify", digest, verdicts(count))
+        run_stage(app, s3b_verify.verify, version_id)
+        write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), interview_only_s4(refs))
+
+
 def write(root: Path, stage: str, key: str, data: object) -> None:
     (root / stage).mkdir(parents=True, exist_ok=True)
     (root / stage / f"{key}.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -1190,6 +1282,7 @@ def main() -> None:
         run_stage(app, s3_calibrate.calibrate, version_id)
         for label, (digest, _count) in s3b_hashes(sessions, version_id).items():
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
+    write_interview_only()
     write_gap()
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
@@ -1199,5 +1292,7 @@ def main() -> None:
 if __name__ == "__main__":
     if sys.argv[1:] == ["gap"]:  # only the gap-analysis answers
         write_gap()
+    elif sys.argv[1:] == ["interview"]:  # only the interview-only sample's answers
+        write_interview_only()
     else:
         main()

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
 
@@ -288,6 +290,15 @@ class ReadinessFacts(BaseModel):
     exported: bool = False
 
 
+class SignalStrength(BaseModel):
+    """How much independent evidence a map rests on, from the kinds of its sources (P12)."""
+
+    level: Literal["strong", "moderate", "limited"]
+    label: str  # Strong · Moderate · Limited
+    score: int  # 3 · 2 · 1 (the meter shown next to the label)
+    detail: str
+
+
 class Readiness(BaseModel):
     key_set: bool
     transcripts_ready: bool
@@ -299,6 +310,8 @@ class Readiness(BaseModel):
     nav_counts: dict[str, int]
     next_step: str | None
     missing: list[str]
+    recommended: list[str] = []
+    signal: SignalStrength | None = None
     ready_to_draft: bool
 
 
@@ -725,6 +738,7 @@ class VersionSummary(BaseModel):
     published_at: str | None
     published_by: str | None
     parent_version_id: str | None
+    signal: SignalStrength | None = None
 
 
 class ChangeEntry(BaseModel):

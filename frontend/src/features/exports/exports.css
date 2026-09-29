@@ -2,6 +2,9 @@
 .exports__version {
   max-width: 320px;
 }
+.exports__signal {
+  max-width: 640px;
+}
 .exports__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

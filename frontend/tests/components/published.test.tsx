@@ -103,6 +103,17 @@ describe("the Published screen (PRD §5.4, §5.9)", () => {
     expect(await seriousViolations(document.body)).toEqual([]);
   });
 
+  it("states the version's signal strength in words and bars", async () => {
+    const signal = { level: "moderate" as const, label: "Moderate", score: 2, detail: "Interviews with supporting records." };
+    backend({ versions: [{ ...V1_SUMMARY, signal }] });
+    const { container } = renderApp(PATH);
+    expect(await screen.findByText("Published v1.0")).toBeInTheDocument();
+    const meter = container.querySelector(".version-banner .signal");
+    expect(meter).toHaveTextContent("Signal strength: Moderate (2 of 3)");
+    expect(meter).not.toHaveTextContent("Interviews with supporting records.");
+    expect(meter?.querySelectorAll(".signal__bar--on")).toHaveLength(2);
+  });
+
   it("lists what changed while it was the draft", async () => {
     backend({ versions: [V1_SUMMARY] });
     renderApp(PATH);

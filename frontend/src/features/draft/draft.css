@@ -34,6 +34,11 @@
   margin: var(--space-4) 0 0;
   padding-left: var(--space-20);
 }
+.draft-signal {
+  margin-top: var(--space-12);
+  padding-top: var(--space-10);
+  border-top: var(--line-hairline) solid var(--border-soft);
+}
 .draft-start {
   display: flex;
   align-items: center;

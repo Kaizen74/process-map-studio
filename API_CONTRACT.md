@@ -260,13 +260,17 @@ Response `200`:
  "nav_counts": {"sources": 1},
  "next_step": "sources",
  "missing": ["Add an interview transcript"],
+ "recommended": [],
+ "signal": null,
  "ready_to_draft": false}
 ```
 - `transcripts_ready`: at least one `interview_transcript` source has `text_status: "ready"`.
 - `documents_ready`: at least one SOP, manual, executed artefact or other document is ready (a job description alone doesn't describe the steps).
 - `speakers_unmapped`: speaker labels in ready transcripts with no role and not marked Interviewer.
 - `blockers_count`: failing hard checks on the current draft's quality card (phase P7; `0` without a draft), worked out when asked.
-- `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · process document · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true. File names are shown with names hidden.
+- `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · a process document still being read ("Wait for the process document to be read (…)") · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true. File names are shown with names hidden.
+- `recommended` (from P12, Eric's decision 2026-09-29): what would make the map stronger but doesn't stop the draft: "Add a process document such as an SOP or manual" (or the job-description variant, or a document that couldn't be read). A draft from interviews alone is allowed.
+- `signal`: the signal strength of a draft made now, from the ready sources (`null` until an interview transcript is ready): `{"level": "strong" | "moderate" | "limited", "label": "Strong" | "Moderate" | "Limited", "score": 3 | 2 | 1, "detail": "…"}`. **Strong**: an interview and an SOP or manual. **Moderate**: an interview with only job descriptions, executed artefacts or other documents. **Limited**: interview transcripts only ("Built from interviews only. Every step is 'practiced only': confirm it with a document or another SME before relying on it.").
 - `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** done once anything was exported (P7).
 - `nav_counts` has an entry only for items in `attention`.
 - `next_step`: the first item in nav order that isn't done, never `gap_analysis`; `null` when everything is done.
@@ -386,7 +390,7 @@ Response `200`:
 ```
 - `status`: `pass` · `fail` (hard checks Q1–Q9) · `warning` (Q10 only, when above 25 steps or 6 lanes). `all_green`: every hard check passes.
 - Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
-- `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
+- `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map), and, for a map drafted from interviews only, "Signal strength: Limited. Built from interviews only; confirm the steps with a document or another SME before relying on them." (a warning, never a blocker). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
 Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
 
 ## Views: alignment matrix, registers, cause library (PRD §4 Views, §5.4 Matrix and Registers) — phase P9
@@ -594,7 +598,7 @@ The stored picture (`image/jpeg`, `image/png` or `image/webp`); `?size=thumb` fo
 
 ### GET /api/engagements/{id}/versions
 Every version of the engagement, newest first (a refresh's half-built version is never listed).
-Response `200`: `[{"id", "engagement_id", "label", "state", "created_at", "published_at", "published_by", "parent_version_id"}]` — `state`: `draft` · `published` · `superseded`; `published_at`/`published_by` `null` for a draft.
+Response `200`: `[{"id", "engagement_id", "label", "state", "created_at", "published_at", "published_by", "parent_version_id", "signal"}]` — `state`: `draft` · `published` · `superseded`; `published_at`/`published_by` `null` for a draft; `signal` as in readiness, worked out from the sources the version was drafted from (`null` when it has none recorded).
 Errors: `404` ("That engagement doesn't exist."). Used by: Published screen version picker, Exports screen.
 
 ### GET /api/versions/{vid}

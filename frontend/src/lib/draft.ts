@@ -46,16 +46,22 @@ export interface ChecklistItem {
   key: "key" | "transcript" | "document" | "speakers";
   label: string;
   done: boolean;
+  /** False for what makes the map stronger but doesn't stop the draft (the process document). */
+  required: boolean;
   /** Where to fix it. */
   to: "settings" | "sources";
   action: string;
 }
 
-/** The Draft readiness checklist (PRD §5.4), from the readiness endpoint. */
+/**
+ * The Draft readiness checklist (PRD §5.4), from the readiness endpoint. A process document is
+ * recommended, not required: a draft from interviews alone is allowed at Limited signal (P12).
+ */
 export function draftChecklist(readiness: Readiness): ChecklistItem[] {
   return [
     {
       key: "key",
+      required: true,
       label: "Claude API key saved",
       done: readiness.key_set,
       to: "settings",
@@ -63,6 +69,7 @@ export function draftChecklist(readiness: Readiness): ChecklistItem[] {
     },
     {
       key: "transcript",
+      required: true,
       label: "At least one interview transcript read",
       done: readiness.transcripts_ready,
       to: "sources",
@@ -70,19 +77,27 @@ export function draftChecklist(readiness: Readiness): ChecklistItem[] {
     },
     {
       key: "document",
-      label: "At least one process document read (an SOP or manual)",
+      required: false,
+      label: "A process document read (an SOP or manual): recommended for a stronger map",
       done: readiness.documents_ready,
       to: "sources",
       action: "Go to Sources",
     },
     {
       key: "speakers",
+      required: true,
       label: "Every speaker mapped to a role",
       done: readiness.transcripts_ready && readiness.speakers_unmapped === 0,
       to: "sources",
       action: "Map speakers in Sources",
     },
   ];
+}
+
+/** "3 of 3 ready.": only the required items count; the document is recommended. */
+export function checklistSummary(items: ChecklistItem[]): string {
+  const required = items.filter((i) => i.required);
+  return `${required.filter((i) => i.done).length} of ${required.length} ready.`;
 }
 
 const STAGE_NAMES: Readonly<Record<string, string>> = {

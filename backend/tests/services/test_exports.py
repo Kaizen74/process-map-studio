@@ -248,3 +248,16 @@ def test_section_3_lists_pending_causes_and_finalised_gap_reports() -> None:
     assert "No cause library entries yet." not in md and "No finalised gap analyses." not in md
     empty = exports.render_master_map_md(data())
     assert "No cause library entries yet." in empty and "No finalised gap analyses." in empty
+
+
+def test_the_exports_state_the_signal_strength() -> None:
+    # P12: a map made from interviews alone says so in its header (md and html).
+    strong = exports.render_master_map_md(data())
+    assert (
+        "\nSignal strength: Strong (3 of 3). Built from interviews and a written procedure"
+        in strong
+    )
+    interview = data().sources[:1]
+    limited = exports.render_master_map_md(data(sources=interview))
+    assert "\nSignal strength: Limited (1 of 3). Built from interviews only." in limited
+    assert "Signal strength" not in exports.render_master_map_md(data(sources=[]))

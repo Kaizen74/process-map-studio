@@ -58,7 +58,9 @@ def test_brand_new_engagement_starts_at_setup() -> None:
     result = check(assess(facts(trigger="", end_point="", sources=[]), key_set=False))
     assert result.nav == dict.fromkeys(NAV_ORDER, "not_started")
     assert result.next_step == "setup"
-    assert result.missing == [ADD_KEY, ADD_TRANSCRIPT, ADD_DOCUMENT]
+    # P12 (Eric, 2026-09-29): a process document is recommended, no longer required.
+    assert result.missing == [ADD_KEY, ADD_TRANSCRIPT]
+    assert result.recommended == [ADD_DOCUMENT] and result.signal is None
     assert not (result.transcripts_ready or result.documents_ready or result.draft_exists)
 
 
@@ -70,8 +72,9 @@ def test_setup_needs_trigger_and_end_point(trigger: str, end_point: str) -> None
 
 def test_ready_to_draft_with_key_transcript_and_document() -> None:
     result = check(assess(facts(), key_set=True))
-    assert result.ready_to_draft and result.missing == []
+    assert result.ready_to_draft and result.missing == [] and result.recommended == []
     assert result.transcripts_ready and result.documents_ready
+    assert result.signal is not None and result.signal.level == "strong"
     assert (result.nav["setup"], result.nav["sources"]) == ("done", "done")
     assert result.next_step == "draft"
 
@@ -92,7 +95,36 @@ def test_only_documents_asks_for_a_transcript() -> None:
 def test_job_descriptions_alone_are_not_a_process_document() -> None:
     result = check(assess(facts(sources=[TRANSCRIPT, JD]), key_set=True))
     assert not result.documents_ready
-    assert result.missing == [ONLY_JDS]
+    assert result.ready_to_draft and result.recommended == [ONLY_JDS]
+    assert result.signal is not None and result.signal.level == "moderate"
+
+
+def test_an_interview_alone_can_be_drafted_with_a_limited_signal() -> None:
+    result = check(assess(facts(sources=[TRANSCRIPT]), key_set=True))
+    assert result.ready_to_draft and result.missing == []
+    assert result.recommended == [ADD_DOCUMENT]
+    assert result.nav["sources"] == "done" and result.next_step == "draft"
+    assert result.signal is not None and (result.signal.level, result.signal.score) == (
+        "limited",
+        1,
+    )
+
+
+def test_a_document_still_being_read_is_waited_for() -> None:
+    pending = source("sop.docx", "sop", status="pending")
+    result = check(assess(facts(sources=[TRANSCRIPT, pending]), key_set=True))
+    assert result.missing == ["Wait for the process document to be read (sop.docx)"]
+    assert result.recommended == []
+
+
+def test_an_unreadable_document_is_recommended_and_flagged_on_sources() -> None:
+    failed = source("sop.docx", "sop", status="failed")
+    result = check(assess(facts(sources=[TRANSCRIPT, failed]), key_set=True))
+    assert result.ready_to_draft
+    assert result.recommended == [
+        "The process document couldn't be read (sop.docx). Remove it and upload a new copy"
+    ]
+    assert result.nav["sources"] == "attention" and result.nav_counts == {"sources": 1}
 
 
 @pytest.mark.parametrize("kind", ["sop", "manual", "executed_artefact", "other"])

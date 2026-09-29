@@ -2,6 +2,8 @@
 
 Version v1.0 · published 28 Sep 2026 · validated by Owner
 
+Signal strength: Strong (3 of 3). Built from interviews and a written procedure (SOP or manual): steps can be corroborated or contested.
+
 **Quality card**
 
 | Check | Status | Detail |

@@ -157,7 +157,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.reload();
     await page.getByRole("link", { name: "Go to Draft" }).click();
     const checklist = page.getByRole("region", { name: "Before drafting" });
-    await expect(checklist.getByText("4 of 4 ready.")).toBeVisible();
+    await expect(checklist.getByText("3 of 3 ready.")).toBeVisible();
+    // P12: the sample has an interview and an SOP, so the map's signal is Strong.
+    await expect(checklist.getByText(/Signal strength: Strong/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     await page.getByRole("button", { name: "Create draft map" }).click();
@@ -179,6 +181,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Review: the draft map drawn from the backend layout (P5).
     await summary.getByRole("link", { name: "Start reviewing" }).click();
     await expect(page.getByText("0 of 8 steps reviewed")).toBeVisible();
+    await expect(page.locator(".version-banner").getByText(/Signal strength: Strong/)).toBeVisible();
     await expect(page.getByRole("button", { name: /^Activity, Draft load plan, Load controller/ })).toBeVisible();
     await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
@@ -550,6 +553,77 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(research).toHaveCount(0, { timeout: 10_000 });
     expect(await seriousViolations(page)).toEqual([]);
     expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
+  } finally {
+    expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
+  }
+});
+
+// P12 (Eric's decision 2026-09-29): a map drafted from the interview alone. The draft is allowed,
+// and its Limited signal strength is stated in words and bars on Draft, Review (with a quality-card
+// warning that never blocks), Published and Exports. Claude mocked; cleans up after itself.
+test("interview only: draft, review and publish at Limited signal strength", async ({ page, request }) => {
+  test.setTimeout(90_000);
+  const created = await request.post("/api/engagements", {
+    data: { name: "Load control (interview only)", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
+  });
+  const { id } = (await created.json()) as { id: string };
+  try {
+    const roleIds: Record<string, string> = {};
+    for (const [name, aliases] of ROLES) {
+      const role = await request.post(`/api/engagements/${id}/roles`, { data: { name, aliases } });
+      roleIds[name] = ((await role.json()) as { id: string }).id;
+    }
+    await page.goto(`/engagements/${id}/sources`);
+    await page.getByTestId("source-file-input").setInputFiles([join(FIXTURES, "interview_transcript.txt")]);
+    await expect(page.getByText("1 file uploaded.")).toBeVisible();
+    await expect(page.getByRole("table", { name: "Sources for this engagement" }).getByText("Ready")).toHaveCount(1);
+    const [transcript] = (await (await request.get(`/api/engagements/${id}/sources`)).json()) as { id: string }[];
+    const mapped = await request.put(`/api/sources/${transcript?.id ?? ""}/speakers`, {
+      data: { Interviewer: "interviewer", "Priya Nair": roleIds["Load controller"] },
+    });
+    expect(mapped.status()).toBe(200);
+
+    // Draft: ready without a document, which is recommended; the signal is Limited.
+    await page.goto(`/engagements/${id}/draft`);
+    const checklist = page.getByRole("region", { name: "Before drafting" });
+    await expect(checklist.getByText("3 of 3 ready.")).toBeVisible();
+    await expect(checklist.getByText("Recommended", { exact: true })).toBeVisible();
+    await expect(checklist.getByText("Add a process document such as an SOP or manual")).toBeVisible();
+    await expect(checklist.getByText(/Signal strength: Limited/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("button", { name: "Create draft map" }).click();
+    const summary = page.getByRole("region", { name: "Draft v0.1" });
+    await expect(summary).toBeVisible({ timeout: 30_000 });
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("7");
+    await expect(summary.getByText(/Signal strength: Limited/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // Review: the banner says Limited; the quality card warns but only the review blocks.
+    await summary.getByRole("link", { name: "Start reviewing" }).click();
+    await expect(page.getByText("0 of 7 steps reviewed")).toBeVisible();
+    await expect(page.locator(".version-banner").getByText(/Signal strength: Limited/)).toBeVisible();
+    await page.getByRole("button", { name: /Quality card: 8 of 9 green/ }).click();
+    await expect(page.getByText(/Signal strength: Limited\. Built from interviews only/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Review").toBe(false);
+    await page.keyboard.press("Escape");
+
+    const graph = (await (await request.get(`/api/engagements/${id}/draft`)).json()) as { version: { id: string } };
+    const elements = (await (await request.get(`/api/versions/${graph.version.id}/graph`)).json()) as {
+      elements: { id: string; kind: string }[];
+    };
+    for (const e of elements.elements.filter((x) => x.kind !== "start" && x.kind !== "end")) {
+      expect((await request.post(`/api/elements/${e.id}/confirm`)).status()).toBe(200);
+    }
+    await page.reload();
+    await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByText("Published v1.0")).toBeVisible();
+    await expect(page.locator(".version-banner").getByText(/Signal strength: Limited/)).toBeVisible();
+
+    await page.goto(`/engagements/${id}/exports`);
+    await expect(page.getByText(/Built from interviews only/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
   } finally {
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }

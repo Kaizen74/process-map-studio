@@ -77,6 +77,22 @@ describe("the Exports screen (PRD §5.4, §7.3)", () => {
     expect(await seriousViolations(document.body)).toEqual([]);
   });
 
+  it("shows the version's signal strength with what it means (P12)", async () => {
+    const signal = {
+      level: "limited" as const,
+      label: "Limited",
+      score: 1,
+      detail: "Built from interviews only. Every step is 'practiced only': confirm it with a document or another SME before relying on it.",
+    };
+    backend([{ ...version("p2", "v1.1", "published", "2026-09-28T10:00:00+00:00"), signal }]);
+    const { container } = renderApp(PATH);
+    await screen.findByRole("link", { name: "Download Master Process Map (.md) of v1.1" });
+    const meter = container.querySelector(".exports__signal");
+    expect(meter).toHaveTextContent("Signal strength: Limited (1 of 3)");
+    expect(meter).toHaveTextContent(/Built from interviews only/);
+    expect(await seriousViolations(document.body)).toEqual([]);
+  });
+
   it("lists the version's finalised gap analysis reports with Download .md (P10)", async () => {
     const report = (id: string, mode: string, status: string) => ({
       id, version_id: "p2", version_label: "v1.1", mode, status, job_id: null, error: "",

@@ -4,6 +4,7 @@ import {
   AI_CALL_STATUS,
   STAGE_LOOK,
   aiStageName,
+  checklistSummary,
   draftChecklist,
   durationLabel,
   elapsedLabel,
@@ -78,6 +79,15 @@ describe("draft checklist", () => {
     const items = draftChecklist({ ...ready, transcripts_ready: false, key_set: false });
     expect(items.filter((i) => !i.done).map((i) => i.key)).toEqual(["key", "transcript", "speakers"]);
     expect(items.find((i) => i.key === "key")?.to).toBe("settings");
+  });
+
+  it("recommends a process document but doesn't count it as needed", () => {
+    const items = draftChecklist({ ...ready, documents_ready: false });
+    const document = items.find((i) => i.key === "document");
+    expect(document).toMatchObject({ done: false, required: false });
+    expect(items.filter((i) => i.required).map((i) => i.key)).toEqual(["key", "transcript", "speakers"]);
+    expect(checklistSummary(items)).toBe("3 of 3 ready.");
+    expect(checklistSummary(draftChecklist({ ...ready, key_set: false }))).toBe("2 of 3 ready.");
   });
 
   it("shows unmapped speakers as a to-do", () => {

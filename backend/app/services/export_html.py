@@ -416,6 +416,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
         + (f"published {published}" if published else "not published yet")
         + f" · validated by {data.validated_by or 'not recorded'}"
     )
+    signal_line = md.signal_text(data)
     return "\n".join(
         [
             "<!doctype html>",
@@ -434,7 +435,9 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
             "<body>",
             "<main>",
             f"<header><h1>{e(graph.process.name)} — Master Process Map</h1>"
-            f'<p class="meta">{e(meta)}</p></header>',
+            f'<p class="meta">{e(meta)}</p>'
+            + (f'<p class="meta signal">{e(signal_line)}</p>' if signal_line else "")
+            + "</header>",
             f'<div class="card">{_card(data.quality_card)}</div>',
             _facts(data, graph),
             _interpretation(data, graph, layout),

@@ -1,5 +1,5 @@
 import { Link, useParams, useSearchParams } from "react-router";
-import { Card, EmptyState, ErrorState, SelectField, Skeleton } from "../../components/common";
+import { Card, EmptyState, ErrorState, SelectField, SignalMeter, Skeleton } from "../../components/common";
 import { CheckGlyph } from "../../components/quality";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGapAnalyses } from "../../hooks/useGap";
@@ -120,6 +120,11 @@ export function ExportsScreen() {
               }
             />
           </div>
+          {chosen.signal && (
+            <p className="exports__signal">
+              <SignalMeter signal={chosen.signal} />
+            </p>
+          )}
           <div className="exports__grid">
             {EXPORTS.map((kind) => (
               <Card key={kind.format} title={kind.title} className="export-card">
