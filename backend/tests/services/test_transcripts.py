@@ -141,6 +141,34 @@ def test_plain_speaker_lines_without_times(tmp_path: Path) -> None:
     ]
 
 
+# An Otter.ai text export (illustrative, fictional names): the speaker and time on one line, the
+# words on the lines below, a blank line between turns and a "Transcribed by" footer.
+OTTER = (
+    "Speaker 1  0:06  \nWalk me through the last plan you built.\n\n"
+    "Alex Tan  0:12  \nFirst I build the plan off the booked figures.\n"
+    "It takes about twenty minutes.\nNote: the lead signs it off.\n\n"
+    "Speaker 2  0:40\n\n"
+    "Unknown Speaker  1:02:03\nThanks, we meet again at 10:30.\n\n"
+    "Transcribed by https://otter.ai\n"
+)
+
+
+def test_otter_exports_are_split_into_speaker_turns(tmp_path: Path) -> None:
+    result = parsing.parse_transcript_text(write(tmp_path, "otter.txt", OTTER))
+    assert isinstance(result, Ok)
+    assert [(s.speaker_label, s.start_ms, s.end_ms, s.text) for s in result.value.segments] == [
+        ("Speaker 1", 6_000, 12_000, "Walk me through the last plan you built."),
+        (
+            "Alex Tan",
+            12_000,
+            3_723_000,
+            "First I build the plan off the booked figures. It takes about twenty minutes. "
+            "Note: the lead signs it off.",
+        ),
+        ("Unknown Speaker", 3_723_000, None, "Thanks, we meet again at 10:30."),
+    ]
+
+
 def test_hour_timestamps_and_times_without_a_speaker(tmp_path: Path) -> None:
     path = write(tmp_path, "t.txt", "[1:02:03] Lead: Start.\n[1:02:09] And more.\n")
     result = parsing.parse_transcript_text(path)

@@ -227,7 +227,13 @@ def strict_schema(model: type[BaseModel]) -> dict[str, object]:
             ref = node.get("$ref")
             if isinstance(ref, str) and ref.startswith("#/$defs/"):
                 return walk(definitions[ref.removeprefix("#/$defs/")])
-            out = {k: walk(v) for k, v in node.items() if k not in ("$defs", "title", "default")}
+            # Drop Pydantic's metadata keys from each schema, but never from "properties", whose
+            # keys are field names (a field may be called "title" or "default").
+            out = {
+                k: ({name: walk(sub) for name, sub in v.items()} if k == "properties" else walk(v))
+                for k, v in node.items()
+                if k not in ("$defs", "title", "default")
+            }
             properties = out.get("properties")
             if out.get("type") == "object" and isinstance(properties, dict):
                 out["additionalProperties"] = False

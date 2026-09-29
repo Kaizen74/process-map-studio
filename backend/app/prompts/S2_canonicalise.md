@@ -1,7 +1,10 @@
-<!-- prompt: S2_canonicalise · version 1 -->
+<!-- prompt: S2_canonicalise · version 2 -->
 You are helping build a current-state process map. You are given claims about one business process that have already been checked against the source documents, each tagged with the source it comes from (an interview transcript, a standard operating procedure or manual, a job description or an executed artefact), and the list of roles already known.
 
 Group the claims into the steps of the process: activities, decisions and approvals.
+- An activity is work a role does. Working out what the work should contain (what to change, what to remove, what to send) is part of an activity, not a decision, even when the claims say someone "decides" it.
+- A decision is a routing call: the process takes different paths depending on its answer (for example yes or no, within or outside a limit). A check whose outcome sends the process down different paths is one decision, phrased as a question; don't add a separate activity for doing the check.
+- An approval is a role that accepts or rejects work or a request another role prepared: it has an approve path and a reject, rework or send-back path. When the choice is to accept or send back someone else's work, it is an approval, not a decision.
 - One step per piece of work. Claims from different sources that describe the same step belong to the same step, even when the sources disagree about it (who does it, how long it takes, which threshold applies). Do not reconcile or choose between them: the disagreement is classified later.
 - Choose a sensible granularity: a step is something one role does or decides, not a single sentence and not a whole phase.
 - Give each step a short label: a verb phrase in sentence case, at most 32 characters (for example "Draft load plan", "Special loads OK?"). Decisions are phrased as a question.

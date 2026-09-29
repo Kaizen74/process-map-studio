@@ -38,6 +38,14 @@ _TURN = re.compile(
     r"^\[?(?P<ts>(?:\d{1,2}:)?\d{1,2}:\d{2})?\]?\s*"
     r"(?:(?P<label>[^\W\d_][\w.'\u2019-]*(?: [\w.'\u2019-]+){0,4})\s*:\s+)?(?P<text>.*)$"
 )
+# An Otter.ai text export: a line holding only the speaker and the time ("Speaker 1  0:06",
+# "Alex Tan  1:02:03"), separated by two or more spaces or a tab; the words follow on the lines
+# below. The footer "Transcribed by https://otter.ai" is not part of the conversation.
+_OTTER_HEAD = re.compile(
+    r"^(?P<label>[^\W\d_][\w.'\u2019-]*(?: [\w.'\u2019-]+){0,4})(?: {2,}|\t)\s*"
+    r"(?P<ts>(?:\d{1,2}:)?\d{1,2}:\d{2})\s*$"
+)
+_OTTER_FOOTER = re.compile(r"^\s*Transcribed by https?://(?:www\.)?otter\.ai\S*\s*$", re.IGNORECASE)
 _CUE_TIME = re.compile(
     r"(?P<start>(?:\d+:)?\d{2}:\d{2}[.,]\d{3})\s*-->\s*(?P<end>(?:\d+:)?\d{2}:\d{2}[.,]\d{3})"
 )
@@ -246,14 +254,38 @@ def detect_speakers(segments: list[ParsedSegment]) -> list[ParsedSegment]:
     return [turn for turn in turns if turn.text]
 
 
+def _from_otter(lines: list[str]) -> list[str]:
+    """Otter.ai blocks ("Speaker 1  0:06" then the words) as `[0:06] Speaker 1: words` lines;
+    other lines are kept as they are."""
+    out: list[str] = []
+    empty: set[int] = set()  # speaker lines with no words below them (dropped)
+    in_turn = False  # inside an Otter block: every line belongs to its speaker
+    for line in lines:
+        if _OTTER_FOOTER.match(line):
+            continue
+        head = _OTTER_HEAD.match(line)
+        if head:
+            empty.add(len(out))
+            out.append(f"[{head.group('ts')}] {head.group('label')}:")
+            in_turn = True
+        elif in_turn and line.strip():
+            empty.discard(len(out) - 1)
+            out[-1] = f"{out[-1]} {line.strip()}"
+        elif not in_turn:
+            out.append(line)
+    return [line for n, line in enumerate(out) if n not in empty]
+
+
 def parse_transcript_text(path: Path) -> Result[ParsedDocument]:
-    """Plain-text transcripts: `Speaker: text` or `[mm:ss] Speaker: text`, one turn per line."""
+    """Plain-text transcripts: `Speaker: text` or `[mm:ss] Speaker: text`, one turn per line, or
+    an Otter.ai export (speaker and time on their own line, the words below)."""
     match _read_text(path):
         case Err() as err:
             return err
         case Ok(value=text):
             pass
-    lines = [ParsedSegment(seq=n, text=line) for n, line in enumerate(text.splitlines(), 1)]
+    raw = _from_otter(text.splitlines())
+    lines = [ParsedSegment(seq=n, text=line) for n, line in enumerate(raw, 1)]
     return Ok(ParsedDocument(segments=detect_speakers([s for s in lines if s.text.strip()])))
 
 

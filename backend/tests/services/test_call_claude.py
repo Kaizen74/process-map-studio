@@ -12,6 +12,7 @@ import httpx2
 import pytest
 from pydantic import BaseModel
 
+from app.domain import ai_schemas
 from app.domain.result import Err, ErrorKind, Ok
 from app.services import ai_service
 from app.services.ai_service import AiConnection, StageCall
@@ -341,6 +342,39 @@ def test_strict_schema_inlines_references_and_closes_every_object() -> None:
     assert item["additionalProperties"] is False and item["required"] == ["label", "minutes"]
     assert "$ref" not in json.dumps(schema) and "$defs" not in schema
     assert '"default"' not in json.dumps(schema) and '"title"' not in json.dumps(schema)
+
+
+class Titled(BaseModel):
+    title: str
+    default: str
+    items: list[Step]
+
+
+def test_fields_named_like_schema_keywords_are_kept() -> None:
+    # Found by the live run (P12): stripping the "title" metadata also dropped fields named
+    # "title", so Claude was never asked for them and every gap finding failed validation.
+    schema = ai_service.strict_schema(Titled)
+    assert list(schema["properties"]) == ["title", "default", "items"]  # type: ignore[call-overload]
+    assert schema["required"] == ["title", "default", "items"]
+    assert schema["properties"]["title"] == {"type": "string"}  # type: ignore[index]
+    finding = ai_service.strict_schema(ai_schemas.GAInternalOutput)["properties"]["findings"][
+        "items"
+    ]  # type: ignore[index]
+    assert "title" in finding["properties"] and "title" in finding["required"]
+
+
+ANSWER_MODELS = [
+    m
+    for m in vars(ai_schemas).values()
+    if isinstance(m, type) and issubclass(m, BaseModel) and m.__module__ == ai_schemas.__name__
+]
+
+
+@pytest.mark.parametrize("model", ANSWER_MODELS, ids=lambda m: m.__name__)
+def test_every_field_of_every_answer_format_is_asked_for(model: type[BaseModel]) -> None:
+    schema = ai_service.strict_schema(model)
+    assert list(schema["properties"]) == list(model.model_fields)  # type: ignore[call-overload]
+    assert schema["required"] == list(model.model_fields)
 
 
 def test_the_sdk_never_logs_the_key_even_at_debug_level(caplog: pytest.LogCaptureFixture) -> None:
