@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
+import anthropic
 import httpx2
 import pytest
 from pydantic import BaseModel
@@ -183,6 +185,33 @@ def test_two_malformed_answers_are_a_plain_format_error() -> None:
     assert result.message == "Claude's answer didn't match the expected format twice."
     assert [c["status"] for c in result.details["calls"]] == ["invalid", "invalid"]  # type: ignore[index, union-attr]
     assert len(fake.requests) == 2
+
+
+def test_every_connection_the_app_opens_is_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Found by the first live run (P12): each call opened a connection to Anthropic and left it
+    # open ("unclosed SSL socket"). The app's own clients are closed after each call.
+    fake = FakeAnthropic(stream(json.dumps(GOOD)))
+    opened: list[anthropic.Anthropic] = []
+
+    class Recording(anthropic.Anthropic):
+        def __init__(self, **kwargs: Any) -> None:
+            # The app passes no HTTP client of its own (None), so the SDK's would be used: stand
+            # in for it with one that answers from the fake.
+            assert kwargs["http_client"] is None
+            kwargs["http_client"] = httpx2.Client(transport=httpx2.MockTransport(fake))
+            super().__init__(**kwargs)
+            opened.append(self)
+
+    monkeypatch.setattr(ai_service.anthropic, "Anthropic", Recording)
+    own = AiConnection(api_key=KEY, mock=False, fixtures_dir=Path("x"))
+    assert isinstance(ai_service.call_claude(own, stage()), Ok)
+    assert len(opened) == 1 and opened[0].is_closed()
+
+
+def test_a_connection_passed_in_is_left_open_for_its_owner() -> None:
+    conn = connect(FakeAnthropic(stream(json.dumps(GOOD))))
+    assert isinstance(ai_service.call_claude(conn, stage()), Ok)
+    assert conn.http_client is not None and not conn.http_client.is_closed
 
 
 @pytest.mark.parametrize(

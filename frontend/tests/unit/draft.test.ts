@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { JobStage, Readiness } from "../../src/api/types";
 import {
+  AI_CALL_STATUS,
   STAGE_LOOK,
   aiStageName,
   draftChecklist,
@@ -90,6 +91,18 @@ describe("AI usage wording", () => {
     expect(aiStageName("S0_ocr_page")).toBe("Reading a scanned page");
     expect(aiStageName("S3b_verify")).toBe("Independent verification of a step");
     expect(aiStageName("S9_new")).toBe("S9_new");
+  });
+
+  it("says in plain words how each call ended", () => {
+    expect(AI_CALL_STATUS).toEqual({
+      ok: "OK",
+      error: "Failed",
+      mock: "Test answer",
+      invalid: "Wrong format",
+      repaired: "Repaired",
+      truncated: "Cut off",
+      refused: "Declined",
+    });
   });
 
   it.each([

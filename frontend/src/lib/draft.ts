@@ -114,6 +114,10 @@ export const AI_CALL_STATUS: Readonly<Record<string, string>> = {
   ok: "OK",
   error: "Failed",
   mock: "Test answer",
+  invalid: "Wrong format",
+  repaired: "Repaired",
+  truncated: "Cut off",
+  refused: "Declined",
 };
 
 /** "14.2 s", "850 ms". */

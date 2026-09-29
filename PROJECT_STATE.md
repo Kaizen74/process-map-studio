@@ -130,6 +130,8 @@ P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §
 7. Run `./run_checks.sh` first — all 13 lines should say PASS. If `.venv` or `frontend/node_modules` is missing (fresh cloud container), run `python3.12 scripts/setup.py --dev` first.
 
 ## Known issues
+- First live run (2026-09-29, Eric's PC): the draft worked; Analysis A ("Explaining the differences") failed with a format error of unknown cause. Fixed since: a connection leak in `ai_service`, plain messages for cut-off/declined answers in the gap analyses, plain AI-usage statuses, and a live check that keeps going and reports each unusual AI call. Next: Eric re-runs with the updated code; read the report's "AI calls that did not end normally" to find the cause before changing any prompt.
+- 2026-09-29, on Eric's Windows PC: setup.bat (after updating Node.js to LTS) and start.bat work; with his real key, Settings → Test connection passes on every line (claude-opus-5-5, PDF input, structured outputs) and Test web search says web search is available for his organisation. The live evaluation itself (`pytest -m live`) is still to run; he has the steps.
 - The P12 live evaluation has not run yet: it waits for Eric's key in the cloud environment (see How to resume). Until then the release notes say the harness is ready but not yet run.
 - The `phase-p11` tag: see the report card for whether it could be pushed (tags have never been pushable from cloud sessions). P11's last commit is on branch `claude/charming-davinci-sck1cq`.
 - The `phase-p10` tag: see the report card for whether it could be pushed (tags have never been pushable from cloud sessions). P10's last commit is on branch `claude/charming-davinci-sck1cq`.
@@ -148,4 +150,4 @@ P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §
 - The `phase-p0b` tag was never pushed (cloud sessions can't push tags); P0b's last commit is `0c2c0e5`, merged into `main` in pull request #2.
 - The `phase-p0a` tag was never pushed (cloud sessions can't push tags); P0a's last commit is `b78f2d1`, merged into `main` in pull request #1.
 - Work is pushed to branch `claude/charming-davinci-sck1cq`; Eric merges it into `main` with a pull request (P0a: #1, P0b: #2, P1: #3, P2: #4).
-- The Windows launchers (`setup.bat`, `start.bat`, `run_checks.bat`) and the macOS `.command` files have been checked for content and line endings by tests, but not yet run on a real Windows PC or Mac; the P12 clean-clone rehearsal covers this, and Eric's first double-click is the earlier real test.
+- The macOS `.command` files and `run_checks.bat` have been checked by tests but not yet run on a real Mac or with Git Bash on Windows (`setup.bat` and `start.bat` now work on Eric's Windows PC); the P12 clean-clone rehearsal covers this, and Eric's first double-click is the earlier real test.

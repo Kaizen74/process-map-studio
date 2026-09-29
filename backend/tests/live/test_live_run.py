@@ -59,14 +59,22 @@ def live_client(tmp_path: Path) -> Iterator[TestClient]:
         yield client
 
 
-def test_live_fixture_meets_the_p12_thresholds(live_client: TestClient, tmp_path: Path) -> None:
-    runs = [capture.capture(live_client, analyses=(n == 0)) for n in range(RUNS)]
-    per_run = [evaluation.evaluate_run(run) for run in runs]
-    model = eric_settings()["ANTHROPIC_MODEL"]
-    report = evaluation.render(runs, per_run, model)
+def save(report: str, tmp_path: Path) -> None:
     path = Path(os.environ.get("PMS_LIVE_REPORT", tmp_path / "live-evaluation.md"))
     path.write_text(report, encoding="utf-8")
     print(f"\n{report}\nReport saved to {path}")
+
+
+def test_live_fixture_meets_the_p12_thresholds(live_client: TestClient, tmp_path: Path) -> None:
+    model = eric_settings()["ANTHROPIC_MODEL"]
+    try:
+        runs = capture.capture_runs(live_client, RUNS)
+    except AssertionError as failed:
+        # A draft that fails still leaves a report: the error and the calls that went wrong.
+        save(evaluation.render_failure(str(failed), capture.usage(live_client), model), tmp_path)
+        raise
+    per_run = [evaluation.evaluate_run(run) for run in runs]
+    save(evaluation.render(runs, per_run, model), tmp_path)
     checks = [c for run_checks in per_run for c in run_checks] + [evaluation.stability(runs)]
     missed = [f"{c.code} {c.name}: {c.detail}" for c in checks if c.passed is False]
     assert not missed, "Thresholds missed:\n" + "\n".join(missed)
