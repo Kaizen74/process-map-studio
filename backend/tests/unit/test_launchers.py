@@ -121,6 +121,40 @@ def test_setup_creates_data_folder_and_env_from_example(tmp_path: Path) -> None:
     assert (tmp_path / ".env").read_text() == "ANTHROPIC_API_KEY=\nAPP_PORT=8000\n"
 
 
+def test_the_private_env_does_not_repeat_the_examples_warning(tmp_path: Path) -> None:
+    # The example's header is about the example (committed to GitHub); the private copy holds
+    # the key and never leaves the computer, so it gets its own header (clean-clone rehearsal).
+    example = (
+        "# Copy of the settings.\n"
+        "# Never put your real API key in this file; it is committed to GitHub.\n"
+        "ANTHROPIC_API_KEY=\n"
+    )
+    (tmp_path / ".env.example").write_text(example)
+    setup_script.ensure_data_and_env(tmp_path)
+    text = (tmp_path / ".env").read_text()
+    assert "committed to GitHub" not in text
+    assert text.startswith("# Your private Process Map Studio settings.")
+    assert text.endswith("\nANTHROPIC_API_KEY=\n")
+
+
+def test_a_fresh_env_leaves_every_setting_to_the_environment_or_default(tmp_path: Path) -> None:
+    # PRD §3.4: .env.example is committed with blank values, so the private copy pins nothing:
+    # a setting from the computer's environment (MOCK_CLAUDE=1 for the clean-clone rehearsal,
+    # or the key) applies, and otherwise the default does. Found by the P12 rehearsal.
+    from app.actions.settings import effective_settings
+    from app.config import SETTING_DEFAULTS, load_config
+    from app.domain.result import Ok
+
+    shutil.copyfile(REPO_ROOT / ".env.example", tmp_path / ".env.example")
+    setup_script.ensure_data_and_env(tmp_path)
+    env = {"PMS_ENV_FILE": str(tmp_path / ".env"), "DATA_DIR": str(tmp_path / "data")}
+    plain = effective_settings(load_config(env))
+    assert isinstance(plain, Ok) and plain.value == dict(SETTING_DEFAULTS)
+    mocked = effective_settings(load_config({**env, "MOCK_CLAUDE": "1", "APP_PORT": "8123"}))
+    assert isinstance(mocked, Ok) and mocked.value["MOCK_CLAUDE"] == "1"
+    assert common.configured_port(tmp_path) == 8000
+
+
 def test_setup_never_overwrites_an_existing_env(tmp_path: Path) -> None:
     (tmp_path / ".env.example").write_text("ANTHROPIC_API_KEY=\n")
     (tmp_path / ".env").write_text("ANTHROPIC_API_KEY=kept\n")
@@ -312,6 +346,22 @@ def test_start_serves_the_placeholder_page_and_stops_cleanly() -> None:
         process.communicate(timeout=30)
     assert process.returncode == 0
     assert common.port_is_free(port), "stopping must also stop the server"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="uses POSIX signals to stop the app")
+def test_closing_the_window_stops_the_server_too() -> None:
+    # Closing the Terminal window sends a hang-up. If it reaches only the launcher, the server
+    # must still stop, or the next Start finds the port busy (P12 clean-clone rehearsal).
+    port = free_port()
+    process = run_start("--no-browser", "--port", str(port))
+    assert process.stdout is not None
+    for line in process.stdout:
+        if "Close this window to stop it." in line:
+            break
+    process.send_signal(signal.SIGHUP)
+    output, _ = process.communicate(timeout=30)
+    assert "Stopping Process Map Studio..." in output
+    assert common.port_is_free(port), "closing the window must also stop the server"
 
 
 # --- Double-click launchers ---------------------------------------------------------------

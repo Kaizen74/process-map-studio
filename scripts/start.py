@@ -164,6 +164,9 @@ def main(argv: list[str] | None = None) -> int:
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGTERM, handle_terminate)
+    # Closing the Terminal window (macOS) sends a hang-up; stop the server then too.
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, handle_terminate)
     try:
         if not wait_until_ready(url, server, STARTUP_TIMEOUT_S):
             stop(server)
