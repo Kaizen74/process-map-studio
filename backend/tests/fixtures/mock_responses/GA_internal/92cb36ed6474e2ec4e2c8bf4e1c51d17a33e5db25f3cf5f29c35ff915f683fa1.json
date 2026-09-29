@@ -1,0 +1,93 @@
+{
+  "findings": [
+    {
+      "finding_type": "dead_control_candidate",
+      "section": "fact",
+      "title": "Plan approval by the Load control lead is documented but never mentioned in practice",
+      "text": "SOP LC-07 \u00a73.2 and the Load control lead's job description say the Load control lead approves the load plan before release to Ramp. The interview never mentions this approval.",
+      "step_refs": [
+        "d1"
+      ],
+      "evidence": [
+        {
+          "segment_id": "e2",
+          "quote": "The preliminary load plan shall be approved by the Load Control Lead before release to Ramp"
+        },
+        {
+          "segment_id": "e1",
+          "quote": "Accountable for approval of load plans"
+        }
+      ],
+      "basis": "",
+      "basis_segment_ids": []
+    },
+    {
+      "finding_type": "threshold_gap",
+      "section": "fact",
+      "title": "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
+      "text": "SOP RP-02 \u00a72 has the Ramp Supervisor return the loading report within 10 minutes of loading completion; the Load controller says they sometimes wait fifteen minutes for it.",
+      "step_refs": [
+        "d3"
+      ],
+      "evidence": [
+        {
+          "segment_id": "e5",
+          "quote": "return the loading report to Load Control within 10 minutes of loading completion"
+        },
+        {
+          "segment_id": "e4",
+          "quote": "We sometimes wait fifteen minutes for it"
+        }
+      ],
+      "basis": "",
+      "basis_segment_ids": []
+    },
+    {
+      "finding_type": "ownership_mismatch",
+      "section": "fact",
+      "title": "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice",
+      "text": "SOP LC-07 \u00a75 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.",
+      "step_refs": [
+        "d4"
+      ],
+      "evidence": [
+        {
+          "segment_id": "e7",
+          "quote": "the Load Control Lead shall decide on corrective action"
+        },
+        {
+          "segment_id": "e6",
+          "quote": "it's the captain who decides, not us"
+        }
+      ],
+      "basis": "",
+      "basis_segment_ids": []
+    },
+    {
+      "finding_type": "undocumented_work",
+      "section": "fact",
+      "title": "Offload resolution is undocumented work",
+      "text": "When something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes before the Load controller re-plans. No SOP or job description covers it.",
+      "step_refs": [
+        "d2"
+      ],
+      "evidence": [
+        {
+          "segment_id": "e3",
+          "quote": "If something can't be accepted, the airline decides what to offload"
+        }
+      ],
+      "basis": "",
+      "basis_segment_ids": []
+    }
+  ],
+  "unknowns": [
+    {
+      "finding_type": "dead_control_candidate",
+      "step_refs": [
+        "d1"
+      ],
+      "question": "Is the load plan approved by the Load control lead before release to Ramp, and if not, why not?"
+    }
+  ]
+}

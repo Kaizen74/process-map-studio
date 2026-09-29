@@ -26,7 +26,7 @@ from app.domain.enums import (
     SourceState,
     Stance,
 )
-from app.domain.exports import ExportInput
+from app.domain.exports import ExportCause, ExportGapReport, ExportInput
 from app.domain.graph import Graph, GraphElement
 from app.domain.quality import QualityCard
 
@@ -110,6 +110,28 @@ def display_date(iso: str) -> str:
     except ValueError:
         return iso
     return f"{moment.day} {MONTHS[moment.month - 1]} {moment.year}"
+
+
+GAP_MODES = {"internal": "Documents vs practice", "external": "External best practice"}
+
+
+def cause_line(c: ExportCause) -> str:
+    """ "- [O] <step> · <type>: <pattern> [I] Likely cause: …" (or not known yet)."""
+    cause = (
+        f"[I] Likely cause: {c.inferred_cause}"
+        if c.inferred_cause
+        else "Likely cause: not known yet: ask your SMEs."
+    )
+    return f"- [O] {c.element_label} · {c.divergence_type}: {c.pattern} {cause}"
+
+
+def gap_report_line(r: ExportGapReport) -> str:
+    """ "- <mode> · finalised <date> · <n> accepted findings: <title>; <title>"."""
+    count = len(r.accepted)
+    found = f"{count} accepted finding" if count == 1 else f"{count} accepted findings"
+    titles = f": {'; '.join(r.accepted)}" if r.accepted else ""
+    mode = GAP_MODES.get(r.mode, r.mode)
+    return f"- {mode} · finalised {display_date(r.finalised_at)} · {found}{titles}"
 
 
 def minutes(value: float | None) -> str:
@@ -361,13 +383,10 @@ def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
         questions.append(f"{number}. {q.question}{where} · {REASONS.get(q.reason, q.reason)}")
     lines += (questions or ["No open questions."]) + [""]
 
-    lines += [
-        "### Cause library entries (pending validation)",
-        "",
-        "No cause library entries yet.",
-        "",
-    ]
-    lines += ["### Gap analyses", "", "No finalised gap analyses."]
+    lines += ["### Cause library entries (pending validation)", ""]
+    lines += [cause_line(c) for c in data.causes] or ["No cause library entries yet."]
+    lines += ["", "### Gap analyses", ""]
+    lines += [gap_report_line(r) for r in data.gap_reports] or ["No finalised gap analyses."]
     return lines
 
 

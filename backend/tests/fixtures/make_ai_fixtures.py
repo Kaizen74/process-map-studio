@@ -768,6 +768,360 @@ S5_ANSWER: dict[str, Any] = {
 S5_EMPTY: dict[str, list[Any]] = {"questions": []}
 
 
+# Gap analysis A (PRD Appendix A.7): the four expected findings and the unexplained cause. The
+# divergence IDs (d1 …) and passage IDs (e1 …) are the ones the app gives the sample map's
+# divergence set: d1 Approve load plan, d2 Resolve or offload, d3 Load and return LIR,
+# d4 Deviation in limits?, d5 Approve deviation.
+def ga_finding(
+    finding_type: str, title: str, text: str, refs: list[str], evidence: list[tuple[str, str]]
+) -> dict[str, Any]:
+    return {
+        "finding_type": finding_type,
+        "section": "fact",
+        "title": title,
+        "text": text,
+        "step_refs": refs,
+        "evidence": [{"segment_id": seg, "quote": quote} for seg, quote in evidence],
+        "basis": "",
+        "basis_segment_ids": [],
+    }
+
+
+GA_INTERNAL_ANSWER: dict[str, Any] = {
+    "findings": [
+        ga_finding(
+            "dead_control_candidate",
+            "Plan approval by the Load control lead is documented but never mentioned in practice",
+            "SOP LC-07 §3.2 and the Load control lead's job description say the Load control lead "
+            "approves the load plan before release to Ramp. The interview never mentions this "
+            "approval.",
+            ["d1"],
+            [
+                (
+                    "e2",
+                    "The preliminary load plan shall be approved by the Load Control Lead "
+                    "before release to Ramp",
+                ),
+                ("e1", "Accountable for approval of load plans"),
+            ],
+        ),
+        ga_finding(
+            "threshold_gap",
+            "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
+            "SOP RP-02 §2 has the Ramp Supervisor return the loading report within 10 minutes of "
+            "loading completion; the Load controller says they sometimes wait fifteen minutes "
+            "for it.",
+            ["d3"],
+            [
+                (
+                    "e5",
+                    "return the loading report to Load Control within 10 minutes of loading "
+                    "completion",
+                ),
+                ("e4", "We sometimes wait fifteen minutes for it"),
+            ],
+        ),
+        ga_finding(
+            "ownership_mismatch",
+            "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in "
+            "practice",
+            "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights "
+            "deviate beyond the airline tolerance; in practice the captain decides. The job "
+            "descriptions are silent.",
+            ["d4"],
+            [
+                ("e7", "the Load Control Lead shall decide on corrective action"),
+                ("e6", "it's the captain who decides, not us"),
+            ],
+        ),
+        ga_finding(
+            "undocumented_work",
+            "Offload resolution is undocumented work",
+            "When something can't be accepted, the airline decides what to offload, which takes "
+            "fifteen to forty minutes before the Load controller re-plans. No SOP or job "
+            "description covers it.",
+            ["d2"],
+            [("e3", "If something can't be accepted, the airline decides what to offload")],
+        ),
+    ],
+    "unknowns": [
+        {
+            "finding_type": "dead_control_candidate",
+            "step_refs": ["d1"],
+            "question": "Is the load plan approved by the Load control lead before release to "
+            "Ramp, and if not, why not?",
+        }
+    ],
+}
+
+
+def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
+    """The input hashes of the GA_internal call and, with its answer as filed, the GA_verify call."""
+    from app.db import session_scope
+    from app.domain.ai_schemas import GAInternalOutput
+    from app.pipeline import ga_internal as ga
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        dset = ga.divergence_set(session, version_id)
+    assert dset is not None
+    output = GAInternalOutput.model_validate(GA_INTERNAL_ANSWER)
+    checked = [ga.check(dset, f) for f in output.findings]
+    rejected = [c.finding.rejection_reason for c in checked if c.finding.rejection_reason]
+    assert not rejected, rejected  # every A.7 finding passes the gate
+    return (
+        ai_service.input_hash(ga.STAGE_ID, ga.blocks_for(dset)),
+        ai_service.input_hash(ga.VERIFY_STAGE, ga.verify_blocks(dset, checked)),
+    )
+
+
+def ga_verdicts(count: int) -> dict[str, Any]:
+    return {
+        "verdicts": [
+            {"finding_ref": f"f{n}", "verdict": "supported",
+             "reason": "The cited passages state it."}
+            for n in range(1, count + 1)
+        ]
+    }  # fmt: skip
+
+
+# Gap analysis B (PRD Appendix A.7 traps TE1-TE9), on the drafted sample with the A.7 Setup.
+# One mocked research turn: three pages returned, one search stopped by the limit (TE6), and the
+# answer citing those pages plus one page the search never returned (TE1). ILLUSTRATIVE ONLY:
+# the domains decide the source tiers; the pages and their words are invented.
+IATA = "https://www.iata.org/illustrative/load-control-guidance"
+EASA = "https://www.easa.europa.eu/illustrative/mass-and-balance"
+VENDOR = "https://loadplanning-software.example.com/blog/automation"
+UNLISTED = "https://www.unlisted.example.org/loading-kpi"
+
+
+def cite(url: str, title: str, text: str) -> dict[str, Any]:
+    return {"type": "web_search_result_location", "url": url, "title": title,
+            "encrypted_index": "MOCK", "cited_text": text}  # fmt: skip
+
+
+IATA_T = "Illustrative industry guidance on load control"
+EASA_T = "Illustrative regulator material on mass and balance"
+VENDOR_T = "Illustrative vendor blog on automated load planning"
+GB_RESEARCH_ANSWER: dict[str, Any] = {
+    "responses": [
+        {
+            "id": "msg_mock_gap_research",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-opus-5-5",
+            "content": [
+                {"type": "server_tool_use", "id": "srvtoolu_gap_1", "name": "web_search",
+                 "input": {"query": "load control second person check load sheet guidance"}},
+                {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_gap_1", "content": [
+                    {"type": "web_search_result", "url": IATA, "title": IATA_T,
+                     "encrypted_content": "MOCK", "page_age": "March 2024"},
+                    {"type": "web_search_result", "url": EASA, "title": EASA_T,
+                     "encrypted_content": "MOCK", "page_age": "January 2025"},
+                    {"type": "web_search_result", "url": VENDOR, "title": VENDOR_T,
+                     "encrypted_content": "MOCK", "page_age": "June 2025"},
+                ]},
+                {"type": "server_tool_use", "id": "srvtoolu_gap_2", "name": "web_search",
+                 "input": {"query": "loading report return time benchmark"}},
+                {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_gap_2",
+                 "content": {"type": "web_search_tool_result_error",
+                             "error_code": "max_uses_exceeded"}},
+                {"type": "text", "text": "Comparable operations have a second qualified person "
+                 "check the load sheet before it is signed.", "citations": [
+                    cite(IATA, IATA_T, "The load sheet shall be checked by a second qualified "
+                         "person before it is signed."),
+                    cite(EASA, EASA_T, "Operators shall ensure that mass and balance "
+                         "documentation is checked by a second qualified person before it is "
+                         "signed.")]},
+                {"type": "text", "text": " Guidance sets a time for the final load sheet.",
+                 "citations": [cite(IATA, IATA_T, "The final load sheet is issued no later than "
+                                    "15 minutes before departure.")]},
+                {"type": "text", "text": " Vendors describe automated checks.", "citations": [
+                    cite(VENDOR, VENDOR_T, "Automated tools check the load sheet and flag "
+                         "deviations.")]},
+                {"type": "text", "text": " The loading report return time is tracked.",
+                 "citations": [cite(UNLISTED, "Unlisted page", "Loading report return time is "
+                                    "tracked as a key performance indicator.")]},
+                {"type": "text", "text": " Tolerances are agreed with each airline.",
+                 "citations": [cite(EASA, EASA_T, "Deviation tolerances are agreed with each "
+                                    "airline in writing.")]},
+                {"type": "text", "text": " A final walk-round is described.", "citations": [
+                    cite(IATA, IATA_T, "A final walk-round confirms the hold doors and loading "
+                         "before departure.")]},
+                {"type": "text", "text": " The load plan is approved before release.",
+                 "citations": [cite(IATA, IATA_T, "The load plan is approved before it is "
+                                    "released to the ramp.")]},
+            ],
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {"input_tokens": 3100, "output_tokens": 420,
+                      "server_tool_use": {"web_search_requests": 2, "web_fetch_requests": 0}},
+        }
+    ]
+}  # fmt: skip
+
+
+# Any other brief: one search, nothing reliable found.
+GB_RESEARCH_NOTHING: dict[str, Any] = {
+    "responses": [
+        {"id": "msg_mock_gap_nothing", "type": "message", "role": "assistant",
+         "model": "claude-opus-5-5",
+         "content": [{"type": "text", "text": "No reliable source found.", "citations": None}],
+         "stop_reason": "end_turn", "stop_sequence": None,
+         "usage": {"input_tokens": 900, "output_tokens": 12,
+                   "server_tool_use": {"web_search_requests": 1, "web_fetch_requests": 0}}}
+    ]
+}  # fmt: skip
+
+
+def gb_finding(
+    finding_type: str,
+    title: str,
+    claim: str,
+    quote: str,
+    cites: list[str],
+    refs: list[str],
+    comparison: str,
+) -> dict[str, Any]:
+    return {"finding_type": finding_type, "title": title, "claim": claim, "quote": quote,
+            "citation_ids": cites, "step_refs": refs, "comparison": comparison}  # fmt: skip
+
+
+# Citations as the app numbers them: c1 IATA second-person check, c2 EASA second-person check,
+# c3 IATA 15 minutes, c4 vendor, c5 the unlisted page, c6 EASA tolerances, c7 IATA walk-round,
+# c8 IATA plan approval. Steps: m1 Draft load plan … m6 Deviation in limits? … m8 Issue load sheet.
+GB_STRUCTURE_ANSWER: dict[str, Any] = {
+    "findings": [
+        gb_finding("missing_control", "Second-person check of the load sheet before signing",
+                   "Guidance and regulator material have a second qualified person check the load "
+                   "sheet before it is signed.",
+                   "checked by a second qualified person before it is signed",
+                   ["c1", "c2"], ["m8"], "different"),
+        gb_finding("time_or_threshold_benchmark", "Final load sheet issued by a set time",
+                   "Guidance issues the final load sheet no later than 15 minutes before "
+                   "departure.",
+                   "The final load sheet is issued no later than 15 minutes before departure",
+                   ["c3"], [], "absent"),
+        # TE4: a vendor blog only → kept, weak evidence, Low.
+        gb_finding("technology_enabler", "Automated checks of the load sheet",
+                   "Automated tools check the load sheet and flag deviations.",
+                   "Automated tools check the load sheet and flag deviations",
+                   ["c4"], ["m8"], "absent"),
+        # TE1: a page the search never returned → GX2.
+        gb_finding("kpi_practice", "Loading report return time as a KPI",
+                   "Loading report return time is tracked as a key performance indicator.",
+                   "Loading report return time is tracked as a key performance indicator",
+                   ["c5"], ["m5"], "absent"),
+        # TE2: no citation → GX1.
+        gb_finding("other_difference", "Load controllers rotate shifts weekly",
+                   "Load controllers rotate shifts weekly.", "", [], [], "absent"),
+        # TE3: a number the cited text doesn't have → GX3.
+        gb_finding("time_or_threshold_benchmark", "Deviation decisions within 5 minutes",
+                   "Deviation tolerances are agreed with each airline and decided within "
+                   "5 minutes.",
+                   "Deviation tolerances are agreed with each airline in writing",
+                   ["c6"], ["m6"], "different"),
+        # TE7: one link to a step that isn't on the map → link removed and flagged.
+        gb_finding("decision_rights_difference", "Deviation tolerances agreed in writing",
+                   "Deviation tolerances are agreed with each airline in writing.",
+                   "Deviation tolerances are agreed with each airline in writing",
+                   ["c6"], ["m6", "m99"], "different"),
+        # TE8: well cited, but the verifier answers not_supported → rejected GAV.
+        gb_finding("missing_step", "Final walk-round before departure",
+                   "A final walk-round confirms the hold doors and loading before departure.",
+                   "A final walk-round confirms the hold doors and loading before departure",
+                   ["c7"], [], "absent"),
+        # TE9: already present and aligned → left out as not a gap.
+        gb_finding("missing_step", "Load plan approved before release",
+                   "The load plan is approved before it is released to the ramp.",
+                   "The load plan is approved before it is released to the ramp",
+                   ["c8"], ["m2"], "aligned"),
+    ]
+}  # fmt: skip
+# Verified in order: the first check, the benchmark, the vendor claim, the tolerances, the walk-round.
+GB_VERIFY_ANSWER: dict[str, Any] = {
+    "verdicts": [
+        {"finding_ref": "f1", "verdict": "supported", "reason": "Both excerpts state it."},
+        {"finding_ref": "f2", "verdict": "supported", "reason": "The excerpt states it."},
+        {"finding_ref": "f3", "verdict": "supported", "reason": "The excerpt states it."},
+        {"finding_ref": "f4", "verdict": "supported", "reason": "The excerpt states it."},
+        {"finding_ref": "f5", "verdict": "not_supported",
+         "reason": "TE8: the excerpt is about a walk-round, not a separate step in this process."},
+    ]
+}  # fmt: skip
+
+
+def gb_hashes(client: Any, app: Any, engagement_id: str, version_id: str) -> tuple[str, str, str]:
+    """The research key, and the structuring and verifier input hashes, for the sample with the
+    A.7 Setup and its drafted brief, confirmed as it stands."""
+    from datetime import date
+
+    from app.db import session_scope
+    from app.domain.ai_schemas import GBStructureOutput
+    from app.domain.models import ResearchAnswer
+    from app.pipeline import gb_external as gb
+    from app.repositories import engagements
+    from app.services import ai_service
+    from tests import fixture_engagement
+
+    patched = client.patch(f"/api/engagements/{engagement_id}", json=fixture_engagement.GAP_SETUP)
+    assert patched.status_code == 200, patched.text
+    started = client.post(f"/api/versions/{version_id}/gap-analyses/external").json()
+    brief = started["brief"]
+    assert brief["scan"]["hits"] == [], brief["scan"]  # the drafted brief passes its own scan
+    call = ai_service.ResearchCall(
+        stage_id=gb.RESEARCH_STAGE, prompt_version="1", system="", brief=brief["text"],
+        model="", max_uses=brief["brief"]["max_searches"],
+    )  # fmt: skip
+    research = ai_service.research_key(call)
+    import anthropic
+
+    messages = [anthropic.types.Message.model_validate(r) for r in GB_RESEARCH_ANSWER["responses"]]
+    passages, results, errors, searches = ai_service._read_answer(messages)
+    answer = ResearchAnswer(passages=passages, results=results, tool_errors=errors,
+                            search_count=searches, stop_reason="end_turn", calls=[])  # fmt: skip
+    captured = gb.capture(answer)
+    with session_scope(app.state.sessions) as session:
+        steps = gb.step_refs(gb.steps_of(session, version_id))
+        lanes = {r.id: r.name for r in engagements.list_roles(session, engagement_id)}
+    structure = ai_service.input_hash(
+        gb.STRUCTURE_STAGE, gb.structure_blocks(captured, steps, lanes)
+    )
+    output = GBStructureOutput.model_validate(GB_STRUCTURE_ANSWER)
+    checked = [
+        gb.check(captured, steps, f, recency_years=5, this_year=date.today().year, terms=[])
+        for f in output.findings
+    ]
+    verify = ai_service.input_hash(
+        gb.VERIFY_STAGE, gb.verify_blocks(captured, gb.to_verify(checked))
+    )
+    return research, structure, verify
+
+
+def write_gap() -> None:
+    """The Analysis A answers for the drafted sample (after the draft answers are written)."""
+    for stage in ("GA_internal", "GA_verify", "GB_research", "GB_structure", "GB_verify"):
+        shutil.rmtree(MOCKS / stage, ignore_errors=True)
+    with sample_app() as (app, client, built):
+        key = "sk-" + "ant-" + "Fixture" * 5
+        assert client.put("/api/settings/key", json={"anthropic_api_key": key}).status_code == 200
+        job_id = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
+        assert app.state.worker.drain(60)
+        version_id = client.get(f"/api/jobs/{job_id}").json()["target_id"]
+        synthesis, verification = ga_hashes(app.state.sessions, version_id)
+        research, structure, checked = gb_hashes(client, app, built.engagement_id, version_id)
+    write(MOCKS, "GA_internal", "default", {"findings": [], "unknowns": []})
+    write(MOCKS, "GA_verify", "default", {"verdicts": []})
+    write(MOCKS, "GA_internal", synthesis, GA_INTERNAL_ANSWER)
+    write(MOCKS, "GA_verify", verification, ga_verdicts(len(GA_INTERNAL_ANSWER["findings"])))
+    write(MOCKS, "GB_research", "default", GB_RESEARCH_NOTHING)
+    write(MOCKS, "GB_research", research, GB_RESEARCH_ANSWER)
+    write(MOCKS, "GB_structure", "default", {"findings": []})
+    write(MOCKS, "GB_structure", structure, GB_STRUCTURE_ANSWER)
+    write(MOCKS, "GB_verify", "default", {"verdicts": []})
+    write(MOCKS, "GB_verify", checked, GB_VERIFY_ANSWER)
+
+
 def write(root: Path, stage: str, key: str, data: object) -> None:
     (root / stage).mkdir(parents=True, exist_ok=True)
     (root / stage / f"{key}.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -836,10 +1190,14 @@ def main() -> None:
         run_stage(app, s3_calibrate.calibrate, version_id)
         for label, (digest, _count) in s3b_hashes(sessions, version_id).items():
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
+    write_gap()
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
     )
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["gap"]:  # only the gap-analysis answers
+        write_gap()
+    else:
+        main()

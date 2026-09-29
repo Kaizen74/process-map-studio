@@ -119,7 +119,23 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     graph = client.get(f"/api/versions/{sample['target_id']}/graph").json()
     step = next(e for e in graph["elements"] if e["kind"] == "decision")
     cited = next(c for c in step["evidence"] if c["segment_id"])
+    # A documents-vs-practice report on that map (phase P10).
+    started = client.post(f"/api/versions/{sample['target_id']}/gap-analyses/internal").json()
+    wait_for_jobs(client)
+    external = client.post(f"/api/versions/{sample['target_id']}/gap-analyses/external").json()
+    # A second copy of the sample, every step confirmed and published (the leadership view, P11).
+    second = fixture_engagement.build(client)
+    second_job = client.post(f"/api/engagements/{second.engagement_id}/draft").json()["job_id"]
+    wait_for_jobs(client)
+    published = client.get(f"/api/jobs/{second_job}").json()["target_id"]
+    for e in client.get(f"/api/versions/{published}/graph").json()["elements"]:
+        if e["kind"] not in ("start", "end"):
+            assert client.post(f"/api/elements/{e['id']}/confirm").status_code == 200
+    assert client.post(f"/api/versions/{published}/publish").status_code == 200
     return client, ids | {
+        "published": published,
+        "gap": started["analysis_id"],
+        "brief": external["analysis"]["id"],
         "draft_job": draft_job,
         "version": version,
         "map": sample["target_id"],
@@ -129,7 +145,7 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     }
 
 
-ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
+ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/health", None),
     ("GET", "/api/settings", None),
     ("GET", "/api/engagements", None),
@@ -168,6 +184,23 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
     ("GET", "/api/versions/{map}/alignment-matrix", None),
     ("GET", "/api/versions/{map}/registers", None),
     ("GET", "/api/engagements/{eid}/cause-library", None),
+    ("GET", "/api/versions/{map}/gap-analyses", None),
+    ("GET", "/api/gap-analyses/{gap}", None),
+    ("GET", "/api/versions/{published}/leadership", None),
+    (
+        "PUT",
+        "/api/versions/{published}/leadership/decisions",
+        [{"cause_type": "system_fragmentation", "text": "Fund one digital loading report."}],
+    ),
+    ("GET", "/api/gap-analyses/{brief}", None),
+    (
+        "PATCH",
+        "/api/gap-analyses/{brief}/brief",
+        {
+            "brief": {"process_name": "Load control", "steps": ["Draft load plan"]},
+            "confirmed": True,
+        },
+    ),
     ("GET", "/api/sources/{cited_source}/segments?around={cited}", None),
 ]
 
@@ -175,9 +208,7 @@ ENDPOINTS: list[tuple[str, str, dict[str, Any] | None]] = [
 @pytest.mark.parametrize(
     ("method", "path", "body"), ENDPOINTS, ids=[f"{m} {p}" for m, p, _ in ENDPOINTS]
 )
-def test_endpoint_p95_under_budget(
-    loaded: Loaded, method: str, path: str, body: dict[str, Any] | None
-) -> None:
+def test_endpoint_p95_under_budget(loaded: Loaded, method: str, path: str, body: Any) -> None:
     client, ids = loaded
     url = path.format(**ids)
 

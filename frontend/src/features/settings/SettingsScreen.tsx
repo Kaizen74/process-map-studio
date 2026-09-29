@@ -6,6 +6,7 @@ import { ConnectionCard } from "./ConnectionCard";
 import { ModelCard } from "./ModelCard";
 import { OwnerNameCard } from "./OwnerNameCard";
 import { UsageCard } from "./UsageCard";
+import { WebResearchCard } from "./WebResearchCard";
 import "./settings.css";
 
 function AboutCard() {
@@ -22,7 +23,7 @@ function AboutCard() {
   );
 }
 
-/** Settings (PRD §5.4). Web research arrives in P10. */
+/** Settings (PRD §5.4). */
 export function SettingsScreen() {
   const settings = useSettings();
   return (
@@ -54,6 +55,7 @@ export function SettingsScreen() {
           <ConnectionCard settings={settings.data} />
           <OwnerNameCard settings={settings.data} />
           <ModelCard settings={settings.data} />
+          <WebResearchCard settings={settings.data} />
           <UsageCard />
           <AboutCard />
         </div>

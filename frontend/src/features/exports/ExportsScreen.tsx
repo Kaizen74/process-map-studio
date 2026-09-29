@@ -2,11 +2,13 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, SelectField, Skeleton } from "../../components/common";
 import { CheckGlyph } from "../../components/quality";
 import { useEngagement } from "../../hooks/useEngagements";
+import { useGapAnalyses } from "../../hooks/useGap";
 import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EXCLUDED, EXPORTS, exportUrl } from "../../lib/exports";
 import { formatDate } from "../../lib/format";
+import { MODE_LABELS, exportUrl as gapExportUrl } from "../../lib/gap";
 import { greenCount } from "../../lib/quality";
 import type { VersionSummary } from "../../lib/reviewTypes";
 import { EngagementProblem } from "../engagement/EngagementProblem";
@@ -24,9 +26,40 @@ function CardStatus({ versionId }: { versionId: string }) {
   );
 }
 
+/** The fifth card (PRD §5.4 Exports): this version's finalised gap analysis reports. */
+function GapReportsCard({ versionId, versionLabel, engagementId }: { versionId: string; versionLabel: string; engagementId: string }) {
+  const analyses = useGapAnalyses(versionId);
+  const finalised = (analyses.data ?? []).filter((a) => a.status === "finalised");
+  return (
+    <Card title="Gap analysis reports" className="export-card">
+      <p>Finalised gap analysis reports, each as a Markdown file: facts, interpretation and recommendation.</p>
+      <p className="export-card__excluded">Role names only; no passage quotes or names.</p>
+      {analyses.isError && <p className="export-card__excluded">{messageOf(analyses.error)}</p>}
+      {analyses.isSuccess && finalised.length === 0 && (
+        <p>
+          No finalised reports for {versionLabel} yet.{" "}
+          <Link to={engagementPath(engagementId, "gap_analysis")}>Go to Gap analysis</Link>
+        </p>
+      )}
+      {finalised.length > 0 && (
+        <ul className="export-card__reports">
+          {finalised.map((a) => (
+            <li key={a.id}>
+              {MODE_LABELS[a.mode]} · finalised {formatDate(a.finalised_at ?? "")}{" "}
+              <a className="btn btn--secondary" href={gapExportUrl(a.id)} download>
+                Download .md<span className="visually-hidden"> {MODE_LABELS[a.mode]} report of {versionLabel}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 /**
  * Exports (PRD §5.4): the four exports of a published version with a green quality card, what
- * each leaves out, and Download. Gap analysis reports join in phase P10.
+ * each leaves out, and Download; and the version's finalised gap analysis reports.
  */
 export function ExportsScreen() {
   const { engagementId = "" } = useParams();
@@ -101,10 +134,7 @@ export function ExportsScreen() {
                 </a>
               </Card>
             ))}
-            <Card title="Gap analysis reports" className="export-card">
-              <p>Finalised gap analysis reports, each as a Markdown file.</p>
-              <p className="export-card__excluded">No finalised reports yet. Gap analysis arrives in build phase P10.</p>
-            </Card>
+            <GapReportsCard versionId={chosen.id} versionLabel={chosen.label} engagementId={engagementId} />
           </div>
         </>
       )}

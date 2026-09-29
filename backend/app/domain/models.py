@@ -884,3 +884,52 @@ class CausePatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     validation_result: str
+
+
+# --- Web research (PRD §3.11.2 step 2; phase P10) ----------------------------------------------
+
+
+class ResearchCitation(BaseModel):
+    """A citation Anthropic attached to the answer text: the source and the words it cites."""
+
+    url: str
+    title: str
+    cited_text: str
+
+
+class ResearchPassage(BaseModel):
+    """One piece of the answer text with the citations attached to it (none for connecting text)."""
+
+    text: str
+    citations: list[ResearchCitation]
+
+
+class SearchResult(BaseModel):
+    """A page the web search returned in this request (never its encrypted content)."""
+
+    url: str
+    title: str
+    page_age: str
+
+
+class ResearchAnswer(BaseModel):
+    """What a web research call produced: the cited answer, every search result, tool errors
+    (kept as partial results), searches used, and the calls made (one per continuation)."""
+
+    passages: list[ResearchPassage]
+    results: list[SearchResult]
+    tool_errors: list[str]
+    search_count: int
+    stop_reason: str
+    calls: list[AiCallRecord]
+
+
+class WebSearchTest(BaseModel):
+    available: bool
+    message: str
+
+
+class ResearchSetting(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    web_research_enabled: bool

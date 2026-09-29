@@ -1,0 +1,27 @@
+{
+  "responses": [
+    {
+      "id": "msg_mock_web_search_test",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-5-5",
+      "content": [
+        {"type": "server_tool_use", "id": "srvtoolu_mock_1", "name": "web_search",
+         "input": {"query": "aircraft load control guidance"}},
+        {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_mock_1", "content": [
+          {"type": "web_search_result", "url": "https://www.example.org/load-control-guidance",
+           "title": "Illustrative load control guidance", "encrypted_content": "MOCK",
+           "page_age": "January 2025"}]},
+        {"type": "text", "text": "Published guidance describes checking the load sheet before departure.",
+         "citations": [{"type": "web_search_result_location",
+                        "url": "https://www.example.org/load-control-guidance",
+                        "title": "Illustrative load control guidance", "encrypted_index": "MOCK",
+                        "cited_text": "The load sheet is checked before departure."}]}
+      ],
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "usage": {"input_tokens": 1200, "output_tokens": 60,
+                "server_tool_use": {"web_search_requests": 1, "web_fetch_requests": 0}}
+    }
+  ]
+}

@@ -3,6 +3,13 @@ import type { Page } from "@playwright/test";
 
 /** WCAG 2.1 A/AA violations of serious or critical impact on the current page (PRD §5.10). */
 export async function seriousViolations(page: Page): Promise<string[]> {
+  // Measure the settled page: a toast still fading in (120 ms) reads as low contrast mid-way.
+  // Looping animations (skeleton shimmer) never finish, so only finite ones are waited for.
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

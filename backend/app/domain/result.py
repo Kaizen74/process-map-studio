@@ -46,11 +46,14 @@ class Err:
     kind: ErrorKind
     message: str
     details: Mapping[str, object] = field(default_factory=_empty_details)
+    # A more specific code for the API error shape when the PRD names one for this case (e.g.
+    # 409 BRIEF_NOT_APPROVED is a `conflict`); empty means the kind's own code.
+    api_code: str = ""
 
     @property
     def code(self) -> str:
         """The error code used in the standard API error shape, e.g. PUBLISH_BLOCKED."""
-        return self.kind.value.upper()
+        return self.api_code or self.kind.value.upper()
 
 
 type Result[T] = Ok[T] | Err

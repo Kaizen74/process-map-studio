@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { LENSES, type Lens } from "../../lib/lens";
 import { plural } from "../../lib/format";
 import { Button, Popover, SegmentedControl } from "../common";
@@ -22,6 +22,8 @@ export interface MapToolbarProps {
   onAddStep?: (() => void) | undefined;
   /** "Refresh draft from sources" in the overflow menu; omitted where it isn't offered. */
   onRefresh?: (() => void) | undefined;
+  /** Shown before the counts, e.g. the "open gap findings" chip (P10). */
+  extra?: ReactNode;
 }
 
 const VIEWS = [
@@ -52,6 +54,7 @@ export function MapToolbar({
   large,
   onAddStep,
   onRefresh,
+  extra,
 }: MapToolbarProps) {
   const [more, setMore] = useState(false);
   const counts = `${plural(steps, "step")} · ${plural(lanes, "lane")} · ${plural(phases, "phase")}`;
@@ -70,6 +73,7 @@ export function MapToolbar({
         )}
       </div>
       <div className="map-toolbar__group">
+        {extra}
         <span className={large ? "map-toolbar__counts map-toolbar__counts--large" : "map-toolbar__counts"}>
           {large ? `${counts}. Large map: consider splitting by phase` : counts}
         </span>

@@ -106,3 +106,11 @@ def latest(session: Session, engagement_id: str, job_type: str) -> JobView | Non
         .order_by(Job.created_at.desc(), Job.id.desc())
     ).first()
     return _view(row) if row else None
+
+
+def for_target(session: Session, target_id: str) -> JobView | None:
+    """The most recent job working on one target (a source, a version or a gap analysis)."""
+    row = session.scalars(
+        select(Job).where(Job.target_id == target_id).order_by(Job.created_at.desc(), Job.id.desc())
+    ).first()
+    return _view(row) if row else None

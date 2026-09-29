@@ -217,3 +217,101 @@ class S5Question(BaseModel):
 
 class S5Output(BaseModel):
     questions: list[S5Question]
+
+
+# --- Gap analysis A: documents vs practice (PRD §3.11.1; phase P10) ----------------------------
+
+InternalFindingType = Literal[
+    "dead_control_candidate",
+    "undocumented_work",
+    "ownership_mismatch",
+    "threshold_gap",
+    "sequence_gap",
+    "trigger_gap",
+    "exception_gap",
+    "stale_documentation",
+    "documentation_update",
+]
+
+
+class GAEvidence(BaseModel):
+    segment_id: str = Field(description="ID of one <segment> the finding rests on")
+    quote: str = Field(description="Verbatim words copied from that segment, at most 40 words")
+
+
+class GAFinding(BaseModel):
+    """One difference between the documents and practice, a pattern or likely cause behind
+    differences, or a documentation update, tied to the passages of every side it compares."""
+
+    finding_type: InternalFindingType
+    section: Literal["fact", "interpretation", "recommendation"] = Field(
+        description="fact: a difference; interpretation: a pattern or likely cause; "
+        "recommendation: a documentation update"
+    )
+    title: str = Field(description="Short title in sentence case, naming roles, never people")
+    text: str = Field(description="Plain-language description, one to three sentences")
+    step_refs: list[str] = Field(description="IDs of the <divergence> items it is about")
+    evidence: list[GAEvidence]
+    basis: str = Field(
+        description="For interpretation: how the SME passages show it; otherwise empty"
+    )
+    basis_segment_ids: list[str] = Field(
+        description="For interpretation: the interview segments the basis cites; otherwise empty"
+    )
+
+
+class GAUnknown(BaseModel):
+    """A cause the passages don't explain: a question for the SMEs, never a guess."""
+
+    finding_type: InternalFindingType = Field(description="The kind of difference it is about")
+    step_refs: list[str]
+    question: str = Field(description="One short question an SME can answer")
+
+
+class GAInternalOutput(BaseModel):
+    findings: list[GAFinding]
+    unknowns: list[GAUnknown]
+
+
+class GAVerdict(BaseModel):
+    finding_ref: str = Field(description="The finding's ID from the <finding> list")
+    verdict: Literal["supported", "partial", "not_supported"]
+    reason: str = Field(description="One sentence: what the passages do or do not say")
+
+
+class GAVerifyOutput(BaseModel):
+    verdicts: list[GAVerdict]
+
+
+# --- Gap analysis B: external best practice (PRD §3.11.2; phase P10) ---------------------------
+
+ExternalFindingType = Literal[
+    "missing_step",
+    "missing_control",
+    "sequence_difference",
+    "decision_rights_difference",
+    "time_or_threshold_benchmark",
+    "kpi_practice",
+    "technology_enabler",
+    "other_difference",
+]
+
+
+class GBFinding(BaseModel):
+    """One practice the cited answer describes, compared with the current map. It may cite only the
+    citation IDs it was given; it can't introduce URLs or text of its own."""
+
+    finding_type: ExternalFindingType
+    title: str = Field(description="Short title in sentence case")
+    claim: str = Field(description="What the cited sources say, in one or two plain sentences")
+    quote: str = Field(description="Verbatim words copied from the cited text, at most 40 words")
+    citation_ids: list[str] = Field(description="IDs of the <citation> items that support it")
+    step_refs: list[str] = Field(description="IDs of the map <step> items it concerns, or empty")
+    comparison: Literal["absent", "different", "aligned"] = Field(
+        description="absent: the map lacks it; different: the map does it differently; "
+        "aligned: the map already does it"
+    )
+
+
+class GBStructureOutput(BaseModel):
+    findings: list[GBFinding]

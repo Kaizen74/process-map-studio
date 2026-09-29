@@ -36,6 +36,15 @@ class FixtureEngagement:
     sources: dict[str, str]  # file name → source id
 
 
+# The engagement Setup for the gap-analysis fixtures (PRD Appendix A.7), set with PATCH
+# /engagements/{id} where a test needs it (the other baselines don't use these fields).
+GAP_SETUP = {
+    "industry": "Aviation ground handling",
+    "adjacent_industries": ["Air cargo", "Airport operations"],
+    "confidential_terms": ["Acme Ground Services", "LC-07", "RP-02"],
+}
+
+
 def build(client: TestClient, sources: list[str] = SOURCES) -> FixtureEngagement:
     eid = client.post(
         "/api/engagements",

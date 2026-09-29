@@ -1,0 +1,29 @@
+{
+  "verdicts": [
+    {
+      "finding_ref": "f1",
+      "verdict": "supported",
+      "reason": "Both excerpts state it."
+    },
+    {
+      "finding_ref": "f2",
+      "verdict": "supported",
+      "reason": "The excerpt states it."
+    },
+    {
+      "finding_ref": "f3",
+      "verdict": "supported",
+      "reason": "The excerpt states it."
+    },
+    {
+      "finding_ref": "f4",
+      "verdict": "supported",
+      "reason": "The excerpt states it."
+    },
+    {
+      "finding_ref": "f5",
+      "verdict": "not_supported",
+      "reason": "TE8: the excerpt is about a walk-round, not a separate step in this process."
+    }
+  ]
+}

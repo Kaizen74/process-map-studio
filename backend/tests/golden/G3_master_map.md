@@ -170,7 +170,8 @@ No steps from external practice.
 
 ### Cause library entries (pending validation)
 
-No cause library entries yet.
+- [O] Load and return LIR · threshold: Threshold divergence: 10 min in the SOP vs up to 15 min wait in practice. [I] Likely cause: The loading report is on paper and re-keyed
+- [O] Deviation in limits? · ownership: Ownership divergence: the Load control lead decides in the SOP, the Captain in practice. Likely cause: not known yet: ask your SMEs.
 
 ### Gap analyses
 

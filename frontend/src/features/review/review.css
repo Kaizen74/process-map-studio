@@ -138,3 +138,14 @@
   border-radius: var(--radius-control);
   background: var(--surface-2);
 }
+/* The toolbar's "open gap findings" chip: a link styled as a chip (P10). */
+.gap-chip {
+  text-decoration: none;
+}
+.gap-chip:hover {
+  text-decoration: underline;
+}
+.gap-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+}

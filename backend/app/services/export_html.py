@@ -394,10 +394,14 @@ def _recommendation(data: ExportInput, graph: Graph) -> str:
             f"<li>{e(q.question)}{e(where)} · {e(md.REASONS.get(q.reason, q.reason))}</li>"
         )
     parts.append(f"<ol>{''.join(questions)}</ol>" if questions else "<p>No open questions.</p>")
+    parts.append("<h3>Cause library entries (pending validation)</h3>")
+    causes = [f"<li>{e(md.cause_line(c).removeprefix('- '))}</li>" for c in data.causes]
     parts.append(
-        "<h3>Cause library entries (pending validation)</h3><p>No cause library entries yet.</p>"
+        f"<ul>{''.join(causes)}</ul>" if causes else "<p>No cause library entries yet.</p>"
     )
-    parts.append("<h3>Gap analyses</h3><p>No finalised gap analyses.</p>")
+    parts.append("<h3>Gap analyses</h3>")
+    reports = [f"<li>{e(md.gap_report_line(r).removeprefix('- '))}</li>" for r in data.gap_reports]
+    parts.append(f"<ul>{''.join(reports)}</ul>" if reports else "<p>No finalised gap analyses.</p>")
     parts.append("</section>")
     return "\n".join(parts)
 

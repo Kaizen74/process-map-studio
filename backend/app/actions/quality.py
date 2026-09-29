@@ -21,12 +21,20 @@ from app.actions.engagements import actor_name
 from app.config import DESIGN_TOKENS_FILE, FONTS_DIR, AppConfig
 from app.db import session_scope
 from app.domain.enums import VerificationStatus, VersionState
-from app.domain.exports import ExportInput, ExportQuestion, SourceEntry
+from app.domain.exports import (
+    ExportCause,
+    ExportGapReport,
+    ExportInput,
+    ExportQuestion,
+    SourceEntry,
+)
 from app.domain.graph import Graph
 from app.domain.quality import QualityCard, QualityInput
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.repositories import causes as causes_repo
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
+from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import export_html, exports, layout, lint, quality
@@ -67,6 +75,32 @@ def export_input(
         for q in questions_action.question_views(session, version_id, version.engagement_id)
         if q.status == "open"
     ]
+    # Pending cause-library entries on this map's steps, and its finalised gap reports (P10).
+    labels = {e.stable_key: e.label for e in graph.elements if e.review_status != "rejected"}
+    causes = [
+        ExportCause(
+            element_label=labels[c.element_stable_key],
+            divergence_type=c.divergence_type,
+            pattern=redaction.hide(c.pattern, terms),
+            inferred_cause=redaction.hide(c.inferred_cause, terms),
+        )
+        for c in causes_repo.for_engagement(session, version.engagement_id)
+        if c.validation_result == "pending" and c.element_stable_key in labels
+    ]
+    accepted = {"added_question", "added_cause", "added_step"}
+    gap_reports = [
+        ExportGapReport(
+            mode=a.mode,
+            finalised_at=a.finalised_at or "",
+            accepted=[
+                redaction.hide(f.title, terms)
+                for f in gap_repo.findings(session, a.id)
+                if f.disposition in accepted
+            ],
+        )
+        for a in reversed(gap_repo.for_version(session, version_id))
+        if a.status == "finalised"
+    ]
     return ExportInput(
         graph=graph,
         sources=[
@@ -83,6 +117,8 @@ def export_input(
         published_at=published_at,
         validated_by=published_by or actor_name(config),
         open_questions=open_questions,
+        causes=causes,
+        gap_reports=gap_reports,
     )
 
 

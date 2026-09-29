@@ -1,0 +1,74 @@
+/* Gap analysis screen (PRD §5.4). Tokens only. */
+.gap__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-16);
+}
+.gap__cards .card p {
+  margin: 0 0 var(--space-10);
+}
+.gap__small {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.gap__problem {
+  margin: 0;
+  color: var(--danger-text);
+}
+.gap__version {
+  max-width: 320px;
+}
+.gap-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gap-history__open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.gap-history__row--chosen .gap-history__open {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.gap-history__open:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+}
+.gap-history__mode {
+  font-weight: var(--weight-medium);
+}
+.gap-history__meta {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.gap-report,
+.gap-section,
+.gap-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.gap-report h2,
+.gap-section h3 {
+  margin: 0;
+}
+.gap-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}

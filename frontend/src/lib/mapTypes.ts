@@ -2,6 +2,8 @@
 // that presentational components (components/map, components/panel) can type their props without
 // importing src/api; api/types.ts re-exports them for everything else.
 
+import type { StepGapFinding } from "./gap";
+
 export type SourceKind =
   | "interview_transcript"
   | "sop"
@@ -135,5 +137,5 @@ export interface ElementDetail extends Omit<GraphElement, "evidence" | "raci"> {
   evidence: EvidenceCard[];
   raci: RaciDetail[];
   image_count: number;
-  gap_findings: Record<string, unknown>[];
+  gap_findings: StepGapFinding[];
 }

@@ -28,6 +28,23 @@ class ExportQuestion(BaseModel):
     reason: str
 
 
+class ExportCause(BaseModel):
+    """A cause-library entry pending validation, on one of the map's steps (PRD §7.3 section 3)."""
+
+    element_label: str
+    divergence_type: str
+    pattern: str  # observed [O]
+    inferred_cause: str  # [I]; empty when not known yet
+
+
+class ExportGapReport(BaseModel):
+    """A finalised gap analysis of the version (PRD §7.3 section 3)."""
+
+    mode: str  # internal · external
+    finalised_at: str
+    accepted: list[str]  # titles of findings added as a question, cause or step
+
+
 class ExportInput(BaseModel):
     graph: Graph
     sources: list[SourceEntry]
@@ -39,3 +56,6 @@ class ExportInput(BaseModel):
     open_questions: list[ExportQuestion]
     #: None while the card has not been worked out (the renderers say so).
     quality_card: QualityCard | None = None
+    #: Pending cause-library entries for the map's steps, and finalised gap reports (phase P10).
+    causes: list[ExportCause] = []
+    gap_reports: list[ExportGapReport] = []

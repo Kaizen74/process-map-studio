@@ -24,7 +24,8 @@ PRD_TABLES = {
     "external_sources", "external_citations",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
-ADDED_TABLES = {"version_sources"}  # 0004: the sources each draft was made from
+# 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
+ADDED_TABLES = {"version_sources", "leadership_decisions"}
 
 MIGRATION_COUNT = len(list((BACKEND_ROOT / "migrations" / "versions").glob("0*.py")))
 
@@ -198,6 +199,38 @@ def test_downgrade_of_0005_removes_only_merge_groups(migrated: Path) -> None:
     with sqlite3.connect(migrated) as conn:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(merge_proposals)")}
     assert "claim_groups" in columns
+
+
+def test_downgrade_of_0006_removes_only_gap_questions(migrated: Path) -> None:
+    db.downgrade(migrated, "0005")
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "question" not in columns and {"finding_type", "disposition"} <= columns
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    with sqlite3.connect(migrated) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "question" in columns
+
+
+def test_downgrade_of_0007_removes_only_gap_notes(migrated: Path) -> None:
+    db.downgrade(migrated, "0006")
+    with sqlite3.connect(migrated) as conn:
+        analyses = {row[1] for row in conn.execute("PRAGMA table_info(gap_analyses)")}
+        findings = {row[1] for row in conn.execute("PRAGMA table_info(gap_findings)")}
+    assert "notes" not in analyses and "notes" not in findings
+    assert "question" in findings and "brief" in analyses
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+
+
+def test_downgrade_of_0008_removes_only_leadership_decisions(migrated: Path) -> None:
+    db.downgrade(migrated, "0007")
+    assert "leadership_decisions" not in table_names(migrated)
+    assert "gap_findings" in table_names(migrated)
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    assert "leadership_decisions" in table_names(migrated)
 
 
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:

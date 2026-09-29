@@ -1,0 +1,836 @@
+{
+  "internal": {
+    "analysis": {
+      "id": "id-1",
+      "version_id": "id-2",
+      "version_label": "v0.1",
+      "mode": "internal",
+      "status": "draft_report",
+      "job_id": "id-3",
+      "error": "",
+      "created_at": "<time>",
+      "completed_at": "<time>",
+      "finalised_at": null,
+      "notes": [],
+      "counts": {
+        "kept": 4,
+        "rejected": 0,
+        "open": 5,
+        "needs_check": 0
+      }
+    },
+    "findings": [
+      {
+        "id": "id-4",
+        "section": "fact",
+        "finding_type": "dead_control_candidate",
+        "title": "Plan approval by the Load control lead is documented but never mentioned in practice",
+        "text": "SOP LC-07 §3.2 and the Load control lead's job description say the Load control lead approves the load plan before release to Ramp. The interview never mentions this approval.",
+        "element_ids": [
+          "id-5"
+        ],
+        "elements": [
+          {
+            "id": "id-5",
+            "label": "Approve load plan"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "documents",
+            "source_id": "id-6",
+            "source_kind": "sop",
+            "source_name": "sop LC-07",
+            "stance": "supports",
+            "segment_id": "id-7",
+            "anchor": "§3.2",
+            "quote": "The preliminary load plan shall be approved by the Load Control Lead before release to Ramp",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "documents",
+            "source_id": "id-8",
+            "source_kind": "job_description",
+            "source_name": "jd load control lead",
+            "stance": "supports",
+            "segment_id": "id-9",
+            "anchor": "¶ 2",
+            "quote": "Accountable for approval of load plans",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "",
+        "provenance": "O",
+        "severity": "high",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-11",
+        "section": "fact",
+        "finding_type": "ownership_mismatch",
+        "title": "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice",
+        "text": "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.",
+        "element_ids": [
+          "id-12"
+        ],
+        "elements": [
+          {
+            "id": "id-12",
+            "label": "Deviation in limits?"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "documents",
+            "source_id": "id-6",
+            "source_kind": "sop",
+            "source_name": "sop LC-07",
+            "stance": "contradicts",
+            "segment_id": "id-13",
+            "anchor": "§5",
+            "quote": "the Load Control Lead shall decide on corrective action",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-14",
+            "anchor": "27:15",
+            "quote": "it's the captain who decides, not us",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "",
+        "provenance": "O",
+        "severity": "high",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-15",
+        "section": "fact",
+        "finding_type": "threshold_gap",
+        "title": "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
+        "text": "SOP RP-02 §2 has the Ramp Supervisor return the loading report within 10 minutes of loading completion; the Load controller says they sometimes wait fifteen minutes for it.",
+        "element_ids": [
+          "id-16"
+        ],
+        "elements": [
+          {
+            "id": "id-16",
+            "label": "Load and return LIR"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "documents",
+            "source_id": "id-17",
+            "source_kind": "sop",
+            "source_name": "sop RP-02",
+            "stance": "contradicts",
+            "segment_id": "id-18",
+            "anchor": "§2",
+            "quote": "return the loading report to Load Control within 10 minutes of loading completion",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-19",
+            "anchor": "21:50",
+            "quote": "We sometimes wait fifteen minutes for it",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "",
+        "provenance": "O",
+        "severity": "medium",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-20",
+        "section": "fact",
+        "finding_type": "undocumented_work",
+        "title": "Offload resolution is undocumented work",
+        "text": "When something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes before the Load controller re-plans. No SOP or job description covers it.",
+        "element_ids": [
+          "id-21"
+        ],
+        "elements": [
+          {
+            "id": "id-21",
+            "label": "Resolve or offload"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-22",
+            "anchor": "16:22",
+            "quote": "If something can't be accepted, the airline decides what to offload",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "documents",
+            "source_id": "id-8",
+            "source_kind": "job_description",
+            "source_name": "jd load control lead",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "documents",
+            "source_id": "id-23",
+            "source_kind": "job_description",
+            "source_name": "jd load controller",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "documents",
+            "source_id": "id-6",
+            "source_kind": "sop",
+            "source_name": "sop LC-07",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "documents",
+            "source_id": "id-17",
+            "source_kind": "sop",
+            "source_name": "sop RP-02",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "",
+        "provenance": "O",
+        "severity": "medium",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      }
+    ],
+    "rejected": [],
+    "questions": [
+      {
+        "id": "id-24",
+        "section": "recommendation",
+        "finding_type": "dead_control_candidate",
+        "title": "Cause not explained by the sources",
+        "text": "Is the load plan approved by the Load control lead before release to Ramp, and if not, why not?",
+        "element_ids": [
+          "id-5"
+        ],
+        "elements": [
+          {
+            "id": "id-5",
+            "label": "Approve load plan"
+          }
+        ],
+        "evidence": [],
+        "basis": "",
+        "provenance": "",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "not_run",
+        "needs_check": false,
+        "question": "Is the load plan approved by the Load control lead before release to Ramp, and if not, why not?",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      }
+    ],
+    "sources": [],
+    "brief": null,
+    "usage": {
+      "calls": 2,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "search_count": 0
+  },
+  "external": {
+    "analysis": {
+      "id": "id-25",
+      "version_id": "id-2",
+      "version_label": "v0.1",
+      "mode": "external",
+      "status": "draft_report",
+      "job_id": "id-26",
+      "error": "",
+      "created_at": "<time>",
+      "completed_at": "<time>",
+      "finalised_at": null,
+      "notes": [
+        "The search limit was reached before the research finished, so this report may be incomplete.",
+        "Left out as not a gap (the map already does this): “Load plan approved before release”."
+      ],
+      "counts": {
+        "kept": 4,
+        "rejected": 4,
+        "open": 4,
+        "needs_check": 0
+      }
+    },
+    "findings": [
+      {
+        "id": "id-27",
+        "section": "recommendation",
+        "finding_type": "missing_control",
+        "title": "Second-person check of the load sheet before signing",
+        "text": "Guidance and regulator material have a second qualified person check the load sheet before it is signed.",
+        "element_ids": [
+          "id-28"
+        ],
+        "elements": [
+          {
+            "id": "id-28",
+            "label": "Issue load sheet"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "industry_association",
+            "source_name": "Illustrative industry guidance on load control",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "The load sheet shall be checked by a second qualified person before it is signed.",
+            "url": "https://www.iata.org/illustrative/load-control-guidance",
+            "tier": "industry_association",
+            "page_age": "March 2024",
+            "citation_id": "c1"
+          },
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "regulator",
+            "source_name": "Illustrative regulator material on mass and balance",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "Operators shall ensure that mass and balance documentation is checked by a second qualified person before it is signed.",
+            "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+            "tier": "regulator",
+            "page_age": "January 2025",
+            "citation_id": "c2"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": "high",
+        "evidence_strength": "strong",
+        "comparison": "different",
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [
+          "Confirm with your compliance team; this is not legal advice."
+        ],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-29",
+        "section": "recommendation",
+        "finding_type": "decision_rights_difference",
+        "title": "Deviation tolerances agreed in writing",
+        "text": "Deviation tolerances are agreed with each airline in writing.",
+        "element_ids": [
+          "id-12"
+        ],
+        "elements": [
+          {
+            "id": "id-12",
+            "label": "Deviation in limits?"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "regulator",
+            "source_name": "Illustrative regulator material on mass and balance",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "Deviation tolerances are agreed with each airline in writing.",
+            "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+            "tier": "regulator",
+            "page_age": "January 2025",
+            "citation_id": "c6"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": "high",
+        "evidence_strength": "strong",
+        "comparison": "different",
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [
+          "A link to a step that isn't on this map was removed.",
+          "Confirm with your compliance team; this is not legal advice."
+        ],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-30",
+        "section": "recommendation",
+        "finding_type": "time_or_threshold_benchmark",
+        "title": "Final load sheet issued by a set time",
+        "text": "Guidance issues the final load sheet no later than 15 minutes before departure.",
+        "element_ids": [],
+        "elements": [],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "industry_association",
+            "source_name": "Illustrative industry guidance on load control",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "The final load sheet is issued no later than 15 minutes before departure.",
+            "url": "https://www.iata.org/illustrative/load-control-guidance",
+            "tier": "industry_association",
+            "page_age": "March 2024",
+            "citation_id": "c3"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": "medium",
+        "evidence_strength": "strong",
+        "comparison": "absent",
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-31",
+        "section": "recommendation",
+        "finding_type": "technology_enabler",
+        "title": "Automated checks of the load sheet",
+        "text": "Automated tools check the load sheet and flag deviations.",
+        "element_ids": [
+          "id-28"
+        ],
+        "elements": [
+          {
+            "id": "id-28",
+            "label": "Issue load sheet"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "other",
+            "source_name": "Illustrative vendor blog on automated load planning",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "Automated tools check the load sheet and flag deviations.",
+            "url": "https://loadplanning-software.example.com/blog/automation",
+            "tier": "other",
+            "page_age": "June 2025",
+            "citation_id": "c4"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": "low",
+        "evidence_strength": "weak",
+        "comparison": "absent",
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      }
+    ],
+    "rejected": [
+      {
+        "id": "id-32",
+        "section": "recommendation",
+        "finding_type": "kpi_practice",
+        "title": "Loading report return time as a KPI",
+        "text": "Loading report return time is tracked as a key performance indicator.",
+        "element_ids": [
+          "id-16"
+        ],
+        "elements": [
+          {
+            "id": "id-16",
+            "label": "Load and return LIR"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "other",
+            "source_name": "Unlisted page",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "Loading report return time is tracked as a key performance indicator.",
+            "url": "https://www.unlisted.example.org/loading-kpi",
+            "tier": "other",
+            "page_age": "",
+            "citation_id": "c5"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": "absent",
+        "verification_status": "rejected",
+        "rejection_guardrail": "GX2",
+        "rejection_reason": "source not returned by the search",
+        "verifier_verdict": "not_run",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-33",
+        "section": "recommendation",
+        "finding_type": "other_difference",
+        "title": "Load controllers rotate shifts weekly",
+        "text": "Load controllers rotate shifts weekly.",
+        "element_ids": [],
+        "elements": [],
+        "evidence": [],
+        "basis": "",
+        "provenance": "R",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": "absent",
+        "verification_status": "rejected",
+        "rejection_guardrail": "GX1",
+        "rejection_reason": "no source cited",
+        "verifier_verdict": "not_run",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-34",
+        "section": "recommendation",
+        "finding_type": "time_or_threshold_benchmark",
+        "title": "Deviation decisions within 5 minutes",
+        "text": "Deviation tolerances are agreed with each airline and decided within 5 minutes.",
+        "element_ids": [
+          "id-12"
+        ],
+        "elements": [
+          {
+            "id": "id-12",
+            "label": "Deviation in limits?"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "regulator",
+            "source_name": "Illustrative regulator material on mass and balance",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "Deviation tolerances are agreed with each airline in writing.",
+            "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+            "tier": "regulator",
+            "page_age": "January 2025",
+            "citation_id": "c6"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": "different",
+        "verification_status": "rejected",
+        "rejection_guardrail": "GX3",
+        "rejection_reason": "claim not found in the cited source text",
+        "verifier_verdict": "not_run",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      },
+      {
+        "id": "id-35",
+        "section": "recommendation",
+        "finding_type": "missing_step",
+        "title": "Final walk-round before departure",
+        "text": "A final walk-round confirms the hold doors and loading before departure.",
+        "element_ids": [],
+        "elements": [],
+        "evidence": [
+          {
+            "side": "external",
+            "source_id": "",
+            "source_kind": "industry_association",
+            "source_name": "Illustrative industry guidance on load control",
+            "stance": "supports",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "A final walk-round confirms the hold doors and loading before departure.",
+            "url": "https://www.iata.org/illustrative/load-control-guidance",
+            "tier": "industry_association",
+            "page_age": "March 2024",
+            "citation_id": "c7"
+          }
+        ],
+        "basis": "",
+        "provenance": "R",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": "absent",
+        "verification_status": "rejected",
+        "rejection_guardrail": "GAV",
+        "rejection_reason": "TE8: the excerpt is about a walk-round, not a separate step in this process.",
+        "verifier_verdict": "not_supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": ""
+      }
+    ],
+    "questions": [],
+    "sources": [
+      {
+        "id": "id-36",
+        "url": "https://www.iata.org/illustrative/load-control-guidance",
+        "title": "Illustrative industry guidance on load control",
+        "domain": "iata.org",
+        "page_age": "March 2024",
+        "tier": "industry_association",
+        "returned_in_results": true
+      },
+      {
+        "id": "id-37",
+        "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
+        "title": "Illustrative regulator material on mass and balance",
+        "domain": "easa.europa.eu",
+        "page_age": "January 2025",
+        "tier": "regulator",
+        "returned_in_results": true
+      },
+      {
+        "id": "id-38",
+        "url": "https://loadplanning-software.example.com/blog/automation",
+        "title": "Illustrative vendor blog on automated load planning",
+        "domain": "loadplanning-software.example.com",
+        "page_age": "June 2025",
+        "tier": "other",
+        "returned_in_results": true
+      },
+      {
+        "id": "id-39",
+        "url": "https://www.unlisted.example.org/loading-kpi",
+        "title": "Unlisted page",
+        "domain": "unlisted.example.org",
+        "page_age": "",
+        "tier": "other",
+        "returned_in_results": false
+      }
+    ],
+    "brief": {
+      "brief": {
+        "process_name": "Load control",
+        "industry": "Aviation ground handling",
+        "adjacent_industries": [
+          "Air cargo",
+          "Airport operations"
+        ],
+        "region": "",
+        "steps": [
+          "Draft load plan",
+          "Approve load plan",
+          "Special loads OK?",
+          "Resolve or offload",
+          "Load and return LIR",
+          "Deviation in limits?",
+          "Approve deviation",
+          "Issue load sheet"
+        ],
+        "questions": [
+          "What steps, controls and approvals do comparable processes typically include?",
+          "How are decision rights and approvals typically allocated?",
+          "What cycle-time, KPI or threshold benchmarks are published?",
+          "What technology or automation is commonly used?"
+        ],
+        "max_searches": 10,
+        "allowed_domains": [],
+        "blocked_domains": [],
+        "recency_years": 5
+      },
+      "text": "Process: Load control\nIndustry: Aviation ground handling\nAdjacent industries: Air cargo; Airport operations\nSteps of the process as it is done today:\n- Draft load plan\n- Approve load plan\n- Special loads OK?\n- Resolve or offload\n- Load and return LIR\n- Deviation in limits?\n- Approve deviation\n- Issue load sheet\nResearch questions:\n- What steps, controls and approvals do comparable processes typically include?\n- How are decision rights and approvals typically allocated?\n- What cycle-time, KPI or threshold benchmarks are published?\n- What technology or automation is commonly used?",
+      "confirmed": true,
+      "scan": {
+        "hits": []
+      }
+    },
+    "usage": {
+      "calls": 3,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "search_count": 2
+  }
+}

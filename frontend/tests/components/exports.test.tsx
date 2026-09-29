@@ -29,7 +29,7 @@ const version = (id: string, label: string, state: string, at: string): VersionS
   parent_version_id: null,
 });
 
-function backend(versions: VersionSummary[]) {
+function backend(versions: VersionSummary[], analyses: Record<string, unknown[]> = {}) {
   const routes: Record<string, Handler> = {
     "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
@@ -38,6 +38,7 @@ function backend(versions: VersionSummary[]) {
   for (const v of versions) {
     const detail: VersionDetail = { ...v, review: { reviewed: 8, total: 8 }, change_log: [], quality_card: GREEN };
     routes[`GET /api/versions/${v.id}`] = () => ({ body: detail });
+    routes[`GET /api/versions/${v.id}/gap-analyses`] = () => ({ body: analyses[v.id] ?? [] });
   }
   return fakeApi(routes);
 }
@@ -68,8 +69,29 @@ describe("the Exports screen (PRD §5.4, §7.3)", () => {
     expect(screen.getAllByText("No images, verbatim quotes or names.")).toHaveLength(4);
     expect((await screen.findAllByText(/Quality card: 9 of 9 green/)).length).toBe(4);
     const gap = screen.getByRole("region", { name: "Gap analysis reports" });
-    expect(within(gap).getByText(/arrives in build phase P10/)).toBeInTheDocument();
+    expect(await within(gap).findByText(/No finalised reports for v1.1 yet./)).toBeInTheDocument();
+    expect(within(gap).getByRole("link", { name: "Go to Gap analysis" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/gap-analysis",
+    );
     expect(await seriousViolations(document.body)).toEqual([]);
+  });
+
+  it("lists the version's finalised gap analysis reports with Download .md (P10)", async () => {
+    const report = (id: string, mode: string, status: string) => ({
+      id, version_id: "p2", version_label: "v1.1", mode, status, job_id: null, error: "",
+      created_at: "2026-09-28T10:00:00+00:00", completed_at: "2026-09-28T10:01:00+00:00",
+      finalised_at: status === "finalised" ? "2026-09-28T11:00:00+00:00" : null, notes: [],
+      counts: { kept: 4, rejected: 0, open: 0, needs_check: 0 },
+    }); // prettier-ignore
+    backend([version("p2", "v1.1", "published", "2026-09-28T10:00:00+00:00")], {
+      p2: [report("g2", "external", "draft_report"), report("g1", "internal", "finalised")],
+    });
+    renderApp(PATH);
+    const link = await screen.findByRole("link", { name: /^Download \.md\s*Documents vs practice report of v1\.1$/ });
+    expect(link).toHaveAttribute("href", "/api/gap-analyses/g1/export");
+    const gap = screen.getByRole("region", { name: "Gap analysis reports" });
+    expect(within(gap).queryByText(/External best practice/)).toBeNull(); // not finalised
   });
 
   it("can export an earlier, superseded version", async () => {

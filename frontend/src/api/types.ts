@@ -20,6 +20,11 @@ export interface Settings {
   key_last4: string;
 }
 
+export interface WebSearchTest {
+  available: boolean;
+  message: string;
+}
+
 export interface ConnectionTest {
   key_valid: boolean;
   model_available: boolean;
@@ -219,7 +224,7 @@ export interface JobStage {
 export interface Job {
   id: string;
   engagement_id: string | null;
-  type: "read_source" | "draft";
+  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external";
   target_id: string | null;
   status: JobStatus;
   stage: string;

@@ -1,0 +1,174 @@
+/* Gap analysis (PRD §5.4 Gap analysis): finding cards, source cards and decision forms. Tokens
+   only; every state is also said in words. */
+.finding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.finding--open {
+  border-color: var(--border-strong);
+}
+.finding p,
+.finding h3 {
+  margin: 0;
+}
+.finding__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.finding__title {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+.finding__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-12);
+}
+.finding__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.finding__label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+.finding__evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.finding__meta,
+.finding__note {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.finding__decision {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+}
+.finding__actions,
+.gap-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.severity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+}
+.severity__shape--high {
+  fill: var(--danger-text);
+}
+.severity__shape--medium {
+  fill: var(--decision-stroke);
+}
+.severity__shape--low {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+.source-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: var(--line-hairline) solid var(--border-soft);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+.source-card__title {
+  font-weight: var(--weight-medium);
+}
+.source-card__meta {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.source-card__quote {
+  margin: 0;
+  padding-left: var(--space-8);
+  border-left: var(--line-highlight) solid var(--border-strong);
+  color: var(--ink-2);
+}
+.source-card__open {
+  font-size: var(--text-label);
+}
+.source-list__item + .source-list__item {
+  margin-top: var(--space-4);
+}
+.gap-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.gap-form__intro {
+  margin: 0;
+  color: var(--ink-2);
+}
+.gap-form__problem {
+  margin: 0;
+  color: var(--danger-text);
+}
+.rejected-findings summary {
+  cursor: pointer;
+  font-weight: var(--weight-medium);
+}
+.rejected-findings[open] summary {
+  margin-bottom: var(--space-8);
+}
+.scan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-10) var(--space-12);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+}
+.scan h3 {
+  margin: 0;
+}
+.scan__hits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan__hit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+.scan__text {
+  padding: 0 var(--space-4);
+  background: var(--highlight-bg);
+  color: var(--ink);
+  border-bottom: var(--line-highlight) solid var(--highlight-line);
+}
+.step-gap-findings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.step-gap-findings__row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}

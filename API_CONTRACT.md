@@ -89,6 +89,12 @@ Response `200`: the settings object.
 Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
 Used by: Settings screen, "Model" card.
 
+### PUT /api/settings/research (phase P10)
+Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
+
+### POST /api/settings/test-web-search (phase P10)
+Checks that web search works for this key: one small search with a generic question ("published guidance on aircraft load control"), `max_uses` 1 (billed as one search by Anthropic). Mocked in tests. Response `200`: `{"available": true, "message": "Web search works for your Anthropic organisation."}`, or `available: false` with a plain message: no key saved; "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." (the organisation has web search switched off in the Claude Console: Anthropic answers 400 saying web search is not enabled); key rejected. Errors: `503 AI_RATE_LIMIT`; `500 IO` (Anthropic couldn't be reached).
+
 ### GET /api/settings/usage
 The AI calls the app has made, newest first, for the "AI usage" card. Usage only: never prompt or document text.
 Request: `?limit=50` (1 to 500; default 50).
@@ -285,7 +291,7 @@ Response `200`:
              "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
 - `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.
@@ -418,6 +424,138 @@ All entries, in the order they were added. Errors: `404` ("That engagement doesn
 ### PATCH /api/cause-library/{cid}
 Request `{"validation_result": "pending" | "confirmed" | "refuted"}` → the entry. Audit rows "Confirmed cause" · "Refuted cause" · "Reopened cause". Errors: `404` ("That cause-library entry doesn't exist."); `422` (field `validation_result`: "Choose pending, confirmed or refuted.").
 
+## Leadership view (PRD §4 Views, §5.4 Leadership) — phase P11
+
+Where the process jams and why, for a **published** version: worked out from its map every time it is asked for (no AI call), kept in three separate parts (constraint 9). Only steps count (activities, decisions and approvals), never rejected ones. Every figure carries the IDs of the steps behind it (`element_ids`), so the screen can open them. Roles only; no person is named, scored or rated (constraint 10).
+
+### GET /api/versions/{vid}/leadership
+Response `200`:
+```json
+{"version": {"id", "label", "state"},
+ "facts": {"phases": [{"phase_id", "name", "work_min", "wait_min", "rework_loops", "handoffs",
+                       "divergence_counts": {"threshold": 1},
+                       "links": {"work": [...], "wait": [...], "rework_loops": [...], "handoffs": [...],
+                                 "divergence": {"threshold": [...]}}}],
+           "sources": 5},
+ "interpretation": {"causes": [{"cause_type", "systemic": true, "reason", "phases": [{"phase_id", "name"}],
+                                "lanes": ["…"], "evidence_weight": {"supporting": 3, "sources": 5},
+                                "confidence": 0.72, "constraints": [{"element_id", "label", "text", "is_key"}],
+                                "element_ids": [...]}]},
+ "recommendation": {"recoverable_wait_min": 15, "recoverable_wait_element_ids": [...],
+                    "rework_loops": 3, "rework_element_ids": [...],
+                    "ai_flags": [{"element_id", "label", "lane", "mechanism", "component", "input", "output", "handoff", "basis"}],
+                    "decisions_needed": [{"cause_type", "text"}]}}
+```
+- **Facts, per phase** (in phase order; steps with no phase under "No phase"): `work_min` and `wait_min` add up the steps' times (steps without a time add nothing; `links.work` / `links.wait` list the steps that do); `rework_loops`: lines of kind `rework` or `reject` leaving a step of the phase; `handoffs`: lines of any kind between two steps in different lanes, counted in the phase of the step they leave; `divergence_counts`: steps of the phase by divergence type (B.5). `sources`: the sources the version was drafted from.
+- **Interpretation, one entry per cause type** (B.9) found on the steps' constraints, in B.9 order. **Systemic** when the cause constrains 2 or more steps that sit in different lanes or different phases (it is not one team's local issue); otherwise **Local**. `reason` says which in plain words (for example "On 2 steps in 2 lanes: Load controller, Ramp."). `evidence_weight`: how many of the version's sources support at least one of those steps (a verified "supports" passage), of all its sources. `confidence`: the average confidence of those steps (their own confidence, worked out when the map was built), rounded to 2 places; `null` if none has one. Constraint texts have names hidden.
+- **Recommendation:** `recoverable_wait_min`: waiting time on steps constrained by a systemic cause (time a fix to that cause could win back); `rework_loops`: all rework and reject lines; `ai_flags`: up to 3 steps with an AI flag, rule-based decisions first (automation candidates), then by confidence, in the fixed five-field block (a judgment step's flag is support only); `decisions_needed`: one line per **systemic** cause, with the text Eric saved (empty until he writes one).
+Errors: `404` ("That version doesn't exist."); `409` "The leadership view shows a published map. Publish this draft first, then open Leadership." (a draft).
+
+### PUT /api/versions/{vid}/leadership/decisions
+Request: `[{"cause_type": "system_fragmentation", "text": "Fund one digital loading report across ramp and load control."}]` — the "Decision needed" lines (up to 500 characters each; an empty text clears a line). Replaces the version's saved lines. Response `200`: the `decisions_needed` list as above. An audit row "Saved leadership decisions". Allowed on published and superseded versions (the lines are Eric's notes about the map, not map content).
+Errors: `404`; `409` (a draft, as above); `422` (field `cause_type`) "Decisions are recorded for systemic causes only." or (field `text`) "Keep each decision under 500 characters."
+
+## Gap analysis (PRD §3.11, §4 Gap analysis, §5.4) — phase P10
+
+Two advisory analyses Eric starts himself on any draft or published version. They produce a report of findings and **never change the map** (constraint 22); every kept finding waits for Eric's disposition.
+
+A report as returned by `GET /api/gap-analyses/{gid}`:
+```json
+{"analysis": {"id", "version_id", "version_label", "mode": "internal" | "external",
+              "status": "brief_draft" | "queued" | "running" | "draft_report" | "finalised" | "failed",
+              "job_id", "error", "created_at", "completed_at", "finalised_at", "notes": [],
+              "counts": {"kept", "rejected", "open", "needs_check"}},
+ "findings": [finding, …], "rejected": [finding, …], "questions": [finding, …],
+ "sources": [{"id", "url", "title", "domain", "page_age", "tier", "returned_in_results"}],
+ "brief": {"brief": {…}, "text", "confirmed", "scan": {"hits": [{"text", "reason"}]}} | null,
+ "usage": {"calls", "input_tokens", "output_tokens"} | null, "search_count": 0}
+```
+- `notes` (analysis): plain-language notes about the run, e.g. "The search limit was reached before the research finished, so this report may be incomplete." (a web search tool error, kept as a partial result) or "Left out as not a gap (the map already does this): “…”." `sources` and `brief` are for Analysis B (`[]` and `null` for A).
+A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice" | "external", "source_id", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote", "url", "tier", "page_age", "citation_id"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison": "absent" | "different" | null, "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "notes": [], "disposition" (B.25), "disposition_note", "created_item_ref"}`.
+- External evidence (Analysis B): `side` `external`, `source_kind` and `tier` the source tier (B.24), `source_name` the page title, `url`, `page_age`, `citation_id` (c1 …), and `quote` the cited text cut to at most 25 words. `url`, `tier`, `page_age` and `citation_id` are empty for internal evidence; `source_id` (the engagement's source, to open it in the viewer) is empty for external evidence.
+- Finding `notes`: plain-language flags, e.g. "A link to a step that isn't on this map was removed." (GX6) or "Confirm with your compliance team; this is not legal advice." (a legal or regulatory finding).
+- `findings`: kept findings in report order (facts, then interpretation, then recommendation; high severity first within a section). `rejected`: findings a guardrail or the verifier turned down, with the guardrail (`G3` passage, `G4` quote, `G5` number or role, `GAV` gap verifier); shown in a collapsible section, never as findings. `questions`: causes the sources don't explain (`question` holds the suggested SME question; `provenance` and `severity` empty) — they are dispositioned like findings.
+- `needs_check`: the verifier found the finding only partly supported (`partial`).
+- Names on the hidden list are replaced by roles in every text; `quote` is the passage words the finding cites (names hidden); a silent side has `segment_id: null` and no quote.
+- `usage`: tokens of the analysis's AI calls. `search_count`: web searches used (Analysis B).
+
+### POST /api/versions/{vid}/gap-analyses/internal
+**AI.** Analysis A, documents vs practice (PRD §3.11.1). Request: none. Response `202`: `{"analysis_id", "job_id"}`; the job (type `gap_internal`, target the analysis) runs:
+1. **Finding where the sources differ** (no AI): every step whose source state is `contested`, `documented_only`, `practiced_only` or `trace_contradicted`, or that has a contested RACI entry, with each source's stance, the passages behind it and the divergence notes (threshold, timing, ownership, trigger).
+2. **Explaining the differences** (`GA_internal`): Claude sees only that set and the passages it cites (names hidden) and returns findings of the B.22 types, each with evidence, plus causes it can't explain as questions.
+3. **Checking every quote against your documents** (no AI): every evidence item must cite a passage it was given (G3) and quote it (G4); numbers and roles in a finding must be in its passages (G5); every step it names must be in the set (G3); it must have evidence from both sides — the documents and practice — where a side's silence (from the set) counts as that side's evidence; a pattern or likely cause (`interpretation`) needs a basis citing what the SMEs said (interview passages), else it is rejected (G3). Names are replaced by roles (G10).
+4. **Independent verification** (`GA_verify`, follows the verifier switch; `skipped` when it is off): sees each finding and its passages only; `not_supported` → rejected `GAV`; `partial` → kept with `needs_check`.
+5. **Writing the report** (no AI): severity by the §3.11.1 rules; provenance `O` for facts, `I` for interpretation and recommendation.
+With no step that differs, the report is empty and no AI call is made. If a stage fails, the analysis is `failed` with the job's plain error and no findings. The map is not changed.
+Errors: `404` ("That version doesn't exist."); `409` "A gap analysis is already running for this version." (one of its analyses is queued or running).
+
+### POST /api/versions/{vid}/gap-analyses/external
+Analysis B, external best practice (PRD §3.11.2): creates the analysis (status `brief_draft`) with a research brief drafted from the version, deterministically (`gap.build_brief`). **No AI call; nothing is sent.** Request: none.
+Response `201`: `{"analysis": {…}, "brief": {"brief", "text", "confirmed": false, "scan": {"hits": [...]}}}`.
+- `brief`: `{"process_name", "industry", "adjacent_industries": [...], "region", "steps": [...], "questions": [...], "max_searches": 10, "allowed_domains": [], "blocked_domains": [], "recency_years": 5}` — the process name and step labels (activities, decisions and approvals, not rejected ones) made generic: every confidential term (Setup), every name on the hidden list and every figure removed; industry and adjacent industries from Setup; the four default research questions.
+- `text`: exactly what would be sent to web search (process, industry, adjacent industries, region focus, steps, questions). The search limit and domain lists go to the search tool's settings, not the text.
+- `scan`: the confidentiality scan of `text` (PRD §3.11.2): every name on the hidden list ("A name from your list of names to hide"), every confidential term ("A confidential term from Setup"), every number or time copied from the map ("A number or time copied from the map") and every run of 8+ consecutive words found in a transcript or document passage ("Words copied from your sources").
+Errors: `404` ("That version doesn't exist.").
+
+### PATCH /api/gap-analyses/{gid}/brief
+Request `{"brief": {…brief as above}, "confirmed": true | false}` (`confirmed`: "This brief contains no confidential information" is ticked). Saves the brief and returns the same shape as the POST above, with a fresh scan. Allowed while the analysis is `brief_draft` or `failed`.
+Errors: `404` ("That gap analysis doesn't exist."); `409` "This analysis has already run. Start a new one to change the brief." (or it is Analysis A); `422` with the field: search limit 3–20, recency 1–30 years, "Use allowed domains or blocked domains, not both." (the API rejects requests with both).
+
+### POST /api/gap-analyses/{gid}/run
+**AI with web search.** Runs Analysis B from the saved brief. Request: none. Response `202`: `{"analysis_id", "job_id"}`; the job (type `gap_external`) runs:
+1. **Searching the web with your brief** (`GB_research`, the web search tool; `max_uses` = the brief's search limit, at most `WEB_SEARCH_MAX_USES_CAP`): only the brief text is sent — never sources, the map, names or confidential terms. Every search result (URL, title, page age) and every citation on the answer (URL, title, cited text) is captured; citations get IDs `c1` … . A tool error (e.g. `max_uses_exceeded`) is kept as a partial result with a plain note on the analysis.
+2. **Organising the findings** (`GB_structure`, no tools): the cited answer becomes findings of the B.23 types, each citing only captured citation IDs, with the steps of the map it concerns and whether the practice is `absent`, `different` or `aligned` (the step list with labels, names hidden, is sent here as in drafting — never to web search).
+3. **Checking every finding against its sources** (no AI): GX1–GX6 (`grounding.verify_citations`): no citation → rejected `GX1`; a cited URL the search didn't return → `GX2`; claim or quote not in the cited text → `GX3`; vendor or unknown sources only → kept, weak evidence (`GX4`); every source older than the recency limit → kept, dated (`GX5`); a step reference not on the map → link removed with a note (`GX6`).
+4. **Independent verification** (`GB_verify`, follows the verifier switch): `not_supported` → rejected `GAV`; `partial` → kept with `needs_check`.
+5. **Writing the report** (no AI): findings the map already follows (`aligned`) are left out as "not a gap" (a note on the analysis); severity by `gap.severity_external`; provenance always `R`; the compliance note on legal or regulatory findings; `search_count` stored.
+If a stage fails, the analysis is `failed` with the job's plain error and no findings; it can be run again. The map is not changed.
+Errors: `404`; `409 BRIEF_NOT_APPROVED` "Tick “This brief contains no confidential information” before running the research." or "Remove the highlighted items from the brief before running the research." (scan hits); `409 WEB_RESEARCH_DISABLED` "Web research is switched off. Turn it on in Settings first."; `409` "A gap analysis is already running for this version."; `409` "This analysis has already run. Start a new one to run the research again." (a `draft_report` or `finalised` analysis, or Analysis A). A web search switched off for Eric's Anthropic organisation fails the job with "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'."
+
+### GET /api/versions/{vid}/gap-analyses
+Every analysis of the version, newest first: the `analysis` objects above. Errors: `404`.
+
+### GET /api/gap-analyses/{gid}
+The report above. Errors: `404` ("That gap analysis doesn't exist.").
+
+### PATCH /api/gap-findings/{fid}
+Eric's decision on one kept finding or question (PRD §3.11.3). Nothing changes the map without this. Request:
+`{"disposition": "added_question" | "added_cause" | "added_step" | "dismissed", "note": "", "step": {"kind", "label", "lane_role_id", "after_element_id", "mechanism"}}` (`step` only for `added_step`).
+Response `200`: the finding, with `disposition`, `disposition_note` and `created_item_ref` (`question:<id>`, `cause:<id>` or `element:<id>`).
+- **added_question**: a validation question (reason `gap_analysis`, `origin_ref` the finding) in the engagement's **current draft**, on the draft's step with the same key as the finding's first step (if any). The wording: the finding's `question` for a cause the sources don't explain; otherwise "<title>: which account is right in practice?" (documents vs practice) or "Should the process include this practice: <title>?" (external).
+- **added_cause** (documents vs practice only): a cause-library entry for the finding's first step and divergence type (`threshold_gap` → threshold, `ownership_mismatch` → ownership, `sequence_gap` → sequence, `trigger_gap` → trigger, `exception_gap` → exception, otherwise omission): pattern = the finding's text (`O`), likely cause = its basis (`I`) for an interpretation. An entry that already exists for that step and type is reused, never doubled.
+- **added_step**: the step is added to the current draft exactly as `POST /versions/{vid}/elements`, with the provenance and evidence taken from the finding: an external finding makes an `R` step whose reference is "<source title> <URL>" (its first source); a documents-vs-practice finding makes an `O` step on its passages. `step` gives what Eric chose in the Add step form (kind, label, lane, where it goes, and for a decision or approval rule-based or judgment).
+- **dismissed**: needs a `note` (why), 1–1000 characters.
+- Each decision writes an audit row: "Added gap finding as question" · "Added gap finding to cause library" · "Added step from gap finding" (with the "Added step" row of the step itself) · "Dismissed gap finding".
+Errors: `404` ("That finding doesn't exist."); `409` "This report is finalised and can't be changed." · "This finding already has a decision." · "A rejected finding can't be used." · "Reopen this map as a new draft first: questions and steps are added to the draft." (the analysis ran on a published map and no draft exists); `422` (field `note`) "Say why you're dismissing this finding." · (field `disposition`) "Only documents-vs-practice findings go to the cause library." · "This finding isn't tied to a step, so it can't go to the cause library." · "Choose added_question, added_cause, added_step or dismissed." · (field `step`) "Choose where the new step goes." · and the Add step field errors.
+
+### POST /api/gap-analyses/{gid}/finalise
+Finalises a draft report once every kept finding and question has a decision: status `finalised`, `finalised_at` set, read-only from then on (re-running means a new analysis). Response `200`: the report. Audit row "Finalised gap report".
+Errors: `404`; `409` "Decide on every finding first: <n> still open." · "Only a draft report can be finalised."
+
+### GET /api/gap-analyses/{gid}/export
+The finalised report as Markdown (`text/markdown`, attachment `gap-analysis-<mode>-<version>.md`), a fixed template:
+```
+# <Process> — Gap analysis: documents vs practice | external best practice
+Version <label> · run <date> · finalised <date>
+Advisory evidence summary: not a legal, regulatory or audit opinion.
+
+## 1. Facts
+## 2. Interpretation
+## 3. Recommendation
+## Rejected findings   (counts by guardrail only)
+## Notes               (analysis notes, if any)
+```
+- Documents vs practice: **Facts** lists each difference with its severity, steps and every side's sources by name, place and stance (never a passage's words); **Interpretation** the patterns and likely causes with their basis; **Recommendation** documentation updates, SME questions and each finding's decision.
+- External: **Facts** what the sources say, each source with title, link, tier, date and an excerpt of at most 25 words; **Interpretation** how the map compares (absent, or different from named steps), weak or dated evidence and the compliance note; **Recommendation** each candidate change with its decision.
+- Every line carries its provenance tag (`[O]`, `[I]`, `[R]`). Role names only; the text is scanned for names on the hidden list (0 hits, or the export isn't made). Confidential terms may appear (they only restrict what is sent to web search).
+Errors: `404`; `409` "Finalise the report first."
+
+### Gap findings on a step
+`GET /api/elements/{eid}` `gap_findings`: `[{"id", "analysis_id", "mode", "title", "severity", "disposition"}]` — the kept findings and questions of every analysis in the engagement that name a step with this step's key, newest analysis first.
+
+### Master Process Map section 3 (phase P10)
+"Cause library entries (pending validation)" lists the engagement's pending entries for the map's steps: `- [O] <step> · <type>: <pattern>` and the likely cause (`[I]`) or "not known yet: ask your SMEs". "Gap analyses" lists the version's finalised reports: `- <mode> · finalised <date> · <n> accepted findings: <title>; <title>` (accepted = added as a question, cause or step). The HTML map shows the same.
+
 ## Images (PRD §4 Images, §5.7.7 item 10, constraint 11) — phase P8
 
 Images live only in the app: never in any export (Q9). Every image needs a caption, a type (B.16: `workplace_photo` · `system_screenshot` · `executed_artefact` · `illustrative_diagram` · `document_extract`) and the confirmation that faces, names, badge numbers and flight identifiers are removed or not shown. Metadata (EXIF, including GPS) is removed from the stored file. Changes are made on a draft version only (`409` "This version is published and can't be changed. Reopen it as a new draft."); start and end carry no images (`422`).
@@ -500,7 +638,7 @@ Response `200`: the element exactly as in the graph (`id, stable_key, kind, labe
 - `evidence`: the graph's evidence in the same order, each with its source's file name and the verbatim `quote` (for the in-app highlight; quotes never leave the app); silent sources have `segment_id: null` and no quote.
 - `raci[].sources`: the passages behind that RACI entry (for a contested `A?`, the competing sources and anchors).
 - `lane_role_name`, `phase_name`, `decider_role_name`: `""` when there is none.
-- `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: `[]` until P10.
+- `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: see Gap analysis → Gap findings on a step (P10).
 - Names on the hidden list are replaced by roles in every text, including quotes and file names.
 Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
 
@@ -563,7 +701,7 @@ Errors: `404` ("That line doesn't exist."), `409`, `422`. Used by: Review edit f
 
 ### GET /api/versions/{vid}/questions · PATCH /api/questions/{qid} (phase P6)
 The validation questions for the offline SME session (PRD §5.7.10).
-`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap. `status`: open · answered. Names hidden.
+`GET` response `200`: `[{"id", "element_id", "element_label", "phase_id", "phase_name", "question", "reason", "status"}]` in the order they were written (step questions in process order, then every gap Claude raised). `reason`: contested · documented_only · inferred · partial_support · low_confidence · gap · gap_analysis (added from a gap finding, P10). `status`: open · answered. Names hidden.
 `PATCH` request `{"status": "answered"}` (or `"open"` to reopen); response the question. Audit rows "Marked question answered" / "Reopened question". Only a draft version changes (`409`).
 Errors: `404` ("That version doesn't exist." / "That question doesn't exist."), `409`, `422`. Used by: Review Questions tab (P6).
 

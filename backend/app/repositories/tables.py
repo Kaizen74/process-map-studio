@@ -371,6 +371,7 @@ class GapAnalysis(Row):
     usage: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     completed_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
     finalised_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # about the run (0007)
 
 
 class GapFinding(Row):
@@ -395,6 +396,8 @@ class GapFinding(Row):
     disposition: Mapped[str] = mapped_column(String(16), default="open")
     disposition_note: Mapped[str] = mapped_column(Text, default="")
     created_item_ref: Mapped[str] = mapped_column(Text, default="")
+    question: Mapped[str] = mapped_column(Text, default="")  # a cause not explained (0006)
+    notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # flags on the finding (0007)
 
 
 class ExternalSource(Row):
@@ -414,3 +417,12 @@ class ExternalCitation(Row):
     source_id: Mapped[str] = fk("external_sources.id")
     citation_ref: Mapped[str] = mapped_column(String(16))
     cited_text: Mapped[str] = mapped_column(Text)
+
+
+class LeadershipDecision(Row):
+    """A "Decision needed" line for one systemic cause type of a version (0008)."""
+
+    __tablename__ = "leadership_decisions"
+    version_id: Mapped[str] = fk("map_versions.id")
+    cause_type: Mapped[str] = mapped_column(String(32))
+    text: Mapped[str] = mapped_column(Text, default="")

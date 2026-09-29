@@ -1,0 +1,156 @@
+/* Leadership view (PRD §5.4): three columns told apart by text headers and dividers, not colour.
+   Work is solid ink; wait is coral hatching (shape and pattern, never colour alone). Tokens only. */
+.leadership-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border-top: var(--line-hairline) solid var(--border);
+}
+.leadership-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-16);
+  min-width: 0;
+}
+.leadership-column + .leadership-column {
+  border-left: var(--line-hairline) solid var(--border);
+}
+.leadership-column h2,
+.leadership-column h3,
+.leadership-column p {
+  margin: 0;
+}
+.leadership-column__intro {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.leadership-column__subtitle {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  margin-top: var(--space-8);
+}
+.leadership-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.phase-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.phase-facts__name {
+  font-weight: var(--weight-medium);
+}
+.phase-facts__figures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.phase-bar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+.phase-bar__work {
+  display: inline-block;
+  height: 100%;
+  background: var(--ink-2);
+}
+.phase-bar__wait {
+  display: inline-block;
+  box-sizing: border-box;
+  height: 100%;
+  border: var(--line-hairline) solid var(--constraint);
+  background: repeating-linear-gradient(45deg, var(--constraint) 0 1.5px, transparent 1.5px 4px);
+}
+.phase-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.phase-legend__swatch {
+  width: 16px;
+  height: 10px;
+}
+.phase-legend__swatch + .phase-legend__swatch,
+.phase-legend .phase-bar__wait {
+  margin-left: var(--space-8);
+}
+.figure summary {
+  cursor: pointer;
+}
+.figure summary:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-selection);
+  border-radius: var(--radius-control);
+}
+.figure__count {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.figure--none {
+  color: var(--ink-2);
+}
+.figure__steps {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-16);
+}
+.cause-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-10) var(--space-12);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.cause-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.cause-card__title {
+  font-weight: var(--weight-medium);
+}
+.cause-card__constraints {
+  margin: 0;
+  padding-left: var(--space-16);
+}
+.cause-card__key {
+  color: var(--ink-2);
+}
+.leadership-decisions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-10);
+}
+.leadership-decisions .field {
+  width: 100%;
+}
+.leadership-decisions__problem {
+  color: var(--danger-text);
+}
+@media (max-width: 1100px) {
+  .leadership-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .leadership-column + .leadership-column {
+    border-left: 0;
+    border-top: var(--line-hairline) solid var(--border);
+  }
+}
+.leadership__version {
+  max-width: 360px;
+}

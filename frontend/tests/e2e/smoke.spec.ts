@@ -378,6 +378,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await lirCause.getByRole("button", { name: "Confirm" }).click();
     await expect(lirCause.getByRole("button", { name: "Reopen" })).toBeVisible();
     expect((await publicText(page)).includes("Priya"), "a name shown on Registers").toBe(false);
+
     await page.goto(`/engagements/${id}/review`);
     await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
 
@@ -448,7 +449,38 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(errors, "the HTML map logged errors").toEqual([]);
     expect(await seriousViolations(offline)).toEqual([]);
     await offline.close();
-    await page.getByRole("link", { name: "Published" }).click();
+
+    // P11: Leadership on v1.0: facts, interpretation and recommendation kept apart, each figure
+    // opening its steps, and one decision line for the systemic cause.
+    await page.goto(`/engagements/${id}/leadership`);
+    await expect(page.getByRole("heading", { level: 1, name: "Leadership" })).toBeVisible();
+    for (const part of ["Facts", "Interpretation", "Recommendation"]) {
+      await expect(page.getByRole("heading", { level: 2, name: part })).toBeVisible();
+    }
+    await expect(page.getByText("Work 80 min")).toBeVisible();
+    await expect(page.getByText("Systemic", { exact: true })).toBeVisible();
+    await expect(page.getByText("Recoverable wait: 15 min")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Leadership").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p11-leadership.png"), fullPage: true });
+    }
+    await page
+      .getByRole("textbox", { name: "Decision needed: System fragmentation" })
+      .fill("Fund one digital loading report across Ramp and Load control.");
+    await page.getByRole("button", { name: "Save decisions" }).click();
+    const saved = page.locator(".toast", { hasText: "Decisions saved." });
+    await expect(saved).toBeVisible();
+    await expect(saved).toHaveCount(0, { timeout: 10_000 });
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: "Decision needed: System fragmentation" })).toHaveValue(
+      "Fund one digital loading report across Ramp and Load control.",
+    );
+    const recoverable = page.locator("details", { hasText: "Recoverable wait: 15 min" });
+    await recoverable.getByText("Recoverable wait: 15 min").click();
+    await recoverable.getByRole("button", { name: "Open Load and return LIR" }).click();
+    await expect(page).toHaveURL(/\/review|\/published/);
+    await page.goto(`/engagements/${id}/published`);
 
     // Reopen: a new draft with every reviewed step locked.
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
@@ -469,6 +501,46 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     if (process.env.PMS_SCREENSHOT_DIR) {
       await usage.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p4-settings-ai-usage.png") });
     }
+
+    // P10: Gap analysis, last so its AI calls don't push the rows above out of the usage list.
+    // Documents vs practice on the published map (Claude mocked), then an external brief:
+    // refused while web research is off, run with the mocked web search once it is on.
+    await page.goto(`/engagements/${id}/gap-analysis`);
+    await expect(page.getByRole("heading", { level: 1, name: /Gap analysis/ })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("button", { name: "Run analysis" }).click();
+    await expect(page.getByText(/2 AI calls/)).toBeVisible({ timeout: 30_000 });
+    // The "started" toast can be caught mid-way in (it may even appear after the report), so
+    // the page is checked once that toast has come and gone.
+    const started = page.locator(".toast", { hasText: "Documents-vs-practice analysis started." });
+    await expect(started).toBeVisible();
+    await expect(started).toHaveCount(0, { timeout: 10_000 });
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Gap analysis").toBe(false);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p10-gap-report.png"), fullPage: true });
+    }
+    await page.getByRole("button", { name: "Prepare research brief" }).click();
+    let brief = page.getByRole("form", { name: "Research brief" });
+    await expect(brief.getByRole("region", { name: "Confidentiality check" })).toBeVisible();
+    await brief.getByRole("checkbox", { name: "This brief contains no confidential information" }).check();
+    await brief.getByRole("button", { name: "Run research" }).click();
+    await expect(brief.getByRole("alert")).toContainText("Web research is switched off");
+    expect(await seriousViolations(page)).toEqual([]);
+    if (process.env.PMS_SCREENSHOT_DIR) {
+      await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, "p10-gap-brief.png"), fullPage: true });
+    }
+    expect((await request.put("/api/settings/research", { data: { web_research_enabled: true } })).status()).toBe(200);
+    await page.reload();
+    brief = page.getByRole("form", { name: "Research brief" });
+    await brief.getByRole("checkbox", { name: "This brief contains no confidential information" }).check();
+    await brief.getByRole("button", { name: "Run research" }).click();
+    await expect(page.getByText(/1 web search used/)).toBeVisible({ timeout: 30_000 });
+    const research = page.locator(".toast", { hasText: "Research started." });
+    await expect(research).toBeVisible();
+    await expect(research).toHaveCount(0, { timeout: 10_000 });
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
   } finally {
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
