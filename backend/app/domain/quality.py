@@ -41,3 +41,5 @@ class QualityInput(BaseModel):
     exports: dict[str, str]
     #: Names on the redaction list (the owner-only list; never shown by the card).
     hidden_terms: list[str]
+    #: Kinds of the sources the version was drafted from (its signal strength, P12).
+    source_kinds: list[str] = []

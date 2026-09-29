@@ -29,6 +29,7 @@ from app.domain.enums import (
 from app.domain.exports import ExportCause, ExportGapReport, ExportInput
 from app.domain.graph import Graph, GraphElement
 from app.domain.quality import QualityCard
+from app.services import signal
 
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 DECIDING = {ElementKind.DECISION.value, ElementKind.APPROVAL.value}
@@ -390,6 +391,19 @@ def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
     return lines
 
 
+def signal_text(data: ExportInput) -> str:
+    """ "Signal strength: Strong (3 of 3). Built from …" or "" without an interview (P12)."""
+    strength = signal.signal_strength(s.kind for s in data.sources)
+    if strength is None:
+        return ""
+    return f"Signal strength: {strength.label} ({strength.score} of 3). {strength.detail}"
+
+
+def signal_lines(data: ExportInput) -> list[str]:
+    text = signal_text(data)
+    return [text, ""] if text else []
+
+
 def render_master_map_md(data: ExportInput) -> str:
     graph = on_the_map(data.graph)
     published = display_date(data.published_at)
@@ -400,6 +414,7 @@ def render_master_map_md(data: ExportInput) -> str:
         + (f"published {published}" if published else "not published yet")
         + f" · validated by {data.validated_by or 'not recorded'}",
         "",
+        *signal_lines(data),
     ]
     body = (
         header

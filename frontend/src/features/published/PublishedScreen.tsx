@@ -165,6 +165,7 @@ export function PublishedScreen() {
           state={chosen.state}
           publishedBy={chosen.published_by ?? ""}
           publishedOn={formatDate(chosen.published_at ?? "")}
+          signal={chosen.signal}
           actions={actions}
         />
       )}

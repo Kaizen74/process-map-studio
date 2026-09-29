@@ -183,3 +183,10 @@ def test_rejected_steps_count_for_nothing_and_warnings_come_from_lint() -> None:
     card = quality.build_quality_card(card_input(graph, lint=warnings))
     assert card.all_green
     assert card.warnings == ["2 steps have no time."]
+
+
+def test_an_interview_only_map_gets_a_warning_never_a_blocker() -> None:
+    limited = quality.build_quality_card(card_input(source_kinds=["interview_transcript"]))
+    assert quality.SIGNAL_WARNING in limited.warnings and limited.all_green
+    strong = quality.build_quality_card(card_input(source_kinds=["interview_transcript", "sop"]))
+    assert quality.SIGNAL_WARNING not in strong.warnings

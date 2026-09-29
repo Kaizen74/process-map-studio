@@ -12,8 +12,11 @@ from app.domain.enums import Provenance, ReviewStatus
 from app.domain.graph import GraphElement
 from app.domain.quality import CheckStatus, QualityCard, QualityCheck, QualityInput
 from app.services import exports as md
+from app.services import signal
 from app.services.grounding import scan_redaction_terms
 from app.services.lint import MAX_LANES, MAX_STEPS
+
+SIGNAL_WARNING = signal.QUALITY_WARNING
 
 EVIDENCED = {Provenance.OBSERVED.value, Provenance.INFERRED.value}
 PROVENANCES = {p.value for p in Provenance}
@@ -233,6 +236,9 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
     )
 
     warnings = [w.message for w in inp.lint.warnings]
+    strength = signal.signal_strength(inp.source_kinds)
+    if strength is not None and strength.level == "limited":
+        warnings.append(signal.QUALITY_WARNING)  # a warning, never a blocker (P12)
     all_green = all(c.status == "pass" for c in checks if c.hard)
     return QualityCard(checks=checks, warnings=warnings, all_green=all_green)
 

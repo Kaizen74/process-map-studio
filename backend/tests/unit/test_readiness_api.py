@@ -66,7 +66,8 @@ def test_new_engagement_without_key(client: TestClient) -> None:
     body = readiness(client, created["id"])
     assert body["key_set"] is False
     assert body["next_step"] == "setup"
-    assert body["missing"] == [ADD_KEY, ADD_TRANSCRIPT, ADD_DOCUMENT]
+    assert body["missing"] == [ADD_KEY, ADD_TRANSCRIPT]  # a document is recommended (P12)
+    assert body["recommended"] == [ADD_DOCUMENT] and body["signal"] is None
     assert body["nav"]["setup"] == "not_started" and body["nav_counts"] == {}
     assert body["ready_to_draft"] is False and body["blockers_count"] == 0
 

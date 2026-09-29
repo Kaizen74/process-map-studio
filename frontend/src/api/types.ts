@@ -1,4 +1,5 @@
 import type { SourceKind } from "../lib/mapTypes";
+import type { SignalStrength } from "../lib/reviewTypes";
 
 // Response shapes, mirroring API_CONTRACT.md. Edit the contract first, then these.
 
@@ -113,6 +114,9 @@ export interface Readiness {
   nav_counts: Partial<Record<NavKey, number>>;
   next_step: NavKey | null;
   missing: string[];
+  /** What would make the map stronger but doesn't stop the draft (P12). */
+  recommended?: string[];
+  signal?: SignalStrength | null;
   ready_to_draft: boolean;
 }
 
@@ -311,6 +315,7 @@ export type {
   QualityCard,
   QualityCheck,
   PublishBlocker,
+  SignalStrength,
   VersionSummary,
   VersionDetail,
   ChangeEntry,

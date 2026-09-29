@@ -192,3 +192,11 @@ def test_unknown_versions_are_404(drafted: Drafted) -> None:
     ]
     for method, url in calls:
         assert getattr(drafted.client, method)(url).status_code == 404, url
+
+
+def test_every_version_carries_its_signal_strength(drafted: Drafted) -> None:
+    # P12: from the sources the version was drafted from (the sample has an SOP: strong).
+    listed = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/versions").json()
+    assert listed[0]["signal"]["level"] == "strong" and listed[0]["signal"]["score"] == 3
+    detail = drafted.client.get(f"/api/versions/{drafted.version_id}").json()
+    assert detail["signal"]["label"] == "Strong"

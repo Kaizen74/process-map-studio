@@ -168,6 +168,7 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
             hidden_terms=[
                 t.term for t in redaction.name_replacements(session, version.engagement_id)
             ],
+            source_kinds=[s.kind for s in data.sources],
         )
     )
 

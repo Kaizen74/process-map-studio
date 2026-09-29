@@ -119,7 +119,7 @@ describe("Draft screen", () => {
     }, READINESS);
     renderApp(PATH);
     const checklist = await screen.findByRole("region", { name: "Before drafting" });
-    expect(within(checklist).getByText("0 of 4 ready.")).toBeInTheDocument();
+    expect(within(checklist).getByText("0 of 3 ready.")).toBeInTheDocument();
     expect(within(checklist).getByRole("link", { name: "Add it in Settings" })).toHaveAttribute("href", "/settings");
     expect(within(checklist).getAllByRole("link", { name: "Go to Sources" })[0]).toHaveAttribute(
       "href",
@@ -213,12 +213,51 @@ describe("Draft screen", () => {
     expect(within(register).getByText("T3: The plan takes 30 min.").tagName).toBe("S");
   });
 
+  it("allows a draft from interviews alone and shows its signal strength", async () => {
+    const limited = {
+      level: "limited" as const,
+      label: "Limited",
+      score: 1,
+      detail: "Built from interviews only. Every step is 'practiced only': confirm it with a document or another SME before relying on it.",
+    };
+    const interviewsOnly = {
+      ...READY,
+      documents_ready: false,
+      recommended: ["Add a process document such as an SOP or manual"],
+      signal: limited,
+    };
+    draftApi(EMPTY, {}, interviewsOnly);
+    const { container } = renderApp(PATH);
+    const checklist = await screen.findByRole("region", { name: "Before drafting" });
+    expect(within(checklist).getByText("3 of 3 ready.")).toBeInTheDocument();
+    expect(within(checklist).getByText("Recommended")).toBeInTheDocument();
+    expect(within(checklist).getByText("Recommended, not required:")).toBeInTheDocument();
+    expect(within(checklist).getByText("Add a process document such as an SOP or manual")).toBeInTheDocument();
+    const meter = container.querySelector(".signal");
+    expect(meter).toHaveTextContent("Signal strength: Limited (1 of 3)");
+    expect(meter).toHaveTextContent(/confirm it with a document or another SME/);
+    expect(meter?.querySelectorAll(".signal__bar--on")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Create draft map" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("shows the checklist again when a draft exists but something is missing now", async () => {
     draftApi(DONE, {}, { ...READY, documents_ready: false, missing: ["Add a process document"], ready_to_draft: false });
     renderApp(PATH);
     const checklist = await screen.findByRole("region", { name: "Before drafting" });
     expect(within(checklist).getByText("Add a process document")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Draft v0.1" })).toBeInTheDocument();
+  });
+
+  it("shows the finished draft's signal strength from its version", async () => {
+    const strong = { level: "strong" as const, label: "Strong", score: 3, detail: "Interviews and a procedure agree or differ in the open." };
+    draftApi(DONE, {
+      "GET /api/engagements/e1/versions": () => ({ body: [{ ...VERSION, published_at: null, published_by: null, parent_version_id: null, signal: strong }] }),
+    });
+    renderApp(PATH);
+    const summary = await screen.findByRole("region", { name: "Draft v0.1" });
+    await waitFor(() => expect(summary.querySelector(".signal")).toHaveTextContent("Signal strength: Strong (3 of 3)"));
+    expect(summary.querySelectorAll(".signal__bar--on")).toHaveLength(3);
   });
 
   it("says so when no claims were rejected", async () => {

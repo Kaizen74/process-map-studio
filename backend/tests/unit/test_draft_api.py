@@ -121,7 +121,7 @@ def test_drafting_needs_everything_on_the_checklist(client: TestClient) -> None:
     assert error["code"] == "CONFLICT"
     assert error["message"] == f"The draft can't start yet: {ADD_KEY}."
     assert ADD_KEY in error["details"]["missing"]
-    assert len(error["details"]["missing"]) == 2  # the key and a process document
+    assert error["details"]["missing"] == [ADD_KEY]  # a document is only recommended (P12)
     assert draft_state(client, built.engagement_id)["job"] is None
 
 

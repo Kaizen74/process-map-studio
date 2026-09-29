@@ -83,6 +83,49 @@
   font-size: var(--text-micro);
 }
 
+/* Signal strength (P12): three bars, filled for the score, hollow otherwise; the level is also in words. */
+.signal {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.signal__meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  align-self: center;
+}
+.signal__bar {
+  width: 4px;
+  border: var(--line-hairline) solid var(--ink-4);
+  border-radius: 1px;
+  background: var(--surface);
+}
+.signal__bar:nth-child(1) {
+  height: 6px;
+}
+.signal__bar:nth-child(2) {
+  height: 9px;
+}
+.signal__bar:nth-child(3) {
+  height: 12px;
+}
+.signal__bar--on {
+  border-color: var(--ink-2);
+  background: var(--ink-2);
+}
+.signal__label strong {
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+.signal__detail {
+  flex-basis: 100%;
+  color: var(--ink-3);
+}
+
 /* Card */
 .card {
   background: var(--surface);

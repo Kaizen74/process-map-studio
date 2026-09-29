@@ -19,7 +19,7 @@ from app.domain.models import Readiness, ReadinessFacts, SourceFacts
 from app.domain.quality import QualityCard
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import readiness as repo
-from app.services import quality
+from app.services import quality, signal
 
 Sessions = sessionmaker[Session]
 
@@ -108,8 +108,15 @@ def assess(
     documents_ready, document_item, named_d = _kind_missing(
         sources, PROCESS_DOCUMENTS, document_add, "process document"
     )
+    # A draft from interviews alone is allowed (P12, Eric's decision): a missing or unreadable
+    # document is recommended, not required; one still being read is waited for.
+    waiting_document = document_item is not None and document_item.startswith("Wait")
+    recommended = [document_item] if document_item and not waiting_document else []
+    if not waiting_document:
+        named_d = set()  # an unreadable document is counted below as a failed file
     speaker_items = _speaker_items(sources)
-    source_items = [item for item in (transcript_item, document_item) if item] + speaker_items
+    blocking_document = document_item if waiting_document else None
+    source_items = [i for i in (transcript_item, blocking_document) if i] + speaker_items
     missing = ([] if key_set else [ADD_KEY]) + source_items
 
     failed_unnamed = [
@@ -164,6 +171,8 @@ def assess(
         nav_counts=counts,
         next_step=next_step,
         missing=missing,
+        recommended=recommended,
+        signal=signal.signal_strength(s.kind for s in sources if s.text_status == "ready"),
         ready_to_draft=not missing,
     )
 

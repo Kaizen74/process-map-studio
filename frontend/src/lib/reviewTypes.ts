@@ -106,6 +106,14 @@ export interface PublishBlocker {
   message: string;
 }
 
+/** How much independent evidence a map rests on (P12): from the kinds of its sources. */
+export interface SignalStrength {
+  level: "strong" | "moderate" | "limited";
+  label: string;
+  score: number;
+  detail: string;
+}
+
 export interface VersionSummary {
   id: string;
   engagement_id: string;
@@ -115,6 +123,8 @@ export interface VersionSummary {
   published_at: string | null;
   published_by: string | null;
   parent_version_id: string | null;
+  /** From the sources the version was drafted from (P12). */
+  signal?: SignalStrength | null;
 }
 
 export interface ChangeEntry {

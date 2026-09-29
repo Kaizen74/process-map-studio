@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import type { DraftState, Job, Readiness } from "../../api/types";
-import { Button, Card, Chip, ErrorState, Skeleton } from "../../components/common";
+import type { DraftState, Job, Readiness, SignalStrength } from "../../api/types";
+import { Button, Card, Chip, ErrorState, SignalMeter, Skeleton } from "../../components/common";
 import { useDraft, useStartDraft } from "../../hooks/useDraft";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
-import { draftChecklist, groupDigits } from "../../lib/draft";
+import { useVersions } from "../../hooks/useVersions";
+import { checklistSummary, draftChecklist, groupDigits } from "../../lib/draft";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
@@ -16,10 +17,7 @@ import "./draft.css";
 function Checklist({ engagementId, readiness }: { engagementId: string; readiness: Readiness }) {
   const items = draftChecklist(readiness);
   return (
-    <Card
-      title="Before drafting"
-      description={`${items.filter((i) => i.done).length} of ${items.length} ready.`}
-    >
+    <Card title="Before drafting" description={checklistSummary(items)}>
       <ul className="draft-checklist">
         {items.map((item) => (
           <li key={item.key} className="draft-checklist__item">
@@ -30,7 +28,11 @@ function Checklist({ engagementId, readiness }: { engagementId: string; readines
                   {item.action}
                 </Link>
               )}
-              {item.done ? <Chip tone="good">Done</Chip> : <Chip dashed>To do</Chip>}
+              {item.done ? (
+                <Chip tone="good">Done</Chip>
+              ) : (
+                <Chip dashed>{item.required ? "To do" : "Recommended"}</Chip>
+              )}
             </span>
           </li>
         ))}
@@ -45,6 +47,23 @@ function Checklist({ engagementId, readiness }: { engagementId: string; readines
               <li key={m}>{m}</li>
             ))}
           </ul>
+        </div>
+      )}
+      {readiness.recommended && readiness.recommended.length > 0 && (
+        <div className="draft-missing">
+          <p>
+            <strong>Recommended, not required:</strong>
+          </p>
+          <ul>
+            {readiness.recommended.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {readiness.signal && (
+        <div className="draft-signal">
+          <SignalMeter signal={readiness.signal} />
         </div>
       )}
     </Card>
@@ -93,7 +112,15 @@ function Progress({ job }: { job: Job }) {
   );
 }
 
-function Summary({ engagementId, state }: { engagementId: string; state: DraftState }) {
+function Summary({
+  engagementId,
+  state,
+  signal,
+}: {
+  engagementId: string;
+  state: DraftState;
+  signal: SignalStrength | null | undefined;
+}) {
   const { version, summary } = state;
   if (!version || !summary) return null;
   return (
@@ -119,6 +146,11 @@ function Summary({ engagementId, state }: { engagementId: string; state: DraftSt
           <dd className="mono">{summary.open_questions}</dd>
         </div>
       </dl>
+      {signal && (
+        <div className="draft-signal">
+          <SignalMeter signal={signal} />
+        </div>
+      )}
       <div className="draft-start">
         <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
           Start reviewing
@@ -135,6 +167,7 @@ export function DraftScreen() {
   const engagement = useEngagement(engagementId);
   const readiness = useReadiness(engagementId);
   const draft = useDraft(engagementId);
+  const versions = useVersions(engagementId);
   const start = useStartDraft(engagementId);
   const [startError, setStartError] = useState<unknown>(null);
 
@@ -178,7 +211,13 @@ export function DraftScreen() {
         />
       )}
 
-      {!running && state && <Summary engagementId={engagementId} state={state} />}
+      {!running && state && (
+        <Summary
+          engagementId={engagementId}
+          state={state}
+          signal={versions.data?.find((v) => v.id === state.version?.id)?.signal}
+        />
+      )}
       {!running && state?.version && (
         <RejectedClaimsList engagementId={engagementId} versionId={state.version.id} />
       )}

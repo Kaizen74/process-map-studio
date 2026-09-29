@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Chip } from "../common";
+import type { SignalStrength } from "../../lib/reviewTypes";
+import { Chip, SignalMeter } from "../common";
 import "./shell.css";
 
 export interface ProgressStep {
@@ -17,6 +18,8 @@ export interface VersionBannerProps {
   onSelect: (id: string) => void;
   /** Quality card and Publish (phase P7), on the right. */
   actions?: ReactNode;
+  /** How well the sources support the map (P12); shown after the version chip when known. */
+  signal?: SignalStrength | null | undefined;
 }
 
 const REVIEWED = new Set(["confirmed", "edited", "added"]);
@@ -32,13 +35,14 @@ const SEGMENT_WORDS = { reviewed: "reviewed", rejected: "rejected", open: "not r
  * The draft's banner (PRD §5.7.1): version chip, what it means, and one progress segment per step
  * in process order. Clicking a segment selects that step. Quality card and Publish come in `actions`.
  */
-export function VersionBanner({ label, sources, steps, selectedId, onSelect, actions }: VersionBannerProps) {
+export function VersionBanner({ label, sources, steps, selectedId, onSelect, actions, signal }: VersionBannerProps) {
   const reviewed = steps.filter((s) => REVIEWED.has(s.review_status)).length;
   return (
     <div className="version-banner">
       <Chip dashed mono>
         Draft {label}
       </Chip>
+      {signal && <SignalMeter signal={signal} compact />}
       <p className="version-banner__text">
         Generated from {sources} {sources === 1 ? "source" : "sources"}. Nothing is published until every step is
         reviewed and the quality card is green.

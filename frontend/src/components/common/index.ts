@@ -6,6 +6,7 @@ export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { ErrorState, type ErrorStateProps } from "./ErrorState";
 export { Popover, type PopoverProps } from "./Popover";
 export { SegmentedControl, type SegmentOption, type SegmentedControlProps } from "./SegmentedControl";
+export { SignalMeter, type SignalMeterProps } from "./SignalMeter";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { StateGlyph, type StateGlyphProps } from "./StateGlyph";
 export {

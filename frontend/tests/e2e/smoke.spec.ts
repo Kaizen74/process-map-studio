@@ -157,7 +157,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.reload();
     await page.getByRole("link", { name: "Go to Draft" }).click();
     const checklist = page.getByRole("region", { name: "Before drafting" });
-    await expect(checklist.getByText("4 of 4 ready.")).toBeVisible();
+    await expect(checklist.getByText("3 of 3 ready.")).toBeVisible();
+    // P12: the sample has an interview and an SOP, so the map's signal is Strong.
+    await expect(checklist.getByText(/Signal strength: Strong/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     await page.getByRole("button", { name: "Create draft map" }).click();
@@ -179,6 +181,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Review: the draft map drawn from the backend layout (P5).
     await summary.getByRole("link", { name: "Start reviewing" }).click();
     await expect(page.getByText("0 of 8 steps reviewed")).toBeVisible();
+    await expect(page.locator(".version-banner").getByText(/Signal strength: Strong/)).toBeVisible();
     await expect(page.getByRole("button", { name: /^Activity, Draft load plan, Load controller/ })).toBeVisible();
     await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);

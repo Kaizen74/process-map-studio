@@ -23,6 +23,7 @@ from app.repositories.tables import (
     MergeProposal,
     Phase,
     Raci,
+    Source,
     Unknown,
     ValidationQuestion,
     VersionSource,
@@ -214,6 +215,17 @@ def _row(row: MapVersion) -> dict[str, Any]:
         "published_by": row.published_by,
         "parent_version_id": row.parent_version_id,
     }
+
+
+def source_kinds(session: Session, version_id: str) -> list[str]:
+    """The kinds of the sources a version was drafted from (for its signal strength)."""
+    return list(
+        session.scalars(
+            select(Source.kind)
+            .join(VersionSource, VersionSource.source_id == Source.id)
+            .where(VersionSource.version_id == version_id)
+        )
+    )
 
 
 def row(session: Session, version_id: str) -> dict[str, Any] | None:

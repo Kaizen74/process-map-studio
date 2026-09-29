@@ -86,6 +86,7 @@ export function ReviewScreen() {
             steps={steps}
             selectedId={selectedId}
             onSelect={select}
+            signal={versions.data?.find((v) => v.id === g.version.id)?.signal}
             actions={
               g.version.state === "draft" ? (
                 <PublishControls versionId={g.version.id} engagementId={engagementId} onSelect={(id) => select(id)} />
