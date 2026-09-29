@@ -1,0 +1,14 @@
+{
+  "stances": [
+    {
+      "step_ref": "e4",
+      "stance": "supports",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

@@ -121,6 +121,7 @@ P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §
 - 2026-09-29 P12 increment 4: final visual pass: every screen at 1440 × 900 and 1080 × 800 (docs/screens/P12_VISUAL_PASS.md); Eric approved the one fix found: the engagement step bar wraps instead of cutting off Registers, Leadership and Exports (browser check added; new approved 1080 × 800 Review baseline, 1440 × 900 unchanged). 13 of 13 checks green.
 - 2026-09-29 P12 increments 5a and 5b: interview-only drafts allowed (a process document is recommended, not required) and a deterministic signal strength (Strong, Moderate, Limited) on readiness, every version, the quality card (a warning for Limited, never a blocker) and the Master Map and HTML exports; the signal meter (bars plus words) on Draft, Review, Published and Exports; Eric approved the new Review baselines
 - 2026-09-29 P12 increment 5c: Eric's sample interview (Pei Fen, Otter.ai export) kept exactly as given as a test fixture, with names on the redaction list; offline tests (reading, interview-only readiness at Limited signal, names hidden) and an interview-only live check that reports the steps in order, lanes, flow and signal
+- 2026-09-29 P12 mock regression pass (Eric's request): 13 of 13 checks green at the start; the interview-only journey now tested end to end offline (new mock answers, a backend journey test and a browser test); fixed a draft with no steps offering to review an empty map; no other regressions
 
 ## Not started yet
 - P12 live run, polish and handover

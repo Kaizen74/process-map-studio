@@ -260,6 +260,17 @@ describe("Draft screen", () => {
     expect(summary.querySelectorAll(".signal__bar--on")).toHaveLength(3);
   });
 
+  it("explains a draft with no steps instead of offering to review it", async () => {
+    draftApi({ ...DONE, summary: { steps: 0, needs_check: 0, verified: 0, rejected: 2, open_questions: 0, scrubbed: 0 } });
+    renderApp(PATH);
+    const summary = await screen.findByRole("region", { name: "Draft v0.1" });
+    expect(within(summary).getByRole("status")).toHaveTextContent(
+      "No steps could be drafted: nothing in these sources described a step that passed every check.",
+    );
+    expect(within(summary).getByRole("status")).toHaveTextContent(/Add a process document or another interview/);
+    expect(within(summary).queryByRole("link", { name: "Start reviewing" })).toBeNull();
+  });
+
   it("says so when no claims were rejected", async () => {
     draftApi(DONE, {
       "GET /api/versions/v1/rejected-claims": () => ({

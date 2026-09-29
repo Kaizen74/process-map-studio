@@ -151,12 +151,20 @@ function Summary({
           <SignalMeter signal={signal} />
         </div>
       )}
-      <div className="draft-start">
-        <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
-          Start reviewing
-        </Link>
-        <p className="draft-note">Confirm, edit or reject each step on the map. Steps you review are never changed by a refresh.</p>
-      </div>
+      {summary.steps === 0 ? (
+        <p className="draft-missing" role="status">
+          No steps could be drafted: nothing in these sources described a step that passed every check. Add a process
+          document or another interview, check that each speaker is mapped to the right role, then draft again. The
+          rejected claims below show what was set aside and why.
+        </p>
+      ) : (
+        <div className="draft-start">
+          <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
+            Start reviewing
+          </Link>
+          <p className="draft-note">Confirm, edit or reject each step on the map. Steps you review are never changed by a refresh.</p>
+        </div>
+      )}
     </Card>
   );
 }
