@@ -71,7 +71,8 @@ class CitationCheck(BaseModel):
 class GapEvidence(BaseModel):
     """One side of a comparison: a passage with its quote, or a source that is silent."""
 
-    side: str  # documents · practice
+    side: str  # documents · practice · external
+    source_id: str = ""  # internal evidence: the engagement's source (opens in the viewer)
     source_kind: str
     source_name: str
     stance: str

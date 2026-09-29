@@ -61,6 +61,7 @@ def side_of(source_kind: str) -> str:
 class Passage:
     ref: str  # call-local, e1 …
     source_ref: str  # call-local, s1 …
+    source_id: str
     source_kind: str
     source_name: str
     stance: str
@@ -70,6 +71,7 @@ class Passage:
 @dataclass(slots=True)
 class SideStance:
     source_ref: str
+    source_id: str
     source_kind: str
     source_name: str
     stance: str
@@ -165,6 +167,7 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
                 key,
                 SideStance(
                     source_ref=source_ref[p.source_id],
+                    source_id=p.source_id,
                     source_kind=p.evidence.source_kind,
                     source_name=sources[source_ref[p.source_id]][1],
                     stance=p.evidence.stance,
@@ -177,6 +180,7 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
                 passages[ref] = Passage(
                     ref=ref,
                     source_ref=source_ref[p.source_id],
+                    source_id=p.source_id,
                     source_kind=p.evidence.source_kind,
                     source_name=side.source_name,
                     stance=p.evidence.stance,
@@ -194,6 +198,7 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
         silent = [
             SideStance(
                 source_ref=source_ref[ev.source_id],
+                source_id=ev.source_id,
                 source_kind=ev.source_kind,
                 source_name=sources[source_ref[ev.source_id]][1],
                 stance="silent",
@@ -373,6 +378,7 @@ def check(dset: DivergenceSet, f: ai_schemas.GAFinding) -> Checked:
         evidence.append(
             GapEvidence(
                 side=side_of(p.source_kind),
+                source_id=p.source_id,
                 source_kind=p.source_kind,
                 source_name=p.source_name,
                 stance=p.stance,
@@ -428,6 +434,7 @@ def check(dset: DivergenceSet, f: ai_schemas.GAFinding) -> Checked:
                 continue  # that side does speak about the step; silence isn't its evidence
             ev = GapEvidence(
                 side=side_of(side.source_kind),
+                source_id=side.source_id,
                 source_kind=side.source_kind,
                 source_name=side.source_name,
                 stance="silent",

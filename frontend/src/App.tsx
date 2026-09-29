@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router";
 import { DraftScreen } from "./features/draft/DraftScreen";
 import { EngagementIndex } from "./features/engagement/EngagementIndex";
 import { ExportsScreen } from "./features/exports/ExportsScreen";
+import { GapScreen } from "./features/gap/GapScreen";
 import { StepPlaceholder } from "./features/engagement/StepPlaceholder";
 import { MatrixScreen } from "./features/matrix/MatrixScreen";
 import { RegistersScreen } from "./features/registers/RegistersScreen";
@@ -27,6 +28,7 @@ export function App() {
         <Route path="engagements/:engagementId/review" element={<ReviewScreen />} />
         <Route path="engagements/:engagementId/published" element={<PublishedScreen />} />
         <Route path="engagements/:engagementId/matrix" element={<MatrixScreen />} />
+        <Route path="engagements/:engagementId/gap-analysis" element={<GapScreen />} />
         <Route path="engagements/:engagementId/registers" element={<RegistersScreen />} />
         <Route path="engagements/:engagementId/exports" element={<ExportsScreen />} />
         <Route path="engagements/:engagementId/:step" element={<StepPlaceholder />} />
