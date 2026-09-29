@@ -98,3 +98,4 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 - Stack: FastAPI, SQLite, React + TypeScript, Claude API. Local only; binds to 127.0.0.1.
 - Developer set-up (adds the check tools): `python3.12 scripts/setup.py --dev`. Developer mode with live reload: `python3.12 scripts/dev.py` (screens on http://127.0.0.1:5173).
 - Run all checks: `./run_checks.sh` (all lines should say PASS). On Windows: `run_checks.bat` (needs Git for Windows).
+- Live evaluation with the real Claude model (only when Eric asks; it uses his key and is billed to his Anthropic account): `cd backend && ../.venv/bin/pytest -m live -s`. It drafts the illustrative fixture twice, runs both gap analyses on the first draft and prints the evaluation against the PRD §6.3 P12 thresholds. Without a key it is skipped.
