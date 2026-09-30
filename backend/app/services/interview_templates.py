@@ -1,10 +1,21 @@
 """Standard interview templates (PRD v1.10 Appendix F.9): built from the question bank only
-(no AI, no engagement data), rendered as Markdown and Word with the same content.
+(no AI, no engagement data), rendered as Markdown and as Word (python-docx) with the same content.
 
 Explicit inputs (the bank and the interview type) and structured results; no files, no database.
 """
 
 from __future__ import annotations
+
+from io import BytesIO
+
+from docx import Document
+from docx.document import Document as WordDocument
+from docx.enum.section import WD_ORIENT
+from docx.enum.table import WD_ROW_HEIGHT_RULE
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Cm
+from docx.table import _Cell, _Row
 
 from app.domain.enums import InterviewType
 from app.domain.interview import (
@@ -175,3 +186,109 @@ def render_markdown(doc: InterviewDocument) -> str:
     lines += [f"- {item}:" for item in doc.close_items]
     lines += ["", "---", "", f"*{doc.footer}*", ""]
     return "\n".join(lines)
+
+
+# --- Word (python-docx 1.2; MIT licence) ----------------------------------------------------
+
+# Landscape A4 with 1.5 cm margins leaves 26.7 cm: wide Question and Notes columns for writing.
+COLUMNS_CM = (1.6, 8.6, 6.0, 1.7, 8.8)
+HEADINGS = ("ID", "Question", "Probes", "Minutes", "Notes")
+NOTES_ROW_CM = 1.8  # a tall row, so each answer has room for handwritten or typed notes
+
+
+def _repeat_header(row: _Row) -> None:
+    """Repeat a table's header row at the top of every page it runs onto."""
+    properties = row._tr.get_or_add_trPr()
+    header = OxmlElement("w:tblHeader")
+    header.set(qn("w:val"), "true")
+    properties.append(header)
+
+
+def _cell_text(cell: _Cell, text: str, *, bold: bool = False, italic_prefix: str = "") -> None:
+    paragraph = cell.paragraphs[0]
+    if italic_prefix:
+        paragraph.add_run(f"{italic_prefix} ").italic = True
+    run = paragraph.add_run(text)
+    run.bold = bold
+
+
+def _question_table(doc: WordDocument, table: DocumentTable) -> None:
+    grid = doc.add_table(rows=1, cols=len(COLUMNS_CM))
+    grid.style = "Table Grid"
+    grid.autofit = False
+    for cell, heading in zip(grid.rows[0].cells, HEADINGS, strict=True):
+        _cell_text(cell, heading, bold=True)
+    _repeat_header(grid.rows[0])
+    for row in table.rows:
+        cells = grid.add_row().cells
+        cells[0].text = row.id
+        question = f"↳ {row.wording}" if row.signifier else row.wording
+        if row.note:
+            question = f"{question} ({row.note})"
+        _cell_text(cells[1], question, italic_prefix=row.lead_in)
+        probes = row.probes or (["—"] if row.id else [])
+        cells[2].text = "\n".join(probes)
+        cells[3].text = row.minutes
+        grid.rows[-1].height = Cm(NOTES_ROW_CM)
+        grid.rows[-1].height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+    for r in grid.rows:
+        for cell, width in zip(r.cells, COLUMNS_CM, strict=True):
+            cell.width = Cm(width)
+
+
+def render_docx(doc: InterviewDocument) -> bytes:
+    """The same content as the Markdown, laid out for Word (editable), footer on every page."""
+    word = Document()
+    section = word.sections[0]
+    section.orientation = WD_ORIENT.LANDSCAPE
+    section.page_width, section.page_height = Cm(29.7), Cm(21.0)
+    for side in ("left_margin", "right_margin", "top_margin", "bottom_margin"):
+        setattr(section, side, Cm(1.5))
+    section.footer.paragraphs[0].text = doc.footer  # item 9, on every page
+    section.footer.paragraphs[0].runs[0].italic = True
+    properties = word.core_properties
+    properties.title, properties.author = doc.title, "Process Map Studio"
+    properties.comments = doc.stamp
+
+    word.add_heading(doc.title, level=0)  # item 1
+    word.add_paragraph(doc.stamp)
+    word.add_heading("Interview details", level=1)  # item 2
+    header = word.add_table(rows=0, cols=2)
+    header.style = "Table Grid"
+    for field in doc.header_fields:
+        cells = header.add_row().cells
+        _cell_text(cells[0], field.removesuffix(" ☐"), bold=True)
+        cells[1].text = "☐" if field.endswith("☐") else ""
+    word.add_heading("Opener (F.3)", level=1)  # item 3
+    word.add_paragraph().add_run(doc.record).bold = True
+    for paragraph in doc.opener:
+        word.add_paragraph(paragraph, style="Quote")
+    word.add_paragraph(doc.opener_note)
+    word.add_heading(f"Minute plan ({doc.minutes} min)", level=1)  # item 4
+    plan = word.add_table(rows=1, cols=2)
+    plan.style = "Table Grid"
+    _cell_text(plan.rows[0].cells[0], "Section", bold=True)
+    _cell_text(plan.rows[0].cells[1], "Minutes", bold=True)
+    for item in doc.plan:
+        cells = plan.add_row().cells
+        cells[0].text, cells[1].text = item.label, str(item.minutes)
+    total = plan.add_row().cells
+    _cell_text(total[0], "Total", bold=True)
+    _cell_text(total[1], str(sum(item.minutes for item in doc.plan)), bold=True)
+    word.add_heading("Interviewer principles", level=1)  # item 5
+    for principle in doc.principles:
+        word.add_paragraph(principle, style="List Number")
+    for table in doc.tables:  # item 6
+        word.add_heading(f"{table.label} ({table.minutes} min)", level=1)
+        if table.note:
+            word.add_paragraph(table.note)
+        _question_table(word, table)
+    word.add_heading("Coverage checklist", level=1)  # item 7
+    for check in doc.coverage_checklist:
+        word.add_paragraph(f"☐ {check}")
+    word.add_heading("Close and next steps", level=1)  # item 8
+    for close in doc.close_items:
+        word.add_paragraph(f"{close}:")
+    out = BytesIO()
+    word.save(out)
+    return out.getvalue()

@@ -5,8 +5,12 @@ minute plans that add up and wording that passes the non-blaming and anti-anchor
 from __future__ import annotations
 
 import re
+from io import BytesIO
 
+import docx
 import pytest
+from docx.document import Document as DocxDocument
+from docx.shared import Cm
 
 from app.domain.enums import InterviewType
 from app.domain.interview import InterviewDocument
@@ -194,3 +198,58 @@ def test_summaries_for_the_screens() -> None:
 def test_file_names() -> None:
     assert templates.filename(InterviewType.FOLLOW_UP, "md") == "interview-template-follow-up.md"
     assert templates.filename(InterviewType.PRACTICE, "docx") == "interview-template-practice.docx"
+
+
+# --- Word -------------------------------------------------------------------------------------
+
+
+def reopen(kind: InterviewType) -> DocxDocument:
+    data = templates.render_docx(templates.build(bank(), kind))
+    assert data[:2] == b"PK"  # a Word (zip) file
+    return docx.Document(BytesIO(data))
+
+
+def word_text(document: DocxDocument) -> str:
+    parts = [p.text for p in document.paragraphs]
+    parts += [c.text for t in document.tables for r in t.rows for c in r.cells]
+    return "\n".join(parts)
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_the_word_file_reopens_cleanly_with_the_same_content(kind: InterviewType) -> None:
+    document = reopen(kind)
+    doc = templates.build(bank(), kind)
+    headings = [
+        p.text for p in document.paragraphs if p.style.name.startswith(("Heading", "Title"))
+    ]
+    assert headings == [
+        doc.title, "Interview details", "Opener (F.3)", f"Minute plan ({doc.minutes} min)",
+        "Interviewer principles", *[f"{t.label} ({t.minutes} min)" for t in doc.tables],
+        "Coverage checklist", "Close and next steps",
+    ]  # fmt: skip
+    # Header table (item 2), minute plan (4) and one table per movement or section (6).
+    assert len(document.tables) == 2 + len(doc.tables)
+    fields = [r.cells[0].text for r in document.tables[0].rows]
+    assert fields[-1] == "Recording consent" and document.tables[0].rows[-1].cells[1].text == "☐"
+    plan = document.tables[1]
+    assert plan.rows[-1].cells[1].text == str(doc.minutes)
+    for word_table, table in zip(document.tables[2:], doc.tables, strict=True):
+        assert [c.text for c in word_table.rows[0].cells] == [
+            "ID", "Question", "Probes", "Minutes", "Notes"
+        ]  # fmt: skip
+        body = word_table.rows[1:]
+        assert [r.cells[0].text for r in body] == [r.id for r in table.rows]
+        assert [r.cells[3].text for r in body] == [r.minutes for r in table.rows]
+        assert all(r.cells[4].text == "" for r in body)  # notes left to fill in
+        assert all(r.height is not None and r.height >= Cm(1.7) for r in body)  # tall rows
+    text = word_text(document)
+    for question_id in bank().template_ids(kind):
+        wording_ = bank().question(question_id).wording
+        assert wording_ in text, question_id
+    assert sum(p.text.startswith("☐ ") for p in document.paragraphs) == 14  # item 7
+    assert document.paragraphs[1].text == "Question bank v1.0 · Process Map Studio"
+    footer = document.sections[0].footer.paragraphs[0].text
+    assert footer.startswith("Say or note the question ID (e.g. [M2.2]) when you ask it")
+    assert document.sections[0].page_width > document.sections[0].page_height  # landscape
+    assert wording.banned_words(text) == []
+    assert document.core_properties.author == "Process Map Studio"
