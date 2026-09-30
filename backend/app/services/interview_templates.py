@@ -7,6 +7,7 @@ Explicit inputs (the bank and the interview type) and structured results; no fil
 from __future__ import annotations
 
 from io import BytesIO
+from pathlib import Path
 
 from docx import Document
 from docx.document import Document as WordDocument
@@ -16,6 +17,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm
 from docx.table import _Cell, _Row
+from pydantic import ValidationError
 
 from app.domain.enums import InterviewType
 from app.domain.interview import (
@@ -27,11 +29,21 @@ from app.domain.interview import (
     TemplateSection,
     TemplateSummary,
 )
+from app.domain.result import Err, ErrorKind, Ok, Result
 
+BANK_FILE = Path(__file__).resolve().parent.parent / "prompts" / "question_bank.json"
 ORDER = (InterviewType.LANDSCAPE, InterviewType.PRACTICE, InterviewType.FOLLOW_UP)
 IN_STORY = "in story"
 CORE_WEIGHT = 2  # core questions (never dropped, F.8 rule 6) get twice a standard share
 FORMATS = ("docx", "md")
+
+
+def load_bank(path: Path = BANK_FILE) -> Result[QuestionBank]:
+    """The question bank the templates are made from (a file shipped with the app)."""
+    try:
+        return Ok(QuestionBank.model_validate_json(path.read_text(encoding="utf-8")))
+    except (OSError, ValidationError):
+        return Err(ErrorKind.IO, "The interview question bank is missing or damaged in the app.")
 
 
 def minutes_label(half_minutes: int) -> str:

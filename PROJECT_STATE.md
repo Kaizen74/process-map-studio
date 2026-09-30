@@ -12,8 +12,8 @@ Eric's feature prompt (PRD v1.10 §8). P0a and P0b are complete. The templates a
 - [x] Increment T1 — PRD v1.10 into the repository, CLAUDE.md synced to Appendix C; schema synced (migration 0009, enums B.28–B.39); API contract for the template endpoints and the Interview nav item; `question_bank.json` from Appendix F with tests (word for word against the PRD, IDs, priorities, minute plans 60 / 60 / 30, no banned words, no SOP claims before M6, no names)
 - [x] Increment T2 — template generator service (explicit inputs: the bank and the type) and the Markdown renderer, layout items 1–9, per-question minutes that sum to the plan
 - [x] Increment T3 — Word renderer (python-docx; landscape A4, tall notes cells, footer on every page); reopen test; the three Word files in `docs/samples/` for Eric
-- [ ] Increment T4 — IN PROGRESS: template endpoints (router → one action), latency; question matcher (§3.12.10 Step A: explicit tag or wording ≥ 0.60) with the A.9 matching test re-run on template wording
-- [ ] Increment T5 — UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
+- [x] Increment T4 — template endpoints (router → one action), latency; question matcher (§3.12.10 Step A: explicit tag or wording ≥ 0.60) with the A.9 matching test re-run on template wording
+- [ ] Increment T5 — IN PROGRESS: UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
 - [ ] Increment T6 — waiting for Eric: approve the Word templates and the Markdown (then saved as golden baseline G9) and any changed Review screenshot; report card
 
 ## Open from session 15 — Phase P12 (live run, polish and handover)
@@ -134,6 +134,7 @@ P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §
 - 2026-09-30 Templates T1: PRD v1.10 adopted (CLAUDE.md synced); database schema and enums brought up to v1.10 (migration 0009, unused until P4b/P4c); question_bank.json holds Appendix F word for word (58 questions) with tests against the PRD itself; wording checks for banned words and SOP claims; API contract for the template endpoints. 13 of 13 checks green
 - 2026-09-30 Templates T2: the template generator (a service whose only inputs are the question bank and the interview type) builds Landscape (60 min), Practice (60 min) and Follow-up (30 min) and writes them as Markdown in the F.9 layout: title and bank version, header table, opener, minute plan, principles, one table per movement (ID · Question · Probes · Minutes · Notes, signifiers repeated under each story), coverage checklist, close and next steps, question-ID footer; per-question minutes add up exactly (core questions get double time)
 - 2026-09-30 Templates T3: the Word versions (python-docx; landscape A4, tall notes rows, header rows repeated on each page, the question-ID footer on every page), reopened and checked by tests; the three Word files saved in docs/samples/ for Eric
+- 2026-09-30 Templates T4: GET /api/templates/interview (Word or Markdown, no engagement needed) and /plans; the question matcher (tag, else wording ≥ 0.60) passes the A.9 test and matches every template question read with its wording or its ID
 
 ## Not started yet
 - P12 live run, polish and handover (increments 5 and 6 above)

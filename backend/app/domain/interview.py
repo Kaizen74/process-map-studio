@@ -149,3 +149,19 @@ class InterviewDocument(BaseModel):
     coverage_checklist: list[str]  # item 7
     close_items: list[str]  # item 8
     footer: str  # item 9
+
+
+class TemplateFile(BaseModel):
+    """A template ready to download (Word bytes or Markdown encoded as UTF-8)."""
+
+    filename: str
+    media_type: str
+    content: bytes
+
+
+class QuestionMatch(BaseModel):
+    """Which question an interviewer turn asks (§3.12.10 step A)."""
+
+    question_id: str
+    method: Literal["tag", "wording"]
+    score: float
