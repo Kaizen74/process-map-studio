@@ -65,6 +65,8 @@ class Engagement(Row):
     adjacent_industries: Mapped[list[str]] = mapped_column(JSON, default=list)
     status: Mapped[str] = mapped_column(String(32), default="active")
     updated_at: Mapped[str] = mapped_column(String(32), default=now_iso)
+    # PRD v1.10 (0009): codebook tier 2 conventions (granularity, label style, phase naming).
+    conventions: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class Source(Row):
@@ -99,6 +101,10 @@ class SourceSegment(Row):
     instruction_like: Mapped[bool] = mapped_column(Boolean, default=False)
     # Added in migration 0002: the label was mapped to "Interviewer" (not a role).
     is_interviewer: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # PRD v1.10 (0009): the guide question an interviewer turn matched, its answer block, markers.
+    question_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    answer_block_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    marker_tags: Mapped[list[Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class RedactionTerm(Row):
@@ -132,6 +138,7 @@ class MapVersion(Row):
     change_log: Mapped[list[Any]] = mapped_column(JSON, default=list)
     lint_report: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     quality_card: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    codebook_version: Mapped[str | None] = mapped_column(String(32), nullable=True)  # 0009
 
 
 class Claim(Row):
@@ -150,6 +157,7 @@ class Claim(Row):
     rejection_guardrail: Mapped[str] = mapped_column(String(8), default="")
     verifier_verdict: Mapped[str] = mapped_column(String(16), default="not_run")
     verifier_reason: Mapped[str] = mapped_column(Text, default="")
+    account_type: Mapped[str | None] = mapped_column(String(16), nullable=True)  # B.28 (0009)
 
 
 class VersionSource(Row):
@@ -204,6 +212,17 @@ class Element(Row):
     confidence_breakdown: Mapped[list[Any]] = mapped_column(JSON, default=list)
     needs_check: Mapped[bool] = mapped_column(Boolean, default=False)
     review_status: Mapped[str] = mapped_column(String(16), default="draft")
+    # PRD v1.10 (0009): work type, views, variants and landscape/practice levels (§3.12).
+    work_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    constraint_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    work_type_basis: Mapped[list[Any] | None] = mapped_column(JSON, nullable=True)
+    sme_work_type_signifier: Mapped[str | None] = mapped_column(Text, nullable=True)
+    work_type_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    practice_described: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    view_membership: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    variants: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    level: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    parent_element_id: Mapped[str | None] = mapped_column(ID, nullable=True)
 
 
 class ElementClaim(Row):
@@ -229,6 +248,11 @@ class Edge(Row):
     kind: Mapped[str] = mapped_column(String(16))
     label: Mapped[str] = mapped_column(Text, default="")
     provenance: Mapped[str] = mapped_column(String(1), default="O")
+    # PRD v1.10 (0009): why the order is known, typical responses, views, what passes across.
+    sequence_basis: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    typical: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    view_membership: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    information_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class EvidenceLink(Row):
@@ -396,6 +420,7 @@ class GapFinding(Row):
     disposition: Mapped[str] = mapped_column(String(16), default="open")
     disposition_note: Mapped[str] = mapped_column(Text, default="")
     created_item_ref: Mapped[str] = mapped_column(Text, default="")
+    gap_class: Mapped[str | None] = mapped_column(String(24), nullable=True)  # B.32 (0009)
     question: Mapped[str] = mapped_column(Text, default="")  # a cause not explained (0006)
     notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # flags on the finding (0007)
 
@@ -426,3 +451,95 @@ class LeadershipDecision(Row):
     version_id: Mapped[str] = fk("map_versions.id")
     cause_type: Mapped[str] = mapped_column(String(32))
     text: Mapped[str] = mapped_column(Text, default="")
+
+
+# --- Sensemaking (PRD v1.10 §3.12; migration 0009). Filled by phases P4b and P4c. ----------
+
+
+class Fragment(Row):
+    __tablename__ = "fragments"
+    version_id: Mapped[str] = fk("map_versions.id")
+    source_id: Mapped[str | None] = opt_fk("sources.id")
+    segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    label: Mapped[str] = mapped_column(Text)
+    fragment_type: Mapped[str] = mapped_column(String(16))  # B.31
+    sme_signifiers: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    element_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    single_account: Mapped[bool] = mapped_column(Boolean, default=False)
+    provenance: Mapped[str] = mapped_column(String(1), default="O")
+
+
+class KnowledgePoint(Row):
+    __tablename__ = "knowledge_points"
+    element_id: Mapped[str] = fk("elements.id")
+    kdp_type: Mapped[str] = mapped_column(String(24))
+    ashen: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # B.33
+    knowledge_risk: Mapped[str] = mapped_column(String(8), default="low")
+    basis: Mapped[str] = mapped_column(Text, default="")
+    cadence: Mapped[str | None] = mapped_column(String(16), nullable=True)  # B.37
+    information_received: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    information_attended: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    information_wanted: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    communicated_via: Mapped[list[Any]] = mapped_column(JSON, default=list)
+
+
+class GlossaryTerm(Row):
+    __tablename__ = "glossary_terms"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    term: Mapped[str] = mapped_column(Text)
+    plain_meaning: Mapped[str] = mapped_column(Text, default="")
+    standard_label: Mapped[str] = mapped_column(Text, default="")
+    segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+
+
+class EmergentTheme(Row):
+    __tablename__ = "emergent_themes"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    version_id: Mapped[str | None] = opt_fk("map_versions.id")
+    theme: Mapped[str] = mapped_column(Text)
+    fragment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    basis: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(16), default="proposed")
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class IntervieweeProfile(Row):
+    """Roles only, never personal names (constraint 10)."""
+
+    __tablename__ = "interviewee_profiles"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    role_id: Mapped[str | None] = opt_fk("roles.id")
+    stakeholder_group: Mapped[str] = mapped_column(Text, default="")
+    interview_type: Mapped[str] = mapped_column(String(16))  # B.38
+    referred_by_role: Mapped[str] = mapped_column(Text, default="")
+    previous_profile_session: Mapped[str | None] = mapped_column(ID, nullable=True)
+
+
+class CapabilityNote(Row):
+    __tablename__ = "capability_notes"
+    version_id: Mapped[str] = fk("map_versions.id")
+    kind: Mapped[str] = mapped_column(String(16))  # strength / weakness
+    dimension: Mapped[str] = mapped_column(String(24))  # B.36
+    text: Mapped[str] = mapped_column(Text)
+    element_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    provenance: Mapped[str] = mapped_column(String(1), default="O")
+    cause_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+class InterviewGuide(Row):
+    __tablename__ = "interview_guides"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    profile_id: Mapped[str | None] = opt_fk("interviewee_profiles.id")
+    interview_type: Mapped[str] = mapped_column(String(16))  # B.38
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    content: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    edited: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class CoverageReport(Row):
+    __tablename__ = "coverage_reports"
+    version_id: Mapped[str] = fk("map_versions.id")
+    source_id: Mapped[str | None] = opt_fk("sources.id")
+    dimensions: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    follow_up_questions: Mapped[list[Any]] = mapped_column(JSON, default=list)

@@ -22,6 +22,9 @@ PRD_TABLES = {
     "evidence_links", "constraints", "ai_flags", "merge_proposals", "validation_questions",
     "images", "cause_library", "audit_log", "jobs", "ai_calls", "gap_analyses", "gap_findings",
     "external_sources", "external_citations",
+    # PRD v1.10 §3.12 (migration 0009), filled from phases P4b and P4c.
+    "fragments", "knowledge_points", "glossary_terms", "emergent_themes", "interviewee_profiles",
+    "capability_notes", "interview_guides", "coverage_reports",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -53,18 +56,24 @@ def test_prd_columns_are_all_present(migrated: Path) -> None:
     engine = db.make_engine(migrated)
     inspector = inspect(engine)
     missing = []
+    checked = 0
     for line in section.splitlines():
         match = re.match(r"^\| `(\w+)` \| (.+) \|$", line)
         if not match:
             continue
         table, spec = match.groups()
+        # Words inside a column's description, e.g. "variants (json: … owner, threshold, time)",
+        # are not column names (PRD v1.10 added such lists).
+        spec = re.sub(r"\s*\([^()]*(?:\([^()]*\)[^()]*)*\)", "", spec)
         names = re.findall(r"(?:^|, )(\w+)(?= \(|,|$| or| —)", spec)
         columns = {c["name"] for c in inspector.get_columns(table)}
+        checked += len(names)
         for name in names:
             if name not in columns and name not in {"or"}:
                 missing.append(f"{table}.{name}")
     engine.dispose()
     assert missing == []
+    assert checked >= 296  # every PRD v1.10 column is read (guards the parser against skipping)
 
 
 def test_every_table_has_id_and_created_at(migrated: Path) -> None:
@@ -233,6 +242,39 @@ def test_downgrade_of_0008_removes_only_leadership_decisions(migrated: Path) -> 
     assert "leadership_decisions" in table_names(migrated)
 
 
+def test_downgrade_of_0009_removes_only_the_v1_10_tables_and_columns(migrated: Path) -> None:
+    new_tables = {
+        "fragments", "knowledge_points", "glossary_terms", "emergent_themes",
+        "interviewee_profiles", "capability_notes", "interview_guides", "coverage_reports",
+    }  # fmt: skip
+    engine = db.make_engine(migrated)
+    before = {t: {c["name"] for c in inspect(engine).get_columns(t)} for t in ("elements", "edges")}
+    engine.dispose()
+    db.downgrade(migrated, "0008")
+    assert new_tables.isdisjoint(table_names(migrated))
+    engine = db.make_engine(migrated)
+    inspector = inspect(engine)
+    elements = {c["name"] for c in inspector.get_columns("elements")}
+    edges = {c["name"] for c in inspector.get_columns("edges")}
+    segments = {c["name"] for c in inspector.get_columns("source_segments")}
+    engine.dispose()
+    assert before["elements"] - elements == {
+        "work_type", "constraint_type", "work_type_basis", "sme_work_type_signifier",
+        "work_type_status", "practice_described", "view_membership", "variants", "level",
+        "parent_element_id",
+    }  # fmt: skip
+    assert before["edges"] - edges == {
+        "sequence_basis",
+        "typical",
+        "view_membership",
+        "information_payload",
+    }
+    assert "question_id" not in segments and "is_interviewer" in segments
+    assert "leadership_decisions" in table_names(migrated)
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:
@@ -275,6 +317,17 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
     assert engagement.created_at.endswith("+00:00")
 
 
+# PRD v1.10 values that change what the app does, added with the phase that uses them (logged in
+# DECISIONS.md 2026-09-30): the "not described" gap edge (P4b, As done view) and the reality-gap
+# finding types that Analysis A may return (P4c). The test checks they are still absent, so each
+# is removed from this list when its phase adds it.
+PENDING_VALUES = {
+    "B.8": {"gap"},
+    "B.22": {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap",
+             "constraint_mismatch"},
+}  # fmt: skip
+
+
 def test_enums_match_appendix_b() -> None:
     prd = (REPO_ROOT / "PRD_ProcessMapStudio.md").read_text(encoding="utf-8")
     rows = re.findall(r"^\| (B\.\d+) \| [^|]+ \| ([^|]+) \|$", prd, re.MULTILINE)
@@ -283,10 +336,12 @@ def test_enums_match_appendix_b() -> None:
         for cls in vars(enums).values()
         if isinstance(cls, type) and issubclass(cls, enums.StrEnum) and cls is not enums.StrEnum
     }
-    assert len(rows) == 27 == len(by_id)
+    assert len(rows) == 39 == len(by_id)
     for bid, values in rows:
         expected = [re.sub(r"\s*\(.*?\)", "", v).strip().split()[0] for v in values.split("·")]
-        assert [m.value for m in by_id[bid]] == expected, bid
+        pending = PENDING_VALUES.get(bid, set())
+        assert pending <= set(expected), bid  # still in the PRD
+        assert [m.value for m in by_id[bid]] == [v for v in expected if v not in pending], bid
 
 
 def test_manage_reports_and_applies_updates(tmp_path: Path) -> None:

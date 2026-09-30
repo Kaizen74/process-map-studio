@@ -14,7 +14,7 @@ The files are the project memory. If chat memory and these files disagree, the f
 4. **Silence is not contradiction.** A source that does not mention an element is `silent`, never `contradicts`. Job-description silence about tasks never changes an element's source state.
 5. **Lane rule.** Activities sit in the lane of their single Responsible role. Approvals sit in the lane of their Accountable role. Decisions sit in the lane of the role that makes the routing call.
 6. **Every exit labelled.** Every decision has at least two labelled outgoing edges. Every approval has an approve edge and a reject/rework edge. No orphan elements.
-7. **Rule versus judgment.** Every decision and approval is classified `rule_based` or `judgment`. A judgment step is never flagged as an automation candidate.
+7. **Rule versus judgment.** Every decision and approval is classified `rule_based` or `judgment`. A judgment step, or any step whose work type is complex or chaotic (§3.12), is never flagged as an automation candidate.
 8. **Human publishes.** Nothing is published until every element, merge proposal and suggested image has been reviewed and every hard check on the quality card (§7.2) is green. Elements Eric has confirmed, edited or added are never overwritten by any AI re-run.
 9. **Facts, interpretation, recommendation stay separate** in every generated text output and export.
 10. **Roles, not people.** Maps and exports use role names only. Speaker labels map to roles; names on the redaction list never appear in AI outputs or exports. The app never scores, rates or assesses individuals.
@@ -30,6 +30,7 @@ The files are the project memory. If chat memory and these files disagree, the f
 20. **One design system.** All colours, type, spacing and radii come from `shared/design_tokens.json`; components use tokens only, never raw colour values. The HTML export uses the same tokens. Every screen meets WCAG 2.1 AA contrast and has 0 serious or critical automated accessibility violations. The UI never computes layout; it draws the backend layout.
 21. **Private repository, plain-language README.** Code is pushed only to Eric's designated private GitHub repository. README.md follows Appendix D, is written for a non-technical reader, and is updated in the same increment as any change to installing, starting, updating or configuring the app.
 22. **Gap analysis is advisory and on demand.** It runs only when Eric starts it and never changes the map by itself. Internal findings carry evidence from every side they compare. External findings carry sources actually returned by the web search in the same request, pass the GX checks and the verifier, and are always provenance `R`. External research sends only an approved brief that has passed the confidentiality scan; transcripts, documents and map content are never sent to web search.
+23. **Sensemaking integrity (§3.12.9).** The SME's own meaning comes first: SME signifiers and terms are observed data; the model's interpretations of stories, patterns and work types are inferred and shown separately. Stories told once are kept and flagged, not discarded. Interview claims are tagged official, lived or unclear, and the interview is always labelled work-as-disclosed. Work types need quoted evidence cues. Natural talent and know-how are recorded at role level only. All UI copy, prompts and exports use non-blaming vocabulary. The As done view shows only what lived accounts or traces support; gaps are shown as "not described", never filled with invented steps.
 
 ## Code structure (PRD §3.2)
 - routers/: HTTP only; call exactly one action.
@@ -43,6 +44,17 @@ The files are the project memory. If chat memory and these files disagree, the f
 
 ## AI grounding (PRD §3.8)
 Every AI claim needs segment IDs, a verbatim quote and (if inferred) a basis. Claims failing segment, quote, number or role checks are rejected and logged, never shown on the map. No outside knowledge. Unknowns become questions, not elements. Confidence is computed with a breakdown, never self-reported. Names on the redaction list never appear outside the three owner-only screens. Gap analysis (§3.11) is advisory: it never changes the map; external findings must cite sources returned by the same search and pass GX1–GX6 and the verifier; web research sends only the approved, scan-clean brief.
+
+## Sensemaking (PRD §3.12, Appendices E and F)
+- Five lenses per interview: Flow, Stories, Know-how (ASHEN), Work type (Cynefin-informed), Reality gap (official · lived · documented · traced).
+- SME meaning first: SME signifiers and terms are observed; model interpretations are inferred and shown separately. Keep single-account stories.
+- Work type needs quoted cues; complex steps are judgment steps; complex or chaotic steps never carry automation flags.
+- Codebook tiers: invariants never change; conventions may be overridden with a reason; emergent themes are proposed, never forced.
+- Non-blaming vocabulary everywhere (banned-words test).
+- Interviews follow the Appendix F question bank; answers are anchored to question IDs; marker tags are hints confirmed by quotes; the label is the translation, the quote is the proof.
+- Standard interview templates (Appendix F.9; 60-minute Landscape and Practice, 30-minute Follow-up) are generated from question_bank.json only, in Word and Markdown.
+- Interview types (Landscape, Practice, Follow-up) follow Appendix F; decision information in/out stitches flows across interviews; strengths and weaknesses feed Preserve / Improve.
+- Two views: As done (default, lived and traced evidence only, "not described" connectors instead of invented steps) and As documented.
 
 ## UI (PRD §5)
 - Tokens only (shared/design_tokens.json → tokens.css). No raw colours in components or features.

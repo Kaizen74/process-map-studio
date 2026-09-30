@@ -1,0 +1,1215 @@
+{
+  "version": "1.0",
+  "source": "PRD_ProcessMapStudio.md v1.10, Appendix F (F.1-F.6, F.9)",
+  "note": "The single source of the interview questions (PRD §3.12.8, Appendix F). Wording is the PRD's, word for word; `lead_in` is the interviewer's cue before the spoken question and `note` a label, both kept apart so transcripts are matched on the spoken wording. Priority `core`: never dropped when a guide is shortened (F.8 rule 6); `standard`: dropped first.",
+  "principles": [
+    "Story before explanation. Ask what happened, not how it works. \"How does it work?\" gets the procedure; \"What happened last time?\" gets the practice.",
+    "Gather without judging. No analytical or evaluative questions early; collect what people actually decide and do, in their words.",
+    "Oblique before direct. For sensitive ground, ask for the story a new colleague should hear, not \"what goes wrong\".",
+    "Their words first. Note the SME's terms and reuse them in later questions (\"the inefficient disconnect, as you call it\"); never correct them.",
+    "\"What happened next?\" before \"why?\" Save \"why\" for the contrast movement (M6).",
+    "Silent listening. Don't fill pauses; the useful detail often follows one.",
+    "Follow a good story over the script. The close (M7) catches what's missed.",
+    "Documents last. Never mention the SOP's version before M6.",
+    "Present contrasts without evaluation. When playing back differences (M6, follow-ups, validation), describe them and let the SME draw the conclusion.",
+    "Session targets: at least three stories (went well, went badly, surprise); every decision deepened once; every handoff named; the timeline read back once; strengths as well as weaknesses."
+  ],
+  "opener": {
+    "record": "[RECORD THE SESSION — confirm consent]",
+    "text": "We're mapping the [end-to-end scope, e.g. from product planning to raw materials to supplier to logistics to customer fulfilment] for [business]. I understand your team plays a key role in [area], so [referrer role] suggested I speak with you to understand how it works from your perspective and where it fits in the broader chain. We're mapping how the work actually happens, not checking on anyone; nothing will be linked to your name.",
+    "follow_up": "Last time we covered [topics]; today I'd like to pick up where we left off.",
+    "note": "Use roles by default (\"the global contract holder\"); you may type personal names into your own copy. The guide is your working document and is never exported or sent anywhere."
+  },
+  "movements": [
+    {
+      "id": "L",
+      "name": "Landscape questions",
+      "minutes": null
+    },
+    {
+      "id": "M0",
+      "name": "Framing",
+      "minutes": 3
+    },
+    {
+      "id": "M1",
+      "name": "Open conversation",
+      "minutes": 6
+    },
+    {
+      "id": "M2",
+      "name": "The last real case: the As done spine",
+      "minutes": 14
+    },
+    {
+      "id": "M3",
+      "name": "Artefact walk-through (with the completed examples)",
+      "minutes": 6
+    },
+    {
+      "id": "M4",
+      "name": "Decisions: decision mapping and ASHEN",
+      "minutes": 12
+    },
+    {
+      "id": "M5",
+      "name": "Stories: prompting questions and the SME's own reading of them",
+      "minutes": 9
+    },
+    {
+      "id": "M6",
+      "name": "Contrast: official vs lived; now bring the documents",
+      "minutes": 6
+    },
+    {
+      "id": "M7",
+      "name": "Close: ask only what is still missing",
+      "minutes": 4
+    },
+    {
+      "id": "F",
+      "name": "Follow-up and reflective probes",
+      "minutes": null
+    }
+  ],
+  "questions": [
+    {
+      "id": "L1",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "Who are the core teams and individuals involved in [scope] from your side, and how are they structured?",
+      "probes": [
+        "Who do they report to?",
+        "Global, regional or local?"
+      ],
+      "targets": [
+        "Flow (roles, lanes)",
+        "structure"
+      ],
+      "translation": "Roles and lanes; reporting and global/regional notes",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "L2",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "What activities does each of these teams manage?",
+      "probes": [
+        "Which are the big ones by effort or risk?"
+      ],
+      "targets": [
+        "Flow (activities by team)"
+      ],
+      "translation": "Activities with Responsible roles (landscape level)",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "L3",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "How does your team interface with [adjacent functions]? Where do the handoffs happen?",
+      "probes": [
+        "What passes across — a document, a decision, a request?",
+        "What happens when it's late or unclear?"
+      ],
+      "targets": [
+        "Flow (interfaces, handoffs, information flows)"
+      ],
+      "translation": "Cross-lane edges with the information or artefact that passes; interface issues as constraints",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "L4",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "Where do the key decision rights sit — who decides, who must be consulted, who is told?",
+      "probes": [
+        "Does it always work that way?"
+      ],
+      "targets": [
+        "Flow (decision rights, RACI)"
+      ],
+      "translation": "Decisions and approvals with A, C, I; ownership mismatches",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "L5",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "Could you help me separate the activities your team manages from those of [other team]? Where do they overlap or fall between the two?",
+      "probes": [
+        "Who shows up to the supplier or customer?",
+        "Who is held accountable when it goes wrong?"
+      ],
+      "targets": [
+        "Flow (boundaries)",
+        "Reality gap"
+      ],
+      "translation": "Lane boundaries; overlaps and gaps flagged; shared delivery recorded as one Responsible plus Consulted, with a note",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "L6",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "What capability — skills, ways of working, systems or process — do you see as the biggest strength in how this is managed today? And the biggest weakness?",
+      "probes": [
+        "What should we keep no matter what?",
+        "Where does it hurt most?"
+      ],
+      "targets": [
+        "Capability (preserve / improve)"
+      ],
+      "translation": "Strengths to preserve and weaknesses to improve, each with a capability dimension (B.36); weaknesses also become constraints with a cause type",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "L7",
+      "movement": "L",
+      "lead_in": "",
+      "wording": "Where do you see the biggest risk in how this works today?",
+      "probes": [
+        "What would it take for that to happen?"
+      ],
+      "targets": [
+        "Reality gap",
+        "constraints"
+      ],
+      "translation": "Risk notes linked to steps and cause types",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M0.1",
+      "movement": "M0",
+      "lead_in": "",
+      "wording": "Opener (F.3)",
+      "probes": [],
+      "targets": [],
+      "translation": "Not extracted",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M0.2",
+      "movement": "M0",
+      "lead_in": "",
+      "wording": "What should I call your role, and what do the people around you call this piece of work?",
+      "probes": [
+        "Any nicknames for parts of it?"
+      ],
+      "targets": [
+        "Flow (role)",
+        "glossary"
+      ],
+      "translation": "Role alias; SME terms to glossary",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M1.1",
+      "movement": "M1",
+      "lead_in": "",
+      "wording": "Tell me about a normal shift in this work.",
+      "probes": [
+        "And then?",
+        "What's the busiest part?",
+        "How many of these in a day?"
+      ],
+      "targets": [
+        "Flow (phases, rhythm)",
+        "glossary"
+      ],
+      "translation": "Phase candidates in SME names; frequency and volume",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M1.2",
+      "movement": "M1",
+      "lead_in": "",
+      "wording": "What makes a good day different from a bad day?",
+      "probes": [
+        "What did a bad day look like last time?"
+      ],
+      "targets": [
+        "Stories",
+        "constraints",
+        "KPI proxies"
+      ],
+      "translation": "Constraints with cause type; KPI candidates; fragments",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M1.3",
+      "movement": "M1",
+      "lead_in": "",
+      "wording": "If a new colleague joined tomorrow, what's the one thing you'd make sure they understood?",
+      "probes": [
+        "What would they learn the hard way?"
+      ],
+      "targets": [
+        "Know-how (H, E)"
+      ],
+      "translation": "Heuristics and experience; knowledge risk",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M2.1",
+      "movement": "M2",
+      "lead_in": "",
+      "wording": "Think of the last time you did this from start to finish. What set it off?",
+      "probes": [
+        "How did you find out?"
+      ],
+      "targets": [
+        "Flow (trigger)"
+      ],
+      "translation": "Start event and trigger",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M2.2",
+      "movement": "M2",
+      "lead_in": "",
+      "wording": "Walk me through what happened, step by step, as it actually went.",
+      "probes": [
+        "What happened next?",
+        "Who did that?",
+        "What did you have in front of you?",
+        "Where did it go after you?"
+      ],
+      "targets": [
+        "Flow (lived sequence, roles, handoffs, artefacts, systems)"
+      ],
+      "translation": "Lived activities; explicit_order edges; cross-lane handoffs; artefacts in/out",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M2.3",
+      "movement": "M2",
+      "lead_in": "Read-back:",
+      "wording": "Let me play back the order I heard: [list]. What did I get wrong or leave out?",
+      "probes": [
+        "Anything in between you didn't mention?",
+        "If stuck, work backwards: \"Just before you finished, what had to be true?\""
+      ],
+      "targets": [
+        "Flow (sequence verification)"
+      ],
+      "translation": "Confirms or corrects edges; corrections outrank narration order",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M2.4",
+      "movement": "M2",
+      "lead_in": "",
+      "wording": "How long did each part take, and where were you waiting on someone or something?",
+      "probes": [
+        "What were you waiting for?",
+        "Is that usual?"
+      ],
+      "targets": [
+        "Flow (work and wait)"
+      ],
+      "translation": "work_min / wait_min on the receiving step",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M2.5",
+      "movement": "M2",
+      "lead_in": "",
+      "wording": "How did you know you were done, and who got the result?",
+      "probes": [
+        "What would they say if it was late or wrong?"
+      ],
+      "targets": [
+        "Flow (end, output, customer, KPI proxy)"
+      ],
+      "translation": "End event; KPI candidate",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M2.6",
+      "movement": "M2",
+      "lead_in": "",
+      "wording": "Was that case typical? What was the same as usual, what was different, and what surprised you?",
+      "probes": [
+        "What do you do instead when it's busy or something's missing?"
+      ],
+      "targets": [
+        "Flow (variation)",
+        "Stories",
+        "Reality gap"
+      ],
+      "translation": "Condition-based branch with the lived alternative, or typical responses for a complex step",
+      "note": "the standard question",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M3.1",
+      "movement": "M3",
+      "lead_in": "",
+      "wording": "Take me through this form. Who fills in each part, and when?",
+      "probes": [
+        "Who uses it after that?"
+      ],
+      "targets": [
+        "Flow",
+        "Reality gap (trace)"
+      ],
+      "translation": "Activities anchored to the artefact; trace stances",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M3.2",
+      "movement": "M3",
+      "lead_in": "",
+      "wording": "What do you check here, and what happens if it's blank or wrong?",
+      "probes": [
+        "Who fixes it?",
+        "How long does that add?"
+      ],
+      "targets": [
+        "Flow (controls, rework)"
+      ],
+      "translation": "Control notes; rework edges",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M3.3",
+      "movement": "M3",
+      "lead_in": "",
+      "wording": "Where does this go next, and does anyone sign it?",
+      "probes": [
+        "What if they're not around?"
+      ],
+      "targets": [
+        "Flow (handoff, approval, escalation)"
+      ],
+      "translation": "Handoff edges; approvals (Accountable role)",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M3.4",
+      "movement": "M3",
+      "lead_in": "On the exception example:",
+      "wording": "What happened on this one?",
+      "probes": [
+        "What was different?"
+      ],
+      "targets": [
+        "Flow (exception)",
+        "Stories"
+      ],
+      "translation": "Exception branch; fragment",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.0",
+      "movement": "M4",
+      "lead_in": "Decision sweep:",
+      "wording": "What decisions do you make daily? Weekly? Monthly? Once a year? Only when something unusual happens?",
+      "probes": [
+        "However small"
+      ],
+      "targets": [
+        "Flow (decision inventory, cadence)"
+      ],
+      "translation": "Decision list with cadence (B.37); chooses which to deepen (4–6 per session)",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.1",
+      "movement": "M4",
+      "lead_in": "For each chosen decision:",
+      "wording": "At that point, what were your options?",
+      "probes": [
+        "Any you ruled out?"
+      ],
+      "targets": [
+        "Flow (exits)"
+      ],
+      "translation": "Decision exits, all labelled",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.2",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "What information did you receive, and which of it did you actually pay attention to?",
+      "probes": [
+        "What would have made you go the other way?"
+      ],
+      "targets": [
+        "Flow (criteria, information in)",
+        "Work type (cues)"
+      ],
+      "translation": "Criteria or signals watched; information in; work-type cues",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.3",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "Is there a rule for this, or does it depend? On what?",
+      "probes": [
+        "How often does the rule not fit?"
+      ],
+      "targets": [
+        "Work type",
+        "Flow (rule vs judgment)"
+      ],
+      "translation": "Rule-based vs judgment; clear / complicated / complex cue",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.4",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "Who has the final say, whose advice do you seek, and who do you tell?",
+      "probes": [
+        "Who would you call if unsure?"
+      ],
+      "targets": [
+        "Flow (decider, RACI)",
+        "know-how network"
+      ],
+      "translation": "Decider; A, C, I; advice network",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.5",
+      "movement": "M4",
+      "lead_in": "ASHEN:",
+      "wording": "What did you use — documents, screens, tools? (A) · What would someone need to learn to do this well? (S) · Do you have a rule of thumb? (H) · Was there a time that taught you how to handle this? (E) · Does this role need a particular knack? (N, role level only)",
+      "probes": [
+        "Ask each once, in the SME's words"
+      ],
+      "targets": [
+        "Know-how"
+      ],
+      "translation": "ASHEN items; knowledge risk",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.6",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "How is the decision communicated or put into action, and who picks it up?",
+      "probes": [
+        "In what form — email, system, conversation?"
+      ],
+      "targets": [
+        "Flow (information out, handoff)"
+      ],
+      "translation": "Information out; downstream edge (used to stitch flows across interviews)",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.7",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "What information, if you had it, would make this decision better?",
+      "probes": [
+        "Who has it today?"
+      ],
+      "targets": [
+        "Reality gap",
+        "improvement"
+      ],
+      "translation": "Information wanted; improvement signal (kept in the SME's voice)",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M4.8",
+      "movement": "M4",
+      "lead_in": "",
+      "wording": "What would a new joiner probably get wrong here? What if the usual person were away?",
+      "probes": [
+        "What would you tell them?"
+      ],
+      "targets": [
+        "Know-how",
+        "K-RISK"
+      ],
+      "translation": "Heuristics; single points of knowledge",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M5.1",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "Tell me about a time this went really well.",
+      "probes": [],
+      "targets": [
+        "Stories"
+      ],
+      "translation": "Fragment (went well)",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.2",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "Tell me about a time it went badly, or nearly did.",
+      "probes": [],
+      "targets": [
+        "Stories"
+      ],
+      "translation": "Fragment (went badly)",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.3",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "Tell me about a time something surprised you.",
+      "probes": [],
+      "targets": [
+        "Stories"
+      ],
+      "translation": "Fragment (surprise)",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.4",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "What's a story people around here tell about this work?",
+      "probes": [],
+      "targets": [
+        "Stories",
+        "glossary"
+      ],
+      "translation": "Fragment; shared terms",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.s1",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?",
+      "probes": [],
+      "targets": [
+        "Work type (SME view)"
+      ],
+      "translation": "SME work-type signifier for the story",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.s2",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "How often does something like that happen?",
+      "probes": [],
+      "targets": [
+        "Stories"
+      ],
+      "translation": "Frequency",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.s3",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "Who ended up deciding?",
+      "probes": [],
+      "targets": [
+        "Flow (decision rights)"
+      ],
+      "translation": "Decider evidence",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.s4",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "In that moment, did you have too little freedom to act, about the right amount, or too much?",
+      "probes": [],
+      "targets": [
+        "Work type (constraints)"
+      ],
+      "translation": "Perceived constraint",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M5.s5",
+      "movement": "M5",
+      "lead_in": "",
+      "wording": "What would you want more of, and less of, next time?",
+      "probes": [],
+      "targets": [
+        "Reality gap (pressures)",
+        "capability"
+      ],
+      "translation": "Improvement signals and strengths, in the SME's voice",
+      "note": "More Like This, Less Like That",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M6.1",
+      "movement": "M6",
+      "lead_in": "",
+      "wording": "Earlier you described [step] as [SME's words]. Is that how it's meant to work?",
+      "probes": [],
+      "targets": [
+        "Reality gap"
+      ],
+      "translation": "Official account for the step",
+      "note": "",
+      "priority": "core",
+      "built_from": ""
+    },
+    {
+      "id": "M6.2",
+      "movement": "M6",
+      "lead_in": "",
+      "wording": "What does the procedure say here, as far as you know?",
+      "probes": [],
+      "targets": [
+        "Reality gap"
+      ],
+      "translation": "unknown_rule if the SME is unaware of the rule",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M6.3",
+      "movement": "M6",
+      "lead_in": "",
+      "wording": "What would happen if you followed it exactly, every time?",
+      "probes": [],
+      "targets": [
+        "Reality gap",
+        "Work type"
+      ],
+      "translation": "Consequences; constraint-mismatch cues",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M6.4",
+      "movement": "M6",
+      "lead_in": "",
+      "wording": "Why do people do it this way?",
+      "probes": [],
+      "targets": [
+        "Reality gap"
+      ],
+      "translation": "Stated reason → gap-class proposal and cause type",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M6.5",
+      "movement": "M6",
+      "lead_in": "SOP-derived (generator inserts, max 5):",
+      "wording": "The procedure mentions [e.g. plan approval by the lead]. Where does that happen in practice?",
+      "probes": [],
+      "targets": [
+        "Reality gap"
+      ],
+      "translation": "Resolves documented-only steps",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M6.6",
+      "movement": "M6",
+      "lead_in": "Constraints:",
+      "wording": "What stops you doing this the way you'd like? And what makes it possible to do it well?",
+      "probes": [],
+      "targets": [
+        "Work type (constraints)",
+        "capability"
+      ],
+      "translation": "Governing vs enabling constraints; strengths to preserve",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.1",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "How do you know this went well — what's measured, and who looks at it?",
+      "probes": [],
+      "targets": [
+        "Flow (KPI)"
+      ],
+      "translation": "Process and step KPIs",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.2",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "Who signs off, who must be consulted, and who just gets told?",
+      "probes": [],
+      "targets": [
+        "Flow (RACI)"
+      ],
+      "translation": "RACI gaps filled",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.3",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "How long does the whole thing take, typically and at worst?",
+      "probes": [],
+      "targets": [
+        "Flow (cycle time)"
+      ],
+      "translation": "Cycle-time evidence",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.4",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "What systems or tools do you use along the way?",
+      "probes": [],
+      "targets": [
+        "Flow (systems)"
+      ],
+      "translation": "Systems and artefacts",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.5",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "What should I have asked that I didn't?",
+      "probes": [],
+      "targets": [
+        "All"
+      ],
+      "translation": "Free extraction",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "M7.6",
+      "movement": "M7",
+      "lead_in": "",
+      "wording": "Who else should I talk to about this?",
+      "probes": [],
+      "targets": [
+        "Know-how (network)"
+      ],
+      "translation": "Next interview; knowledge network",
+      "note": "",
+      "priority": "standard",
+      "built_from": ""
+    },
+    {
+      "id": "F1",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "Going back to where we left off, could you help me separate the activities managed by [your team] versus [other team]?",
+      "probes": [],
+      "targets": [],
+      "translation": "Lane boundaries; RACI",
+      "note": "",
+      "priority": "standard",
+      "built_from": "Overlaps and boundary gaps from L5 or the map"
+    },
+    {
+      "id": "F2",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "You mentioned previously that [SME's own words, ≤ 20 words]. How do you manage that today, and where do you see the biggest risk?",
+      "probes": [],
+      "targets": [],
+      "translation": "Stated reasons; risks; cause types",
+      "note": "",
+      "priority": "standard",
+      "built_from": "Verified quotes carrying constraints, risks or stated reasons"
+    },
+    {
+      "id": "F3",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "You mentioned there's unclarity around accountabilities between [role A] and [role B]. Where is it not working well — for example at handoffs?",
+      "probes": [],
+      "targets": [],
+      "translation": "RACI; ownership findings",
+      "note": "",
+      "priority": "standard",
+      "built_from": "Ownership mismatches, contested A"
+    },
+    {
+      "id": "F4",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "On [activity], how does your team work with [other role's team]? It sounds like both show up together.",
+      "probes": [],
+      "targets": [],
+      "translation": "One Responsible plus Consulted; shared-delivery note",
+      "note": "",
+      "priority": "standard",
+      "built_from": "Shared or duplicated activities"
+    },
+    {
+      "id": "F5",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "On [step], the map currently shows a gap between [A] and [B]. What happens in between?",
+      "probes": [],
+      "targets": [],
+      "translation": "Fills gaps with lived evidence",
+      "note": "",
+      "priority": "standard",
+      "built_from": "\"Not described\" connectors"
+    },
+    {
+      "id": "F6",
+      "movement": "F",
+      "lead_in": "",
+      "wording": "[Validation question from the review workbench]",
+      "probes": [],
+      "targets": [],
+      "translation": "As per the question's element",
+      "note": "",
+      "priority": "standard",
+      "built_from": "Open validation questions"
+    }
+  ],
+  "templates": {
+    "landscape": {
+      "title": "Landscape",
+      "minutes": 60,
+      "who": "Team leads, contract holders, cross-functional owners (one per stakeholder group lead)",
+      "purpose": "The end-to-end picture: which teams, how structured, what each manages, interfaces and handoffs between them, where decision rights sit, capability strengths and weaknesses",
+      "sections": [
+        {
+          "label": "Opener and framing",
+          "minutes": 3,
+          "rows": [
+            "M0.1"
+          ]
+        },
+        {
+          "label": "L1–L2 teams, structure, activities",
+          "minutes": 10,
+          "rows": [
+            "L1",
+            "L2"
+          ]
+        },
+        {
+          "label": "L3–L5 interfaces, decision rights, boundaries",
+          "minutes": 20,
+          "rows": [
+            "L3",
+            "L4",
+            "L5"
+          ]
+        },
+        {
+          "label": "Role module (3–5 blank rows for the stakeholder group)",
+          "minutes": 8,
+          "rows": [],
+          "blank_rows": 4,
+          "note": "Add 3–5 questions for this stakeholder group from the L3–L5 wording, naming its specific interfaces and decisions."
+        },
+        {
+          "label": "L6–L7 strengths, weaknesses, risk",
+          "minutes": 8,
+          "rows": [
+            "L6",
+            "L7"
+          ]
+        },
+        {
+          "label": "Two stories with signifiers (M5.1–M5.2, M5.s1–s3)",
+          "minutes": 7,
+          "stories": [
+            "M5.1",
+            "M5.2"
+          ],
+          "signifiers": [
+            "M5.s1",
+            "M5.s2",
+            "M5.s3"
+          ]
+        },
+        {
+          "label": "Close (M7.1, M7.5, M7.6)",
+          "minutes": 4,
+          "rows": [
+            "M7.1",
+            "M7.5",
+            "M7.6"
+          ]
+        }
+      ]
+    },
+    "practice": {
+      "title": "Practice",
+      "minutes": 60,
+      "who": "People who do the work (one per person)",
+      "purpose": "The workflow as actually performed: steps, decisions, know-how, variations, official vs lived",
+      "sections": [
+        {
+          "label": "M0 — Framing",
+          "minutes": 3,
+          "rows": [
+            "M0.1",
+            "M0.2"
+          ]
+        },
+        {
+          "label": "M1 — Open conversation",
+          "minutes": 6,
+          "rows": [
+            "M1.1",
+            "M1.2",
+            "M1.3"
+          ]
+        },
+        {
+          "label": "M2 — The last real case: the As done spine",
+          "minutes": 14,
+          "rows": [
+            "M2.1",
+            "M2.2",
+            "M2.3",
+            "M2.4",
+            "M2.5",
+            "M2.6"
+          ]
+        },
+        {
+          "label": "M3 — Artefact walk-through (with the completed examples)",
+          "minutes": 6,
+          "rows": [
+            "M3.1",
+            "M3.2",
+            "M3.3",
+            "M3.4"
+          ]
+        },
+        {
+          "label": "M4 — Decisions: decision mapping and ASHEN",
+          "minutes": 12,
+          "rows": [
+            "M4.0",
+            "M4.1",
+            "M4.2",
+            "M4.3",
+            "M4.4",
+            "M4.5",
+            "M4.6",
+            "M4.7",
+            "M4.8"
+          ],
+          "note": "Start with the M4.0 sweep, then deepen 4–6 decisions in process order with M4.1–M4.8; the rest go to a follow-up."
+        },
+        {
+          "label": "M5 — Stories: prompting questions and the SME's own reading of them",
+          "minutes": 9,
+          "stories": [
+            "M5.1",
+            "M5.2",
+            "M5.3",
+            "M5.4"
+          ],
+          "signifiers": [
+            "M5.s1",
+            "M5.s2",
+            "M5.s3",
+            "M5.s4",
+            "M5.s5"
+          ]
+        },
+        {
+          "label": "M6 — Contrast: official vs lived; now bring the documents",
+          "minutes": 6,
+          "rows": [
+            "M6.1",
+            "M6.2",
+            "M6.3",
+            "M6.4",
+            "M6.5",
+            "M6.6"
+          ]
+        },
+        {
+          "label": "M7 — Close: ask only what is still missing",
+          "minutes": 4,
+          "rows": [
+            "M7.1",
+            "M7.2",
+            "M7.3",
+            "M7.4",
+            "M7.5",
+            "M7.6"
+          ]
+        }
+      ]
+    },
+    "follow_up": {
+      "title": "Follow-up",
+      "minutes": 30,
+      "who": "Anyone already interviewed",
+      "purpose": "Close gaps and test interpretations using the SME's own words",
+      "sections": [
+        {
+          "label": "Opener",
+          "minutes": 2,
+          "rows": [
+            "M0.1"
+          ],
+          "note": "Use the short opener with the follow-up line."
+        },
+        {
+          "label": "F-series with blank rows for reflective probes",
+          "minutes": 22,
+          "rows": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5",
+            "F6"
+          ],
+          "blank_rows": 5,
+          "note": "Reflective probes quote only verified claims, in the SME's own words (at most 20 words), never names of other people."
+        },
+        {
+          "label": "Close",
+          "minutes": 6,
+          "rows": [
+            "M7.1",
+            "M7.2",
+            "M7.3",
+            "M7.4",
+            "M7.5",
+            "M7.6"
+          ]
+        }
+      ]
+    }
+  },
+  "header_fields": [
+    "Engagement / process",
+    "Interviewee role",
+    "Stakeholder group",
+    "Date",
+    "Interviewer",
+    "Referred by (role)",
+    "Recording consent ☐"
+  ],
+  "coverage_checklist": [
+    "Trigger",
+    "End point",
+    "Handoffs",
+    "Decisions and criteria",
+    "Approvals",
+    "Exceptions",
+    "RACI",
+    "Work and wait time",
+    "KPIs",
+    "Artefacts",
+    "Know-how per decision",
+    "Three stories",
+    "Official vs lived",
+    "Strengths and weaknesses"
+  ],
+  "close_items": [
+    "Artefacts to send (three completed examples)",
+    "Who else to talk to",
+    "Follow-up date"
+  ],
+  "footer": "Say or note the question ID (e.g. [M2.2]) when you ask it — it helps the app link each answer to its question. Use roles, not names."
+}

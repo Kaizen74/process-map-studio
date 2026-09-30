@@ -247,6 +247,20 @@ Response `201`: term (`origin: "manual"`). Errors: `404`; `409 CONFLICT` ("That 
 ### DELETE /api/redaction-terms/{tid}
 Response `204`. Errors: `404` (also for confidential terms, which are edited on the scope card). Writes an audit row.
 
+## Interview templates (PRD v1.10 Appendix F.9, §4 Interview and sensemaking, §5.4) — phase P1
+
+Standard templates generated deterministically (no AI, no engagement data) from `backend/app/prompts/question_bank.json`, stamped with its version. Available before any engagement exists. The question bank is Appendix F word for word (a test compares them); wording changes need the PRD to change or a logged decision.
+
+### GET /api/templates/interview/plans
+What the home screen and the Interview screen show for each template (added 2026-09-30 so the screens never hold their own copy of the minute plans).
+Response `200`: `[{"type": "landscape" | "practice" | "follow_up", "title": "Landscape", "minutes": 60, "who": "…", "purpose": "…", "plan": [{"label": "Opener and framing", "minutes": 3}, …], "question_count": 16, "bank_version": "1.0"}]` in the order Landscape, Practice, Follow-up. Minute plans sum to 60 / 60 / 30.
+
+### GET /api/templates/interview?type=landscape|practice|follow_up&format=docx|md
+The template file. `docx`: Word (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`, made with python-docx, editable); `md`: Markdown (`text/markdown; charset=utf-8`). Both carry the same content in the F.9 layout: 1 title with the question-bank version; 2 header table to fill in (Engagement / process · Interviewee role · Stakeholder group · Date · Interviewer · Referred by (role) · Recording consent ☐); 3 [RECORD THE SESSION] and the F.3 opener with [bracketed] placeholders; 4 the minute plan; 5 interviewer principles (F.1); 6 one table per movement or plan section: ID · Question · Probes · Minutes · Notes (story sections repeat the signifier questions under each story); 7 coverage checklist with tick boxes; 8 close and next steps; 9 the question-ID footer ("Say or note the question ID (e.g. [M2.2]) when you ask it …"), on every page in Word and at the end in Markdown.
+- Minutes per question are the plan section's minutes shared in half minutes, core questions (never dropped, F.8 rule 6) counting double, so each section adds up exactly; a story's minutes include its signifier questions (their rows say "in story").
+- `Content-Disposition: attachment; filename="interview-template-practice.docx"` (or `.md`; `landscape`, `follow-up`).
+Errors: `422 VALIDATION` ("Choose landscape, practice or follow_up." · "Choose docx or md."). No personal names, no SOP claims before M6, no banned words (tests).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness
@@ -254,7 +268,7 @@ Response `200`:
 ```json
 {"key_set": true, "transcripts_ready": false, "documents_ready": true,
  "speakers_unmapped": 0, "draft_exists": false, "blockers_count": 0,
- "nav": {"setup": "done", "sources": "attention", "draft": "not_started", "review": "not_started",
+ "nav": {"setup": "done", "interview": "done", "sources": "attention", "draft": "not_started", "review": "not_started",
          "published": "not_started", "matrix": "not_started", "gap_analysis": "not_started",
          "registers": "not_started", "leadership": "not_started", "exports": "not_started"},
  "nav_counts": {"sources": 1},
@@ -271,7 +285,7 @@ Response `200`:
 - `missing`: plain-language list of what the draft still needs, in this order: API key · interview transcript · a process document still being read ("Wait for the process document to be read (…)") · each transcript with unmapped speakers ("Map 1 speaker in interview_transcript.txt"). Empty when `ready_to_draft` is true. File names are shown with names hidden.
 - `recommended` (from P12, Eric's decision 2026-09-29): what would make the map stronger but doesn't stop the draft: "Add a process document such as an SOP or manual" (or the job-description variant, or a document that couldn't be read). A draft from interviews alone is allowed.
 - `signal`: the signal strength of a draft made now, from the ready sources (`null` until an interview transcript is ready): `{"level": "strong" | "moderate" | "limited", "label": "Strong" | "Moderate" | "Limited", "score": 3 | 2 | 1, "detail": "…"}`. **Strong**: an interview and an SOP or manual. **Moderate**: an interview with only job descriptions, executed artefacts or other documents. **Limited**: interview transcripts only ("Built from interviews only. Every step is 'practiced only': confirm it with a document or another SME before relying on it.").
-- `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** done once anything was exported (P7).
+- `nav` status rules: **setup** done when trigger and end point are filled, otherwise not started. **interview** (PRD v1.10 §5.3, nav order Setup · Interview · Sources …; from 2026-09-30) done once an interview transcript has been uploaded (the interview has happened), otherwise not started; never attention. Until tailored guides exist (phase P4c) the Interview screen offers the standard templates. **sources** not started with no files; done when nothing source-related is missing and no file failed; otherwise attention, with `nav_counts.sources` = source items missing + failed files. **draft** done once a map version exists. **review** not started without a draft; done when every element of the latest version is reviewed and there are no blockers; otherwise attention with the number of elements left plus blockers. **published** and **leadership** done once a version is published. **matrix** and **registers** done once a draft exists (their content exists). **gap_analysis** done once a report is finalised. **exports** done once anything was exported (P7).
 - `nav_counts` has an entry only for items in `attention`.
 - `next_step`: the first item in nav order that isn't done, never `gap_analysis`; `null` when everything is done.
 

@@ -275,3 +275,116 @@ class GapStatus(StrEnum):
     DRAFT_REPORT = "draft_report"
     FINALISED = "finalised"
     FAILED = "failed"
+
+
+# --- PRD v1.10 sensemaking vocabularies (§3.12). Used from phases P4b and P4c. -------------
+
+
+class AccountType(StrEnum):
+    """B.28 account type."""
+
+    OFFICIAL = "official"
+    LIVED = "lived"
+    UNCLEAR = "unclear"
+
+
+class WorkType(StrEnum):
+    """B.29 work type."""
+
+    CLEAR = "clear"
+    COMPLICATED = "complicated"
+    COMPLEX = "complex"
+    CHAOTIC = "chaotic"
+    CONFUSED = "confused"
+    NOT_CLASSIFIED = "not_classified"
+
+
+class ConstraintType(StrEnum):
+    """B.30 constraint type."""
+
+    RIGID = "rigid"
+    GOVERNING = "governing"
+    ENABLING = "enabling"
+    ABSENT = "absent"
+
+
+class FragmentType(StrEnum):
+    """B.31 fragment type."""
+
+    RECENT_CASE = "recent_case"
+    WENT_WELL = "went_well"
+    WENT_BADLY = "went_badly"
+    SURPRISE = "surprise"
+    WORKAROUND = "workaround"
+    OTHER = "other"
+
+
+class GapClass(StrEnum):
+    """B.32 gap class."""
+
+    EFFECTIVE_ADAPTATION = "effective_adaptation"
+    RISKY_DRIFT = "risky_drift"
+    OBSOLETE_RULE = "obsolete_rule"
+    UNEXPLAINED = "unexplained"
+
+
+class AshenCategory(StrEnum):
+    """B.33 ASHEN category."""
+
+    ARTEFACTS = "artefacts"
+    SKILLS = "skills"
+    HEURISTICS = "heuristics"
+    EXPERIENCE = "experience"
+    NATURAL_TALENT = "natural_talent"
+
+
+class SequenceBasis(StrEnum):
+    """B.34 sequence basis."""
+
+    EXPLICIT_ORDER = "explicit_order"
+    DOCUMENT_ORDER = "document_order"
+    DEPENDENCY = "dependency"
+    NARRATION_ORDER = "narration_order"
+
+
+class ViewMembership(StrEnum):
+    """B.35 view membership."""
+
+    BOTH = "both"
+    DONE_ONLY = "done_only"
+    DOCUMENTED_ONLY = "documented_only"
+
+
+class CapabilityDimension(StrEnum):
+    """B.36 capability dimension."""
+
+    SKILLSET = "skillset"
+    WAYS_OF_WORKING = "ways_of_working"
+    SYSTEMS = "systems"
+    PROCESS = "process"
+    STRUCTURE = "structure"
+
+
+class DecisionCadence(StrEnum):
+    """B.37 decision cadence."""
+
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    ANNUALLY = "annually"
+    EXCEPTIONAL = "exceptional"
+
+
+class InterviewType(StrEnum):
+    """B.38 interview type."""
+
+    LANDSCAPE = "landscape"
+    PRACTICE = "practice"
+    FOLLOW_UP = "follow_up"
+
+
+class ElementLevel(StrEnum):
+    """B.39 element level."""
+
+    LANDSCAPE = "landscape"
+    PRACTICE = "practice"
