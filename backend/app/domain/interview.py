@@ -108,3 +108,44 @@ class TemplateSummary(BaseModel):
     plan: list[TemplatePlanRow]
     question_count: int = Field(description="Question IDs the template asks")
     bank_version: str
+
+
+# --- A generated interview document (standard template now; tailored guides from P4c) ------
+
+
+class DocumentRow(BaseModel):
+    """One row of a movement table: ID · Question · Probes · Minutes · Notes (notes left blank)."""
+
+    id: str = ""  # blank for rows the interviewer fills in (role module, reflective probes)
+    lead_in: str = ""
+    wording: str = ""
+    note: str = ""
+    probes: list[str] = []
+    minutes: str  # "2", "1½", "½", or "in story" for a signifier asked within a story
+    signifier: bool = False
+
+
+class DocumentTable(BaseModel):
+    label: str
+    minutes: int
+    note: str = ""
+    rows: list[DocumentRow]
+
+
+class InterviewDocument(BaseModel):
+    """Everything a template (or a tailored guide) prints, in the F.9 layout order."""
+
+    kind: InterviewType
+    title: str  # item 1
+    stamp: str  # item 1: question bank version · Process Map Studio
+    header_fields: list[str]  # item 2
+    record: str  # item 3
+    opener: list[str]
+    opener_note: str
+    minutes: int  # item 4
+    plan: list[TemplatePlanRow]
+    principles: list[str]  # item 5
+    tables: list[DocumentTable]  # item 6
+    coverage_checklist: list[str]  # item 7
+    close_items: list[str]  # item 8
+    footer: str  # item 9
