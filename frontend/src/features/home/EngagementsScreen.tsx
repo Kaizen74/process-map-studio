@@ -1,15 +1,41 @@
 import { useState } from "react";
 import type { EngagementSummary } from "../../api/types";
 import { Button, Card, EmptyState, ErrorState, Skeleton } from "../../components/common";
+import { TemplateList } from "../../components/interview";
 import { useEngagements } from "../../hooks/useEngagements";
 import { useSettings } from "../../hooks/useSettings";
+import { useTemplatePlans } from "../../hooks/useTemplates";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import { QUESTION_ID_TIP } from "../../lib/templates";
 import { DeleteEngagementDialog } from "./DeleteEngagementDialog";
 import { EngagementCard } from "./EngagementCard";
 import { FirstRunChecklist, type ChecklistStep } from "./FirstRunChecklist";
 import { NewEngagementDialog } from "./NewEngagementDialog";
 import "./home.css";
+
+/** The standard interview templates, available before any engagement exists (PRD v1.10 §5.4). */
+function InterviewTemplatesCard() {
+  const plans = useTemplatePlans();
+  return (
+    <Card
+      title="Interview templates"
+      description="The same questions, question IDs and minute plan for every interviewer. No engagement needed."
+    >
+      {plans.isPending && <Skeleton height="96px" />}
+      {plans.isError && (
+        <ErrorState
+          title="The interview templates couldn't be loaded"
+          message={messageOf(plans.error)}
+          details={copyDetailsOf(plans.error)}
+          onRetry={() => void plans.refetch()}
+        />
+      )}
+      {plans.data && <TemplateList templates={plans.data} />}
+      <p className="home-templates__tip">{QUESTION_ID_TIP}</p>
+    </Card>
+  );
+}
 
 /** Home: engagement cards and, on first run, the three-step checklist (PRD §5.4). */
 export function EngagementsScreen() {
@@ -91,6 +117,7 @@ export function EngagementsScreen() {
         />
       )}
       {firstRun && <FirstRunChecklist steps={steps} />}
+      <InterviewTemplatesCard />
 
       {engagements.isSuccess && list.length === 0 && (
         <EmptyState

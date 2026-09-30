@@ -80,7 +80,9 @@ def test_key_and_uploaded_word_sop(client: TestClient, engagement: str, env_file
     assert body["key_set"] is True and body["documents_ready"] is True
     assert body["nav"]["setup"] == "done"
     assert body["nav"]["sources"] == "attention" and body["nav_counts"] == {"sources": 1}
-    assert body["missing"] == [ADD_TRANSCRIPT] and body["next_step"] == "sources"
+    assert body["missing"] == [ADD_TRANSCRIPT]
+    # PRD v1.10: with no transcript yet, the interview comes next (Interview precedes Sources).
+    assert body["nav"]["interview"] == "not_started" and body["next_step"] == "interview"
 
 
 def test_a_read_transcript_is_ready_and_its_speakers_need_mapping(

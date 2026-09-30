@@ -53,6 +53,11 @@ test.describe("accessibility and offline assets", () => {
       await expect(page.getByRole("navigation", { name: "Engagement steps" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
 
+      // PRD v1.10 §5.4: the Interview screen's templates (always available).
+      await page.goto(`/engagements/${id}/interview`);
+      await expect(page.getByRole("region", { name: "Practice (60 min)" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
       const upload = await request.post(`/api/engagements/${id}/sources`, {
         multipart: { file: { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("[00:05] Interviewer: Hello") } },
       });

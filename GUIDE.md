@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-29 (version 1.0.0)*
+*Updated: 2026-09-30 (version 1.0.0, with the standard interview templates)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -16,14 +16,32 @@ With Process Map Studio you can start it, save your name and your Claude API key
 - Each engagement has a card: its name, its latest map version (or "No draft yet"), how many steps are reviewed, how many sources it has and when it last changed. Click anywhere on the card to open the engagement; the app takes you to the step that needs you next.
 - **New engagement** asks for a name (usually the process, for example "Aircraft load control") and opens its Setup screen.
 - **Delete** on a card asks first and says exactly what will be removed: the engagement, its source files, roles, drafts and published versions. This can't be undone.
+- **Interview templates** (a card on the home screen, always there, even before you create an engagement): the three standard interview templates, each with **Download Word** and **Download Markdown**. See "Interview templates, step by step" below.
+
+### Interview templates, step by step
+Every interviewer uses the same questions, the same question IDs and the same minute plan, so interviews are consistent and the app can link each answer to its question.
+1. Choose the template for the person you are interviewing:
+   - **Landscape (60 min)** for team leads, contract holders and cross-functional owners: which teams are involved, what each manages, the handoffs between them, who decides, strengths, weaknesses and risks.
+   - **Practice (60 min)** for the people who do the work: the last real case step by step, the forms they use, the decisions they make, stories, and how the work compares with the procedure (only at the end).
+   - **Follow-up (30 min)** for anyone you have already interviewed: blank rows for "You mentioned previously…" questions in their own words, then the close.
+2. Download it from the home screen card or from the engagement's **Interview** screen, as **Word** (to print or type into) or **Markdown**. Each template shows the question bank version at the top.
+3. Fill in the header table (engagement, the interviewee's **role**, stakeholder group, date, interviewer, who referred you) and tick **Recording consent** once they agree.
+4. Start with **[RECORD THE SESSION]** and read the opener; replace the [bracketed] parts with your scope and roles.
+5. Follow the minute plan. Each table lists the question **ID**, the question, follow-up **probes**, the suggested **minutes** and a **Notes** column for what you hear. In the story sections, ask the short questions under each story ("in story" means their time is inside the story's minutes).
+6. **Say or note the question ID when you ask it**, for example "[M2.2] Walk me through what happened, step by step." With the ID in the transcript, the app links each answer to the question that produced it; if you forget, it matches the question by its wording instead, as long as you read it close to the template.
+7. Use roles, not names ("the ramp supervisor", not a person's name). The documents and the SOP come in only at **M6** (Practice), so the SME describes the work as it really happens first.
+8. Tick the **coverage checklist** at the end and note the next steps: the three completed examples to send, who else to talk to and the follow-up date.
+9. Upload the recording's transcript on **Sources**; the **Interview** step in the top bar then shows as done.
 
 ### Inside an engagement: the guided path
-When an engagement is open, the top bar shows its name and ten steps: Setup · Sources · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Each has a small mark and a spoken label:
+When an engagement is open, the top bar shows its name and eleven steps: Setup · Interview · Sources · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Each has a small mark and a spoken label:
 - **filled circle:** done;
 - **ring with a number:** needs attention (the number says how many things to resolve);
 - **empty circle:** not started.
 
 The step to do next carries a **Next** tag. Gap analysis is marked **Optional** and is never suggested as next.
+
+**Interview** counts as done once an interview transcript has been uploaded; until then it is the next step after Setup, and its screen offers the three standard templates (tailored interview guides and a coverage report will be added there later).
 
 ### Setup, step by step
 1. **Process scope** (left card): check the **Engagement name**, then fill in the **Trigger** (what starts the process) and **End point** (what marks it as finished). Setup counts as done once both are filled.
@@ -189,14 +207,16 @@ A short message in the bottom-left confirms each save. If anything goes wrong, t
 A typical engagement, start to finish (each step has its own section above):
 1. **Settings** (once): save your name and your Claude API key, and click **Test connection**.
 2. **New engagement** on the home screen, then **Setup**: the trigger, the end point and the roles, in lane order.
-3. **Sources**: upload the interview transcripts, SOPs, manuals and job descriptions; map each speaker to a role and check the **Names to hide** list.
-4. **Draft**: click **Create draft map** and wait for the seven stages (a few minutes, depending on how much you uploaded).
-5. **Review**: confirm, edit, reject or add every step; take the **Questions** tab to your SME and come back with the answers; **Refresh draft from sources** after you add or correct a source.
-6. **Publish** when the quality card is green, then download what you need on **Exports**.
-7. When useful: **Matrix** and **Registers** to see where sources agree and where knowledge sits, **Gap analysis** for a second opinion, and **Leadership** to brief senior readers on a published map.
-8. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
+3. **Interview**: download a standard template, hold the interview with it and say each question ID as you ask it.
+4. **Sources**: upload the interview transcripts, SOPs, manuals and job descriptions; map each speaker to a role and check the **Names to hide** list.
+5. **Draft**: click **Create draft map** and wait for the seven stages (a few minutes, depending on how much you uploaded).
+6. **Review**: confirm, edit, reject or add every step; take the **Questions** tab to your SME and come back with the answers; **Refresh draft from sources** after you add or correct a source.
+7. **Publish** when the quality card is green, then download what you need on **Exports**.
+8. When useful: **Matrix** and **Registers** to see where sources agree and where knowledge sits, **Gap analysis** for a second opinion, and **Leadership** to brief senior readers on a published map.
+9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
 
 ## What changed recently
+- 2026-09-30: **Standard interview templates.** Landscape (60 min), Practice (60 min) and Follow-up (30 min) templates download as Word or Markdown from the home screen and from the new **Interview** step (between Setup and Sources), even before you create an engagement. Each has the same question IDs, probes and minute plan, notes space, a coverage checklist and a reminder to say the question ID when you ask it. The questions are the PRD's question bank word for word. The app now follows PRD v1.10.
 - 2026-09-29: **A draft with no steps explains itself.** If Claude finds nothing in your sources that describes a step and passes every check (for example a conversation that isn't about the process), the Draft screen now says so and suggests what to do (add a process document or another interview, check each speaker's role, draft again) instead of offering to review an empty map. A full offline test pass confirmed the rest of the app behaves as before, including a map drafted from an interview alone from draft to export.
 - 2026-09-29: **Interview-only drafts and signal strength.** You can now draft a map from interview transcripts alone; a process document is recommended rather than required. Every draft and version shows its **signal strength** (Strong, Moderate or Limited) in words and bars, never colour alone; a Limited map gets a quality-card warning (never a blocker), and the exports state the signal too. You approved the updated Review screenshots. Your interview with Pei Fen is now a test sample, kept exactly as Otter exported it, with every person's name hidden; a live check (run on request, one draft) maps it on its own and lists the steps in order, their lanes and the flow so you can judge how Claude organised the work.
 - 2026-09-29: **Otter.ai transcripts.** Text exports from Otter.ai (speaker and time on their own line, the words below) are now split into speaker turns with their times, like the other transcript formats.

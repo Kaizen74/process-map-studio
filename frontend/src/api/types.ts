@@ -91,6 +91,7 @@ export interface EngagementSummary extends Engagement {
 
 export type NavKey =
   | "setup"
+  | "interview"
   | "sources"
   | "draft"
   | "review"

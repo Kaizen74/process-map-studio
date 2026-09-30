@@ -628,3 +628,31 @@ test("interview only: draft, review and publish at Limited signal strength", asy
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
 });
+
+// PRD v1.10 F.9 and acceptance 77: the standard interview templates download from the home screen
+// as Word and Markdown, with no engagement needed; the Word file is a real .docx (a zip package).
+test("interview templates: download Word and Markdown from the home screen", async ({ page }) => {
+  await page.goto("/");
+  const card = page.getByRole("region", { name: "Interview templates" });
+  await expect(card.getByRole("list", { name: "Interview templates" }).getByRole("listitem")).toHaveCount(3);
+  expect(await seriousViolations(page)).toEqual([]);
+
+  const [word] = await Promise.all([
+    page.waitForEvent("download"),
+    card.getByRole("link", { name: "Download Word Practice interview template" }).click(),
+  ]);
+  expect(word.suggestedFilename()).toBe("interview-template-practice.docx");
+  const wordBytes = readFileSync(await word.path());
+  expect(wordBytes.subarray(0, 2).toString()).toBe("PK");
+
+  const [markdown] = await Promise.all([
+    page.waitForEvent("download"),
+    card.getByRole("link", { name: "Download Markdown Landscape interview template" }).click(),
+  ]);
+  expect(markdown.suggestedFilename()).toBe("interview-template-landscape.md");
+  const text = readFileSync(await markdown.path(), "utf-8");
+  expect(text.startsWith("# Landscape interview template\n\nQuestion bank v1.0 · Process Map Studio")).toBe(true);
+  expect(text).toContain("| **Total** | **60** |");
+  expect(text).toContain("| L3 |");
+  expect(text).toContain("Use roles, not names.");
+});

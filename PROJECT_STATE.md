@@ -13,8 +13,8 @@ Eric's feature prompt (PRD v1.10 §8). P0a and P0b are complete. The templates a
 - [x] Increment T2 — template generator service (explicit inputs: the bank and the type) and the Markdown renderer, layout items 1–9, per-question minutes that sum to the plan
 - [x] Increment T3 — Word renderer (python-docx; landscape A4, tall notes cells, footer on every page); reopen test; the three Word files in `docs/samples/` for Eric
 - [x] Increment T4 — template endpoints (router → one action), latency; question matcher (§3.12.10 Step A: explicit tag or wording ≥ 0.60) with the A.9 matching test re-run on template wording
-- [ ] Increment T5 — IN PROGRESS: UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
-- [ ] Increment T6 — waiting for Eric: approve the Word templates and the Markdown (then saved as golden baseline G9) and any changed Review screenshot; report card
+- [x] Increment T5 — UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
+- [ ] Increment T6 — IN PROGRESS, waiting for Eric: approve the Word templates and the Markdown (then saved as golden baseline G9) and any changed Review screenshot; report card
 
 ## Open from session 15 — Phase P12 (live run, polish and handover)
 P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §6.2 (the live test runs only when Eric asks). Parts that need Eric (his API key for the live run, approval of the final screenshots, creating the release on GitHub) come last so everything else is ready when he is.
