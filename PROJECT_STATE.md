@@ -16,7 +16,7 @@ Eric's feature prompt (PRD v1.10 §8). P0a and P0b are complete. The templates a
 - [x] Increment T5 — UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
 - [x] Increment T6 — Eric approved the Word templates, the Markdown and the new Review screenshots (2026-09-30): G9 golden baseline saved (`backend/tests/golden/G9_template_*.md`, compared byte for byte with each download) and the Review baselines replaced
 - [x] Increment D1 — AI instruction lock: every stage prompt and the question bank are pinned to a fingerprint per version, so their wording can't change without a new version and a DECISIONS.md line; banned-words scan extended to every stage prompt
-- [ ] Increment D2 — run record on every draft and gap analysis (model, effort, verifier, prompt versions, app version) and a drift warning before a refresh that would use something different; contract first, UI in the refresh dialog
+- [x] Increment D2 — run record on every draft and gap analysis (model, effort, verifier, prompt versions, app version) and a drift warning before a refresh that would use something different; contract first, UI in the refresh dialog
 - [ ] Increment D3 — refresh change report: what a refresh changed among steps not yet reviewed (new, no longer drafted, renamed), in the audit and on the Draft screen; then a full mock regression pass
 
 ## Open from session 15 — Phase P12 (live run, polish and handover)

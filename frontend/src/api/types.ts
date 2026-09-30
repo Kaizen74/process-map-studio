@@ -259,6 +259,22 @@ export interface DraftSummary {
   scrubbed: number;
 }
 
+/** How a draft or refresh was made (API_CONTRACT.md → Run record). */
+export interface RunRecord {
+  model: string;
+  effort: string | null;
+  verifier: boolean;
+  instructions: Record<string, string>;
+  app_version: string;
+}
+
+/** What a refresh would do differently from the run that made the draft (warn, never block). */
+export interface RefreshCheck {
+  made_with: RunRecord | null;
+  now: RunRecord;
+  changes: string[];
+}
+
 export interface DraftState {
   job: Job | null;
   version: Version | null;

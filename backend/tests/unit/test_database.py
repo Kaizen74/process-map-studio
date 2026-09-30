@@ -275,6 +275,22 @@ def test_downgrade_of_0009_removes_only_the_v1_10_tables_and_columns(migrated: P
     assert db.pending_migrations(migrated) == 0
 
 
+def test_downgrade_of_0010_removes_only_the_run_record(migrated: Path) -> None:
+    def version_columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        columns = {c["name"] for c in inspect(engine).get_columns("map_versions")}
+        engine.dispose()
+        return columns
+
+    before = version_columns()
+    db.downgrade(migrated, "0009")
+    assert before - version_columns() == {"run_record"}
+    assert "codebook_version" in version_columns()
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    assert "run_record" in version_columns()
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:

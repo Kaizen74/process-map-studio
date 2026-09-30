@@ -396,3 +396,16 @@ def current_map_id(session: Session, engagement_id: str) -> str | None:
         return draft.id
     published = latest_published(session, engagement_id)
     return str(published["id"]) if published else None
+
+
+def set_run_record(session: Session, version_id: str, record: dict[str, Any]) -> None:
+    """Stamp how the version's latest draft or refresh run was made (0010)."""
+    row = session.get(MapVersion, version_id)
+    if row is not None:
+        row.run_record = record
+        session.flush()
+
+
+def run_record(session: Session, version_id: str) -> dict[str, Any] | None:
+    row = session.get(MapVersion, version_id)
+    return dict(row.run_record) if row is not None and row.run_record else None

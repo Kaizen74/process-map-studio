@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import causes, redaction, refresh
+from app.actions import causes, redaction, refresh, run_records
 from app.actions import images as images_action
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
@@ -364,10 +364,13 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         raise
 
     kept_note = ""
+    record = run_records.made_with(ctx).model_dump()
     with session_scope(sessions) as session:
         if refreshing and earlier is not None:
+            before_record = versions.run_record(session, earlier.id)
             kept = refresh.fold(session, earlier.id, version.id)
             versions.set_label(session, earlier.id, version.label)
+            versions.set_run_record(session, earlier.id, record)
             versions.delete(session, version.id)
             audit.record(
                 session,
@@ -377,8 +380,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
                 target_id=earlier.id,
                 engagement_id=engagement_id,
                 version_id=earlier.id,
-                before={"label": earlier.label},
-                after={"label": version.label, "kept_steps": kept},
+                before={"label": earlier.label, "run_record": before_record},
+                after={"label": version.label, "kept_steps": kept, "run_record": record},
             )
             result_id = earlier.id
             kept_note = f" {_plural(kept, 'step')} you reviewed stayed as they were."
@@ -387,6 +390,7 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             for old in versions.drafts(session, engagement_id):
                 if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
                     versions.delete(session, old.id)
+            versions.set_run_record(session, version.id, record)
             result_id = version.id
         # PDF pictures suggested on the steps whose verified evidence cites their page (P8).
         images_action.attach_suggestions(session, result_id)

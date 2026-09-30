@@ -336,8 +336,23 @@ Used by: Draft screen (Create draft map, Retry).
 - Steps Eric confirmed, edited, added or rejected stay exactly as they are (constraint 8: locked steps are never written by a pipeline run; a rejection stands): same ID, fields, RACI, evidence and review status. A fresh step with the same key as one of them is dropped in its favour; the fresh lines into it point at it, and its own lines stay (a line whose other end was replaced follows the fresh step with the same key).
 - Every other step, line, phase, claim (and the rejected-claims register), gap, question and merge proposal is replaced by the fresh run. A question with exactly the same wording as one already answered stays answered.
 - The draft being refreshed stays visible on Review while the run builds (its temporary version has state `building` and is never listed). If a stage fails, nothing changes ("Nothing was saved.").
-- An audit row "Refreshed draft from sources" records the labels before and after and how many steps were kept.
+- An audit row "Refreshed draft from sources" records the labels before and after, how many steps were kept and the run records before and after (below).
 Errors: `404` ("That version doesn't exist."); `409` "Only the current draft can be refreshed." · "A draft map is already being made." · "The draft can't start yet: …" (readiness). Used by: Draft screen and Review (P6).
+
+**Run record (anti-drift, 2026-09-30).** Every draft and refresh stamps its version with how it was made: `{"model": "claude-…", "effort": "high" | null, "verifier": true, "instructions": {"S1_extract_interview": "1", …, "question_bank": "1.0"}, "app_version": "1.0.0"}` — `effort` as used (`null` when the model has no effort setting), `verifier` whether the independent verifier (S3b) ran, `instructions` the version of every stage prompt and of the question bank (each version pinned to its wording by the instruction lock). A draft made before this record existed has none (`null`).
+
+### GET /api/versions/{vid}/refresh-check
+What a refresh would do differently from the run that made this version, so drift between runs made at different times is visible before Eric starts one (warn, never block). Request: none; no AI call (the model's own capabilities aren't looked up).
+Response `200`:
+```json
+{"made_with": {"model": "claude-opus-5-5", "effort": "high", "verifier": true,
+               "instructions": {"S1_extract_interview": "1"}, "app_version": "1.0.0"},
+ "now": {"model": "claude-sonnet-5-5", "effort": "high", "verifier": false,
+         "instructions": {"S1_extract_interview": "1"}, "app_version": "1.0.0"},
+ "changes": ["The model changed: this draft was made with claude-opus-5-5; a refresh now uses claude-sonnet-5-5.",
+             "The independent verifier checked this draft, but it is now switched off in Settings, so fresh suggestions would reach the map without that second check."]}
+```
+`made_with` is the version's run record (`null` for a version drafted before run records existed, with `changes` then holding one line saying it can't be compared); `now` is what a refresh would use from Settings and the app's instructions today (`effort` as set in Settings); `changes` is `[]` when both match. Effort is compared only when both are known. Errors: `404` ("That version doesn't exist."). Used by: the Refresh draft dialog on Review.
 
 ### GET /api/engagements/{id}/draft
 The latest draft job and the current draft, so the Draft screen can pick up a running job after a reload.

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.actions import draft
-from app.domain.models import DraftStarted, DraftState, RejectedClaims
+from app.actions import draft, run_records
+from app.domain.models import DraftStarted, DraftState, RefreshCheck, RejectedClaims
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["draft"])
@@ -25,6 +25,12 @@ def start_refresh(request: Request, version_id: str) -> DraftStarted:
     return unwrap(
         draft.start_refresh(state.config, state.sessions, version_id, state.worker.submit)
     )
+
+
+@router.get("/versions/{version_id}/refresh-check")
+def refresh_check(request: Request, version_id: str) -> RefreshCheck:
+    state = request.app.state
+    return unwrap(run_records.refresh_check(state.config, state.sessions, version_id))
 
 
 @router.get("/engagements/{engagement_id}/draft")

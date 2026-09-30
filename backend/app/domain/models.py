@@ -497,6 +497,24 @@ class DraftStarted(BaseModel):
     job_id: str
 
 
+class RunRecord(BaseModel):
+    """How a draft or refresh was made (API_CONTRACT → Run record; anti-drift)."""
+
+    model: str
+    effort: str | None
+    verifier: bool
+    instructions: dict[str, str]  # prompt or question-bank name → version
+    app_version: str
+
+
+class RefreshCheck(BaseModel):
+    """What a refresh would do differently from the run that made the version (warn, not block)."""
+
+    made_with: RunRecord | None
+    now: RunRecord
+    changes: list[str]
+
+
 class RejectedClaim(BaseModel):
     id: str
     claim_text: str

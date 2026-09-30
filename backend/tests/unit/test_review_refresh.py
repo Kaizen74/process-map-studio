@@ -90,6 +90,10 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     assert len(refreshed) == 5
     row = drafted.audit()[0]
     assert row["action"] == "Refreshed draft from sources"
+    # Requirement change 2026-09-30 (run records): both runs' records are kept in the audit row.
+    made_with = row["before"].pop("run_record")
+    assert made_with is not None and made_with == row["after"].pop("run_record")
+    assert made_with["verifier"] is True and made_with["instructions"]["S1_extract_interview"]
     assert (row["before"], row["after"]) == ({"label": "v0.1"}, {"label": "v0.2", "kept_steps": 4})
     cards = drafted.client.get("/api/engagements").json()
     [card] = [c for c in cards if c["id"] == drafted.engagement_id]

@@ -174,6 +174,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/graph", None),
     ("GET", "/api/versions/{map}/layout", None),
     ("GET", "/api/versions/{map}/lint", None),
+    ("GET", "/api/versions/{map}/refresh-check", None),
     ("GET", "/api/versions/{map}/quality-card", None),
     ("GET", "/api/versions/{map}", None),
     ("GET", "/api/engagements/{eid}/versions", None),
