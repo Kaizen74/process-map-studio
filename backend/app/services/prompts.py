@@ -8,6 +8,7 @@ data to analyse, never instructions (G9). No database access.
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Sequence
 from pathlib import Path
@@ -32,6 +33,30 @@ def load_prompt(name: str, prompts_dir: Path = PROMPTS_DIR) -> Result[Prompt]:
     if header is None or header.group("name") != name:
         return Err(ErrorKind.IO, "A stage prompt has no version line.", {"prompt": name})
     return Ok(Prompt(name=name, version=header.group("version"), text=raw[header.end() :].strip()))
+
+
+def instruction_version(path: Path) -> str | None:
+    """The version of an instruction file: a prompt's version line, or the `version` field of a
+    JSON file such as the question bank; None if it has none or can't be read."""
+    try:
+        raw = path.read_text(encoding="utf-8")
+        if path.suffix == ".json":
+            version = json.loads(raw).get("version")
+            return str(version) if version else None
+    except (OSError, ValueError, AttributeError):
+        return None
+    header = _HEADER.match(raw)
+    return header.group("version") if header else None
+
+
+def instruction_versions(prompts_dir: Path = PROMPTS_DIR) -> dict[str, str]:
+    """Every instruction file's version by name (`S1_extract_interview`, `question_bank`): what a
+    run was made with, stamped on its run record so later runs can be compared."""
+    return {
+        p.stem: version
+        for p in sorted(prompts_dir.iterdir())
+        if p.suffix in (".md", ".json") and (version := instruction_version(p))
+    }
 
 
 def escape(text: str) -> str:
