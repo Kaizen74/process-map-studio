@@ -275,10 +275,19 @@ export interface RefreshCheck {
   changes: string[];
 }
 
+/** What a refresh changed among the steps not yet reviewed (API_CONTRACT.md → refresh). */
+export interface RefreshChanges {
+  kept: number;
+  new_steps: string[];
+  no_longer_drafted: string[];
+  renamed: { before: string; after: string }[];
+}
+
 export interface DraftState {
   job: Job | null;
   version: Version | null;
   summary: DraftSummary | null;
+  last_refresh?: RefreshChanges | null;
 }
 
 export interface AiUsageRow {

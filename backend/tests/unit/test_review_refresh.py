@@ -11,6 +11,7 @@ import pytest
 
 from app.db import session_scope
 from app.domain.result import Err, ErrorKind
+from app.repositories import elements as map_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
 from tests.unit.test_review_actions import Drafted, drafted
@@ -52,7 +53,11 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     job = refresh(drafted)
     assert job["status"] == "done", job
     assert job["type"] == "refresh" and job["target_id"] == drafted.version_id
-    assert job["message"].endswith("4 steps you reviewed stayed as they were.")
+    # Requirement change 2026-09-30: the message also says what changed among unreviewed steps.
+    assert job["message"].endswith(
+        "4 steps you reviewed stayed as they were. "
+        "The steps you hadn't reviewed came out the same as before."
+    )
 
     # Same draft, next number; the claims behind the dropped twins aren't counted twice.
     state = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/draft").json()
@@ -91,6 +96,9 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     row = drafted.audit()[0]
     assert row["action"] == "Refreshed draft from sources"
     # Requirement change 2026-09-30 (run records): both runs' records are kept in the audit row.
+    assert row["after"].pop("changes") == {
+        "kept": 4, "new_steps": [], "no_longer_drafted": [], "renamed": []
+    }  # fmt: skip
     made_with = row["before"].pop("run_record")
     assert made_with is not None and made_with == row["after"].pop("run_record")
     assert made_with["verifier"] is True and made_with["instructions"]["S1_extract_interview"]
@@ -98,6 +106,38 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     cards = drafted.client.get("/api/engagements").json()
     [card] = [c for c in cards if c["id"] == drafted.engagement_id]
     assert card["latest_version"]["label"] == "v0.2"
+
+
+def test_the_refresh_says_what_it_drafted_differently_among_unreviewed_steps(
+    drafted: Drafted,
+) -> None:
+    """Drift between runs made at different times is shown, never silent: the earlier run is
+    made to differ (one step named otherwise, one under a key the fresh run doesn't draft)."""
+    drafted.act("Draft load plan", "confirm")
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        map_repo.update_element(session, drafted.ids["Special loads OK?"], {"label": "Loads OK?"})
+        map_repo.update_element(
+            session, drafted.ids["Approve deviation"], {"stable_key": "an-older-step"}
+        )
+    state = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/draft").json()
+    assert state["last_refresh"] is None  # the newest job is the draft, not a refresh
+
+    job = refresh(drafted)
+    assert job["status"] == "done", job
+    assert job["message"].endswith(
+        "1 step you reviewed stayed as they were. Among the steps you hadn't reviewed: "
+        "1 new step, 1 step no longer drafted, 1 renamed."
+    )
+    expected = {
+        "kept": 1,
+        "new_steps": ["Approve deviation"],
+        "no_longer_drafted": ["Approve deviation"],
+        "renamed": [{"before": "Loads OK?", "after": "Special loads OK?"}],
+    }
+    state = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/draft").json()
+    assert state["last_refresh"] == expected
+    assert drafted.audit()[0]["after"]["changes"] == expected
 
 
 def test_a_failed_refresh_changes_nothing(

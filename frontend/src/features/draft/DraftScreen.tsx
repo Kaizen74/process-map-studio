@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import type { DraftState, Job, Readiness, SignalStrength } from "../../api/types";
+import type { DraftState, Job, Readiness, RefreshChanges, SignalStrength } from "../../api/types";
 import { Button, Card, Chip, ErrorState, SignalMeter, Skeleton } from "../../components/common";
 import { useDraft, useStartDraft } from "../../hooks/useDraft";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
@@ -112,6 +112,38 @@ function Progress({ job }: { job: Job }) {
   );
 }
 
+/** What the latest refresh drafted differently: drift between runs is shown, never silent. */
+function RefreshChangesNote({ changes }: { changes: RefreshChanges }) {
+  const same = changes.new_steps.length + changes.no_longer_drafted.length + changes.renamed.length === 0;
+  return (
+    <section className="draft-refresh" aria-labelledby="draft-refresh-title">
+      <h3 id="draft-refresh-title">What the refresh changed</h3>
+      <p>
+        {changes.kept === 0
+          ? "You hadn't reviewed any steps, so every step was drafted again."
+          : `The ${plural(changes.kept, "step")} you reviewed stayed exactly as they were.`}
+      </p>
+      {same ? (
+        <p>The steps you hadn't reviewed came out the same as before.</p>
+      ) : (
+        <>
+          <p>Among the steps you hadn't reviewed, compared with the draft before the refresh:</p>
+          <ul className="how-to">
+            {changes.new_steps.length > 0 && <li>New: {changes.new_steps.join(", ")}</li>}
+            {changes.no_longer_drafted.length > 0 && (
+              <li>No longer drafted: {changes.no_longer_drafted.join(", ")}</li>
+            )}
+            {changes.renamed.length > 0 && (
+              <li>Renamed: {changes.renamed.map((r) => `${r.before} → ${r.after}`).join(", ")}</li>
+            )}
+          </ul>
+          <p className="draft-note">Look at these on the map before you confirm them.</p>
+        </>
+      )}
+    </section>
+  );
+}
+
 function Summary({
   engagementId,
   state,
@@ -151,6 +183,7 @@ function Summary({
           <SignalMeter signal={signal} />
         </div>
       )}
+      {state.last_refresh && <RefreshChangesNote changes={state.last_refresh} />}
       {summary.steps === 0 ? (
         <p className="draft-missing" role="status">
           No steps could be drafted: nothing in these sources described a step that passed every check. Add a process

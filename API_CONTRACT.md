@@ -336,7 +336,8 @@ Used by: Draft screen (Create draft map, Retry).
 - Steps Eric confirmed, edited, added or rejected stay exactly as they are (constraint 8: locked steps are never written by a pipeline run; a rejection stands): same ID, fields, RACI, evidence and review status. A fresh step with the same key as one of them is dropped in its favour; the fresh lines into it point at it, and its own lines stay (a line whose other end was replaced follows the fresh step with the same key).
 - Every other step, line, phase, claim (and the rejected-claims register), gap, question and merge proposal is replaced by the fresh run. A question with exactly the same wording as one already answered stays answered.
 - The draft being refreshed stays visible on Review while the run builds (its temporary version has state `building` and is never listed). If a stage fails, nothing changes ("Nothing was saved.").
-- An audit row "Refreshed draft from sources" records the labels before and after, how many steps were kept and the run records before and after (below).
+- An audit row "Refreshed draft from sources" records the labels before and after, how many steps were kept, the run records before and after (below) and `changes` (below).
+- **What the refresh changed (anti-drift, 2026-09-30):** among the steps Eric hadn't reviewed, compared by step key with the draft before the refresh: `{"kept": 4, "new_steps": ["Check fuel figures"], "no_longer_drafted": ["Brief the crew"], "renamed": [{"before": "Issue load sheet", "after": "Issue final load sheet"}]}` (activities, decisions and approvals only; labels in process order, names hidden). It is in the audit row's `after.changes`, in the job's message, and on `GET /engagements/{id}/draft` as `last_refresh` so the Draft screen shows it.
 Errors: `404` ("That version doesn't exist."); `409` "Only the current draft can be refreshed." · "A draft map is already being made." · "The draft can't start yet: …" (readiness). Used by: Draft screen and Review (P6).
 
 **Run record (anti-drift, 2026-09-30).** Every draft and refresh stamps its version with how it was made: `{"model": "claude-…", "effort": "high" | null, "verifier": true, "instructions": {"S1_extract_interview": "1", …, "question_bank": "1.0"}, "app_version": "1.0.0"}` — `effort` as used (`null` when the model has no effort setting), `verifier` whether the independent verifier (S3b) ran, `instructions` the version of every stage prompt and of the question bank (each version pinned to its wording by the instruction lock). A draft made before this record existed has none (`null`).
@@ -361,10 +362,11 @@ Response `200`:
 {"job": {"…": "job object as GET /api/jobs/{job_id}"},
  "version": {"id": "…", "label": "v0.1", "state": "draft", "created_at": "…"},
  "summary": {"steps": 8, "needs_check": 0, "verified": 21, "rejected": 0,
-             "open_questions": 5, "scrubbed": 0}}
+             "open_questions": 5, "scrubbed": 0},
+ "last_refresh": null}
 ```
 `job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `steps`: activities, decisions and approvals on the draft; `needs_check`: steps the independent verifier found only partly supported; `verified` / `rejected`: claims; `open_questions`: validation questions still open (including every gap Claude raised); `scrubbed`: names replaced by roles in Claude's answers.
-`job` is the newest draft or refresh job. Errors: `404`. Used by: Draft screen.
+`job` is the newest draft or refresh job. `last_refresh` (2026-09-30): what the refresh changed, as in the refresh audit row's `after.changes`, when `job` is a finished refresh of the current draft; otherwise `null`. Errors: `404`. Used by: Draft screen.
 
 ### GET /api/versions/{vid}/graph
 The version's map as the graph of PRD §3.6 (also the future `.json` export): `version`, `process` (name, trigger, end point, KPI, `cycle_time: {elapsed_min, work_min, incomplete_steps}` along the main path), `roles`, `phases`, `elements`, `edges` (`from`, `to`, `kind`, `label`).

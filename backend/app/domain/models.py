@@ -485,12 +485,27 @@ class DraftSummary(BaseModel):
     scrubbed: int
 
 
+class StepRename(BaseModel):
+    before: str
+    after: str
+
+
+class RefreshChanges(BaseModel):
+    """What a refresh changed among the steps Eric hadn't reviewed (anti-drift)."""
+
+    kept: int
+    new_steps: list[str] = []
+    no_longer_drafted: list[str] = []
+    renamed: list[StepRename] = []
+
+
 class DraftState(BaseModel):
     """GET /engagements/{id}/draft: the latest draft job and the current draft."""
 
     job: JobView | None
     version: VersionView | None
     summary: DraftSummary | None
+    last_refresh: RefreshChanges | None = None
 
 
 class DraftStarted(BaseModel):

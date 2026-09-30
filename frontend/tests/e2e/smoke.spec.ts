@@ -278,9 +278,15 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Refresh draft from sources" }).click();
     const refresh = page.getByRole("dialog", { name: "Refresh draft from sources" });
     await expect(refresh).toContainText("The 8 steps you confirmed, edited, added or rejected stay exactly as they are.");
+    // Anti-drift: nothing changed in Settings or the instructions since the draft was made.
+    await expect(refresh).toContainText("Claude's model, settings and instructions are the same as when this draft was made.");
     expect(await seriousViolations(page)).toEqual([]);
     await refresh.getByRole("button", { name: "Refresh draft" }).click();
     await expect(page.getByRole("region", { name: "Draft v0.2" })).toBeVisible({ timeout: 30_000 });
+    const changed = page.getByRole("region", { name: "What the refresh changed" });
+    await expect(changed).toContainText("The 8 steps you reviewed stayed exactly as they were.");
+    await expect(changed).toContainText("The steps you hadn't reviewed came out the same as before.");
+    expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("region", { name: "Draft v0.2" }).getByRole("link", { name: "Start reviewing" }).click();
     await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
     await expect(page.getByText("All steps reviewed")).toBeVisible();

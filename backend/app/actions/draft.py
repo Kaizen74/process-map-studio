@@ -27,6 +27,7 @@ from app.domain.models import (
     JobClaims,
     JobStage,
     JobView,
+    RefreshChanges,
     RejectedClaim,
     RejectedClaims,
     VersionView,
@@ -368,7 +369,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
     with session_scope(sessions) as session:
         if refreshing and earlier is not None:
             before_record = versions.run_record(session, earlier.id)
-            kept = refresh.fold(session, earlier.id, version.id)
+            changed = refresh.fold(session, earlier.id, version.id)
+            kept = changed.kept
             versions.set_label(session, earlier.id, version.label)
             versions.set_run_record(session, earlier.id, record)
             versions.delete(session, version.id)
@@ -381,10 +383,17 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
                 engagement_id=engagement_id,
                 version_id=earlier.id,
                 before={"label": earlier.label, "run_record": before_record},
-                after={"label": version.label, "kept_steps": kept, "run_record": record},
+                after={
+                    "label": version.label,
+                    "kept_steps": kept,
+                    "run_record": record,
+                    "changes": changed.model_dump(),
+                },
             )
             result_id = earlier.id
-            kept_note = f" {_plural(kept, 'step')} you reviewed stayed as they were."
+            kept_note = (
+                f" {_plural(kept, 'step')} you reviewed stayed as they were. {_changed(changed)}"
+            )
         else:
             # The new draft replaces an earlier one none of whose steps has been reviewed yet.
             for old in versions.drafts(session, engagement_id):
@@ -408,6 +417,35 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
 
 
 # --- Reporting ---------------------------------------------------------------------------------
+
+
+def _changed(changed: RefreshChanges) -> str:
+    """What the refresh drafted differently among the steps not yet reviewed, in one sentence."""
+    parts = [
+        f"{_plural(len(changed.new_steps), 'new step')}" if changed.new_steps else "",
+        f"{_plural(len(changed.no_longer_drafted), 'step')} no longer drafted"
+        if changed.no_longer_drafted
+        else "",
+        f"{len(changed.renamed)} renamed" if changed.renamed else "",
+    ]
+    listed = [p for p in parts if p]
+    if not listed:
+        return "The steps you hadn't reviewed came out the same as before."
+    return f"Among the steps you hadn't reviewed: {', '.join(listed)}."
+
+
+def last_refresh(session: Session, job: JobView | None, version_id: str) -> RefreshChanges | None:
+    """What the latest refresh changed, when the newest map job is a finished refresh of this
+    draft (from its audit row)."""
+    if job is None or job.type != REFRESH_JOB or job.status != "done":
+        return None
+    if job.target_id != version_id:
+        return None
+    for row in audit.list_for_version(session, version_id):
+        if row["action"] == "Refreshed draft from sources":
+            stored = (row["after"] or {}).get("changes")
+            return RefreshChanges.model_validate(stored) if stored else None
+    return None
 
 
 def _summary(session: Session, version_id: str) -> DraftSummary:
@@ -455,6 +493,7 @@ def get_draft(sessions: Sessions, engagement_id: str) -> Result[DraftState]:
                 job=with_progress(session, job) if job else None,
                 version=current,
                 summary=_summary(session, current.id) if current else None,
+                last_refresh=last_refresh(session, job, current.id) if current else None,
             )
         )
 

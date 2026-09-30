@@ -139,6 +139,7 @@ def test_an_empty_draft_state_before_the_first_draft(client: TestClient) -> None
         "job": None,
         "version": None,
         "summary": None,
+        "last_refresh": None,  # 2026-09-30: what a refresh changed (API_CONTRACT → Draft)
     }
 
 

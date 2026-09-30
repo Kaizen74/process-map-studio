@@ -271,6 +271,44 @@ describe("Draft screen", () => {
     expect(within(summary).queryByRole("link", { name: "Start reviewing" })).toBeNull();
   });
 
+  it("says what a refresh drafted differently among the steps not yet reviewed", async () => {
+    draftApi({
+      ...DONE,
+      job: { ...(DONE.job as Job), type: "refresh" },
+      last_refresh: {
+        kept: 2,
+        new_steps: ["Approve deviation"],
+        no_longer_drafted: ["Brief the crew"],
+        renamed: [{ before: "Loads OK?", after: "Special loads OK?" }],
+      },
+    });
+    renderApp(PATH);
+    const summary = await screen.findByRole("region", { name: "Draft v0.1" });
+    const note = within(summary).getByRole("region", { name: "What the refresh changed" });
+    expect(note).toHaveTextContent("The 2 steps you reviewed stayed exactly as they were.");
+    expect(within(note).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "New: Approve deviation",
+      "No longer drafted: Brief the crew",
+      "Renamed: Loads OK? → Special loads OK?",
+    ]);
+    expect(note).toHaveTextContent("Look at these on the map before you confirm them.");
+    expect(await seriousViolations(document.body)).toEqual([]);
+  });
+
+  it("says a refresh changed nothing among unreviewed steps, and shows no note after a plain draft", async () => {
+    draftApi({ ...DONE, last_refresh: { kept: 0, new_steps: [], no_longer_drafted: [], renamed: [] } });
+    const { unmount } = renderApp(PATH);
+    const note = await screen.findByRole("region", { name: "What the refresh changed" });
+    expect(note).toHaveTextContent("You hadn't reviewed any steps, so every step was drafted again.");
+    expect(note).toHaveTextContent("The steps you hadn't reviewed came out the same as before.");
+    expect(within(note).queryByRole("list")).toBeNull();
+    unmount();
+    draftApi(DONE);
+    renderApp(PATH);
+    await screen.findByRole("region", { name: "Draft v0.1" });
+    expect(screen.queryByRole("region", { name: "What the refresh changed" })).toBeNull();
+  });
+
   it("says so when no claims were rejected", async () => {
     draftApi(DONE, {
       "GET /api/versions/v1/rejected-claims": () => ({
