@@ -14,7 +14,10 @@ Eric's feature prompt (PRD v1.10 §8). P0a and P0b are complete. The templates a
 - [x] Increment T3 — Word renderer (python-docx; landscape A4, tall notes cells, footer on every page); reopen test; the three Word files in `docs/samples/` for Eric
 - [x] Increment T4 — template endpoints (router → one action), latency; question matcher (§3.12.10 Step A: explicit tag or wording ≥ 0.60) with the A.9 matching test re-run on template wording
 - [x] Increment T5 — UI: Interview templates card on Home, Interview screen (Templates tab) and Interview in the guided path; component tests, axe, browser test; README (Everyday use) and GUIDE
-- [ ] Increment T6 — IN PROGRESS, waiting for Eric: approve the Word templates and the Markdown (then saved as golden baseline G9) and any changed Review screenshot; report card
+- [x] Increment T6 — Eric approved the Word templates, the Markdown and the new Review screenshots (2026-09-30): G9 golden baseline saved (`backend/tests/golden/G9_template_*.md`, compared byte for byte with each download) and the Review baselines replaced
+- [ ] Increment D1 — AI instruction lock: every stage prompt and the question bank are pinned to a fingerprint per version, so their wording can't change without a new version and a DECISIONS.md line; banned-words scan extended to every stage prompt
+- [ ] Increment D2 — run record on every draft and gap analysis (model, effort, verifier, prompt versions, app version) and a drift warning before a refresh that would use something different; contract first, UI in the refresh dialog
+- [ ] Increment D3 — refresh change report: what a refresh changed among steps not yet reviewed (new, no longer drafted, renamed), in the audit and on the Draft screen; then a full mock regression pass
 
 ## Open from session 15 — Phase P12 (live run, polish and handover)
 P12 follows PRD §6.3 P12, §3.10 (clean-clone rehearsal, v1.0.0 release) and §6.2 (the live test runs only when Eric asks). Parts that need Eric (his API key for the live run, approval of the final screenshots, creating the release on GitHub) come last so everything else is ready when he is.
