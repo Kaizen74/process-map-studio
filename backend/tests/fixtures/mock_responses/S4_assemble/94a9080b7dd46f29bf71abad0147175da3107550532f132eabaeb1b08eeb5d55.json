@@ -13,16 +13,18 @@
       "step_refs": [
         "e2",
         "e3",
-        "e4"
+        "e4",
+        "e5",
+        "e6"
       ]
     },
     {
       "name": "Close out",
       "time_window": "T-15 to T-10",
       "step_refs": [
-        "e5",
-        "e6",
-        "e7"
+        "e7",
+        "e8",
+        "e9"
       ]
     }
   ],
@@ -62,7 +64,19 @@
           ]
         }
       ],
-      "ai_flags": []
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
       "step_ref": "e2",
@@ -103,7 +117,19 @@
           "handoff": "Load controller",
           "basis": "rule_based_automate_candidate"
         }
-      ]
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
       "step_ref": "e3",
@@ -131,7 +157,19 @@
       ],
       "k_risk": "",
       "constraints": [],
-      "ai_flags": []
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
       "step_ref": "e4",
@@ -184,10 +222,22 @@
           "handoff": "Load controller",
           "basis": "rule_based_automate_candidate"
         }
-      ]
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
-      "step_ref": "e5",
+      "step_ref": "e7",
       "claim_refs": [],
       "decision_mechanism": "judgment",
       "decider_role": "Load controller",
@@ -212,10 +262,22 @@
       ],
       "k_risk": "",
       "constraints": [],
-      "ai_flags": []
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
-      "step_ref": "e6",
+      "step_ref": "e8",
       "claim_refs": [],
       "decision_mechanism": "judgment",
       "decider_role": "",
@@ -236,10 +298,22 @@
       ],
       "k_risk": "",
       "constraints": [],
-      "ai_flags": []
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     },
     {
-      "step_ref": "e7",
+      "step_ref": "e9",
       "claim_refs": [],
       "decision_mechanism": "none",
       "decider_role": "",
@@ -272,7 +346,99 @@
           "handoff": "Captain",
           "basis": "rule_based_automate_candidate"
         }
-      ]
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e5",
+      "claim_refs": [],
+      "decision_mechanism": "rule_based",
+      "decider_role": "Load controller",
+      "rule_or_threshold": "On a busy wave",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e6",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "Loading report on the ramp's sheet",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
     }
   ],
   "edges": [
@@ -314,30 +480,48 @@
     },
     {
       "from_ref": "e5",
+      "to_ref": "e6",
+      "kind": "yes",
+      "label": "Yes"
+    },
+    {
+      "from_ref": "e5",
       "to_ref": "e7",
+      "kind": "no",
+      "label": "No"
+    },
+    {
+      "from_ref": "e6",
+      "to_ref": "e7",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e7",
+      "to_ref": "e9",
       "kind": "yes",
       "label": "Within limits"
     },
     {
-      "from_ref": "e5",
-      "to_ref": "e6",
+      "from_ref": "e7",
+      "to_ref": "e8",
       "kind": "no",
       "label": "Outside limits"
     },
     {
-      "from_ref": "e6",
-      "to_ref": "e7",
+      "from_ref": "e8",
+      "to_ref": "e9",
       "kind": "approve",
       "label": "Accept"
     },
     {
-      "from_ref": "e6",
+      "from_ref": "e8",
       "to_ref": "e4",
       "kind": "rework",
       "label": "Re-trim"
     },
     {
-      "from_ref": "e7",
+      "from_ref": "e9",
       "to_ref": "end",
       "kind": "sequence",
       "label": ""

@@ -45,6 +45,24 @@
     {
       "ref": "st5",
       "kind": "decision",
+      "label": "Busy wave?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c11"
+      ]
+    },
+    {
+      "ref": "st6",
+      "kind": "activity",
+      "label": "Read report at aircraft",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c11"
+      ]
+    },
+    {
+      "ref": "st7",
+      "kind": "decision",
       "label": "Deviation in limits?",
       "lane_role": "Load controller",
       "claim_refs": [
@@ -53,7 +71,7 @@
       ]
     },
     {
-      "ref": "st6",
+      "ref": "st8",
       "kind": "approval",
       "label": "Approve deviation",
       "lane_role": "Captain",
@@ -62,7 +80,7 @@
       ]
     },
     {
-      "ref": "st7",
+      "ref": "st9",
       "kind": "activity",
       "label": "Issue load sheet",
       "lane_role": "Load controller",

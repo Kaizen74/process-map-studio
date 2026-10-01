@@ -71,7 +71,7 @@ describe("editing a step (PRD §5.7.6)", () => {
     expect(call?.body).toEqual({ label: "Build the load plan", kpi: "Plan issued by T-90" });
     // Auto-advance after Save: the next unreviewed step in process order.
     expect(await within(panel()).findByRole("heading", { name: "Approve load plan" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 8 steps reviewed"));
+    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 10 steps reviewed"));
   });
 
   it("refuses to save until the fields pass, with the message under the field", async () => {

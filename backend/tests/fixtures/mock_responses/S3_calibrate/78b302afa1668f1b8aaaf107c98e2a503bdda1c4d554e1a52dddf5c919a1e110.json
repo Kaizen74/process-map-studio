@@ -1,32 +1,32 @@
 {
   "stances": [
     {
-      "step_ref": "e5",
+      "step_ref": "e1",
       "stance": "supports",
       "segment_ids": [
-        "p12"
+        "p2"
       ],
-      "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
       "divergence_type": "none",
       "divergence_note": ""
     },
     {
-      "step_ref": "e6",
+      "step_ref": "e3",
       "stance": "supports",
       "segment_ids": [
-        "p13"
+        "p2"
       ],
-      "quote": "The captain either accepts or asks for a re-trim.",
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
       "divergence_type": "none",
       "divergence_note": ""
     },
     {
-      "step_ref": "e7",
+      "step_ref": "e10",
       "stance": "supports",
       "segment_ids": [
-        "p16"
+        "p2"
       ],
-      "quote": "Then I issue the final load sheet, around T-15.",
+      "quote": "Prepares load plans; performs special load acceptance checks; issues load sheets.",
       "divergence_type": "none",
       "divergence_note": ""
     }

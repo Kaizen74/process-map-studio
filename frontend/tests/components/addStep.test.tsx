@@ -141,7 +141,7 @@ describe("adding a missing step (PRD §5.7.6)", () => {
       mechanism: "judgment",
     });
     expect(await within(panel()).findByRole("heading", { name: "Check fuel figures" })).toBeInTheDocument();
-    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 9 steps reviewed");
+    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 11 steps reviewed");
   });
 
   it("a recommended step needs a reference instead of a passage", async () => {

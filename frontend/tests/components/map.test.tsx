@@ -40,7 +40,7 @@ describe("MapStage (PRD §5.5)", () => {
 
   it("labels each lane with its role and step count", () => {
     draw();
-    expect(screen.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Load controller lane, 6 steps" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Ramp lane, 1 step" })).toBeInTheDocument();
   });
 

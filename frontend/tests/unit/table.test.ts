@@ -20,8 +20,8 @@ describe("the table view's rows (PRD §5.7.4)", () => {
       i === 1 ? { ...e, review_status: "confirmed" } : i === 2 ? { ...e, review_status: "rejected", source_state: "contested" } : e,
     );
     const counts = Object.fromEntries(filterOptions(graph).map((f) => [f.value, f.label]));
-    expect(counts.all).toBe("All steps (8)");
-    expect(counts.unreviewed).toBe("Unreviewed (6)");
+    expect(counts.all).toBe("All steps (10)"); // v1.10 A.5
+    expect(counts.unreviewed).toBe("Unreviewed (8)");
     expect(tableRows(graph, "unreviewed").some((r) => r.rejected)).toBe(false);
     expect(tableRows(graph, "contested").every((r) => r.sourceState === "contested")).toBe(true);
     expect(tableRows(graph, "all").find((r) => r.rejected)?.review).toBe("Rejected");

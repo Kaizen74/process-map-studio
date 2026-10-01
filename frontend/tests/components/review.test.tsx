@@ -47,16 +47,16 @@ describe("Review screen (PRD §5.6)", () => {
     renderApp(PATH);
     expect(await screen.findByText("Draft v0.1")).toBeInTheDocument();
     expect(screen.getByText(/Generated from 5 sources/)).toBeInTheDocument();
-    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("0 of 8 steps reviewed");
+    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("0 of 10 steps reviewed");
     const progress = screen.getByRole("list", { name: /Review progress/ });
-    expect(within(progress).getAllByRole("button")).toHaveLength(8);
+    expect(within(progress).getAllByRole("button")).toHaveLength(10); // v1.10 A.5: ten steps
     const strip = screen.getByRole("region", { name: "Process at a glance" });
     expect(within(strip).getByText("Flight scheduled")).toBeInTheDocument();
     expect(within(strip).getByText("~75 min elapsed, ~60 min work")).toBeInTheDocument();
-    expect(within(strip).getByText("Incomplete: 2 steps without time")).toBeInTheDocument();
+    expect(within(strip).getByText("Incomplete: 3 steps without time")).toBeInTheDocument(); // v1.10: + Read report at aircraft
     expect(within(strip).getByText("Not stated")).toBeInTheDocument(); // no process KPI
-    expect(screen.getByText("8 steps · 5 lanes · 3 phases")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^(Activity|Decision|Approval|Start|End),/ })).toHaveLength(10);
+    expect(screen.getByText("10 steps · 5 lanes · 3 phases")).toBeInTheDocument(); // v1.10 A.5
+    expect(screen.getAllByRole("button", { name: /^(Activity|Decision|Approval|Start|End),/ })).toHaveLength(12);
     expect(screen.getByRole("heading", { name: "How to review" })).toBeInTheDocument();
   });
 

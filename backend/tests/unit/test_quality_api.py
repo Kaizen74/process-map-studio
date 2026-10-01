@@ -24,14 +24,14 @@ def readiness(d: Drafted) -> dict[str, Any]:
 def test_the_sample_draft_waits_only_on_review(drafted: Drafted) -> None:
     body = card(drafted)
     failing = {c["id"]: c["detail"] for c in body["checks"] if c["status"] == "fail"}
-    assert failing == {"Q6": "8 steps not reviewed yet."}
+    assert failing == {"Q6": "10 steps not reviewed yet."}  # v1.10 A.5
     assert body["all_green"] is False
     assert {c["id"]: c["status"] for c in body["checks"]}["Q10"] == "pass"
     assert any("no time stated" in w for w in body["warnings"])
     assert "Priya" not in str(body)
     ready = readiness(drafted)
     assert ready["blockers_count"] == 1
-    assert ready["nav"]["review"] == "attention" and ready["nav_counts"]["review"] == 8
+    assert ready["nav"]["review"] == "attention" and ready["nav_counts"]["review"] == 10
 
 
 def test_confirming_every_step_turns_it_green(drafted: Drafted) -> None:

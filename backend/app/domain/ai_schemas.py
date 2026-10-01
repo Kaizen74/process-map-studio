@@ -209,6 +209,16 @@ class S4AiFlag(BaseModel):
     basis: Literal["rule_based_automate_candidate", "judgment_support_only"]
 
 
+class S4Variant(BaseModel):
+    """How one version of the work does this step (§3.12.11 variant attributes), as the sources
+    state it; empty strings where that version says nothing different."""
+
+    owner: str = Field(description="The role that does or decides it in this version, or empty")
+    threshold: str = Field(description="The rule or threshold as this version states it, or empty")
+    time: str = Field(description="The time or deadline as this version states it, or empty")
+    trigger: str = Field(description="What starts it in this version, or empty")
+
+
 class S4Step(BaseModel):
     step_ref: str = Field(description="The step's ID from the <steps> list")
     claim_refs: list[str] = Field(description="Further claims this step's details come from")
@@ -227,6 +237,12 @@ class S4Step(BaseModel):
     k_risk: str = Field(description="Knowledge risk the claims show, or empty")
     constraints: list[S4Constraint]
     ai_flags: list[S4AiFlag] = Field(description="At most one")
+    variant_done: S4Variant = Field(
+        description="Where practice differs from the documents: the values the lived account gives"
+    )
+    variant_documented: S4Variant = Field(
+        description="Where practice differs from the documents: the values the documents give"
+    )
 
 
 class S4Edge(BaseModel):

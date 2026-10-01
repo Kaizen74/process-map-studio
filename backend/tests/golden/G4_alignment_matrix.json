@@ -58,6 +58,28 @@
   },
   {
     "element_id": "id-6",
+    "label": "Busy wave?",
+    "kind": "decision",
+    "sop": "silent",
+    "interview": "supports",
+    "jd": "silent",
+    "artefact": "not_applicable",
+    "state": "practiced_only",
+    "divergence_types": []
+  },
+  {
+    "element_id": "id-7",
+    "label": "Read report at aircraft",
+    "kind": "activity",
+    "sop": "silent",
+    "interview": "supports",
+    "jd": "silent",
+    "artefact": "not_applicable",
+    "state": "practiced_only",
+    "divergence_types": []
+  },
+  {
+    "element_id": "id-8",
     "label": "Deviation in limits?",
     "kind": "decision",
     "sop": "contradicts",
@@ -70,7 +92,7 @@
     ]
   },
   {
-    "element_id": "id-7",
+    "element_id": "id-9",
     "label": "Approve deviation",
     "kind": "approval",
     "sop": "silent",
@@ -81,7 +103,7 @@
     "divergence_types": []
   },
   {
-    "element_id": "id-8",
+    "element_id": "id-10",
     "label": "Issue load sheet",
     "kind": "activity",
     "sop": "supports",

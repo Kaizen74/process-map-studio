@@ -60,7 +60,8 @@ def test_split_puts_back_the_steps_as_drafted_and_accept_joins_them_again(
     flow = lines(drafted)
     assert {("Special loads OK?", "Load aircraft", "yes", "Yes"),
             ("Load aircraft", "Return loading report", "sequence", ""),
-            ("Return loading report", "Deviation in limits?", "sequence", ""),
+            # v1.10 A.5: after loading comes the busy-wave decision.
+            ("Return loading report", "Busy wave?", "sequence", ""),
             ("Approve deviation", "Load aircraft", "rework", "Re-trim")} <= flow  # fmt: skip
     aircraft = element(drafted, "Load and return LIR")  # the same step, now "Load aircraft"
     report_id = next(e["id"] for e in graph(drafted)["elements"]
@@ -91,7 +92,7 @@ def test_split_puts_back_the_steps_as_drafted_and_accept_joins_them_again(
     assert back["needs_check"] and back["confidence"] is None
     flow = lines(drafted)
     assert not any(a == b for a, b, _, _ in flow)  # no line from a step to itself
-    assert ("Load and return LIR", "Deviation in limits?", "sequence", "") in flow
+    assert ("Load and return LIR", "Busy wave?", "sequence", "") in flow  # v1.10 A.5
     assert lint_rules(drafted) == []
 
 
@@ -123,7 +124,7 @@ def test_a_pending_proposal_can_be_kept_separate_or_accepted(drafted: Drafted) -
     assert {g["element_id"] for g in p["groups"]} == {
         drafted.ids["Draft load plan"], drafted.ids["Issue load sheet"]}  # fmt: skip
     kept = decide(drafted, pending.id, "rejected").json()
-    assert kept["decision"] == "rejected" and len(labels(drafted)) == 10
+    assert kept["decision"] == "rejected" and len(labels(drafted)) == 12  # v1.10: 10 steps + 2
     merged = decide(drafted, pending.id, "accepted").json()
     assert merged["element_id"] == drafted.ids["Draft load plan"]
     assert "Issue load sheet" not in labels(drafted) and "Plan and issue" in labels(drafted)

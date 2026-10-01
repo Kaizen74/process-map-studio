@@ -81,10 +81,10 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
         "verified": 23,
         "rejected": 0,
     }  # v1.10 sample: + the 22:30 official and lived accounts
-    # S1 7 chunks + S2 1 + S3 7 source parts + S3b 8 steps + S4 1 + S5 1
-    assert job["usage"]["calls"] == 25
+    # S1 7 chunks + S2 1 + S3 7 source parts + S3b 10 steps + S4 1 + S5 1 (v1.10 A.5: ten steps)
+    assert job["usage"]["calls"] == 27
     assert job["message"] == (
-        "Draft v0.1 is ready: 8 steps drafted, 0 to check, 0 rejected claims, 5 open questions."
+        "Draft v0.1 is ready: 10 steps drafted, 0 to check, 0 rejected claims, 5 open questions."
     )
     assert [s["id"] for s in job["stages"]] == [sid for sid, _ in draft.STAGES]
     for stage in job["stages"]:
@@ -94,7 +94,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
-        "steps": 8, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 5,
+        "steps": 10, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 5,
         "scrubbed": 0,
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]
@@ -314,7 +314,7 @@ def test_usage_lists_calls_newest_first_without_any_text(client: TestClient) -> 
     response = client.get("/api/settings/usage?limit=3")
     assert response.status_code == 200
     body = response.json()
-    assert len(body["items"]) == 3 and body["totals"]["calls"] == 25
+    assert len(body["items"]) == 3 and body["totals"]["calls"] == 27  # v1.10 A.5: ten steps
     stamps = [item["created_at"] for item in body["items"]]
     assert stamps == sorted(stamps, reverse=True)
     assert set(body["items"][0]) == {
@@ -417,7 +417,7 @@ def test_review_progress_counts_steps_not_start_and_end(client: TestClient) -> N
     built = fixture_engagement.build(with_key(client))
     run_draft(client, built.engagement_id)
     [card] = [e for e in client.get("/api/engagements").json() if e["id"] == built.engagement_id]
-    assert card["review_progress"] == {"reviewed": 0, "total": 8}
+    assert card["review_progress"] == {"reviewed": 0, "total": 10}  # v1.10 A.5
     readiness = client.get(f"/api/engagements/{built.engagement_id}/readiness").json()
     assert readiness["nav"]["review"] == "attention"
-    assert readiness["nav_counts"]["review"] == 8
+    assert readiness["nav_counts"]["review"] == 10

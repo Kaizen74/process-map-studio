@@ -454,12 +454,14 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("interview_transcript.txt", 1): {"stances": [
         stance("e5", "supports", ["p7"],
                "Ramp loads the aircraft, forty minutes or so, and sends back the loading report."),
+        stance("e6", "supports", ["p8"], "What actually happens on a busy wave"),
+        stance("e7", "supports", ["p8"], "I walk down and read it off their sheet"),
     ]},
     ("interview_transcript.txt", 2): {"stances": [
-        stance("e6", "supports", ["p12"],
+        stance("e8", "supports", ["p12"],
                "If the weight deviation is outside tolerance, it's the captain who decides, not us."),
-        stance("e7", "supports", ["p13"], "The captain either accepts or asks for a re-trim."),
-        stance("e8", "supports", ["p16"], "Then I issue the final load sheet, around T-15."),
+        stance("e9", "supports", ["p13"], "The captain either accepts or asks for a re-trim."),
+        stance("e10", "supports", ["p16"], "Then I issue the final load sheet, around T-15."),
     ]},
     ("sop_LC-07.docx", 0): {"stances": [
         stance("e1", "supports", ["p3"],
@@ -468,10 +470,10 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                "Control Lead before release to Ramp."),
         stance("e3", "supports", ["p6"],
                "Special loads shall be checked against the acceptance checklist before loading."),
-        stance("e6", "contradicts", ["p8"], "the Load Control Lead shall decide on corrective action",
+        stance("e8", "contradicts", ["p8"], "the Load Control Lead shall decide on corrective action",
                "ownership", "Ownership divergence: the Load control lead decides in the SOP, the "
                "Captain in practice."),
-        stance("e8", "supports", ["p10"], "The final load sheet shall be issued through the "
+        stance("e10", "supports", ["p10"], "The final load sheet shall be issued through the "
                "departure control system no later than T-10."),
     ]},
     ("sop_RP-02.docx", 0): {"stances": [
@@ -486,7 +488,7 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("jd_load_controller.docx", 0): {"stances": [
         stance("e1", "supports", ["p2"], JD_CONTROLLER_QUOTE),
         stance("e3", "supports", ["p2"], JD_CONTROLLER_QUOTE),
-        stance("e8", "supports", ["p2"], JD_CONTROLLER_QUOTE),
+        stance("e10", "supports", ["p2"], JD_CONTROLLER_QUOTE),
     ]},
 }  # fmt: skip
 
@@ -520,9 +522,14 @@ S2_ANSWER: dict[str, Any] = {
         step("st4", "activity", "Resolve or offload", "Airline ops", [5]),
         step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
         step("st6", "activity", "Return loading report", "Ramp", [21]),
-        step("st7", "decision", "Deviation in limits?", "Load controller", [12, 13, 19]),
-        step("st8", "approval", "Approve deviation", "Captain", [14]),
-        step("st9", "activity", "Issue load sheet", "Load controller", [15, 20]),
+        # Translation rule 2 (A.5, A.9): the lived variation "on a busy wave" (c11) becomes a
+        # decision on that condition with the lived alternative as its "Yes" branch; listed where
+        # it happens in the process.
+        step("st7", "decision", "Busy wave?", "Load controller", [11]),
+        step("st8", "activity", "Read report at aircraft", "Load controller", [11]),
+        step("st9", "decision", "Deviation in limits?", "Load controller", [12, 13, 19]),
+        step("st10", "approval", "Approve deviation", "Captain", [14]),
+        step("st11", "activity", "Issue load sheet", "Load controller", [15, 20]),
     ],
     "new_roles": [],
     "merge_proposals": [
@@ -764,12 +771,17 @@ TRAPS_S3B: dict[str, dict[str, Any]] = {
 }
 
 
+def variant(**values: str) -> dict[str, str]:
+    return {"owner": "", "threshold": "", "time": "", "trigger": ""} | values
+
+
 def s4_step(ref: str, **fields: Any) -> dict[str, Any]:
     base: dict[str, Any] = {
         "step_ref": ref, "claim_refs": [], "decision_mechanism": "none", "decider_role": "",
         "rule_or_threshold": "", "escalation": "", "work_min": None, "wait_min": None,
         "duration_text": "", "complexity": "", "kpi": "", "handoff_in": "", "handoff_out": "",
         "raci": [], "k_risk": "", "constraints": [], "ai_flags": [],
+        "variant_done": variant(), "variant_documented": variant(),
     }  # fmt: skip
     base.update(fields)
     return base
@@ -790,8 +802,8 @@ LC, LEAD = "Load controller", "Load control lead"
 S4_ANSWER: dict[str, Any] = {
     "phases": [
         {"name": "Plan", "time_window": "T-120 to T-90", "step_refs": ["e1", "e2"]},
-        {"name": "Check and load", "time_window": "", "step_refs": ["e3", "e4", "e5"]},
-        {"name": "Close out", "time_window": "T-15 to T-10", "step_refs": ["e6", "e7", "e8"]},
+        {"name": "Check and load", "time_window": "", "step_refs": ["e3", "e4", "e5", "e6", "e7"]},
+        {"name": "Close out", "time_window": "T-15 to T-10", "step_refs": ["e8", "e9", "e10"]},
     ],
     "steps": [
         s4_step("e1", raci=raci((LC, "R"), (LC, "A")), work_min=20, complexity="M",
@@ -826,17 +838,28 @@ S4_ANSWER: dict[str, Any] = {
                 ],
                 ai_flags=[{"component": "perception", "input": "Paper loading report",
                            "output": "Keyed loading data", "handoff": "Load controller",
-                           "basis": "rule_based_automate_candidate"}]),
-        s4_step("e6", raci=raci((LC, "R")), decision_mechanism="judgment", decider_role=LC,
+                           "basis": "rule_based_automate_candidate"}],
+                # A.9 variants: the documents' ten minutes against practice's wait of up to 15.
+                variant_done=variant(time="Up to fifteen minutes' wait for the report"),
+                variant_documented=variant(time="Within 10 minutes of loading completion")),
+        s4_step("e8", raci=raci((LC, "R")), decision_mechanism="judgment", decider_role=LC,
                 rule_or_threshold="Weight deviation within the airline contract tolerance",
-                escalation="Outside tolerance the captain decides"),
-        s4_step("e7", raci=raci(("Captain", "A")), decision_mechanism="judgment", work_min=15,
+                escalation="Outside tolerance the captain decides",
+                # A.9 variants: who decides outside tolerance, in practice and per the SOP.
+                variant_done=variant(owner="Captain"),
+                variant_documented=variant(owner="Load control lead")),
+        s4_step("e9", raci=raci(("Captain", "A")), decision_mechanism="judgment", work_min=15,
                 duration_text="Five to fifteen minutes"),
-        s4_step("e8", raci=raci((LC, "R"), (LC, "A")), kpi="Final load sheet no later than T-10",
+        s4_step("e10", raci=raci((LC, "R"), (LC, "A")), kpi="Final load sheet no later than T-10",
                 duration_text="Around T-15",
                 ai_flags=[{"component": "action", "input": "Final load figures",
                            "output": "Load sheet issued through the departure control system",
                            "handoff": "Captain", "basis": "rule_based_automate_candidate"}]),
+        # The busy-wave decision (A.5: rule-based, the condition is stated) and its lived branch.
+        s4_step("e6", raci=raci((LC, "R"), (LC, "A")), decision_mechanism="rule_based",
+                decider_role=LC, rule_or_threshold="On a busy wave"),
+        s4_step("e7", raci=raci((LC, "R"), (LC, "A")),
+                handoff_in="Loading report on the ramp's sheet"),
     ],
     "edges": [
         edge("start", "e1"),
@@ -847,11 +870,14 @@ S4_ANSWER: dict[str, Any] = {
         edge("e3", "e4", "no", "No"),
         edge("e4", "e1", "rework", "Re-plan"),
         edge("e5", "e6"),
-        edge("e6", "e8", "yes", "Within limits"),
-        edge("e6", "e7", "no", "Outside limits"),
-        edge("e7", "e8", "approve", "Accept"),
-        edge("e7", "e5", "rework", "Re-trim"),
-        edge("e8", "end"),
+        edge("e6", "e7", "yes", "Yes"),
+        edge("e6", "e8", "no", "No"),
+        edge("e7", "e8"),
+        edge("e8", "e10", "yes", "Within limits"),
+        edge("e8", "e9", "no", "Outside limits"),
+        edge("e9", "e10", "approve", "Accept"),
+        edge("e9", "e5", "rework", "Re-trim"),
+        edge("e10", "end"),
     ],
 }  # fmt: skip
 S4_EMPTY: dict[str, list[Any]] = {"phases": [], "steps": [], "edges": []}
@@ -934,10 +960,10 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
             "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights "
             "deviate beyond the airline tolerance; in practice the captain decides. The job "
             "descriptions are silent.",
-            ["d4"],
+            ["d6"],
             [
-                ("e7", "the Load Control Lead shall decide on corrective action"),
-                ("e6", "it's the captain who decides, not us"),
+                ("e8", "the Load Control Lead shall decide on corrective action"),
+                ("e7", "it's the captain who decides, not us"),
             ],
         ),
         ga_finding(
@@ -1102,7 +1128,7 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
                    "Guidance and regulator material have a second qualified person check the load "
                    "sheet before it is signed.",
                    "checked by a second qualified person before it is signed",
-                   ["c1", "c2"], ["m8"], "different"),
+                   ["c1", "c2"], ["m10"], "different"),
         gb_finding("time_or_threshold_benchmark", "Final load sheet issued by a set time",
                    "Guidance issues the final load sheet no later than 15 minutes before "
                    "departure.",
@@ -1112,7 +1138,7 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
         gb_finding("technology_enabler", "Automated checks of the load sheet",
                    "Automated tools check the load sheet and flag deviations.",
                    "Automated tools check the load sheet and flag deviations",
-                   ["c4"], ["m8"], "absent"),
+                   ["c4"], ["m10"], "absent"),
         # TE1: a page the search never returned → GX2.
         gb_finding("kpi_practice", "Loading report return time as a KPI",
                    "Loading report return time is tracked as a key performance indicator.",
@@ -1126,12 +1152,12 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
                    "Deviation tolerances are agreed with each airline and decided within "
                    "5 minutes.",
                    "Deviation tolerances are agreed with each airline in writing",
-                   ["c6"], ["m6"], "different"),
+                   ["c6"], ["m8"], "different"),
         # TE7: one link to a step that isn't on the map → link removed and flagged.
         gb_finding("decision_rights_difference", "Deviation tolerances agreed in writing",
                    "Deviation tolerances are agreed with each airline in writing.",
                    "Deviation tolerances are agreed with each airline in writing",
-                   ["c6"], ["m6", "m99"], "different"),
+                   ["c6"], ["m8", "m99"], "different"),
         # TE8: well cited, but the verifier answers not_supported → rejected GAV.
         gb_finding("missing_step", "Final walk-round before departure",
                    "A final walk-round confirms the hold doors and loading before departure.",
@@ -1240,9 +1266,11 @@ INTERVIEW_ONLY_S2: dict[str, Any] = {
         step("st2", "decision", "Special loads OK?", "Load controller", [3, 4]),
         step("st3", "activity", "Resolve or offload", "Airline ops", [5]),
         step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
-        step("st5", "decision", "Deviation in limits?", "Load controller", [12, 13]),
-        step("st6", "approval", "Approve deviation", "Captain", [14]),
-        step("st7", "activity", "Issue load sheet", "Load controller", [15]),
+        step("st5", "decision", "Busy wave?", "Load controller", [11]),
+        step("st6", "activity", "Read report at aircraft", "Load controller", [11]),
+        step("st7", "decision", "Deviation in limits?", "Load controller", [12, 13]),
+        step("st8", "approval", "Approve deviation", "Captain", [14]),
+        step("st9", "activity", "Issue load sheet", "Load controller", [15]),
     ],
     "new_roles": [],
     "merge_proposals": [],
@@ -1250,8 +1278,8 @@ INTERVIEW_ONLY_S2: dict[str, Any] = {
 # The full sample's step refs (see S3_ANSWERS) → labels in the interview-only draft.
 FULL_LABELS = {
     "e1": "Draft load plan", "e3": "Special loads OK?", "e4": "Resolve or offload",
-    "e5": "Load aircraft", "e6": "Deviation in limits?", "e7": "Approve deviation",
-    "e8": "Issue load sheet",
+    "e5": "Load aircraft", "e8": "Deviation in limits?", "e9": "Approve deviation",
+    "e10": "Issue load sheet", "e6": "Busy wave?", "e7": "Read report at aircraft",
 }  # fmt: skip
 
 
@@ -1282,7 +1310,13 @@ def interview_only_s4(refs: dict[str, str]) -> dict[str, Any]:
     Accountable role); the T-10 KPI stays in, and is rejected, because only the SOP states it."""
     steps = [
         {**s, "step_ref": remap(s["step_ref"], refs)}
-        | ({"raci": raci((LC, "R"), (LC, "A"))} if s["step_ref"] == "e6" else {})
+        | (
+            {"raci": raci((LC, "R"), (LC, "A"))}
+            if FULL_LABELS.get(s["step_ref"]) == "Deviation in limits?"
+            else {}
+        )
+        # With no document, nothing differs from one: no variants (§3.12.11).
+        | {"variant_done": variant(), "variant_documented": variant()}
         for s in S4_ANSWER["steps"]
         if s["step_ref"] != "e2"
     ]

@@ -122,7 +122,7 @@ def test_every_element_and_edge_is_placed(drawn: tuple[Graph, Layout]) -> None:
     g, lay = drawn
     assert [n.id for n in lay.nodes] == [e.id for e in g.elements]
     assert [e.id for e in lay.edges] == [e.id for e in g.edges]
-    assert lay.canvas.w == engine.LABEL_COL + 8 * engine.COL_W
+    assert lay.canvas.w == engine.LABEL_COL + 10 * engine.COL_W  # v1.10 A.5: ten columns
     assert lay.canvas.h == engine.PHASE_BAND + 5 * engine.LANE_H
 
 
@@ -133,7 +133,7 @@ def test_lanes_follow_lane_order_with_branch_lanes_above(drawn: tuple[Graph, Lay
         ("Load control lead", 1),
         ("Airline ops", 1),
         ("Captain", 1),
-        ("Load controller", 4),
+        ("Load controller", 6),  # v1.10 A.5: + Busy wave? and Read report at aircraft
         ("Ramp", 1),
     ]
     assert [ln.y for ln in lay.lanes] == [48, 172, 296, 420, 544]
@@ -173,10 +173,12 @@ def test_columns_follow_the_longest_path(drawn: tuple[Graph, Layout]) -> None:
         "Special loads OK?": 3,
         "Resolve or offload": 3,  # exception step: beside its decision, one lane above
         "Load and return LIR": 4,
-        "Deviation in limits?": 5,
-        "Approve deviation": 5,  # likewise
-        "Issue load sheet": 6,
-        "Final load sheet issued": 7,
+        "Busy wave?": 5,  # v1.10 A.5: the lived busy-wave variation and its branch
+        "Read report at aircraft": 6,
+        "Deviation in limits?": 7,
+        "Approve deviation": 7,  # likewise
+        "Issue load sheet": 8,
+        "Final load sheet issued": 9,
     }
 
 
@@ -289,7 +291,7 @@ def test_back_edges_sharing_a_target_are_offset(drawn: tuple[Graph, Layout]) -> 
 def test_edge_labels_sit_on_no_node(drawn: tuple[Graph, Layout]) -> None:
     g, lay = drawn
     labelled = [e for e in lay.edges if e.label]
-    assert len(labelled) == 9
+    assert len(labelled) == 11  # v1.10 A.5: + the Yes and No of Busy wave?
     for e in labelled:
         assert e.label_pos is not None
         chip = label_rect(e.label, e.label_pos)

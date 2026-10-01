@@ -72,7 +72,7 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     # The fresh twins of reviewed steps were dropped; the unreviewed steps are new.
     labels = [e["label"] for e in graph(drafted)["elements"]]
     assert labels.count("Draft load plan") == 1 and "Issue load sheet" not in labels
-    assert len(labels) == 11  # 10 drafted (one edited name) + the added step
+    assert len(labels) == 13  # 12 drafted (v1.10 A.5; one edited name) + the added step
     assert ids_by_label(drafted)["Special loads OK?"] != unreviewed_before
     # Lines around the reviewed steps stay; those into them from fresh steps are re-pointed.
     flow = lines(drafted)

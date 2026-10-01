@@ -8,7 +8,7 @@ Signal strength: Strong (3 of 3). Built from interviews and a written procedure 
 
 | Check | Status | Detail |
 |---|---|---|
-| Q1 Provenance green | Pass | All 8 steps are tagged O, I or R. |
+| Q1 Provenance green | Pass | All 10 steps are tagged O, I or R. |
 | Q2 Evidence verified | Pass | Every observed or inferred step has a verified passage. |
 | Q3 Diamonds closed | Pass | Every decision and approval has all its exits, each labelled. |
 | Q4 Lanes and ownership | Pass | Every step sits in the right lane, has one Accountable role and is connected. |
@@ -17,12 +17,13 @@ Signal strength: Strong (3 of 3). Built from interviews and a written procedure 
 | Q7 Facts, interpretation and recommendation separated | Pass | The exports keep facts, interpretation and recommendation in their own sections. |
 | Q8 Anonymised | Pass | No name from your list of names to hide appears in any export. |
 | Q9 Images contained | Pass | No image or image reference in any export. |
-| Q10 60-minute validatable | Pass | 8 steps and 5 lanes: fits a one-hour session. |
+| Q10 60-minute validatable | Pass | 10 steps and 5 lanes: fits a one-hour session. |
 
 All hard checks green: yes.
 
 Warnings:
 - Approval "Approve load plan" has no time stated.
+- Activity "Read report at aircraft" has no time stated.
 - Activity "Issue load sheet" has no time stated.
 
 ## 1. Facts: what the sources tell us
@@ -50,7 +51,7 @@ Warnings:
 |---|---|
 | Corroborated | 3 |
 | Documented only | 1 |
-| Practiced only | 2 |
+| Practiced only | 4 |
 | Contested | 2 |
 | Trace contradicted | 0 |
 | Not assessed | 0 |
@@ -75,18 +76,20 @@ This phase has 1 activity and 1 decision or approval, involving Load controller,
 ### Phase 2: Check and load
 
 Time window: not stated.
-Purpose: covers 3 steps, from “Special loads OK?” to “Load and return LIR”.
+Purpose: covers 5 steps, from “Special loads OK?” to “Read report at aircraft”.
 
 | Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
 |---|---|---|---|---|---|---|---|
 | Resolve or offload | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
 | Load and return LIR | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
+| Read report at aircraft | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
 
 Decisions and approvals:
 
 - [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: Yes → Load and return LIR; No → Resolve or offload.
+- [O] Busy wave? (decision, rule-based, decider: Load controller). Exits: Yes → Read report at aircraft; No → Deviation in limits?.
 
-This phase has 2 activities and 1 decision or approval, involving Load controller, Airline ops, Ramp.
+This phase has 3 activities and 2 decisions or approvals, involving Load controller, Airline ops, Ramp.
 
 ### Phase 3: Close out
 
@@ -113,6 +116,8 @@ This phase has 1 activity and 2 decisions or approvals, involving Load controlle
 | [O] Special loads OK? | A | · | · | · | · |
 | [O] Resolve or offload | · | · | · | R A | · |
 | [O] Load and return LIR | · | · | R A | · | · |
+| [O] Busy wave? | R A | · | · | · | · |
+| [O] Read report at aircraft | R A | · | · | · | · |
 | [O] Deviation in limits? | R | A? | · | · | A? |
 | [O] Approve deviation | · | · | · | · | A |
 | [O] Issue load sheet | R A | · | · | · | · |

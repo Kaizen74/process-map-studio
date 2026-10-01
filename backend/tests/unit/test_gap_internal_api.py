@@ -151,16 +151,20 @@ def test_the_divergence_set_is_the_steps_where_sources_differ(drafted: Drafted) 
         ("d1", "Approve load plan", "documented_only"),
         ("d2", "Resolve or offload", "practiced_only"),
         ("d3", "Load and return LIR", "contested"),
-        ("d4", "Deviation in limits?", "contested"),
-        ("d5", "Approve deviation", "practiced_only"),
+        # v1.10 A.5: the lived busy-wave variation, in practice only (undocumented work).
+        ("d4", "Busy wave?", "practiced_only"),
+        ("d5", "Read report at aircraft", "practiced_only"),
+        ("d6", "Deviation in limits?", "contested"),
+        ("d7", "Approve deviation", "practiced_only"),
     ]
-    d4 = found.items[3]
+    d4 = found.items[5]  # Deviation in limits?
     assert d4.contested_raci == [("Captain", "A"), ("Load control lead", "A")]
     notes = [s.note for s in d4.sides if s.note]
     assert "Ownership divergence: the Load control lead decides in the SOP, the Captain in " \
         "practice." in notes  # fmt: skip
     # Only the passages behind the stances are sent, each once.
-    assert sorted(found.passages) == [f"e{n}" for n in range(1, 9)]
+    # v1.10: + the 22:30 passage behind the busy-wave steps.
+    assert sorted(found.passages) == [f"e{n}" for n in range(1, 10)]
 
 
 def test_a_map_with_no_differences_gets_an_empty_report_without_ai(

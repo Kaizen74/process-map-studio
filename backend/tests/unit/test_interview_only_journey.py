@@ -23,6 +23,9 @@ STEPS = [
     ("Special loads OK?", "decision", "Load controller"),
     ("Resolve or offload", "activity", "Airline ops"),
     ("Load aircraft", "activity", "Ramp"),
+    # v1.10 A.5: the busy-wave decision and its lived branch come from the interview alone.
+    ("Busy wave?", "decision", "Load controller"),
+    ("Read report at aircraft", "activity", "Load controller"),
     ("Deviation in limits?", "decision", "Load controller"),
     ("Approve deviation", "approval", "Captain"),
     ("Issue load sheet", "activity", "Load controller"),
@@ -72,7 +75,7 @@ def test_an_interview_alone_drafts_a_practiced_only_map(interview_only: Drafted)
     issue = next(e for e in steps if e["label"] == "Issue load sheet")
     assert issue["kpi"] == ""
     state = get(d, f"/api/engagements/{d.engagement_id}/draft")
-    assert state["summary"]["steps"] == 7
+    assert state["summary"]["steps"] == 9
 
 
 def test_the_quality_card_warns_but_publishing_is_allowed(interview_only: Drafted) -> None:
@@ -101,7 +104,7 @@ def test_every_export_and_view_of_the_published_map(interview_only: Drafted) -> 
     html = d.client.get(f"{url}/html").text
     assert "Signal strength: Limited (1 of 3)" in html
     graph = json.loads(d.client.get(f"{url}/json").text)
-    assert len([e for e in graph["elements"] if e["kind"] not in STRUCTURAL]) == 7
+    assert len([e for e in graph["elements"] if e["kind"] not in STRUCTURAL]) == 9
     assert d.client.get(f"{url}/csv").status_code == 200
     for text in (md, html, json.dumps(graph)):
         assert "Priya" not in text

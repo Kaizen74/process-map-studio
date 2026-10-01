@@ -7,6 +7,8 @@ writes. `Graph` is the intermediate representation: the graph endpoint, the lint
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 # --- Stored records ----------------------------------------------------------------------------
@@ -52,6 +54,16 @@ class ElementRecord(Record):
     confidence_breakdown: list[dict[str, object]] = []
     needs_check: bool = False
     review_status: str = "draft"  # B.7
+    # PRD v1.10 (§3.12; columns from migration 0009).
+    work_type: str | None = None  # B.29
+    constraint_type: str | None = None  # B.30
+    work_type_basis: list[Any] | None = None
+    sme_work_type_signifier: str | None = None
+    work_type_status: str | None = None
+    view_membership: str | None = None  # B.35
+    variants: dict[str, Any] | None = None  # {"done": {owner, threshold, time, trigger}, ...}
+    level: str | None = None  # B.39
+    parent_element_id: str | None = None
 
 
 class EdgeRecord(Record):
@@ -60,6 +72,11 @@ class EdgeRecord(Record):
     kind: str  # B.8
     label: str = ""
     provenance: str = "O"
+    # PRD v1.10 (§3.12.10, §3.12.11; columns from migration 0009).
+    sequence_basis: str | None = None  # B.34
+    typical: bool | None = None
+    view_membership: str | None = None  # B.35
+    information_payload: str | None = None
 
 
 class RaciRecord(Record):
@@ -274,6 +291,9 @@ class GraphElement(Out):
     # "Practice not described" (only the official account), None when the interview is silent.
     account_summary: AccountSummary = AccountSummary()
     practice_described: bool | None = None
+    # §3.12.11: where the views differ on this step, both values (owner, threshold, time,
+    # trigger): {"done": {...}, "documented": {...}}; null when they don't.
+    variants: dict[str, dict[str, str]] | None = None
 
 
 class GraphEdge(Out):
@@ -389,6 +409,7 @@ class ElementDetail(Out):
     gap_findings: list[dict[str, object]]
     account_summary: AccountSummary = AccountSummary()
     practice_described: bool | None = None
+    variants: dict[str, dict[str, str]] | None = None
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
     # was translated from, each with the guide question that prompted it. App only, never exported.
     answers: list[AnswerQuote] = []

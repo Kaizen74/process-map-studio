@@ -10,7 +10,7 @@
         "c2"
       ],
       "step_refs": [
-        "m8"
+        "m10"
       ],
       "comparison": "different"
     },
@@ -34,7 +34,7 @@
         "c4"
       ],
       "step_refs": [
-        "m8"
+        "m10"
       ],
       "comparison": "absent"
     },
@@ -69,7 +69,7 @@
         "c6"
       ],
       "step_refs": [
-        "m6"
+        "m8"
       ],
       "comparison": "different"
     },
@@ -82,7 +82,7 @@
         "c6"
       ],
       "step_refs": [
-        "m6",
+        "m8",
         "m99"
       ],
       "comparison": "different"

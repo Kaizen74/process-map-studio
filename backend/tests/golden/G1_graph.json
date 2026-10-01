@@ -13,7 +13,7 @@
     "cycle_time": {
       "elapsed_min": 75.0,
       "work_min": 60.0,
-      "incomplete_steps": 2
+      "incomplete_steps": 3
     }
   },
   "roles": [
@@ -111,7 +111,8 @@
         "lived": 0,
         "unclear": 0
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": null
     },
     {
       "id": "id-11",
@@ -232,7 +233,8 @@
         "lived": 1,
         "unclear": 1
       },
-      "practice_described": true
+      "practice_described": true,
+      "variants": null
     },
     {
       "id": "id-20",
@@ -342,7 +344,8 @@
         "lived": 0,
         "unclear": 0
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": null
     },
     {
       "id": "id-23",
@@ -464,7 +467,8 @@
         "lived": 1,
         "unclear": 1
       },
-      "practice_described": true
+      "practice_described": true,
+      "variants": null
     },
     {
       "id": "id-26",
@@ -574,7 +578,8 @@
         "lived": 0,
         "unclear": 1
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": null
     },
     {
       "id": "id-28",
@@ -709,10 +714,240 @@
         "lived": 3,
         "unclear": 1
       },
-      "practice_described": true
+      "practice_described": true,
+      "variants": {
+        "done": {
+          "time": "Up to fifteen minutes' wait for the report"
+        },
+        "documented": {
+          "time": "Within 10 minutes of loading completion"
+        }
+      }
     },
     {
       "id": "id-31",
+      "stable_key": "busy-wave",
+      "kind": "decision",
+      "label": "Busy wave?",
+      "lane_role_id": "id-2",
+      "phase_id": "id-8",
+      "time": {
+        "work_min": null,
+        "wait_min": null,
+        "text": ""
+      },
+      "complexity": null,
+      "kpi": "",
+      "decision": {
+        "mechanism": "rule_based",
+        "decider_role_id": "id-2",
+        "rule_or_threshold": "On a busy wave",
+        "escalation": ""
+      },
+      "handoff": {
+        "in": "",
+        "out": ""
+      },
+      "raci": [
+        {
+          "role_id": "id-2",
+          "letter": "R",
+          "contested": false
+        },
+        {
+          "role_id": "id-2",
+          "letter": "A",
+          "contested": false
+        }
+      ],
+      "provenance": "O",
+      "r_reference": "",
+      "source_state": "practiced_only",
+      "divergence_types": [],
+      "constraints": [],
+      "k_risk": "",
+      "ai_flag": null,
+      "evidence": [
+        {
+          "segment_id": "id-32",
+          "source_id": "id-13",
+          "source_kind": "interview_transcript",
+          "stance": "supports",
+          "anchor": "22:30",
+          "verified": true,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-15",
+          "source_kind": "sop",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-18",
+          "source_kind": "sop",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-19",
+          "source_kind": "job_description",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-17",
+          "source_kind": "job_description",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        }
+      ],
+      "confidence": 0.7,
+      "confidence_breakdown": [
+        {
+          "label": "Observed (O)",
+          "delta": 0.6
+        },
+        {
+          "label": "Independent verifier: supported",
+          "delta": 0.1
+        }
+      ],
+      "needs_check": false,
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "practice_described": true,
+      "variants": null
+    },
+    {
+      "id": "id-33",
+      "stable_key": "read-report-at-aircraft",
+      "kind": "activity",
+      "label": "Read report at aircraft",
+      "lane_role_id": "id-2",
+      "phase_id": "id-8",
+      "time": {
+        "work_min": null,
+        "wait_min": null,
+        "text": ""
+      },
+      "complexity": null,
+      "kpi": "",
+      "decision": {
+        "mechanism": "none",
+        "decider_role_id": null,
+        "rule_or_threshold": "",
+        "escalation": ""
+      },
+      "handoff": {
+        "in": "Loading report on the ramp's sheet",
+        "out": ""
+      },
+      "raci": [
+        {
+          "role_id": "id-2",
+          "letter": "R",
+          "contested": false
+        },
+        {
+          "role_id": "id-2",
+          "letter": "A",
+          "contested": false
+        }
+      ],
+      "provenance": "O",
+      "r_reference": "",
+      "source_state": "practiced_only",
+      "divergence_types": [],
+      "constraints": [],
+      "k_risk": "",
+      "ai_flag": null,
+      "evidence": [
+        {
+          "segment_id": "id-32",
+          "source_id": "id-13",
+          "source_kind": "interview_transcript",
+          "stance": "supports",
+          "anchor": "22:30",
+          "verified": true,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-15",
+          "source_kind": "sop",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-18",
+          "source_kind": "sop",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-19",
+          "source_kind": "job_description",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        },
+        {
+          "segment_id": null,
+          "source_id": "id-17",
+          "source_kind": "job_description",
+          "stance": "silent",
+          "anchor": "",
+          "verified": false,
+          "note": ""
+        }
+      ],
+      "confidence": 0.7,
+      "confidence_breakdown": [
+        {
+          "label": "Observed (O)",
+          "delta": 0.6
+        },
+        {
+          "label": "Independent verifier: supported",
+          "delta": 0.1
+        }
+      ],
+      "needs_check": false,
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "practice_described": true,
+      "variants": null
+    },
+    {
+      "id": "id-34",
       "stable_key": "deviation-in-limits",
       "kind": "decision",
       "label": "Deviation in limits?",
@@ -763,7 +998,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-32",
+          "segment_id": "id-35",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -772,7 +1007,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-33",
+          "segment_id": "id-36",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "contradicts",
@@ -830,10 +1065,18 @@
         "lived": 0,
         "unclear": 2
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": {
+        "done": {
+          "owner": "Captain"
+        },
+        "documented": {
+          "owner": "Load control lead"
+        }
+      }
     },
     {
-      "id": "id-34",
+      "id": "id-37",
       "stable_key": "approve-deviation",
       "kind": "approval",
       "label": "Approve deviation",
@@ -872,7 +1115,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-35",
+          "segment_id": "id-38",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -935,10 +1178,11 @@
         "lived": 0,
         "unclear": 1
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": null
     },
     {
-      "id": "id-36",
+      "id": "id-39",
       "stable_key": "issue-load-sheet",
       "kind": "activity",
       "label": "Issue load sheet",
@@ -988,7 +1232,7 @@
       },
       "evidence": [
         {
-          "segment_id": "id-37",
+          "segment_id": "id-40",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -997,7 +1241,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-38",
+          "segment_id": "id-41",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "supports",
@@ -1055,10 +1299,11 @@
         "lived": 1,
         "unclear": 0
       },
-      "practice_described": true
+      "practice_described": true,
+      "variants": null
     },
     {
-      "id": "id-39",
+      "id": "id-42",
       "stable_key": "end",
       "kind": "end",
       "label": "Final load sheet issued",
@@ -1099,98 +1344,120 @@
         "lived": 0,
         "unclear": 0
       },
-      "practice_described": null
+      "practice_described": null,
+      "variants": null
     }
   ],
   "edges": [
     {
-      "id": "id-40",
+      "id": "id-43",
       "from": "id-10",
       "to": "id-11",
       "kind": "sequence",
       "label": ""
     },
     {
-      "id": "id-41",
+      "id": "id-44",
       "from": "id-11",
       "to": "id-20",
       "kind": "sequence",
       "label": ""
     },
     {
-      "id": "id-42",
+      "id": "id-45",
       "from": "id-20",
       "to": "id-23",
       "kind": "approve",
       "label": "Approve"
     },
     {
-      "id": "id-43",
+      "id": "id-46",
       "from": "id-20",
       "to": "id-11",
       "kind": "reject",
       "label": "Rework"
     },
     {
-      "id": "id-44",
+      "id": "id-47",
       "from": "id-23",
       "to": "id-28",
       "kind": "yes",
       "label": "Yes"
     },
     {
-      "id": "id-45",
+      "id": "id-48",
       "from": "id-23",
       "to": "id-26",
       "kind": "no",
       "label": "No"
     },
     {
-      "id": "id-46",
+      "id": "id-49",
       "from": "id-26",
       "to": "id-11",
       "kind": "rework",
       "label": "Re-plan"
     },
     {
-      "id": "id-47",
+      "id": "id-50",
       "from": "id-28",
       "to": "id-31",
       "kind": "sequence",
       "label": ""
     },
     {
-      "id": "id-48",
+      "id": "id-51",
       "from": "id-31",
-      "to": "id-36",
+      "to": "id-33",
+      "kind": "yes",
+      "label": "Yes"
+    },
+    {
+      "id": "id-52",
+      "from": "id-31",
+      "to": "id-34",
+      "kind": "no",
+      "label": "No"
+    },
+    {
+      "id": "id-53",
+      "from": "id-33",
+      "to": "id-34",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "id": "id-54",
+      "from": "id-34",
+      "to": "id-39",
       "kind": "yes",
       "label": "Within limits"
     },
     {
-      "id": "id-49",
-      "from": "id-31",
-      "to": "id-34",
+      "id": "id-55",
+      "from": "id-34",
+      "to": "id-37",
       "kind": "no",
       "label": "Outside limits"
     },
     {
-      "id": "id-50",
-      "from": "id-34",
-      "to": "id-36",
+      "id": "id-56",
+      "from": "id-37",
+      "to": "id-39",
       "kind": "approve",
       "label": "Accept"
     },
     {
-      "id": "id-51",
-      "from": "id-34",
+      "id": "id-57",
+      "from": "id-37",
       "to": "id-28",
       "kind": "rework",
       "label": "Re-trim"
     },
     {
-      "id": "id-52",
-      "from": "id-36",
-      "to": "id-39",
+      "id": "id-58",
+      "from": "id-39",
+      "to": "id-42",
       "kind": "sequence",
       "label": ""
     }

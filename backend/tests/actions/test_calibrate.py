@@ -92,6 +92,9 @@ def test_the_sample_gets_the_a5_source_states(sample: Canonical) -> None:
         "Deviation in limits?": ("contested", ["ownership"]),
         "Approve deviation": ("practiced_only", []),
         "Issue load sheet": ("corroborated", []),
+        # v1.10 A.5: the lived busy-wave variation and its branch, in practice only.
+        "Busy wave?": ("practiced_only", []),
+        "Read report at aircraft": ("practiced_only", []),
     }
 
 
@@ -113,7 +116,7 @@ def test_stances_become_verified_evidence_and_silence_is_shown(sample: Canonical
     assert all(ev.verified for ev in lir.evidence if ev.stance != "silent")
     with session_scope(sample.sessions) as session:
         stored = [p.evidence for p in map_repo.evidence(session, sample.version_id)]
-    assert len(stored) == 17  # interview 7, LC-07 5, RP-02 1, job descriptions 4
+    assert len(stored) == 19  # interview 9 (v1.10: + the busy-wave steps), LC-07 5, RP-02 1, JDs 4
     assert all(link.quote for link in stored)  # kept for the highlight, never in the graph
     assert "Ramp loads the aircraft" not in graph.value.model_dump_json()
 
@@ -128,7 +131,8 @@ def test_the_injected_instruction_changes_nothing(sample: Canonical) -> None:
 BAD: dict[str, Any] = {
     "stances": [
         make_ai_fixtures.stance("e1", "supports", ["p2"], "I build the preliminary load plan"),
-        make_ai_fixtures.stance("e9", "supports", ["p2"], "I build the preliminary load plan"),
+        # A step ref that doesn't exist (e9 and e10 are real since v1.10 A.5).
+        make_ai_fixtures.stance("e99", "supports", ["p2"], "I build the preliminary load plan"),
         make_ai_fixtures.stance("e2", "supports", ["p42"], "approved by the Load Control Lead"),
         make_ai_fixtures.stance("e3", "supports", ["p4"], "Controller checks fuel figures"),
         make_ai_fixtures.stance(
@@ -160,7 +164,7 @@ def test_every_stance_is_checked_again(settings_config: AppConfig, tmp_path: Pat
                 for _, r in claims.rejected_rows(session, c.version_id)
             ]  # fmt: skip
         assert rejected == [
-            ('Supports "e9"', "G3", "cites a step that wasn't provided", "S3", "stance"),
+            ('Supports "e99"', "G3", "cites a step that wasn't provided", "S3", "stance"),
             ('Supports "Approve load plan"', "G3", "cites a passage that wasn't provided", "S3",
              "stance"),
             ('Supports "Special loads OK?"', "G4", "quote not found in source", "S3", "stance"),

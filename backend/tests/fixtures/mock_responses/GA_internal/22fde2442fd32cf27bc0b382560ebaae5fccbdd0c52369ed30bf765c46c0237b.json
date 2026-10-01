@@ -48,15 +48,15 @@
       "title": "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice",
       "text": "SOP LC-07 \u00a75 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.",
       "step_refs": [
-        "d4"
+        "d6"
       ],
       "evidence": [
         {
-          "segment_id": "e7",
+          "segment_id": "e8",
           "quote": "the Load Control Lead shall decide on corrective action"
         },
         {
-          "segment_id": "e6",
+          "segment_id": "e7",
           "quote": "it's the captain who decides, not us"
         }
       ],

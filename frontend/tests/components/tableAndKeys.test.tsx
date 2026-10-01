@@ -62,7 +62,7 @@ describe("the table view (PRD §5.7.4)", () => {
     renderApp(PATH);
     fireEvent.click(await screen.findByRole("radio", { name: "Table" }));
     const table = await screen.findByRole("table", { name: "Steps in process order" });
-    expect(within(table).getAllByRole("row")).toHaveLength(9); // header + 8 steps
+    expect(within(table).getAllByRole("row")).toHaveLength(11); // header + 10 steps (v1.10 A.5)
     expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: /Contested/ }));
     const rows = within(table).getAllByRole("row").slice(1);

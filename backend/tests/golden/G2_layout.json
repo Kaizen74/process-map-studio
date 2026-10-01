@@ -1,6 +1,6 @@
 {
   "canvas": {
-    "w": 1112,
+    "w": 1360,
     "h": 668
   },
   "lanes": [
@@ -28,7 +28,7 @@
     {
       "role_id": "id-4",
       "label": "Load controller",
-      "step_count": 4,
+      "step_count": 6,
       "y": 420,
       "h": 124
     },
@@ -53,13 +53,13 @@
       "label": "Check and load",
       "time_window": "",
       "x": 492,
-      "w": 248
+      "w": 496
     },
     {
       "phase_id": "id-8",
       "label": "Close out",
       "time_window": "T-15 to T-10",
-      "x": 740,
+      "x": 988,
       "w": 372
     }
   ],
@@ -200,8 +200,7 @@
       "w": 52,
       "h": 52,
       "label_lines": [
-        "Deviation",
-        "in limits?"
+        "Busy wave?"
       ],
       "label_pos": {
         "x": 802,
@@ -210,45 +209,24 @@
       },
       "lens_pos": {
         "x": 802,
-        "y": 528,
+        "y": 513,
         "align": "center"
       }
     },
     {
       "id": "id-16",
-      "shape": "pill",
-      "x": 752,
-      "y": 318,
-      "w": 100,
-      "h": 44,
-      "label_lines": [
-        "Approve",
-        "deviation"
-      ],
-      "label_pos": {
-        "x": 802,
-        "y": 325,
-        "align": "center"
-      },
-      "lens_pos": {
-        "x": 810,
-        "y": 368,
-        "align": "left"
-      }
-    },
-    {
-      "id": "id-17",
       "shape": "rounded_rect",
       "x": 876,
       "y": 442,
       "w": 100,
       "h": 44,
       "label_lines": [
-        "Issue load sheet"
+        "Read report",
+        "at aircraft"
       ],
       "label_pos": {
         "x": 926,
-        "y": 457,
+        "y": 449,
         "align": "center"
       },
       "lens_pos": {
@@ -258,20 +236,85 @@
       }
     },
     {
+      "id": "id-17",
+      "shape": "diamond",
+      "x": 1024,
+      "y": 438,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Deviation",
+        "in limits?"
+      ],
+      "label_pos": {
+        "x": 1050,
+        "y": 494,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1050,
+        "y": 528,
+        "align": "center"
+      }
+    },
+    {
       "id": "id-18",
+      "shape": "pill",
+      "x": 1000,
+      "y": 318,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Approve",
+        "deviation"
+      ],
+      "label_pos": {
+        "x": 1050,
+        "y": 325,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1058,
+        "y": 368,
+        "align": "left"
+      }
+    },
+    {
+      "id": "id-19",
+      "shape": "rounded_rect",
+      "x": 1124,
+      "y": 442,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Issue load sheet"
+      ],
+      "label_pos": {
+        "x": 1174,
+        "y": 457,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1174,
+        "y": 492,
+        "align": "center"
+      }
+    },
+    {
+      "id": "id-20",
       "shape": "double_circle",
-      "x": 1042,
+      "x": 1290,
       "y": 456,
       "w": 16,
       "h": 16,
       "label_lines": [],
       "label_pos": {
-        "x": 1050,
+        "x": 1298,
         "y": 464,
         "align": "center"
       },
       "lens_pos": {
-        "x": 1050,
+        "x": 1298,
         "y": 478,
         "align": "center"
       }
@@ -279,7 +322,7 @@
   ],
   "edges": [
     {
-      "id": "id-19",
+      "id": "id-21",
       "kind": "sequence",
       "is_back_edge": false,
       "points": [
@@ -296,7 +339,7 @@
       "label_pos": null
     },
     {
-      "id": "id-20",
+      "id": "id-22",
       "kind": "sequence",
       "is_back_edge": false,
       "points": [
@@ -321,7 +364,7 @@
       "label_pos": null
     },
     {
-      "id": "id-21",
+      "id": "id-23",
       "kind": "approve",
       "is_back_edge": false,
       "points": [
@@ -350,7 +393,7 @@
       }
     },
     {
-      "id": "id-22",
+      "id": "id-24",
       "kind": "reject",
       "is_back_edge": true,
       "points": [
@@ -379,7 +422,7 @@
       }
     },
     {
-      "id": "id-23",
+      "id": "id-25",
       "kind": "yes",
       "is_back_edge": false,
       "points": [
@@ -408,7 +451,7 @@
       }
     },
     {
-      "id": "id-24",
+      "id": "id-26",
       "kind": "no",
       "is_back_edge": false,
       "points": [
@@ -429,7 +472,7 @@
       }
     },
     {
-      "id": "id-25",
+      "id": "id-27",
       "kind": "rework",
       "is_back_edge": true,
       "points": [
@@ -458,7 +501,7 @@
       }
     },
     {
-      "id": "id-26",
+      "id": "id-28",
       "kind": "sequence",
       "is_back_edge": false,
       "points": [
@@ -483,7 +526,7 @@
       "label_pos": null
     },
     {
-      "id": "id-27",
+      "id": "id-29",
       "kind": "yes",
       "is_back_edge": false,
       "points": [
@@ -496,74 +539,133 @@
           464
         ]
       ],
-      "label": "Within limits",
+      "label": "Yes",
       "label_pos": {
         "x": 834,
-        "y": 428,
-        "align": "left"
-      }
-    },
-    {
-      "id": "id-28",
-      "kind": "no",
-      "is_back_edge": false,
-      "points": [
-        [
-          802,
-          438
-        ],
-        [
-          802,
-          362
-        ]
-      ],
-      "label": "Outside limits",
-      "label_pos": {
-        "x": 796,
-        "y": 428,
-        "align": "right"
-      }
-    },
-    {
-      "id": "id-29",
-      "kind": "approve",
-      "is_back_edge": false,
-      "points": [
-        [
-          852,
-          340
-        ],
-        [
-          864,
-          340
-        ],
-        [
-          864,
-          464
-        ],
-        [
-          876,
-          464
-        ]
-      ],
-      "label": "Accept",
-      "label_pos": {
-        "x": 858,
-        "y": 331,
+        "y": 455,
         "align": "left"
       }
     },
     {
       "id": "id-30",
+      "kind": "no",
+      "is_back_edge": false,
+      "points": [
+        [
+          828,
+          464
+        ],
+        [
+          1024,
+          464
+        ]
+      ],
+      "label": "No",
+      "label_pos": {
+        "x": 834,
+        "y": 473,
+        "align": "left"
+      }
+    },
+    {
+      "id": "id-31",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          976,
+          464
+        ],
+        [
+          1024,
+          464
+        ]
+      ],
+      "label": "",
+      "label_pos": null
+    },
+    {
+      "id": "id-32",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          1076,
+          464
+        ],
+        [
+          1124,
+          464
+        ]
+      ],
+      "label": "Within limits",
+      "label_pos": {
+        "x": 1082,
+        "y": 428,
+        "align": "left"
+      }
+    },
+    {
+      "id": "id-33",
+      "kind": "no",
+      "is_back_edge": false,
+      "points": [
+        [
+          1050,
+          438
+        ],
+        [
+          1050,
+          362
+        ]
+      ],
+      "label": "Outside limits",
+      "label_pos": {
+        "x": 1044,
+        "y": 428,
+        "align": "right"
+      }
+    },
+    {
+      "id": "id-34",
+      "kind": "approve",
+      "is_back_edge": false,
+      "points": [
+        [
+          1100,
+          340
+        ],
+        [
+          1112,
+          340
+        ],
+        [
+          1112,
+          464
+        ],
+        [
+          1124,
+          464
+        ]
+      ],
+      "label": "Accept",
+      "label_pos": {
+        "x": 1106,
+        "y": 331,
+        "align": "left"
+      }
+    },
+    {
+      "id": "id-35",
       "kind": "rework",
       "is_back_edge": true,
       "points": [
         [
-          802,
+          1050,
           318
         ],
         [
-          802,
+          1050,
           310
         ],
         [
@@ -577,22 +679,22 @@
       ],
       "label": "Re-trim",
       "label_pos": {
-        "x": 796,
+        "x": 1044,
         "y": 301,
         "align": "right"
       }
     },
     {
-      "id": "id-31",
+      "id": "id-36",
       "kind": "sequence",
       "is_back_edge": false,
       "points": [
         [
-          976,
+          1224,
           464
         ],
         [
-          1042,
+          1290,
           464
         ]
       ],

@@ -23,6 +23,8 @@ LABELS = [
     "Special loads OK?",
     "Resolve or offload",
     "Load and return LIR",
+    "Busy wave?",  # v1.10 A.5
+    "Read report at aircraft",
     "Deviation in limits?",
     "Approve deviation",
     "Issue load sheet",

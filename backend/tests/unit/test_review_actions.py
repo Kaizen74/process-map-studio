@@ -67,7 +67,7 @@ def test_confirming_locks_a_step_and_is_audited(drafted: Drafted) -> None:
     )
     cards = drafted.client.get("/api/engagements").json()
     [card] = [c for c in cards if c["id"] == drafted.engagement_id]
-    assert card["review_progress"] == {"reviewed": 1, "total": 8}
+    assert card["review_progress"] == {"reviewed": 1, "total": 10}  # v1.10 A.5
 
 
 def test_rejecting_is_reversible_and_refreshes_lint(drafted: Drafted) -> None:

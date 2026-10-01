@@ -1,12 +1,22 @@
 {
   "stances": [
     {
+      "step_ref": "e5",
+      "stance": "supports",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
       "step_ref": "e6",
       "stance": "supports",
       "segment_ids": [
-        "p12"
+        "p8"
       ],
-      "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
+      "quote": "What actually happens on a busy wave",
       "divergence_type": "none",
       "divergence_note": ""
     },
@@ -14,19 +24,9 @@
       "step_ref": "e7",
       "stance": "supports",
       "segment_ids": [
-        "p13"
+        "p8"
       ],
-      "quote": "The captain either accepts or asks for a re-trim.",
-      "divergence_type": "none",
-      "divergence_note": ""
-    },
-    {
-      "step_ref": "e8",
-      "stance": "supports",
-      "segment_ids": [
-        "p16"
-      ],
-      "quote": "Then I issue the final load sheet, around T-15.",
+      "quote": "I walk down and read it off their sheet",
       "divergence_type": "none",
       "divergence_note": ""
     }

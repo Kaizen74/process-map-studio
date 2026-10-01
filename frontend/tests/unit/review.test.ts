@@ -39,6 +39,6 @@ describe("auto-advance order (PRD §5.7.5)", () => {
     };
     expect(nextToReview(done, id("Draft load plan"))).toBeNull();
     expect(openSteps(done)).toBe(0);
-    expect(openSteps(SAMPLE.graph)).toBe(8);
+    expect(openSteps(SAMPLE.graph)).toBe(10); // v1.10 A.5
   });
 });

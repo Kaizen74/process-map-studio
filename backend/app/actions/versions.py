@@ -238,6 +238,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 review_status=e.review_status,
                 account_summary=accounts,
                 practice_described=translation.practice_described(accounts),
+                variants=e.variants,
             )
         )
 

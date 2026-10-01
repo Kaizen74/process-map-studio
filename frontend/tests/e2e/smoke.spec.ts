@@ -168,7 +168,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("8");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
     await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("5");
-    await expect(summary.getByText(/Built from 21 checked claims/)).toBeVisible();
+    await expect(summary.getByText(/Built from 23 checked claims/)).toBeVisible();  // v1.10 A.1, A.5
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
@@ -180,10 +180,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
 
     // Review: the draft map drawn from the backend layout (P5).
     await summary.getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("0 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("0 of 10 steps reviewed")).toBeVisible();  // v1.10 A.5: ten steps
     await expect(page.locator(".version-banner").getByText(/Signal strength: Strong/)).toBeVisible();
     await expect(page.getByRole("button", { name: /^Activity, Draft load plan, Load controller/ })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
+    await expect(page.getByRole("group", { name: "Load controller lane, 6 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
     // Visual baseline (PRD §6.2 item 9): the sample's Review screen, plain lens, nothing
     // selected, at both sizes; at most 0.5% of pixels may differ. P7 added the quality card button
@@ -202,7 +202,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await page.getByRole("radio", { name: "Map" }).click();
       await expect(page.getByRole("radiogroup", { name: "Lens" })).toBeVisible();
     }
-    await expect(page).toHaveScreenshot("p7-review-1440x900.png");
+    // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
+    // but the rest of the journey keeps running, so other regressions are still caught.
+    await expect.soft(page).toHaveScreenshot("p7-review-1440x900.png");
     await page.setViewportSize({ width: 1080, height: 800 });
     // P12 visual pass: every step of the guided path stays in view at the smaller size (the bar
     // wraps instead of cutting off Registers, Leadership and Exports).
@@ -213,7 +215,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       const name = await step.getAttribute("aria-label");
       expect(box && barBox && box.x + box.width <= barBox.x + barBox.width + 0.5, `${name} is cut off`).toBe(true);
     }
-    await expect(page).toHaveScreenshot("p7-review-1080x800.png");
+    await expect.soft(page).toHaveScreenshot("p7-review-1080x800.png");
     await page.setViewportSize({ width: 1440, height: 900 });
     // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.
     await page.getByRole("button", { name: "Publish" }).click();
@@ -262,12 +264,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Confirm every step with auto-advance: buttons and the C shortcut, then all reviewed.
     await page.getByRole("button", { name: "Close details" }).click();
     await page.getByRole("button", { name: "Start with the first step that needs attention" }).click();
-    for (let reviewed = 1; reviewed <= 8; reviewed += 1) {
+    for (let reviewed = 1; reviewed <= 10; reviewed += 1) {
       const actions = page.getByRole("complementary", { name: "Step details" });
       await expect(actions.getByRole("button", { name: "Confirm as drafted" })).toBeVisible();
       if (reviewed % 2 === 0) await page.keyboard.press("c");
       else await actions.getByRole("button", { name: "Confirm as drafted" }).click();
-      await expect(page.getByText(`${reviewed} of 8 steps reviewed`)).toBeVisible();
+      await expect(page.getByText(`${reviewed} of 10 steps reviewed`)).toBeVisible();
     }
     await expect(page.getByText("All steps reviewed")).toBeVisible();
     await expect(page.locator(".map-node--unreviewed")).toHaveCount(0);
@@ -277,18 +279,18 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "More" }).click();
     await page.getByRole("button", { name: "Refresh draft from sources" }).click();
     const refresh = page.getByRole("dialog", { name: "Refresh draft from sources" });
-    await expect(refresh).toContainText("The 8 steps you confirmed, edited, added or rejected stay exactly as they are.");
+    await expect(refresh).toContainText("The 10 steps you confirmed, edited, added or rejected stay exactly as they are.");
     // Anti-drift: nothing changed in Settings or the instructions since the draft was made.
     await expect(refresh).toContainText("Claude's model, settings and instructions are the same as when this draft was made.");
     expect(await seriousViolations(page)).toEqual([]);
     await refresh.getByRole("button", { name: "Refresh draft" }).click();
     await expect(page.getByRole("region", { name: "Draft v0.2" })).toBeVisible({ timeout: 30_000 });
     const changed = page.getByRole("region", { name: "What the refresh changed" });
-    await expect(changed).toContainText("The 8 steps you reviewed stayed exactly as they were.");
+    await expect(changed).toContainText("The 10 steps you reviewed stayed exactly as they were.");
     await expect(changed).toContainText("The steps you hadn't reviewed came out the same as before.");
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("region", { name: "Draft v0.2" }).getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
     await expect(page.getByText("All steps reviewed")).toBeVisible();
     await page.getByRole("tab", { name: "Audit log" }).click();
     await expect(page.getByRole("tabpanel").getByRole("row", { name: /Refreshed draft from sources/ })).toBeVisible();
@@ -400,7 +402,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect((await publicText(page)).includes("Priya"), "a name shown on Registers").toBe(false);
 
     await page.goto(`/engagements/${id}/review`);
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
 
     // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
     await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
@@ -505,7 +507,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Reopen: a new draft with every reviewed step locked.
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
     await expect(page.getByText("Draft v1.1 draft")).toBeVisible();
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
     await expect(page.getByRole("region", { name: "Visual walkthrough" })).toContainText(CAPTION);
     expect(await seriousViolations(page)).toEqual([]);
 
@@ -602,13 +604,14 @@ test("interview only: draft, review and publish at Limited signal strength", asy
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("7");
+    // v1.10: seven steps plus the busy-wave decision and its lived branch (A.5).
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("9");
     await expect(summary.getByText(/Signal strength: Limited/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     // Review: the banner says Limited; the quality card warns but only the review blocks.
     await summary.getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("0 of 7 steps reviewed")).toBeVisible();
+    await expect(page.getByText("0 of 9 steps reviewed")).toBeVisible();
     await expect(page.locator(".version-banner").getByText(/Signal strength: Limited/)).toBeVisible();
     await page.getByRole("button", { name: /Quality card: 8 of 9 green/ }).click();
     await expect(page.getByText(/Signal strength: Limited\. Built from interviews only/)).toBeVisible();

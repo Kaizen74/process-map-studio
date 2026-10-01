@@ -106,10 +106,11 @@ def test_every_element_line_carries_its_provenance() -> None:
         line for line in interpretation.splitlines() if line.startswith("| ") and "---" not in line
     ]
     step_rows = [row for row in table_rows if not row.startswith("| Step |")]
-    assert len(step_rows) == 4  # the sample's activities
+    assert len(step_rows) == 5  # the sample's activities (v1.10 A.5: + Read report at aircraft)
     assert all("| [O] |" in row for row in step_rows)
     decisions = [line for line in interpretation.splitlines() if line.startswith("- ")]
-    assert len(decisions) == 4 and all(line.startswith("- [O] ") for line in decisions)
+    # v1.10 A.5: + Busy wave?
+    assert len(decisions) == 5 and all(line.startswith("- [O] ") for line in decisions)
     assert "- [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: " in md
 
 
@@ -179,7 +180,7 @@ def test_raci_csv_is_steps_by_roles() -> None:
     rows = list(csv.reader(io.StringIO(text.removeprefix("﻿"))))
     assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
                        "Ramp", "Airline ops", "Captain"]  # fmt: skip
-    assert len(rows) == 9  # header + 8 steps; start and end are not steps
+    assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
     assert rows[6] == [
         "Deviation in limits?",
         "decision",

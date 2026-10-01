@@ -98,7 +98,12 @@ STAGES = [
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
-VERSIONS = {"S1_extract_interview": "3", "S1_extract_jd": "2", "S2_canonicalise": "2"}
+VERSIONS = {
+    "S1_extract_interview": "3",
+    "S1_extract_jd": "2",
+    "S2_canonicalise": "2",
+    "S4_assemble": "2",
+}
 
 
 @pytest.mark.parametrize("name", STAGES)
