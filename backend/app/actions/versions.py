@@ -41,6 +41,7 @@ from app.domain.graph import (
     LintReport,
     RaciDetail,
     RaciSource,
+    WorkTypeCue,
 )
 from app.domain.interview import QuestionBank
 from app.domain.layout import Layout
@@ -450,6 +451,13 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         rows = sources_repo.segment_rows(
             session, [r.segment_ids[0] for r in interview if r.segment_ids]
         )
+        cue_segments = [
+            str(c["segment_ids"][0])
+            for c in element.work_type_basis
+            if isinstance(c.get("segment_ids"), list) and c["segment_ids"]
+        ]
+        cue_anchors, _ = lenses.places(session, cue_segments)
+        cue_sources = {sid: sources_repo.segment_source(session, sid) or "" for sid in cue_segments}
         # The first passage each answer cites: its anchor and the guide question it answers.
         where = {
             sid: (
@@ -504,6 +512,16 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
             version_id=version.id,
             know_how=lenses.know_how(lens, element.stable_key, element.kind, element.work_type),
             stories=lenses.stories(lens, element.stable_key),
+            work_type_cues=[
+                WorkTypeCue(
+                    quote=hide(str(c.get("quote", ""))),
+                    source_id=cue_sources.get(seg, ""),
+                    segment_id=seg or None,
+                    anchor=cue_anchors.get(seg, ""),
+                )
+                for c in element.work_type_basis
+                for seg in [str((c.get("segment_ids") or [""])[0])]
+            ],
             lane_role_name=roles.get(element.lane_role_id or "", ""),
             phase_name=phases.get(element.phase_id or "", ""),
             decider_role_name=roles.get(element.decision.decider_role_id or "", ""),

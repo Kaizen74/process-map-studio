@@ -41,7 +41,8 @@ Start: working tree clean, `main` merged in (Eric re-uploaded the same v1.10 PRD
 - [x] C4c — P4c: follow-up probes F2 in the coverage report (A.10: "…it gets lost or arrives late"); G8 baseline (work types, account tags, know-how, stories, glossary, capability notes, coverage)
 - [x] V1 — P5: layout per view (`?view=done|documented`), ghosted other-view steps (`show_other`), cycle time per view; G2a and G2b (levels and nesting moved to C3 with A.10; drawing gap connectors dashed is V2)
 - [x] V2 — P5 UI: View switch (As done by default), Show the other view, "not described" connectors and legend, Work type lens, variant values in the lens line, per-view cycle time in the header strip
-- [ ] V3 — P5 UI: panel sections 4a–4d (Work type, Know-how, Stories, Official vs lived) with quotes and the question ID that prompted each
+- [x] V3 — P5 UI: panel sections 4a–4d (Work type, Know-how, Stories, Official vs lived) with quotes, anchors and the question ID that prompted each (read-only)
+- [ ] V3b — P5: Confirm or change a step's work type (draft only), kept through refresh like Eric's other edits; complex or chaotic drops an automation-candidate flag
 - [ ] V4 — end-to-end proof on the fixture (A.1–A.4 + A.10): draft, compare with A.5, A.8, A.9, A.10; screenshots of both views; new Review candidates for Eric's approval
 - [ ] C5 — P4c: interviewee profile form and tailored guide generation (`IG_generate`, criteria 61 and 69) on the Interview screen
 

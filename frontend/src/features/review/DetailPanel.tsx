@@ -5,12 +5,17 @@ import {
   DecisionRights,
   EvidenceCard,
   HandoffTime,
+  KnowHowSection,
   KnowledgeRisk,
   Kpi,
+  OfficialLivedSection,
   PanelHeader,
   PanelSection,
   ReviewActions,
   RoleAccountability,
+  StoriesSection,
+  WorkTypeSection,
+  type PassageLink,
 } from "../../components/panel";
 import { ErrorState, Skeleton } from "../../components/common";
 import { useElement } from "../../hooks/useReview";
@@ -40,6 +45,8 @@ export interface DetailPanelProps {
   onAddAfter?: (() => void) | undefined;
   /** Opens a gap analysis report from the step's "Gap findings" section. */
   onOpenGapReport: (analysisId: string) => void;
+  /** A judgment step's exits marked typical (§3.12.5), for "Typical responses" (4a). */
+  typicalResponses?: readonly string[] | undefined;
   onClose: () => void;
 }
 
@@ -55,10 +62,23 @@ export function DetailPanel({
   onOpenEvidence,
   onAddAfter,
   onOpenGapReport,
+  typicalResponses = [],
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
   const step = STEPS.has(element.kind);
+  // A know-how item, story, cue or answer opens in the source viewer like an evidence card.
+  const openPassage = (passage: PassageLink) => {
+    const known = detail.data?.evidence.find((c) => c.source_id === passage.source_id);
+    onOpenEvidence({
+      ...passage,
+      source_name: known?.source_name ?? "",
+      source_kind: known?.source_kind ?? "interview_transcript",
+      stance: "supports",
+      verified: true,
+      note: "",
+    });
+  };
   return (
     <div className="panel-stack">
       <PanelHeader element={element} laneName={laneName} phaseName={phaseName} />
@@ -118,6 +138,10 @@ export function DetailPanel({
           <ConfidenceBreakdown element={detail.data} />
           <RoleAccountability element={detail.data} />
           <DecisionRights element={detail.data} />
+          <WorkTypeSection element={detail.data} typicalResponses={typicalResponses} onOpen={openPassage} />
+          <KnowHowSection knowHow={detail.data.know_how} onOpen={openPassage} />
+          <StoriesSection stories={detail.data.stories} onOpen={openPassage} />
+          <OfficialLivedSection element={detail.data} onOpen={openPassage} />
           <HandoffTime element={detail.data} />
           <Kpi element={detail.data} />
           <ConstraintList element={detail.data} />

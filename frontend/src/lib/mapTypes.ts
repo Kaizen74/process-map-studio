@@ -183,6 +183,8 @@ export interface ElementDetail extends Omit<GraphElement, "evidence" | "raci"> {
   know_how?: KnowHow | null;
   /** v1.10 §3.12.2 (C2b): the stories the SME told about the step, in their own words. */
   stories?: StoryCard[];
+  /** V3 (§5.7.7 4a): the work type's quoted cues with their anchors. */
+  work_type_cues?: { quote: string; source_id: string; segment_id: string | null; anchor: string }[];
 }
 
 export type AshenCategory = "artefacts" | "skills" | "heuristics" | "experience" | "natural_talent";

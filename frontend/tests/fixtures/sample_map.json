@@ -2622,6 +2622,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": null,
+      "work_type_cues": [],
       "answers": [],
       "know_how": null,
       "stories": []
@@ -2790,6 +2791,14 @@
         }
       ],
       "work_type_status": "proposed",
+      "work_type_cues": [
+        {
+          "quote": "only me and one other controller really know the configurations",
+          "source_id": "id-13",
+          "segment_id": "id-21",
+          "anchor": "07:55"
+        }
+      ],
       "answers": [
         {
           "quote": "I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.",
@@ -2979,6 +2988,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [],
       "know_how": {
         "kdp_type": "decision",
@@ -3168,6 +3178,20 @@
         }
       ],
       "work_type_status": "proposed",
+      "work_type_cues": [
+        {
+          "quote": "against the checklist",
+          "source_id": "id-13",
+          "segment_id": "id-26",
+          "anchor": "14:05"
+        },
+        {
+          "quote": "Special loads shall be checked against the acceptance checklist",
+          "source_id": "id-15",
+          "segment_id": "id-27",
+          "anchor": "§4"
+        }
+      ],
       "answers": [
         {
           "quote": "I check special loads, dangerous goods and live animals, against the checklist",
@@ -3368,6 +3392,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [
         {
           "quote": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes.",
@@ -3573,6 +3598,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [
         {
           "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
@@ -3820,6 +3846,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [
         {
           "quote": "What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
@@ -3999,6 +4026,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [
         {
           "quote": "What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
@@ -4212,6 +4240,20 @@
         }
       ],
       "work_type_status": "proposed",
+      "work_type_cues": [
+        {
+          "quote": "There's no fixed answer.",
+          "source_id": "id-13",
+          "segment_id": "id-40",
+          "anchor": "29:48"
+        },
+        {
+          "quote": "You read the situation.",
+          "source_id": "id-13",
+          "segment_id": "id-40",
+          "anchor": "29:48"
+        }
+      ],
       "answers": [
         {
           "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
@@ -4443,6 +4485,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
+      "work_type_cues": [],
       "answers": [
         {
           "quote": "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
@@ -4639,6 +4682,14 @@
         }
       ],
       "work_type_status": "proposed",
+      "work_type_cues": [
+        {
+          "quote": "The final load sheet shall be issued through the departure control system",
+          "source_id": "id-15",
+          "segment_id": "id-45",
+          "anchor": "§6"
+        }
+      ],
       "answers": [
         {
           "quote": "Then I issue the final load sheet, around T-15.",
@@ -4711,6 +4762,7 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": null,
+      "work_type_cues": [],
       "answers": [],
       "know_how": null,
       "stories": []

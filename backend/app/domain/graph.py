@@ -416,6 +416,15 @@ class KnowHow(Out):
     communicated_via: list[str] = []
 
 
+class WorkTypeCue(Out):
+    """A quoted cue behind a step's work type (§3.12.4), with where it is (§5.7.7 4a)."""
+
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
 class StoryCard(Out):
     """§3.12.2 (C2b): a fragment the SME told, with their own words for it; kept when told once."""
 
@@ -494,6 +503,8 @@ class ElementDetail(Out):
     constraint_type: str | None = None
     work_type_basis: list[dict[str, Any]] = []
     work_type_status: str | None = None
+    # §5.7.7 4a (V3): the work type's quoted cues with their anchors (names hidden).
+    work_type_cues: list[WorkTypeCue] = []
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
     # was translated from, each with the guide question that prompted it. App only, never exported.
     answers: list[AnswerQuote] = []

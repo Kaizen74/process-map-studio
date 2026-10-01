@@ -774,3 +774,19 @@ def test_information_nobody_receives_or_gives_becomes_a_question() -> None:
     ]
     same_lane = load.model_copy(update={"lane": "lc"})
     assert translation.translate([plan, same_lane], []).edges == []  # a hand-over is cross-lane
+
+
+def test_a8_work_type_cues_come_with_their_anchors(drafted: Drafted) -> None:
+    """§5.7.7 4a (V3): each quoted cue opens at its passage."""
+    deviation = element_named(drafted, "Deviation in limits?")
+    assert [(c["quote"], c["anchor"]) for c in deviation["work_type_cues"]] == [
+        ("There's no fixed answer.", "29:48"),
+        ("You read the situation.", "29:48"),
+    ]
+    assert all(c["segment_id"] and c["source_id"] for c in deviation["work_type_cues"])
+    special = element_named(drafted, "Special loads OK?")["work_type_cues"]
+    assert [(c["quote"], c["anchor"]) for c in special] == [
+        ("against the checklist", "14:05"),
+        ("Special loads shall be checked against the acceptance checklist", "§4"),
+    ]
+    assert element_named(drafted, "Resolve or offload")["work_type_cues"] == []  # not classified

@@ -407,6 +407,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
           ) : selected ? (
             <DetailPanel
               element={selected}
+              typicalResponses={g.edges.filter((e) => e.from === selected.id && e.typical).map((e) => e.label)}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
               review={
