@@ -1,11 +1,45 @@
 # Project State
-*Last updated: 2026-09-30 (session 16) — update after EVERY increment*
+*Last updated: 2026-10-01 (session 17) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.10 from 2026-09-30; built up to P12 against v1.5, see DECISIONS.md).
 
 ## Current status
 Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) is complete (2026-09-28, tag `phase-p9` created locally); merged into `main` (pull request #11). Phase P10 (gap analysis, optional feature) is complete (2026-09-29, tag `phase-p10` created locally). Phase P11 (leadership view) is complete (2026-09-29, tag `phase-p11` created locally). The P10 and P11 work was merged into `main` (pull request #12). Now: Phase P12 (live run, polish and handover).
+
+## This session (2026-10-01, session 17) — goal: transcript to workflow (PRD v1.10 §8 feature prompt: P4b, the parts of P4c it needs, and the P5 views)
+Start: working tree clean, `main` merged in (Eric re-uploaded the same v1.10 PRD; no file changed), 13 of 13 checks green. P0a–P4 and P5 (single view) are complete as built against v1.5; nothing of v1.10's P4b (translation core) or P4c (sensemaking) exists beyond the empty columns and tables of migration 0009; P5 draws one view only.
+
+**Audit (Done / Partly / Not started)**
+| Area | Status | Evidence / gap |
+|---|---|---|
+| S0, speaker mapping, redaction (G10) | Done | `pipeline/s0_normalise.py`, `actions/redaction.py`; `test_s0_normalise.py`, `test_speakers_api.py`, privacy scan in the browser checks |
+| Step A question matching | Partly | matcher built (`services/question_matching.py`, `test_question_matching.py`) but not run on uploaded transcripts; no answer blocks, `source_segments.question_id` unused, S1 gets no targets |
+| S1 extraction + G1–G12 + A.6 traps | Partly | v1.5 claims and G1–G12 done (`grounding.py`, `test_grounding*.py`, G6 golden T1–T8); account type, stories, know-how, stated reasons, variation, decision information in/out not extracted |
+| Steps B–C translation (lexicon, rules 1–10, sequence basis, gap connectors, stitching, nesting) | Not started | no `marker_lexicon.json`, no codebook, no sequence basis or view membership written |
+| S2 canonicalise + merge proposals | Done | `pipeline/s2_canonicalise.py`, `test_s2_*` |
+| S3, S3b, S4, S5, lane rule, exits, lint L1–L12 | Done for v1.5 | `s3_calibrate.py`, `s3b_verify.py`, `s4_assemble.py`, `s5_questions.py`, `lint.py`; v1.10 additions missing: S3c work types, L10 work-type rule, L12 narration / work-type / stories warnings, per-view checks |
+| Work types and domain-aware mapping (§3.12.4–5) | Not started | — |
+| Layout per view, As done / As documented, gap connectors | Not started | `services/layout.py` one view; G2 single baseline (G2a/G2b missing) |
+| Map rendering, lenses, panel 1–11, evidence opens at quote | Done for v1.5 | `components/map/*`, `components/panel/*`, `lens.test.ts`, smoke path; Work type lens and panel 4a–4d missing |
+| A.5 (10 elements) / A.8 / A.9 / A.10 / G1 / G2a / G2b / G6 / G8 | Partly | A.5's 8 v1.5 elements and G1, G2, G6 done; Busy wave? and Read report at aircraft, A.8, A.9 (beyond question matches), A.10, G2a, G2b, G8 missing |
+| Acceptance criteria | 5–13 met (single view); 51–57, 61–67 (except 61 for templates), 69–72 not met | |
+
+**Plan (one increment ≈ 30 min; each: contract first, tests, full checks, commit, push, this file)**
+- [ ] B1 — P4b: codebook (Appendix E) and marker lexicon files, versioned and locked; deterministic pre-tagging (markers, account-type cues); codebook version stamped on every draft
+- [ ] B2 — P4b: Step A in drafting: interviewer turns matched to the engagement's guide (default: the Practice template), answer blocks with targets stored on passages; S1 interview prompt gets question–answer blocks, targets and pre-tags
+- [ ] B3 — P4b: S1 interview answers extended (account type with quoted cue, stated reason, variation condition, marker confirmations), grounded like every claim; account summary and "Practice not described"
+- [ ] B4 — P4b: translation rules 1–7: sequence basis on every edge, view membership and variants, the variation decision (Busy wave? → Read report at aircraft), "not described" connectors only where the lived account doesn't state the next step; narration-only edges and gap connectors raise questions; G1 updated (A.5 now 10 elements)
+- [ ] B5 — P4b: per-view flow checks (lint and quality card), graph and lint `?view=`; L12 warnings for narration-only edges
+- [ ] C1 — P4c: S1 stories (fragments, signifiers), know-how (ASHEN) with knowledge risk, SME terms, decision cadence and information in/out, capability notes; grounded and stored
+- [ ] C2 — P4c: S3c work types with quoted cues, SME-signifier rule, not classified → question; L10 extended (no automation on complex or chaotic)
+- [ ] C3 — P4c: landscape transcript A.10: interviewee profiles, landscape steps and nesting (rule 9), cross-interview stitching (rule 8, `dependency` with payload), capability notes → Preserve / Improve and a constraint (rule 10), follow-up probe F2; G1 updated for A.10
+- [ ] C4 — P4c: coverage report; reality-gap findings in Analysis A (known adaptation with gap class from a stated reason, constraint mismatch); G8 baseline
+- [ ] V1 — P5: layout per view (`?view=done|documented`), gap connectors drawn dashed, levels (rule 10), ghosted other-view steps; G2a and G2b
+- [ ] V2 — P5 UI: View switch (As done by default), Show the other view, "not described" connectors and legend, Work type lens, variant values in the lens line and header strip
+- [ ] V3 — P5 UI: panel sections 4a–4d (Work type, Know-how, Stories, Official vs lived) with quotes and the question ID that prompted each
+- [ ] V4 — end-to-end proof on the fixture (A.1–A.4 + A.10): draft, compare with A.5, A.8, A.9, A.10; screenshots of both views; new Review candidates for Eric's approval
+- [ ] C5 — P4c: interviewee profile form and tailored guide generation (`IG_generate`, criteria 61 and 69) on the Interview screen
 
 ## This session (2026-09-30, session 16) — goal: standard interview templates (PRD v1.10 F.9, built as part of P1)
 Eric's feature prompt (PRD v1.10 §8). P0a and P0b are complete. The templates are built as P1 additions; the rest of v1.6–v1.10 (P4b, P4c) is not started. Parts that need Eric (checking the Word templates, approving the G9 Markdown and any changed Review screenshot) come last.
