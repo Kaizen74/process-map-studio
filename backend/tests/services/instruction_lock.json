@@ -59,6 +59,14 @@
     "sha256": "8a35a97aa38d44df014b3a3636ac7bf8b264c95353021e0f5607f57607545eb6",
     "version": "1"
   },
+  "codebook.md": {
+    "sha256": "78b4c75d6a8de350c859649f7c11fd8c5e8a563b0706f9e43d761425b1bc047f",
+    "version": "1"
+  },
+  "marker_lexicon.json": {
+    "sha256": "0a12bbb43c96d74660a4e1b7c2874277b047ff6444e2dba8e531ff9841ad2f08",
+    "version": "1"
+  },
   "question_bank.json": {
     "sha256": "c03650395e1824b0f9fd06260df140c55befff9357d7a0711f0be54ba9078ab9",
     "version": "1.0"

@@ -106,3 +106,27 @@ def test_differences_in_plain_words() -> None:
         in run_records.differences(record(instructions=missing), same)[0]
     )
     assert run_records.differences(None, same) == [run_records.NO_RECORD]
+
+
+def test_every_draft_is_stamped_with_the_codebook_version(drafted: Drafted) -> None:
+    """PRD Appendix E: the codebook version is stamped on every draft (and shown per version)."""
+    [version] = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/versions").json()
+    assert version["codebook_version"] == prompts.instruction_versions()["codebook"] == "1"
+
+
+def test_a_reopened_draft_keeps_how_its_content_was_made(drafted: Drafted) -> None:
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        reopened = versions_repo.create_reopened(
+            session,
+            engagement_id=drafted.engagement_id,
+            label="v1.1 draft",
+            parent_id=drafted.version_id,
+        )
+        assert versions_repo.run_record(session, reopened.id) == versions_repo.run_record(
+            session, drafted.version_id
+        )
+        [row] = [
+            r for r in versions_repo.rows(session, drafted.engagement_id) if r["id"] == reopened.id
+        ]
+        assert row["codebook_version"] == "1"

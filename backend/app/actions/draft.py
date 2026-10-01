@@ -48,7 +48,7 @@ from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import sources as sources_repo
-from app.services import parsing
+from app.services import parsing, prompts
 
 Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
@@ -365,14 +365,15 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         raise
 
     kept_note = ""
-    record = run_records.made_with(ctx).model_dump()
+    made = run_records.made_with(ctx)
+    record, codebook_version = made.model_dump(), made.instructions.get(prompts.CODEBOOK)
     with session_scope(sessions) as session:
         if refreshing and earlier is not None:
             before_record = versions.run_record(session, earlier.id)
             changed = refresh.fold(session, earlier.id, version.id)
             kept = changed.kept
             versions.set_label(session, earlier.id, version.label)
-            versions.set_run_record(session, earlier.id, record)
+            versions.set_run_record(session, earlier.id, record, codebook_version)
             versions.delete(session, version.id)
             audit.record(
                 session,
@@ -399,7 +400,7 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
             for old in versions.drafts(session, engagement_id):
                 if old.id != version.id and versions.reviewed_count(session, old.id) == 0:
                     versions.delete(session, old.id)
-            versions.set_run_record(session, version.id, record)
+            versions.set_run_record(session, version.id, record, codebook_version)
             result_id = version.id
         # PDF pictures suggested on the steps whose verified evidence cites their page (P8).
         images_action.attach_suggestions(session, result_id)

@@ -1,0 +1,71 @@
+{
+  "version": "1",
+  "codebook_version": "1",
+  "note": "Marker pre-tags (PRD §3.12.10 Step B). Hints only: the model confirms or rejects each with a quote, and a tag is never evidence on its own. Phrases match whole words, ignoring case; within one family the longest phrase at a place wins.",
+  "families": {
+    "sequence": {
+      "pretag": "explicit_order",
+      "phrases": ["first thing", "first", "then", "after that", "next", "once", "before", "afterwards", "around T-"]
+    },
+    "handoff": {
+      "pretag": "handoff",
+      "phrases": ["send it to", "sends it to", "pass it to", "passes it to", "hand over", "hands over", "comes to me from", "send back", "sends back", "we get", "we send"]
+    },
+    "decision": {
+      "pretag": "decision_candidate",
+      "phrases": ["if", "unless", "depends on", "whether", "decide", "decides"]
+    },
+    "approval": {
+      "pretag": "approval_candidate",
+      "phrases": ["sign off", "signs off", "approve", "approves", "has to OK it", "get the lead to sign"]
+    },
+    "wait": {
+      "pretag": "wait",
+      "phrases": ["wait for", "wait", "sits in", "queue", "chase", "until it comes back"]
+    },
+    "check": {
+      "pretag": "control_note",
+      "phrases": ["check", "verify", "make sure"]
+    },
+    "rework": {
+      "pretag": "rework",
+      "phrases": ["send it back", "redo", "re-plan", "re-trim", "again"]
+    },
+    "variation": {
+      "pretag": "variation",
+      "phrases": ["usually", "sometimes", "on a busy day", "on a busy wave", "when it's"]
+    },
+    "official": {
+      "pretag": "account_official",
+      "phrases": ["supposed to", "officially", "the SOP says", "the rule is"]
+    },
+    "lived": {
+      "pretag": "account_lived",
+      "phrases": ["what actually happens", "last time", "last flight", "last night", "on Monday", "on Tuesday", "on Wednesday", "on Thursday", "on Friday", "that night"]
+    },
+    "work_type_clear": {
+      "pretag": "work_type_clear",
+      "phrases": ["always", "checklist", "just follow"]
+    },
+    "work_type_complex": {
+      "pretag": "work_type_complex",
+      "phrases": ["no fixed answer", "read the situation", "it depends on the day", "you just know"]
+    },
+    "work_type_chaotic": {
+      "pretag": "work_type_chaotic",
+      "phrases": ["drop everything", "firefighting", "all hands"]
+    },
+    "heuristic": {
+      "pretag": "ashen_heuristics",
+      "phrases": ["rule of thumb", "the trick is", "I always"]
+    },
+    "experience": {
+      "pretag": "ashen_experience",
+      "phrases": ["learned the hard way", "after that time", "learned it after"]
+    },
+    "sme_term": {
+      "pretag": "glossary_candidate",
+      "phrases": ["we call it", "we call them"]
+    }
+  }
+}

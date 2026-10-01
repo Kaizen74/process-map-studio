@@ -629,7 +629,7 @@ The stored picture (`image/jpeg`, `image/png` or `image/webp`); `?size=thumb` fo
 
 ### GET /api/engagements/{id}/versions
 Every version of the engagement, newest first (a refresh's half-built version is never listed).
-Response `200`: `[{"id", "engagement_id", "label", "state", "created_at", "published_at", "published_by", "parent_version_id", "signal"}]` — `state`: `draft` · `published` · `superseded`; `published_at`/`published_by` `null` for a draft; `signal` as in readiness, worked out from the sources the version was drafted from (`null` when it has none recorded).
+Response `200`: `[{"id", "engagement_id", "label", "state", "created_at", "published_at", "published_by", "parent_version_id", "signal", "codebook_version"}]` — `state`: `draft` · `published` · `superseded`; `published_at`/`published_by` `null` for a draft; `signal` as in readiness, worked out from the sources the version was drafted from (`null` when it has none recorded). `codebook_version` (2026-10-01): the version of the mapping codebook (PRD Appendix E, `backend/app/prompts/codebook.md`) its latest draft or refresh was made with; `null` for a version made before the codebook existed. The codebook is sent with the S1, S2, S3c and S4 prompts.
 Errors: `404` ("That engagement doesn't exist."). Used by: Published screen version picker, Exports screen.
 
 ### GET /api/versions/{vid}

@@ -23,7 +23,40 @@ _HEADER = re.compile(
 _ESCAPES = str.maketrans({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})
 
 
+# The mapping codebook (Appendix E) is sent with the prompts of the stages that build the map
+# (S1, S2, S3c, S4); its own version is stamped on every draft.
+CODEBOOK = "codebook"
+CODEBOOK_STAGES = frozenset(
+    {
+        "S1_extract_interview",
+        "S1_extract_document",
+        "S1_extract_jd",
+        "S2_canonicalise",
+        "S3c_worktype",
+        "S4_assemble",
+    }
+)
+
+
 def load_prompt(name: str, prompts_dir: Path = PROMPTS_DIR) -> Result[Prompt]:
+    """A stage prompt and its version; for the map-building stages, followed by the codebook."""
+    match _read_prompt(name, prompts_dir):
+        case Err() as err:
+            return err
+        case Ok(value=prompt):
+            pass
+    if name not in CODEBOOK_STAGES:
+        return Ok(prompt)
+    match _read_prompt(CODEBOOK, prompts_dir):
+        case Err() as err:
+            return err
+        case Ok(value=codebook):
+            pass
+    text = f'{prompt.text}\n\n<codebook version="{codebook.version}">\n{codebook.text}\n</codebook>'
+    return Ok(prompt.model_copy(update={"text": text}))
+
+
+def _read_prompt(name: str, prompts_dir: Path) -> Result[Prompt]:
     path = prompts_dir / f"{name}.md"
     try:
         raw = path.read_text(encoding="utf-8")

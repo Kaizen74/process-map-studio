@@ -772,6 +772,7 @@ class VersionSummary(BaseModel):
     published_by: str | None
     parent_version_id: str | None
     signal: SignalStrength | None = None
+    codebook_version: str | None = None  # Appendix E: the codebook the draft was made with
 
 
 class ChangeEntry(BaseModel):
