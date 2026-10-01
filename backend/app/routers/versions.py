@@ -22,8 +22,10 @@ def get_graph(request: Request, version_id: str, view: View | None = None) -> Gr
 
 
 @router.get("/versions/{version_id}/layout")
-def get_layout(request: Request, version_id: str) -> Layout:
-    return unwrap(versions.get_layout(request.app.state.sessions, version_id))
+def get_layout(
+    request: Request, version_id: str, view: View | None = None, show_other: bool = False
+) -> Layout:
+    return unwrap(versions.get_layout(request.app.state.sessions, version_id, view, show_other))
 
 
 @router.get("/versions/{version_id}/alignment-matrix")

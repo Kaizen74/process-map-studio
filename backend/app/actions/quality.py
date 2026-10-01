@@ -28,7 +28,7 @@ from app.domain.exports import (
     ExportQuestion,
     SourceEntry,
 )
-from app.domain.graph import Graph, LintReport
+from app.domain.graph import Graph
 from app.domain.quality import QualityCard, QualityInput
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import causes as causes_repo
@@ -37,7 +37,7 @@ from app.repositories import elements as map_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import export_html, exports, quality
+from app.services import export_html, exports, quality, views
 
 Sessions = sessionmaker[Session]
 
@@ -134,9 +134,10 @@ def render_exports(data: ExportInput) -> dict[str, str]:
 
 def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCard | None:
     """Work out the quality card of a version as it is now (not stored)."""
-    graph = versions_action.build_graph(session, version_id)
-    if graph is None:
+    every = versions_action.build_graph(session, version_id, every_line=True)
+    if every is None:
         return None
+    graph = views.combined(every)  # the map as one, built once
     data = export_input(config, session, version_id, graph)
     if data is None:
         return None
@@ -160,8 +161,7 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
     return quality.build_quality_card(
         QualityInput(
             graph=graph,
-            lint=versions_action.lint_for(session, version_id)
-            or LintReport(failures=[], warnings=[]),
+            lint=versions_action.lint_graph(every),
             pending_merges=pending,
             open_image_suggestions=map_repo.suggested_image_count(session, version_id),
             unverified_claims=unverified,

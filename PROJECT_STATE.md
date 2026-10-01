@@ -36,7 +36,7 @@ Start: working tree clean, `main` merged in (Eric re-uploaded the same v1.10 PRD
 - [ ] C2 — P4c: S3c work types with quoted cues, SME-signifier rule, not classified → question; L10 extended (no automation on complex or chaotic)
 - [ ] C3 — P4c: landscape transcript A.10: interviewee profiles, landscape steps and nesting (rule 9), cross-interview stitching (rule 8, `dependency` with payload), capability notes → Preserve / Improve and a constraint (rule 10), follow-up probe F2; G1 updated for A.10
 - [ ] C4 — P4c: coverage report; reality-gap findings in Analysis A (known adaptation with gap class from a stated reason, constraint mismatch); G8 baseline
-- [ ] V1 — P5: layout per view (`?view=done|documented`), gap connectors drawn dashed, levels (rule 10), ghosted other-view steps; G2a and G2b
+- [x] V1 — P5: layout per view (`?view=done|documented`), ghosted other-view steps (`show_other`), cycle time per view; G2a and G2b (levels and nesting moved to C3 with A.10; drawing gap connectors dashed is V2)
 - [ ] V2 — P5 UI: View switch (As done by default), Show the other view, "not described" connectors and legend, Work type lens, variant values in the lens line and header strip
 - [ ] V3 — P5 UI: panel sections 4a–4d (Work type, Know-how, Stories, Official vs lived) with quotes and the question ID that prompted each
 - [ ] V4 — end-to-end proof on the fixture (A.1–A.4 + A.10): draft, compare with A.5, A.8, A.9, A.10; screenshots of both views; new Review candidates for Eric's approval

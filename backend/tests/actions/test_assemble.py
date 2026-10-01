@@ -92,6 +92,13 @@ def test_the_sample_assembles_into_a_map_that_passes_lint(sample: Verified) -> N
         'Approval "Approve load plan" has no time stated.',
         'Activity "Read report at aircraft" has no time stated.',  # the SME gives none (22:30)
         'Activity "Issue load sheet" has no time stated.',
+        # v1.10 (B5, §3.7 L12): lines resting only on the order of mentioning.
+        'The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources '
+        "mention them.",
+        'The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order '
+        "the sources mention them.",
+        'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
+        "sources mention them.",
     ]
 
 

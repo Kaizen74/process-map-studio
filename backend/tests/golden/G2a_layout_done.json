@@ -1,0 +1,636 @@
+{
+  "view": "done",
+  "canvas": {
+    "w": 1236,
+    "h": 544
+  },
+  "lanes": [
+    {
+      "role_id": "id-1",
+      "label": "Airline ops",
+      "step_count": 1,
+      "y": 48,
+      "h": 124
+    },
+    {
+      "role_id": "id-2",
+      "label": "Captain",
+      "step_count": 1,
+      "y": 172,
+      "h": 124
+    },
+    {
+      "role_id": "id-3",
+      "label": "Load controller",
+      "step_count": 6,
+      "y": 296,
+      "h": 124
+    },
+    {
+      "role_id": "id-4",
+      "label": "Ramp",
+      "step_count": 1,
+      "y": 420,
+      "h": 124
+    }
+  ],
+  "phases": [
+    {
+      "phase_id": "id-5",
+      "label": "Plan",
+      "time_window": "T-120 to T-90",
+      "x": 120,
+      "w": 248
+    },
+    {
+      "phase_id": "id-6",
+      "label": "Check and load",
+      "time_window": "",
+      "x": 368,
+      "w": 496
+    },
+    {
+      "phase_id": "id-7",
+      "label": "Close out",
+      "time_window": "T-15 to T-10",
+      "x": 864,
+      "w": 372
+    }
+  ],
+  "nodes": [
+    {
+      "id": "id-8",
+      "shape": "circle",
+      "x": 174,
+      "y": 332,
+      "w": 16,
+      "h": 16,
+      "label_lines": [],
+      "label_pos": {
+        "x": 182,
+        "y": 340,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 182,
+        "y": 354,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-9",
+      "shape": "rounded_rect",
+      "x": 256,
+      "y": 318,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Draft load plan"
+      ],
+      "label_pos": {
+        "x": 306,
+        "y": 333,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 306,
+        "y": 368,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-10",
+      "shape": "diamond",
+      "x": 404,
+      "y": 314,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Special",
+        "loads OK?"
+      ],
+      "label_pos": {
+        "x": 430,
+        "y": 370,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 430,
+        "y": 404,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-11",
+      "shape": "rounded_rect",
+      "x": 380,
+      "y": 70,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Resolve",
+        "or offload"
+      ],
+      "label_pos": {
+        "x": 430,
+        "y": 77,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 438,
+        "y": 120,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-12",
+      "shape": "rounded_rect",
+      "x": 504,
+      "y": 442,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Load and",
+        "return LIR"
+      ],
+      "label_pos": {
+        "x": 554,
+        "y": 449,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 554,
+        "y": 492,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-13",
+      "shape": "diamond",
+      "x": 652,
+      "y": 314,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Busy wave?"
+      ],
+      "label_pos": {
+        "x": 678,
+        "y": 370,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 678,
+        "y": 389,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-14",
+      "shape": "rounded_rect",
+      "x": 752,
+      "y": 318,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Read report",
+        "at aircraft"
+      ],
+      "label_pos": {
+        "x": 802,
+        "y": 325,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 802,
+        "y": 368,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-15",
+      "shape": "diamond",
+      "x": 900,
+      "y": 314,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Deviation",
+        "in limits?"
+      ],
+      "label_pos": {
+        "x": 926,
+        "y": 370,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 926,
+        "y": 404,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-16",
+      "shape": "pill",
+      "x": 876,
+      "y": 194,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Approve",
+        "deviation"
+      ],
+      "label_pos": {
+        "x": 926,
+        "y": 201,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 934,
+        "y": 244,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-17",
+      "shape": "rounded_rect",
+      "x": 1000,
+      "y": 318,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Issue load sheet"
+      ],
+      "label_pos": {
+        "x": 1050,
+        "y": 333,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1050,
+        "y": 368,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-18",
+      "shape": "double_circle",
+      "x": 1166,
+      "y": 332,
+      "w": 16,
+      "h": 16,
+      "label_lines": [],
+      "label_pos": {
+        "x": 1174,
+        "y": 340,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1174,
+        "y": 354,
+        "align": "center"
+      },
+      "ghost": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "id-19",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          190,
+          340
+        ],
+        [
+          256,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-20",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          456,
+          340
+        ],
+        [
+          492,
+          340
+        ],
+        [
+          492,
+          464
+        ],
+        [
+          504,
+          464
+        ]
+      ],
+      "label": "Yes",
+      "label_pos": {
+        "x": 462,
+        "y": 331,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-21",
+      "kind": "no",
+      "is_back_edge": false,
+      "points": [
+        [
+          430,
+          314
+        ],
+        [
+          430,
+          114
+        ]
+      ],
+      "label": "No",
+      "label_pos": {
+        "x": 424,
+        "y": 304,
+        "align": "right"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-22",
+      "kind": "rework",
+      "is_back_edge": true,
+      "points": [
+        [
+          430,
+          70
+        ],
+        [
+          430,
+          62
+        ],
+        [
+          306,
+          62
+        ],
+        [
+          306,
+          318
+        ]
+      ],
+      "label": "Re-plan",
+      "label_pos": {
+        "x": 424,
+        "y": 53,
+        "align": "right"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-23",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          604,
+          464
+        ],
+        [
+          616,
+          464
+        ],
+        [
+          616,
+          340
+        ],
+        [
+          652,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-24",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          704,
+          340
+        ],
+        [
+          752,
+          340
+        ]
+      ],
+      "label": "Yes",
+      "label_pos": {
+        "x": 710,
+        "y": 331,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-25",
+      "kind": "no",
+      "is_back_edge": false,
+      "points": [
+        [
+          704,
+          340
+        ],
+        [
+          900,
+          340
+        ]
+      ],
+      "label": "No",
+      "label_pos": {
+        "x": 710,
+        "y": 349,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-26",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          852,
+          340
+        ],
+        [
+          900,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-27",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          952,
+          340
+        ],
+        [
+          1000,
+          340
+        ]
+      ],
+      "label": "Within limits",
+      "label_pos": {
+        "x": 958,
+        "y": 304,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-28",
+      "kind": "no",
+      "is_back_edge": false,
+      "points": [
+        [
+          926,
+          314
+        ],
+        [
+          926,
+          238
+        ]
+      ],
+      "label": "Outside limits",
+      "label_pos": {
+        "x": 920,
+        "y": 304,
+        "align": "right"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-29",
+      "kind": "approve",
+      "is_back_edge": false,
+      "points": [
+        [
+          976,
+          216
+        ],
+        [
+          988,
+          216
+        ],
+        [
+          988,
+          340
+        ],
+        [
+          1000,
+          340
+        ]
+      ],
+      "label": "Accept",
+      "label_pos": {
+        "x": 982,
+        "y": 207,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-30",
+      "kind": "rework",
+      "is_back_edge": true,
+      "points": [
+        [
+          926,
+          194
+        ],
+        [
+          926,
+          186
+        ],
+        [
+          554,
+          186
+        ],
+        [
+          554,
+          442
+        ]
+      ],
+      "label": "Re-trim",
+      "label_pos": {
+        "x": 920,
+        "y": 177,
+        "align": "right"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-31",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          1100,
+          340
+        ],
+        [
+          1166,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-32",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          356,
+          340
+        ],
+        [
+          404,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    }
+  ]
+}

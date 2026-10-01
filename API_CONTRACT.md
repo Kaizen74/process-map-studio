@@ -407,6 +407,7 @@ Response `200`:
 - `lens_pos`: where the lens line goes (`y` = its top). `align` is `left` when a line leaves or enters the node's bottom, so the text sits beside it.
 - `points`: the corners of an orthogonal line from source to target. `is_back_edge`: drawn dashed along the track 14 px below the top of the upper lane.
 - `label_pos` of an edge: the centre line (`y`) and left, centre or right edge (`x`, per `align`) of its label chip; `null` when the edge has no label.
+- **Per view** (2026-10-01, PRD §3.12.11, V1): `?view=done|documented` lays out only that view's steps and lines (G2a: As done, G2b: As documented); `&show_other=true` also places the steps only in the other view, with `ghost: true` on them and on the lines only the other view draws (the UI draws them at 20% opacity with a dashed outline and the label "Only in the documented version" or "Only in practice"; no marker is added). Without `view`, the combined map (both views' steps, without the lines added for one view) as before. The response carries `view` (`"done"`, `"documented"` or `null`); every node and edge carries `ghost` (false unless `show_other`). A `gap` edge ("not described" connector, As done only) is drawn dashed with its label. Any other `view` value: `422`.
 Errors: `404` ("That version doesn't exist."). Used by: Review (P5).
 
 ### GET /api/versions/{vid}/lint

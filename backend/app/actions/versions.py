@@ -126,10 +126,13 @@ def combined_lines(edges: list[EdgeRecord]) -> list[EdgeRecord]:
     return [e for e in edges if not views.added_for_one_view(e.provenance, e.view_membership)]
 
 
-def build_graph(session: Session, version_id: str, *, every_line: bool = False) -> Graph | None:
+def build_graph(
+    session: Session, version_id: str, *, every_line: bool = False, view: View | None = None
+) -> Graph | None:
     """The version's graph. Without `every_line` the lines are the combined map's (what the
     layout, lint, quality card, exports and leadership read); the graph endpoint returns every
-    line with its view membership."""
+    line with its view membership. With a view, only that view's steps and lines, and the cycle
+    time along that view's main path (§3.12.11)."""
     version = versions_repo.get(session, version_id)
     if version is None:
         return None
@@ -145,7 +148,17 @@ def build_graph(session: Session, version_id: str, *, every_line: bool = False) 
     phases = map_repo.phases(session, version_id)
     elements = map_repo.elements(session, version_id)
     edges = map_repo.edges(session, version_id)
-    if not every_line:
+    if view is not None:
+        elements = [e for e in elements if views.in_view(e.view_membership, view)]
+        shown = {e.id for e in elements}
+        edges = [
+            e
+            for e in edges
+            if views.in_view(e.view_membership, view)
+            and e.from_element_id in shown
+            and e.to_element_id in shown
+        ]
+    elif not every_line:
         edges = combined_lines(edges)
     raci = map_repo.raci(session, version_id)
     constraints = map_repo.constraints(session, version_id)
@@ -272,7 +285,7 @@ def build_graph(session: Session, version_id: str, *, every_line: bool = False) 
             trigger=hide(engagement.trigger),
             end_point=hide(engagement.end_point),
             kpi=hide(engagement.process_kpi),
-            cycle_time=cycle_time(elements, combined_lines(edges)),
+            cycle_time=cycle_time(elements, edges if view else combined_lines(edges)),
         ),
         roles=[
             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
@@ -306,10 +319,8 @@ def build_graph(session: Session, version_id: str, *, every_line: bool = False) 
 def get_graph(sessions: Sessions, version_id: str, view: View | None = None) -> Result[Graph]:
     """Every line with its view membership; with a view, only that view's steps and lines."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id, every_line=True)
-    if graph is None:
-        return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
-    return Ok(views.view_graph(graph, view) if view else graph)
+        graph = build_graph(session, version_id, every_line=True, view=view)
+    return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
 
 
 def get_alignment_matrix(sessions: Sessions, version_id: str) -> Result[list[AlignmentRow]]:
@@ -321,26 +332,39 @@ def get_alignment_matrix(sessions: Sessions, version_id: str) -> Result[list[Ali
     return Ok(alignment.alignment_matrix(graph))
 
 
-def get_layout(sessions: Sessions, version_id: str) -> Result[Layout]:
-    """Where the UI draws the version's map (PRD §3.9)."""
+def get_layout(
+    sessions: Sessions, version_id: str, view: View | None = None, show_other: bool = False
+) -> Result[Layout]:
+    """Where the UI draws the version's map (PRD §3.9): the combined map, or one view (§3.12.11),
+    optionally with the other view's steps ghosted."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
-    return Ok(layout.compute_layout(graph)) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
-
-
-def lint_for(session: Session, version_id: str) -> LintReport | None:
-    """The lint rules on the map as one (with its layout), then each view's flow checks
-    (§3.12.11). Used for the stored report, the quality card and publishing alike."""
-    graph = build_graph(session, version_id)
+        graph = build_graph(session, version_id, every_line=True)
     if graph is None:
-        return None
+        return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+    if view is None:
+        return Ok(layout.compute_layout(views.combined(graph)))
+    if not show_other:
+        drawn = layout.compute_layout(views.view_graph(graph, view))
+        return Ok(drawn.model_copy(update={"view": view}))
+    drawn = layout.compute_layout(views.with_other_view(graph, view))
+    return Ok(views.mark_ghosts(drawn, graph, view))
+
+
+def lint_graph(every: Graph) -> LintReport:
+    """The lint rules on the map as one (with its layout), then each view's flow checks
+    (§3.12.11), from the graph with every line. Used for the stored report, the quality card and
+    publishing alike."""
+    graph = views.combined(every)
     whole = lint.run_lint(graph, layout.compute_layout(graph))
-    every = build_graph(session, version_id, every_line=True)
-    assert every is not None
     per_view = lint.run_view_checks(every)
     return LintReport(
         failures=whole.failures + per_view.failures, warnings=whole.warnings + per_view.warnings
     )
+
+
+def lint_for(session: Session, version_id: str) -> LintReport | None:
+    every = build_graph(session, version_id, every_line=True)
+    return lint_graph(every) if every is not None else None
 
 
 def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:

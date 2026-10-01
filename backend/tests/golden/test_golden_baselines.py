@@ -1,7 +1,8 @@
 """Golden baselines (PRD §6.2 item 4): byte-identical outcomes on the illustrative fixture.
 
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
-- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
+- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn; G2a and
+  G2b the layout of each view (As done, As documented; §3.12.11).
 - G3: the Master Process Map Markdown of the sample, fully confirmed and published (PRD §7.3).
 - G4: the alignment-matrix payload of that draft (PRD §4 Views, §5.4 Matrix).
 - G5: the single-file HTML map of the same published version (the embedded font data, which is the
@@ -84,6 +85,15 @@ def test_g2_layout_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         layout = client.get(f"/api/versions/{version_id}/layout").json()
         matches_baseline("G2_layout.json", layout)
+
+
+def test_g2a_and_g2b_layout_of_each_view(settings_config: AppConfig) -> None:
+    """PRD §3.12.11 (V1): the layout of As done (G2a) and of As documented (G2b)."""
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        url = f"/api/versions/{version_id}/layout"
+        matches_baseline("G2a_layout_done.json", client.get(url, params={"view": "done"}).json())
+        documented = client.get(url, params={"view": "documented"}).json()
+        matches_baseline("G2b_layout_documented.json", documented)
 
 
 def test_g4_alignment_matrix_of_the_sample(settings_config: AppConfig) -> None:

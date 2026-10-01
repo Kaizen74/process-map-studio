@@ -376,6 +376,12 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
         "Final load sheet issued",
     ]  # fmt: skip
     assert len(done["edges"]) == 14 and len(documented["edges"]) == 8
+    # Cycle time per view (§3.12.11): each view's main path has two steps without time; the map
+    # as one has three (Approve load plan is only in As documented).
+    assert done["process"]["cycle_time"] == documented["process"]["cycle_time"] == {
+        "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 2,
+    }  # fmt: skip
+    assert drafted.client.get(url).json()["process"]["cycle_time"]["incomplete_steps"] == 3
     bad = drafted.client.get(url, params={"view": "both"})
     assert bad.status_code == 422
     lint = drafted.client.get(f"/api/versions/{drafted.version_id}/lint").json()
@@ -417,3 +423,30 @@ def test_views_are_kept_up_to_date_on_drafts_only(drafted: Drafted) -> None:
     with session_scope(sessions) as session:
         assert map_repo.element(session, plan.id).view_membership is None  # type: ignore[union-attr]
         assert len(map_repo.edges(session, drafted.version_id)) == before
+
+
+def test_each_view_is_laid_out_and_the_other_view_can_be_shown_ghosted(drafted: Drafted) -> None:
+    """V1 (§3.12.11): the layout of one view; with Show the other view, the steps and lines only
+    in the other view are placed too and marked ghost (no marker is added)."""
+    url = f"/api/versions/{drafted.version_id}/layout"
+    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
+    named = {e["id"]: e["label"] for e in graph["elements"]}
+    edges = {e["id"]: (named[e["from"]], named[e["to"]]) for e in graph["edges"]}
+    done = drafted.client.get(url, params={"view": "done"}).json()
+    assert done["view"] == "done" and not any(n["ghost"] for n in done["nodes"])
+    assert "Approve load plan" not in [named[n["id"]] for n in done["nodes"]]
+    shown = drafted.client.get(url, params={"view": "done", "show_other": "true"}).json()
+    assert [named[n["id"]] for n in shown["nodes"] if n["ghost"]] == ["Approve load plan"]
+    assert sorted(edges[e["id"]] for e in shown["edges"] if e["ghost"]) == [
+        ("Approve load plan", "Draft load plan"),
+        ("Approve load plan", "Special loads OK?"),
+        ("Draft load plan", "Approve load plan"),
+    ]
+    # As done's own line from drafting to the special-loads check is drawn; As documented's
+    # line from loading to the deviation check is not.
+    drawn = [edges[e["id"]] for e in shown["edges"]]
+    assert ("Draft load plan", "Special loads OK?") in drawn
+    assert ("Load and return LIR", "Deviation in limits?") not in drawn
+    assert drafted.client.get(url, params={"view": "later"}).status_code == 422
+    combined = drafted.client.get(url).json()
+    assert combined["view"] is None and len(combined["nodes"]) == 12

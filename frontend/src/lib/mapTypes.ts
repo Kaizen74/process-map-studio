@@ -115,6 +115,8 @@ export interface LayoutNode {
   label_lines: string[];
   label_pos: TextPos;
   lens_pos: TextPos;
+  /** v1.10 §3.12.11: only in the other view (drawn ghosted with Show the other view). */
+  ghost?: boolean;
 }
 
 export type Point = [number, number];
@@ -126,9 +128,12 @@ export interface LayoutEdge {
   points: Point[];
   label: string;
   label_pos: TextPos | null;
+  ghost?: boolean;
 }
 
 export interface Layout {
+  /** "done" · "documented" · null (the combined map). */
+  view?: "done" | "documented" | null;
   canvas: { w: number; h: number };
   lanes: { role_id: string; label: string; step_count: number; y: number; h: number }[];
   phases: { phase_id: string; label: string; time_window: string; x: number; w: number }[];

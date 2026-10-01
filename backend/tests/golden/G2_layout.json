@@ -1,4 +1,5 @@
 {
+  "view": null,
   "canvas": {
     "w": 1360,
     "h": 668
@@ -81,7 +82,8 @@
         "x": 182,
         "y": 478,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-10",
@@ -102,7 +104,8 @@
         "x": 306,
         "y": 492,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-11",
@@ -124,7 +127,8 @@
         "x": 430,
         "y": 120,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-12",
@@ -146,7 +150,8 @@
         "x": 554,
         "y": 528,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-13",
@@ -168,7 +173,8 @@
         "x": 562,
         "y": 244,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-14",
@@ -190,7 +196,8 @@
         "x": 678,
         "y": 616,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-15",
@@ -211,7 +218,8 @@
         "x": 802,
         "y": 513,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-16",
@@ -233,7 +241,8 @@
         "x": 926,
         "y": 492,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-17",
@@ -255,7 +264,8 @@
         "x": 1050,
         "y": 528,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-18",
@@ -277,7 +287,8 @@
         "x": 1058,
         "y": 368,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-19",
@@ -298,7 +309,8 @@
         "x": 1174,
         "y": 492,
         "align": "center"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-20",
@@ -317,7 +329,8 @@
         "x": 1298,
         "y": 478,
         "align": "center"
-      }
+      },
+      "ghost": false
     }
   ],
   "edges": [
@@ -336,7 +349,8 @@
         ]
       ],
       "label": "",
-      "label_pos": null
+      "label_pos": null,
+      "ghost": false
     },
     {
       "id": "id-22",
@@ -361,7 +375,8 @@
         ]
       ],
       "label": "",
-      "label_pos": null
+      "label_pos": null,
+      "ghost": false
     },
     {
       "id": "id-23",
@@ -390,7 +405,8 @@
         "x": 486,
         "y": 83,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-24",
@@ -419,7 +435,8 @@
         "x": 424,
         "y": 53,
         "align": "right"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-25",
@@ -448,7 +465,8 @@
         "x": 586,
         "y": 455,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-26",
@@ -469,7 +487,8 @@
         "x": 548,
         "y": 428,
         "align": "right"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-27",
@@ -498,7 +517,8 @@
         "x": 548,
         "y": 177,
         "align": "right"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-28",
@@ -523,7 +543,8 @@
         ]
       ],
       "label": "",
-      "label_pos": null
+      "label_pos": null,
+      "ghost": false
     },
     {
       "id": "id-29",
@@ -544,7 +565,8 @@
         "x": 834,
         "y": 455,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-30",
@@ -565,7 +587,8 @@
         "x": 834,
         "y": 473,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-31",
@@ -582,7 +605,8 @@
         ]
       ],
       "label": "",
-      "label_pos": null
+      "label_pos": null,
+      "ghost": false
     },
     {
       "id": "id-32",
@@ -603,7 +627,8 @@
         "x": 1082,
         "y": 428,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-33",
@@ -624,7 +649,8 @@
         "x": 1044,
         "y": 428,
         "align": "right"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-34",
@@ -653,7 +679,8 @@
         "x": 1106,
         "y": 331,
         "align": "left"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-35",
@@ -682,7 +709,8 @@
         "x": 1044,
         "y": 301,
         "align": "right"
-      }
+      },
+      "ghost": false
     },
     {
       "id": "id-36",
@@ -699,7 +727,8 @@
         ]
       ],
       "label": "",
-      "label_pos": null
+      "label_pos": null,
+      "ghost": false
     }
   ]
 }

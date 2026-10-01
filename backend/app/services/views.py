@@ -7,6 +7,7 @@ none, and everything on it is in both views. A line is in a view only if both it
 from __future__ import annotations
 
 from app.domain.graph import Graph
+from app.domain.layout import Layout
 from app.domain.sensemaking import View
 
 VIEWS: tuple[View, ...] = ("done", "documented")
@@ -27,6 +28,33 @@ def combined(graph: Graph) -> Graph:
     line except those added for a single view, so nothing is counted twice."""
     edges = [e for e in graph.edges if not added_for_one_view(e.provenance, e.view_membership)]
     return graph.model_copy(update={"edges": edges})
+
+
+def with_other_view(graph: Graph, view: View) -> Graph:
+    """For "Show the other view": every step of both views, the combined map's lines and the
+    lines this view adds (its "not described" connectors and stated-order lines)."""
+    edges = [
+        e
+        for e in graph.edges
+        if not added_for_one_view(e.provenance, e.view_membership)
+        or in_view(e.view_membership, view)
+    ]
+    return graph.model_copy(update={"edges": edges})
+
+
+def mark_ghosts(layout: Layout, graph: Graph, view: View) -> Layout:
+    """The steps and lines only in the other view, marked to be drawn ghosted (no new marker)."""
+    other_steps = {e.id for e in graph.elements if not in_view(e.view_membership, view)}
+    other_lines = {
+        e.id
+        for e in graph.edges
+        if not in_view(e.view_membership, view) or e.from_ in other_steps or e.to in other_steps
+    }
+    return layout.model_copy(update={
+        "view": view,
+        "nodes": [n.model_copy(update={"ghost": n.id in other_steps}) for n in layout.nodes],
+        "edges": [e.model_copy(update={"ghost": e.id in other_lines}) for e in layout.edges],
+    })  # fmt: skip
 
 
 def view_graph(graph: Graph, view: View) -> Graph:
