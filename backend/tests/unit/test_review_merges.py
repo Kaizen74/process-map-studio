@@ -154,6 +154,10 @@ def test_questions_can_be_marked_answered_and_reopened(drafted: Drafted) -> None
         ("contested", "Deviation in limits?", "Close out"),
         ("gap", "", ""),
         ("gap", "", ""),
+        # v1.10 A.9: the lines resting only on the order of mentioning.
+        ("sequence", "Busy wave?", "Check and load"),
+        ("sequence", "Deviation in limits?", "Close out"),
+        ("sequence", "Deviation in limits?", "Close out"),
     ]
     assert all(q["status"] == "open" for q in listed)
     first = listed[0]["id"]

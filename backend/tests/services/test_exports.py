@@ -181,7 +181,7 @@ def test_raci_csv_is_steps_by_roles() -> None:
     assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
                        "Ramp", "Airline ops", "Captain"]  # fmt: skip
     assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
-    assert rows[6] == [
+    assert rows[8] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
         "Deviation in limits?",
         "decision",
         "Load controller",

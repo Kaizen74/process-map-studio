@@ -139,8 +139,9 @@ def test_the_sample_map_has_the_a5_details(sample: Verified) -> None:
         ("Busy wave?", "Read report at aircraft", "yes", "Yes"),
         ("Busy wave?", "Deviation in limits?", "no", "No"),
     }
-    assert [(named[e.from_], named[e.to]) for e in g.edges if named[e.from_] ==
-            "Read report at aircraft"] == [("Read report at aircraft", "Deviation in limits?")]  # fmt: skip
+    report = "Read report at aircraft"
+    after_report = [(named[e.from_], named[e.to]) for e in g.edges if named[e.from_] == report]
+    assert after_report == [(report, "Deviation in limits?")]
     # A.9 variants: where practice and the documents differ, both values.
     assert lir.variants == {
         "done": {"time": "Up to fifteen minutes' wait for the report"},

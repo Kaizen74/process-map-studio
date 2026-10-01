@@ -294,6 +294,8 @@ class GraphElement(Out):
     # §3.12.11: where the views differ on this step, both values (owner, threshold, time,
     # trigger): {"done": {...}, "documented": {...}}; null when they don't.
     variants: dict[str, dict[str, str]] | None = None
+    # §3.12.11 (B.35): both · done_only · documented_only; null on maps drafted before v1.10.
+    view_membership: str | None = None
 
 
 class GraphEdge(Out):
@@ -302,6 +304,12 @@ class GraphEdge(Out):
     to: str
     kind: str
     label: str
+    # §3.12.10-3.12.11 (B.34, B.35): why the line is there and which views draw it; null on maps
+    # drafted before v1.10 and on lines Eric added.
+    sequence_basis: str | None = None
+    view_membership: str | None = None
+    information_payload: str | None = None
+    typical: bool | None = None
 
 
 class Graph(Out):
@@ -410,6 +418,7 @@ class ElementDetail(Out):
     account_summary: AccountSummary = AccountSummary()
     practice_described: bool | None = None
     variants: dict[str, dict[str, str]] | None = None
+    view_membership: str | None = None
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
     # was translated from, each with the guide question that prompted it. App only, never exported.
     answers: list[AnswerQuote] = []

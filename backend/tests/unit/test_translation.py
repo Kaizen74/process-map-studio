@@ -4,12 +4,14 @@ through the real draft job with Claude mocked."""
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import Any
 
 from app.db import session_scope
 from app.domain import ai_schemas
 from app.domain.models import ClaimRecord
 from app.domain.result import Ok
+from app.domain.sensemaking import StepPosition, Translation, TranslationEdge, TranslationStep
 from app.pipeline import s1_extract
 from app.repositories import claims as claims_repo
 from app.services import translation
@@ -186,3 +188,172 @@ def test_ungrounded_cues_reasons_conditions_and_marker_quotes_are_dropped() -> N
         {"marker": "account_official: Officially", "confirmed": True, "quote": "Officially"}
     ]
     assert fields["markers_dropped"] == 1
+
+
+# --- Views and sequence basis (§3.12.10 rules 1-7, §3.12.11; A.9; acceptance criteria 63-65) ---
+
+
+def lines(graph: dict[str, Any], view: str) -> list[tuple[str, str, str, str]]:
+    """The lines a view draws: (from, to, kind, sequence basis)."""
+    named = {e["id"]: e["label"] for e in graph["elements"]}
+    keep = {"both", f"{view}_only"}
+    return [
+        (named[e["from"]], named[e["to"]], e["kind"], e["sequence_basis"])
+        for e in graph["edges"]
+        if e["view_membership"] in keep
+    ]
+
+
+def test_a9_as_done_and_as_documented_from_one_draft(drafted: Drafted) -> None:
+    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
+    views = {e["label"]: e["view_membership"] for e in graph["elements"]}
+    assert views == {
+        "Flight scheduled": "both",
+        "Draft load plan": "both",
+        "Approve load plan": "documented_only",  # not described in practice
+        "Special loads OK?": "both",
+        "Resolve or offload": "done_only",
+        "Load and return LIR": "both",  # contested: in both, with variants
+        "Busy wave?": "done_only",
+        "Read report at aircraft": "done_only",
+        "Deviation in limits?": "both",
+        "Approve deviation": "done_only",
+        "Issue load sheet": "both",
+        "Final load sheet issued": "both",
+    }
+    # As done: the SME states the next step after drafting ("Then I check special loads"), so
+    # the line is explicit order and there is no "not described" connector (A.9).
+    assert lines(graph, "done") == [
+        ("Flight scheduled", "Draft load plan", "sequence", "explicit_order"),
+        ("Special loads OK?", "Load and return LIR", "yes", "explicit_order"),
+        ("Special loads OK?", "Resolve or offload", "no", "explicit_order"),
+        ("Resolve or offload", "Draft load plan", "rework", "explicit_order"),
+        ("Load and return LIR", "Busy wave?", "sequence", "narration_order"),
+        ("Busy wave?", "Read report at aircraft", "yes", "explicit_order"),
+        ("Busy wave?", "Deviation in limits?", "no", "explicit_order"),
+        ("Read report at aircraft", "Deviation in limits?", "sequence", "narration_order"),
+        ("Deviation in limits?", "Issue load sheet", "yes", "explicit_order"),
+        ("Deviation in limits?", "Approve deviation", "no", "explicit_order"),
+        ("Approve deviation", "Issue load sheet", "approve", "explicit_order"),
+        ("Approve deviation", "Load and return LIR", "rework", "explicit_order"),
+        ("Issue load sheet", "Final load sheet issued", "sequence", "explicit_order"),
+        ("Draft load plan", "Special loads OK?", "sequence", "explicit_order"),
+    ]
+    assert not [e for e in graph["edges"] if e["kind"] == "gap"]
+    # As documented: the SOP's order (LC-07 §3.1 before §3.2); RP-02 and LC-07 don't say which
+    # of the loading report and the deviation check comes first, so that line is narration order.
+    assert lines(graph, "documented") == [
+        ("Flight scheduled", "Draft load plan", "sequence", "explicit_order"),
+        ("Draft load plan", "Approve load plan", "sequence", "document_order"),
+        ("Approve load plan", "Special loads OK?", "approve", "explicit_order"),
+        ("Approve load plan", "Draft load plan", "reject", "explicit_order"),
+        ("Special loads OK?", "Load and return LIR", "yes", "explicit_order"),
+        ("Deviation in limits?", "Issue load sheet", "yes", "explicit_order"),
+        ("Issue load sheet", "Final load sheet issued", "sequence", "explicit_order"),
+        ("Load and return LIR", "Deviation in limits?", "sequence", "narration_order"),
+    ]
+    # Each line resting only on the order of mentioning becomes a validation question, written
+    # after the step questions (and the S1 gaps).
+    questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
+    assert [q["reason"] for q in questions] == [
+        "documented_only", "contested", "contested", "gap", "gap",
+        "sequence", "sequence", "sequence",
+    ]  # fmt: skip
+    assert questions[-3]["question"] == (
+        'Does "Busy wave?" come right after "Load and return LIR"? The sources mention it later '
+        "but don't say it comes next."
+    )
+    assert {q["element_label"] for q in questions[-3:]} == {"Busy wave?", "Deviation in limits?"}
+
+
+def step(
+    sid: str,
+    state: str,
+    interview: Sequence[tuple[int, bool, bool]] = (),
+    documents: Sequence[int] = (),
+    kind: str = "activity",
+) -> TranslationStep:
+    return TranslationStep(
+        id=sid, kind=kind, label=sid.upper(), source_state=state, provenance="O",
+        interview=[StepPosition(source_id="t", seq=s, lived=lived, explicit=explicit)
+                   for s, lived, explicit in interview],
+        documents=[StepPosition(source_id="sop", seq=s) for s in documents],
+    )  # fmt: skip
+
+
+def line(a: str, b: str, kind: str = "sequence", label: str = "") -> TranslationEdge:
+    return TranslationEdge(id=f"{a}{b}", from_id=a, to_id=b, kind=kind, label=label)
+
+
+def drawn(result: Translation, view: str) -> list[tuple[str, str, str, str, str]]:
+    keep = {"both", f"{view}_only"}
+    return [
+        (e.from_id, e.to_id, e.kind, e.label, e.sequence_basis)
+        for e in result.edges
+        if e.view_membership in keep
+    ]
+
+
+def test_a_jump_in_the_lived_account_becomes_a_not_described_connector() -> None:
+    """Rule 7 (criterion 65): "…and then it's done" where the SOP shows two steps in between:
+    As done gets a dashed "not described" connector and a follow-up question, never a step."""
+    steps = [
+        step("a", "corroborated", [(1, True, False)], [1]),
+        step("b", "documented_only", documents=[2]),
+        step("c", "documented_only", documents=[3]),
+        step("d", "corroborated", [(2, True, False)], [4]),
+    ]
+    result = translation.translate(steps, [line("a", "b"), line("b", "c"), line("c", "d")])
+    assert drawn(result, "documented") == [
+        ("a", "b", "sequence", "", "document_order"),
+        ("b", "c", "sequence", "", "document_order"),
+        ("c", "d", "sequence", "", "document_order"),
+    ]
+    assert drawn(result, "done") == [("a", "d", "gap", "Not described", "document_order")]
+    assert [(q.element_id, q.reason) for q in result.questions] == [("d", "not_described")]
+    assert result.questions[0].question == (
+        'The documents describe "B", "C" between "A" and "D", but the interview doesn\'t say what '
+        "happens there. What happens in practice?"
+    )
+    # Running it again on its own output changes nothing (a refresh, a second pass).
+    again = translation.translate(steps, [
+        TranslationEdge(**e.model_dump(exclude={"sequence_basis", "view_membership"}))
+        for e in result.edges
+    ])  # fmt: skip
+    assert drawn(again, "done") == drawn(result, "done")
+    assert drawn(again, "documented") == drawn(result, "documented")
+
+
+def test_a_stated_next_step_bridges_without_a_connector() -> None:
+    """Rule 1: "first … then" in the lived account is explicit order across the skipped step."""
+    steps = [
+        step("a", "corroborated", [(1, True, True)], [1]),
+        step("b", "documented_only", documents=[2]),
+        step("c", "corroborated", [(2, True, True)], [3]),
+    ]
+    result = translation.translate(steps, [line("a", "b"), line("b", "c")])
+    assert drawn(result, "done") == [("a", "c", "sequence", "", "explicit_order")]
+    assert result.questions == []
+
+
+def test_sequence_basis_strongest_first() -> None:
+    told = step("a", "corroborated", [(1, True, False)], [1])
+    later = step("b", "corroborated", [(2, True, True)], [2])
+    assert translation.sequence_basis(told, later, "sequence") == "explicit_order"
+    sop_only = step("b", "corroborated", [(2, False, False)], [2])
+    assert translation.sequence_basis(told, sop_only, "sequence") == "document_order"
+    hand = told.model_copy(update={"handoff_out": "Load plan", "documents": []})
+    takes = sop_only.model_copy(update={"handoff_in": "load  plan", "documents": []})
+    assert translation.sequence_basis(hand, takes, "sequence") == "dependency"
+    assert translation.sequence_basis(hand, sop_only.model_copy(update={"documents": []}),
+                                      "sequence") == "narration_order"  # fmt: skip
+    # A stated exit or loop is explicit; so are the trigger and the end point.
+    assert translation.sequence_basis(hand, takes, "no") == "explicit_order"
+    assert translation.sequence_basis(step("s", "not_assessed", kind="start"), takes,
+                                      "sequence") == "explicit_order"  # fmt: skip
+
+
+def test_recommended_practice_is_documented_only() -> None:
+    added = step("r", "not_assessed").model_copy(update={"provenance": "R"})
+    assert translation.element_view(added) == "documented_only"
+    assert translation.element_view(step("t", "trace_contradicted")) == "both"

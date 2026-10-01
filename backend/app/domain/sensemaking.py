@@ -39,3 +39,55 @@ class SentenceAccount(BaseModel):
     text: str
     account_type: AccountType
     cue: str
+
+
+# --- Translation into views (PRD §3.12.10 step C rules 1-7, §3.12.11) ---------------------------
+
+ViewMembership = Literal["both", "done_only", "documented_only"]
+SequenceBasis = Literal["explicit_order", "document_order", "dependency", "narration_order"]
+
+
+class StepPosition(BaseModel):
+    """Where one of a step's verified claims sits in its source (the order of its passages)."""
+
+    source_id: str
+    seq: int
+    lived: bool = False  # an interview claim giving the lived account
+    explicit: bool = False  # it confirmed an explicit-order marker ("first", "then", "T-90")
+
+
+class TranslationStep(BaseModel):
+    id: str
+    kind: str
+    label: str
+    source_state: str
+    provenance: str
+    interview: list[StepPosition] = []
+    documents: list[StepPosition] = []
+    handoff_in: str = ""
+    handoff_out: str = ""
+
+
+class TranslationEdge(BaseModel):
+    id: str | None = None  # None for a line translation adds
+    from_id: str
+    to_id: str
+    kind: str
+    label: str = ""
+
+
+class TranslatedEdge(TranslationEdge):
+    sequence_basis: SequenceBasis
+    view_membership: ViewMembership
+
+
+class TranslationQuestion(BaseModel):
+    element_id: str
+    question: str
+    reason: Literal["sequence", "not_described"]
+
+
+class Translation(BaseModel):
+    element_views: dict[str, ViewMembership]
+    edges: list[TranslatedEdge]  # the existing lines first, then the added ones
+    questions: list[TranslationQuestion]

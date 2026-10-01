@@ -80,6 +80,8 @@ REASONS = {
     "low_confidence": "low confidence",
     "gap": "gap",
     "gap_analysis": "gap analysis",
+    "sequence": "order not stated",
+    "not_described": "not described",
 }
 EXIT_WORDS = {kind.value: kind.value.capitalize() for kind in EdgeKind}
 STATUS_WORDS = {"pass": "Pass", "fail": "Fail", "warning": "Warning"}

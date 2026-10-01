@@ -218,7 +218,8 @@ def _check_edge(
         return _invalid("to", "A line can't go from a step to itself.")
     if source.kind == ElementKind.END.value or target.kind == ElementKind.START.value:
         return _invalid("to", "Lines can't leave the end or go into the start.")
-    if edge.kind not in {k.value for k in EdgeKind}:
+    # "Not described" connectors are drawn by the translation only, where practice is silent.
+    if edge.kind not in {k.value for k in EdgeKind} - {EdgeKind.GAP.value}:
         return _invalid("kind", "Choose the kind of line from the list.")
     label = edge.label.strip()
     if len(label) > 60:

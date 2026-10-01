@@ -84,7 +84,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     # S1 7 chunks + S2 1 + S3 7 source parts + S3b 10 steps + S4 1 + S5 1 (v1.10 A.5: ten steps)
     assert job["usage"]["calls"] == 27
     assert job["message"] == (
-        "Draft v0.1 is ready: 10 steps drafted, 0 to check, 0 rejected claims, 5 open questions."
+        "Draft v0.1 is ready: 10 steps drafted, 0 to check, 0 rejected claims, 8 open questions."
     )
     assert [s["id"] for s in job["stages"]] == [sid for sid, _ in draft.STAGES]
     for stage in job["stages"]:
@@ -94,7 +94,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
-        "steps": 10, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 5,
+        "steps": 10, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 8,
         "scrubbed": 0,
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]
@@ -374,14 +374,26 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     assert graph.status_code == 200
     body = graph.json()
     assert set(body) == {"version", "process", "roles", "phases", "elements", "edges"}
-    assert set(body["edges"][0]) == {"id", "from", "to", "kind", "label"}
+    # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it.
+    assert set(body["edges"][0]) == {
+        "id", "from", "to", "kind", "label",
+        "sequence_basis", "view_membership", "information_payload", "typical",
+    }  # fmt: skip
     assert "Priya" not in graph.text and "I build the preliminary" not in graph.text
     layout = client.get(f"/api/versions/{job['target_id']}/layout")
     assert layout.status_code == 200
     drawn = layout.json()
     assert set(drawn) == {"canvas", "lanes", "phases", "nodes", "edges"}
     assert [n["id"] for n in drawn["nodes"]] == [e["id"] for e in body["elements"]]
-    assert [e["id"] for e in drawn["edges"]] == [e["id"] for e in body["edges"]]
+    # The one map draws both views' steps, so it leaves out the two lines the translation added
+    # for a single view (As done: Draft → Special loads; As documented: loading → deviation).
+    named = {e["id"]: e["label"] for e in body["elements"]}
+    drawn_ids = [e["id"] for e in drawn["edges"]]
+    assert drawn_ids == [e["id"] for e in body["edges"]][: len(drawn_ids)]
+    assert [(named[e["from"]], named[e["to"]]) for e in body["edges"][len(drawn_ids) :]] == [
+        ("Draft load plan", "Special loads OK?"),
+        ("Load and return LIR", "Deviation in limits?"),
+    ]
     assert set(drawn["edges"][3]) == {"id", "kind", "is_back_edge", "points", "label", "label_pos"}
     assert "Priya" not in layout.text
     for path in ("graph", "layout", "lint"):

@@ -11,6 +11,8 @@ export const REASONS: Readonly<Record<string, string>> = {
   low_confidence: "Low confidence",
   gap: "Gap",
   gap_analysis: "Gap analysis",
+  sequence: "Order not stated",
+  not_described: "Not described",
 };
 
 /** Reasons shown in the danger outline; the others are neutral. */

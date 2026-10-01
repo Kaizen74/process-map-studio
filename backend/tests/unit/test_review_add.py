@@ -132,6 +132,8 @@ def test_line_rules(drafted: Drafted) -> None:
         ({"from": ids["Final load sheet issued"], "to": ids["Draft load plan"]}, "to"),
         ({"from": ids["Draft load plan"], "to": "nope"}, "from"),
         ({"from": ids["Draft load plan"], "to": ids["Issue load sheet"], "kind": "maybe"}, "kind"),
+        # "Not described" connectors come from the translation only (§3.12.10 rule 7).
+        ({"from": ids["Draft load plan"], "to": ids["Issue load sheet"], "kind": "gap"}, "kind"),
         ({"from": ids["Draft load plan"], "to": ids["Approve load plan"]}, "to"),  # already joined
         ({"from": ids["Draft load plan"], "to": ids["Issue load sheet"],
           "label": "Tell Priya Nair"}, "label"),

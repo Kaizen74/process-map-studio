@@ -165,9 +165,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("8");
+    // v1.10 A.5: ten steps; A.9: three lines rest only on the order of mentioning (+3 questions).
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("10");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
-    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("5");
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("8");
     await expect(summary.getByText(/Built from 23 checked claims/)).toBeVisible();  // v1.10 A.1, A.5
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();

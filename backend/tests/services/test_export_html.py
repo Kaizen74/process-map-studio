@@ -56,7 +56,8 @@ def test_the_map_is_drawn_from_the_layout_and_links_to_each_step() -> None:
     assert set(steps) <= set(anchors)
     assert 'aria-label="Activity, Draft load plan, Load controller, Corroborated"' in html
     assert 'aria-label="Load controller lane, 6 steps"' in html  # v1.10 A.5
-    assert html.count('class="lens danger"') == 3  # three steps without time (v1.10 A.5), as on the map
+    # Three steps without time (v1.10 A.5), as on the map.
+    assert html.count('class="lens danger"') == 3
     assert '<span class="chip"' in html and 'class="arrow right"' in html
 
 

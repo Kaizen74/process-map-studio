@@ -94,7 +94,7 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     assert [q["status"] for q in refreshed if q["question"] == first_question["question"]] == [
         "answered"
     ]
-    assert len(refreshed) == 5
+    assert len(refreshed) == 8  # v1.10 A.9: + three "order not stated" questions, never twice
     row = drafted.audit()[0]
     assert row["action"] == "Refreshed draft from sources"
     # Requirement change 2026-09-30 (run records): both runs' records are kept in the audit row.

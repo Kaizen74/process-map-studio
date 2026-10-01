@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
 from app.db import session_scope
-from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance
+from app.domain.enums import EdgeKind, ElementKind, Provenance, ReviewStatus, Stance
 from app.domain.graph import (
     AlignmentRow,
     AnswerQuote,
@@ -109,7 +109,21 @@ def cycle_time(elements: list[ElementRecord], edges: list[EdgeRecord]) -> CycleT
     return CycleTime(elapsed_min=work + wait, work_min=work, incomplete_steps=incomplete)
 
 
-def build_graph(session: Session, version_id: str) -> Graph | None:
+def combined_lines(edges: list[EdgeRecord]) -> list[EdgeRecord]:
+    """The lines of the one map that shows both views' steps: without the lines the translation
+    added for a single view where the other view's steps are left out (provenance I, PRD §3.12.10;
+    each view is drawn on its own from V1, 2026-10-01)."""
+    return [
+        e
+        for e in edges
+        if not (e.provenance == Provenance.INFERRED.value and e.view_membership is not None)
+    ]
+
+
+def build_graph(session: Session, version_id: str, *, every_line: bool = False) -> Graph | None:
+    """The version's graph. Without `every_line` the lines are the combined map's (what the
+    layout, lint, quality card, exports and leadership read); the graph endpoint returns every
+    line with its view membership."""
     version = versions_repo.get(session, version_id)
     if version is None:
         return None
@@ -125,6 +139,8 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
     phases = map_repo.phases(session, version_id)
     elements = map_repo.elements(session, version_id)
     edges = map_repo.edges(session, version_id)
+    if not every_line:
+        edges = combined_lines(edges)
     raci = map_repo.raci(session, version_id)
     constraints = map_repo.constraints(session, version_id)
     flags = map_repo.ai_flags(session, version_id)
@@ -239,6 +255,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 account_summary=accounts,
                 practice_described=translation.practice_described(accounts),
                 variants=e.variants,
+                view_membership=e.view_membership,
             )
         )
 
@@ -249,7 +266,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
             trigger=hide(engagement.trigger),
             end_point=hide(engagement.end_point),
             kpi=hide(engagement.process_kpi),
-            cycle_time=cycle_time(elements, edges),
+            cycle_time=cycle_time(elements, combined_lines(edges)),
         ),
         roles=[
             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
@@ -267,6 +284,12 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 to=e.to_element_id,
                 kind=e.kind,
                 label=hide(e.label),
+                sequence_basis=e.sequence_basis,
+                view_membership=e.view_membership,
+                information_payload=hide(e.information_payload)
+                if e.information_payload is not None
+                else None,
+                typical=e.typical,
             )
             for e in edges
         ],
@@ -275,7 +298,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
 
 def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
+        graph = build_graph(session, version_id, every_line=True)
     return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
 
 

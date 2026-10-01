@@ -86,6 +86,7 @@ class EdgeKind(StrEnum):
     REJECT = "reject"
     REWORK = "rework"
     EXCEPTION = "exception"
+    GAP = "gap"  # v1.10: a "not described" connector, As done view only (§3.12.10 rule 7)
 
 
 class CauseType(StrEnum):

@@ -334,11 +334,10 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 
 
 # PRD v1.10 values that change what the app does, added with the phase that uses them (logged in
-# DECISIONS.md 2026-09-30): the "not described" gap edge (P4b, As done view) and the reality-gap
-# finding types that Analysis A may return (P4c). The test checks they are still absent, so each
-# is removed from this list when its phase adds it.
+# DECISIONS.md 2026-09-30): the reality-gap finding types that Analysis A may return (P4c). The
+# test checks they are still absent, so each is removed from this list when its phase adds it (the
+# "not described" gap edge of B.8 was added with P4b, 2026-10-01).
 PENDING_VALUES = {
-    "B.8": {"gap"},
     "B.22": {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap",
              "constraint_mismatch"},
 }  # fmt: skip

@@ -53,7 +53,11 @@ describe("MapStage (PRD §5.5)", () => {
     rerender(
       <MapStage graph={SAMPLE.graph} layout={SAMPLE.layout} lens="plain" scale={1} selectedId={plan.id} onSelect={onSelect} />,
     );
-    const touching = SAMPLE.graph.edges.filter((e) => e.from === plan.id || e.to === plan.id).map((e) => e.id);
+    // The lines drawn (the graph also lists lines for one view only, drawn per view from V1).
+    const drawn = new Set(SAMPLE.layout.edges.map((e) => e.id));
+    const touching = SAMPLE.graph.edges
+      .filter((e) => (e.from === plan.id || e.to === plan.id) && drawn.has(e.id))
+      .map((e) => e.id);
     const active = [...container.querySelectorAll(".map-edge--active")].map((e) => e.getAttribute("data-edge"));
     expect(active.sort()).toEqual(touching.sort());
     expect(screen.getByRole("button", { name: /Draft load plan/ })).toHaveAttribute("aria-pressed", "true");

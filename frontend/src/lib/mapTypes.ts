@@ -53,6 +53,27 @@ export interface GraphElement {
   account_summary?: { official: number; lived: number; unclear: number };
   /** false = "Practice not described" (only the official account); null = interview silent. */
   practice_described?: boolean | null;
+  /** v1.10 §3.12.11: where practice and the documents differ, both values. */
+  variants?: { done?: Record<string, string>; documented?: Record<string, string> } | null;
+  /** v1.10 §3.12.11 (B.35); null on maps drafted before v1.10. */
+  view_membership?: ViewMembership | null;
+}
+
+export type ViewMembership = "both" | "done_only" | "documented_only";
+export type SequenceBasis = "explicit_order" | "document_order" | "dependency" | "narration_order";
+
+export interface GraphEdge {
+  id: string;
+  from: string;
+  to: string;
+  /** B.8; "gap" is a "not described" connector (As done only). */
+  kind: string;
+  label: string;
+  /** v1.10 §3.12.10 (B.34): why the line is there; null on lines Eric added. */
+  sequence_basis?: SequenceBasis | null;
+  view_membership?: ViewMembership | null;
+  information_payload?: string | null;
+  typical?: boolean | null;
 }
 
 export interface Graph {
@@ -67,7 +88,7 @@ export interface Graph {
   roles: { id: string; name: string; is_system: boolean; lane_order: number | null }[];
   phases: { id: string; name: string; time_window: string; order: number }[];
   elements: GraphElement[];
-  edges: { id: string; from: string; to: string; kind: string; label: string }[];
+  edges: GraphEdge[];
 }
 
 // Layout and the detail panel (phase P5).

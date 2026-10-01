@@ -113,7 +113,8 @@
           "unclear": 0
         },
         "practice_described": null,
-        "variants": null
+        "variants": null,
+        "view_membership": "both"
       },
       {
         "id": "id-11",
@@ -235,7 +236,8 @@
           "unclear": 1
         },
         "practice_described": true,
-        "variants": null
+        "variants": null,
+        "view_membership": "both"
       },
       {
         "id": "id-20",
@@ -346,7 +348,8 @@
           "unclear": 0
         },
         "practice_described": null,
-        "variants": null
+        "variants": null,
+        "view_membership": "documented_only"
       },
       {
         "id": "id-23",
@@ -469,7 +472,8 @@
           "unclear": 1
         },
         "practice_described": true,
-        "variants": null
+        "variants": null,
+        "view_membership": "both"
       },
       {
         "id": "id-26",
@@ -580,7 +584,8 @@
           "unclear": 1
         },
         "practice_described": null,
-        "variants": null
+        "variants": null,
+        "view_membership": "done_only"
       },
       {
         "id": "id-28",
@@ -723,7 +728,8 @@
           "documented": {
             "time": "Within 10 minutes of loading completion"
           }
-        }
+        },
+        "view_membership": "both"
       },
       {
         "id": "id-31",
@@ -834,7 +840,8 @@
           "unclear": 0
         },
         "practice_described": true,
-        "variants": null
+        "variants": null,
+        "view_membership": "done_only"
       },
       {
         "id": "id-33",
@@ -945,7 +952,8 @@
           "unclear": 0
         },
         "practice_described": true,
-        "variants": null
+        "variants": null,
+        "view_membership": "done_only"
       },
       {
         "id": "id-34",
@@ -1074,7 +1082,8 @@
           "documented": {
             "owner": "Load control lead"
           }
-        }
+        },
+        "view_membership": "both"
       },
       {
         "id": "id-37",
@@ -1180,7 +1189,8 @@
           "unclear": 1
         },
         "practice_described": null,
-        "variants": null
+        "variants": null,
+        "view_membership": "done_only"
       },
       {
         "id": "id-39",
@@ -1301,7 +1311,8 @@
           "unclear": 0
         },
         "practice_described": true,
-        "variants": null
+        "variants": null,
+        "view_membership": "both"
       },
       {
         "id": "id-42",
@@ -1346,7 +1357,8 @@
           "unclear": 0
         },
         "practice_described": null,
-        "variants": null
+        "variants": null,
+        "view_membership": "both"
       }
     ],
     "edges": [
@@ -1355,112 +1367,198 @@
         "from": "id-10",
         "to": "id-11",
         "kind": "sequence",
-        "label": ""
+        "label": "",
+        "sequence_basis": "explicit_order",
+        "view_membership": "both",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-44",
         "from": "id-11",
         "to": "id-20",
         "kind": "sequence",
-        "label": ""
+        "label": "",
+        "sequence_basis": "document_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-45",
         "from": "id-20",
         "to": "id-23",
         "kind": "approve",
-        "label": "Approve"
+        "label": "Approve",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-46",
         "from": "id-20",
         "to": "id-11",
         "kind": "reject",
-        "label": "Rework"
+        "label": "Rework",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-47",
         "from": "id-23",
         "to": "id-28",
         "kind": "yes",
-        "label": "Yes"
+        "label": "Yes",
+        "sequence_basis": "explicit_order",
+        "view_membership": "both",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-48",
         "from": "id-23",
         "to": "id-26",
         "kind": "no",
-        "label": "No"
+        "label": "No",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-49",
         "from": "id-26",
         "to": "id-11",
         "kind": "rework",
-        "label": "Re-plan"
+        "label": "Re-plan",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-50",
         "from": "id-28",
         "to": "id-31",
         "kind": "sequence",
-        "label": ""
+        "label": "",
+        "sequence_basis": "narration_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-51",
         "from": "id-31",
         "to": "id-33",
         "kind": "yes",
-        "label": "Yes"
+        "label": "Yes",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-52",
         "from": "id-31",
         "to": "id-34",
         "kind": "no",
-        "label": "No"
+        "label": "No",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-53",
         "from": "id-33",
         "to": "id-34",
         "kind": "sequence",
-        "label": ""
+        "label": "",
+        "sequence_basis": "narration_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-54",
         "from": "id-34",
         "to": "id-39",
         "kind": "yes",
-        "label": "Within limits"
+        "label": "Within limits",
+        "sequence_basis": "explicit_order",
+        "view_membership": "both",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-55",
         "from": "id-34",
         "to": "id-37",
         "kind": "no",
-        "label": "Outside limits"
+        "label": "Outside limits",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-56",
         "from": "id-37",
         "to": "id-39",
         "kind": "approve",
-        "label": "Accept"
+        "label": "Accept",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-57",
         "from": "id-37",
         "to": "id-28",
         "kind": "rework",
-        "label": "Re-trim"
+        "label": "Re-trim",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
       },
       {
         "id": "id-58",
         "from": "id-39",
         "to": "id-42",
         "kind": "sequence",
-        "label": ""
+        "label": "",
+        "sequence_basis": "explicit_order",
+        "view_membership": "both",
+        "information_payload": null,
+        "typical": null
+      },
+      {
+        "id": "id-59",
+        "from": "id-11",
+        "to": "id-23",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "explicit_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null
+      },
+      {
+        "id": "id-60",
+        "from": "id-28",
+        "to": "id-34",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "narration_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null
       }
     ]
   },
@@ -2220,6 +2318,7 @@
       },
       "practice_described": null,
       "variants": null,
+      "view_membership": "both",
       "answers": []
     },
     "id-11": {
@@ -2363,6 +2462,7 @@
       },
       "practice_described": true,
       "variants": null,
+      "view_membership": "both",
       "answers": [
         {
           "quote": "I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.",
@@ -2383,7 +2483,7 @@
           "stated_reason": "",
           "variation_condition": "",
           "source_id": "id-13",
-          "segment_id": "id-59",
+          "segment_id": "id-61",
           "anchor": "07:55",
           "question_id": "M2.2",
           "question": "Walk me through what happened, step by step, as it actually went."
@@ -2520,6 +2620,7 @@
       },
       "practice_described": null,
       "variants": null,
+      "view_membership": "documented_only",
       "answers": []
     },
     "id-23": {
@@ -2662,6 +2763,7 @@
       },
       "practice_described": true,
       "variants": null,
+      "view_membership": "both",
       "answers": [
         {
           "quote": "I check special loads, dangerous goods and live animals, against the checklist",
@@ -2819,6 +2921,7 @@
       },
       "practice_described": null,
       "variants": null,
+      "view_membership": "done_only",
       "answers": [
         {
           "quote": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes.",
@@ -2996,6 +3099,7 @@
           "time": "Within 10 minutes of loading completion"
         }
       },
+      "view_membership": "both",
       "answers": [
         {
           "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
@@ -3189,6 +3293,7 @@
       },
       "practice_described": true,
       "variants": null,
+      "view_membership": "done_only",
       "answers": [
         {
           "quote": "What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
@@ -3334,6 +3439,7 @@
       },
       "practice_described": true,
       "variants": null,
+      "view_membership": "done_only",
       "answers": [
         {
           "quote": "What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
@@ -3516,6 +3622,7 @@
           "owner": "Load control lead"
         }
       },
+      "view_membership": "both",
       "answers": [
         {
           "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
@@ -3666,6 +3773,7 @@
       },
       "practice_described": null,
       "variants": null,
+      "view_membership": "done_only",
       "answers": [
         {
           "quote": "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
@@ -3821,6 +3929,7 @@
       },
       "practice_described": true,
       "variants": null,
+      "view_membership": "both",
       "answers": [
         {
           "quote": "Then I issue the final load sheet, around T-15.",
@@ -3886,6 +3995,7 @@
       },
       "practice_described": null,
       "variants": null,
+      "view_membership": "both",
       "answers": []
     }
   },
@@ -3893,7 +4003,7 @@
     "id-13": {
       "segments": [
         {
-          "id": "id-60",
+          "id": "id-62",
           "seq": 1,
           "anchor": "06:38",
           "page": null,
@@ -3921,7 +4031,7 @@
           "question_id": "M2.2"
         },
         {
-          "id": "id-59",
+          "id": "id-61",
           "seq": 3,
           "anchor": "07:55",
           "page": null,
@@ -3963,7 +4073,7 @@
           "question_id": "M2.2"
         },
         {
-          "id": "id-61",
+          "id": "id-63",
           "seq": 6,
           "anchor": "21:45",
           "page": null,
@@ -4005,7 +4115,7 @@
           "question_id": "M2.4"
         },
         {
-          "id": "id-62",
+          "id": "id-64",
           "seq": 9,
           "anchor": "24:10",
           "page": null,
@@ -4019,7 +4129,7 @@
           "question_id": "M2.4"
         },
         {
-          "id": "id-63",
+          "id": "id-65",
           "seq": 10,
           "anchor": "24:40",
           "page": null,
@@ -4033,7 +4143,7 @@
           "question_id": "M5.s1"
         },
         {
-          "id": "id-64",
+          "id": "id-66",
           "seq": 11,
           "anchor": "24:46",
           "page": null,
@@ -4075,7 +4185,7 @@
           "question_id": "M5.s1"
         },
         {
-          "id": "id-65",
+          "id": "id-67",
           "seq": 14,
           "anchor": "29:40",
           "page": null,
@@ -4089,7 +4199,7 @@
           "question_id": "M4.3"
         },
         {
-          "id": "id-66",
+          "id": "id-68",
           "seq": 15,
           "anchor": "29:48",
           "page": null,
@@ -4125,7 +4235,7 @@
     "id-15": {
       "segments": [
         {
-          "id": "id-67",
+          "id": "id-69",
           "seq": 1,
           "anchor": "¶ 1",
           "page": null,
@@ -4139,7 +4249,7 @@
           "question_id": null
         },
         {
-          "id": "id-68",
+          "id": "id-70",
           "seq": 2,
           "anchor": "¶ 2",
           "page": null,
@@ -4181,7 +4291,7 @@
           "question_id": null
         },
         {
-          "id": "id-69",
+          "id": "id-71",
           "seq": 5,
           "anchor": "¶ 5",
           "page": null,
@@ -4209,7 +4319,7 @@
           "question_id": null
         },
         {
-          "id": "id-70",
+          "id": "id-72",
           "seq": 7,
           "anchor": "¶ 7",
           "page": null,
@@ -4237,7 +4347,7 @@
           "question_id": null
         },
         {
-          "id": "id-71",
+          "id": "id-73",
           "seq": 9,
           "anchor": "¶ 9",
           "page": null,
@@ -4273,7 +4383,7 @@
     "id-17": {
       "segments": [
         {
-          "id": "id-72",
+          "id": "id-74",
           "seq": 1,
           "anchor": "¶ 1",
           "page": null,
@@ -4301,7 +4411,7 @@
           "question_id": null
         },
         {
-          "id": "id-73",
+          "id": "id-75",
           "seq": 3,
           "anchor": "¶ 3",
           "page": null,
@@ -4315,7 +4425,7 @@
           "question_id": null
         },
         {
-          "id": "id-74",
+          "id": "id-76",
           "seq": 4,
           "anchor": "¶ 4",
           "page": null,
@@ -4329,7 +4439,7 @@
           "question_id": null
         },
         {
-          "id": "id-75",
+          "id": "id-77",
           "seq": 5,
           "anchor": "¶ 5",
           "page": null,
@@ -4351,7 +4461,7 @@
     "id-19": {
       "segments": [
         {
-          "id": "id-76",
+          "id": "id-78",
           "seq": 1,
           "anchor": "¶ 1",
           "page": null,
@@ -4387,7 +4497,7 @@
     "id-18": {
       "segments": [
         {
-          "id": "id-77",
+          "id": "id-79",
           "seq": 1,
           "anchor": "¶ 1",
           "page": null,
@@ -4415,7 +4525,7 @@
           "question_id": null
         },
         {
-          "id": "id-78",
+          "id": "id-80",
           "seq": 3,
           "anchor": "¶ 3",
           "page": null,
@@ -4429,7 +4539,7 @@
           "question_id": null
         },
         {
-          "id": "id-79",
+          "id": "id-81",
           "seq": 4,
           "anchor": "§9",
           "page": null,
