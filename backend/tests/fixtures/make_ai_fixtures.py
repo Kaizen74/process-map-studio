@@ -389,6 +389,109 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     },
 }
 
+
+def grounded(refs: list[str], quote: str, **fields: Any) -> dict[str, Any]:
+    return {"segment_ids": refs, "quote": quote} | fields
+
+
+# What else the A.1 interview tells (PRD §3.12.2, A.8; C1): the 24:10 story with the SME's own
+# signifier and frequency (24:46), the know-how at the special-loads and deviation decisions, the
+# SME terms, and what the deviation call attends to. S3c links them to the steps.
+SENSE: dict[tuple[str, int], dict[str, Any]] = {
+    ("interview_transcript.txt", 0): {
+        "know_how": [
+            grounded(
+                ["p4"],
+                "against the checklist",
+                category="artefacts",
+                text="The special loads checklist.",
+                about="Special loads OK?",
+                provenance="O",
+                basis="",
+            ),
+        ],
+    },
+    ("interview_transcript.txt", 1): {
+        "stories": [
+            grounded(
+                ["p9", "p11"],
+                "I learned it after we had to re-trim three flights in one night.",
+                label="Had to re-trim three flights in one night",
+                fragment_type="went_badly",
+                signifiers=["Firefighting"],
+                frequency="maybe once a month",
+                about="Draft load plan; Deviation in limits?",
+            ),
+        ],
+        "know_how": [
+            grounded(
+                ["p9"],
+                "if the forward hold looks heavy on the plan, I call the ramp before "
+                "they start, not after",
+                category="heuristics",
+                text="If the forward hold looks heavy on the plan, call the ramp before they "
+                "start, not after.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+            grounded(
+                ["p9"],
+                "Nobody taught me that; I learned it after we had to re-trim three "
+                "flights in one night.",
+                category="experience",
+                text="The rule of thumb was learned, not taught, after re-trimming three "
+                "flights in one night.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+            grounded(
+                ["p7"],
+                "sends back the loading report",
+                category="artefacts",
+                text="The loading report from Ramp.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+        ],
+        "terms": [
+            grounded(
+                ["p9"],
+                "we had to re-trim three flights",
+                term="re-trim",
+                plain_meaning="Rebalance an aircraft's load after it has been planned.",
+            ),
+            grounded(
+                ["p8"], "on a busy wave", term="wave", plain_meaning="A busy period of departures."
+            ),
+            grounded(
+                ["p9"],
+                "if the forward hold looks heavy on the plan",
+                term="forward hold",
+                plain_meaning="The cargo hold at the front of the aircraft.",
+            ),
+        ],
+    },
+    ("interview_transcript.txt", 2): {
+        "decision_info": [
+            grounded(
+                ["p15"],
+                "It depends on the captain, the weather, what's still on the belt.",
+                about="Deviation in limits?",
+                cadence="none",
+                received=[],
+                attended=["the captain", "the weather", "what's still on the belt"],
+                wanted=[],
+                communicated_via=[],
+            ),
+        ],
+    },
+}
+for _key, _items in SENSE.items():
+    ANSWERS[_key] = ANSWERS[_key] | _items
+
 # PRD Appendix A.6 traps T1-T6 (T7-T8 concern the verifier, phase P4). Each must be rejected with
 # the stated guardrail or scrubbed; the well-grounded claim alongside them must pass.
 TRAPS_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {

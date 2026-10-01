@@ -114,8 +114,8 @@ def test_the_sample_answers_all_pass_the_grounding_checks(sample: Setup) -> None
     rejected = [(r.payload["text"], r.rejection_reason) for r in stored(sample, "rejected")]
     assert rejected == []
     assert (
-        tallies["interview_transcript.txt"].verified == 15
-    )  # v1.10 sample: + the 22:30 official and lived accounts
+        tallies["interview_transcript.txt"].verified == 24
+    )  # v1.10 sample: + the 22:30 official and lived accounts; C1: + nine A.8 items
     assert tallies["sop_LC-07.docx"].verified == 5
     assert all(t.scrubbed == 0 for t in tallies.values())
 

@@ -793,6 +793,7 @@ Response `200`:
  "total": 1, "scrub_count": 1, "instruction_like_count": 1}
 ```
 - `claim_text` and `source_name` have names on the redaction list replaced by roles.
+- Since 2026-10-01 (C1) the register also lists the interview's stories, know-how items, SME terms, decision-information items and capability notes that failed a check (for a story its label, for a term "term: meaning", for decision information the decision). A term not found in the cited passages fails G4 ("term not found in cited text"). The draft summary's `verified` counts them too when they pass.
 - `anchor` and `segment_id`: the first cited passage that exists; `""` and `null` when none does (`passage_available: false`, e.g. G3 "cites a passage that wasn't provided").
 - `guardrail`: B.20 (`G3` passage · `G4` quote · `G5` number or role · `G6` verifier · `G10` redaction).
 - `scrub_count`: names Claude used that were replaced by roles, across all claims of the version. `instruction_like_count`: passages in the engagement's sources that looked like instructions and were treated as data.

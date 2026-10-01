@@ -91,5 +91,23 @@
       "basis": ""
     }
   ],
-  "unknowns": []
+  "unknowns": [],
+  "decision_info": [
+    {
+      "segment_ids": [
+        "p15"
+      ],
+      "quote": "It depends on the captain, the weather, what's still on the belt.",
+      "about": "Deviation in limits?",
+      "cadence": "none",
+      "received": [],
+      "attended": [
+        "the captain",
+        "the weather",
+        "what's still on the belt"
+      ],
+      "wanted": [],
+      "communicated_via": []
+    }
+  ]
 }

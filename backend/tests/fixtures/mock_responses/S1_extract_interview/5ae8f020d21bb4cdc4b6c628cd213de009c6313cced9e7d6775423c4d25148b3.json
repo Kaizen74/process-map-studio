@@ -177,5 +177,82 @@
       "basis": ""
     }
   ],
-  "unknowns": []
+  "unknowns": [],
+  "stories": [
+    {
+      "segment_ids": [
+        "p9",
+        "p11"
+      ],
+      "quote": "I learned it after we had to re-trim three flights in one night.",
+      "label": "Had to re-trim three flights in one night",
+      "fragment_type": "went_badly",
+      "signifiers": [
+        "Firefighting"
+      ],
+      "frequency": "maybe once a month",
+      "about": "Draft load plan; Deviation in limits?"
+    }
+  ],
+  "know_how": [
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "if the forward hold looks heavy on the plan, I call the ramp before they start, not after",
+      "category": "heuristics",
+      "text": "If the forward hold looks heavy on the plan, call the ramp before they start, not after.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "Nobody taught me that; I learned it after we had to re-trim three flights in one night.",
+      "category": "experience",
+      "text": "The rule of thumb was learned, not taught, after re-trimming three flights in one night.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "sends back the loading report",
+      "category": "artefacts",
+      "text": "The loading report from Ramp.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "terms": [
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "we had to re-trim three flights",
+      "term": "re-trim",
+      "plain_meaning": "Rebalance an aircraft's load after it has been planned."
+    },
+    {
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "on a busy wave",
+      "term": "wave",
+      "plain_meaning": "A busy period of departures."
+    },
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "if the forward hold looks heavy on the plan",
+      "term": "forward hold",
+      "plain_meaning": "The cargo hold at the front of the aircraft."
+    }
+  ]
 }

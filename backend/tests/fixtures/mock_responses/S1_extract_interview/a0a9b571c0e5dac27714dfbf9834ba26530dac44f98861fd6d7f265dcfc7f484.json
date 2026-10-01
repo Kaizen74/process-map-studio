@@ -140,5 +140,18 @@
         "p2"
       ]
     }
+  ],
+  "know_how": [
+    {
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "against the checklist",
+      "category": "artefacts",
+      "text": "The special loads checklist.",
+      "about": "Special loads OK?",
+      "provenance": "O",
+      "basis": ""
+    }
   ]
 }

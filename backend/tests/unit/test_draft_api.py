@@ -78,7 +78,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     assert job["status"] == "done", job
     assert job["type"] == "draft" and job["progress"] == 1.0
     assert job["claims"] == {
-        "verified": 23,
+        "verified": 32,  # C1: + nine checked stories, know-how items, terms and decision info
         "rejected": 0,
     }  # v1.10 sample: + the 22:30 official and lived accounts
     # S1 7 chunks + S2 1 + S3 7 source parts + S3b 10 steps + S4 1 + S5 1 (v1.10 A.5: ten steps)
@@ -94,7 +94,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
-        "steps": 10, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 8,
+        "steps": 10, "needs_check": 0, "verified": 32, "rejected": 0, "open_questions": 8,
         "scrubbed": 0,
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]
@@ -383,7 +383,7 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     layout = client.get(f"/api/versions/{job['target_id']}/layout")
     assert layout.status_code == 200
     drawn = layout.json()
-    assert set(drawn) == {"canvas", "lanes", "phases", "nodes", "edges"}
+    assert set(drawn) == {"view", "canvas", "lanes", "phases", "nodes", "edges"}  # V1: + view
     assert [n["id"] for n in drawn["nodes"]] == [e["id"] for e in body["elements"]]
     # The one map draws both views' steps, so it leaves out the two lines the translation added
     # for a single view (As done: Draft → Special loads; As documented: loading → deviation).
@@ -394,7 +394,9 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
         ("Draft load plan", "Special loads OK?"),
         ("Load and return LIR", "Deviation in limits?"),
     ]
-    assert set(drawn["edges"][3]) == {"id", "kind", "is_back_edge", "points", "label", "label_pos"}
+    assert set(drawn["edges"][3]) == {
+        "id", "kind", "is_back_edge", "points", "label", "label_pos", "ghost",
+    }  # fmt: skip
     assert "Priya" not in layout.text
     for path in ("graph", "layout", "lint"):
         missing = client.get(f"/api/versions/nope/{path}")

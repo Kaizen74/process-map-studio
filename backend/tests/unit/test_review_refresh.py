@@ -63,7 +63,7 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     state = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/draft").json()
     assert state["version"]["id"] == drafted.version_id and state["version"]["label"] == "v0.2"
     assert (
-        state["summary"]["verified"] == 23
+        state["summary"]["verified"] == 32  # C1: + nine stories, know-how items and terms
     )  # v1.10 sample: + the 22:30 official and lived accounts
     # Every reviewed step exactly as it was: same ID, fields, RACI, evidence, status.
     for label, detail in before.items():

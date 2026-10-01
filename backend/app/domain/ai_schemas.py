@@ -91,9 +91,82 @@ class S1Output(BaseModel):
     unknowns: list[S1Unknown]
 
 
+# --- What else an interview tells (PRD §3.12.2, §3.12.6, §3.12.10 rules 4 and 10; C1) -----------
+# Each item is grounded like a claim (§3.12.9 rule 7): segment IDs and a verbatim quote; the SME's
+# own words (signifiers, terms) must be found in the cited segments. `about` names the step or
+# decision in plain words, so the items can be linked to the map's steps once they exist (S3c).
+
+
+class S1Grounded(BaseModel):
+    segment_ids: list[str] = Field(description="IDs of the segments it comes from")
+    quote: str = Field(description="Verbatim words copied from those segments, at most 40 words")
+
+
+class S1Story(S1Grounded):
+    """A fragment: an anchored micro-narrative of a real case, kept even when told once."""
+
+    label: str = Field(description="At most 12 words, in the SME's own wording where possible")
+    fragment_type: Literal[
+        "recent_case", "went_well", "went_badly", "surprise", "workaround", "other"
+    ]
+    signifiers: list[str] = Field(
+        description="The SME's own words for the situation (for example how they classed it), "
+        "each copied exactly from the cited segments"
+    )
+    frequency: str = Field(description="How often it happens, copied exactly, or empty")
+    about: str = Field(description="The steps or decisions it concerns, in plain words")
+
+
+class S1KnowHow(S1Grounded):
+    """One ASHEN item at a knowledge disclosure point (a decision, approval or judgment)."""
+
+    category: Literal["artefacts", "skills", "heuristics", "experience", "natural_talent"]
+    text: str = Field(description="The item in one plain sentence, naming roles, never people")
+    about: str = Field(description="The decision or step it is know-how for, in plain words")
+    provenance: Literal["O", "I"]
+    basis: str = Field(description="For I: how it follows from the cited text; for O: empty")
+
+
+class S1Term(S1Grounded):
+    """An SME term (glossary candidate): the word as the SME uses it and its plain meaning."""
+
+    term: str = Field(description="The term, copied exactly from the cited segments")
+    plain_meaning: str = Field(description="What it means, in plain words, from the segments")
+
+
+class S1DecisionInfo(S1Grounded):
+    """What a decision takes in and gives out (§3.12.10 rules 4 and 8), in the SME's terms."""
+
+    about: str = Field(description="The decision, in plain words")
+    cadence: Literal["daily", "weekly", "monthly", "annually", "exceptional", "none"] = Field(
+        description="How often the decision is made, only if stated; otherwise none"
+    )
+    received: list[str] = Field(description="Information the decision receives")
+    attended: list[str] = Field(description="Signals the decider pays attention to")
+    wanted: list[str] = Field(description="Information the decider says they lack")
+    communicated_via: list[str] = Field(description="How the decision is passed on")
+
+
+class S1Capability(S1Grounded):
+    """A strength or weakness the SME names (rule 10): Preserve or Improve."""
+
+    kind: Literal["strength", "weakness"]
+    dimension: Literal["skillset", "ways_of_working", "systems", "process", "structure"]
+    text: str = Field(description="The note in one plain sentence, naming roles, never people")
+    cause_type: Literal[
+        "decision_rights", "system_fragmentation", "single_point_knowledge",
+        "capacity_mismatch", "policy_control", "capability_gap", "none",
+    ] = Field(description="For a weakness: its cause type (B.9); otherwise none")  # fmt: skip
+
+
 class S1InterviewOutput(BaseModel):
     claims: list[S1InterviewClaim]
     unknowns: list[S1Unknown]
+    stories: list[S1Story] = []
+    know_how: list[S1KnowHow] = []
+    terms: list[S1Term] = []
+    decision_info: list[S1DecisionInfo] = []
+    capability_notes: list[S1Capability] = []
 
 
 class S0OcrOutput(BaseModel):

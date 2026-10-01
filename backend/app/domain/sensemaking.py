@@ -8,6 +8,10 @@ from pydantic import BaseModel
 
 AccountType = Literal["official", "lived", "unclear"]
 
+# Claim types of what else an interview tells (C1): stored with the claims and checked like them,
+# but never grouped into steps by S2; S3c links them to the map's steps.
+SENSE_CLAIM_TYPES = frozenset({"story", "know_how", "sme_term", "decision_info", "capability"})
+
 
 class LexiconFamily(BaseModel):
     pretag: str

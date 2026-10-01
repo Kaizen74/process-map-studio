@@ -98,7 +98,7 @@ def test_the_sample_is_supported_throughout(sample: Calibrated) -> None:
     with session_scope(sample.sessions) as session:
         elements = map_repo.elements(session, sample.version_id)
     assert len(elements) == 10 and not any(e.needs_check for e in elements)
-    # v1.10 sample: every S1 claim is on a step now (the busy-wave claim on two: 24 checks).
+    # v1.10 sample: every S1 flow claim is on a step (the busy-wave claim on two: 24 checks).
     assert verdict_counts(sample)["supported"] == 23
 
 
@@ -129,7 +129,9 @@ def test_switching_the_verifier_off_makes_no_calls(sample: Calibrated) -> None:
     tally = run(sample, verifier_enabled=False)
     assert (tally.not_run, tally.supported) == (24, 0)
     assert calls(sample) == before
-    assert verdict_counts(sample) == {"not_run": 23}  # every S1 claim of the v1.10 sample
+    # Every S1 claim of the v1.10 sample (C1: the nine stories, know-how items and terms are
+    # never sent to the verifier; they stay "not run" either way).
+    assert verdict_counts(sample) == {"not_run": 32}
 
 
 def test_a_claim_without_a_verdict_is_checked_not_assumed(

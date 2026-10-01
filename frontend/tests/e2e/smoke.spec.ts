@@ -169,7 +169,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("10");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
     await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("8");
-    await expect(summary.getByText(/Built from 23 checked claims/)).toBeVisible();  // v1.10 A.1, A.5
+    await expect(summary.getByText(/Built from 32 checked claims/)).toBeVisible();  // v1.10 A.1, A.5, A.8 (C1)
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);

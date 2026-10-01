@@ -306,6 +306,15 @@ def gate(
                 account_type=account,
             )
         )
+    if isinstance(answer, ai_schemas.S1InterviewOutput):
+        items: list[SenseItem] = [
+            *answer.stories, *answer.know_how, *answer.terms, *answer.decision_info,
+            *answer.capability_notes,
+        ]  # fmt: skip
+        for item in items:
+            record, hits = check_sense(item, chunk, terms, source_id)
+            records.append(record)
+            scrubbed_total += hits
     unknowns = [
         UnknownRecord(
             source_id=source_id,
@@ -315,6 +324,107 @@ def gate(
         for u in answer.unknowns
     ]
     return records, unknowns, scrubbed_total
+
+
+SenseItem = (
+    ai_schemas.S1Story
+    | ai_schemas.S1KnowHow
+    | ai_schemas.S1Term
+    | ai_schemas.S1DecisionInfo
+    | ai_schemas.S1Capability
+)
+SENSE_KIND: dict[type, str] = {
+    ai_schemas.S1Story: "story",
+    ai_schemas.S1KnowHow: "know_how",
+    ai_schemas.S1Term: "sme_term",
+    ai_schemas.S1DecisionInfo: "decision_info",
+    ai_schemas.S1Capability: "capability",
+}
+TERM_NOT_FOUND = "term not found in cited text"
+
+
+def _hide_all(value: object, terms: list[NameReplacement]) -> tuple[object, int]:
+    """G10 on every text of an item (strings and lists of strings); returns the hit count."""
+    if isinstance(value, str):
+        result = grounding.redact_text(value, terms)
+        return result.text, result.hits
+    if isinstance(value, list):
+        out, hits = [], 0
+        for v in value:
+            text, n = _hide_all(v, terms)
+            out.append(text)
+            hits += n
+        return out, hits
+    return value, 0
+
+
+def check_sense(
+    item: SenseItem, chunk: list[PromptSegment], terms: list[NameReplacement], source_id: str
+) -> tuple[ClaimRecord, int]:
+    """One story, know-how item, term, decision-information item or capability note, checked like
+    a claim (§3.12.9 rule 7): names hidden (G10), cited passages sent in this call (G3), the quote
+    found in them (G4) and every number in its words found there too (G5). The SME's own words
+    must be in the passages: a term that isn't is rejected; a signifier or frequency that isn't is
+    dropped (they are recorded as observed, never inferred)."""
+    by_ref = {s.ref: s for s in chunk}
+    fields: dict[str, object] = {}
+    hits = 0
+    for name, value in item.model_dump().items():
+        if name in {"segment_ids", "quote", "provenance", "basis", "fragment_type", "category",
+                    "cadence", "kind", "dimension", "cause_type"}:  # fmt: skip
+            fields[name] = value
+            continue
+        fields[name], n = _hide_all(value, terms)
+        hits += n
+    refs: list[str] = list(item.segment_ids)
+    outcome = grounding.verify_segments(refs, by_ref)
+    cited = prompts.cited_text([by_ref[r] for r in refs]) if outcome.passed else ""
+    if outcome.passed:
+        outcome = grounding.verify_quote(item.quote, cited)
+    provenance = getattr(item, "provenance", "O")
+    basis = getattr(item, "basis", "") if provenance == "I" else ""
+    stated = " ".join(
+        str(v) if isinstance(v, str) else " ".join(map(str, v))
+        for k, v in fields.items()
+        if k not in {"segment_ids", "quote", "basis"} and isinstance(v, str | list)
+    )
+    if outcome.passed:
+        outcome = grounding.verify_numbers(stated, cited, basis)
+
+    def found(words: str) -> bool:
+        return bool(words) and grounding.verify_quote(words, cited).passed
+
+    if outcome.passed and isinstance(item, ai_schemas.S1Term) and not found(str(fields["term"])):
+        outcome = CheckOutcome(passed=False, guardrail="G4", reason=TERM_NOT_FOUND)
+    if outcome.passed and isinstance(item, ai_schemas.S1Story):
+        signifiers = [s for s in fields["signifiers"] if found(s)]  # type: ignore[attr-defined]
+        fields["signifiers_dropped"] = len(item.signifiers) - len(signifiers)
+        fields["signifiers"] = signifiers
+        if not found(str(fields["frequency"])):
+            fields["frequency"] = ""
+    kind = SENSE_KIND[type(item)]
+    text = {
+        "story": fields.get("label", ""),
+        "sme_term": f"{fields.get('term', '')}: {fields.get('plain_meaning', '')}",
+        "decision_info": fields.get("about", ""),
+    }.get(kind, fields.get("text", ""))
+    payload = {k: v for k, v in fields.items() if k not in {"segment_ids", "quote", "provenance",
+                                                           "basis"}}  # fmt: skip
+    payload |= {"text": text, "scrubbed": hits, "segment_refs": refs}
+    record = ClaimRecord(
+        source_id=source_id,
+        stage=STAGE,
+        claim_type=kind,
+        payload=payload,
+        segment_ids=[by_ref[r].segment_id for r in refs if r in by_ref],
+        quote=item.quote,
+        provenance=provenance,
+        basis=getattr(item, "basis", ""),
+        verification_status="verified" if outcome.passed else "rejected",
+        rejection_reason=outcome.reason,
+        rejection_guardrail=outcome.guardrail,
+    )
+    return record, hits
 
 
 def _dedupe(records: list[ClaimRecord]) -> list[ClaimRecord]:

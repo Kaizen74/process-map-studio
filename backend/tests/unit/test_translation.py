@@ -9,9 +9,15 @@ from typing import Any
 
 from app.db import session_scope
 from app.domain import ai_schemas
-from app.domain.models import ClaimRecord
+from app.domain.models import ClaimRecord, NameReplacement, PromptSegment
 from app.domain.result import Ok
-from app.domain.sensemaking import StepPosition, Translation, TranslationEdge, TranslationStep
+from app.domain.sensemaking import (
+    SENSE_CLAIM_TYPES,
+    StepPosition,
+    Translation,
+    TranslationEdge,
+    TranslationStep,
+)
 from app.pipeline import s1_extract
 from app.repositories import claims as claims_repo
 from app.services import translation
@@ -95,10 +101,15 @@ def test_a8_account_tags_with_quoted_cues(drafted: Drafted) -> None:
     assert lived.payload["stated_reason"] == "otherwise we'd miss the slot"
     assert lived.payload["variation_condition"] == "on a busy wave"
     assert {c.account_type for c in by_anchor["21:50"]} >= {"lived"}
-    # Every interview claim carries an account; documents' claims carry none.
+    # Every interview claim about the flow carries an account; documents' claims carry none
+    # (stories, know-how and terms are lenses of their own, C1).
     sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
     with session_scope(sessions) as session:
-        verified = claims_repo.list_claims(session, drafted.version_id, "verified")
+        verified = [
+            c
+            for c in claims_repo.list_claims(session, drafted.version_id, "verified")
+            if c.claim_type not in SENSE_CLAIM_TYPES
+        ]
     interview_source = transcript_id(drafted)
     assert all((c.account_type is not None) == (c.source_id == interview_source) for c in verified)
 
@@ -450,3 +461,88 @@ def test_each_view_is_laid_out_and_the_other_view_can_be_shown_ghosted(drafted: 
     assert drafted.client.get(url, params={"view": "later"}).status_code == 422
     combined = drafted.client.get(url).json()
     assert combined["view"] is None and len(combined["nodes"]) == 12
+
+
+# --- What else an interview tells (C1; PRD §3.12.2, §3.12.6, §3.12.9 rule 7) --------------------
+
+
+def chunk_of(*texts: str) -> list[PromptSegment]:
+    return [
+        PromptSegment(ref=f"p{n}", segment_id=f"seg-{n}", seq=n, anchor=f"0{n}:00", text=t,
+                      speaker_role="Load controller")
+        for n, t in enumerate(texts, start=1)
+    ]  # fmt: skip
+
+
+SPOKEN = chunk_of(
+    "My rule of thumb: if the forward hold looks heavy, I call the ramp before they start.",
+    "Firefighting. It happens maybe once a month.",
+)
+NAMES = [NameReplacement(term="Priya Nair", replacement="Load controller")]
+
+
+def sense(item: Any) -> ClaimRecord:
+    record, _ = s1_extract.check_sense(item, SPOKEN, NAMES, "src")
+    return record
+
+
+def test_stories_know_how_and_terms_are_grounded_like_claims() -> None:
+    story = sense(ai_schemas.S1Story(
+        segment_ids=["p1", "p2"], quote="Firefighting. It happens maybe once a month.",
+        label="Priya Nair calls the ramp early", fragment_type="went_badly",
+        signifiers=["Firefighting", "total chaos"], frequency="maybe once a month",
+        about="Deviation in limits?",
+    ))  # fmt: skip
+    assert (story.claim_type, story.verification_status) == ("story", "verified")
+    # The SME's own words are kept only if they are in the passages; names never are (G10).
+    assert story.payload["signifiers"] == ["Firefighting"]
+    assert story.payload["signifiers_dropped"] == 1
+    assert story.payload["frequency"] == "maybe once a month"
+    assert story.payload["text"] == "Load controller calls the ramp early"
+    term = sense(ai_schemas.S1Term(segment_ids=["p1"], quote="the forward hold looks heavy",
+                                   term="aft hold", plain_meaning="The rear hold."))  # fmt: skip
+    assert (term.verification_status, term.rejection_guardrail, term.rejection_reason) == (
+        "rejected", "G4", s1_extract.TERM_NOT_FOUND)  # fmt: skip
+    invented = sense(ai_schemas.S1KnowHow(
+        segment_ids=["p1"], quote="I call the ramp before they start", category="heuristics",
+        text="Call the ramp 20 minutes before they start.", about="Deviation in limits?",
+        provenance="O", basis="",
+    ))  # fmt: skip
+    assert (invented.verification_status, invented.rejection_guardrail) == ("rejected", "G5")
+    unsent = sense(ai_schemas.S1DecisionInfo(
+        segment_ids=["p9"], quote="the weather", about="Deviation in limits?", cadence="none",
+        received=[], attended=["the weather"], wanted=[], communicated_via=[],
+    ))  # fmt: skip
+    assert (unsent.verification_status, unsent.rejection_guardrail) == ("rejected", "G3")
+
+
+def test_the_sample_interview_tells_its_story_know_how_and_terms(drafted: Drafted) -> None:
+    """A.8 (C1): the 24:10 story with the SME's own signifier and frequency (24:46), know-how at
+    the special-loads and deviation decisions, three SME terms and what the deviation call
+    attends to; all checked, none of them made into steps."""
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        rows = claims_repo.list_claims(session, drafted.version_id)
+    told = [
+        (r.claim_type, str(r.payload["text"]))
+        for r in rows
+        if r.claim_type in SENSE_CLAIM_TYPES and r.verification_status == "verified"
+    ]
+    assert told == [
+        ("know_how", "The special loads checklist."),
+        ("story", "Had to re-trim three flights in one night"),
+        ("know_how", "If the forward hold looks heavy on the plan, call the ramp before they "
+                     "start, not after."),
+        ("know_how", "The rule of thumb was learned, not taught, after re-trimming three flights "
+                     "in one night."),
+        ("know_how", "The loading report from Ramp."),
+        ("sme_term", "re-trim: Rebalance an aircraft's load after it has been planned."),
+        ("sme_term", "wave: A busy period of departures."),
+        ("sme_term", "forward hold: The cargo hold at the front of the aircraft."),
+        ("decision_info", "Deviation in limits?"),
+    ]  # fmt: skip
+    story = next(r for r in rows if r.claim_type == "story")
+    assert story.payload["signifiers"] == ["Firefighting"]
+    assert story.payload["frequency"] == "maybe once a month"
+    assert story.payload["fragment_type"] == "went_badly"
+    assert "Priya" not in json.dumps([r.model_dump() for r in rows])
