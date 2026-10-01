@@ -668,7 +668,10 @@ Errors: `404` (version, or unknown `fmt`: "Choose md, json, csv or html."); `409
 
 ### GET /api/elements/{eid}
 One step with everything the detail panel shows (PRD §4: every element response carries these fields, so the panel renders without extra calls).
-Response `200`: the element exactly as in the graph (`id, stable_key, kind, label, lane_role_id, phase_id, time, complexity, kpi, decision, handoff, provenance, r_reference, source_state, divergence_types, constraints, k_risk, ai_flag, confidence, confidence_breakdown, needs_check, review_status, account_summary, practice_described, variants, view_membership`), plus `answers` (2026-10-01, PRD §3.12.10 rule 6, §5.7.7 4d, acceptance criterion 66): the verified interview answers the step was translated from, `[{"quote", "account_type": "official" | "lived" | "unclear", "account_cue", "stated_reason", "variation_condition", "source_id", "segment_id", "anchor", "question_id": "M2.4" | null, "question": "How long did each part take, …"}]` (cue, reason and condition are the SME's words, each found in the cited passage; the question is the guide question the passage answers). In the app only; never in any export. And:
+Response `200`: the element exactly as in the graph (`id, stable_key, kind, label, lane_role_id, phase_id, time, complexity, kpi, decision, handoff, provenance, r_reference, source_state, divergence_types, constraints, k_risk, ai_flag, confidence, confidence_breakdown, needs_check, review_status, account_summary, practice_described, variants, view_membership`), plus `answers` (2026-10-01, PRD §3.12.10 rule 6, §5.7.7 4d, acceptance criterion 66): the verified interview answers the step was translated from, `[{"quote", "account_type": "official" | "lived" | "unclear", "account_cue", "stated_reason", "variation_condition", "source_id", "segment_id", "anchor", "question_id": "M2.4" | null, "question": "How long did each part take, …"}]` (cue, reason and condition are the SME's words, each found in the cited passage; the question is the guide question the passage answers). In the app only; never in any export. Since 2026-10-01 (C2b, PRD §3.12.6, §5.7.7 4b–4c) also `know_how` and `stories`, worked out from the interview's checked items and the steps S3c linked them to:
+- `know_how` (decisions, approvals and complex steps — the knowledge disclosure points — otherwise `null`): `{"kdp_type": "decision" | "judgment", "ashen": {"artefacts": [item], "skills": [...], "heuristics": [...], "experience": [...], "natural_talent": [...]}, "knowledge_risk": "high" | "medium" | "low" | "unknown", "risk_reason": "plain sentence", "cadence": "daily" | … | null, "received": [str], "attended": [str], "wanted": [str], "communicated_via": [str]}`; each item `{"text", "quote", "role", "source_id", "segment_id", "anchor"}` (role: the speaker's role, never a person; natural talent at role level only).
+- `stories`: `[{"label", "fragment_type", "signifiers": [the SME's own words], "frequency", "single_account": true, "quote", "source_id", "segment_id", "anchor"}]`, in the order told; kept when told once.
+And:
 ```json
 {"version_id": "…", "lane_role_name": "Load controller", "phase_name": "Plan",
  "decider_role_name": "Load controller",
@@ -782,6 +785,9 @@ Response `200`:
   "before": {"review_status": "draft"}, "after": {"review_status": "confirmed"}}]
 ```
 `target_label`: the step's current label (names hidden), `""` when the target no longer exists. Errors: `404` ("That version doesn't exist."). Used by: Review Audit tab (P6).
+
+### GET /api/versions/{vid}/glossary
+The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).
 
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.

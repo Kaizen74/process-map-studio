@@ -151,3 +151,25 @@ def knowledge_risk(ashen: dict[str, list[dict[str, object]]]) -> str:
     if count["skills"] > count["artefacts"]:
         return "medium"
     return "low"
+
+
+def risk_reason(ashen: dict[str, list[dict[str, object]]], risk: str) -> str:
+    """Why the knowledge risk is what it is, in one plain sentence (no blame, roles not people)."""
+    count = {k: len(ashen.get(k, [])) for k in ASHEN}
+    if risk == "unknown":
+        return "The interviews don't yet say what this call needs; ask the know-how questions."
+    if count["natural_talent"]:
+        return "The SME says the role needs a natural aptitude, which is hard to pass on."
+    tacit = count["heuristics"] + count["experience"]
+    if risk == "high":
+        return (
+            "Rules of thumb and experience outweigh documents and skills, and few roles hold them."
+        )
+    if risk == "medium" and tacit > count["artefacts"] + count["skills"]:
+        return (
+            "Rules of thumb and experience outweigh documents and skills, but several roles hold "
+            "them."
+        )
+    if risk == "medium":
+        return "Learnable skills carry most of this call."
+    return "Documents, tools and learnable skills cover this call."

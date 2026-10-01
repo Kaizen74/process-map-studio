@@ -13,7 +13,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction, view_translation
+from app.actions import lenses, redaction, view_translation
 from app.db import session_scope
 from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance, VersionState
 from app.domain.graph import (
@@ -443,6 +443,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         names = {s.id: s.filename for s in sources}
         images = map_repo.image_count(session, element_id)
         found = gap_repo.step_findings(session, version.engagement_id, element.stable_key)
+        lens = lenses.load(session, version.id, version.engagement_id)
         claim_ids = map_repo.element_claims(session, version.id).get(element_id, [])
         records = claims_repo.by_ids(session, claim_ids)
         interview = [records[c] for c in claim_ids if c in records and records[c].account_type]
@@ -501,6 +502,8 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         ElementDetail(
             **fields,
             version_id=version.id,
+            know_how=lenses.know_how(lens, element.stable_key, element.kind, element.work_type),
+            stories=lenses.stories(lens, element.stable_key),
             lane_role_name=roles.get(element.lane_role_id or "", ""),
             phase_name=phases.get(element.phase_id or "", ""),
             decider_role_name=roles.get(element.decision.decider_role_id or "", ""),

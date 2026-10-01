@@ -179,6 +179,55 @@ export interface ElementDetail extends Omit<GraphElement, "evidence" | "raci"> {
   gap_findings: StepGapFinding[];
   /** v1.10 §3.12.10 rule 6: the interview answers behind the step, with their guide questions. */
   answers?: AnswerQuote[];
+  /** v1.10 §3.12.6 (C2b): the ASHEN profile of a decision, approval or complex step. */
+  know_how?: KnowHow | null;
+  /** v1.10 §3.12.2 (C2b): the stories the SME told about the step, in their own words. */
+  stories?: StoryCard[];
+}
+
+export type AshenCategory = "artefacts" | "skills" | "heuristics" | "experience" | "natural_talent";
+
+export interface AshenItem {
+  text: string;
+  quote: string;
+  role: string;
+  source_id: string;
+  segment_id: string | null;
+  anchor: string;
+}
+
+export interface KnowHow {
+  kdp_type: "decision" | "judgment";
+  ashen: Record<AshenCategory, AshenItem[]>;
+  knowledge_risk: "high" | "medium" | "low" | "unknown";
+  risk_reason: string;
+  cadence: string | null;
+  received: string[];
+  attended: string[];
+  wanted: string[];
+  communicated_via: string[];
+}
+
+export interface StoryCard {
+  label: string;
+  fragment_type: string;
+  signifiers: string[];
+  frequency: string;
+  single_account: boolean;
+  quote: string;
+  source_id: string;
+  segment_id: string | null;
+  anchor: string;
+}
+
+/** API_CONTRACT.md → GET /api/versions/{vid}/glossary. */
+export interface GlossaryEntry {
+  term: string;
+  plain_meaning: string;
+  steps: string[];
+  source_id: string;
+  segment_id: string | null;
+  anchor: string;
 }
 
 /** One interview answer behind a step (API_CONTRACT.md → GET /api/elements/{eid}). */

@@ -390,6 +390,55 @@ class AnswerQuote(Out):
     question: str
 
 
+class AshenItem(Out):
+    """One know-how item at a knowledge disclosure point, with the passage that shows it."""
+
+    text: str
+    quote: str
+    role: str  # the speaker's role, never a person (§3.12.6: natural talent at role level only)
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class KnowHow(Out):
+    """§3.12.6 (C2b): the ASHEN profile of a knowledge disclosure point, its computed knowledge
+    risk and why, and the decision's cadence and information in and out (§3.12.10 rule 4)."""
+
+    kdp_type: str  # decision · judgment
+    ashen: dict[str, list[AshenItem]]
+    knowledge_risk: str  # high · medium · low · unknown
+    risk_reason: str
+    cadence: str | None = None
+    received: list[str] = []
+    attended: list[str] = []
+    wanted: list[str] = []
+    communicated_via: list[str] = []
+
+
+class StoryCard(Out):
+    """§3.12.2 (C2b): a fragment the SME told, with their own words for it; kept when told once."""
+
+    label: str
+    fragment_type: str
+    signifiers: list[str]
+    frequency: str
+    single_account: bool
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class GlossaryEntry(Out):
+    term: str
+    plain_meaning: str
+    steps: list[str]
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
 class ElementDetail(Out):
     """The graph element, with names, quotes and source names for the panel (never exported)."""
 
@@ -434,6 +483,8 @@ class ElementDetail(Out):
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
     # was translated from, each with the guide question that prompted it. App only, never exported.
     answers: list[AnswerQuote] = []
+    know_how: KnowHow | None = None
+    stories: list[StoryCard] = []
 
 
 # --- Alignment matrix (PRD §4 Views, §5.4 Matrix; phase P9) ------------------------------------

@@ -642,3 +642,52 @@ def test_reviewed_steps_keep_their_work_type(drafted: Drafted) -> None:
     with session_scope(sessions) as session:
         kept = map_repo.element(session, plan.id)
     assert kept is not None and (kept.work_type, kept.work_type_status) == ("clear", "confirmed")
+
+
+# --- Know-how, stories and the glossary in the panel (C2b; §3.12.6, §5.7.7 4b-4c, A.8) ---------
+
+
+def test_a8_know_how_and_knowledge_risk_at_each_decision(drafted: Drafted) -> None:
+    deviation = element_named(drafted, "Deviation in limits?")["know_how"]
+    assert deviation["kdp_type"] == "judgment"  # complex work (C2)
+    texts = {k: [i["text"] for i in v] for k, v in deviation["ashen"].items() if v}
+    assert texts == {
+        "heuristics": ["If the forward hold looks heavy on the plan, call the ramp before they "
+                       "start, not after."],
+        "experience": ["The rule of thumb was learned, not taught, after re-trimming three "
+                       "flights in one night."],
+        "artefacts": ["The loading report from Ramp."],
+    }  # fmt: skip
+    assert deviation["knowledge_risk"] == "high"
+    heuristic = deviation["ashen"]["heuristics"][0]
+    assert (heuristic["anchor"], heuristic["role"]) == ("24:10", "Load controller")
+    assert deviation["attended"] == ["the captain", "the weather", "what's still on the belt"]
+    special = element_named(drafted, "Special loads OK?")["know_how"]
+    assert [i["text"] for i in special["ashen"]["artefacts"]] == ["The special loads checklist."]
+    assert (special["kdp_type"], special["knowledge_risk"]) == ("decision", "low")
+    # A decision nobody has described the know-how for yet; activities are not disclosure points.
+    approve = element_named(drafted, "Approve load plan")["know_how"]
+    assert approve["knowledge_risk"] == "unknown" and "ask the know-how" in approve["risk_reason"]
+    assert element_named(drafted, "Load and return LIR")["know_how"] is None
+
+
+def test_a8_the_story_is_shown_on_the_steps_it_is_about(drafted: Drafted) -> None:
+    for label in ("Draft load plan", "Deviation in limits?"):
+        [story] = element_named(drafted, label)["stories"]
+        assert (story["label"], story["fragment_type"]) == (
+            "Had to re-trim three flights in one night", "went_badly")  # fmt: skip
+        assert story["signifiers"] == ["Firefighting"]  # the SME's own word, as observed
+        assert story["frequency"] == "maybe once a month" and story["single_account"] is True
+        assert story["anchor"] == "24:10"
+    assert element_named(drafted, "Special loads OK?")["stories"] == []
+    assert "Priya" not in json.dumps(element_named(drafted, "Deviation in limits?"))
+
+
+def test_a8_glossary(drafted: Drafted) -> None:
+    glossary = drafted.client.get(f"/api/versions/{drafted.version_id}/glossary").json()
+    assert [(g["term"], g["steps"], g["anchor"]) for g in glossary] == [
+        ("re-trim", ["Approve deviation"], "24:10"),
+        ("wave", ["Busy wave?"], "22:30"),
+        ("forward hold", ["Draft load plan"], "24:10"),
+    ]
+    assert drafted.client.get("/api/versions/nope/glossary").status_code == 404

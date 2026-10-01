@@ -2458,7 +2458,9 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": null,
-      "answers": []
+      "answers": [],
+      "know_how": null,
+      "stories": []
     },
     "id-11": {
       "id": "id-11",
@@ -2638,6 +2640,22 @@
           "question_id": "M2.2",
           "question": "Walk me through what happened, step by step, as it actually went."
         }
+      ],
+      "know_how": null,
+      "stories": [
+        {
+          "label": "Had to re-trim three flights in one night",
+          "fragment_type": "went_badly",
+          "signifiers": [
+            "Firefighting"
+          ],
+          "frequency": "maybe once a month",
+          "single_account": true,
+          "quote": "I learned it after we had to re-trim three flights in one night.",
+          "source_id": "id-13",
+          "segment_id": "id-63",
+          "anchor": "24:10"
+        }
       ]
     },
     "id-21": {
@@ -2775,7 +2793,25 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": "not_classified",
-      "answers": []
+      "answers": [],
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
     },
     "id-24": {
       "id": "id-24",
@@ -2960,7 +2996,34 @@
           "question_id": "M2.2",
           "question": "Walk me through what happened, step by step, as it actually went."
         }
-      ]
+      ],
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [
+            {
+              "text": "The special loads checklist.",
+              "quote": "against the checklist",
+              "role": "Load controller",
+              "source_id": "id-13",
+              "segment_id": "id-25",
+              "anchor": "14:05"
+            }
+          ],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "low",
+        "risk_reason": "Documents, tools and learnable skills cover this call.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
     },
     "id-27": {
       "id": "id-27",
@@ -3110,7 +3173,9 @@
           "question_id": "M2.2",
           "question": "Walk me through what happened, step by step, as it actually went."
         }
-      ]
+      ],
+      "know_how": null,
+      "stories": []
     },
     "id-29": {
       "id": "id-29",
@@ -3340,7 +3405,9 @@
           "question_id": "M2.4",
           "question": "How long did each part take, and where were you waiting on someone or something?"
         }
-      ]
+      ],
+      "know_how": null,
+      "stories": []
     },
     "id-32": {
       "id": "id-32",
@@ -3490,7 +3557,25 @@
           "question_id": "M2.4",
           "question": "How long did each part take, and where were you waiting on someone or something?"
         }
-      ]
+      ],
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
     },
     "id-34": {
       "id": "id-34",
@@ -3640,7 +3725,9 @@
           "question_id": "M2.4",
           "question": "How long did each part take, and where were you waiting on someone or something?"
         }
-      ]
+      ],
+      "know_how": null,
+      "stories": []
     },
     "id-35": {
       "id": "id-35",
@@ -3852,6 +3939,69 @@
           "question_id": "M5.s1",
           "question": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?"
         }
+      ],
+      "know_how": {
+        "kdp_type": "judgment",
+        "ashen": {
+          "artefacts": [
+            {
+              "text": "The loading report from Ramp.",
+              "quote": "sends back the loading report",
+              "role": "Load controller",
+              "source_id": "id-13",
+              "segment_id": "id-30",
+              "anchor": "21:50"
+            }
+          ],
+          "skills": [],
+          "heuristics": [
+            {
+              "text": "If the forward hold looks heavy on the plan, call the ramp before they start, not after.",
+              "quote": "if the forward hold looks heavy on the plan, I call the ramp before they start, not after",
+              "role": "Load controller",
+              "source_id": "id-13",
+              "segment_id": "id-63",
+              "anchor": "24:10"
+            }
+          ],
+          "experience": [
+            {
+              "text": "The rule of thumb was learned, not taught, after re-trimming three flights in one night.",
+              "quote": "Nobody taught me that; I learned it after we had to re-trim three flights in one night.",
+              "role": "Load controller",
+              "source_id": "id-13",
+              "segment_id": "id-63",
+              "anchor": "24:10"
+            }
+          ],
+          "natural_talent": []
+        },
+        "knowledge_risk": "high",
+        "risk_reason": "Rules of thumb and experience outweigh documents and skills, and few roles hold them.",
+        "cadence": null,
+        "received": [],
+        "attended": [
+          "the captain",
+          "the weather",
+          "what's still on the belt"
+        ],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": [
+        {
+          "label": "Had to re-trim three flights in one night",
+          "fragment_type": "went_badly",
+          "signifiers": [
+            "Firefighting"
+          ],
+          "frequency": "maybe once a month",
+          "single_account": true,
+          "quote": "I learned it after we had to re-trim three flights in one night.",
+          "source_id": "id-13",
+          "segment_id": "id-63",
+          "anchor": "24:10"
+        }
       ]
     },
     "id-39": {
@@ -3995,7 +4145,25 @@
           "question_id": "M5.s1",
           "question": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?"
         }
-      ]
+      ],
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
     },
     "id-41": {
       "id": "id-41",
@@ -4162,7 +4330,9 @@
           "question_id": "M4.3",
           "question": "Is there a rule for this, or does it depend? On what?"
         }
-      ]
+      ],
+      "know_how": null,
+      "stories": []
     },
     "id-44": {
       "id": "id-44",
@@ -4219,14 +4389,16 @@
       "constraint_type": null,
       "work_type_basis": [],
       "work_type_status": null,
-      "answers": []
+      "answers": [],
+      "know_how": null,
+      "stories": []
     }
   },
   "segments": {
     "id-13": {
       "segments": [
         {
-          "id": "id-63",
+          "id": "id-64",
           "seq": 1,
           "anchor": "06:38",
           "page": null,
@@ -4296,7 +4468,7 @@
           "question_id": "M2.2"
         },
         {
-          "id": "id-64",
+          "id": "id-65",
           "seq": 6,
           "anchor": "21:45",
           "page": null,
@@ -4338,7 +4510,7 @@
           "question_id": "M2.4"
         },
         {
-          "id": "id-65",
+          "id": "id-63",
           "seq": 9,
           "anchor": "24:10",
           "page": null,
