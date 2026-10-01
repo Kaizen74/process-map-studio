@@ -219,6 +219,33 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await page.getByRole("radio", { name: "Map" }).click();
       await expect(page.getByRole("radiogroup", { name: "Lens" })).toBeVisible();
     }
+    // V2-V4 (§3.12.11): the map opens As done; As documented draws the documents' version (with
+    // Approve load plan, A.9), and the Work type lens shows A.8's kinds of work.
+    const viewSwitch = page.getByRole("radiogroup", { name: "View" });
+    await expect(viewSwitch.getByRole("radio", { name: "As done" })).toHaveAttribute("aria-checked", "true");
+    const approvePlan = page.getByRole("button", { name: /^Approval, Approve load plan/ });
+    await expect(approvePlan).toHaveCount(0);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-1440x900.png"), ...still });
+    await viewSwitch.getByRole("radio", { name: "As documented" }).click();
+    await expect(approvePlan).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Activity, Read report at aircraft/ })).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-documented-1440x900.png"), ...still });
+    await viewSwitch.getByRole("radio", { name: "As done" }).click();
+    const showOther = page.getByRole("checkbox", { name: "Show the other view" });
+    await showOther.click(); // the choice lives in the address, so it applies a moment later
+    await expect(showOther).toBeChecked();
+    await expect(page.getByRole("button", { name: /Approve load plan.*only in the documented version$/ })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-with-other-1440x900.png"), ...still });
+    await showOther.click();
+    await expect(showOther).not.toBeChecked();
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Work type" }).click();
+    await expect(page.locator(".map-lens", { hasText: /^Complexproposed$/ })).toBeVisible(); // A.8
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-work-type-1440x900.png"), ...still });
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
+    await expect(approvePlan).toHaveCount(0);
     // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
     // but the rest of the journey keeps running, so other regressions are still caught.
     await expect.soft(page).toHaveScreenshot("p7-review-1440x900.png");
