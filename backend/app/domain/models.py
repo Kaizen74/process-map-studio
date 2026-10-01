@@ -459,6 +459,7 @@ class ClaimRecord(BaseModel):
     verification_status: str
     rejection_reason: str = ""
     rejection_guardrail: str = ""
+    account_type: str | None = None  # interview claims (B.28): official · lived · unclear
 
 
 class UnknownRecord(BaseModel):

@@ -41,7 +41,7 @@ def test_the_merge_made_while_drafting_is_listed_side_by_side(drafted: Drafted) 
         ("Return loading report", "activity", "Ramp", None),
     ]
     first, second = p["groups"]
-    assert len(first["claims"]) == 4 and len(second["claims"]) == 1
+    assert len(first["claims"]) == 5 and len(second["claims"]) == 1  # v1.10: + the official account
     claim = second["claims"][0]
     assert (claim["source_name"], claim["anchor"]) == ("sop_RP-02.docx", "§2")
     assert claim["quote"].startswith("The Ramp Supervisor shall return the loading report")

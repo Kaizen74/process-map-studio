@@ -237,6 +237,14 @@ class GraphEvidence(Out):
     note: str = ""
 
 
+class AccountSummary(Out):
+    """The accounts a step's interview claims give (§3.12.3, B.28)."""
+
+    official: int = 0
+    lived: int = 0
+    unclear: int = 0
+
+
 class GraphElement(Out):
     id: str
     stable_key: str
@@ -262,6 +270,10 @@ class GraphElement(Out):
     confidence_breakdown: list[dict[str, object]]
     needs_check: bool
     review_status: str
+    # v1.10 (§3.12.3): the accounts its interview claims give; practice_described False marks
+    # "Practice not described" (only the official account), None when the interview is silent.
+    account_summary: AccountSummary = AccountSummary()
+    practice_described: bool | None = None
 
 
 class GraphEdge(Out):
@@ -326,6 +338,22 @@ class RaciDetail(Out):
     sources: list[RaciSource]
 
 
+class AnswerQuote(Out):
+    """One interview answer behind a step: the quote, the account it gives and its cue, the SME's
+    stated reason and variation condition, where it is, and the question that prompted it."""
+
+    quote: str
+    account_type: str
+    account_cue: str
+    stated_reason: str
+    variation_condition: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+    question_id: str | None
+    question: str
+
+
 class ElementDetail(Out):
     """The graph element, with names, quotes and source names for the panel (never exported)."""
 
@@ -359,6 +387,11 @@ class ElementDetail(Out):
     review_status: str
     image_count: int
     gap_findings: list[dict[str, object]]
+    account_summary: AccountSummary = AccountSummary()
+    practice_described: bool | None = None
+    # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
+    # was translated from, each with the guide question that prompted it. App only, never exported.
+    answers: list[AnswerQuote] = []
 
 
 # --- Alignment matrix (PRD §4 Views, §5.4 Matrix; phase P9) ------------------------------------

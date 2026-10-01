@@ -52,10 +52,10 @@ def test_coverage_is_the_share_of_passages_verified_claims_cite(drafted: Drafted
         counted = [s for s in page["segments"] if s["speaker_role"] != "Interviewer"]
         cited = [s for s in counted if s["cited"]]
         assert page["coverage_pct"] == round(100 * len(cited) / len(counted), 1), name
-    # The v1.10 A.1 interview (twelve SME turns): the four turns that carry only accounts,
-    # stories, know-how and judgment cues (22:30, 24:10, 24:46, 29:48) are not cited until those
-    # lenses are extracted; the SOP half.
-    assert (listed[TRANSCRIPT]["coverage_pct"], listed[SOP]["coverage_pct"]) == (66.7, 50.0)
+    # The v1.10 A.1 interview (twelve SME turns): the three turns that carry only a story,
+    # know-how and judgment cues (24:10, 24:46, 29:48) are not cited until those lenses are
+    # extracted (C1, C2); 22:30 is cited by its official and lived accounts. The SOP half.
+    assert (listed[TRANSCRIPT]["coverage_pct"], listed[SOP]["coverage_pct"]) == (75.0, 50.0)
     assert drafted.client.get(f"/api/sources/{listed[SOP]['id']}").json()["coverage_pct"] == 50.0
 
 
@@ -66,8 +66,8 @@ def test_uncited_only_lists_what_nothing_cites(drafted: Drafted) -> None:
     assert uncited["total"] == 5 and uncited["pages"] == 1
     # Interviewer turns are never listed as skipped, even if uncited: only the SME's turns.
     interview = passages(drafted, TRANSCRIPT, uncited_only="1")
-    assert [s["anchor"] for s in interview["segments"]] == ["22:30", "24:10", "24:46", "29:48"]
-    assert interview["total"] == 4
+    assert [s["anchor"] for s in interview["segments"]] == ["24:10", "24:46", "29:48"]
+    assert interview["total"] == 3
     cited = next(s for s in everything if s["cited"])
     both = drafted.client.get(
         f"/api/sources/{sources(drafted)[SOP]['id']}/segments",

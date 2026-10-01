@@ -77,7 +77,10 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
 
     assert job["status"] == "done", job
     assert job["type"] == "draft" and job["progress"] == 1.0
-    assert job["claims"] == {"verified": 21, "rejected": 0}
+    assert job["claims"] == {
+        "verified": 23,
+        "rejected": 0,
+    }  # v1.10 sample: + the 22:30 official and lived accounts
     # S1 7 chunks + S2 1 + S3 7 source parts + S3b 8 steps + S4 1 + S5 1
     assert job["usage"]["calls"] == 25
     assert job["message"] == (
@@ -91,7 +94,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
-        "steps": 8, "needs_check": 0, "verified": 21, "rejected": 0, "open_questions": 5,
+        "steps": 8, "needs_check": 0, "verified": 23, "rejected": 0, "open_questions": 5,
         "scrubbed": 0,
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]

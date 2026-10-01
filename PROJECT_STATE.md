@@ -28,7 +28,7 @@ Start: working tree clean, `main` merged in (Eric re-uploaded the same v1.10 PRD
 **Plan (one increment ≈ 30 min; each: contract first, tests, full checks, commit, push, this file)**
 - [x] B1 — P4b: codebook (Appendix E) and marker lexicon files, versioned and locked; deterministic pre-tagging (markers, account-type cues); codebook version stamped on every draft
 - [x] B2 — P4b: Step A in drafting: interviewer turns matched to the engagement's guide (default: the Practice template), answer blocks with targets stored on passages; S1 interview prompt gets question–answer blocks, targets and pre-tags
-- [ ] B3 — P4b: S1 interview answers extended (account type with quoted cue, stated reason, variation condition, marker confirmations), grounded like every claim; account summary and "Practice not described"
+- [x] B3 — P4b: S1 interview answers extended (account type with quoted cue, stated reason, variation condition, marker confirmations), grounded like every claim; account summary and "Practice not described"
 - [ ] B4 — P4b: translation rules 1–7: sequence basis on every edge, view membership and variants, the variation decision (Busy wave? → Read report at aircraft), "not described" connectors only where the lived account doesn't state the next step; narration-only edges and gap connectors raise questions; G1 updated (A.5 now 10 elements)
 - [ ] B5 — P4b: per-view flow checks (lint and quality card), graph and lint `?view=`; L12 warnings for narration-only edges
 - [ ] C1 — P4c: S1 stories (fragments, signifiers), know-how (ASHEN) with knowledge risk, SME terms, decision cadence and information in/out, capability notes; grounded and stored

@@ -49,6 +49,10 @@ export interface GraphElement {
   confidence_breakdown: { label: string; delta: number }[];
   needs_check: boolean;
   review_status: string;
+  /** v1.10 §3.12.3: the accounts the step's interview claims give. */
+  account_summary?: { official: number; lived: number; unclear: number };
+  /** false = "Practice not described" (only the official account); null = interview silent. */
+  practice_described?: boolean | null;
 }
 
 export interface Graph {
@@ -138,4 +142,20 @@ export interface ElementDetail extends Omit<GraphElement, "evidence" | "raci"> {
   raci: RaciDetail[];
   image_count: number;
   gap_findings: StepGapFinding[];
+  /** v1.10 §3.12.10 rule 6: the interview answers behind the step, with their guide questions. */
+  answers?: AnswerQuote[];
+}
+
+/** One interview answer behind a step (API_CONTRACT.md → GET /api/elements/{eid}). */
+export interface AnswerQuote {
+  quote: string;
+  account_type: "official" | "lived" | "unclear";
+  account_cue: string;
+  stated_reason: string;
+  variation_condition: string;
+  source_id: string;
+  segment_id: string | null;
+  anchor: string;
+  question_id: string | null;
+  question: string;
 }

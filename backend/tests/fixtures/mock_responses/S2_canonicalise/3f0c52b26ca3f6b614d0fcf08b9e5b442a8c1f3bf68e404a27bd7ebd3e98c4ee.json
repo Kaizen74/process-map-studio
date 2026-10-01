@@ -8,8 +8,8 @@
       "claim_refs": [
         "c1",
         "c2",
-        "c14",
-        "c21"
+        "c16",
+        "c23"
       ]
     },
     {
@@ -18,8 +18,8 @@
       "label": "Approve load plan",
       "lane_role": "Load control lead",
       "claim_refs": [
-        "c15",
-        "c20"
+        "c17",
+        "c22"
       ]
     },
     {
@@ -30,7 +30,7 @@
       "claim_refs": [
         "c3",
         "c4",
-        "c16"
+        "c18"
       ]
     },
     {
@@ -51,7 +51,8 @@
         "c6",
         "c7",
         "c8",
-        "c9"
+        "c9",
+        "c10"
       ]
     },
     {
@@ -60,7 +61,7 @@
       "label": "Return loading report",
       "lane_role": "Ramp",
       "claim_refs": [
-        "c19"
+        "c21"
       ]
     },
     {
@@ -69,9 +70,9 @@
       "label": "Deviation in limits?",
       "lane_role": "Load controller",
       "claim_refs": [
-        "c10",
-        "c11",
-        "c17"
+        "c12",
+        "c13",
+        "c19"
       ]
     },
     {
@@ -80,7 +81,7 @@
       "label": "Approve deviation",
       "lane_role": "Captain",
       "claim_refs": [
-        "c12"
+        "c14"
       ]
     },
     {
@@ -89,8 +90,8 @@
       "label": "Issue load sheet",
       "lane_role": "Load controller",
       "claim_refs": [
-        "c13",
-        "c18"
+        "c15",
+        "c20"
       ]
     }
   ],

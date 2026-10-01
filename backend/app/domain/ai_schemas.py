@@ -43,6 +43,42 @@ class S1Claim(BaseModel):
     basis: str = Field(description="For I: how it follows from the cited text; for O: empty")
 
 
+class S1MarkerReview(BaseModel):
+    """A marker hint (§3.12.10 step B) the claim relies on or sets aside. A hint is never evidence:
+    a confirmation counts only if its quote is found in the cited segments."""
+
+    marker: str = Field(description="The hint as listed in the segment's markers attribute")
+    confirmed: bool = Field(description="True if the cited words bear the hint out, else false")
+    quote: str = Field(
+        description="The words, copied exactly from the cited segments, that show it"
+    )
+
+
+class S1InterviewClaim(S1Claim):
+    """An interview claim, with the account it gives (§3.12.3) and what translation needs
+    (§3.12.10): stated reasons and variation conditions, in the SME's own words."""
+
+    account_type: Literal["official", "lived", "unclear"] = Field(
+        description="official: how it is meant to work; lived: what the SME does or did; "
+        "unclear: neither is evident"
+    )
+    account_cue: str = Field(
+        description="For official or lived: the cue words, copied exactly from the cited "
+        "segments; for unclear: empty"
+    )
+    stated_reason: str = Field(
+        description="The SME's own reason for working this way, copied exactly, or empty"
+    )
+    variation_condition: str = Field(
+        description="For a variation: the condition it depends on, copied exactly (for example "
+        "'on a busy wave'), or empty"
+    )
+    markers: list[S1MarkerReview] = Field(
+        description="The marker hints on the cited segments that bear on this claim, each "
+        "confirmed or set aside with a quote"
+    )
+
+
 class S1Unknown(BaseModel):
     """Something the process needs that the passages don't say (G8): becomes a question."""
 
@@ -52,6 +88,11 @@ class S1Unknown(BaseModel):
 
 class S1Output(BaseModel):
     claims: list[S1Claim]
+    unknowns: list[S1Unknown]
+
+
+class S1InterviewOutput(BaseModel):
+    claims: list[S1InterviewClaim]
     unknowns: list[S1Unknown]
 
 

@@ -38,7 +38,8 @@
         "c6",
         "c7",
         "c8",
-        "c9"
+        "c9",
+        "c10"
       ]
     },
     {
@@ -47,8 +48,8 @@
       "label": "Deviation in limits?",
       "lane_role": "Load controller",
       "claim_refs": [
-        "c10",
-        "c11"
+        "c12",
+        "c13"
       ]
     },
     {
@@ -57,7 +58,7 @@
       "label": "Approve deviation",
       "lane_role": "Captain",
       "claim_refs": [
-        "c12"
+        "c14"
       ]
     },
     {
@@ -66,7 +67,7 @@
       "label": "Issue load sheet",
       "lane_role": "Load controller",
       "claim_refs": [
-        "c13"
+        "c15"
       ]
     }
   ],

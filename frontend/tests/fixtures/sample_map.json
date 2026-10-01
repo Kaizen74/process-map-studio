@@ -106,7 +106,13 @@
         "confidence": null,
         "confidence_breakdown": [],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null
       },
       {
         "id": "id-11",
@@ -221,7 +227,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 1,
+          "unclear": 1
+        },
+        "practice_described": true
       },
       {
         "id": "id-20",
@@ -325,7 +337,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null
       },
       {
         "id": "id-23",
@@ -441,7 +459,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 1,
+          "unclear": 1
+        },
+        "practice_described": true
       },
       {
         "id": "id-26",
@@ -545,7 +569,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 1
+        },
+        "practice_described": null
       },
       {
         "id": "id-28",
@@ -674,7 +704,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 1,
+          "lived": 3,
+          "unclear": 1
+        },
+        "practice_described": true
       },
       {
         "id": "id-31",
@@ -789,7 +825,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 2
+        },
+        "practice_described": null
       },
       {
         "id": "id-34",
@@ -888,7 +930,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 1
+        },
+        "practice_described": null
       },
       {
         "id": "id-36",
@@ -1002,7 +1050,13 @@
           }
         ],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 1,
+          "unclear": 0
+        },
+        "practice_described": true
       },
       {
         "id": "id-39",
@@ -1040,7 +1094,13 @@
         "confidence": null,
         "confidence_breakdown": [],
         "needs_check": false,
-        "review_status": "draft"
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null
       }
     ],
     "edges": [
@@ -1783,7 +1843,14 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null,
+      "answers": []
     },
     "id-11": {
       "id": "id-11",
@@ -1918,7 +1985,39 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "practice_described": true,
+      "answers": [
+        {
+          "quote": "I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.",
+          "account_type": "lived",
+          "account_cue": "I build the preliminary load plan",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-12",
+          "anchor": "06:40",
+          "question_id": "M2.2",
+          "question": "Walk me through what happened, step by step, as it actually went."
+        },
+        {
+          "quote": "only me and one other controller really know the configurations",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-53",
+          "anchor": "07:55",
+          "question_id": "M2.2",
+          "question": "Walk me through what happened, step by step, as it actually went."
+        }
+      ]
     },
     "id-20": {
       "id": "id-20",
@@ -2042,7 +2141,14 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null,
+      "answers": []
     },
     "id-23": {
       "id": "id-23",
@@ -2176,7 +2282,39 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "practice_described": true,
+      "answers": [
+        {
+          "quote": "I check special loads, dangerous goods and live animals, against the checklist",
+          "account_type": "lived",
+          "account_cue": "Then I check special loads",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-24",
+          "anchor": "14:05",
+          "question_id": "M2.2",
+          "question": "Walk me through what happened, step by step, as it actually went."
+        },
+        {
+          "quote": "The notification from the cargo terminal often comes late.",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-24",
+          "anchor": "14:05",
+          "question_id": "M2.2",
+          "question": "Walk me through what happened, step by step, as it actually went."
+        }
+      ]
     },
     "id-26": {
       "id": "id-26",
@@ -2300,7 +2438,27 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "practice_described": null,
+      "answers": [
+        {
+          "quote": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes.",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-27",
+          "anchor": "16:22",
+          "question_id": "M2.2",
+          "question": "Walk me through what happened, step by step, as it actually went."
+        }
+      ]
     },
     "id-28": {
       "id": "id-28",
@@ -2449,7 +2607,75 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 1,
+        "lived": 3,
+        "unclear": 1
+      },
+      "practice_described": true,
+      "answers": [
+        {
+          "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+          "account_type": "lived",
+          "account_cue": "It's still on paper and I re-key it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-29",
+          "anchor": "21:50",
+          "question_id": "M2.4",
+          "question": "How long did each part take, and where were you waiting on someone or something?"
+        },
+        {
+          "quote": "It's still on paper and I re-key it.",
+          "account_type": "lived",
+          "account_cue": "I re-key it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-29",
+          "anchor": "21:50",
+          "question_id": "M2.4",
+          "question": "How long did each part take, and where were you waiting on someone or something?"
+        },
+        {
+          "quote": "We sometimes wait fifteen minutes for it",
+          "account_type": "lived",
+          "account_cue": "We sometimes wait fifteen minutes for it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-29",
+          "anchor": "21:50",
+          "question_id": "M2.4",
+          "question": "How long did each part take, and where were you waiting on someone or something?"
+        },
+        {
+          "quote": "at peak we're short of containers",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-29",
+          "anchor": "21:50",
+          "question_id": "M2.4",
+          "question": "How long did each part take, and where were you waiting on someone or something?"
+        },
+        {
+          "quote": "Officially the ramp should send the report within ten minutes.",
+          "account_type": "official",
+          "account_cue": "Officially",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-54",
+          "anchor": "22:30",
+          "question_id": "M2.4",
+          "question": "How long did each part take, and where were you waiting on someone or something?"
+        }
+      ]
     },
     "id-31": {
       "id": "id-31",
@@ -2603,7 +2829,39 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 2
+      },
+      "practice_described": null,
+      "answers": [
+        {
+          "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-32",
+          "anchor": "27:15",
+          "question_id": "M5.s1",
+          "question": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?"
+        },
+        {
+          "quote": "The tolerance depends on the airline contract.",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-32",
+          "anchor": "27:15",
+          "question_id": "M5.s1",
+          "question": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?"
+        }
+      ]
     },
     "id-34": {
       "id": "id-34",
@@ -2720,7 +2978,27 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "practice_described": null,
+      "answers": [
+        {
+          "quote": "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-35",
+          "anchor": "29:02",
+          "question_id": "M5.s1",
+          "question": "Was that more like following a procedure, needing an expert, working it out as you went, or firefighting?"
+        }
+      ]
     },
     "id-36": {
       "id": "id-36",
@@ -2854,7 +3132,27 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "practice_described": true,
+      "answers": [
+        {
+          "quote": "Then I issue the final load sheet, around T-15.",
+          "account_type": "lived",
+          "account_cue": "Then I issue the final load sheet",
+          "stated_reason": "",
+          "variation_condition": "",
+          "source_id": "id-13",
+          "segment_id": "id-37",
+          "anchor": "31:10",
+          "question_id": "M4.3",
+          "question": "Is there a rule for this, or does it depend? On what?"
+        }
+      ]
     },
     "id-39": {
       "id": "id-39",
@@ -2898,14 +3196,21 @@
       "needs_check": false,
       "review_status": "draft",
       "image_count": 0,
-      "gap_findings": []
+      "gap_findings": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null,
+      "answers": []
     }
   },
   "segments": {
     "id-13": {
       "segments": [
         {
-          "id": "id-53",
+          "id": "id-55",
           "seq": 1,
           "anchor": "06:38",
           "page": null,
@@ -2933,7 +3238,7 @@
           "question_id": "M2.2"
         },
         {
-          "id": "id-54",
+          "id": "id-53",
           "seq": 3,
           "anchor": "07:55",
           "page": null,
@@ -2975,7 +3280,7 @@
           "question_id": "M2.2"
         },
         {
-          "id": "id-55",
+          "id": "id-56",
           "seq": 6,
           "anchor": "21:45",
           "page": null,
@@ -3003,14 +3308,14 @@
           "question_id": "M2.4"
         },
         {
-          "id": "id-56",
+          "id": "id-54",
           "seq": 8,
           "anchor": "22:30",
           "page": null,
           "section": "",
           "speaker_role": "Load controller",
           "text": "Officially the ramp should send the report within ten minutes. What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
-          "cited": false,
+          "cited": true,
           "instruction_like": false,
           "speaker_label": null,
           "corrected": false,
@@ -3132,7 +3437,7 @@
       "total": 16,
       "page": 1,
       "pages": 1,
-      "coverage_pct": 66.7
+      "coverage_pct": 75.0
     },
     "id-15": {
       "segments": [

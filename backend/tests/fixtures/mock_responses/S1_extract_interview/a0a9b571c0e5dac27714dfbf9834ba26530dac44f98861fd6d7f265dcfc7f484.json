@@ -1,6 +1,22 @@
 {
   "claims": [
     {
+      "account_type": "lived",
+      "account_cue": "I build the preliminary load plan",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "explicit_order: First thing",
+          "confirmed": true,
+          "quote": "First thing"
+        },
+        {
+          "marker": "variation: usually",
+          "confirmed": false,
+          "quote": "usually around T-120"
+        }
+      ],
       "claim_type": "activity",
       "text": "The Load controller builds the preliminary load plan from the booked figures, around T-120, in about twenty minutes.",
       "responsible_role": "Load controller",
@@ -17,6 +33,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "constraint",
       "text": "Only the Load controller and one other controller really know the widebody configurations.",
       "responsible_role": "Load controller",
@@ -33,6 +54,27 @@
       "basis": ""
     },
     {
+      "account_type": "lived",
+      "account_cue": "Then I check special loads",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "explicit_order: Then",
+          "confirmed": true,
+          "quote": "Then I check special loads"
+        },
+        {
+          "marker": "control_note: check",
+          "confirmed": true,
+          "quote": "I check special loads"
+        },
+        {
+          "marker": "work_type_clear: checklist",
+          "confirmed": true,
+          "quote": "against the checklist"
+        }
+      ],
       "claim_type": "decision",
       "text": "The Load controller checks special loads, dangerous goods and live animals against the checklist.",
       "responsible_role": "",
@@ -49,6 +91,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "constraint",
       "text": "The notification from the cargo terminal often comes late.",
       "responsible_role": "",
@@ -65,6 +112,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "decision",
       "text": "If something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes.",
       "responsible_role": "",

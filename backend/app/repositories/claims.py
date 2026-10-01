@@ -24,6 +24,7 @@ def _record(row: Claim) -> ClaimRecord:
         verification_status=row.verification_status,
         rejection_reason=row.rejection_reason,
         rejection_guardrail=row.rejection_guardrail,
+        account_type=row.account_type,
     )
 
 
@@ -159,3 +160,11 @@ def cited_segment_ids(session: Session, version_id: str) -> set[str]:
         )
     )
     return {segment for ids in rows for segment in ids}
+
+
+def by_ids(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
+    """Claim ID → claim, for the IDs given."""
+    if not claim_ids:
+        return {}
+    rows = session.scalars(select(Claim).where(Claim.id.in_(claim_ids)))
+    return {row.id: _record(row) for row in rows}

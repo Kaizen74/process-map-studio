@@ -1,6 +1,11 @@
 {
   "claims": [
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "activity",
       "text": "T1: The Load controller builds the plan.",
       "responsible_role": "Load controller",
@@ -17,6 +22,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "activity",
       "text": "T2: The Load controller checks fuel figures.",
       "responsible_role": "Load controller",
@@ -33,6 +43,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "duration",
       "text": "T3: The plan takes 30 min.",
       "responsible_role": "",
@@ -49,6 +64,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "approval",
       "text": "T4: The Duty manager approves the plan.",
       "responsible_role": "",
@@ -65,6 +85,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "activity",
       "text": "T6: Priya Nair builds the preliminary load plan.",
       "responsible_role": "Load controller",
@@ -81,6 +106,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "activity",
       "text": "Control: the Load controller builds the preliminary load plan.",
       "responsible_role": "Load controller",

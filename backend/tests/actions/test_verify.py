@@ -94,11 +94,11 @@ def test_every_sample_step_has_a_verifier_answer(sample: Calibrated) -> None:
 
 def test_the_sample_is_supported_throughout(sample: Calibrated) -> None:
     tally = run(sample)
-    assert (tally.supported, tally.partial, tally.rejected, tally.removed_steps) == (21, 0, 0, 0)
+    assert (tally.supported, tally.partial, tally.rejected, tally.removed_steps) == (22, 0, 0, 0)
     with session_scope(sample.sessions) as session:
         elements = map_repo.elements(session, sample.version_id)
     assert len(elements) == 8 and not any(e.needs_check for e in elements)
-    assert verdict_counts(sample)["supported"] == 21
+    assert verdict_counts(sample)["supported"] == 22  # v1.10 sample: + the official account
 
 
 def test_trap_t7_is_rejected_by_the_verifier_and_t8_needs_a_check(traps: Calibrated) -> None:
@@ -126,9 +126,9 @@ def test_trap_t7_is_rejected_by_the_verifier_and_t8_needs_a_check(traps: Calibra
 def test_switching_the_verifier_off_makes_no_calls(sample: Calibrated) -> None:
     before = calls(sample)
     tally = run(sample, verifier_enabled=False)
-    assert (tally.not_run, tally.supported) == (21, 0)
+    assert (tally.not_run, tally.supported) == (22, 0)
     assert calls(sample) == before
-    assert verdict_counts(sample) == {"not_run": 21}
+    assert verdict_counts(sample) == {"not_run": 23}  # every S1 claim of the v1.10 sample
 
 
 def test_a_claim_without_a_verdict_is_checked_not_assumed(

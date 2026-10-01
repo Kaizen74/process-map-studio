@@ -113,7 +113,9 @@ def test_the_sample_answers_all_pass_the_grounding_checks(sample: Setup) -> None
     tallies = {name: extract(sample, name) for name in fixture_engagement.SOURCES}
     rejected = [(r.payload["text"], r.rejection_reason) for r in stored(sample, "rejected")]
     assert rejected == []
-    assert tallies["interview_transcript.txt"].verified == 13
+    assert (
+        tallies["interview_transcript.txt"].verified == 15
+    )  # v1.10 sample: + the 22:30 official and lived accounts
     assert tallies["sop_LC-07.docx"].verified == 5
     assert all(t.scrubbed == 0 for t in tallies.values())
 

@@ -1,6 +1,11 @@
 {
   "claims": [
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "decision",
       "text": "If the weight deviation is outside tolerance, the captain decides.",
       "responsible_role": "",
@@ -17,6 +22,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "threshold",
       "text": "The weight tolerance depends on the airline contract.",
       "responsible_role": "",
@@ -33,6 +43,11 @@
       "basis": ""
     },
     {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
       "claim_type": "approval",
       "text": "The captain either accepts the deviation or asks for a re-trim, which takes five to fifteen minutes.",
       "responsible_role": "",
@@ -49,6 +64,17 @@
       "basis": ""
     },
     {
+      "account_type": "lived",
+      "account_cue": "Then I issue the final load sheet",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "explicit_order: Then",
+          "confirmed": true,
+          "quote": "Then I issue"
+        }
+      ],
       "claim_type": "activity",
       "text": "The Load controller issues the final load sheet around T-15.",
       "responsible_role": "Load controller",

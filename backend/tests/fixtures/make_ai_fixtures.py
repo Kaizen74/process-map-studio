@@ -59,6 +59,40 @@ def claim(
     }
 
 
+INTERVIEW_FIELDS: dict[str, Any] = {
+    "account_type": "unclear",
+    "account_cue": "",
+    "stated_reason": "",
+    "variation_condition": "",
+    "markers": [],
+}
+
+
+def told(
+    found: dict[str, Any],
+    account: str,
+    cue: str,
+    *,
+    reason: str = "",
+    condition: str = "",
+    markers: tuple[tuple[str, bool, str], ...] = (),
+) -> dict[str, Any]:
+    """An interview claim with the account it gives (PRD §3.12.3, A.8), the SME's stated reason
+    and variation condition, and the marker hints it confirms or sets aside (§3.12.10 B)."""
+    return found | {
+        "account_type": account,
+        "account_cue": cue,
+        "stated_reason": reason,
+        "variation_condition": condition,
+        "markers": [{"marker": m, "confirmed": ok, "quote": q} for m, ok, q in markers],
+    }
+
+
+def as_interview(answer: dict[str, Any]) -> dict[str, Any]:
+    """Every interview claim carries the interview fields (unclear and empty unless told)."""
+    return answer | {"claims": [INTERVIEW_FIELDS | c for c in answer["claims"]]}
+
+
 OFFLOAD = claim(
     "decision",
     "If something can't be accepted, the airline decides what to offload, which takes fifteen "
@@ -75,15 +109,24 @@ OFFLOAD = claim(
 ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("interview_transcript.txt", 0): {
         "claims": [
-            claim(
-                "activity",
-                "The Load controller builds the preliminary load plan from the booked figures, "
-                "around T-120, in about twenty minutes.",
-                ["p2"],
-                "I build the preliminary load plan off the booked figures, usually around T-120. "
-                "Takes me about twenty minutes.",
-                responsible="Load controller",
-                duration="about twenty minutes",
+            told(
+                claim(
+                    "activity",
+                    "The Load controller builds the preliminary load plan from the booked "
+                    "figures, around T-120, in about twenty minutes.",
+                    ["p2"],
+                    "I build the preliminary load plan off the booked figures, usually around "
+                    "T-120. Takes me about twenty minutes.",
+                    responsible="Load controller",
+                    duration="about twenty minutes",
+                ),
+                "lived",
+                "I build the preliminary load plan",
+                markers=(
+                    ("explicit_order: First thing", True, "First thing"),
+                    # "usually" here is about timing, not a variant path: set aside (crit. 63).
+                    ("variation: usually", False, "usually around T-120"),
+                ),
             ),
             claim(
                 "constraint",
@@ -93,14 +136,24 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                 "only me and one other controller really know the configurations",
                 responsible="Load controller",
             ),
-            claim(
-                "decision",
-                "The Load controller checks special loads, dangerous goods and live animals "
-                "against the checklist.",
-                ["p4"],
-                "I check special loads, dangerous goods and live animals, against the checklist",
-                decider="Load controller",
-                mechanism="rule_based",
+            told(
+                claim(
+                    "decision",
+                    "The Load controller checks special loads, dangerous goods and live animals "
+                    "against the checklist.",
+                    ["p4"],
+                    "I check special loads, dangerous goods and live animals, against the "
+                    "checklist",
+                    decider="Load controller",
+                    mechanism="rule_based",
+                ),
+                "lived",
+                "Then I check special loads",
+                markers=(
+                    ("explicit_order: Then", True, "Then I check special loads"),
+                    ("control_note: check", True, "I check special loads"),
+                    ("work_type_clear: checklist", True, "against the checklist"),
+                ),
             ),
             claim(
                 "constraint",
@@ -120,35 +173,83 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("interview_transcript.txt", 1): {
         "claims": [
             OFFLOAD,  # the same claim from the overlapping window; stored once
-            claim(
-                "activity",
-                "Ramp loads the aircraft, in forty minutes or so, and sends back the loading "
-                "report.",
-                ["p7"],
-                "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
-                responsible="Ramp",
-                duration="forty minutes or so",
+            told(
+                claim(
+                    "activity",
+                    "Ramp loads the aircraft, in forty minutes or so, and sends back the loading "
+                    "report.",
+                    ["p7"],
+                    "Ramp loads the aircraft, forty minutes or so, and sends back the loading "
+                    "report.",
+                    responsible="Ramp",
+                    duration="forty minutes or so",
+                ),
+                "lived",
+                "It's still on paper and I re-key it",
+                markers=(("handoff: sends back", True, "sends back the loading report"),),
             ),
-            claim(
-                "constraint",
-                "The loading report is still on paper and the Load controller re-keys it.",
-                ["p7"],
-                "It's still on paper and I re-key it.",
-                responsible="Load controller",
+            told(
+                claim(
+                    "constraint",
+                    "The loading report is still on paper and the Load controller re-keys it.",
+                    ["p7"],
+                    "It's still on paper and I re-key it.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "I re-key it",
             ),
-            claim(
-                "duration",
-                "The Load controller sometimes waits fifteen minutes for the loading report.",
-                ["p7"],
+            told(
+                claim(
+                    "duration",
+                    "The Load controller sometimes waits fifteen minutes for the loading report.",
+                    ["p7"],
+                    "We sometimes wait fifteen minutes for it",
+                    responsible="Load controller",
+                    duration="fifteen minutes",
+                ),
+                "lived",
                 "We sometimes wait fifteen minutes for it",
-                responsible="Load controller",
-                duration="fifteen minutes",
+                markers=(("wait: wait", True, "We sometimes wait fifteen minutes for it"),),
             ),
             claim(
                 "constraint",
                 "At peak times there is a shortage of containers.",
                 ["p7"],
                 "at peak we're short of containers",
+            ),
+            # 22:30 (A.8): the first sentence is the official account, the second the lived one.
+            told(
+                claim(
+                    "threshold",
+                    "The Ramp should send the loading report within ten minutes.",
+                    ["p8"],
+                    "Officially the ramp should send the report within ten minutes.",
+                    responsible="Ramp",
+                    threshold="within ten minutes",
+                ),
+                "official",
+                "Officially",
+                markers=(("account_official: Officially", True, "Officially"),),
+            ),
+            told(
+                claim(
+                    "exception",
+                    "On a busy wave the Load controller walks down to the aircraft and reads the "
+                    "loading report off the ramp's sheet.",
+                    ["p8"],
+                    "What actually happens on a busy wave is I walk down and read it off their "
+                    "sheet, otherwise we'd miss the slot.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "What actually happens",
+                reason="otherwise we'd miss the slot",
+                condition="on a busy wave",
+                markers=(
+                    ("account_lived: What actually happens", True, "What actually happens"),
+                    ("variation: on a busy wave", True, "on a busy wave"),
+                ),
             ),
         ],
         "unknowns": [],
@@ -180,12 +281,17 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                 mechanism="judgment",
                 duration="Five to fifteen minutes",
             ),
-            claim(
-                "activity",
-                "The Load controller issues the final load sheet around T-15.",
-                ["p16"],
-                "Then I issue the final load sheet, around T-15.",
-                responsible="Load controller",
+            told(
+                claim(
+                    "activity",
+                    "The Load controller issues the final load sheet around T-15.",
+                    ["p16"],
+                    "Then I issue the final load sheet, around T-15.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "Then I issue the final load sheet",
+                markers=(("explicit_order: Then", True, "Then I issue"),),
             ),
         ],
         "unknowns": [],
@@ -401,20 +507,22 @@ def step(ref: str, kind: str, label: str, lane: str, claims: list[int]) -> dict[
     }
 
 
-# S2 for the sample: the eight steps of Appendix A.5, built from the 21 verified claims (c1-c13
-# interview, c14-c18 SOP LC-07, c19 SOP RP-02, c20-c21 job descriptions). "Load and return LIR"
-# comes from two steps merged at 0.86 (pre-merged, listed as accepted).
+# S2 for the sample: the eight steps of Appendix A.5, built from the 23 verified claims (c1-c15
+# interview, c16-c20 SOP LC-07, c21 SOP RP-02, c22-c23 job descriptions). "Load and return LIR"
+# comes from two steps merged at 0.86 (pre-merged, listed as accepted); it also carries the
+# SME's official account of the return time (c10). The lived busy-wave variation (c11) is left
+# out here: translation places it (B4).
 S2_ANSWER: dict[str, Any] = {
     "steps": [
-        step("st1", "activity", "Draft load plan", "Load controller", [1, 2, 14, 21]),
-        step("st2", "approval", "Approve load plan", "Load control lead", [15, 20]),
-        step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 16]),
+        step("st1", "activity", "Draft load plan", "Load controller", [1, 2, 16, 23]),
+        step("st2", "approval", "Approve load plan", "Load control lead", [17, 22]),
+        step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 18]),
         step("st4", "activity", "Resolve or offload", "Airline ops", [5]),
-        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
-        step("st6", "activity", "Return loading report", "Ramp", [19]),
-        step("st7", "decision", "Deviation in limits?", "Load controller", [10, 11, 17]),
-        step("st8", "approval", "Approve deviation", "Captain", [12]),
-        step("st9", "activity", "Issue load sheet", "Load controller", [13, 18]),
+        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
+        step("st6", "activity", "Return loading report", "Ramp", [21]),
+        step("st7", "decision", "Deviation in limits?", "Load controller", [12, 13, 19]),
+        step("st8", "approval", "Approve deviation", "Captain", [14]),
+        step("st9", "activity", "Issue load sheet", "Load controller", [15, 20]),
     ],
     "new_roles": [],
     "merge_proposals": [
@@ -1131,10 +1239,10 @@ INTERVIEW_ONLY_S2: dict[str, Any] = {
         step("st1", "activity", "Draft load plan", "Load controller", [1, 2]),
         step("st2", "decision", "Special loads OK?", "Load controller", [3, 4]),
         step("st3", "activity", "Resolve or offload", "Airline ops", [5]),
-        step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
-        step("st5", "decision", "Deviation in limits?", "Load controller", [10, 11]),
-        step("st6", "approval", "Approve deviation", "Captain", [12]),
-        step("st7", "activity", "Issue load sheet", "Load controller", [13]),
+        step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
+        step("st5", "decision", "Deviation in limits?", "Load controller", [12, 13]),
+        step("st6", "approval", "Approve deviation", "Captain", [14]),
+        step("st7", "activity", "Issue load sheet", "Load controller", [15]),
     ],
     "new_roles": [],
     "merge_proposals": [],
@@ -1223,9 +1331,10 @@ def main() -> None:
         for stage in (*S1_STAGES, "S0_ocr_page"):
             shutil.rmtree(root / stage, ignore_errors=True)
     for key, (stage, digest) in hashes.items():
-        write(MOCKS, stage, digest, ANSWERS.get(key, EMPTY))
+        fill = as_interview if stage == "S1_extract_interview" else (lambda a: a)
+        write(MOCKS, stage, digest, fill(ANSWERS.get(key, EMPTY)))
         if key in TRAPS_ANSWERS:
-            write(TRAPS, stage, digest, TRAPS_ANSWERS[key])
+            write(TRAPS, stage, digest, fill(TRAPS_ANSWERS[key]))
     for stage in S1_STAGES:
         write(MOCKS, stage, "default", EMPTY)
         write(TRAPS, stage, "default", EMPTY)

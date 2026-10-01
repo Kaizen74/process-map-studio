@@ -9,6 +9,8 @@ images are never part of the graph.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
@@ -16,6 +18,7 @@ from app.db import session_scope
 from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance
 from app.domain.graph import (
     AlignmentRow,
+    AnswerQuote,
     CycleTime,
     EdgeRecord,
     ElementDetail,
@@ -39,14 +42,17 @@ from app.domain.graph import (
     RaciDetail,
     RaciSource,
 )
+from app.domain.interview import QuestionBank
 from app.domain.layout import Layout
+from app.domain.models import ClaimRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import alignment, layout, lint, parsing
+from app.services import alignment, interview_templates, layout, lint, parsing, translation
 
 Sessions = sessionmaker[Session]
 
@@ -123,6 +129,8 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
     constraints = map_repo.constraints(session, version_id)
     flags = map_repo.ai_flags(session, version_id)
     passages = map_repo.evidence(session, version_id)
+    claims_of = map_repo.element_claims(session, version_id)
+    claim_records = claims_repo.by_ids(session, [c for ids in claims_of.values() for c in ids])
     drafted_from = [
         s
         for sid in map_repo.version_source_ids(session, version_id)
@@ -173,6 +181,9 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
     graph_elements = []
     for e in elements:
         flag = next((f for f in flags if f.element_id == e.id), None)
+        accounts = translation.account_summary(
+            claim_records[c].account_type for c in claims_of.get(e.id, []) if c in claim_records
+        )
         graph_elements.append(
             GraphElement(
                 id=e.id,
@@ -225,6 +236,8 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 confidence_breakdown=list(e.confidence_breakdown),
                 needs_check=e.needs_check,
                 review_status=e.review_status,
+                account_summary=accounts,
+                practice_described=translation.practice_described(accounts),
             )
         )
 
@@ -303,6 +316,31 @@ def get_lint(sessions: Sessions, version_id: str) -> Result[LintReport]:
     return lint_version(sessions, version_id)
 
 
+def _answer(
+    record: ClaimRecord,
+    where: dict[str, tuple[str, str | None]],
+    bank: QuestionBank | None,
+    hide: Callable[[str], str],
+) -> AnswerQuote:
+    first = record.segment_ids[0] if record.segment_ids else None
+    anchor, question_id = where.get(first or "", ("", None))
+    question = ""
+    if bank is not None and question_id and any(q.id == question_id for q in bank.questions):
+        question = bank.question(question_id).wording
+    return AnswerQuote(
+        quote=hide(record.quote),
+        account_type=record.account_type or "unclear",
+        account_cue=hide(str(record.payload.get("account_cue", ""))),
+        stated_reason=hide(str(record.payload.get("stated_reason", ""))),
+        variation_condition=hide(str(record.payload.get("variation_condition", ""))),
+        source_id=record.source_id,
+        segment_id=first,
+        anchor=anchor,
+        question_id=question_id,
+        question=question,
+    )
+
+
 def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
     """One step as the detail panel shows it: the graph element with role, lane and phase names,
     each evidence card's source name and quote, and the passages behind each RACI entry. Names
@@ -321,10 +359,27 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         names = {s.id: s.filename for s in sources}
         images = map_repo.image_count(session, element_id)
         found = gap_repo.step_findings(session, version.engagement_id, element.stable_key)
+        claim_ids = map_repo.element_claims(session, version.id).get(element_id, [])
+        records = claims_repo.by_ids(session, claim_ids)
+        interview = [records[c] for c in claim_ids if c in records and records[c].account_type]
+        rows = sources_repo.segment_rows(
+            session, [r.segment_ids[0] for r in interview if r.segment_ids]
+        )
+        # The first passage each answer cites: its anchor and the guide question it answers.
+        where = {
+            sid: (
+                parsing.segment_anchor(fmt=fmt, seq=seg.seq, page=seg.page, section=seg.section,
+                                       text=seg.text, start_ms=seg.start_ms),
+                seg.question_id,
+            )
+            for sid, (seg, fmt) in rows.items()
+        }  # fmt: skip
 
     def hide(text: str) -> str:
         return redaction.hide(text, terms)
 
+    loaded = interview_templates.load_bank()
+    bank = loaded.value if isinstance(loaded, Ok) else None
     roles = {r.id: r.name for r in graph.roles}
     phases = {p.id: p.name for p in graph.phases}
     linked = [p for p in passages if p.evidence.element_id == element_id]
@@ -377,6 +432,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
             ],
             evidence=cards,
             image_count=images,
+            answers=[_answer(r, where, bank, hide) for r in interview],
             gap_findings=[
                 {
                     "id": f.id,

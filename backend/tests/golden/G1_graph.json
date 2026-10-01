@@ -105,7 +105,13 @@
       "confidence": null,
       "confidence_breakdown": [],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null
     },
     {
       "id": "id-11",
@@ -220,7 +226,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "practice_described": true
     },
     {
       "id": "id-20",
@@ -324,7 +336,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null
     },
     {
       "id": "id-23",
@@ -440,7 +458,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "practice_described": true
     },
     {
       "id": "id-26",
@@ -544,7 +568,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "practice_described": null
     },
     {
       "id": "id-28",
@@ -673,7 +703,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 1,
+        "lived": 3,
+        "unclear": 1
+      },
+      "practice_described": true
     },
     {
       "id": "id-31",
@@ -788,7 +824,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 2
+      },
+      "practice_described": null
     },
     {
       "id": "id-34",
@@ -887,7 +929,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "practice_described": null
     },
     {
       "id": "id-36",
@@ -1001,7 +1049,13 @@
         }
       ],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "practice_described": true
     },
     {
       "id": "id-39",
@@ -1039,7 +1093,13 @@
       "confidence": null,
       "confidence_breakdown": [],
       "needs_check": false,
-      "review_status": "draft"
+      "review_status": "draft",
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "practice_described": null
     }
   ],
   "edges": [

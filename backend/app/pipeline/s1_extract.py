@@ -49,6 +49,14 @@ from app.services import (
 Sessions = sessionmaker[Session]
 
 STAGE = "S1"
+# Interview fields kept in their own column or checked before they go into the payload.
+INTERVIEW = {
+    "account_type",
+    "account_cue",
+    "stated_reason",
+    "variation_condition",
+    "markers",
+}
 SOURCE_REF = "s1"
 PROMPT_BY_KIND = {
     SourceKind.INTERVIEW_TRANSCRIPT.value: "S1_extract_interview",
@@ -185,20 +193,50 @@ def prepare(session: Session, source_id: str) -> Result[Prepared]:
     )
 
 
-def _scrub(
-    claim: ai_schemas.S1Claim, terms: list[NameReplacement]
-) -> tuple[ai_schemas.S1Claim, int]:
+FIXED_FIELDS = {"claim_type", "mechanism", "provenance", "account_type"}
+
+
+def _scrub[ClaimT: ai_schemas.S1Claim](
+    claim: ClaimT, terms: list[NameReplacement]
+) -> tuple[ClaimT, int]:
     """G10: any hidden name in the answer is replaced by its role; the hits are counted."""
     hits = 0
     fields: dict[str, object] = {}
     for name, value in claim.model_dump().items():
-        if isinstance(value, str) and name not in {"claim_type", "mechanism", "provenance"}:
+        if isinstance(value, str) and name not in FIXED_FIELDS:
             result = grounding.redact_text(value, terms)
             hits += result.hits
             fields[name] = result.text
         else:
             fields[name] = value
-    return ai_schemas.S1Claim.model_validate(fields), hits
+    return type(claim).model_validate(fields), hits
+
+
+def check_interview_fields(
+    claim: ai_schemas.S1InterviewClaim, cited: str
+) -> tuple[str, dict[str, object]]:
+    """The account tag, stated reason, variation condition and marker reviews of a verified
+    interview claim pass the quote check (G4) like every other output (§3.12.9 rule 7). A cue that
+    isn't in the cited text makes the account `unclear`; a reason, condition or marker review
+    whose words aren't there is dropped. Returns the account type and the payload fields."""
+
+    def found(words: str) -> bool:
+        return bool(words) and grounding.verify_quote(words, cited).passed
+
+    account = claim.account_type
+    if account != "unclear" and not found(claim.account_cue):
+        account = "unclear"
+    markers = [m.model_dump() for m in claim.markers if found(m.quote)]
+    return account, {
+        "account_cue": claim.account_cue if account != "unclear" else "",
+        "account_cue_dropped": claim.account_type != account,
+        "stated_reason": claim.stated_reason if found(claim.stated_reason) else "",
+        "variation_condition": (
+            claim.variation_condition if found(claim.variation_condition) else ""
+        ),
+        "markers": markers,
+        "markers_dropped": len(claim.markers) - len(markers),
+    }
 
 
 def check_claim(
@@ -223,7 +261,7 @@ def check_claim(
 
 
 def gate(
-    answer: ai_schemas.S1Output,
+    answer: ai_schemas.S1Output | ai_schemas.S1InterviewOutput,
     chunk: list[PromptSegment],
     *,
     source_id: str,
@@ -241,10 +279,17 @@ def gate(
         payload: dict[str, object] = {
             k: v
             for k, v in claim.model_dump().items()
-            if k not in {"claim_type", "segment_ids", "quote", "provenance", "basis"}
+            if k not in {"claim_type", "segment_ids", "quote", "provenance", "basis"} | INTERVIEW
         }
         payload["scrubbed"] = scrubbed
         payload["segment_refs"] = list(claim.segment_ids)
+        account: str | None = None
+        if isinstance(claim, ai_schemas.S1InterviewClaim):
+            account = "unclear"
+            if outcome.passed:
+                cited = prompts.cited_text([by_ref[ref] for ref in claim.segment_ids])
+                account, fields = check_interview_fields(claim, cited)
+                payload.update(fields)
         records.append(
             ClaimRecord(
                 source_id=source_id,
@@ -258,6 +303,7 @@ def gate(
                 verification_status="verified" if outcome.passed else "rejected",
                 rejection_reason=outcome.reason,
                 rejection_guardrail=outcome.guardrail,
+                account_type=account,
             )
         )
     unknowns = [
@@ -319,13 +365,18 @@ def extract_source(
     records: list[ClaimRecord] = []
     unknowns: list[UnknownRecord] = []
     tally = S1Tally()
+    output_model: type[ai_schemas.S1Output] | type[ai_schemas.S1InterviewOutput] = (
+        ai_schemas.S1InterviewOutput
+        if info.kind == SourceKind.INTERVIEW_TRANSCRIPT.value
+        else ai_schemas.S1Output
+    )
     for chunk in chunks_for(info.kind, prepared.segments):
         call = ai_service.StageCall(
             stage_id=prompt_name,
             prompt_version=prompt.version,
             system=prompt.text,
             blocks=blocks_for(info.kind, chunk, prepared.questions),
-            output_model=ai_schemas.S1Output,
+            output_model=output_model,
             model=ctx.model,
             repair_prompt=repair.text,
             effort=ctx.effort,
@@ -345,7 +396,7 @@ def extract_source(
             case Ok(value=answer):
                 pass
         chunk_records, chunk_unknowns, scrubbed = gate(
-            ai_schemas.S1Output.model_validate(answer.data),
+            output_model.model_validate(answer.data),
             chunk,
             source_id=source_id,
             terms=terms,
