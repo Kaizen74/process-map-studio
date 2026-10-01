@@ -220,6 +220,19 @@ export interface StoryCard {
   anchor: string;
 }
 
+/** API_CONTRACT.md → GET /api/versions/{vid}/capability-notes (Preserve · Improve). */
+export interface CapabilityNote {
+  kind: "strength" | "weakness";
+  dimension: string;
+  text: string;
+  cause_type: string | null;
+  steps: string[];
+  quote: string;
+  source_id: string;
+  segment_id: string | null;
+  anchor: string;
+}
+
 /** API_CONTRACT.md → GET /api/versions/{vid}/glossary. */
 export interface GlossaryEntry {
   term: string;

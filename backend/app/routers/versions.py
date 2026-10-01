@@ -6,7 +6,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.actions import lenses, quality, registers, versions
-from app.domain.graph import AlignmentRow, ElementDetail, GlossaryEntry, Graph, LintReport
+from app.domain.graph import (
+    AlignmentRow,
+    CapabilityNote,
+    ElementDetail,
+    GlossaryEntry,
+    Graph,
+    LintReport,
+)
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
@@ -36,6 +43,11 @@ def get_alignment_matrix(request: Request, version_id: str) -> list[AlignmentRow
 @router.get("/versions/{version_id}/registers")
 def get_registers(request: Request, version_id: str) -> Registers:
     return unwrap(registers.get_registers(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/capability-notes")
+def get_capability_notes(request: Request, version_id: str) -> list[CapabilityNote]:
+    return unwrap(lenses.get_capability_notes(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/glossary")

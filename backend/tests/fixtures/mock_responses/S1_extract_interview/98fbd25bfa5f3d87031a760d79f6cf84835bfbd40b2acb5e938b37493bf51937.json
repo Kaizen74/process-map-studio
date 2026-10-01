@@ -1,0 +1,108 @@
+{
+  "claims": [
+    {
+      "account_type": "lived",
+      "account_cue": "We get the preliminary load plan",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "handoff",
+      "text": "Ramp gets the preliminary load plan from Load control.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "We get the preliminary load plan from load control",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "lived",
+      "account_cue": "we send them the loading report",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "handoff",
+      "text": "Once loading is done, Ramp sends the loading report to Load control.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "once loading is done we send them the loading report",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "constraint",
+      "text": "The loading report is on paper; it gets lost or arrives late.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The weakness is the paper loading report; it gets lost or arrives late.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": [],
+  "decision_info": [
+    {
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "We get the preliminary load plan from load control, and once loading is done we send them the loading report.",
+      "about": "Load and return LIR",
+      "cadence": "none",
+      "received": [
+        "the preliminary load plan"
+      ],
+      "attended": [],
+      "wanted": [],
+      "communicated_via": [
+        "the loading report"
+      ]
+    }
+  ],
+  "capability_notes": [
+    {
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The strength is the supervisors know the aircraft types inside out.",
+      "kind": "strength",
+      "dimension": "skillset",
+      "text": "Ramp supervisors know the aircraft types inside out.",
+      "cause_type": "none"
+    },
+    {
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The weakness is the paper loading report; it gets lost or arrives late.",
+      "kind": "weakness",
+      "dimension": "systems",
+      "text": "The paper loading report gets lost or arrives late.",
+      "cause_type": "system_fragmentation"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ Advisory evidence summary: not a legal, regulatory or audit opinion.
 - [O] Plan approval by the Load control lead is documented but never mentioned in practice · High severity · steps: Approve load plan
   - SOP LC-07 §3.2 and the Load control lead's job description say the Load control lead approves the load plan before release to Ramp. The interview never mentions this approval.
   - Documents: sop LC-07 §3.2 (supports); jd load control lead ¶ 2 (supports)
-  - Practice: interview transcript (silent)
+  - Practice: interview transcript (silent); landscape ramp lead (silent)
 - [O] Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice · High severity · steps: Deviation in limits?
   - SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.
   - Documents: sop LC-07 §5 (contradicts)

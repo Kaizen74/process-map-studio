@@ -21,7 +21,7 @@ from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
 from app.domain.enums import ElementKind, ReviewStatus
-from app.domain.graph import QuestionRecord
+from app.domain.graph import ConstraintRecord, QuestionRecord
 from app.domain.models import AiCallRecord, ClaimRecord, NameReplacement, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import SENSE_CLAIM_TYPES
@@ -61,6 +61,7 @@ class S3cTally:
     dropped_cues: int = 0
     links: int = 0
     dropped_links: int = 0
+    constraints: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +213,18 @@ def sense(
             payload = dict(item.record.payload) | {"about_steps": [keys[r] for r in refs]}
             claims_repo.set_payload(session, item.claim_id, payload)
             tally.links += 1
+            # Rule 10: a weakness the SME names is also a constraint on the steps it is about.
+            if item.record.claim_type == "capability" and payload.get("kind") == "weakness":
+                cause = str(payload.get("cause_type", "none"))
+                map_repo.add_constraints(session, [
+                    ConstraintRecord(element_id=by_ref[r].element.id,
+                                     text=redaction.hide(str(payload.get("text", "")), terms),
+                                     provenance=item.record.provenance,
+                                     cause_type=None if cause == "none" else cause)
+                    for r in refs
+                    if by_ref[r].element.review_status not in REVIEWED
+                ])  # fmt: skip
+                tally.constraints += len(refs)
     return Ok(tally)
 
 

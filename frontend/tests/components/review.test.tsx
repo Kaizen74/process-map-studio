@@ -46,7 +46,7 @@ describe("Review screen (PRD §5.6)", () => {
     backend();
     renderApp(PATH);
     expect(await screen.findByText("Draft v0.1")).toBeInTheDocument();
-    expect(screen.getByText(/Generated from 5 sources/)).toBeInTheDocument();
+    expect(screen.getByText(/Generated from 6 sources/)).toBeInTheDocument(); // A.10 (C3): + the landscape interview
     expect(screen.getByText(/steps reviewed/)).toHaveTextContent("0 of 10 steps reviewed");
     const progress = screen.getByRole("list", { name: /Review progress/ });
     expect(within(progress).getAllByRole("button")).toHaveLength(10); // v1.10 A.5: ten steps
@@ -84,7 +84,8 @@ describe("Review screen (PRD §5.6)", () => {
     const panel = screen.getByRole("complementary", { name: "Step details" });
     const evidence = await within(panel).findByRole("region", { name: "Evidence" });
     expect(within(evidence).getAllByRole("button")).toHaveLength(2); // two cited passages
-    expect(within(evidence).getAllByText(/Silence is not contradiction/)).toHaveLength(3);
+    // Three silent documents plus the landscape interview (A.10), which does not mention the check.
+    expect(within(evidence).getAllByText(/Silence is not contradiction/)).toHaveLength(4);
     expect(within(panel).getAllByText("A?")).toHaveLength(2);
     expect(within(panel).getByRole("region", { name: "Decision rights and mechanism" })).toBeInTheDocument();
     expect(within(panel).getByRole("region", { name: "How confidence was computed" })).toBeInTheDocument();

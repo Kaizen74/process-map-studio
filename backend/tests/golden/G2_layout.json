@@ -729,6 +729,58 @@
       "label": "",
       "label_pos": null,
       "ghost": false
+    },
+    {
+      "id": "id-37",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          356,
+          464
+        ],
+        [
+          368,
+          464
+        ],
+        [
+          368,
+          588
+        ],
+        [
+          628,
+          588
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-38",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          728,
+          588
+        ],
+        [
+          988,
+          588
+        ],
+        [
+          988,
+          464
+        ],
+        [
+          1024,
+          464
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
     }
   ]
 }

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.actions import redaction
 from app.db import session_scope
 from app.domain.enums import ElementKind
-from app.domain.graph import AshenItem, GlossaryEntry, KnowHow, StoryCard
+from app.domain.graph import AshenItem, CapabilityNote, GlossaryEntry, KnowHow, StoryCard
 from app.domain.models import ClaimRecord, NameReplacement
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import SENSE_CLAIM_TYPES
@@ -135,6 +135,32 @@ def stories(lens: Lenses, stable_key: str) -> list[StoryCard]:
             quote=lens.hide(r.quote), source_id=r.source_id, segment_id=segment, anchor=anchor,
         ))  # fmt: skip
     return cards
+
+
+def get_capability_notes(sessions: Sessions, version_id: str) -> Result[list[CapabilityNote]]:
+    """Strengths to preserve and weaknesses to improve, as the interviews named them (rule 10)."""
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        lens = load(session, version_id, version.engagement_id)
+        labels = {e.stable_key: e.label for e in map_repo.elements(session, version_id)}
+    notes = []
+    for r in lens.items:
+        if r.claim_type != "capability":
+            continue
+        segment, anchor = _where(lens, r)
+        about = r.payload.get("about_steps")
+        cause = str(r.payload.get("cause_type", "none"))
+        notes.append(CapabilityNote(
+            kind=str(r.payload.get("kind", "")), dimension=str(r.payload.get("dimension", "")),
+            text=lens.hide(str(r.payload.get("text", ""))),
+            cause_type=None if cause == "none" else cause,
+            steps=[lens.hide(labels[k]) for k in about if k in labels]
+            if isinstance(about, list) else [],
+            quote=lens.hide(r.quote), source_id=r.source_id, segment_id=segment, anchor=anchor,
+        ))  # fmt: skip
+    return Ok(notes)
 
 
 def get_glossary(sessions: Sessions, version_id: str) -> Result[list[GlossaryEntry]]:

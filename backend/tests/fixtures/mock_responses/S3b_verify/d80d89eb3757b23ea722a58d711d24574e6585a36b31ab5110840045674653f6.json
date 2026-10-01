@@ -29,6 +29,21 @@
       "claim_ref": "k6",
       "verdict": "supported",
       "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k7",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k8",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "claim_ref": "k9",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
     }
   ]
 }

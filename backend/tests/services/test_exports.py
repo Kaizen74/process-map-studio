@@ -82,7 +82,9 @@ def test_facts_list_sources_pain_points_and_source_states_without_quotes() -> No
     assert "| sop_LC-07.docx | SOP | 2025-03-01 | Load control office | Yes |" in facts
     assert "| interview_transcript.txt | Interview | — | — | No |" in facts
     pains = [line for line in facts.splitlines() if line.startswith("- [O] ")]
-    assert len(pains) == 4  # the four observed constraints of the sample
+    # The four observed constraints of the sample and the weakness the Ramp duty manager names
+    # (A.10, C3: the paper loading report gets lost or arrives late).
+    assert len(pains) == 5
     assert all("(step: " in line and "interview_transcript.txt" in line for line in pains[:1])
     assert "| Contested | 2 |" in facts and "| Corroborated | 3 |" in facts
 

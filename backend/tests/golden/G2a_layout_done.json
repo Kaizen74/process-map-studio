@@ -624,6 +624,58 @@
           340
         ],
         [
+          368,
+          340
+        ],
+        [
+          368,
+          464
+        ],
+        [
+          504,
+          464
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-33",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          604,
+          464
+        ],
+        [
+          864,
+          464
+        ],
+        [
+          864,
+          340
+        ],
+        [
+          900,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-34",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          356,
+          340
+        ],
+        [
           404,
           340
         ]

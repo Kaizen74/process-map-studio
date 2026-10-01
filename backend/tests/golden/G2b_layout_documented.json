@@ -409,6 +409,32 @@
       "is_back_edge": false,
       "points": [
         [
+          356,
+          216
+        ],
+        [
+          368,
+          216
+        ],
+        [
+          368,
+          340
+        ],
+        [
+          628,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-23",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
           728,
           340
         ],

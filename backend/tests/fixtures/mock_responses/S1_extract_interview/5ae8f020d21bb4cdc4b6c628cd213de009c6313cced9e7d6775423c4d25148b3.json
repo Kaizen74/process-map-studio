@@ -254,5 +254,21 @@
       "term": "forward hold",
       "plain_meaning": "The cargo hold at the front of the aircraft."
     }
+  ],
+  "decision_info": [
+    {
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "sends back the loading report",
+      "about": "Deviation in limits?",
+      "cadence": "none",
+      "received": [
+        "the loading report"
+      ],
+      "attended": [],
+      "wanted": [],
+      "communicated_via": []
+    }
   ]
 }

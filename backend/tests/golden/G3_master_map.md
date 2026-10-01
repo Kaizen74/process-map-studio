@@ -27,7 +27,6 @@ Warnings:
 - Activity "Issue load sheet" has no time stated.
 - The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources mention them.
 - The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order the sources mention them.
-- The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the sources mention them.
 
 ## 1. Facts: what the sources tell us
 
@@ -40,13 +39,15 @@ Warnings:
 | sop_RP-02.docx | SOP | — | — | No |
 | jd_load_control_lead.docx | Job description | — | — | No |
 | jd_load_controller.docx | Job description | — | — | No |
+| landscape_ramp_lead.txt | Interview | — | — | No |
 
 ### Pain points as stated in the sources
 
 - [O] Only one other controller knows the widebody configurations (step: Draft load plan · interview_transcript.txt 06:40; sop_LC-07.docx §3.1; jd_load_controller.docx ¶ 2)
 - [O] The cargo terminal's notification often comes late (step: Special loads OK? · interview_transcript.txt 14:05; sop_LC-07.docx §4; jd_load_controller.docx ¶ 2)
-- [O] The loading report is on paper and re-keyed (step: Load and return LIR · interview_transcript.txt 21:50)
-- [O] Containers run short at peak times (step: Load and return LIR · interview_transcript.txt 21:50)
+- [O] The paper loading report gets lost or arrives late. (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)
+- [O] The loading report is on paper and re-keyed (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)
+- [O] Containers run short at peak times (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)
 
 ### How well the sources agree
 
@@ -182,7 +183,6 @@ No steps from external practice.
 8. What kind of work is "Approve deviation"? Is it done by following a fixed rule, worked out by someone experienced, a judgment call that depends on the situation, or firefighting? (step: Approve deviation · Close out) · work type not clear
 9. Does "Busy wave?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Busy wave? · Check and load) · order not stated
 10. Does "Deviation in limits?" come right after "Read report at aircraft"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
-11. Does "Deviation in limits?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
 
 ### Cause library entries (pending validation)
 

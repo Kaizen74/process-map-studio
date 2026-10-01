@@ -72,6 +72,11 @@ class TranslationStep(BaseModel):
     handoff_in: str = ""
     handoff_out: str = ""
     added_by_owner: bool = False  # Eric put the step in the flow himself: its order is stated
+    lane: str = ""
+    # Rule 8 (C3): the information the step passes on and the information it receives, in the
+    # SME's terms, from the decision-information items linked to it (any interview).
+    gives: list[str] = []
+    takes: list[str] = []
 
 
 class TranslationEdge(BaseModel):
@@ -85,12 +90,13 @@ class TranslationEdge(BaseModel):
 class TranslatedEdge(TranslationEdge):
     sequence_basis: SequenceBasis
     view_membership: ViewMembership
+    information_payload: str | None = None  # rule 8: what passes across, in the SME's terms
 
 
 class TranslationQuestion(BaseModel):
     element_id: str
     question: str
-    reason: Literal["sequence", "not_described"]
+    reason: Literal["sequence", "not_described", "information"]
 
 
 class Translation(BaseModel):

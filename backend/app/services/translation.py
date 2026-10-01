@@ -103,6 +103,27 @@ def document_after(a: TranslationStep, b: TranslationStep) -> bool:
     )
 
 
+_ARTICLE = ("the ", "a ", "an ", "our ", "their ")
+
+
+def information_name(text: str) -> str:
+    """What passes across, as a matching key: lower case, single spaces, no leading article."""
+    name = _norm(text)
+    for article in _ARTICLE:
+        if name.startswith(article):
+            return name[len(article) :]
+    return name
+
+
+def shared_information(a: TranslationStep, b: TranslationStep) -> str | None:
+    """Rule 8: what A passes on that B receives (by the same term), or None."""
+    takes = {information_name(t): t for t in b.takes}
+    for given in a.gives:
+        if information_name(given) in takes:
+            return information_name(given)
+    return None
+
+
 def sequence_basis(a: TranslationStep, b: TranslationStep, kind: str) -> SequenceBasis:
     """Codebook tier 2, strongest first: explicit order words or times → the documents' step
     order → dependency (what A hands over is what B takes in) → the order of mentioning."""
@@ -113,6 +134,8 @@ def sequence_basis(a: TranslationStep, b: TranslationStep, kind: str) -> Sequenc
     if document_after(a, b):
         return "document_order"
     if a.handoff_out and _norm(a.handoff_out) == _norm(b.handoff_in):
+        return "dependency"
+    if shared_information(a, b):
         return "dependency"
     return "narration_order"
 
@@ -164,7 +187,42 @@ def translate(steps: list[TranslationStep], edges: list[TranslationEdge]) -> Tra
             shared = {DONE} if DONE in _views(views[a.id]) | _views(views[b.id]) else {DOCUMENTED}
         basis = sequence_basis(a, b, e.kind)
         out.append(TranslatedEdge(**e.model_dump(), sequence_basis=basis,
-                                  view_membership=_membership(shared)))  # fmt: skip
+                                  view_membership=_membership(shared),
+                                  information_payload=shared_information(a, b)))  # fmt: skip
+
+    # Rule 8: information one step passes on that a step in another lane receives, with no line
+    # between them yet, becomes a candidate line (`dependency`, with what passes across), even
+    # when the two come from different interviews. Unmatched information becomes a question.
+    joined = {(e.from_id, e.to_id) for e in out}
+    for a in steps:
+        for b in steps:
+            payload = shared_information(a, b)
+            if a.id == b.id or not payload or a.lane == b.lane or (a.id, b.id) in joined:
+                continue
+            both = _views(views[a.id]) & _views(views[b.id])
+            if not both:
+                continue
+            joined.add((a.id, b.id))
+            out.append(TranslatedEdge(
+                from_id=a.id, to_id=b.id, kind="sequence", label="",
+                sequence_basis="dependency", view_membership=_membership(both),
+                information_payload=payload,
+            ))  # fmt: skip
+    for a in steps:
+        for given in a.gives:
+            if not any(information_name(given) in map(information_name, b.takes)
+                       for b in steps if b.id != a.id):  # fmt: skip
+                questions.append(TranslationQuestion(
+                    element_id=a.id, reason="information",
+                    question=f'"{a.label}" passes on {given}. Who uses it next?',
+                ))  # fmt: skip
+        for taken in a.takes:
+            if not any(information_name(taken) in map(information_name, b.gives)
+                       for b in steps if b.id != a.id):  # fmt: skip
+                questions.append(TranslationQuestion(
+                    element_id=a.id, reason="information",
+                    question=f'"{a.label}" receives {taken}. Where does it come from?',
+                ))  # fmt: skip
 
     # Each view's own next step where the other view's steps are left out.
     for view in (DONE, DOCUMENTED):

@@ -153,5 +153,21 @@
       "provenance": "O",
       "basis": ""
     }
+  ],
+  "decision_info": [
+    {
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "I build the preliminary load plan",
+      "about": "Draft load plan",
+      "cadence": "none",
+      "received": [],
+      "attended": [],
+      "wanted": [],
+      "communicated_via": [
+        "the preliminary load plan"
+      ]
+    }
   ]
 }

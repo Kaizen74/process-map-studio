@@ -12,6 +12,7 @@ export const REASONS: Readonly<Record<string, string>> = {
   gap: "Gap",
   gap_analysis: "Gap analysis",
   work_type: "Work type not clear",
+  information: "Information flow",
   sequence: "Order not stated",
   not_described: "Not described",
 };

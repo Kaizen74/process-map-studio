@@ -18,9 +18,15 @@ def in_view(membership: str | None, view: View) -> bool:
     return membership in (None, "both") or membership == f"{view}_only"
 
 
-def added_for_one_view(provenance: str, membership: str | None) -> bool:
-    """A line the translation added where one view leaves out the other view's steps."""
+def added_by_translation(provenance: str, membership: str | None) -> bool:
+    """A line the translation added (provenance I): worked out again on every update."""
     return provenance == "I" and membership is not None
+
+
+def added_for_one_view(provenance: str, membership: str | None) -> bool:
+    """A line the translation added where one view leaves out the other view's steps (a stitched
+    line, which both views draw, is not one of them)."""
+    return provenance == "I" and membership in ("done_only", "documented_only")
 
 
 def combined(graph: Graph) -> Graph:

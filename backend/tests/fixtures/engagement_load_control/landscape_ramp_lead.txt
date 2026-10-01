@@ -1,0 +1,4 @@
+[02:10] Interviewer: [L3] How does your team interface with Load Control? Where do the handoffs happen?
+[02:18] Ramp duty manager: We get the preliminary load plan from load control, and once loading is done we send them the loading report.
+[05:40] Interviewer: [L6] What capability do you see as the biggest strength here, and the biggest weakness?
+[05:52] Ramp duty manager: The strength is the supervisors know the aircraft types inside out. The weakness is the paper loading report; it gets lost or arrives late.

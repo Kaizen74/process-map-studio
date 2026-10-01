@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 from app.db import session_scope
@@ -22,6 +23,7 @@ from app.pipeline import s1_extract
 from app.repositories import claims as claims_repo
 from app.services import sensemaking, translation
 from tests.unit.test_review_actions import Drafted, drafted
+from tests.uploads import FIXTURES
 
 __all__ = ["drafted"]
 TRANSCRIPT = "interview_transcript.txt"
@@ -80,14 +82,14 @@ def test_s1_receives_question_answer_blocks_targets_and_marker_hints(drafted: Dr
 
 
 def claims_at(d: Drafted) -> dict[str, list[ClaimRecord]]:
-    """The version's verified interview claims by the anchor of the passage they cite."""
+    """The A.1 interview's verified claims by the anchor of the passage they cite."""
     sessions = d.client.app.state.sessions  # type: ignore[attr-defined]
     page = d.client.get(f"/api/sources/{transcript_id(d)}/segments").json()["segments"]
     anchors = {s["id"]: s["anchor"] for s in page}
     out: dict[str, list[ClaimRecord]] = {}
     with session_scope(sessions) as session:
         for c in claims_repo.list_claims(session, d.version_id, "verified"):
-            if c.account_type is not None:
+            if c.account_type is not None and c.source_id == transcript_id(d):
                 out.setdefault(anchors[c.segment_ids[0]], []).append(c)
     return out
 
@@ -110,8 +112,9 @@ def test_a8_account_tags_with_quoted_cues(drafted: Drafted) -> None:
             for c in claims_repo.list_claims(session, drafted.version_id, "verified")
             if c.claim_type not in SENSE_CLAIM_TYPES
         ]
-    interview_source = transcript_id(drafted)
-    assert all((c.account_type is not None) == (c.source_id == interview_source) for c in verified)
+    sources = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/sources").json()
+    interviews = {s["id"] for s in sources if s["kind"] == "interview_transcript"}  # A.1, A.10
+    assert all((c.account_type is not None) == (c.source_id in interviews) for c in verified)
 
 
 def test_marker_hints_are_confirmed_or_set_aside_with_a_quote(drafted: Drafted) -> None:
@@ -133,7 +136,9 @@ def test_each_step_shows_its_accounts_and_the_questions_behind_its_answers(
     drafted: Drafted,
 ) -> None:
     lir = element_named(drafted, "Load and return LIR")
-    assert lir["account_summary"] == {"official": 1, "lived": 3, "unclear": 1}
+    # A.1 (official 1, lived 3, unclear 1) and the A.10 landscape interview (two lived hand-offs,
+    # one constraint giving no account).
+    assert lir["account_summary"] == {"official": 1, "lived": 5, "unclear": 2}
     assert lir["practice_described"] is True
     official = next(a for a in lir["answers"] if a["account_type"] == "official")
     assert official == {
@@ -248,6 +253,9 @@ def test_a9_as_done_and_as_documented_from_one_draft(drafted: Drafted) -> None:
         ("Approve deviation", "Issue load sheet", "approve", "explicit_order"),
         ("Approve deviation", "Load and return LIR", "rework", "explicit_order"),
         ("Issue load sheet", "Final load sheet issued", "sequence", "explicit_order"),
+        # A.10 (C3, rule 8): what passes across lanes, stitched across the two interviews.
+        ("Draft load plan", "Load and return LIR", "sequence", "dependency"),
+        ("Load and return LIR", "Deviation in limits?", "sequence", "dependency"),
         ("Draft load plan", "Special loads OK?", "sequence", "explicit_order"),
     ]
     assert not [e for e in graph["edges"] if e["kind"] == "gap"]
@@ -261,7 +269,10 @@ def test_a9_as_done_and_as_documented_from_one_draft(drafted: Drafted) -> None:
         ("Special loads OK?", "Load and return LIR", "yes", "explicit_order"),
         ("Deviation in limits?", "Issue load sheet", "yes", "explicit_order"),
         ("Issue load sheet", "Final load sheet issued", "sequence", "explicit_order"),
-        ("Load and return LIR", "Deviation in limits?", "sequence", "narration_order"),
+        # A.10: the loading report explains the line from loading to the deviation check, which
+        # both views now draw (before C3 it rested on the order of mentioning, As documented).
+        ("Draft load plan", "Load and return LIR", "sequence", "dependency"),
+        ("Load and return LIR", "Deviation in limits?", "sequence", "dependency"),
     ]
     # Each line resting only on the order of mentioning becomes a validation question, written
     # after the step questions (and the S1 gaps).
@@ -269,13 +280,13 @@ def test_a9_as_done_and_as_documented_from_one_draft(drafted: Drafted) -> None:
     assert [q["reason"] for q in questions] == [
         "documented_only", "contested", "contested", "gap", "gap",
         "work_type", "work_type", "work_type",  # C2: decisions and approvals not classified
-        "sequence", "sequence", "sequence",
+        "sequence", "sequence",  # A.10 (C3): the loading report explains the third line
     ]  # fmt: skip
-    assert questions[-3]["question"] == (
+    assert questions[-2]["question"] == (
         'Does "Busy wave?" come right after "Load and return LIR"? The sources mention it later '
         "but don't say it comes next."
     )
-    assert {q["element_label"] for q in questions[-3:]} == {"Busy wave?", "Deviation in limits?"}
+    assert {q["element_label"] for q in questions[-2:]} == {"Busy wave?", "Deviation in limits?"}
 
 
 def step(
@@ -387,7 +398,8 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
         "Load and return LIR", "Deviation in limits?", "Issue load sheet",
         "Final load sheet issued",
     ]  # fmt: skip
-    assert len(done["edges"]) == 14 and len(documented["edges"]) == 8
+    # + the two stitched lines in each view (A.10, C3)
+    assert len(done["edges"]) == 16 and len(documented["edges"]) == 9
     # Cycle time per view (§3.12.11): each view's main path has two steps without time; the map
     # as one has three (Approve load plan is only in As documented).
     assert done["process"]["cycle_time"] == documented["process"]["cycle_time"] == {
@@ -404,8 +416,6 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
         "mention them.",
         'The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order '
         "the sources mention them.",
-        'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
-        "sources mention them.",
     ]
 
 
@@ -454,11 +464,11 @@ def test_each_view_is_laid_out_and_the_other_view_can_be_shown_ghosted(drafted: 
         ("Approve load plan", "Special loads OK?"),
         ("Draft load plan", "Approve load plan"),
     ]
-    # As done's own line from drafting to the special-loads check is drawn; As documented's
-    # line from loading to the deviation check is not.
+    # As done's own line from drafting to the special-loads check is drawn, and so are the lines
+    # stitched across the interviews (both views draw them, A.10).
     drawn = [edges[e["id"]] for e in shown["edges"]]
     assert ("Draft load plan", "Special loads OK?") in drawn
-    assert ("Load and return LIR", "Deviation in limits?") not in drawn
+    assert ("Load and return LIR", "Deviation in limits?") in drawn
     assert drafted.client.get(url, params={"view": "later"}).status_code == 422
     combined = drafted.client.get(url).json()
     assert combined["view"] is None and len(combined["nodes"]) == 12
@@ -531,6 +541,7 @@ def test_the_sample_interview_tells_its_story_know_how_and_terms(drafted: Drafte
     ]
     assert told == [
         ("know_how", "The special loads checklist."),
+        ("decision_info", "Draft load plan"),  # passes on the preliminary load plan (C3)
         ("story", "Had to re-trim three flights in one night"),
         ("know_how", "If the forward hold looks heavy on the plan, call the ramp before they "
                      "start, not after."),
@@ -540,7 +551,13 @@ def test_the_sample_interview_tells_its_story_know_how_and_terms(drafted: Drafte
         ("sme_term", "re-trim: Rebalance an aircraft's load after it has been planned."),
         ("sme_term", "wave: A busy period of departures."),
         ("sme_term", "forward hold: The cargo hold at the front of the aircraft."),
+        ("decision_info", "Deviation in limits?"),  # receives the loading report (C3)
         ("decision_info", "Deviation in limits?"),
+        # A.10, the landscape interview (C3): what loading takes in and passes on, and the
+        # strength and weakness the Ramp duty manager names.
+        ("decision_info", "Load and return LIR"),
+        ("capability", "Ramp supervisors know the aircraft types inside out."),
+        ("capability", "The paper loading report gets lost or arrives late."),
     ]  # fmt: skip
     story = next(r for r in rows if r.claim_type == "story")
     assert story.payload["signifiers"] == ["Firefighting"]
@@ -691,3 +708,69 @@ def test_a8_glossary(drafted: Drafted) -> None:
         ("forward hold", ["Draft load plan"], "24:10"),
     ]
     assert drafted.client.get("/api/versions/nope/glossary").status_code == 404
+
+
+# --- A.10: the landscape interview, stitching and capability notes (C3; §3.12.10 rules 8, 10) --
+
+
+def test_the_a10_fixture_is_the_prd_transcript() -> None:
+    prd = (Path(__file__).resolve().parents[3] / "PRD_ProcessMapStudio.md").read_text("utf-8")
+    block = prd.split("**A.10 Landscape and stitching fixture**", 1)[1].split("```", 2)[1]
+    fixture = (FIXTURES / "landscape_ramp_lead.txt").read_text("utf-8")
+    assert fixture.strip() == block.strip()
+
+
+def test_a10_information_is_stitched_across_interviews(drafted: Drafted) -> None:
+    """Rule 8: what one step passes on, matched to what another receives, even from different
+    interviewees, is a cross-lane line with sequence basis `dependency` and its payload."""
+    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
+    named = {e["id"]: e["label"] for e in graph["elements"]}
+    stitched = {
+        (named[e["from"]], named[e["to"]]): (e["sequence_basis"], e["view_membership"],
+                                             e["information_payload"])
+        for e in graph["edges"]
+        if e["information_payload"]
+    }  # fmt: skip
+    assert stitched == {
+        ("Draft load plan", "Load and return LIR"): ("dependency", "both", "preliminary load plan"),
+        ("Load and return LIR", "Deviation in limits?"): ("dependency", "both", "loading report"),
+    }
+    # The loading report now explains the line from loading to the deviation check: no longer
+    # an "order not stated" question.
+    questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
+    after_loading = 'Does "Deviation in limits?" come right after "Load and return LIR"?'
+    assert not any(q["question"].startswith(after_loading) for q in questions)
+
+
+def test_a10_capability_notes_preserve_and_improve(drafted: Drafted) -> None:
+    notes = drafted.client.get(f"/api/versions/{drafted.version_id}/capability-notes").json()
+    assert [(n["kind"], n["dimension"], n["text"], n["cause_type"], n["steps"], n["anchor"])
+            for n in notes] == [
+        ("strength", "skillset", "Ramp supervisors know the aircraft types inside out.", None,
+         ["Load and return LIR"], "05:52"),
+        ("weakness", "systems", "The paper loading report gets lost or arrives late.",
+         "system_fragmentation", ["Load and return LIR"], "05:52"),
+    ]  # fmt: skip
+    # Rule 10: the weakness is also a constraint on the step, with its cause type.
+    lir = element_named(drafted, "Load and return LIR")
+    weakness = {"text": "The paper loading report gets lost or arrives late.", "provenance": "O",
+                "cause_type": "system_fragmentation", "is_key": False}  # fmt: skip
+    assert weakness in lir["constraints"]
+    assert drafted.client.get("/api/versions/nope/capability-notes").status_code == 404
+
+
+def test_information_nobody_receives_or_gives_becomes_a_question() -> None:
+    plan = step("a", "corroborated", [(1, True, False)]).model_copy(
+        update={"lane": "lc", "gives": ["the load plan"], "takes": ["the booking figures"]}
+    )
+    load = step("b", "corroborated", [(2, True, False)]).model_copy(
+        update={"lane": "ramp", "takes": ["The Load Plan"]}
+    )
+    result = translation.translate([plan, load], [])
+    assert [(e.from_id, e.to_id, e.sequence_basis, e.information_payload) for e in result.edges
+            ] == [("a", "b", "dependency", "load plan")]  # fmt: skip
+    assert [(q.element_id, q.reason, q.question) for q in result.questions] == [
+        ("a", "information", '"A" receives the booking figures. Where does it come from?'),
+    ]
+    same_lane = load.model_copy(update={"lane": "lc"})
+    assert translation.translate([plan, same_lane], []).edges == []  # a hand-over is cross-lane

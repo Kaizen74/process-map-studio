@@ -31,7 +31,7 @@
       ],
       "evidence": [
         {
-          "segment_id": "e5",
+          "segment_id": "e6",
           "quote": "return the loading report to Load Control within 10 minutes of loading completion"
         },
         {
@@ -52,11 +52,11 @@
       ],
       "evidence": [
         {
-          "segment_id": "e8",
+          "segment_id": "e9",
           "quote": "the Load Control Lead shall decide on corrective action"
         },
         {
-          "segment_id": "e7",
+          "segment_id": "e8",
           "quote": "it's the captain who decides, not us"
         }
       ],

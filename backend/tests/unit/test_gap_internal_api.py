@@ -92,6 +92,7 @@ def test_a7_every_finding_has_evidence_from_each_side(drafted: Drafted) -> None:
         ("documents", "sop LC-07", "§3.2", "supports"),
         ("documents", "jd load control lead", "¶ 2", "supports"),
         ("practice", "interview transcript", "", "silent"),
+        ("practice", "landscape ramp lead", "", "silent"),  # A.10 says nothing of it either
     ]
     # SOP RP-02 §2 · interview 21:50
     assert sides("threshold_gap") == [
@@ -163,8 +164,9 @@ def test_the_divergence_set_is_the_steps_where_sources_differ(drafted: Drafted) 
     assert "Ownership divergence: the Load control lead decides in the SOP, the Captain in " \
         "practice." in notes  # fmt: skip
     # Only the passages behind the stances are sent, each once.
-    # v1.10: + the 22:30 passage behind the busy-wave steps.
-    assert sorted(found.passages) == [f"e{n}" for n in range(1, 10)]
+    # v1.10: + the 22:30 passage behind the busy-wave steps; A.10 (C3): + the landscape
+    # interview's 02:18 passage behind the loading step.
+    assert sorted(found.passages) == sorted(f"e{n}" for n in range(1, 11))
 
 
 def test_a_map_with_no_differences_gets_an_empty_report_without_ai(
@@ -188,7 +190,7 @@ def finding(**changes: Any) -> ai_schemas.GAFinding:
         "text": "The Ramp Supervisor returns it within 10 minutes; practice waits fifteen minutes.",
         "step_refs": ["d3"],
         "evidence": [
-            {"segment_id": "e5", "quote": "within 10 minutes of loading completion"},
+            {"segment_id": "e6", "quote": "within 10 minutes of loading completion"},
             {"segment_id": "e4", "quote": "We sometimes wait fifteen minutes for it"},
         ],
         "basis": "",
@@ -217,7 +219,7 @@ def test_a_well_grounded_finding_passes(drafted: Drafted) -> None:
             ("G3", "cites a passage that wasn't provided"),
         ),
         (
-            {"evidence": [{"segment_id": "e5", "quote": "within twenty minutes of the flight"}]},
+            {"evidence": [{"segment_id": "e6", "quote": "within twenty minutes of the flight"}]},
             ("G4", "quote not found in source"),
         ),
         (
@@ -243,7 +245,7 @@ def test_a_well_grounded_finding_passes(drafted: Drafted) -> None:
             ("G3", "a pattern or cause needs a basis citing what the SMEs said"),
         ),
         (
-            {"section": "interpretation", "basis": "The SOP says so.", "basis_segment_ids": ["e5"]},
+            {"section": "interpretation", "basis": "The SOP says so.", "basis_segment_ids": ["e6"]},
             ("G3", "a pattern or cause needs a basis citing what the SMEs said"),
         ),
         (

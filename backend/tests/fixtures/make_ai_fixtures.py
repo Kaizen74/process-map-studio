@@ -489,6 +489,97 @@ SENSE: dict[tuple[str, int], dict[str, Any]] = {
         ],
     },
 }
+# Information in and out of steps in the A.1 interview (rule 8: what a step passes on and what
+# another receives), for stitching with the landscape interview (A.10, C3).
+SENSE[("interview_transcript.txt", 0)]["decision_info"] = [
+    grounded(
+        ["p2"],
+        "I build the preliminary load plan",
+        about="Draft load plan",
+        cadence="none",
+        received=[],
+        attended=[],
+        wanted=[],
+        communicated_via=["the preliminary load plan"],
+    ),
+]
+SENSE[("interview_transcript.txt", 1)]["decision_info"] = [
+    grounded(
+        ["p7"],
+        "sends back the loading report",
+        about="Deviation in limits?",
+        cadence="none",
+        received=["the loading report"],
+        attended=[],
+        wanted=[],
+        communicated_via=[],
+    ),
+]
+# A.10: the Ramp duty manager's landscape interview (L3 interfaces, L6 capability).
+ANSWERS[("landscape_ramp_lead.txt", 0)] = {
+    "claims": [
+        told(
+            claim(
+                "handoff",
+                "Ramp gets the preliminary load plan from Load control.",
+                ["p2"],
+                "We get the preliminary load plan from load control",
+                responsible="Ramp",
+            ),
+            "lived",
+            "We get the preliminary load plan",
+        ),
+        told(
+            claim(
+                "handoff",
+                "Once loading is done, Ramp sends the loading report to Load control.",
+                ["p2"],
+                "once loading is done we send them the loading report",
+                responsible="Ramp",
+            ),
+            "lived",
+            "we send them the loading report",
+        ),
+        claim(
+            "constraint",
+            "The loading report is on paper; it gets lost or arrives late.",
+            ["p4"],
+            "The weakness is the paper loading report; it gets lost or arrives late.",
+        ),
+    ],
+    "unknowns": [],
+    "decision_info": [
+        grounded(
+            ["p2"],
+            "We get the preliminary load plan from load control, and once loading "
+            "is done we send them the loading report.",
+            about="Load and return LIR",
+            cadence="none",
+            received=["the preliminary load plan"],
+            attended=[],
+            wanted=[],
+            communicated_via=["the loading report"],
+        ),
+    ],
+    "capability_notes": [
+        grounded(
+            ["p4"],
+            "The strength is the supervisors know the aircraft types inside out.",
+            kind="strength",
+            dimension="skillset",
+            text="Ramp supervisors know the aircraft types inside out.",
+            cause_type="none",
+        ),
+        grounded(
+            ["p4"],
+            "The weakness is the paper loading report; it gets lost or arrives late.",
+            kind="weakness",
+            dimension="systems",
+            text="The paper loading report gets lost or arrives late.",
+            cause_type="system_fragmentation",
+        ),
+    ],
+}
 for _key, _items in SENSE.items():
     ANSWERS[_key] = ANSWERS[_key] | _items
 
@@ -579,6 +670,9 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
         stance("e10", "supports", ["p10"], "The final load sheet shall be issued through the "
                "departure control system no later than T-10."),
     ]},
+    ("landscape_ramp_lead.txt", 0): {"stances": [
+        stance("e5", "supports", ["p2"], "once loading is done we send them the loading report"),
+    ]},
     ("sop_RP-02.docx", 0): {"stances": [
         stance("e5", "contradicts", ["p2"], "The Ramp Supervisor shall return the loading report "
                "to Load Control within 10 minutes of loading completion.", "threshold",
@@ -623,8 +717,9 @@ S2_ANSWER: dict[str, Any] = {
         step("st2", "approval", "Approve load plan", "Load control lead", [17, 22]),
         step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 18]),
         step("st4", "activity", "Resolve or offload", "Airline ops", [5]),
-        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
-        step("st6", "activity", "Return loading report", "Ramp", [21]),
+        # A.10 (C3): the landscape interview's hand-offs and constraint (c24-c26).
+        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10, 24, 26]),
+        step("st6", "activity", "Return loading report", "Ramp", [21, 25]),
         # Translation rule 2 (A.5, A.9): the lived variation "on a busy wave" (c11) becomes a
         # decision on that condition with the lived alternative as its "Yes" branch; listed where
         # it happens in the process.
@@ -797,7 +892,7 @@ def verdicts(count: int, verdict: str = "supported", reason: str = "") -> dict[s
 S3C_EMPTY: dict[str, Any] = {"work_types": [], "links": []}
 
 
-def s3c_call(sessions: Any, version_id: str) -> tuple[str, dict[str, str], dict[str, str]]:
+def s3c_call(sessions: Any, version_id: str) -> tuple[str, dict[str, str], list[tuple[str, str]]]:
     """The S3c call for a version: its input hash, the call's source ref per file name and the
     item ref per item text, exactly as the stage sends them."""
     from app.actions import redaction
@@ -821,11 +916,11 @@ def s3c_call(sessions: Any, version_id: str) -> tuple[str, dict[str, str], dict[
             assert found is not None
             names[found.filename] = sref
         blocks = s3c.blocks_for(steps, items, passages)
-    item_refs = {str(i.record.payload["text"]): i.ref for i in items}
+    item_refs = [(str(i.record.payload["text"]), i.ref) for i in items]
     return ai_service.input_hash(s3c.STAGE_ID, blocks), names, item_refs
 
 
-def s3c_answer(names: dict[str, str], items: dict[str, str]) -> dict[str, Any]:
+def s3c_answer(names: dict[str, str], items: list[tuple[str, str]]) -> dict[str, Any]:
     """A.8 work types with quoted cues, and what each story, know-how item, term and decision
     information item is about (C2)."""
     interview, sop = names["interview_transcript.txt"], names["sop_LC-07.docx"]
@@ -834,7 +929,10 @@ def s3c_answer(names: dict[str, str], items: dict[str, str]) -> dict[str, Any]:
         return {"segment_ids": [f"{source}.p{seq}"], "quote": quote}
 
     def item(text_start: str) -> str:
-        return next(ref for text, ref in items.items() if text.startswith(text_start))
+        return next(ref for text, ref in items if text.startswith(text_start))
+
+    def refs_of(text: str) -> list[str]:
+        return [ref for t, ref in items if t == text]
 
     return {
         "work_types": [
@@ -865,7 +963,14 @@ def s3c_answer(names: dict[str, str], items: dict[str, str]) -> dict[str, Any]:
             {"item_ref": item("re-trim:"), "step_refs": ["e9"]},
             {"item_ref": item("wave:"), "step_refs": ["e6"]},
             {"item_ref": item("forward hold:"), "step_refs": ["e1"]},
-            {"item_ref": item("Deviation in limits?"), "step_refs": ["e8"]},
+            *({"item_ref": ref, "step_refs": [step]} for ref, step in (
+                (refs_of("Deviation in limits?")[0], "e8"),
+                (refs_of("Deviation in limits?")[1], "e8"),
+                (item("Draft load plan"), "e1"),
+                (item("Load and return LIR"), "e5"),
+                (item("Ramp supervisors know"), "e5"),
+                (item("The paper loading report"), "e5"),
+            )),
         ],
     }  # fmt: skip
 
@@ -1125,7 +1230,7 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
             ["d3"],
             [
                 (
-                    "e5",
+                    "e6",  # A.10 (C3): the landscape interview's passage is e5
                     "return the loading report to Load Control within 10 minutes of loading "
                     "completion",
                 ),
@@ -1141,8 +1246,8 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
             "descriptions are silent.",
             ["d6"],
             [
-                ("e8", "the Load Control Lead shall decide on corrective action"),
-                ("e7", "it's the captain who decides, not us"),
+                ("e9", "the Load Control Lead shall decide on corrective action"),
+                ("e8", "it's the captain who decides, not us"),
             ],
         ),
         ga_finding(
@@ -1166,6 +1271,25 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
 }
 
 
+def resolve_ga_refs(dset: Any) -> None:
+    """Check each finding's evidence names the passage that holds its quote, as the call numbers
+    them (`e<n>` follow the diverging steps, so a new source shifts them): fails with the right
+    number so the answer above can be corrected (the tests read it as written)."""
+    from app.services import grounding
+
+    def ref_for(quote: str) -> str:
+        wanted = grounding.normalise_text(quote)
+        for ref, passage in dset.passages.items():
+            if wanted in grounding.normalise_text(passage.segment.text):
+                return str(ref)
+        raise AssertionError(f"no passage holds: {quote}")
+
+    for finding in GA_INTERNAL_ANSWER["findings"]:
+        for e in finding["evidence"]:
+            right = ref_for(e["quote"])
+            assert e["segment_id"] == right, f"{e['quote']!r} is in {right}, not {e['segment_id']}"
+
+
 def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
     """The input hashes of the GA_internal call and, with its answer as filed, the GA_verify call."""
     from app.db import session_scope
@@ -1176,6 +1300,7 @@ def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
     with session_scope(sessions) as session:
         dset = ga.divergence_set(session, version_id)
     assert dset is not None
+    resolve_ga_refs(dset)
     output = GAInternalOutput.model_validate(GA_INTERNAL_ANSWER)
     checked = [ga.check(dset, f) for f in output.findings]
     rejected = [c.finding.rejection_reason for c in checked if c.finding.rejection_reason]

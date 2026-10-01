@@ -72,7 +72,8 @@ def by_label(c: Canonical) -> dict[str, Any]:
 
 def test_the_sample_answer_files_match_the_current_steps(sample: Canonical) -> None:
     hashes = make_ai_fixtures.s3_hashes(sample.sessions, sample.version_id, sample.sources)
-    assert len(hashes) == 7  # three interview windows and four documents
+    # Three interview windows, the landscape interview (A.10) and four documents.
+    assert len(hashes) == 8
     folder = make_ai_fixtures.MOCKS / s3.STAGE_ID
     missing = [k for k, h in hashes.items() if not (folder / f"{h}.json").exists()]
     assert missing == [], "run python tests/fixtures/make_ai_fixtures.py"
@@ -109,6 +110,7 @@ def test_stances_become_verified_evidence_and_silence_is_shown(sample: Canonical
         ("interview_transcript.txt", "supports", "21:50", ""),
         ("sop_RP-02.docx", "contradicts", "§2",
          "Threshold divergence: 10 min in the SOP vs up to 15 min wait in practice."),
+        ("landscape_ramp_lead.txt", "supports", "02:18", ""),  # A.10 (C3)
         ("sop_LC-07.docx", "silent", "", ""),
         ("jd_load_control_lead.docx", "silent", "", ""),
         ("jd_load_controller.docx", "silent", "", ""),
@@ -116,7 +118,8 @@ def test_stances_become_verified_evidence_and_silence_is_shown(sample: Canonical
     assert all(ev.verified for ev in lir.evidence if ev.stance != "silent")
     with session_scope(sample.sessions) as session:
         stored = [p.evidence for p in map_repo.evidence(session, sample.version_id)]
-    assert len(stored) == 19  # interview 9 (v1.10: + the busy-wave steps), LC-07 5, RP-02 1, JDs 4
+    # Interview 9 (v1.10: + the busy-wave steps), landscape 1 (A.10), LC-07 5, RP-02 1, JDs 4.
+    assert len(stored) == 20
     assert all(link.quote for link in stored)  # kept for the highlight, never in the graph
     assert "Ramp loads the aircraft" not in graph.value.model_dump_json()
 

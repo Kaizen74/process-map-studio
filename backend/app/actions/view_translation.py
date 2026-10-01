@@ -22,7 +22,7 @@ from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import sources as sources_repo
 from app.services import translation
-from app.services.views import added_for_one_view
+from app.services.views import added_by_translation
 
 DOCUMENTS = {SourceKind.SOP.value, SourceKind.MANUAL.value}
 EXPLICIT = "explicit_order"
@@ -45,13 +45,24 @@ def _explicit(claim: ClaimRecord) -> bool:
 
 
 def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
-    """Each element with where its verified claims sit in their sources."""
+    """Each element with where its verified claims sit in their sources, and the information it
+    passes on and receives (the decision-information items S3c linked to it; rule 8)."""
     elements = map_repo.elements(session, version_id)
     linked = map_repo.element_claims(session, version_id)
     claims = claims_repo.by_ids(session, [c for ids in linked.values() for c in ids])
     segment_ids = [s for c in claims.values() for s in c.segment_ids]
     rows = sources_repo.segment_rows(session, segment_ids)
     owners = sources_repo.segment_owners(session, segment_ids)
+    gives: dict[str, list[str]] = {}
+    takes: dict[str, list[str]] = {}
+    for _, item in claims_repo.verified_rows(session, version_id):
+        about = item.payload.get("about_steps")
+        if item.claim_type != "decision_info" or not isinstance(about, list):
+            continue
+        sent, got = item.payload.get("communicated_via"), item.payload.get("received")
+        for key in about:
+            gives.setdefault(str(key), []).extend(map(str, sent if isinstance(sent, list) else []))
+            takes.setdefault(str(key), []).extend(map(str, got if isinstance(got, list) else []))
     steps = []
     for e in elements:
         interview: list[StepPosition] = []
@@ -76,6 +87,8 @@ def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
             provenance=e.provenance, interview=interview, documents=documents,
             handoff_in=e.handoff_in, handoff_out=e.handoff_out,
             added_by_owner=e.review_status == ReviewStatus.ADDED.value,
+            lane=e.lane_role_id or "", gives=gives.get(e.stable_key, []),
+            takes=takes.get(e.stable_key, []),
         ))  # fmt: skip
     return steps
 
@@ -97,7 +110,7 @@ def update_views(session: Session, version_id: str) -> Tally:
     exit or a new step is reflected); a line Eric has edited is his and stays."""
     tally = Tally()
     for stored in map_repo.edges(session, version_id):
-        if added_for_one_view(stored.provenance, stored.view_membership):
+        if added_by_translation(stored.provenance, stored.view_membership):
             map_repo.delete_edge(session, stored.id)
     result = _translation(session, version_id)
     if result is None:
@@ -109,12 +122,14 @@ def update_views(session: Session, version_id: str) -> Tally:
         if edge.id is not None:
             map_repo.update_edge(session, edge.id, {
                 "sequence_basis": edge.sequence_basis, "view_membership": edge.view_membership,
+                "information_payload": edge.information_payload,
             })  # fmt: skip
             continue
         added.append(EdgeRecord(
             from_element_id=edge.from_id, to_element_id=edge.to_id, kind=edge.kind,
             label=edge.label, provenance=Provenance.INFERRED.value,
             sequence_basis=edge.sequence_basis, view_membership=edge.view_membership,
+            information_payload=edge.information_payload,
         ))  # fmt: skip
         tally.added_lines += 1
         tally.not_described += edge.kind == EdgeKind.GAP.value

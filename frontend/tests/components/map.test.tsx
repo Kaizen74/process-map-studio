@@ -130,7 +130,8 @@ describe("MapStage (PRD §5.5)", () => {
       <MapStage graph={graph} layout={SAMPLE.layout} lens="plain" scale={1} selectedId={null} onSelect={vi.fn()} />,
     );
     expect(container.querySelector(`[data-node="${plan.id}"]`)).toHaveClass("map-node--rejected");
-    expect(container.querySelectorAll(".map-edge.map-faded").length).toBe(4);
+    // A.10 (C3): + the plan's hand-over to loading, stitched across the interviews.
+    expect(container.querySelectorAll(".map-edge.map-faded").length).toBe(5);
   });
 
   it("scales the stage from the top-left", () => {

@@ -124,6 +124,8 @@ const DRAFT_SOURCES = [
   "sop_RP-02.docx",
   "jd_load_control_lead.docx",
   "jd_load_controller.docx",
+  // A.10 (P4c): the landscape interview with the Ramp duty manager.
+  "landscape_ramp_lead.txt",
 ];
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
@@ -141,13 +143,24 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     }
     await page.goto(`/engagements/${id}/sources`);
     await page.getByTestId("source-file-input").setInputFiles(DRAFT_SOURCES.map((name) => join(FIXTURES, name)));
-    await expect(page.getByText("5 files uploaded.")).toBeVisible();
+    await expect(page.getByText("6 files uploaded.")).toBeVisible();
     const table = page.getByRole("table", { name: "Sources for this engagement" });
-    await expect(table.getByText("Ready")).toHaveCount(5);
-    const sources = (await (await request.get(`/api/engagements/${id}/sources`)).json()) as {
-      id: string;
-      filename: string;
-    }[];
+    await expect(table.getByText("Ready")).toHaveCount(6);
+    type Listed = { id: string; filename: string; kind: string; text_status: string };
+    const sourcesNow = async () =>
+      (await (await request.get(`/api/engagements/${id}/sources`)).json()) as Listed[];
+    // Its name doesn't say "interview", so it is read as a document until its kind is set.
+    const landscape = (await sourcesNow()).find((s) => s.filename === "landscape_ramp_lead.txt");
+    const kind = await request.patch(`/api/sources/${landscape?.id ?? ""}`, { data: { kind: "interview_transcript" } });
+    expect(kind.status()).toBe(200);
+    await expect
+      .poll(async () => (await sourcesNow()).find((s) => s.id === landscape?.id)?.text_status, { timeout: 15_000 })
+      .toBe("ready");
+    const ramp = await request.put(`/api/sources/${landscape?.id ?? ""}/speakers`, {
+      data: { Interviewer: "interviewer", "Ramp duty manager": roleIds["Ramp"] },
+    });
+    expect(ramp.status()).toBe(200);
+    const sources = await sourcesNow();
     const transcript = sources.find((s) => s.filename === "interview_transcript.txt");
     const mapped = await request.put(`/api/sources/${transcript?.id ?? ""}/speakers`, {
       data: { Interviewer: "interviewer", "Priya Nair": roleIds["Load controller"] },
@@ -167,10 +180,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(summary).toBeVisible({ timeout: 30_000 });
     // v1.10 A.5: ten steps; A.9: three lines rest only on the order of mentioning (+3 questions);
     // A.8 (C2): three decisions and approvals whose kind of work isn't clear (+3 questions).
+    // A.10 (C3): the loading report hand-off explains one of those lines (−1 question).
     await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("10");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
-    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("11");
-    await expect(summary.getByText(/Built from 32 checked claims/)).toBeVisible();  // v1.10 A.1, A.5, A.8 (C1)
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("10");
+    // v1.10 A.1, A.5, A.8 (C1); A.10 (C3): + the landscape interview and two information flows
+    await expect(summary.getByText(/Built from 40 checked claims/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
@@ -517,10 +532,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const usage = page.getByRole("region", { name: "AI usage" });
     await expect(usage.getByRole("table")).toBeVisible();
     await expect(usage.getByText(/All time: \d+ calls/)).toBeVisible();
-    // The table lists the 50 most recent calls (the total counts every call). v1.10: a draft makes
-    // 28 calls, so the latest run's three interview chunks are listed and the first draft's have
-    // scrolled out of the 50.
-    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(3);
+    // The table lists the 50 most recent calls (the total counts every call). A draft makes 30
+    // calls (C3: + the A.10 landscape interview), so the latest run's four interview chunks are
+    // listed and the first draft's have scrolled out of the 50.
+    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(4);
     await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {

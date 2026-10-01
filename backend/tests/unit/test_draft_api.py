@@ -78,14 +78,16 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     assert job["status"] == "done", job
     assert job["type"] == "draft" and job["progress"] == 1.0
     assert job["claims"] == {
-        "verified": 32,  # C1: + nine checked stories, know-how items, terms and decision info
+        # C1: + nine checked stories, know-how items, terms and decision info; C3 (A.10): + the
+        # landscape interview's three claims and three items, and two A.1 information flows
+        "verified": 40,
         "rejected": 0,
     }  # v1.10 sample: + the 22:30 official and lived accounts
-    # S1 7 chunks + S2 1 + S3 7 source parts + S3b 10 steps + S3c 1 + S4 1 + S5 1 (v1.10 A.5:
-    # ten steps; C2: S3c)
-    assert job["usage"]["calls"] == 28
+    # S1 8 chunks + S2 1 + S3 8 source parts + S3b 10 steps + S3c 1 + S4 1 + S5 1 (v1.10 A.5:
+    # ten steps; C2: S3c; C3: the landscape interview, one S1 window and one S3 part)
+    assert job["usage"]["calls"] == 30
     assert job["message"] == (
-        "Draft v0.1 is ready: 10 steps drafted, 0 to check, 0 rejected claims, 11 open questions."
+        "Draft v0.1 is ready: 10 steps drafted, 0 to check, 0 rejected claims, 10 open questions."
     )
     assert [s["id"] for s in job["stages"]] == [sid for sid, _ in draft.STAGES]
     for stage in job["stages"]:
@@ -95,7 +97,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
-        "steps": 10, "needs_check": 0, "verified": 32, "rejected": 0, "open_questions": 11,
+        "steps": 10, "needs_check": 0, "verified": 40, "rejected": 0, "open_questions": 10,
         "scrubbed": 0,
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]
@@ -114,7 +116,7 @@ def test_with_the_verifier_off_the_stage_is_skipped(client: TestClient) -> None:
     assert job["status"] == "done"
     stages = {s["id"]: s["status"] for s in job["stages"]}
     assert stages["verify"] == "skipped"
-    assert job["usage"]["calls"] == 18  # no S3b calls (C2: + S3c)
+    assert job["usage"]["calls"] == 20  # no S3b calls (C2: + S3c; C3: + landscape S1 and S3)
 
 
 def test_drafting_needs_everything_on_the_checklist(client: TestClient) -> None:
@@ -315,9 +317,8 @@ def test_usage_lists_calls_newest_first_without_any_text(client: TestClient) -> 
     response = client.get("/api/settings/usage?limit=3")
     assert response.status_code == 200
     body = response.json()
-    assert (
-        len(body["items"]) == 3 and body["totals"]["calls"] == 28
-    )  # v1.10 A.5: ten steps; C2: S3c
+    # v1.10 A.5: ten steps; C2: S3c; C3: the landscape interview (A.10)
+    assert len(body["items"]) == 3 and body["totals"]["calls"] == 30
     stamps = [item["created_at"] for item in body["items"]]
     assert stamps == sorted(stamps, reverse=True)
     assert set(body["items"][0]) == {
@@ -388,14 +389,14 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     drawn = layout.json()
     assert set(drawn) == {"view", "canvas", "lanes", "phases", "nodes", "edges"}  # V1: + view
     assert [n["id"] for n in drawn["nodes"]] == [e["id"] for e in body["elements"]]
-    # The one map draws both views' steps, so it leaves out the two lines the translation added
-    # for a single view (As done: Draft → Special loads; As documented: loading → deviation).
+    # The one map draws both views' steps, so it leaves out the line the translation added for a
+    # single view (As done: Draft → Special loads); the lines stitched across the interviews
+    # (A.10) are drawn, as both views draw them.
     named = {e["id"]: e["label"] for e in body["elements"]}
     drawn_ids = [e["id"] for e in drawn["edges"]]
     assert drawn_ids == [e["id"] for e in body["edges"]][: len(drawn_ids)]
     assert [(named[e["from"]], named[e["to"]]) for e in body["edges"][len(drawn_ids) :]] == [
         ("Draft load plan", "Special loads OK?"),
-        ("Load and return LIR", "Deviation in limits?"),
     ]
     assert set(drawn["edges"][3]) == {
         "id", "kind", "is_back_edge", "points", "label", "label_pos", "ghost",

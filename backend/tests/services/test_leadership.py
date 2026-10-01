@@ -32,10 +32,12 @@ def test_facts_per_phase_with_the_steps_behind_each_figure() -> None:
         for p in view.facts.phases
     ]
     assert got == [
-        # Draft → Approve, Approve → Special loads (approve), Approve → Draft (reject: a loop too)
-        ("Plan", 20, 0, 1, 3, {}),
-        # Special → LIR, Special → Resolve, Resolve → Draft (rework), LIR → Deviation
-        ("Check and load", 80, 15, 1, 4, {"threshold": 1}),
+        # Draft → Approve, Approve → Special loads (approve), Approve → Draft (reject: a loop too),
+        # Draft → LIR (the preliminary load plan, stitched across the interviews; A.10)
+        ("Plan", 20, 0, 1, 4, {}),
+        # Special → LIR, Special → Resolve, Resolve → Draft (rework), LIR → Busy wave?,
+        # LIR → Deviation (the loading report, stitched across the interviews; A.10)
+        ("Check and load", 80, 15, 1, 5, {"threshold": 1}),
         # Deviation → Approve deviation, Approve deviation → Issue, → LIR (rework)
         ("Close out", 15, 0, 1, 3, {"ownership": 1}),
     ]
@@ -49,7 +51,7 @@ def test_facts_per_phase_with_the_steps_behind_each_figure() -> None:
         n["Load and return LIR"],
     ]
     assert check.divergence == {"threshold": [n["Load and return LIR"]]}
-    assert view.facts.sources == 5
+    assert view.facts.sources == 6  # + the landscape interview (A.10)
     # A line to the end (Issue load sheet → end) is not a handoff between steps.
     assert n["Issue load sheet"] not in view.facts.phases[2].links.handoffs
 
@@ -69,14 +71,16 @@ def test_systemic_or_local_by_the_written_rule() -> None:
     assert fragmentation.element_ids == [n["Special loads OK?"], n["Load and return LIR"]]
     assert [p.name for p in fragmentation.phases] == ["Check and load"]
     assert fragmentation.lanes == ["Load controller", "Ramp"]
-    # Interview, SOP LC-07 and the Load controller's JD support at least one of the two steps.
+    # Interview, SOP LC-07, the Load controller's JD and the landscape interview (A.10) support
+    # at least one of the two steps.
     assert (fragmentation.evidence_weight.supporting, fragmentation.evidence_weight.sources) == (
-        3,
-        5,
+        4,
+        6,
     )
     assert fragmentation.confidence == round((0.85 + 0.6) / 2, 2)
     assert [(c.label, c.is_key) for c in fragmentation.constraints] == [
         ("Special loads OK?", True),
+        ("Load and return LIR", False),  # the weakness the Ramp duty manager names (A.10)
         ("Load and return LIR", True),
     ]
 

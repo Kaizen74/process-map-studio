@@ -61,7 +61,9 @@ describe("panel sections", () => {
   it("confidence: one line per term, and a total equal to the value shown", () => {
     const lir = detail("Load and return LIR");
     render(<ConfidenceBreakdown element={lir} />);
-    expect(screen.getByText("Capped at 0.60 while contested").nextElementSibling).toHaveTextContent("−0.10");
+    // A.10 (C3): the landscape interview is one more independent source; the cap still holds.
+    expect(screen.getByText("1 more independent source supports").nextElementSibling).toHaveTextContent("+0.15");
+    expect(screen.getByText("Capped at 0.60 while contested").nextElementSibling).toHaveTextContent("−0.25");
     expect(screen.getByText("Observed (O)").nextElementSibling).toHaveTextContent("+0.60");
     expect(screen.getByText("Confidence").nextElementSibling).toHaveTextContent("0.60");
     for (const element of Object.values(SAMPLE.elements)) {
@@ -111,7 +113,8 @@ describe("panel sections", () => {
   it("constraints: key ones with a coral dot, cause type and provenance", () => {
     const { container } = render(<ConstraintList element={detail("Load and return LIR")} />);
     expect(container.querySelectorAll(".constraint-dot:not(.constraint-dot--plain)")).toHaveLength(2);
-    expect(screen.getByText("System fragmentation · provenance O")).toBeInTheDocument();
+    // A.10 (C3): + the landscape interview's weakness (the report keyed into a separate system).
+    expect(screen.getAllByText("System fragmentation · provenance O")).toHaveLength(2);
     expect(screen.getAllByText("Key constraint:")).toHaveLength(2);
   });
 

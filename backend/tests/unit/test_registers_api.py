@@ -62,6 +62,7 @@ def test_the_registers_of_the_sample(drafted: Drafted) -> None:
     assert groups[0][1] == [
         "The cargo terminal's notification often comes late",
         "The loading report is on paper and re-keyed",
+        "The paper loading report gets lost or arrives late.",  # A.10 (C3): the named weakness
     ]
     assert body["external_practice"] == []
     # The two lists the review tabs already show come back unchanged.
@@ -93,7 +94,8 @@ def test_key_constraints_come_first_and_uncaused_ones_last(drafted: Drafted) -> 
     assert groups[-1]["cause_type"] is None
     assert [c["text"] for c in groups[-1]["constraints"]] == ["Printer jams at stand 12"]
     fragmentation = next(g for g in groups if g["cause_type"] == "system_fragmentation")
-    assert [c["is_key"] for c in fragmentation["constraints"]] == [True, True, False]
+    # A.10 (C3): + the weakness the Ramp duty manager names, not a key constraint.
+    assert [c["is_key"] for c in fragmentation["constraints"]] == [True, True, False, False]
 
 
 def test_recommended_steps_and_rejected_steps(drafted: Drafted) -> None:

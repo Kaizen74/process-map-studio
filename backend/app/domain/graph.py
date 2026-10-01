@@ -430,6 +430,20 @@ class StoryCard(Out):
     anchor: str
 
 
+class CapabilityNote(Out):
+    """Rule 10 (C3): a strength to preserve or a weakness to improve, as the SME named it."""
+
+    kind: str  # strength (Preserve) · weakness (Improve)
+    dimension: str  # B.36
+    text: str
+    cause_type: str | None
+    steps: list[str]
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
 class GlossaryEntry(Out):
     term: str
     plain_meaning: str

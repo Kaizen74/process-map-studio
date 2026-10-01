@@ -146,8 +146,9 @@ def test_reopen_copies_the_map_into_a_locked_draft_and_publishes_as_v1_1(drafted
         "confirmed"
     }
     questions = drafted.client.get(f"/api/versions/{draft['id']}/questions").json()
-    # v1.10 A.9: + three "order not stated" questions; A.8 (C2): + three "work type not clear"
-    assert len(questions) == 11
+    # v1.10 A.9: + three "order not stated" questions; A.8 (C2): + three "work type not clear";
+    # A.10 (C3): the loading report explains one of the three orders
+    assert len(questions) == 10
     # One draft at a time; only the latest published version reopens.
     again = drafted.client.post(f"/api/versions/{drafted.version_id}/reopen")
     assert (

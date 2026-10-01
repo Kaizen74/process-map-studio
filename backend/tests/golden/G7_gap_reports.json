@@ -77,6 +77,20 @@
             "tier": "",
             "page_age": "",
             "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-11",
+            "source_kind": "interview_transcript",
+            "source_name": "landscape ramp lead",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
           }
         ],
         "basis": "",
@@ -96,17 +110,17 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-11",
+        "id": "id-12",
         "section": "fact",
         "finding_type": "ownership_mismatch",
         "title": "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice",
         "text": "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -117,7 +131,7 @@
             "source_kind": "sop",
             "source_name": "sop LC-07",
             "stance": "contradicts",
-            "segment_id": "id-13",
+            "segment_id": "id-14",
             "anchor": "§5",
             "quote": "the Load Control Lead shall decide on corrective action",
             "url": "",
@@ -131,7 +145,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-14",
+            "segment_id": "id-15",
             "anchor": "27:15",
             "quote": "it's the captain who decides, not us",
             "url": "",
@@ -157,28 +171,28 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-15",
+        "id": "id-16",
         "section": "fact",
         "finding_type": "threshold_gap",
         "title": "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
         "text": "SOP RP-02 §2 has the Ramp Supervisor return the loading report within 10 minutes of loading completion; the Load controller says they sometimes wait fifteen minutes for it.",
         "element_ids": [
-          "id-16"
+          "id-17"
         ],
         "elements": [
           {
-            "id": "id-16",
+            "id": "id-17",
             "label": "Load and return LIR"
           }
         ],
         "evidence": [
           {
             "side": "documents",
-            "source_id": "id-17",
+            "source_id": "id-18",
             "source_kind": "sop",
             "source_name": "sop RP-02",
             "stance": "contradicts",
-            "segment_id": "id-18",
+            "segment_id": "id-19",
             "anchor": "§2",
             "quote": "return the loading report to Load Control within 10 minutes of loading completion",
             "url": "",
@@ -192,7 +206,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-19",
+            "segment_id": "id-20",
             "anchor": "21:50",
             "quote": "We sometimes wait fifteen minutes for it",
             "url": "",
@@ -218,17 +232,17 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-20",
+        "id": "id-21",
         "section": "fact",
         "finding_type": "undocumented_work",
         "title": "Offload resolution is undocumented work",
         "text": "When something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes before the Load controller re-plans. No SOP or job description covers it.",
         "element_ids": [
-          "id-21"
+          "id-22"
         ],
         "elements": [
           {
-            "id": "id-21",
+            "id": "id-22",
             "label": "Resolve or offload"
           }
         ],
@@ -239,7 +253,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-22",
+            "segment_id": "id-23",
             "anchor": "16:22",
             "quote": "If something can't be accepted, the airline decides what to offload",
             "url": "",
@@ -263,7 +277,7 @@
           },
           {
             "side": "documents",
-            "source_id": "id-23",
+            "source_id": "id-24",
             "source_kind": "job_description",
             "source_name": "jd load controller",
             "stance": "silent",
@@ -291,7 +305,7 @@
           },
           {
             "side": "documents",
-            "source_id": "id-17",
+            "source_id": "id-18",
             "source_kind": "sop",
             "source_name": "sop RP-02",
             "stance": "silent",
@@ -324,7 +338,7 @@
     "rejected": [],
     "questions": [
       {
-        "id": "id-24",
+        "id": "id-25",
         "section": "recommendation",
         "finding_type": "dead_control_candidate",
         "title": "Cause not explained by the sources",
@@ -367,12 +381,12 @@
   },
   "external": {
     "analysis": {
-      "id": "id-25",
+      "id": "id-26",
       "version_id": "id-2",
       "version_label": "v0.1",
       "mode": "external",
       "status": "draft_report",
-      "job_id": "id-26",
+      "job_id": "id-27",
       "error": "",
       "created_at": "<time>",
       "completed_at": "<time>",
@@ -390,17 +404,17 @@
     },
     "findings": [
       {
-        "id": "id-27",
+        "id": "id-28",
         "section": "recommendation",
         "finding_type": "missing_control",
         "title": "Second-person check of the load sheet before signing",
         "text": "Guidance and regulator material have a second qualified person check the load sheet before it is signed.",
         "element_ids": [
-          "id-28"
+          "id-29"
         ],
         "elements": [
           {
-            "id": "id-28",
+            "id": "id-29",
             "label": "Issue load sheet"
           }
         ],
@@ -453,17 +467,17 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-29",
+        "id": "id-30",
         "section": "recommendation",
         "finding_type": "decision_rights_difference",
         "title": "Deviation tolerances agreed in writing",
         "text": "Deviation tolerances are agreed with each airline in writing.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -503,7 +517,7 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-30",
+        "id": "id-31",
         "section": "recommendation",
         "finding_type": "time_or_threshold_benchmark",
         "title": "Final load sheet issued by a set time",
@@ -543,17 +557,17 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-31",
+        "id": "id-32",
         "section": "recommendation",
         "finding_type": "technology_enabler",
         "title": "Automated checks of the load sheet",
         "text": "Automated tools check the load sheet and flag deviations.",
         "element_ids": [
-          "id-28"
+          "id-29"
         ],
         "elements": [
           {
-            "id": "id-28",
+            "id": "id-29",
             "label": "Issue load sheet"
           }
         ],
@@ -592,17 +606,17 @@
     ],
     "rejected": [
       {
-        "id": "id-32",
+        "id": "id-33",
         "section": "recommendation",
         "finding_type": "kpi_practice",
         "title": "Loading report return time as a KPI",
         "text": "Loading report return time is tracked as a key performance indicator.",
         "element_ids": [
-          "id-16"
+          "id-17"
         ],
         "elements": [
           {
-            "id": "id-16",
+            "id": "id-17",
             "label": "Load and return LIR"
           }
         ],
@@ -639,7 +653,7 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-33",
+        "id": "id-34",
         "section": "recommendation",
         "finding_type": "other_difference",
         "title": "Load controllers rotate shifts weekly",
@@ -664,17 +678,17 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-34",
+        "id": "id-35",
         "section": "recommendation",
         "finding_type": "time_or_threshold_benchmark",
         "title": "Deviation decisions within 5 minutes",
         "text": "Deviation tolerances are agreed with each airline and decided within 5 minutes.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -711,7 +725,7 @@
         "created_item_ref": ""
       },
       {
-        "id": "id-35",
+        "id": "id-36",
         "section": "recommendation",
         "finding_type": "missing_step",
         "title": "Final walk-round before departure",
@@ -754,7 +768,7 @@
     "questions": [],
     "sources": [
       {
-        "id": "id-36",
+        "id": "id-37",
         "url": "https://www.iata.org/illustrative/load-control-guidance",
         "title": "Illustrative industry guidance on load control",
         "domain": "iata.org",
@@ -763,7 +777,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-37",
+        "id": "id-38",
         "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
         "title": "Illustrative regulator material on mass and balance",
         "domain": "easa.europa.eu",
@@ -772,7 +786,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-38",
+        "id": "id-39",
         "url": "https://loadplanning-software.example.com/blog/automation",
         "title": "Illustrative vendor blog on automated load planning",
         "domain": "loadplanning-software.example.com",
@@ -781,7 +795,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-39",
+        "id": "id-40",
         "url": "https://www.unlisted.example.org/loading-kpi",
         "title": "Unlisted page",
         "domain": "unlisted.example.org",

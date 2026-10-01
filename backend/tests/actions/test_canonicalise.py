@@ -103,14 +103,16 @@ def test_the_sample_becomes_the_eight_steps_of_a5(sample: Drafted) -> None:
     assert [e.stable_key for e in elements][:2] == ["draft-load-plan", "approve-load-plan"]
     assert all(e.provenance == "O" and e.review_status == "draft" for e in elements)
     assert all(e.source_state == "not_assessed" for e in elements)  # S3 classifies
-    # v1.10 sample: Load aircraft also carries the SME's official account of the return time.
-    assert [len(linked[e.id]) for e in elements] == [4, 2, 3, 1, 6, 1, 1, 3, 1, 2]
+    # v1.10 sample: Load aircraft also carries the SME's official account of the return time;
+    # A.10 (C3): and the landscape interview's two hand-offs and the paper-report constraint.
+    assert [len(linked[e.id]) for e in elements] == [4, 2, 3, 1, 9, 1, 1, 3, 1, 2]
     assert (merge.proposed_label, merge.similarity, merge.decision) == (
         "Load and return LIR",
         0.86,
         "accepted",
     )
-    assert len(merge.claim_ids) == 6 and merge.decided_at  # v1.10: + the official account
+    # v1.10: + the official account; A.10 (C3): + the landscape interview's three claims.
+    assert len(merge.claim_ids) == 9 and merge.decided_at
 
 
 BAD_STEPS = {

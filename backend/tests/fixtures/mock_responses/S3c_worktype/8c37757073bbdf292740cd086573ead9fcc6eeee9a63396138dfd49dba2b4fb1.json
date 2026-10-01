@@ -73,15 +73,9 @@
       ]
     },
     {
-      "item_ref": "i2",
-      "step_refs": [
-        "e1",
-        "e8"
-      ]
-    },
-    {
       "item_ref": "i3",
       "step_refs": [
+        "e1",
         "e8"
       ]
     },
@@ -100,25 +94,61 @@
     {
       "item_ref": "i6",
       "step_refs": [
-        "e9"
+        "e8"
       ]
     },
     {
       "item_ref": "i7",
       "step_refs": [
-        "e6"
+        "e9"
       ]
     },
     {
       "item_ref": "i8",
       "step_refs": [
-        "e1"
+        "e6"
       ]
     },
     {
       "item_ref": "i9",
       "step_refs": [
+        "e1"
+      ]
+    },
+    {
+      "item_ref": "i10",
+      "step_refs": [
         "e8"
+      ]
+    },
+    {
+      "item_ref": "i11",
+      "step_refs": [
+        "e8"
+      ]
+    },
+    {
+      "item_ref": "i2",
+      "step_refs": [
+        "e1"
+      ]
+    },
+    {
+      "item_ref": "i12",
+      "step_refs": [
+        "e5"
+      ]
+    },
+    {
+      "item_ref": "i13",
+      "step_refs": [
+        "e5"
+      ]
+    },
+    {
+      "item_ref": "i14",
+      "step_refs": [
+        "e5"
       ]
     }
   ]
