@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { Button, Dialog } from "../../components/common";
-import { useStartRefresh } from "../../hooks/useDraft";
+import { useRefreshCheck, useStartRefresh } from "../../hooks/useDraft";
 import { engagementPath } from "../../lib/engagementSteps";
 import { messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
@@ -21,6 +21,7 @@ export interface RefreshDialogProps {
  */
 export function RefreshDialog({ open, engagementId, versionId, versionLabel, kept, onClose }: RefreshDialogProps) {
   const refresh = useStartRefresh(engagementId);
+  const check = useRefreshCheck(versionId, open);
   const navigate = useNavigate();
   const close = () => {
     refresh.reset();
@@ -54,7 +55,26 @@ export function RefreshDialog({ open, engagementId, versionId, versionLabel, kep
         </li>
         <li>Validation questions you marked answered stay answered when Claude asks them again.</li>
         <li>It uses AI calls and takes a few minutes. You can follow it on the Draft screen.</li>
+        {check.data?.changes.length === 0 && (
+          <li>Claude's model, settings and instructions are the same as when this draft was made.</li>
+        )}
       </ul>
+      {check.isPending && <p className="inline-note">Checking how this draft was made…</p>}
+      {check.isError && (
+        <p className="inline-note">The app couldn't check how this draft was made. You can still refresh.</p>
+      )}
+      {check.data != null && check.data.changes.length > 0 && (
+        <section aria-labelledby="refresh-drift-title">
+          <h3 id="refresh-drift-title">Since this draft was made</h3>
+          <p>Fresh suggestions may differ from the ones already on the map because:</p>
+          <ul className="how-to">
+            {check.data.changes.map((change) => (
+              <li key={change}>{change}</li>
+            ))}
+          </ul>
+          <p>You can still refresh. To use what made this draft, change Settings first.</p>
+        </section>
+      )}
       {refresh.error != null && (
         <p className="field__error" role="alert">
           {messageOf(refresh.error)}

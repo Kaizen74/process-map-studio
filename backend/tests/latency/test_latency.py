@@ -147,6 +147,9 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
 
 ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/health", None),
+    ("GET", "/api/templates/interview/plans", None),
+    ("GET", "/api/templates/interview?type=practice&format=docx", None),
+    ("GET", "/api/templates/interview?type=landscape&format=md", None),
     ("GET", "/api/settings", None),
     ("GET", "/api/engagements", None),
     ("GET", "/api/engagements/{eid}", None),
@@ -171,6 +174,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/graph", None),
     ("GET", "/api/versions/{map}/layout", None),
     ("GET", "/api/versions/{map}/lint", None),
+    ("GET", "/api/versions/{map}/refresh-check", None),
     ("GET", "/api/versions/{map}/quality-card", None),
     ("GET", "/api/versions/{map}", None),
     ("GET", "/api/engagements/{eid}/versions", None),

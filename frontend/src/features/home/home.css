@@ -122,3 +122,8 @@
   position: relative;
   z-index: 1;
 }
+.home-templates__tip {
+  margin-top: var(--space-10);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}

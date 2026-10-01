@@ -3,6 +3,7 @@ import { DraftScreen } from "./features/draft/DraftScreen";
 import { EngagementIndex } from "./features/engagement/EngagementIndex";
 import { ExportsScreen } from "./features/exports/ExportsScreen";
 import { GapScreen } from "./features/gap/GapScreen";
+import { InterviewScreen } from "./features/interview/InterviewScreen";
 import { LeadershipScreen } from "./features/leadership/LeadershipScreen";
 import { StepPlaceholder } from "./features/engagement/StepPlaceholder";
 import { MatrixScreen } from "./features/matrix/MatrixScreen";
@@ -24,6 +25,7 @@ export function App() {
         <Route path="settings" element={<SettingsScreen />} />
         <Route path="engagements/:engagementId" element={<EngagementIndex />} />
         <Route path="engagements/:engagementId/setup" element={<SetupScreen />} />
+        <Route path="engagements/:engagementId/interview" element={<InterviewScreen />} />
         <Route path="engagements/:engagementId/sources" element={<SourcesScreen />} />
         <Route path="engagements/:engagementId/draft" element={<DraftScreen />} />
         <Route path="engagements/:engagementId/review" element={<ReviewScreen />} />

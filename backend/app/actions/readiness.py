@@ -25,6 +25,7 @@ Sessions = sessionmaker[Session]
 
 NAV_ORDER = (
     "setup",
+    "interview",
     "sources",
     "draft",
     "review",
@@ -136,6 +137,9 @@ def assess(
         counts[key] = count
 
     nav["setup"] = DONE if facts.trigger.strip() and facts.end_point.strip() else NOT_STARTED
+    # PRD v1.10 §5.3: the interview has happened once its transcript is uploaded (any state);
+    # until then the Interview screen offers the standard templates.
+    nav["interview"] = DONE if any(s.kind in TRANSCRIPTS for s in sources) else NOT_STARTED
     if not sources:
         nav["sources"] = NOT_STARTED
     elif source_issues:

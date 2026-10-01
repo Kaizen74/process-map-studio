@@ -11,6 +11,7 @@
 - G7: the gap-analysis reports of the sample (Appendix A.7): Analysis A, and Analysis B from the
   mocked web search with traps TE1-TE9, as reported and, after a fixed set of decisions, as
   exported (run and finalise times replaced).
+- G9: the three standard interview templates (PRD Appendix F.9) in Markdown, as downloaded.
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
 first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the
@@ -239,3 +240,15 @@ def test_g7_gap_reports_of_the_sample(settings_config: AppConfig) -> None:
             assert client.post(f"/api/gap-analyses/{analysis}/finalise").status_code == 200
             exports.append(client.get(f"/api/gap-analyses/{analysis}/export").text)
         matches_text_baseline("G7_gap_exports.md", DATES.sub("<date>", "\n---\n\n".join(exports)))
+
+
+# --- G9: the standard interview templates (PRD Appendix F.9; phase P1) ------------------------
+
+
+@pytest.mark.parametrize("kind", ["landscape", "practice", "follow_up"])
+def test_g9_standard_interview_templates(settings_config: AppConfig, kind: str) -> None:
+    """The Markdown template of each type, exactly as downloaded (approved by Eric 2026-09-30)."""
+    with TestClient(create_app(settings_config)) as client:
+        response = client.get("/api/templates/interview", params={"type": kind, "format": "md"})
+        assert response.status_code == 200, response.text
+        matches_text_baseline(f"G9_template_{kind}.md", response.text)

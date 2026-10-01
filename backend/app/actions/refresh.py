@@ -11,6 +11,8 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.domain.enums import ReviewStatus
+from app.domain.graph import ElementRecord
+from app.domain.models import RefreshChanges, StepRename
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import images as images_repo
@@ -22,15 +24,38 @@ KEPT = {
     ReviewStatus.ADDED.value,
     ReviewStatus.REJECTED.value,
 }
+STEP_KINDS = {"activity", "decision", "approval"}
 
 
-def fold(session: Session, draft_id: str, fresh_id: str) -> int:
-    """Fold the fresh version into the draft; returns how many steps were kept as reviewed."""
+def changes(old: list[ElementRecord], fresh: list[ElementRecord], kept: int) -> RefreshChanges:
+    """Among the steps Eric hadn't reviewed, what the fresh run drafted differently (by step key,
+    labels in process order): drift between runs made at different times made visible."""
+    before = {e.stable_key: e.label for e in old if e.kind in STEP_KINDS}
+    unreviewed = {
+        e.stable_key: e.label for e in old if e.kind in STEP_KINDS and e.review_status not in KEPT
+    }
+    after = {e.stable_key: e.label for e in fresh if e.kind in STEP_KINDS}
+    return RefreshChanges(
+        kept=kept,
+        new_steps=[label for key, label in after.items() if key not in before],
+        no_longer_drafted=[label for key, label in unreviewed.items() if key not in after],
+        renamed=[
+            StepRename(before=label, after=after[key])
+            for key, label in unreviewed.items()
+            if key in after and after[key] != label
+        ],
+    )
+
+
+def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
+    """Fold the fresh version into the draft; returns how many steps were kept as reviewed and
+    what changed among the others."""
     old = map_repo.elements(session, draft_id)
     keep = {e.id: e for e in old if e.review_status in KEPT}
     replaced = [e for e in old if e.id not in keep]
     fresh = map_repo.elements(session, fresh_id)
     keep_by_key = {e.stable_key: e.id for e in keep.values()}
+    changed = changes(old, [f for f in fresh if f.stable_key not in keep_by_key], len(keep))
     dropped = {f.id: keep_by_key[f.stable_key] for f in fresh if f.stable_key in keep_by_key}
     fresh_by_key = {f.stable_key: f.id for f in fresh if f.id not in dropped}
     successor = {e.id: fresh_by_key[e.stable_key] for e in replaced if e.stable_key in fresh_by_key}
@@ -96,4 +121,4 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> int:
     for q in map_repo.questions(session, draft_id):
         if q.question in answered and q.status == "open":
             map_repo.set_question_status(session, q.id, "answered")
-    return len(keep)
+    return changed

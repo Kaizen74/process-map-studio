@@ -34,6 +34,19 @@
   margin: var(--space-4) 0 0;
   padding-left: var(--space-20);
 }
+.draft-refresh {
+  margin-top: var(--space-12);
+  padding-top: var(--space-10);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-size: var(--text-label);
+}
+.draft-refresh h3 {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+}
 .draft-signal {
   margin-top: var(--space-12);
   padding-top: var(--space-10);

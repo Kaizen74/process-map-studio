@@ -1,0 +1,71 @@
+/* Standard interview templates (PRD v1.10 §5.4 Home and Interview). Tokens only. */
+.template-downloads {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.template-downloads .btn {
+  text-decoration: none;
+}
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.template-card__who,
+.template-card__meta {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.template-plan {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+.template-plan td,
+.template-plan th {
+  padding: var(--space-4) 0;
+  border-top: var(--line-hairline) solid var(--border-soft);
+  text-align: left;
+  font-weight: var(--weight-regular);
+  color: var(--ink-2);
+}
+.template-plan tfoot th,
+.template-plan tfoot td {
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+.template-plan__minutes {
+  width: 4ch;
+  text-align: right;
+}
+.template-plan .template-plan__minutes {
+  text-align: right;
+}
+.template-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.template-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+  padding: var(--space-10) 0;
+  border-top: var(--line-hairline) solid var(--border-soft);
+}
+.template-list__item:first-child {
+  border-top: none;
+}
+.template-list__title {
+  display: block;
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+.template-list__who {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}

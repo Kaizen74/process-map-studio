@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { getDraft, getRejectedClaims, startDraft, startRefresh } from "../api/draft";
+import { getDraft, getRefreshCheck, getRejectedClaims, startDraft, startRefresh } from "../api/draft";
 import type { DraftState } from "../api/types";
 
 const draftKey = (engagementId: string) => ["engagements", engagementId, "draft"] as const;
@@ -53,6 +53,17 @@ export function useStartRefresh(engagementId: string) {
   return useMutation({
     mutationFn: (versionId: string) => startRefresh(versionId),
     onSettled: () => void client.invalidateQueries({ queryKey: draftKey(engagementId) }),
+  });
+}
+
+/** Asked each time the Refresh dialog opens: Settings may have changed since the last look. */
+export function useRefreshCheck(versionId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["versions", versionId, "refresh-check"],
+    queryFn: () => getRefreshCheck(versionId),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 

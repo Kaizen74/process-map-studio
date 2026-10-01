@@ -485,16 +485,49 @@ class DraftSummary(BaseModel):
     scrubbed: int
 
 
+class StepRename(BaseModel):
+    before: str
+    after: str
+
+
+class RefreshChanges(BaseModel):
+    """What a refresh changed among the steps Eric hadn't reviewed (anti-drift)."""
+
+    kept: int
+    new_steps: list[str] = []
+    no_longer_drafted: list[str] = []
+    renamed: list[StepRename] = []
+
+
 class DraftState(BaseModel):
     """GET /engagements/{id}/draft: the latest draft job and the current draft."""
 
     job: JobView | None
     version: VersionView | None
     summary: DraftSummary | None
+    last_refresh: RefreshChanges | None = None
 
 
 class DraftStarted(BaseModel):
     job_id: str
+
+
+class RunRecord(BaseModel):
+    """How a draft or refresh was made (API_CONTRACT → Run record; anti-drift)."""
+
+    model: str
+    effort: str | None
+    verifier: bool
+    instructions: dict[str, str]  # prompt or question-bank name → version
+    app_version: str
+
+
+class RefreshCheck(BaseModel):
+    """What a refresh would do differently from the run that made the version (warn, not block)."""
+
+    made_with: RunRecord | None
+    now: RunRecord
+    changes: list[str]
 
 
 class RejectedClaim(BaseModel):

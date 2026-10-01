@@ -278,3 +278,18 @@ def test_the_research_prompts_forbid_general_knowledge() -> None:
     assert "no reliable source found" in research and "vendor marketing" in research
     structure = prompts.load_prompt("GB_structure").value.text.lower()  # type: ignore[union-attr]
     assert "only ids from the `<citation>` list" in structure and "never invent" in structure
+
+
+def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -> None:
+    """What a run record stamps: each instruction file's version by name."""
+    versions = prompts.instruction_versions()
+    assert versions["S1_extract_interview"] == "1"
+    assert versions["question_bank"] == "1.0"
+    (tmp_path / "A.md").write_text("<!-- prompt: A · version 3 -->\nDo the task.\n", "utf-8")
+    (tmp_path / "no_line.md").write_text("Do the task.\n", encoding="utf-8")
+    (tmp_path / "bank.json").write_text('{"version": "2.1"}', encoding="utf-8")
+    (tmp_path / "unversioned.json").write_text("[1, 2]", encoding="utf-8")
+    (tmp_path / "broken.json").write_text("{", encoding="utf-8")
+    (tmp_path / "notes.txt").write_text("not an instruction", encoding="utf-8")
+    assert prompts.instruction_versions(tmp_path) == {"A": "3", "bank": "2.1"}
+    assert prompts.instruction_version(tmp_path / "missing.md") is None

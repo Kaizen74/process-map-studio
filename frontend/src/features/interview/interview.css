@@ -1,0 +1,22 @@
+/* Interview screen (PRD v1.10 §5.4). Tokens only. */
+.interview-templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.interview-templates__title {
+  font-size: var(--text-popover-title);
+  font-weight: var(--weight-medium);
+}
+.interview-templates__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+.interview-tip,
+.interview-note {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+  max-width: 72ch;
+}

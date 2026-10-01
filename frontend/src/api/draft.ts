@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { DraftState, Graph, Job, LintReport, RejectedClaims } from "./types";
+import type { DraftState, Graph, Job, LintReport, RefreshCheck, RejectedClaims } from "./types";
 
 const enc = encodeURIComponent;
 
@@ -22,3 +22,7 @@ export const getLint = (versionId: string) => request<LintReport>(`/versions/${e
 /** Refresh draft from sources (phase P6): reviewed steps stay exactly as they are. */
 export const startRefresh = (versionId: string) =>
   request<{ job_id: string }>(`/versions/${enc(versionId)}/refresh`, { method: "POST" });
+
+/** What a refresh would use differently from the run that made this draft (no AI call). */
+export const getRefreshCheck = (versionId: string) =>
+  request<RefreshCheck>(`/versions/${enc(versionId)}/refresh-check`);

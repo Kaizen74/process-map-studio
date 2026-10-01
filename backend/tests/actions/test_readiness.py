@@ -89,7 +89,19 @@ def test_only_documents_asks_for_a_transcript() -> None:
     result = check(assess(facts(sources=[SOP]), key_set=True))
     assert result.missing == [ADD_TRANSCRIPT]
     assert result.nav["sources"] == "attention" and result.nav_counts == {"sources": 1}
-    assert result.next_step == "sources"
+    # PRD v1.10 (2026-09-30): Interview comes before Sources; with no transcript yet, the
+    # interview is the next thing to do (was "sources" before Interview joined the path).
+    assert result.nav["interview"] == "not_started" and result.next_step == "interview"
+
+
+def test_the_interview_is_done_once_its_transcript_is_uploaded() -> None:
+    for status in ("pending", "ready", "failed"):
+        uploaded = source("interview.txt", "interview_transcript", status=status)
+        result = check(assess(facts(sources=[uploaded]), key_set=True))
+        assert result.nav["interview"] == "done", status
+        assert "interview" not in result.nav_counts
+    result = check(assess(facts(sources=[]), key_set=True))
+    assert result.nav["interview"] == "not_started" and result.next_step == "interview"
 
 
 def test_job_descriptions_alone_are_not_a_process_document() -> None:
