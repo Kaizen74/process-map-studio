@@ -34,10 +34,11 @@ from app.domain.models import NameReplacement, PromptSegment
 from app.domain.result import Err, Ok, Result
 from app.pipeline import s1_extract
 from app.pipeline.context import AiContext, call_stage, role_groups
+from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import gap, grounding, prompts
+from app.services import gap, grounding, prompts, sensemaking
 
 Sessions = sessionmaker[Session]
 
@@ -49,6 +50,19 @@ SIDES = ("documents", "practice")
 INTERVIEW = "interview_transcript"
 NO_VERDICT = "the verifier gave no verdict for this finding"
 QUESTION_TITLE = "Cause not explained by the sources"
+# Reality gaps (§3.12.7; B.22): classed only from a reason an SME stated (B.32).
+REALITY_GAPS = frozenset(
+    {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap", "constraint_mismatch"}
+)
+UNEXPLAINED = "unexplained"
+NO_ACCOUNTS = "a known adaptation needs an official and a lived account of the step"
+NOT_BOTH_ACCOUNTS = "a known adaptation must quote both the official and the lived account"
+NOT_COMPLEX = "a constraint mismatch needs work the evidence shows is complex"
+NO_PRESCRIPTION = "a constraint mismatch must quote what the documents prescribe"
+WHY_QUESTION = "Why do people do it this way?"  # the bank's M6.4, asked about the step
+REASON_NOT_FOUND = (
+    "The stated reason wasn't found in the interview passages cited, so the class is unexplained."
+)
 STAGE_NAMES = {STAGE_ID: "Explaining the differences", VERIFY_STAGE: "Independent verification"}
 
 
@@ -79,6 +93,23 @@ class SideStance:
     note: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class Account:
+    """An interview's official or lived account of the step (§3.12.3), with the SME's stated
+    reason (found in the passage by S1) for a lived one."""
+
+    account_type: str  # official · lived
+    passage_refs: list[str]
+    stated_reason: str = ""
+    quote: str = ""  # the account claim's own words (checked by S1)
+
+    def holds(self, ref: str, quote: str) -> bool:
+        """A finding's quote from this account: in its passage and within (or around) its
+        claim's words, so two sentences of one passage stay apart."""
+        a, b = grounding.normalise_text(quote), grounding.normalise_text(self.quote)
+        return ref in self.passage_refs and bool(a) and bool(b) and (a in b or b in a)
+
+
 @dataclass(slots=True)
 class Divergence:
     ref: str  # call-local, d1 …
@@ -86,6 +117,20 @@ class Divergence:
     lane: str
     sides: list[SideStance]
     contested_raci: list[tuple[str, str]]  # (role name, letter)
+    # Reality gaps (§3.12.7; C4b): the step's accounts and its work type with the cue passages.
+    accounts: list[Account] = field(default_factory=list)
+    work_type_refs: list[str] = field(default_factory=list)
+
+    @property
+    def work_type(self) -> str | None:
+        wt = self.element.work_type
+        return wt if wt and wt != sensemaking.NOT_CLASSIFIED else None
+
+    def account_refs(self, account_type: str) -> set[str]:
+        return {r for a in self.accounts if a.account_type == account_type for r in a.passage_refs}
+
+    def quotes_account(self, account_type: str, ref: str, quote: str) -> bool:
+        return any(a.account_type == account_type and a.holds(ref, quote) for a in self.accounts)
 
 
 @dataclass(slots=True)
@@ -151,6 +196,27 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
     passages: dict[str, Passage] = {}
     by_segment: dict[str, str] = {}
     items: list[Divergence] = []
+
+    def passage_for(segment_id: str, stance: str) -> str:
+        """The call-local ref of a passage, added on first use (it must be in `segments`)."""
+        ref = by_segment.get(segment_id)
+        if ref is None:
+            sid, seg = segments[segment_id]
+            ref = f"e{len(passages) + 1}"
+            by_segment[segment_id] = ref
+            passages[ref] = Passage(
+                ref=ref,
+                source_ref=source_ref[sid],
+                source_id=sid,
+                source_kind=infos[sid].kind,  # type: ignore[union-attr]
+                source_name=sources[source_ref[sid]][1],
+                stance=stance,
+                segment=seg,
+            )
+        return ref
+
+    behind = map_repo.element_claims(session, version_id)
+    claims = claims_repo.by_ids(session, [c for e in divergent for c in behind.get(e.id, [])])
     for n, element in enumerate(divergent, start=1):
         own = [
             p
@@ -173,19 +239,7 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
                     stance=p.evidence.stance,
                 ),
             )
-            ref = by_segment.get(p.evidence.segment_id)
-            if ref is None:
-                ref = f"e{len(passages) + 1}"
-                by_segment[p.evidence.segment_id] = ref
-                passages[ref] = Passage(
-                    ref=ref,
-                    source_ref=source_ref[p.source_id],
-                    source_id=p.source_id,
-                    source_kind=p.evidence.source_kind,
-                    source_name=side.source_name,
-                    stance=p.evidence.stance,
-                    segment=segments[p.evidence.segment_id][1],
-                )
+            ref = passage_for(p.evidence.segment_id, p.evidence.stance)
             if ref not in side.passage_refs:
                 side.passage_refs.append(ref)
             note = redaction.hide(p.evidence.note, terms)
@@ -212,6 +266,24 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
         all_sides = sorted(
             [*sides.values(), *unique_silent.values()], key=lambda s: (s.source_ref, s.stance)
         )
+        accounts = []
+        for claim_id in behind.get(element.id, []):
+            c = claims.get(claim_id)
+            if c is None or c.account_type not in {"official", "lived"}:
+                continue
+            refs = [passage_for(seg, "supports") for seg in c.segment_ids if seg in segments]
+            if not refs:
+                continue
+            reason = str(c.payload.get("stated_reason", "")) if c.account_type == "lived" else ""
+            account = Account(c.account_type, refs, redaction.hide(reason, terms), c.quote)
+            if account not in accounts:
+                accounts.append(account)
+        cue_refs = [
+            passage_for(str(seg), "supports")
+            for cue in element.work_type_basis
+            for seg in (cue.get("segment_ids") or [])
+            if str(seg) in segments
+        ]
         items.append(
             Divergence(
                 ref=f"d{n}",
@@ -221,6 +293,8 @@ def divergence_set(session: Session, version_id: str) -> DivergenceSet | None:
                 contested_raci=[
                     (roles.get(r.role_id, ""), r.letter) for r in element.raci if r.contested
                 ],
+                accounts=accounts,
+                work_type_refs=list(dict.fromkeys(cue_refs)),
             )
         )
     return DivergenceSet(
@@ -260,10 +334,11 @@ def blocks_for(dset: DivergenceSet) -> list[dict[str, object]]:
     lines: list[str] = []
     for item in dset.items:
         e = item.element
+        work_type = f' work_type="{esc(item.work_type)}"' if item.work_type else ""
         lines.append(
             f'<divergence id="{item.ref}" kind="{esc(e.kind)}" lane="{esc(item.lane)}" '
             f'label="{esc(e.label)}" state="{esc(e.source_state)}" '
-            f'types="{esc(" ".join(e.divergence_types))}">'
+            f'types="{esc(" ".join(e.divergence_types))}"{work_type}>'
         )
         for side in item.sides:
             segs = f' segments="{" ".join(side.passage_refs)}"' if side.passage_refs else ""
@@ -275,6 +350,21 @@ def blocks_for(dset: DivergenceSet) -> list[dict[str, object]]:
                 lines.append(f'<note source="{side.source_ref}">{esc(side.note)}</note>')
         for role, letter in item.contested_raci:
             lines.append(f'<raci role="{esc(role)}" letter="{esc(letter)}" contested="yes"/>')
+        shown: set[tuple[str, str, str]] = set()
+        for a in item.accounts:
+            key = (a.account_type, " ".join(a.passage_refs), a.stated_reason)
+            if key in shown:
+                continue
+            shown.add(key)
+            reason = f' reason="{esc(a.stated_reason)}"' if a.stated_reason else ""
+            lines.append(
+                f'<account type="{esc(a.account_type)}" '
+                f'segments="{" ".join(a.passage_refs)}"{reason}/>'
+            )
+        if item.work_type and item.work_type_refs:
+            lines.append(
+                f'<work_type type="{esc(item.work_type)}" cues="{" ".join(item.work_type_refs)}"/>'
+            )
         lines.append("</divergence>")
     lines += _render_passages(dset, list(dset.passages))
     return [{"type": "text", "text": "\n".join(lines)}]
@@ -419,6 +509,29 @@ def check(dset: DivergenceSet, f: ai_schemas.GAFinding) -> Checked:
     roles = grounding.verify_roles(roles_named(claim, dset.roles), with_names, dset.roles)
     if not roles.passed:
         return _rejected(checked, roles.guardrail, roles.reason)
+    if f.finding_type == "known_adaptation":
+        # The comparison is the SME's official account against their lived one (§3.12.7).
+        official = set().union(*(i.account_refs("official") for i in known))
+        lived = set().union(*(i.account_refs("lived") for i in known))
+        if not official or not lived:
+            return _rejected(checked, Guardrail.G3.value, NO_ACCOUNTS)
+        # One quote from each account's own words (both may sit in the same passage).
+        quotes = [(e.segment_id, e.quote) for e in f.evidence]
+        if not all(
+            any(i.quotes_account(kind, ref, q) for i in known for ref, q in quotes)
+            for kind in ("official", "lived")
+        ):
+            return _rejected(checked, Guardrail.G3.value, NOT_BOTH_ACCOUNTS)
+    if f.finding_type == "constraint_mismatch":
+        if any(i.work_type not in sensemaking.NEVER_AUTOMATED for i in known):
+            return _rejected(checked, Guardrail.G3.value, NOT_COMPLEX)
+        if "documents" not in {e.side for e in evidence}:
+            return _rejected(checked, Guardrail.G3.value, NO_PRESCRIPTION)
+    if f.finding_type in REALITY_GAPS:
+        _classify(checked, f, refs, dset)
+    if f.finding_type == "known_adaptation":
+        finding.evidence = evidence
+        return checked
     # Both sides: quoted, or silent on every step the finding names.
     spoken = {e.side for e in evidence}
     for item in known:
@@ -449,6 +562,45 @@ def check(dset: DivergenceSet, f: ai_schemas.GAFinding) -> Checked:
     return checked
 
 
+def _classify(
+    checked: Checked, f: ai_schemas.GAFinding, refs: list[str], dset: DivergenceSet
+) -> None:
+    """A reality gap's class (§3.12.7): proposed only when the SME's stated reason is quoted
+    exactly from an interview passage the finding cites; otherwise `unexplained`, with the
+    question "Why do people do it this way?" for the SMEs (added to the report)."""
+    finding = checked.finding
+    interview = [
+        dset.passages[r].segment for r in refs if dset.passages[r].source_kind == INTERVIEW
+    ]
+    reason = f.stated_reason.strip()
+    found = bool(reason) and grounding.verify_quote(reason, prompts.cited_text(interview)).passed
+    if found and f.gap_class != UNEXPLAINED:
+        finding.gap_class = f.gap_class
+        finding.stated_reason = redaction.hide(reason, dset.terms)
+        finding.cause_type = None if f.cause_type == "none" else f.cause_type
+        return
+    finding.gap_class = UNEXPLAINED
+    finding.stated_reason = redaction.hide(reason, dset.terms) if found else ""
+    if reason and not found:
+        finding.notes.append(REASON_NOT_FOUND)
+
+
+def why_question(dset: DivergenceSet, c: Checked) -> NewGapFinding:
+    """The follow-up question an unexplained reality gap raises (§3.12.7), about its steps."""
+    labels = [i.element.label for e in c.finding.element_ids for i in dset.items
+              if i.element.id == e]  # fmt: skip
+    question = redaction.hide(f'On "{labels[0]}": {WHY_QUESTION}' if labels else WHY_QUESTION,
+                              dset.terms)  # fmt: skip
+    return NewGapFinding(
+        section="recommendation",
+        finding_type=c.finding.finding_type,
+        title=QUESTION_TITLE,
+        text=question,
+        element_ids=list(c.finding.element_ids),
+        question=question,
+    )
+
+
 def unknown_finding(dset: DivergenceSet, u: ai_schemas.GAUnknown) -> NewGapFinding:
     """A cause the sources don't explain, kept as a suggested question for the SMEs."""
     question = redaction.hide(u.question, dset.terms)
@@ -476,6 +628,8 @@ def verify_blocks(dset: DivergenceSet, kept: list[Checked]) -> list[dict[str, ob
         )
         if f.basis:
             lines.append(f"<basis>{esc(f.basis)}</basis>")
+        if f.stated_reason:
+            lines.append(f"<stated_reason>{esc(f.stated_reason)}</stated_reason>")
         for s in c.silent:
             lines.append(
                 f'<silent kind="{esc(s.source_kind)}" name="{esc(s.source_name)}">'
@@ -519,11 +673,15 @@ def report(
     dset: DivergenceSet, checked: list[Checked], unknowns: list[ai_schemas.GAUnknown]
 ) -> list[NewGapFinding]:
     out: list[NewGapFinding] = []
+    asked: list[NewGapFinding] = []
     for c in checked:
         if c.finding.verification_status != "rejected":
             c.finding.severity = gap.severity_internal(
                 c.finding.finding_type, c.kinds, trace_contradicted=c.trace_contradicted
             )
+            if c.finding.gap_class == UNEXPLAINED:
+                asked.append(why_question(dset, c))
         out.append(c.finding)
     out += [unknown_finding(dset, u) for u in unknowns]
-    return out
+    have = {(q.text, tuple(q.element_ids)) for q in out if q.question}
+    return out + [q for q in asked if (q.text, tuple(q.element_ids)) not in have]

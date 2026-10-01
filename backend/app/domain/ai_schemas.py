@@ -361,7 +361,14 @@ InternalFindingType = Literal[
     "exception_gap",
     "stale_documentation",
     "documentation_update",
+    # v1.10 reality gaps (§3.12.7; C4b)
+    "known_adaptation",
+    "unknown_rule",
+    "disclosure_gap",
+    "control_gap",
+    "constraint_mismatch",
 ]
+GapClassName = Literal["effective_adaptation", "risky_drift", "obsolete_rule", "unexplained"]
 
 
 class GAEvidence(BaseModel):
@@ -388,6 +395,22 @@ class GAFinding(BaseModel):
     basis_segment_ids: list[str] = Field(
         description="For interpretation: the interview segments the basis cites; otherwise empty"
     )
+    # Reality gaps (§3.12.7): a class only from a reason the SME stated, quoted exactly.
+    gap_class: GapClassName = Field(
+        default="unexplained",
+        description="For a reality gap: the class you propose, only when an SME stated a reason; "
+        "otherwise unexplained",
+    )
+    stated_reason: str = Field(
+        default="",
+        description="The SME's reason, copied exactly from an interview segment the finding "
+        "cites; otherwise empty",
+    )
+    cause_type: Literal[
+        "decision_rights", "system_fragmentation", "single_point_knowledge",
+        "capacity_mismatch", "policy_control", "capability_gap", "none",
+    ] = Field(default="none", description="The cause type (B.9) the stated reason points to; "
+              "none without a stated reason")  # fmt: skip
 
 
 class GAUnknown(BaseModel):

@@ -1250,6 +1250,48 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
                 ("e8", "it's the captain who decides, not us"),
             ],
         ),
+        # A.8 (C4b): the reality gaps. The official account (22:30, first sentence) is on the
+        # loading step, the lived one with its stated reason on reading the report at the aircraft.
+        ga_finding(
+            "known_adaptation",
+            "Loading report: sent within ten minutes officially, read at the aircraft on a busy "
+            "wave",
+            "Officially the Ramp sends the loading report within ten minutes; on a busy wave the "
+            "Load controller walks down and reads it off the Ramp's sheet instead.",
+            ["d3", "d5"],
+            [
+                ("e7", "Officially the ramp should send the report within ten minutes"),
+                (
+                    "e7",
+                    "What actually happens on a busy wave is I walk down and read it off their "
+                    "sheet",
+                ),
+            ],
+        )
+        | {
+            "gap_class": "effective_adaptation",
+            "stated_reason": "otherwise we'd miss the slot",
+            "cause_type": "capacity_mismatch",
+        },
+        ga_finding(
+            "constraint_mismatch",
+            "Weight-deviation call: a fixed decider in SOP LC-07 for work the Load controller "
+            "describes as having no fixed answer",
+            "SOP LC-07 §5 sets who decides on corrective action when weights deviate; the Load "
+            "controller describes it as a call with no fixed answer, where you read the "
+            "situation.",
+            ["d6"],
+            [
+                ("e9", "the Load Control Lead shall decide on corrective action"),
+                ("e10", "There's no fixed answer"),
+            ],
+        )
+        | {
+            "section": "interpretation",
+            "basis": "The Load controller says there is no fixed answer and that you read the "
+            "situation, which marks the call as complex work rather than a set rule.",
+            "basis_segment_ids": ["e10"],
+        },
         ga_finding(
             "undocumented_work",
             "Offload resolution is undocumented work",

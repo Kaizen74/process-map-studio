@@ -2,10 +2,27 @@
 // pure helpers. Advisory only: nothing here changes the map.
 
 export type GapMode = "internal" | "external";
-export type GapStatus = "brief_draft" | "queued" | "running" | "draft_report" | "finalised" | "failed";
+export type GapStatus =
+  | "brief_draft"
+  | "queued"
+  | "running"
+  | "draft_report"
+  | "finalised"
+  | "failed";
 export type Severity = "high" | "medium" | "low";
-export type Disposition = "open" | "added_question" | "added_cause" | "added_step" | "dismissed";
+export type Disposition =
+  | "open"
+  | "added_question"
+  | "added_cause"
+  | "added_step"
+  | "dismissed";
 export type Section = "fact" | "interpretation" | "recommendation";
+/** B.32: a reality gap's class (§3.12.7), proposed only from an SME's stated reason. */
+export type GapClass =
+  | "effective_adaptation"
+  | "risky_drift"
+  | "obsolete_rule"
+  | "unexplained";
 
 export interface GapCounts {
   kept: number;
@@ -68,6 +85,10 @@ export interface GapFinding {
   disposition: Disposition;
   disposition_note: string;
   created_item_ref: string;
+  /** Reality gaps only (C4b): proposed while open, Eric's final class once decided. */
+  gap_class: GapClass | null;
+  stated_reason: string;
+  cause_type: string | null;
 }
 
 export interface Brief {
@@ -138,6 +159,7 @@ export interface FindingDecision {
   disposition: Exclude<Disposition, "open">;
   note?: string;
   step?: GapStepChoice;
+  gap_class?: GapClass;
 }
 
 /** A finding on a step's detail panel (GET /elements/{eid} gap_findings). */
@@ -194,6 +216,11 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
   exception_gap: "Different exception route",
   stale_documentation: "Outdated document",
   documentation_update: "Document update",
+  known_adaptation: "Known adaptation",
+  unknown_rule: "Rule not known in practice",
+  disclosure_gap: "Account differs from the record",
+  control_gap: "Control leaves no trace",
+  constraint_mismatch: "Rule doesn't fit the work",
   missing_step: "Missing step",
   missing_control: "Missing control",
   sequence_difference: "Different order",
@@ -203,6 +230,19 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
   technology_enabler: "Technology",
   other_difference: "Other difference",
 };
+
+export const GAP_CLASS_LABELS: Readonly<Record<GapClass, string>> = {
+  effective_adaptation: "Effective adaptation (codify it)",
+  risky_drift: "Risky drift (correct it)",
+  obsolete_rule: "Obsolete rule (retire or rewrite it)",
+  unexplained: "Unexplained (ask)",
+};
+
+/** "capacity_mismatch" → "Capacity mismatch". */
+export function causeLabel(cause: string): string {
+  const words = cause.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 export const GUARDRAIL_LABELS: Readonly<Record<string, string>> = {
   G3: "passage not given or evidence missing",
@@ -215,7 +255,9 @@ export const GUARDRAIL_LABELS: Readonly<Record<string, string>> = {
   GAV: "the independent check didn't support it",
 };
 
-export const STRENGTH_LABELS: Readonly<Record<GapFinding["evidence_strength"], string>> = {
+export const STRENGTH_LABELS: Readonly<
+  Record<GapFinding["evidence_strength"], string>
+> = {
   strong: "Strong evidence",
   weak: "Weak evidence (vendor or unknown sources only)",
   dated: "Dated sources",
@@ -242,9 +284,17 @@ export interface GapFilters {
   disposition: Disposition | "";
 }
 
-export const NO_FILTERS: GapFilters = { type: "", severity: "", strength: "", disposition: "" };
+export const NO_FILTERS: GapFilters = {
+  type: "",
+  severity: "",
+  strength: "",
+  disposition: "",
+};
 
-export function filterFindings(findings: readonly GapFinding[], f: GapFilters): GapFinding[] {
+export function filterFindings(
+  findings: readonly GapFinding[],
+  f: GapFilters,
+): GapFinding[] {
   return findings.filter(
     (x) =>
       (!f.type || x.finding_type === f.type) &&
@@ -255,15 +305,22 @@ export function filterFindings(findings: readonly GapFinding[], f: GapFilters): 
 }
 
 /** Findings in the report's sections (the server's order is kept within each). */
-export function bySection(findings: readonly GapFinding[]): { section: Section; findings: GapFinding[] }[] {
+export function bySection(
+  findings: readonly GapFinding[],
+): { section: Section; findings: GapFinding[] }[] {
   const order: Section[] = ["fact", "interpretation", "recommendation"];
   return order
-    .map((section) => ({ section, findings: findings.filter((f) => f.section === section) }))
+    .map((section) => ({
+      section,
+      findings: findings.filter((f) => f.section === section),
+    }))
     .filter((group) => group.findings.length > 0);
 }
 
 /** "2 high · 1 medium" for the history list; "no findings" when there are none. */
-export function severityCounts(findings: readonly Pick<GapFinding, "severity">[]): string {
+export function severityCounts(
+  findings: readonly Pick<GapFinding, "severity">[],
+): string {
   const parts = (["high", "medium", "low"] as const)
     .map((s) => [s, findings.filter((f) => f.severity === s).length] as const)
     .filter(([, n]) => n > 0)
@@ -273,7 +330,9 @@ export function severityCounts(findings: readonly Pick<GapFinding, "severity">[]
 
 /** Findings and questions still waiting for Eric's decision. */
 export function openItems(report: GapReport): number {
-  return [...report.findings, ...report.questions].filter((f) => f.disposition === "open").length;
+  return [...report.findings, ...report.questions].filter(
+    (f) => f.disposition === "open",
+  ).length;
 }
 
 export function exportUrl(analysisId: string): string {
@@ -281,12 +340,22 @@ export function exportUrl(analysisId: string): string {
 }
 
 /** Rejected findings as counts by guardrail, most first, e.g. "GX2 (source not returned …): 1". */
-export function rejectedCounts(rejected: readonly GapFinding[]): { guardrail: string; label: string; count: number }[] {
+export function rejectedCounts(
+  rejected: readonly GapFinding[],
+): { guardrail: string; label: string; count: number }[] {
   const counts = new Map<string, number>();
-  for (const f of rejected) counts.set(f.rejection_guardrail, (counts.get(f.rejection_guardrail) ?? 0) + 1);
+  for (const f of rejected)
+    counts.set(
+      f.rejection_guardrail,
+      (counts.get(f.rejection_guardrail) ?? 0) + 1,
+    );
   return [...counts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([guardrail, count]) => ({ guardrail, label: GUARDRAIL_LABELS[guardrail] ?? guardrail, count }));
+    .map(([guardrail, count]) => ({
+      guardrail,
+      label: GUARDRAIL_LABELS[guardrail] ?? guardrail,
+      count,
+    }));
 }
 
 // --- The research brief (Analysis B) -------------------------------------------------------
@@ -312,8 +381,15 @@ function escapeRegExp(text: string): string {
 }
 
 function without(text: string, hit: string): string {
-  const pattern = new RegExp(escapeRegExp(hit).replace(/\s+/g, "[\\s,.;:!?'’\"-]+"), "gi");
-  return text.replace(pattern, " ").replace(/\s{2,}/g, " ").replace(/\s+([,.;:!?])/g, "$1").trim();
+  const pattern = new RegExp(
+    escapeRegExp(hit).replace(/\s+/g, "[\\s,.;:!?'’\"-]+"),
+    "gi",
+  );
+  return text
+    .replace(pattern, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
 }
 
 /**
@@ -321,7 +397,8 @@ function without(text: string, hit: string): string {
  * field, ignoring case and the punctuation between words; entries left empty are dropped.
  */
 export function removeHit(brief: Brief, hit: string): Brief {
-  const list = (items: readonly string[]) => items.map((item) => without(item, hit)).filter(Boolean);
+  const list = (items: readonly string[]) =>
+    items.map((item) => without(item, hit)).filter(Boolean);
   return {
     ...brief,
     process_name: without(brief.process_name, hit),
@@ -334,10 +411,16 @@ export function removeHit(brief: Brief, hit: string): Brief {
 }
 
 /** Why Run research can't start yet, in plain words; null when it can. */
-export function runBlocker(state: BriefState, researchEnabled: boolean, dirty: boolean): string | null {
-  if (!researchEnabled) return "Web research is switched off. Turn it on in Settings first.";
+export function runBlocker(
+  state: BriefState,
+  researchEnabled: boolean,
+  dirty: boolean,
+): string | null {
+  if (!researchEnabled)
+    return "Web research is switched off. Turn it on in Settings first.";
   if (!dirty && state.scan.hits.length)
     return "Remove the highlighted items from the brief before running the research.";
-  if (!state.confirmed) return "Tick “This brief contains no confidential information” before running the research.";
+  if (!state.confirmed)
+    return "Tick “This brief contains no confidential information” before running the research.";
   return null;
 }

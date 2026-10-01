@@ -244,6 +244,10 @@ def _names_check(run: RunCapture) -> Check:
     return Check("E5", "No hidden names", not hits, f"found: {', '.join(hits)}" if hits else detail)
 
 
+BOTH = frozenset({"documents", "practice"})
+SIDES_COMPARED = {"known_adaptation": frozenset({"practice"})}
+
+
 def _internal_check(run: RunCapture) -> Check:
     if run.internal is None:
         failed = f"failed: {run.internal_error}" if run.internal_error else "not run"
@@ -261,11 +265,14 @@ def _internal_check(run: RunCapture) -> Check:
         for kind, label in EXPECTED_DIVERGENCES
         if not any(f["finding_type"] == kind and ids.get(label) in f["element_ids"] for f in kept)
     ]
+    # Evidence from every side the finding compares (constraint 22): documents and practice,
+    # except a known adaptation, which compares the SME's official and lived accounts (both
+    # practice; §3.12.7, C4b).
     one_sided = [
         f["title"]
         for f in kept
         if f["section"] == "fact"
-        and {ev["side"] for ev in f["evidence"]} != {"documents", "practice"}
+        and {ev["side"] for ev in f["evidence"]} != SIDES_COMPARED.get(f["finding_type"], BOTH)
     ]
     detail = (
         f"{len(kept)} findings, {len(run.internal['questions'])} questions, "

@@ -53,14 +53,39 @@ def _severity(f: GapFindingView) -> str:
 def _sides(f: GapFindingView) -> list[str]:
     lines = []
     for side, label in (("documents", "Documents"), ("practice", "Practice")):
-        places = [
-            " ".join(part for part in (e.source_name, e.anchor) if part) + f" ({e.stance})"
-            for e in f.evidence
-            if e.side == side
-        ]
+        places = list(
+            dict.fromkeys(  # a place cited twice (two quotes from one passage) is listed once
+                " ".join(part for part in (e.source_name, e.anchor) if part) + f" ({e.stance})"
+                for e in f.evidence
+                if e.side == side
+            )
+        )
         if places:
             lines.append(f"  - {label}: {'; '.join(places)}")
     return lines
+
+
+GAP_CLASSES = {
+    "effective_adaptation": "Effective adaptation",
+    "risky_drift": "Risky drift",
+    "obsolete_rule": "Obsolete rule",
+    "unexplained": "Unexplained",
+}
+
+
+def _gap_class(f: GapFindingView) -> list[str]:
+    """A reality gap's class (§3.12.7): proposed from an SME's stated reason, or unexplained;
+    confirmed once Eric decides the finding. The reason's words stay in the app."""
+    if f.gap_class is None:
+        return []
+    state = "proposed" if f.disposition == "open" else "confirmed"
+    why = (
+        "no reason stated; asked as a question"
+        if f.gap_class == "unexplained"
+        else "from a reason an SME stated"
+    )
+    cause = f" · cause: {f.cause_type.replace('_', ' ')}" if f.cause_type else ""
+    return [f"  - Gap class: {GAP_CLASSES.get(f.gap_class, f.gap_class)} ({state}; {why}){cause}"]
 
 
 def _internal(report: GapReport) -> list[str]:
@@ -71,10 +96,11 @@ def _internal(report: GapReport) -> list[str]:
     for f in facts:
         steps = f" · steps: {_steps(f)}" if _steps(f) else ""
         lines += [f"- [O] {f.title} · {_severity(f)}{steps}", f"  - {f.text}", *_sides(f)]
+        lines += _gap_class(f)
     lines += [] if facts else ["No differences between the documents and practice were kept."]
     lines += ["", "## 2. Interpretation", ""]
     for f in patterns:
-        lines += [f"- [I] {f.title}: {f.text}", f"  - Basis: {f.basis}"]
+        lines += [f"- [I] {f.title}: {f.text}", f"  - Basis: {f.basis}", *_gap_class(f)]
     lines += [] if patterns else ["No pattern or likely cause was supported by what the SMEs said."]
     lines += ["", "## 3. Recommendation", ""]
     lines += ["### Documentation updates", ""]
@@ -84,7 +110,7 @@ def _internal(report: GapReport) -> list[str]:
     lines += ["", "### Questions for the SMEs", ""]
     lines += [f"- {q.question} · {_decision(q)}" for q in report.questions] or ["No questions."]
     lines += ["", "### Decisions on the differences", ""]
-    lines += [f"- [O] {f.title} · {_decision(f)}" for f in facts + patterns] or [
+    lines += [f"- [{f.provenance}] {f.title} · {_decision(f)}" for f in facts + patterns] or [
         "No differences to decide on."
     ]
     return lines

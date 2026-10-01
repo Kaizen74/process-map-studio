@@ -424,6 +424,8 @@ class GapFinding(Row):
     gap_class: Mapped[str | None] = mapped_column(String(24), nullable=True)  # B.32 (0009)
     question: Mapped[str] = mapped_column(Text, default="")  # a cause not explained (0006)
     notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # flags on the finding (0007)
+    stated_reason: Mapped[str] = mapped_column(Text, default="")  # the SME's own words (0011)
+    cause_type: Mapped[str | None] = mapped_column(String(32), nullable=True)  # B.9 (0011)
 
 
 class ExternalSource(Row):

@@ -104,6 +104,8 @@ VERSIONS = {
     "S1_extract_jd": "2",
     "S2_canonicalise": "2",
     "S4_assemble": "2",
+    "GA_internal": "2",  # C4b: reality gaps, accounts and work types
+    "GA_verify": "2",  # C4b: the stated reason
 }
 
 

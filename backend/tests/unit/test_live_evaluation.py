@@ -157,3 +157,18 @@ def test_the_report_lists_every_step_and_each_format_problem(mocked: RunCapture)
     assert "- GAInternalOutput: Does not match the schema: findings.0.section: …" in report
     assert "- Special loads OK? · decision · Load controller · corroborated" in report
     assert "findings, 0 without a citation, " in report
+
+
+def test_a1_needs_evidence_from_every_side_a_finding_compares(mocked: RunCapture) -> None:
+    run = copy.deepcopy(mocked)
+    assert run.internal is not None
+    found = {f["finding_type"]: f for f in run.internal["findings"]}
+    # A known adaptation compares the SME's official and lived accounts: practice only (C4b).
+    assert {e["side"] for e in found["known_adaptation"]["evidence"]} == {"practice"}
+    assert result(evaluation.evaluate_run(run), "A1").passed is True
+    # A threshold difference compares documents with practice: one side alone fails.
+    threshold = found["threshold_gap"]
+    threshold["evidence"] = [e for e in threshold["evidence"] if e["side"] == "practice"]
+    checks = evaluation.evaluate_run(run)
+    assert result(checks, "A1").passed is False
+    assert "without evidence from both sides: Loading report return" in result(checks, "A1").detail

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.enums import GapClass
 from app.domain.models import CheckOutcome
 
 
@@ -115,6 +116,9 @@ class GapFindingView(BaseModel):
     disposition: str
     disposition_note: str
     created_item_ref: str
+    gap_class: str | None = None  # B.32; proposed while the finding is open
+    stated_reason: str = ""
+    cause_type: str | None = None
 
 
 class GapCounts(BaseModel):
@@ -217,6 +221,11 @@ class NewGapFinding(BaseModel):
     verifier_verdict: str = "not_run"
     question: str = ""
     notes: list[str] = Field(default_factory=list)
+    # Reality gaps (§3.12.7; C4b): proposed only from an SME's stated reason; Eric sets the final
+    # class when he decides the finding. Other findings keep `None` and "".
+    gap_class: str | None = None  # B.32
+    stated_reason: str = ""
+    cause_type: str | None = None  # B.9
 
 
 class StoredGapFinding(NewGapFinding):
@@ -271,3 +280,4 @@ class FindingDecision(BaseModel):
     disposition: str
     note: str = Field(default="", max_length=1000)
     step: GapStep | None = None
+    gap_class: GapClass | None = None  # a reality gap's final class (Eric sets it; §3.12.7)

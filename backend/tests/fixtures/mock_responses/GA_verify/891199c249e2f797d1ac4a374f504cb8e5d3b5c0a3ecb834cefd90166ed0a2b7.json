@@ -19,6 +19,16 @@
       "finding_ref": "f4",
       "verdict": "supported",
       "reason": "The cited passages state it."
+    },
+    {
+      "finding_ref": "f5",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    },
+    {
+      "finding_ref": "f6",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
     }
   ]
 }
