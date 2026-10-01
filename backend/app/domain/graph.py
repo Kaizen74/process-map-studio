@@ -310,6 +310,7 @@ class GraphEdge(Out):
     view_membership: str | None = None
     information_payload: str | None = None
     typical: bool | None = None
+    provenance: str = "O"  # I: added by the translation for one view (§3.12.10 rules 1 and 7)
 
 
 class Graph(Out):
@@ -328,6 +329,7 @@ class LintIssue(Out):
     rule: str  # L1 … L12
     element_id: str | None
     message: str
+    view: str | None = None  # v1.10 §3.12.11: "done" or "documented" for a per-view check
 
 
 class LintReport(Out):

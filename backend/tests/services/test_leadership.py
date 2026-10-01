@@ -9,13 +9,14 @@ import json
 from pathlib import Path
 
 from app.domain.graph import Graph, GraphConstraint
-from app.services import leadership
+from app.services import leadership, views
 
 G1 = Path(__file__).resolve().parents[1] / "golden" / "G1_graph.json"
 
 
 def sample() -> Graph:
-    return Graph.model_validate(json.loads(G1.read_text(encoding="utf-8")))
+    # The map as leadership reads it (both views' steps, without the lines added for one view).
+    return views.combined(Graph.model_validate(json.loads(G1.read_text(encoding="utf-8"))))
 
 
 def ids(graph: Graph) -> dict[str, str]:

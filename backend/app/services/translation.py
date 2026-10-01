@@ -85,7 +85,9 @@ def _norm(text: str) -> str:
 def explicit_after(a: TranslationStep, b: TranslationStep) -> bool:
     """Rule 1: the lived account states that B follows A: a lived claim of B confirmed an
     explicit-order marker ("first", "then", "around T-90") and A was described earlier in the
-    same interview."""
+    same interview. A step Eric added was put in the flow by him, so its order is stated."""
+    if a.added_by_owner or b.added_by_owner:
+        return True
     return any(
         p.explicit
         and p.lived

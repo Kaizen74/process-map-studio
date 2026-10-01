@@ -25,6 +25,9 @@ Warnings:
 - Approval "Approve load plan" has no time stated.
 - Activity "Read report at aircraft" has no time stated.
 - Activity "Issue load sheet" has no time stated.
+- The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources mention them.
+- The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order the sources mention them.
+- The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the sources mention them.
 
 ## 1. Facts: what the sources tell us
 

@@ -28,7 +28,7 @@ from app.domain.exports import (
     ExportQuestion,
     SourceEntry,
 )
-from app.domain.graph import Graph
+from app.domain.graph import Graph, LintReport
 from app.domain.quality import QualityCard, QualityInput
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import causes as causes_repo
@@ -37,7 +37,7 @@ from app.repositories import elements as map_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import export_html, exports, layout, lint, quality
+from app.services import export_html, exports, quality
 
 Sessions = sessionmaker[Session]
 
@@ -160,7 +160,8 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
     return quality.build_quality_card(
         QualityInput(
             graph=graph,
-            lint=lint.run_lint(graph, layout.compute_layout(graph)),
+            lint=versions_action.lint_for(session, version_id)
+            or LintReport(failures=[], warnings=[]),
             pending_merges=pending,
             open_image_suggestions=map_repo.suggested_image_count(session, version_id),
             unverified_claims=unverified,

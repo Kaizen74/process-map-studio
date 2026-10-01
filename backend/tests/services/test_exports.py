@@ -20,7 +20,7 @@ from app.domain.exports import (
 )
 from app.domain.graph import Graph
 from app.domain.quality import QualityCard, QualityCheck
-from app.services import exports
+from app.services import exports, views
 
 ROOT = Path(__file__).resolve().parents[3]
 G1 = ROOT / "backend" / "tests" / "golden" / "G1_graph.json"
@@ -28,7 +28,8 @@ SAMPLE = ROOT / "frontend" / "tests" / "fixtures" / "sample_map.json"
 
 
 def sample_graph() -> Graph:
-    return Graph.model_validate(json.loads(G1.read_text(encoding="utf-8")))
+    # The map as the exports read it (both views' steps, without the lines added for one view).
+    return views.combined(Graph.model_validate(json.loads(G1.read_text(encoding="utf-8"))))
 
 
 def card(green: bool = True) -> QualityCard:

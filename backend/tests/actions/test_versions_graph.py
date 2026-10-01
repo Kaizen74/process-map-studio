@@ -180,7 +180,7 @@ def test_graph_has_the_prd_shape(built: Built) -> None:
     # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it.
     assert set(edges[0]) == {
         "id", "from", "to", "kind", "label",
-        "sequence_basis", "view_membership", "information_payload", "typical",
+        "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
     }  # fmt: skip
     elements = graph["elements"]
     assert isinstance(elements, list)

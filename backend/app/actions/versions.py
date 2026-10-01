@@ -13,9 +13,9 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction
+from app.actions import redaction, view_translation
 from app.db import session_scope
-from app.domain.enums import EdgeKind, ElementKind, Provenance, ReviewStatus, Stance
+from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance, VersionState
 from app.domain.graph import (
     AlignmentRow,
     AnswerQuote,
@@ -46,17 +46,27 @@ from app.domain.interview import QuestionBank
 from app.domain.layout import Layout
 from app.domain.models import ClaimRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.domain.sensemaking import View
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import alignment, interview_templates, layout, lint, parsing, translation
+from app.services import (
+    alignment,
+    interview_templates,
+    layout,
+    lint,
+    parsing,
+    translation,
+    views,
+)
 
 Sessions = sessionmaker[Session]
 
 VERSION_MISSING = "That version doesn't exist."
+FROZEN = {VersionState.PUBLISHED.value, VersionState.SUPERSEDED.value}
 ELEMENT_MISSING = "That step doesn't exist."
 # Edges that leave the main path: exception routes and loops back.
 OFF_MAIN_PATH = {
@@ -113,11 +123,7 @@ def combined_lines(edges: list[EdgeRecord]) -> list[EdgeRecord]:
     """The lines of the one map that shows both views' steps: without the lines the translation
     added for a single view where the other view's steps are left out (provenance I, PRD §3.12.10;
     each view is drawn on its own from V1, 2026-10-01)."""
-    return [
-        e
-        for e in edges
-        if not (e.provenance == Provenance.INFERRED.value and e.view_membership is not None)
-    ]
+    return [e for e in edges if not views.added_for_one_view(e.provenance, e.view_membership)]
 
 
 def build_graph(session: Session, version_id: str, *, every_line: bool = False) -> Graph | None:
@@ -290,16 +296,20 @@ def build_graph(session: Session, version_id: str, *, every_line: bool = False) 
                 if e.information_payload is not None
                 else None,
                 typical=e.typical,
+                provenance=e.provenance,
             )
             for e in edges
         ],
     )
 
 
-def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
+def get_graph(sessions: Sessions, version_id: str, view: View | None = None) -> Result[Graph]:
+    """Every line with its view membership; with a view, only that view's steps and lines."""
     with session_scope(sessions) as session:
         graph = build_graph(session, version_id, every_line=True)
-    return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+    if graph is None:
+        return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+    return Ok(views.view_graph(graph, view) if view else graph)
 
 
 def get_alignment_matrix(sessions: Sessions, version_id: str) -> Result[list[AlignmentRow]]:
@@ -318,13 +328,35 @@ def get_layout(sessions: Sessions, version_id: str) -> Result[Layout]:
     return Ok(layout.compute_layout(graph)) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
 
 
-def lint_version(sessions: Sessions, version_id: str) -> Result[LintReport]:
-    """Run the lint rules on a version's graph and its layout; store the report on the version."""
+def lint_for(session: Session, version_id: str) -> LintReport | None:
+    """The lint rules on the map as one (with its layout), then each view's flow checks
+    (§3.12.11). Used for the stored report, the quality card and publishing alike."""
+    graph = build_graph(session, version_id)
+    if graph is None:
+        return None
+    whole = lint.run_lint(graph, layout.compute_layout(graph))
+    every = build_graph(session, version_id, every_line=True)
+    assert every is not None
+    per_view = lint.run_view_checks(every)
+    return LintReport(
+        failures=whole.failures + per_view.failures, warnings=whole.warnings + per_view.warnings
+    )
+
+
+def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:
+    """Bring the views up to date after a change to the map (deterministic, no AI: new steps and
+    lines get their view membership, and each view the lines it needs, with their questions),
+    then run the lint rules and store the report on the version."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
-        if graph is None:
+        version = versions_repo.get(session, version_id)
+        # A published version never changes (constraint 8); only drafts are brought up to date.
+        if version is not None and version.state not in FROZEN:
+            view_translation.update_views(session, version_id)
+            if ask:  # the draft asks after S5, so step questions come first
+                view_translation.add_questions(session, version_id)
+        report = lint_for(session, version_id)
+        if report is None:
             return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
-        report = lint.run_lint(graph, layout.compute_layout(graph))
         versions_repo.set_lint_report(session, version_id, report.model_dump(mode="json"))
     return Ok(report)
 

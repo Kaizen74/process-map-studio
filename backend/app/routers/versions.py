@@ -10,14 +10,15 @@ from app.domain.graph import AlignmentRow, ElementDetail, Graph, LintReport
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
+from app.domain.sensemaking import View
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
 
 
 @router.get("/versions/{version_id}/graph")
-def get_graph(request: Request, version_id: str) -> Graph:
-    return unwrap(versions.get_graph(request.app.state.sessions, version_id))
+def get_graph(request: Request, version_id: str, view: View | None = None) -> Graph:
+    return unwrap(versions.get_graph(request.app.state.sessions, version_id, view))
 
 
 @router.get("/versions/{version_id}/layout")

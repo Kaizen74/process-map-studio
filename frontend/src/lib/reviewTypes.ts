@@ -26,6 +26,8 @@ export interface LintIssue {
   rule: string;
   element_id: string | null;
   message: string;
+  /** v1.10 §3.12.11: "done" or "documented" for a view's own flow check; null for the whole map. */
+  view?: "done" | "documented" | null;
 }
 
 export interface LintReport {

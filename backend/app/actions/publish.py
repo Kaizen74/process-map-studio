@@ -37,7 +37,7 @@ from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import versions as versions_repo
-from app.services import exports, layout, lint, signal
+from app.services import exports, signal
 
 Sessions = sessionmaker[Session]
 
@@ -168,7 +168,8 @@ def blockers(
         found.append(PublishBlocker(type="suggested_image", id="images", element_id=None,
                                     message=f"{exports.plural(suggested, 'suggested image')} to "
                                     "keep or discard."))  # fmt: skip
-    report = lint.run_lint(graph, layout.compute_layout(graph))
+    report = versions_action.lint_for(session, version_id)
+    assert report is not None
     found += [
         PublishBlocker(type="lint_failure", id=f.rule, element_id=f.element_id, message=f.message)
         for f in report.failures

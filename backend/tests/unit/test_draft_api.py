@@ -377,7 +377,7 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it.
     assert set(body["edges"][0]) == {
         "id", "from", "to", "kind", "label",
-        "sequence_basis", "view_membership", "information_payload", "typical",
+        "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
     }  # fmt: skip
     assert "Priya" not in graph.text and "I build the preliminary" not in graph.text
     layout = client.get(f"/api/versions/{job['target_id']}/layout")

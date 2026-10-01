@@ -74,6 +74,8 @@ export interface GraphEdge {
   view_membership?: ViewMembership | null;
   information_payload?: string | null;
   typical?: boolean | null;
+  /** "I" for a line the translation added for one view (drawn per view from V1). */
+  provenance?: "O" | "I" | "R";
 }
 
 export interface Graph {

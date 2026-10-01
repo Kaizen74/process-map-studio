@@ -28,6 +28,7 @@ from app.domain.graph import (
 )
 from app.domain.layout import Layout, LayoutEdge, LayoutNode
 from app.services import layout as engine
+from app.services import views
 from app.services.layout import compute_layout, count_crossings, label_rect, wrap_label
 
 G1 = Path(__file__).resolve().parents[1] / "golden" / "G1_graph.json"
@@ -40,7 +41,8 @@ def sample() -> Graph:
         e["handoff"]["in_"] = e["handoff"].pop("in")
     for e in data["edges"]:
         e["from_"] = e.pop("from")
-    return Graph.model_validate(data)
+    # The map as the layout draws it until V1 (without the lines added for one view).
+    return views.combined(Graph.model_validate(data))
 
 
 def element(

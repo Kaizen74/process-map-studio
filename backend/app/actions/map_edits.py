@@ -236,7 +236,10 @@ def _check_edge(
 
 def _view(edge: EdgeRecord) -> GraphEdge:
     return GraphEdge(id=edge.id, from_=edge.from_element_id, to=edge.to_element_id,
-                     kind=edge.kind, label=edge.label)  # fmt: skip
+                     kind=edge.kind, label=edge.label, sequence_basis=edge.sequence_basis,
+                     view_membership=edge.view_membership,
+                     information_payload=edge.information_payload, typical=edge.typical,
+                     provenance=edge.provenance)  # fmt: skip
 
 
 def _plain(edge: EdgeRecord) -> dict[str, str]:
@@ -287,9 +290,10 @@ def _change_edge(
                 [result] = map_repo.add_edges(session, version_id, [edge])
                 action, before, after = "Added line", None, _plain(result)
             else:
+                # A line Eric edits is his: no longer one the translation re-works (provenance I).
                 fields = {"from_element_id": edge.from_element_id,
                           "to_element_id": edge.to_element_id, "kind": edge.kind,
-                          "label": edge.label}  # fmt: skip
+                          "label": edge.label, "provenance": Provenance.OBSERVED.value}  # fmt: skip
                 updated = map_repo.update_edge(session, current.id, fields)
                 assert updated is not None
                 result = updated
@@ -306,7 +310,11 @@ def _change_edge(
             after=after,
         )
     versions_action.lint_version(sessions, version_id)
-    return Ok(_view(result) if result else None)
+    if result is None:
+        return Ok(None)
+    with session_scope(sessions) as session:  # as stored after the views were brought up to date
+        stored = map_repo.edge(session, result.id)
+    return Ok(_view(stored[1] if stored else result))
 
 
 def add_edge(

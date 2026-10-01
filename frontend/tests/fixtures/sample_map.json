@@ -1371,7 +1371,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "both",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-44",
@@ -1382,7 +1383,8 @@
         "sequence_basis": "document_order",
         "view_membership": "documented_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-45",
@@ -1393,7 +1395,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "documented_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-46",
@@ -1404,7 +1407,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "documented_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-47",
@@ -1415,7 +1419,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "both",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-48",
@@ -1426,7 +1431,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-49",
@@ -1437,7 +1443,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-50",
@@ -1448,7 +1455,8 @@
         "sequence_basis": "narration_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-51",
@@ -1459,7 +1467,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-52",
@@ -1470,7 +1479,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-53",
@@ -1481,7 +1491,8 @@
         "sequence_basis": "narration_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-54",
@@ -1492,7 +1503,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "both",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-55",
@@ -1503,7 +1515,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-56",
@@ -1514,7 +1527,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-57",
@@ -1525,7 +1539,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-58",
@@ -1536,7 +1551,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "both",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "O"
       },
       {
         "id": "id-59",
@@ -1547,7 +1563,8 @@
         "sequence_basis": "explicit_order",
         "view_membership": "done_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "I"
       },
       {
         "id": "id-60",
@@ -1558,7 +1575,8 @@
         "sequence_basis": "narration_order",
         "view_membership": "documented_only",
         "information_payload": null,
-        "typical": null
+        "typical": null,
+        "provenance": "I"
       }
     ]
   },

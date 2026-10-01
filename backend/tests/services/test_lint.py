@@ -22,7 +22,8 @@ from app.domain.graph import (
     GraphTime,
     GraphVersion,
 )
-from app.services.lint import run_lint
+from app.services.lint import run_lint, run_view_checks
+from app.services.views import view_graph
 
 LC, LEAD, CAPTAIN = "lc", "lead", "captain"
 
@@ -306,3 +307,96 @@ def test_more_than_three_line_crossings_is_a_warning() -> None:
     replace(graph, "check", review_status="rejected")  # ids[4] and ids[5] leave "check"
     assert not any("crossings" in w.message for w in run_lint(graph, layout).warnings)
     assert not any("crossings" in w.message for w in run_lint(clean()).warnings)  # no layout
+
+
+# --- Each view on its own (PRD §3.12.11; B5) ----------------------------------------------------
+
+
+def with_views(g: Graph, steps: dict[str, str], lines: list[GraphEdge]) -> Graph:
+    """The clean map with view membership on some steps and some extra lines."""
+    g.elements = [
+        e.model_copy(update={"view_membership": steps.get(e.id, "both")}) for e in g.elements
+    ]
+    g.edges = [e.model_copy(update={"view_membership": "both"}) for e in g.edges] + lines
+    return g
+
+
+def viewed(a: str, b: str, view: str, kind: str = "sequence", label: str = "",
+           basis: str = "explicit_order") -> GraphEdge:  # fmt: skip
+    return GraphEdge(id=f"{a}>{b}:{view}", from_=a, to=b, kind=kind, label=label,
+                     view_membership=view, sequence_basis=basis)  # fmt: skip
+
+
+def two_views() -> Graph:
+    """The approval is only in the documents; practice goes straight from plan to check."""
+    g = with_views(clean(), {"approve": "documented_only"}, [viewed("plan", "check", "done_only")])
+    g.edges = [
+        e.model_copy(update={"view_membership": "documented_only"})
+        if e.from_ == "plan" and e.to == "approve"
+        else e
+        for e in g.edges
+    ]
+    return g
+
+
+def test_a_map_drafted_before_the_views_passes_in_both() -> None:
+    report = run_view_checks(clean())  # no view membership: everything is in both views
+    assert (report.failures, report.warnings) == ([], [])
+
+
+def test_each_view_draws_only_its_steps_and_lines() -> None:
+    g = two_views()
+    done, documented = view_graph(g, "done"), view_graph(g, "documented")
+    assert [e.id for e in done.elements] == ["start", "plan", "check", "issue", "end"]
+    assert ("plan", "check") in {(e.from_, e.to) for e in done.edges}
+    assert [e.id for e in documented.elements] == [
+        "start", "plan", "approve", "check", "issue", "end",
+    ]  # fmt: skip
+    assert ("plan", "check") not in {(e.from_, e.to) for e in documented.edges}
+    report = run_view_checks(g)
+    assert (report.failures, report.warnings) == ([], [])
+
+
+def test_each_view_must_pass_the_flow_checks_on_its_own() -> None:
+    """Without practice's line from plan to check, As done is broken (the approval is only in
+    the documents) though the map as one still connects."""
+    g = two_views()
+    g.edges = [e for e in g.edges if e.id != "plan>check:done_only"]
+    assert run_lint(g).failures == []  # the map as one is fine
+    report = run_view_checks(g)
+    assert [(f.rule, f.element_id, f.view) for f in report.failures] == [
+        ("L9", "plan", "done"),  # no way out in practice
+        ("L9", "check", "done"),  # can't be reached in practice
+        ("L9", "issue", "done"),
+        ("L9", "end", "done"),
+    ]
+    assert report.failures[0].message == 'As done: Activity "Plan" has no way out (no outgoing ' \
+        "connection)."  # fmt: skip
+
+
+def test_an_exit_a_view_draws_must_be_labelled() -> None:
+    g = with_views(clean(), {}, [viewed("check", "end", "documented_only", kind="exception")])
+    report = run_view_checks(g)
+    assert [(f.rule, f.element_id, f.view, f.message) for f in report.failures] == [
+        ("L4", "check", "documented",
+         'As documented: Decision "Check" has 1 unlabelled exit(s).'),
+    ]  # fmt: skip
+
+
+def test_not_described_connectors_and_narration_order_are_warnings() -> None:
+    g = with_views(
+        clean(),
+        {},
+        [viewed("plan", "issue", "done_only", kind="gap", label="Not described",
+                basis="document_order"),
+         viewed("issue", "end", "documented_only", basis="narration_order")],
+    )  # fmt: skip
+    report = run_view_checks(g)
+    assert report.failures == []
+    assert [(w.rule, w.element_id, w.view, w.message) for w in report.warnings] == [
+        ("L12", None, "done",
+         'As done: 1 "not described" connector(s): the interview doesn\'t say what happens '
+         "there."),
+        ("L12", "end", None,
+         'The line from "Issue" to "End" rests only on the order the sources mention them.'),
+    ]  # fmt: skip

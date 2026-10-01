@@ -43,6 +43,7 @@ class SentenceAccount(BaseModel):
 
 # --- Translation into views (PRD §3.12.10 step C rules 1-7, §3.12.11) ---------------------------
 
+View = Literal["done", "documented"]  # As done (default) · As documented
 ViewMembership = Literal["both", "done_only", "documented_only"]
 SequenceBasis = Literal["explicit_order", "document_order", "dependency", "narration_order"]
 
@@ -66,6 +67,7 @@ class TranslationStep(BaseModel):
     documents: list[StepPosition] = []
     handoff_in: str = ""
     handoff_out: str = ""
+    added_by_owner: bool = False  # Eric put the step in the flow himself: its order is stated
 
 
 class TranslationEdge(BaseModel):

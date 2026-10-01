@@ -125,7 +125,7 @@ def _lint(
     _config: AppConfig, sessions: Sessions, _ctx: AiContext, *, version_id: str, job_id: str
 ) -> Result[object]:
     """The lint rules on the assembled map; the report is stored on the version."""
-    return versions_action.lint_version(sessions, version_id)
+    return versions_action.lint_version(sessions, version_id, ask=False)
 
 
 def _plural(n: int, word: str) -> str:

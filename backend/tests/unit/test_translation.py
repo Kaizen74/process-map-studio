@@ -357,3 +357,63 @@ def test_recommended_practice_is_documented_only() -> None:
     added = step("r", "not_assessed").model_copy(update={"provenance": "R"})
     assert translation.element_view(added) == "documented_only"
     assert translation.element_view(step("t", "trace_contradicted")) == "both"
+
+
+def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> None:
+    """B5 (§3.12.11): `?view=` gives one view's steps and lines; both views pass the flow checks
+    on their own; the three narration-order lines are warnings (with their questions)."""
+    url = f"/api/versions/{drafted.version_id}/graph"
+    done = drafted.client.get(url, params={"view": "done"}).json()
+    documented = drafted.client.get(url, params={"view": "documented"}).json()
+    assert [e["label"] for e in done["elements"]] == [
+        "Flight scheduled", "Draft load plan", "Special loads OK?", "Resolve or offload",
+        "Load and return LIR", "Busy wave?", "Read report at aircraft", "Deviation in limits?",
+        "Approve deviation", "Issue load sheet", "Final load sheet issued",
+    ]  # fmt: skip
+    assert [e["label"] for e in documented["elements"]] == [
+        "Flight scheduled", "Draft load plan", "Approve load plan", "Special loads OK?",
+        "Load and return LIR", "Deviation in limits?", "Issue load sheet",
+        "Final load sheet issued",
+    ]  # fmt: skip
+    assert len(done["edges"]) == 14 and len(documented["edges"]) == 8
+    bad = drafted.client.get(url, params={"view": "both"})
+    assert bad.status_code == 422
+    lint = drafted.client.get(f"/api/versions/{drafted.version_id}/lint").json()
+    assert [f for f in lint["failures"] if f["view"]] == []
+    narration = [w["message"] for w in lint["warnings"] if "order the sources" in w["message"]]
+    assert narration == [
+        'The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources '
+        "mention them.",
+        'The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order '
+        "the sources mention them.",
+        'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
+        "sources mention them.",
+    ]
+
+
+def test_views_are_kept_up_to_date_on_drafts_only(drafted: Drafted) -> None:
+    """After an edit the views are worked out again (no AI); a published version never changes
+    (constraint 8), even when its lint report is worked out again."""
+    from sqlalchemy import update
+
+    from app.actions import versions as versions_action
+    from app.repositories import elements as map_repo
+    from app.repositories.tables import MapVersion
+
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        plan = next(e for e in map_repo.elements(session, drafted.version_id)
+                    if e.label == "Draft load plan")  # fmt: skip
+        map_repo.update_element(session, plan.id, {"view_membership": None})
+    versions_action.lint_version(sessions, drafted.version_id)
+    with session_scope(sessions) as session:
+        assert map_repo.element(session, plan.id).view_membership == "both"  # type: ignore[union-attr]
+        map_repo.update_element(session, plan.id, {"view_membership": None})
+        before = len(map_repo.edges(session, drafted.version_id))
+        session.execute(
+            update(MapVersion).where(MapVersion.id == drafted.version_id).values(state="published")
+        )
+    versions_action.lint_version(sessions, drafted.version_id)
+    with session_scope(sessions) as session:
+        assert map_repo.element(session, plan.id).view_membership is None  # type: ignore[union-attr]
+        assert len(map_repo.edges(session, drafted.version_id)) == before

@@ -360,7 +360,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // P9: the Matrix, every step against every kind of source; silence shown as silent.
     await page.getByRole("link", { name: /^Matrix/ }).click();
     const matrixTable = page.getByRole("table", { name: "How each kind of source stands on each step" });
-    await expect(matrixTable.getByRole("row")).toHaveCount(9);
+    await expect(matrixTable.getByRole("row")).toHaveCount(11);  // header + ten steps (v1.10 A.5)
     const lirRow = matrixTable.getByRole("row", { name: /Load and return LIR/ });
     await expect(lirRow).toContainText("Contradicts");
     await expect(lirRow).toContainText("Contested");
@@ -517,8 +517,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const usage = page.getByRole("region", { name: "AI usage" });
     await expect(usage.getByRole("table")).toBeVisible();
     await expect(usage.getByText(/All time: \d+ calls/)).toBeVisible();
-    // Three interview chunks, read twice: the first draft and the refresh (P6).
-    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(6);
+    // The table lists the 50 most recent calls (the total counts every call). v1.10: a draft makes
+    // 27 calls, so the latest run's three interview chunks are listed and the first draft's have
+    // scrolled out of the 50.
+    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(3);
     await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {
