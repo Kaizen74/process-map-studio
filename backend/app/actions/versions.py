@@ -275,6 +275,10 @@ def build_graph(
                 practice_described=translation.practice_described(accounts),
                 variants=e.variants,
                 view_membership=e.view_membership,
+                work_type=e.work_type,
+                constraint_type=e.constraint_type,
+                work_type_basis=list(e.work_type_basis or []),
+                work_type_status=e.work_type_status,
             )
         )
 

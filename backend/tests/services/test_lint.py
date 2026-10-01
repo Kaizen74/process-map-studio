@@ -400,3 +400,13 @@ def test_not_described_connectors_and_narration_order_are_warnings() -> None:
         ("L12", "end", None,
          'The line from "Issue" to "End" rests only on the order the sources mention them.'),
     ]  # fmt: skip
+
+
+def test_complex_or_chaotic_work_is_never_an_automation_candidate() -> None:
+    """L10 (constraint 7, §3.12.5): a rule-based decision can still be complex work."""
+    g = replace(clean(), "check", work_type="complex")
+    assert [(f.rule, f.element_id) for f in run_lint(g).failures] == [("L10", "check")]
+    assert run_lint(g).failures[0].message == (
+        'Decision "Check" is complex work, so it can\'t be flagged for automation.'
+    )
+    assert run_lint(replace(clean(), "check", work_type="clear")).failures == []

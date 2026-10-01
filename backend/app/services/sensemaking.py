@@ -7,13 +7,16 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
 from pydantic import ValidationError
 
+from app.domain.models import PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import AccountType, Lexicon, MarkerTag, SentenceAccount
+from app.services import grounding, prompts
 from app.services.prompts import PROMPTS_DIR
 
 LEXICON_FILE = PROMPTS_DIR / "marker_lexicon.json"
@@ -80,3 +83,71 @@ def pretag_account_type(text: str, lexicon: Lexicon) -> list[SentenceAccount]:
             )
         )
     return result
+
+
+# --- Work type (§3.12.4, §3.12.5) and know-how (§3.12.6): S3c and the panel (C2) ----------------
+
+NOT_CLASSIFIED = "not_classified"
+PROPOSED = "proposed"
+CONSTRAINT_FOR: dict[str, str | None] = {
+    "clear": "rigid",
+    "complicated": "governing",
+    "complex": "enabling",
+    "chaotic": "absent",
+    "confused": None,
+}
+NEVER_AUTOMATED = frozenset({"complex", "chaotic"})
+
+
+@dataclass(frozen=True, slots=True)
+class CueCheck:
+    """The cues that passed (each with the real passage IDs and the quote) and how many didn't."""
+
+    cues: list[dict[str, object]]
+    dropped: int
+
+
+def validate_work_type_cues(
+    cues: list[tuple[list[str], str]], passages: dict[str, PromptSegment]
+) -> CueCheck:
+    """A work-type cue counts only if it cites passages sent in the same call (G3) and its quote is
+    found in them (G4), like every claim (§3.12.4: 'each must be quoted')."""
+    kept: list[dict[str, object]] = []
+    for refs, quote in cues:
+        if not grounding.verify_segments(refs, passages).passed:
+            continue
+        cited = prompts.cited_text([passages[r] for r in refs])
+        if grounding.verify_quote(quote, cited).passed:
+            kept.append({"segment_ids": [passages[r].segment_id for r in refs], "quote": quote})
+    return CueCheck(cues=kept, dropped=len(cues) - len(kept))
+
+
+def work_type_fields(work_type: str | None, cues: list[dict[str, object]]) -> dict[str, object]:
+    """The element fields for a proposed work type, or for one not classified (no valid cue)."""
+    if work_type is None or not cues:
+        return {"work_type": NOT_CLASSIFIED, "constraint_type": None, "work_type_basis": [],
+                "work_type_status": NOT_CLASSIFIED}  # fmt: skip
+    return {"work_type": work_type, "constraint_type": CONSTRAINT_FOR.get(work_type),
+            "work_type_basis": cues, "work_type_status": PROPOSED}  # fmt: skip
+
+
+ASHEN = ("artefacts", "skills", "heuristics", "experience", "natural_talent")
+
+
+def knowledge_risk(ashen: dict[str, list[dict[str, object]]]) -> str:
+    """§3.12.6, deterministic: high when heuristics and experience outweigh artefacts and skills
+    and no more than two roles hold them, or when natural talent is cited; medium when skills
+    outweigh artefacts (or heuristics and experience are spread over more roles); low when
+    artefacts and skills cover it; `unknown` when nothing is known about it yet."""
+    count = {k: len(ashen.get(k, [])) for k in ASHEN}
+    if not any(count.values()):
+        return "unknown"
+    if count["natural_talent"]:
+        return "high"
+    tacit = ashen.get("heuristics", []) + ashen.get("experience", [])
+    if len(tacit) > count["artefacts"] + count["skills"]:
+        holders = {str(i.get("role", "")) for i in tacit}
+        return "high" if len(holders) <= 2 else "medium"
+    if count["skills"] > count["artefacts"]:
+        return "medium"
+    return "low"

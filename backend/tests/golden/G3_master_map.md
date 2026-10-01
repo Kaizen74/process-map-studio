@@ -177,9 +177,12 @@ No steps from external practice.
 3. When the weight deviation is outside tolerance, who decides: the Load control lead, as the SOP says, or the captain, as happens in practice? (step: Deviation in limits? · Close out) · contested
 4. Who approves the preliminary load plan before it is released? · gap
 5. Which role issues the final load sheet? · gap
-6. Does "Busy wave?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Busy wave? · Check and load) · order not stated
-7. Does "Deviation in limits?" come right after "Read report at aircraft"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
-8. Does "Deviation in limits?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
+6. What kind of work is "Approve load plan"? Is it done by following a fixed rule, worked out by someone experienced, a judgment call that depends on the situation, or firefighting? (step: Approve load plan · Plan) · work type not clear
+7. What kind of work is "Busy wave?"? Is it done by following a fixed rule, worked out by someone experienced, a judgment call that depends on the situation, or firefighting? (step: Busy wave? · Check and load) · work type not clear
+8. What kind of work is "Approve deviation"? Is it done by following a fixed rule, worked out by someone experienced, a judgment call that depends on the situation, or firefighting? (step: Approve deviation · Close out) · work type not clear
+9. Does "Busy wave?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Busy wave? · Check and load) · order not stated
+10. Does "Deviation in limits?" come right after "Read report at aircraft"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
+11. Does "Deviation in limits?" come right after "Load and return LIR"? The sources mention it later but don't say it comes next. (step: Deviation in limits? · Close out) · order not stated
 
 ### Cause library entries (pending validation)
 

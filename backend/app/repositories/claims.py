@@ -168,3 +168,11 @@ def by_ids(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
         return {}
     rows = session.scalars(select(Claim).where(Claim.id.in_(claim_ids)))
     return {row.id: _record(row) for row in rows}
+
+
+def set_payload(session: Session, claim_id: str, payload: dict[str, Any]) -> None:
+    """Replace a claim's payload (S3c records the steps a story or know-how item is about)."""
+    row = session.get(Claim, claim_id)
+    if row is not None:
+        row.payload = payload
+        session.flush()

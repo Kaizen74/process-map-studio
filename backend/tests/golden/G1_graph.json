@@ -113,7 +113,11 @@
       },
       "practice_described": null,
       "variants": null,
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": null,
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": null
     },
     {
       "id": "id-11",
@@ -236,10 +240,21 @@
       },
       "practice_described": true,
       "variants": null,
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": "complicated",
+      "constraint_type": "governing",
+      "work_type_basis": [
+        {
+          "segment_ids": [
+            "id-20"
+          ],
+          "quote": "only me and one other controller really know the configurations"
+        }
+      ],
+      "work_type_status": "proposed"
     },
     {
-      "id": "id-20",
+      "id": "id-21",
       "stable_key": "approve-load-plan",
       "kind": "approval",
       "label": "Approve load plan",
@@ -283,7 +298,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-21",
+          "segment_id": "id-22",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "supports",
@@ -292,7 +307,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-22",
+          "segment_id": "id-23",
           "source_id": "id-19",
           "source_kind": "job_description",
           "stance": "supports",
@@ -348,10 +363,14 @@
       },
       "practice_described": null,
       "variants": null,
-      "view_membership": "documented_only"
+      "view_membership": "documented_only",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-23",
+      "id": "id-24",
       "stable_key": "special-loads-ok",
       "kind": "decision",
       "label": "Special loads OK?",
@@ -403,7 +422,7 @@
       },
       "evidence": [
         {
-          "segment_id": "id-24",
+          "segment_id": "id-25",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -412,7 +431,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-25",
+          "segment_id": "id-26",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "supports",
@@ -472,10 +491,27 @@
       },
       "practice_described": true,
       "variants": null,
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": "clear",
+      "constraint_type": "rigid",
+      "work_type_basis": [
+        {
+          "segment_ids": [
+            "id-25"
+          ],
+          "quote": "against the checklist"
+        },
+        {
+          "segment_ids": [
+            "id-26"
+          ],
+          "quote": "Special loads shall be checked against the acceptance checklist"
+        }
+      ],
+      "work_type_status": "proposed"
     },
     {
-      "id": "id-26",
+      "id": "id-27",
       "stable_key": "resolve-or-offload",
       "kind": "activity",
       "label": "Resolve or offload",
@@ -519,7 +555,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-27",
+          "segment_id": "id-28",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -584,10 +620,14 @@
       },
       "practice_described": null,
       "variants": null,
-      "view_membership": "done_only"
+      "view_membership": "done_only",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-28",
+      "id": "id-29",
       "stable_key": "load-and-return-lir",
       "kind": "activity",
       "label": "Load and return LIR",
@@ -652,7 +692,7 @@
       },
       "evidence": [
         {
-          "segment_id": "id-29",
+          "segment_id": "id-30",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -661,7 +701,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-30",
+          "segment_id": "id-31",
           "source_id": "id-18",
           "source_kind": "sop",
           "stance": "contradicts",
@@ -728,10 +768,14 @@
           "time": "Within 10 minutes of loading completion"
         }
       },
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-31",
+      "id": "id-32",
       "stable_key": "busy-wave",
       "kind": "decision",
       "label": "Busy wave?",
@@ -775,7 +819,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-32",
+          "segment_id": "id-33",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -840,10 +884,14 @@
       },
       "practice_described": true,
       "variants": null,
-      "view_membership": "done_only"
+      "view_membership": "done_only",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-33",
+      "id": "id-34",
       "stable_key": "read-report-at-aircraft",
       "kind": "activity",
       "label": "Read report at aircraft",
@@ -887,7 +935,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-32",
+          "segment_id": "id-33",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -952,10 +1000,14 @@
       },
       "practice_described": true,
       "variants": null,
-      "view_membership": "done_only"
+      "view_membership": "done_only",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-34",
+      "id": "id-35",
       "stable_key": "deviation-in-limits",
       "kind": "decision",
       "label": "Deviation in limits?",
@@ -1006,7 +1058,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-35",
+          "segment_id": "id-36",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -1015,7 +1067,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-36",
+          "segment_id": "id-37",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "contradicts",
@@ -1082,10 +1134,27 @@
           "owner": "Load control lead"
         }
       },
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": "complex",
+      "constraint_type": "enabling",
+      "work_type_basis": [
+        {
+          "segment_ids": [
+            "id-38"
+          ],
+          "quote": "There's no fixed answer."
+        },
+        {
+          "segment_ids": [
+            "id-38"
+          ],
+          "quote": "You read the situation."
+        }
+      ],
+      "work_type_status": "proposed"
     },
     {
-      "id": "id-37",
+      "id": "id-39",
       "stable_key": "approve-deviation",
       "kind": "approval",
       "label": "Approve deviation",
@@ -1124,7 +1193,7 @@
       "ai_flag": null,
       "evidence": [
         {
-          "segment_id": "id-38",
+          "segment_id": "id-40",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -1189,10 +1258,14 @@
       },
       "practice_described": null,
       "variants": null,
-      "view_membership": "done_only"
+      "view_membership": "done_only",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": "not_classified"
     },
     {
-      "id": "id-39",
+      "id": "id-41",
       "stable_key": "issue-load-sheet",
       "kind": "activity",
       "label": "Issue load sheet",
@@ -1242,7 +1315,7 @@
       },
       "evidence": [
         {
-          "segment_id": "id-40",
+          "segment_id": "id-42",
           "source_id": "id-13",
           "source_kind": "interview_transcript",
           "stance": "supports",
@@ -1251,7 +1324,7 @@
           "note": ""
         },
         {
-          "segment_id": "id-41",
+          "segment_id": "id-43",
           "source_id": "id-15",
           "source_kind": "sop",
           "stance": "supports",
@@ -1311,10 +1384,21 @@
       },
       "practice_described": true,
       "variants": null,
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": "clear",
+      "constraint_type": "rigid",
+      "work_type_basis": [
+        {
+          "segment_ids": [
+            "id-43"
+          ],
+          "quote": "The final load sheet shall be issued through the departure control system"
+        }
+      ],
+      "work_type_status": "proposed"
     },
     {
-      "id": "id-42",
+      "id": "id-44",
       "stable_key": "end",
       "kind": "end",
       "label": "Final load sheet issued",
@@ -1357,12 +1441,16 @@
       },
       "practice_described": null,
       "variants": null,
-      "view_membership": "both"
+      "view_membership": "both",
+      "work_type": null,
+      "constraint_type": null,
+      "work_type_basis": [],
+      "work_type_status": null
     }
   ],
   "edges": [
     {
-      "id": "id-43",
+      "id": "id-45",
       "from": "id-10",
       "to": "id-11",
       "kind": "sequence",
@@ -1374,9 +1462,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-44",
+      "id": "id-46",
       "from": "id-11",
-      "to": "id-20",
+      "to": "id-21",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "document_order",
@@ -1386,9 +1474,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-45",
-      "from": "id-20",
-      "to": "id-23",
+      "id": "id-47",
+      "from": "id-21",
+      "to": "id-24",
       "kind": "approve",
       "label": "Approve",
       "sequence_basis": "explicit_order",
@@ -1398,8 +1486,8 @@
       "provenance": "O"
     },
     {
-      "id": "id-46",
-      "from": "id-20",
+      "id": "id-48",
+      "from": "id-21",
       "to": "id-11",
       "kind": "reject",
       "label": "Rework",
@@ -1410,9 +1498,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-47",
-      "from": "id-23",
-      "to": "id-28",
+      "id": "id-49",
+      "from": "id-24",
+      "to": "id-29",
       "kind": "yes",
       "label": "Yes",
       "sequence_basis": "explicit_order",
@@ -1422,9 +1510,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-48",
-      "from": "id-23",
-      "to": "id-26",
+      "id": "id-50",
+      "from": "id-24",
+      "to": "id-27",
       "kind": "no",
       "label": "No",
       "sequence_basis": "explicit_order",
@@ -1434,8 +1522,8 @@
       "provenance": "O"
     },
     {
-      "id": "id-49",
-      "from": "id-26",
+      "id": "id-51",
+      "from": "id-27",
       "to": "id-11",
       "kind": "rework",
       "label": "Re-plan",
@@ -1446,9 +1534,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-50",
-      "from": "id-28",
-      "to": "id-31",
+      "id": "id-52",
+      "from": "id-29",
+      "to": "id-32",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "narration_order",
@@ -1458,9 +1546,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-51",
-      "from": "id-31",
-      "to": "id-33",
+      "id": "id-53",
+      "from": "id-32",
+      "to": "id-34",
       "kind": "yes",
       "label": "Yes",
       "sequence_basis": "explicit_order",
@@ -1470,9 +1558,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-52",
-      "from": "id-31",
-      "to": "id-34",
+      "id": "id-54",
+      "from": "id-32",
+      "to": "id-35",
       "kind": "no",
       "label": "No",
       "sequence_basis": "explicit_order",
@@ -1482,9 +1570,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-53",
-      "from": "id-33",
-      "to": "id-34",
+      "id": "id-55",
+      "from": "id-34",
+      "to": "id-35",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "narration_order",
@@ -1494,9 +1582,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-54",
-      "from": "id-34",
-      "to": "id-39",
+      "id": "id-56",
+      "from": "id-35",
+      "to": "id-41",
       "kind": "yes",
       "label": "Within limits",
       "sequence_basis": "explicit_order",
@@ -1506,9 +1594,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-55",
-      "from": "id-34",
-      "to": "id-37",
+      "id": "id-57",
+      "from": "id-35",
+      "to": "id-39",
       "kind": "no",
       "label": "Outside limits",
       "sequence_basis": "explicit_order",
@@ -1518,9 +1606,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-56",
-      "from": "id-37",
-      "to": "id-39",
+      "id": "id-58",
+      "from": "id-39",
+      "to": "id-41",
       "kind": "approve",
       "label": "Accept",
       "sequence_basis": "explicit_order",
@@ -1530,9 +1618,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-57",
-      "from": "id-37",
-      "to": "id-28",
+      "id": "id-59",
+      "from": "id-39",
+      "to": "id-29",
       "kind": "rework",
       "label": "Re-trim",
       "sequence_basis": "explicit_order",
@@ -1542,9 +1630,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-58",
-      "from": "id-39",
-      "to": "id-42",
+      "id": "id-60",
+      "from": "id-41",
+      "to": "id-44",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "explicit_order",
@@ -1554,9 +1642,9 @@
       "provenance": "O"
     },
     {
-      "id": "id-59",
+      "id": "id-61",
       "from": "id-11",
-      "to": "id-23",
+      "to": "id-24",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "explicit_order",
@@ -1566,9 +1654,9 @@
       "provenance": "I"
     },
     {
-      "id": "id-60",
-      "from": "id-28",
-      "to": "id-34",
+      "id": "id-62",
+      "from": "id-29",
+      "to": "id-35",
       "kind": "sequence",
       "label": "",
       "sequence_basis": "narration_order",

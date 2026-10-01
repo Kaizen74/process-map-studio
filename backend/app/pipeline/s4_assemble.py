@@ -51,7 +51,7 @@ from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import versions as versions_repo
-from app.services import ai_service, calibration, grounding, prompts
+from app.services import ai_service, calibration, grounding, prompts, sensemaking
 
 Sessions = sessionmaker[Session]
 
@@ -469,8 +469,12 @@ def assemble(
             flags = detail.ai_flags[:1] if detail else []
             for flag in flags:
                 automate = flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value
-                if automate and mechanism == DecisionMechanism.JUDGMENT.value:
-                    tally.dropped_flags += 1  # constraint 7: never on a judgment step
+                if automate and (
+                    mechanism == DecisionMechanism.JUDGMENT.value
+                    or element.work_type in sensemaking.NEVER_AUTOMATED
+                ):
+                    # Constraint 7: never on a judgment step, nor on complex or chaotic work.
+                    tally.dropped_flags += 1
                     continue
                 texts = [gate.scrub(t) for t in (flag.input, flag.output, flag.handoff)]
                 if not all(grounding.verify_numbers(t, gate.text).passed for t in texts):

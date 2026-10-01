@@ -165,10 +165,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    // v1.10 A.5: ten steps; A.9: three lines rest only on the order of mentioning (+3 questions).
+    // v1.10 A.5: ten steps; A.9: three lines rest only on the order of mentioning (+3 questions);
+    // A.8 (C2): three decisions and approvals whose kind of work isn't clear (+3 questions).
     await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("10");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
-    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("8");
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("11");
     await expect(summary.getByText(/Built from 32 checked claims/)).toBeVisible();  // v1.10 A.1, A.5, A.8 (C1)
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
@@ -517,7 +518,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(usage.getByRole("table")).toBeVisible();
     await expect(usage.getByText(/All time: \d+ calls/)).toBeVisible();
     // The table lists the 50 most recent calls (the total counts every call). v1.10: a draft makes
-    // 27 calls, so the latest run's three interview chunks are listed and the first draft's have
+    // 28 calls, so the latest run's three interview chunks are listed and the first draft's have
     // scrolled out of the 50.
     await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(3);
     await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();

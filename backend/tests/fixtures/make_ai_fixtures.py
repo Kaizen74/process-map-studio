@@ -794,6 +794,82 @@ def verdicts(count: int, verdict: str = "supported", reason: str = "") -> dict[s
     }  # fmt: skip
 
 
+S3C_EMPTY: dict[str, Any] = {"work_types": [], "links": []}
+
+
+def s3c_call(sessions: Any, version_id: str) -> tuple[str, dict[str, str], dict[str, str]]:
+    """The S3c call for a version: its input hash, the call's source ref per file name and the
+    item ref per item text, exactly as the stage sends them."""
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.pipeline import s3c_sensemaking as s3c
+    from app.pipeline.s3_calibrate import step_refs
+    from app.repositories import sources, versions
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        assert version is not None
+        terms = redaction.name_replacements(session, version.engagement_id)
+        steps = step_refs(session, version_id)
+        items = s3c.items_for(session, version_id)
+        passages = s3c.passages_for(session, steps, items, terms)
+        names = {}
+        for sref, _kind, segments in passages:
+            owner = sources.segment_source(session, segments[0].segment_id)
+            found = sources.get(session, owner or "")
+            assert found is not None
+            names[found.filename] = sref
+        blocks = s3c.blocks_for(steps, items, passages)
+    item_refs = {str(i.record.payload["text"]): i.ref for i in items}
+    return ai_service.input_hash(s3c.STAGE_ID, blocks), names, item_refs
+
+
+def s3c_answer(names: dict[str, str], items: dict[str, str]) -> dict[str, Any]:
+    """A.8 work types with quoted cues, and what each story, know-how item, term and decision
+    information item is about (C2)."""
+    interview, sop = names["interview_transcript.txt"], names["sop_LC-07.docx"]
+
+    def cue(source: str, seq: int, quote: str) -> dict[str, Any]:
+        return {"segment_ids": [f"{source}.p{seq}"], "quote": quote}
+
+    def item(text_start: str) -> str:
+        return next(ref for text, ref in items.items() if text.startswith(text_start))
+
+    return {
+        "work_types": [
+            {"step_ref": "e1", "work_type": "complicated",
+             "cues": [cue(interview, 3, "only me and one other controller really know the "
+                                        "configurations")],
+             "basis": "The plan for widebodies needs someone experienced."},
+            {"step_ref": "e3", "work_type": "clear",
+             "cues": [cue(interview, 4, "against the checklist"),
+                      cue(sop, 6, "Special loads shall be checked against the acceptance "
+                                  "checklist")],
+             "basis": "Special loads are checked against a fixed checklist."},
+            {"step_ref": "e8", "work_type": "complex",
+             "cues": [cue(interview, 15, "There's no fixed answer."),
+                      cue(interview, 15, "You read the situation.")],
+             "basis": "The SME says there is no fixed answer and the situation is read."},
+            {"step_ref": "e10", "work_type": "clear",
+             "cues": [cue(sop, 10, "The final load sheet shall be issued through the departure "
+                                  "control system")],
+             "basis": "Issuing the load sheet follows a fixed rule."},
+        ],
+        "links": [
+            {"item_ref": item("The special loads checklist"), "step_refs": ["e3"]},
+            {"item_ref": item("Had to re-trim"), "step_refs": ["e1", "e8"]},
+            {"item_ref": item("If the forward hold"), "step_refs": ["e8"]},
+            {"item_ref": item("The rule of thumb"), "step_refs": ["e8"]},
+            {"item_ref": item("The loading report"), "step_refs": ["e8"]},
+            {"item_ref": item("re-trim:"), "step_refs": ["e9"]},
+            {"item_ref": item("wave:"), "step_refs": ["e6"]},
+            {"item_ref": item("forward hold:"), "step_refs": ["e1"]},
+            {"item_ref": item("Deviation in limits?"), "step_refs": ["e8"]},
+        ],
+    }  # fmt: skip
+
+
 def s4_hash(sessions: Any, version_id: str) -> str:
     """The input hash of the S4 call for a version, exactly as the stage sends it."""
     from app.actions import redaction
@@ -1493,12 +1569,19 @@ def main() -> None:
         for stage, empty in (
             ("S3_calibrate", S3_EMPTY),
             ("S3b_verify", S3B_EMPTY),
+            ("S3c_worktype", S3C_EMPTY),
             ("S4_assemble", S4_EMPTY),
             ("S5_questions", S5_EMPTY),
         ):
             shutil.rmtree(root / stage, ignore_errors=True)
             write(root, stage, "default", empty)
-    from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify, s4_assemble
+    from app.pipeline import (
+        s2_canonicalise,
+        s3_calibrate,
+        s3b_verify,
+        s3c_sensemaking,
+        s4_assemble,
+    )
 
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
@@ -1512,6 +1595,9 @@ def main() -> None:
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        digest, names, items = s3c_call(sessions, version_id)
+        write(MOCKS, "S3c_worktype", digest, s3c_answer(names, items))
+        run_stage(app, s3c_sensemaking.sense, version_id)
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), S4_ANSWER)
         run_stage(app, s4_assemble.assemble, version_id)
         write(MOCKS, "S5_questions", s5_hash(sessions, version_id), S5_ANSWER)

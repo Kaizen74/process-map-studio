@@ -39,6 +39,7 @@ from app.pipeline import (
     s2_canonicalise,
     s3_calibrate,
     s3b_verify,
+    s3c_sensemaking,
     s4_assemble,
     s4b_translate,
     s5_questions,
@@ -343,8 +344,12 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         later: list[tuple[str, list[Stage], float]] = [
             ("compare", [s2_canonicalise.canonicalise, s3_calibrate.calibrate], COMPARE_SHARE),
             ("verify", [s3b_verify.verify], VERIFY_SHARE),
-            ("build", [s4_assemble.assemble, s4b_translate.translate, _lint], BUILD_SHARE),
-            ("questions", [s5_questions.ask, s4b_translate.ask], 1.0),
+            (
+                "build",
+                [s3c_sensemaking.sense, s4_assemble.assemble, s4b_translate.translate, _lint],
+                BUILD_SHARE,
+            ),
+            ("questions", [s5_questions.ask, s3c_sensemaking.ask, s4b_translate.ask], 1.0),
         ]
         for sid, stages, share in later:
             # With the verifier off, S3b only records "not run"; the stepper says it was skipped.

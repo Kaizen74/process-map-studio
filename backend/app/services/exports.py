@@ -80,6 +80,7 @@ REASONS = {
     "low_confidence": "low confidence",
     "gap": "gap",
     "gap_analysis": "gap analysis",
+    "work_type": "work type not clear",
     "sequence": "order not stated",
     "not_described": "not described",
 }

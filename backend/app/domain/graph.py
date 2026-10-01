@@ -296,6 +296,12 @@ class GraphElement(Out):
     variants: dict[str, dict[str, str]] | None = None
     # §3.12.11 (B.35): both · done_only · documented_only; null on maps drafted before v1.10.
     view_membership: str | None = None
+    # §3.12.4 (B.29, B.30; C2): the kind of work, its constraint type, the quoted cues
+    # [{segment_ids, quote}] and proposed · confirmed · not_classified; null before v1.10.
+    work_type: str | None = None
+    constraint_type: str | None = None
+    work_type_basis: list[dict[str, Any]] = []
+    work_type_status: str | None = None
 
 
 class GraphEdge(Out):
@@ -421,6 +427,10 @@ class ElementDetail(Out):
     practice_described: bool | None = None
     variants: dict[str, dict[str, str]] | None = None
     view_membership: str | None = None
+    work_type: str | None = None
+    constraint_type: str | None = None
+    work_type_basis: list[dict[str, Any]] = []
+    work_type_status: str | None = None
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
     # was translated from, each with the guide question that prompted it. App only, never exported.
     answers: list[AnswerQuote] = []

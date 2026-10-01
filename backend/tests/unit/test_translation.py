@@ -20,7 +20,7 @@ from app.domain.sensemaking import (
 )
 from app.pipeline import s1_extract
 from app.repositories import claims as claims_repo
-from app.services import translation
+from app.services import sensemaking, translation
 from tests.unit.test_review_actions import Drafted, drafted
 
 __all__ = ["drafted"]
@@ -268,6 +268,7 @@ def test_a9_as_done_and_as_documented_from_one_draft(drafted: Drafted) -> None:
     questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
     assert [q["reason"] for q in questions] == [
         "documented_only", "contested", "contested", "gap", "gap",
+        "work_type", "work_type", "work_type",  # C2: decisions and approvals not classified
         "sequence", "sequence", "sequence",
     ]  # fmt: skip
     assert questions[-3]["question"] == (
@@ -546,3 +547,98 @@ def test_the_sample_interview_tells_its_story_know_how_and_terms(drafted: Drafte
     assert story.payload["frequency"] == "maybe once a month"
     assert story.payload["fragment_type"] == "went_badly"
     assert "Priya" not in json.dumps([r.model_dump() for r in rows])
+
+
+# --- S3c work types and links (C2; PRD §3.12.4-3.12.6, A.8) -------------------------------------
+
+
+def test_a8_work_types_with_quoted_cues_and_what_each_item_is_about(drafted: Drafted) -> None:
+    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
+    kinds = {
+        e["label"]: (e["work_type"], e["constraint_type"], e["work_type_status"])
+        for e in graph["elements"]
+        if e["kind"] not in ("start", "end")
+    }
+    assert kinds["Draft load plan"] == ("complicated", "governing", "proposed")
+    assert kinds["Special loads OK?"] == ("clear", "rigid", "proposed")
+    assert kinds["Deviation in limits?"] == ("complex", "enabling", "proposed")
+    assert kinds["Issue load sheet"] == ("clear", "rigid", "proposed")
+    assert {k for k, v in kinds.items() if v[0] == "not_classified"} == {
+        "Approve load plan", "Resolve or offload", "Load and return LIR", "Busy wave?",
+        "Read report at aircraft", "Approve deviation",
+    }  # fmt: skip
+    deviation = next(e for e in graph["elements"] if e["label"] == "Deviation in limits?")
+    assert [c["quote"] for c in deviation["work_type_basis"]] == [
+        "There's no fixed answer.",
+        "You read the situation.",
+    ]
+    # A.8: no AI flag on the complex step; the clear special-loads check stays eligible.
+    flagged = {e["label"]: e["ai_flag"]["basis"] for e in graph["elements"] if e["ai_flag"]}
+    assert "Deviation in limits?" not in flagged
+    assert flagged["Special loads OK?"] == "rule_based_automate_candidate"
+    # The SME signifier "Firefighting" describes one night, not the step (A.8): no override.
+    assert deviation["work_type"] == "complex"
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        rows = claims_repo.list_claims(session, drafted.version_id, "verified")
+    about = {str(r.payload["text"])[:24]: r.payload.get("about_steps") for r in rows
+             if r.claim_type in SENSE_CLAIM_TYPES}  # fmt: skip
+    assert about["Had to re-trim three fli"] == ["draft-load-plan", "deviation-in-limits"]
+    assert about["The special loads checkl"] == ["special-loads-ok"]
+    assert about["If the forward hold look"] == ["deviation-in-limits"]
+    # Decisions and approvals without a work type become validation questions.
+    questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
+    assert [q["element_label"] for q in questions if q["reason"] == "work_type"] == [
+        "Approve load plan", "Busy wave?", "Approve deviation",
+    ]  # fmt: skip
+
+
+def test_a_work_type_needs_a_quoted_cue_from_the_passages_sent() -> None:
+    passages = {s.ref: s for s in SPOKEN}
+    check = sensemaking.validate_work_type_cues(
+        [(["p1"], "My rule of thumb"), (["p9"], "rule of thumb"), (["p2"], "no fixed answer")],
+        passages,
+    )
+    assert check.cues == [{"segment_ids": ["seg-1"], "quote": "My rule of thumb"}]
+    assert check.dropped == 2
+    assert sensemaking.work_type_fields("complex", []) == {
+        "work_type": "not_classified", "constraint_type": None, "work_type_basis": [],
+        "work_type_status": "not_classified",
+    }  # fmt: skip
+    assert sensemaking.work_type_fields("chaotic", check.cues)["constraint_type"] == "absent"
+
+
+def test_knowledge_risk_follows_the_ashen_profile() -> None:
+    def items(n: int, role: str = "Load controller") -> list[dict[str, object]]:
+        return [{"text": f"x{i}", "role": role} for i in range(n)]
+
+    risk = sensemaking.knowledge_risk
+    assert risk({}) == "unknown"
+    assert risk({"artefacts": items(1)}) == "low"  # A.8: special loads (the checklist)
+    assert risk({"heuristics": items(1), "experience": items(1), "artefacts": items(1)}) == "high"
+    assert risk({"skills": items(2), "artefacts": items(1)}) == "medium"
+    assert risk({"natural_talent": items(1), "artefacts": items(3)}) == "high"
+    spread = [{"text": "x", "role": r} for r in ("A", "B", "C")]
+    assert risk({"heuristics": spread}) == "medium"  # held by more than two roles
+
+
+def test_reviewed_steps_keep_their_work_type(drafted: Drafted) -> None:
+    from app.pipeline import s3c_sensemaking
+    from app.pipeline.context import ai_context
+    from app.repositories import elements as map_repo
+
+    sessions = drafted.client.app.state.sessions  # type: ignore[attr-defined]
+    config = drafted.client.app.state.config  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        plan = next(e for e in map_repo.elements(session, drafted.version_id)
+                    if e.label == "Draft load plan")  # fmt: skip
+        map_repo.update_element(session, plan.id, {"review_status": "confirmed",
+                                                   "work_type": "clear",
+                                                   "work_type_status": "confirmed"})  # fmt: skip
+    ctx = ai_context(config)
+    assert isinstance(ctx, Ok)
+    result = s3c_sensemaking.sense(config, sessions, ctx.value, version_id=drafted.version_id)
+    assert isinstance(result, Ok)
+    with session_scope(sessions) as session:
+        kept = map_repo.element(session, plan.id)
+    assert kept is not None and (kept.work_type, kept.work_type_status) == ("clear", "confirmed")

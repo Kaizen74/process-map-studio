@@ -445,3 +445,32 @@ class GBFinding(BaseModel):
 
 class GBStructureOutput(BaseModel):
     findings: list[GBFinding]
+
+
+# --- S3c Sensemaking (PRD §3.7, §3.12.4; C2) ---------------------------------------------------
+
+
+class S3cCue(BaseModel):
+    """A work-type cue: words copied exactly from the cited segments."""
+
+    segment_ids: list[str]
+    quote: str = Field(description="The cue words, copied exactly, at most 40 words")
+
+
+class S3cWorkType(BaseModel):
+    step_ref: str
+    work_type: Literal["clear", "complicated", "complex", "chaotic", "confused"]
+    cues: list[S3cCue] = Field(description="At least one quoted cue; without one, leave it out")
+    basis: str = Field(description="How the cues show this kind of work, in one sentence")
+
+
+class S3cLink(BaseModel):
+    """Which steps a story, know-how item, term or decision-information item is about."""
+
+    item_ref: str
+    step_refs: list[str]
+
+
+class S3cOutput(BaseModel):
+    work_types: list[S3cWorkType]
+    links: list[S3cLink]

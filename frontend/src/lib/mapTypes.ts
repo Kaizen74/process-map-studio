@@ -57,7 +57,14 @@ export interface GraphElement {
   variants?: { done?: Record<string, string>; documented?: Record<string, string> } | null;
   /** v1.10 §3.12.11 (B.35); null on maps drafted before v1.10. */
   view_membership?: ViewMembership | null;
+  /** v1.10 §3.12.4 (C2): the kind of work, with the quoted cues that show it. */
+  work_type?: WorkType | null;
+  constraint_type?: "rigid" | "governing" | "enabling" | "absent" | null;
+  work_type_basis?: { segment_ids: string[]; quote: string }[];
+  work_type_status?: "proposed" | "confirmed" | "not_classified" | null;
 }
+
+export type WorkType = "clear" | "complicated" | "complex" | "chaotic" | "confused" | "not_classified";
 
 export type ViewMembership = "both" | "done_only" | "documented_only";
 export type SequenceBasis = "explicit_order" | "document_order" | "dependency" | "narration_order";

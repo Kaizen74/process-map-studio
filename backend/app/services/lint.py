@@ -27,6 +27,7 @@ from app.domain.enums import (
 from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
 from app.domain.layout import Layout
 from app.services.layout import count_crossings
+from app.services.sensemaking import NEVER_AUTOMATED
 from app.services.views import NAMES, VIEWS, view_graph
 
 MAX_STEPS = 25
@@ -152,6 +153,12 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
                 and e.decision.mechanism == DecisionMechanism.JUDGMENT.value
             ):
                 fail("L10", e, f"{_name(e)} is a judgment step, so it can't be flagged for "
+                               "automation.")  # fmt: skip
+            elif (
+                flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value
+                and e.work_type in NEVER_AUTOMATED
+            ):
+                fail("L10", e, f"{_name(e)} is {e.work_type} work, so it can't be flagged for "
                                "automation.")  # fmt: skip
         # L11: exactly one Accountable, or several all marked contested.
         if step:

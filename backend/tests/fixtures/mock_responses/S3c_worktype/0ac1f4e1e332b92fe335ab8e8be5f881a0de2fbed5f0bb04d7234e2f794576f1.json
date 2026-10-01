@@ -1,0 +1,125 @@
+{
+  "work_types": [
+    {
+      "step_ref": "e1",
+      "work_type": "complicated",
+      "cues": [
+        {
+          "segment_ids": [
+            "s1.p3"
+          ],
+          "quote": "only me and one other controller really know the configurations"
+        }
+      ],
+      "basis": "The plan for widebodies needs someone experienced."
+    },
+    {
+      "step_ref": "e3",
+      "work_type": "clear",
+      "cues": [
+        {
+          "segment_ids": [
+            "s1.p4"
+          ],
+          "quote": "against the checklist"
+        },
+        {
+          "segment_ids": [
+            "s2.p6"
+          ],
+          "quote": "Special loads shall be checked against the acceptance checklist"
+        }
+      ],
+      "basis": "Special loads are checked against a fixed checklist."
+    },
+    {
+      "step_ref": "e8",
+      "work_type": "complex",
+      "cues": [
+        {
+          "segment_ids": [
+            "s1.p15"
+          ],
+          "quote": "There's no fixed answer."
+        },
+        {
+          "segment_ids": [
+            "s1.p15"
+          ],
+          "quote": "You read the situation."
+        }
+      ],
+      "basis": "The SME says there is no fixed answer and the situation is read."
+    },
+    {
+      "step_ref": "e10",
+      "work_type": "clear",
+      "cues": [
+        {
+          "segment_ids": [
+            "s2.p10"
+          ],
+          "quote": "The final load sheet shall be issued through the departure control system"
+        }
+      ],
+      "basis": "Issuing the load sheet follows a fixed rule."
+    }
+  ],
+  "links": [
+    {
+      "item_ref": "i1",
+      "step_refs": [
+        "e3"
+      ]
+    },
+    {
+      "item_ref": "i2",
+      "step_refs": [
+        "e1",
+        "e8"
+      ]
+    },
+    {
+      "item_ref": "i3",
+      "step_refs": [
+        "e8"
+      ]
+    },
+    {
+      "item_ref": "i4",
+      "step_refs": [
+        "e8"
+      ]
+    },
+    {
+      "item_ref": "i5",
+      "step_refs": [
+        "e8"
+      ]
+    },
+    {
+      "item_ref": "i6",
+      "step_refs": [
+        "e9"
+      ]
+    },
+    {
+      "item_ref": "i7",
+      "step_refs": [
+        "e6"
+      ]
+    },
+    {
+      "item_ref": "i8",
+      "step_refs": [
+        "e1"
+      ]
+    },
+    {
+      "item_ref": "i9",
+      "step_refs": [
+        "e8"
+      ]
+    }
+  ]
+}

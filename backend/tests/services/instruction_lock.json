@@ -51,6 +51,10 @@
     "sha256": "6e588869613b91d50833d65e662affb78bbb1d31fde4f295c846b1154595950a",
     "version": "1"
   },
+  "S3c_worktype.md": {
+    "sha256": "0e398fa8601457aa1ad98990de53d385cbf01b4241409541414751636816a6cc",
+    "version": "1"
+  },
   "S4_assemble.md": {
     "sha256": "ea806b1bfacceb899e3c92fff8ee4088dd161c3272c1b13daf08843abfdb5a86",
     "version": "2"

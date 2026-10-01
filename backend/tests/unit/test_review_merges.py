@@ -154,6 +154,10 @@ def test_questions_can_be_marked_answered_and_reopened(drafted: Drafted) -> None
         ("contested", "Deviation in limits?", "Close out"),
         ("gap", "", ""),
         ("gap", "", ""),
+        # A.8 (C2): decisions and approvals whose kind of work no cue shows.
+        ("work_type", "Approve load plan", "Plan"),
+        ("work_type", "Busy wave?", "Check and load"),
+        ("work_type", "Approve deviation", "Close out"),
         # v1.10 A.9: the lines resting only on the order of mentioning.
         ("sequence", "Busy wave?", "Check and load"),
         ("sequence", "Deviation in limits?", "Close out"),
