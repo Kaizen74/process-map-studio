@@ -341,9 +341,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // P9: coverage on Sources (G11): the share of each file the map cites, uncited passages on request.
     await page.goto(`/engagements/${id}/sources`);
     const registry = page.getByRole("table", { name: "Sources for this engagement" });
-    // v1.10 A.1: three of the twelve SME turns (a story, know-how, judgment cues) are not cited
-    // until those lenses are extracted.
-    await expect(registry.getByRole("row", { name: /interview_transcript\.txt/ })).toContainText("75%");
+    // v1.10 A.1: every SME turn is cited once the story, know-how and decision cues are extracted.
+    await expect(registry.getByRole("row", { name: /interview_transcript\.txt/ })).toContainText("100%");
     await expect(registry.getByRole("row", { name: /sop_LC-07\.docx/ })).toContainText("50%");
     await registry.getByRole("button", { name: "sop_LC-07.docx", exact: true }).click();
     const lc07 = page.getByRole("region", { name: "sop_LC-07.docx" });

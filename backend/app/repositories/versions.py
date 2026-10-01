@@ -9,6 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.domain.models import VersionView
+from app.domain.sensemaking import SENSE_CLAIM_TYPES
 from app.repositories.tables import (
     AiFlag,
     Base,
@@ -301,10 +302,21 @@ def _copy[T: Base](session: Session, model: type[T], row: T, **changes: Any) -> 
 
 
 def copy_content(session: Session, from_id: str, to_id: str) -> None:
-    """Deep copy of a published map into a new draft (PRD §3.5 Reopen): phases, steps with their
-    claim links, lines, RACI, evidence links, constraints, AI flags, questions, image rows (the
-    files are shared) and sources. Reviewed steps carry over as confirmed; rejected stay rejected.
-    """
+    """Deep copy of a published map into a new draft (PRD §3.5 Reopen): the interview's stories,
+    know-how and terms, phases, steps with their claim links, lines, RACI, evidence links,
+    constraints, AI flags, questions, image rows (the files are shared) and sources. Reviewed
+    steps carry over as confirmed; rejected stay rejected."""
+    # The interview's stories, know-how, terms and the like (C1) belong to no step's claim links;
+    # they are copied with the map so the reopened draft keeps them (their step links are stable
+    # step keys, which the copied steps keep).
+    for claim in session.scalars(
+        select(Claim).where(
+            Claim.version_id == from_id,
+            Claim.verification_status == "verified",
+            Claim.claim_type.in_(SENSE_CLAIM_TYPES),
+        )
+    ):
+        _copy(session, Claim, claim, version_id=to_id)
     phases: dict[str, str] = {}
     for old in session.scalars(select(Phase).where(Phase.version_id == from_id)):
         phases[old.id] = _copy(session, Phase, old, version_id=to_id).id
