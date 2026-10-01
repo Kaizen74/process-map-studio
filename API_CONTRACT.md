@@ -201,9 +201,11 @@ Response `200`:
 ```json
 {"segments": [{"id": "…", "seq": 3, "anchor": "§3.1", "page": null, "section": "3 Load planning",
                "speaker_role": null, "speaker_label": null, "text": "§3.1 The Load Controller shall …",
-               "cited": false, "instruction_like": false, "corrected": false}],
+               "cited": false, "instruction_like": false, "corrected": false,
+               "question_id": null}],
  "total": 10, "page": 1, "pages": 1, "coverage_pct": null}
 ```
+- `question_id` (2026-10-01, PRD §3.12.10 step A): for an interview transcript, once a draft has been made, the guide question each turn asks (interviewer) or answers (the SME's turns until the next matched question); matched by an explicit tag such as `[M2.2]` (any question-bank ID) or by wording similarity ≥ 0.60 against the engagement's guide (until tailored guides exist: the standard Practice template's questions); `null` before the first matched question, for free conversation before it, and for documents.
 - `speaker_role`: the mapped role's name, `"Interviewer"`, or `null` when the speaker isn't mapped yet (never the label, which may be a name).
 - **Names are hidden** (PRD §3.8 G10): `text` and `section` have every redaction term replaced by its replacement (the mapped role, "Interviewer" or "[name]"). With `raw=1` the text is exactly as stored and `speaker_label` is filled; this is one of the three owner-only places where names appear.
 - `around=<segment_id>` (from P5): instead of `page`, return the page that holds this passage (the response's `page` says which). `404` "That passage isn't in this source." when it belongs to another source or doesn't exist.

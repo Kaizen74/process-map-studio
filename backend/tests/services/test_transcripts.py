@@ -14,16 +14,23 @@ from tests.paths import BACKEND_ROOT
 
 FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
 
-# PRD Appendix A.1: (anchor, speaker) for each turn.
+# PRD Appendix A.1 (v1.10: sixteen turns, four of them the interviewer's): (anchor, speaker).
 EXPECTED = [
     ("06:38", "Interviewer"),
     ("06:40", "Priya Nair"),
     ("07:55", "Priya Nair"),
     ("14:05", "Priya Nair"),
     ("16:22", "Priya Nair"),
+    ("21:45", "Interviewer"),
     ("21:50", "Priya Nair"),
+    ("22:30", "Priya Nair"),
+    ("24:10", "Priya Nair"),
+    ("24:40", "Interviewer"),
+    ("24:46", "Priya Nair"),
     ("27:15", "Priya Nair"),
     ("29:02", "Priya Nair"),
+    ("29:40", "Interviewer"),
+    ("29:48", "Priya Nair"),
     ("31:10", "Priya Nair"),
 ]
 
@@ -100,13 +107,14 @@ def test_vtt_and_srt_keep_their_cue_end_times() -> None:
 
 def test_pdf_turns_rejoin_wrapped_lines_and_page_breaks() -> None:
     found = {anchor(s): s for s in turns("pdf")}
-    split = found["16:22"]  # starts on page 1, finishes on page 2
+    # v1.10 A.1 (sixteen turns): the 22:30 turn starts on page 1 and finishes on page 2.
+    split = found["22:30"]
     assert split.page == 1
     assert split.text.replace("\u2019", "'") == (
-        "If something can't be accepted, the airline decides what to offload. That takes anywhere "
-        "from fifteen to forty minutes. Then I re-plan."
+        "Officially the ramp should send the report within ten minutes. What actually happens on "
+        "a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot."
     )
-    assert found["21:50"].page == 2
+    assert found["24:10"].page == 2
 
 
 def test_word_headings_are_not_speakers() -> None:

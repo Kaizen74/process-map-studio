@@ -52,8 +52,10 @@ def test_coverage_is_the_share_of_passages_verified_claims_cite(drafted: Drafted
         counted = [s for s in page["segments"] if s["speaker_role"] != "Interviewer"]
         cited = [s for s in counted if s["cited"]]
         assert page["coverage_pct"] == round(100 * len(cited) / len(counted), 1), name
-    # The interview is fully used once the interviewer's questions are left out; the SOP half.
-    assert (listed[TRANSCRIPT]["coverage_pct"], listed[SOP]["coverage_pct"]) == (100.0, 50.0)
+    # The v1.10 A.1 interview (twelve SME turns): the four turns that carry only accounts,
+    # stories, know-how and judgment cues (22:30, 24:10, 24:46, 29:48) are not cited until those
+    # lenses are extracted; the SOP half.
+    assert (listed[TRANSCRIPT]["coverage_pct"], listed[SOP]["coverage_pct"]) == (66.7, 50.0)
     assert drafted.client.get(f"/api/sources/{listed[SOP]['id']}").json()["coverage_pct"] == 50.0
 
 
@@ -62,9 +64,10 @@ def test_uncited_only_lists_what_nothing_cites(drafted: Drafted) -> None:
     uncited = passages(drafted, SOP, uncited_only="1")
     assert [s["id"] for s in uncited["segments"]] == [s["id"] for s in everything if not s["cited"]]
     assert uncited["total"] == 5 and uncited["pages"] == 1
-    # Interviewer turns are never listed as skipped, even if uncited.
+    # Interviewer turns are never listed as skipped, even if uncited: only the SME's turns.
     interview = passages(drafted, TRANSCRIPT, uncited_only="1")
-    assert interview["segments"] == [] and interview["total"] == 0
+    assert [s["anchor"] for s in interview["segments"]] == ["22:30", "24:10", "24:46", "29:48"]
+    assert interview["total"] == 4
     cited = next(s for s in everything if s["cited"])
     both = drafted.client.get(
         f"/api/sources/{sources(drafted)[SOP]['id']}/segments",

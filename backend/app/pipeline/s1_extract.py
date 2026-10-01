@@ -19,13 +19,15 @@ from app.actions import redaction
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
-from app.domain.enums import SourceKind
+from app.domain.enums import InterviewType, SourceKind
+from app.domain.interview import BankQuestion, Turn
 from app.domain.models import (
     AiCallRecord,
     CheckOutcome,
     ClaimRecord,
     NameReplacement,
     PromptSegment,
+    SourceReadInfo,
     StoredSegment,
     UnknownRecord,
 )
@@ -33,7 +35,16 @@ from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
 from app.repositories import claims as claims_repo
 from app.repositories import sources as sources_repo
-from app.services import ai_service, chunking, grounding, parsing, prompts
+from app.services import (
+    ai_service,
+    chunking,
+    grounding,
+    interview_templates,
+    parsing,
+    prompts,
+    question_matching,
+    sensemaking,
+)
 
 Sessions = sessionmaker[Session]
 
@@ -96,8 +107,82 @@ def chunks_for(kind: str, segments: list[PromptSegment]) -> list[list[PromptSegm
     return chunking.chunk_document(segments)
 
 
-def blocks_for(kind: str, chunk: list[PromptSegment]) -> list[dict[str, object]]:
-    return [{"type": "text", "text": prompts.render_source(SOURCE_REF, kind, chunk)}]
+def blocks_for(
+    kind: str, chunk: list[PromptSegment], questions: dict[str, BankQuestion] | None = None
+) -> list[dict[str, object]]:
+    """One chunk as sent. For an interview, the guide questions its answer blocks answer come
+    first, with their targets (§3.12.10 step A)."""
+    text = prompts.render_source(SOURCE_REF, kind, chunk)
+    asked = list(dict.fromkeys(s.question_id for s in chunk if s.question_id))
+    if questions and asked:
+        text = (
+            prompts.render_questions([questions[q] for q in asked if q in questions]) + "\n" + text
+        )
+    return [{"type": "text", "text": text}]
+
+
+# Until tailored guides exist (P4c), interviews are matched against the standard Practice
+# template's questions (PRD Appendix A.9: "the default Practice guide … without tailoring").
+DEFAULT_GUIDE = InterviewType.PRACTICE
+
+
+@dataclass(frozen=True, slots=True)
+class Prepared:
+    """One source ready for S1: its passages as sent, and for an interview the guide questions
+    its answer blocks answer."""
+
+    info: SourceReadInfo
+    terms: list[NameReplacement]
+    groups: list[list[str]]
+    segments: list[PromptSegment]
+    questions: dict[str, BankQuestion]
+
+
+def prepare(session: Session, source_id: str) -> Result[Prepared]:
+    """Passages as sent (names hidden, speakers as roles). For an interview transcript, step A
+    (each turn's guide question, stored on the passage) and step B (marker hints on the SME's
+    turns) are applied first (§3.12.10)."""
+    info = sources_repo.reading_info(session, source_id)
+    if info is None:
+        return Err(ErrorKind.NOT_FOUND, "That source doesn't exist. It may have been deleted.")
+    terms = redaction.name_replacements(session, info.engagement_id)
+    groups = role_groups(session, info.engagement_id)
+    stored = sources_repo.stored_segments(session, source_id)
+    segments = prompt_segments(stored, info.format, terms)
+    if info.kind != SourceKind.INTERVIEW_TRANSCRIPT.value:
+        return Ok(Prepared(info, terms, groups, segments, {}))
+    match interview_templates.load_bank():
+        case Err() as err:
+            return err
+        case Ok(value=bank):
+            pass
+    match sensemaking.load_lexicon():
+        case Err() as err:
+            return err
+        case Ok(value=lexicon):
+            pass
+    guide = [bank.question(q) for q in bank.template_ids(DEFAULT_GUIDE)]
+    turns = [Turn(seq=s.seq, is_interviewer=s.is_interviewer, text=s.text) for s in stored]
+    by_seq = {
+        a.seq: a.question_id for a in question_matching.answer_blocks(turns, guide, bank.questions)
+    }
+    sources_repo.set_question_ids(session, source_id, by_seq)
+    interviewer = {s.seq for s in stored if s.is_interviewer}
+    annotated = [
+        s.model_copy(
+            update={
+                "question_id": by_seq.get(s.seq) or "",
+                "markers": []
+                if s.seq in interviewer
+                else [f"{t.pretag}: {t.phrase}" for t in sensemaking.pretag(s.text, lexicon)],
+            }
+        )
+        for s in segments
+    ]
+    asked = {q for q in by_seq.values() if q}
+    return Ok(
+        Prepared(info, terms, groups, annotated, {q: bank.question(q) for q in sorted(asked)})
+    )
 
 
 def _scrub(
@@ -213,12 +298,12 @@ def extract_source(
 ) -> Result[S1Tally]:
     """Run S1 on one source and store its checked claims and unknowns in the version."""
     with session_scope(sessions) as session:
-        info = sources_repo.reading_info(session, source_id)
-        if info is None:
-            return Err(ErrorKind.NOT_FOUND, "That source doesn't exist. It may have been deleted.")
-        terms = redaction.name_replacements(session, info.engagement_id)
-        groups = role_groups(session, info.engagement_id)
-        stored = sources_repo.stored_segments(session, source_id)
+        match prepare(session, source_id):
+            case Err() as err:
+                return err
+            case Ok(value=prepared):
+                pass
+    info, terms, groups = prepared.info, prepared.terms, prepared.groups
     prompt_name = PROMPT_BY_KIND.get(info.kind, DOCUMENT_PROMPT)
     match prompts.load_prompt(prompt_name):
         case Err() as err:
@@ -231,16 +316,15 @@ def extract_source(
         case Ok(value=repair):
             pass
 
-    segments = prompt_segments(stored, info.format, terms)
     records: list[ClaimRecord] = []
     unknowns: list[UnknownRecord] = []
     tally = S1Tally()
-    for chunk in chunks_for(info.kind, segments):
+    for chunk in chunks_for(info.kind, prepared.segments):
         call = ai_service.StageCall(
             stage_id=prompt_name,
             prompt_version=prompt.version,
             system=prompt.text,
-            blocks=blocks_for(info.kind, chunk),
+            blocks=blocks_for(info.kind, chunk, prepared.questions),
             output_model=ai_schemas.S1Output,
             model=ctx.model,
             repair_prompt=repair.text,

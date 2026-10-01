@@ -185,6 +185,8 @@ export interface Segment {
   /** Only with raw=1 (owner-only correction editor). */
   speaker_label?: string | null;
   corrected?: boolean;
+  /** Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted. */
+  question_id?: string | null;
 }
 
 export interface SegmentPage {

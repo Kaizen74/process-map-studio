@@ -124,7 +124,7 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                 "activity",
                 "Ramp loads the aircraft, in forty minutes or so, and sends back the loading "
                 "report.",
-                ["p6"],
+                ["p7"],
                 "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
                 responsible="Ramp",
                 duration="forty minutes or so",
@@ -132,14 +132,14 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "constraint",
                 "The loading report is still on paper and the Load controller re-keys it.",
-                ["p6"],
+                ["p7"],
                 "It's still on paper and I re-key it.",
                 responsible="Load controller",
             ),
             claim(
                 "duration",
                 "The Load controller sometimes waits fifteen minutes for the loading report.",
-                ["p6"],
+                ["p7"],
                 "We sometimes wait fifteen minutes for it",
                 responsible="Load controller",
                 duration="fifteen minutes",
@@ -147,7 +147,7 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "constraint",
                 "At peak times there is a shortage of containers.",
-                ["p6"],
+                ["p7"],
                 "at peak we're short of containers",
             ),
         ],
@@ -158,7 +158,7 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "decision",
                 "If the weight deviation is outside tolerance, the captain decides.",
-                ["p7"],
+                ["p12"],
                 "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
                 decider="Captain",
                 mechanism="judgment",
@@ -167,14 +167,14 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "threshold",
                 "The weight tolerance depends on the airline contract.",
-                ["p7"],
+                ["p12"],
                 "The tolerance depends on the airline contract.",
             ),
             claim(
                 "approval",
                 "The captain either accepts the deviation or asks for a re-trim, which takes five "
                 "to fifteen minutes.",
-                ["p8"],
+                ["p13"],
                 "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
                 accountable="Captain",
                 mechanism="judgment",
@@ -183,7 +183,7 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "activity",
                 "The Load controller issues the final load sheet around T-15.",
-                ["p9"],
+                ["p16"],
                 "Then I issue the final load sheet, around T-15.",
                 responsible="Load controller",
             ),
@@ -346,14 +346,14 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                "If something can't be accepted, the airline decides what to offload."),
     ]},
     ("interview_transcript.txt", 1): {"stances": [
-        stance("e5", "supports", ["p6"],
+        stance("e5", "supports", ["p7"],
                "Ramp loads the aircraft, forty minutes or so, and sends back the loading report."),
     ]},
     ("interview_transcript.txt", 2): {"stances": [
-        stance("e6", "supports", ["p7"],
+        stance("e6", "supports", ["p12"],
                "If the weight deviation is outside tolerance, it's the captain who decides, not us."),
-        stance("e7", "supports", ["p8"], "The captain either accepts or asks for a re-trim."),
-        stance("e8", "supports", ["p9"], "Then I issue the final load sheet, around T-15."),
+        stance("e7", "supports", ["p13"], "The captain either accepts or asks for a re-trim."),
+        stance("e8", "supports", ["p16"], "Then I issue the final load sheet, around T-15."),
     ]},
     ("sop_LC-07.docx", 0): {"stances": [
         stance("e1", "supports", ["p3"],
@@ -426,23 +426,21 @@ OCR_DEFAULT = {"lines": ["Section 2.4 Container checks (illustrative scanned pag
 
 def chunk_hashes(sessions: Any, built: Any) -> dict[tuple[str, int], tuple[str, str]]:
     """(source, chunk) → (stage, input hash) for a built sample engagement, as the app sends it."""
-    from app.actions import redaction
     from app.db import session_scope
+    from app.domain.result import Ok
     from app.pipeline import s1_extract
-    from app.repositories import sources as sources_repo
     from app.services import ai_service
 
     found: dict[tuple[str, int], tuple[str, str]] = {}
     for name, source_id in built.sources.items():
         with session_scope(sessions) as session:
-            info = sources_repo.reading_info(session, source_id)
-            terms = redaction.name_replacements(session, built.engagement_id)
-            stored = sources_repo.stored_segments(session, source_id)
-        assert info is not None
-        stage = s1_extract.PROMPT_BY_KIND.get(info.kind, s1_extract.DOCUMENT_PROMPT)
-        segments = s1_extract.prompt_segments(stored, info.format, terms)
-        for index, chunk in enumerate(s1_extract.chunks_for(info.kind, segments)):
-            blocks = s1_extract.blocks_for(info.kind, chunk)
+            result = s1_extract.prepare(session, source_id)  # exactly as S1 prepares it
+        assert isinstance(result, Ok), result
+        prepared = result.value
+        kind = prepared.info.kind
+        stage = s1_extract.PROMPT_BY_KIND.get(kind, s1_extract.DOCUMENT_PROMPT)
+        for index, chunk in enumerate(s1_extract.chunks_for(kind, prepared.segments)):
+            blocks = s1_extract.blocks_for(kind, chunk, prepared.questions)
             found[(name, index)] = (stage, ai_service.input_hash(stage, blocks))
     return found
 

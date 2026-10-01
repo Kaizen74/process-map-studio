@@ -13,6 +13,7 @@ import re
 from collections.abc import Sequence
 from pathlib import Path
 
+from app.domain.interview import BankQuestion
 from app.domain.models import Prompt, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
 
@@ -103,11 +104,27 @@ def render_source(source_ref: str, kind: str, segments: Sequence[PromptSegment])
     lines = [f'<source id="{escape(source_ref)}" kind="{escape(kind)}">']
     for segment in segments:
         speaker = f' speaker="{escape(segment.speaker_role)}"' if segment.speaker_role else ""
+        # Interviews (§3.12.10 steps A and B): the answer block's question and the marker hints.
+        question = f' question="{escape(segment.question_id)}"' if segment.question_id else ""
+        markers = f' markers="{escape("; ".join(segment.markers))}"' if segment.markers else ""
         lines.append(
-            f'<segment id="{escape(segment.ref)}" anchor="{escape(segment.anchor)}"{speaker}>'
-            f"{escape(segment.text)}</segment>"
+            f'<segment id="{escape(segment.ref)}" anchor="{escape(segment.anchor)}"'
+            f"{speaker}{question}{markers}>{escape(segment.text)}</segment>"
         )
     lines.append("</source>")
+    return "\n".join(lines)
+
+
+def render_questions(questions: Sequence[BankQuestion]) -> str:
+    """The guide questions an interview chunk answers, with what each is designed to produce
+    (its targets), so the model knows what each answer is evidence for (§3.12.10 step A)."""
+    lines = ["<questions>"]
+    for q in questions:
+        lines.append(
+            f'<question id="{escape(q.id)}" movement="{escape(q.movement)}" '
+            f'targets="{escape("; ".join(q.targets))}">{escape(q.wording)}</question>'
+        )
+    lines.append("</questions>")
     return "\n".join(lines)
 
 

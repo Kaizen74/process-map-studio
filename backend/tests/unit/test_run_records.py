@@ -95,10 +95,11 @@ def test_differences_in_plain_words() -> None:
         "get a second check this draft didn't have."
     ]
     # Reworded drafting instructions are named; the gap analyses' own prompts don't matter here.
-    newer = dict(same.instructions, S1_extract_interview="2", GA_internal="9")
+    current = same.instructions["S1_extract_interview"]
+    newer = dict(same.instructions, S1_extract_interview=current + "1", GA_internal="9")
     assert run_records.differences(same, record(instructions=newer)) == [
         "Claude's instructions changed since this draft was made (an app update): "
-        "extracting steps from interviews (version 1 → 2)."
+        f"extracting steps from interviews (version {current} → {current}1)."
     ]
     missing = {k: v for k, v in same.instructions.items() if k != "S5_questions"}
     assert (

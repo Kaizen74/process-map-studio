@@ -100,5 +100,5 @@ def test_scan_reports_which_terms_appear() -> None:
 def test_every_a1_mention_of_the_sme_is_redacted() -> None:
     text = (FIXTURES / "interview_transcript.txt").read_text(encoding="utf-8")
     redacted = grounding.redact_text(text, TERMS)
-    assert redacted.hits == 8
+    assert redacted.hits == 12  # v1.10 A.1: sixteen turns, twelve of them the SME's
     assert grounding.scan_redaction_terms(redacted.text, ["Priya Nair", "Priya"]) == []

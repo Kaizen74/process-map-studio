@@ -4,7 +4,7 @@
       "step_ref": "e6",
       "stance": "supports",
       "segment_ids": [
-        "p7"
+        "p12"
       ],
       "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
       "divergence_type": "none",
@@ -14,7 +14,7 @@
       "step_ref": "e7",
       "stance": "supports",
       "segment_ids": [
-        "p8"
+        "p13"
       ],
       "quote": "The captain either accepts or asks for a re-trim.",
       "divergence_type": "none",
@@ -24,7 +24,7 @@
       "step_ref": "e8",
       "stance": "supports",
       "segment_ids": [
-        "p9"
+        "p16"
       ],
       "quote": "Then I issue the final load sheet, around T-15.",
       "divergence_type": "none",

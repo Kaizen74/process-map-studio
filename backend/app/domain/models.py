@@ -243,6 +243,8 @@ class SegmentView(BaseModel):
     # Only with raw=1 (owner-only correction editor): the speaker label as written in the file.
     speaker_label: str | None = None
     corrected: bool = False
+    # Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted.
+    question_id: str | None = None
 
 
 class SegmentPatch(BaseModel):
@@ -420,6 +422,10 @@ class PromptSegment(BaseModel):
     speaker_role: str = ""
     page: int | None = None
     start_ms: int | None = None
+    # Interviews (§3.12.10 steps A and B): the guide question of the answer block, and the marker
+    # pre-tags as hints ("explicit_order: First thing").
+    question_id: str = ""
+    markers: list[str] = []
 
 
 class Prompt(BaseModel):

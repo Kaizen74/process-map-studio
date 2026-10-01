@@ -1,9 +1,16 @@
-[06:38] Interviewer: Walk me through the last flight you planned.
+[06:38] Interviewer: [M2.2] Walk me through the last flight you planned, step by step, as it actually went.
 [06:40] Priya Nair: First thing, I build the preliminary load plan off the booked figures, usually around T-120. Takes me about twenty minutes.
 [07:55] Priya Nair: For widebodies, honestly only me and one other controller really know the configurations.
 [14:05] Priya Nair: Then I check special loads, dangerous goods and live animals, against the checklist. The notification from the cargo terminal often comes late.
 [16:22] Priya Nair: If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes. Then I re-plan.
+[21:45] Interviewer: How long did each part take, and where were you waiting on someone or something?
 [21:50] Priya Nair: Ramp loads the aircraft, forty minutes or so, and sends back the loading report. It's still on paper and I re-key it. We sometimes wait fifteen minutes for it, and at peak we're short of containers.
+[22:30] Priya Nair: Officially the ramp should send the report within ten minutes. What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.
+[24:10] Priya Nair: My rule of thumb: if the forward hold looks heavy on the plan, I call the ramp before they start, not after. Nobody taught me that; I learned it after we had to re-trim three flights in one night.
+[24:40] Interviewer: [M5.s1] Was that night more like following the procedure, needing an expert, working it out as you went, or firefighting?
+[24:46] Priya Nair: Firefighting. It happens maybe once a month.
 [27:15] Priya Nair: If the weight deviation is outside tolerance, it's the captain who decides, not us. The tolerance depends on the airline contract.
 [29:02] Priya Nair: The captain either accepts or asks for a re-trim. Five to fifteen minutes.
+[29:40] Interviewer: [M4.3] How do you decide what to propose when it's outside tolerance? Is there a rule for this, or does it depend?
+[29:48] Priya Nair: There's no fixed answer. It depends on the captain, the weather, what's still on the belt. You read the situation.
 [31:10] Priya Nair: Then I issue the final load sheet, around T-15.

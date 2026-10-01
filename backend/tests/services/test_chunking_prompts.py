@@ -98,7 +98,7 @@ STAGES = [
     "R_repair",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
-VERSIONS = {"S1_extract_jd": "2", "S2_canonicalise": "2"}
+VERSIONS = {"S1_extract_interview": "2", "S1_extract_jd": "2", "S2_canonicalise": "2"}
 
 
 @pytest.mark.parametrize("name", STAGES)
@@ -283,7 +283,7 @@ def test_the_research_prompts_forbid_general_knowledge() -> None:
 def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -> None:
     """What a run record stamps: each instruction file's version by name."""
     versions = prompts.instruction_versions()
-    assert versions["S1_extract_interview"] == "1"
+    assert versions["S1_extract_interview"] == "2"
     assert versions["question_bank"] == "1.0"
     (tmp_path / "A.md").write_text("<!-- prompt: A · version 3 -->\nDo the task.\n", "utf-8")
     (tmp_path / "no_line.md").write_text("Do the task.\n", encoding="utf-8")

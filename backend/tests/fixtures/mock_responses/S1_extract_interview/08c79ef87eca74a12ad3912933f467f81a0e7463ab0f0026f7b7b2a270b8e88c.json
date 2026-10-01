@@ -10,7 +10,7 @@
       "duration_text": "",
       "threshold": "outside tolerance",
       "segment_ids": [
-        "p7"
+        "p12"
       ],
       "quote": "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
       "provenance": "O",
@@ -26,7 +26,7 @@
       "duration_text": "",
       "threshold": "",
       "segment_ids": [
-        "p7"
+        "p12"
       ],
       "quote": "The tolerance depends on the airline contract.",
       "provenance": "O",
@@ -42,7 +42,7 @@
       "duration_text": "Five to fifteen minutes",
       "threshold": "",
       "segment_ids": [
-        "p8"
+        "p13"
       ],
       "quote": "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
       "provenance": "O",
@@ -58,7 +58,7 @@
       "duration_text": "",
       "threshold": "",
       "segment_ids": [
-        "p9"
+        "p16"
       ],
       "quote": "Then I issue the final load sheet, around T-15.",
       "provenance": "O",
