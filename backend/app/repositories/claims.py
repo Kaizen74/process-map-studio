@@ -162,6 +162,25 @@ def cited_segment_ids(session: Session, version_id: str) -> set[str]:
     return {segment for ids in rows for segment in ids}
 
 
+def verified_with_steps(session: Session, version_id: str) -> list[ClaimRecord]:
+    """The version's verified claims and the verified claims behind its steps (a reopened draft
+    keeps those of the version it came from), oldest first. The coverage report (C4)."""
+    behind_steps = (
+        select(ElementClaim.claim_id)
+        .join(Element, Element.id == ElementClaim.element_id)
+        .where(Element.version_id == version_id)
+    )
+    rows = session.scalars(
+        select(Claim)
+        .where(
+            Claim.verification_status == "verified",
+            (Claim.version_id == version_id) | Claim.id.in_(behind_steps),
+        )
+        .order_by(Claim.created_at, Claim.id)
+    )
+    return [_record(row) for row in rows]
+
+
 def by_ids(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
     """Claim ID → claim, for the IDs given."""
     if not claim_ids:

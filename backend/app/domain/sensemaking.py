@@ -103,3 +103,29 @@ class Translation(BaseModel):
     element_views: dict[str, ViewMembership]
     edges: list[TranslatedEdge]  # the existing lines first, then the added ones
     questions: list[TranslationQuestion]
+
+
+# --- Coverage report (§3.12.8; C4) -------------------------------------------------------------
+
+CoverageStatus = Literal["covered", "thin", "missing"]
+
+
+class CoverageDimension(BaseModel):
+    status: CoverageStatus
+    evidence_count: int
+    note: str = ""  # what the count is made of, in plain words (step labels, never names)
+
+
+class FollowUpQuestion(BaseModel):
+    """A ready-to-ask question for a thin or missing dimension, word for word from the bank."""
+
+    dimension: str
+    question_id: str
+    question: str
+    about: str = ""  # the step (or lines) it is about
+
+
+class CoverageReport(BaseModel):
+    version_id: str
+    dimensions: dict[str, CoverageDimension]
+    follow_up_questions: list[FollowUpQuestion]

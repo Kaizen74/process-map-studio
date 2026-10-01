@@ -187,6 +187,12 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/images", None),
     ("GET", "/api/versions/{map}/alignment-matrix", None),
     ("GET", "/api/versions/{map}/registers", None),
+    # P4b-P4c (2026-10-01): the views and what the panel and Interview screen read.
+    ("GET", "/api/versions/{map}/graph?view=done", None),
+    ("GET", "/api/versions/{map}/layout?view=documented&show_other=1", None),
+    ("GET", "/api/versions/{map}/glossary", None),
+    ("GET", "/api/versions/{map}/capability-notes", None),
+    ("GET", "/api/versions/{map}/coverage", None),
     ("GET", "/api/engagements/{eid}/cause-library", None),
     ("GET", "/api/versions/{map}/gap-analyses", None),
     ("GET", "/api/gap-analyses/{gap}", None),

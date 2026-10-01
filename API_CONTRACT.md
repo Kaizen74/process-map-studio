@@ -789,6 +789,24 @@ Response `200`:
 ### GET /api/versions/{vid}/capability-notes
 Strengths to preserve and weaknesses to improve, as the interviews named them (2026-10-01, C3, PRD §3.12.10 rule 10): `[{"kind": "strength" | "weakness", "dimension": "skillset" | "ways_of_working" | "systems" | "process" | "structure", "text", "cause_type": B.9 | null, "steps": [labels], "quote", "source_id", "segment_id", "anchor"}]`. A weakness linked to a step is also a constraint on it, with its cause type. Names hidden. Errors: `404`.
 
+### GET /api/versions/{vid}/coverage
+What the interviews covered and what still needs asking (2026-10-01, C4, PRD §3.12.8, criterion 50, A.8). Worked out on request from the version's checked interview claims and items (claims with an account type, and the stories, know-how, terms and decision information) and its As done view; nothing is sent to Claude.
+```json
+{"version_id": "…",
+ "dimensions": {"trigger": {"status": "missing", "evidence_count": 0, "note": ""},
+                "official_vs_lived": {"status": "covered", "evidence_count": 1,
+                                      "note": "Both accounts on 1 step: Load and return LIR"}},
+ "follow_up_questions": [{"dimension": "kpis", "question_id": "M7.1",
+                          "question": "How do you know this went well — what's measured, and who looks at it?",
+                          "about": ""}]}
+```
+- `dimensions`, in this order: `trigger` · `end_point` · `step_spine` · `handoffs` · `decisions_and_criteria` · `approvals` · `exceptions` · `raci` · `work_and_wait_time` · `kpis` · `artefacts` · `know_how` · `stories` · `official_vs_lived` · `sme_terms`. `status`: `covered` · `thin` · `missing`.
+- **The rule** for most dimensions: `evidence_count` is the number of checked interview claims or items for it; 0 is `missing`, 1 is `thin` (one mention), 2 or more is `covered`. What counts: trigger claims (`trigger`); interview evidence on the steps that lead to an end (`end_point`); step claims (`step_spine`); hand-off claims (`handoffs`); decision and threshold claims (`decisions_and_criteria`); approval claims (`approvals`); exception claims and claims with a variation condition (`exceptions`); RACI claims and claims naming an accountable role or a decider (`raci`); duration claims and claims stating a time (`work_and_wait_time`); KPI claims (`kpis`); know-how items in the artefacts category (`artefacts`); SME terms (`sme_terms`).
+- **Special rules:** `step_spine` is at most `thin` while a line of the As done view rests only on the order of mentioning or is a "not described" connector. `know_how`: the decisions and approvals of the As done view with at least one know-how item; all of them `covered`, some `thin`, none `missing` (`evidence_count`: know-how items). `stories`: one each of went well, went badly and surprise is `covered`, some `thin`, none `missing` (`evidence_count`: stories). `official_vs_lived`: `covered` when at least one step has both an official and a lived account, else `missing` (`evidence_count`: steps compared).
+- `note`: what the count is made of, in plain words (step labels, never names); `""` when there is nothing to add.
+- `follow_up_questions`: for each `thin` or `missing` dimension, the question bank's question for it, word for word, with its ID (trigger M2.1 · end point M2.5 · step spine M2.2 · hand-offs M3.3 · decisions M4.3 · approvals M7.2 · exceptions M2.6 · RACI M4.4 · time M2.4 · KPIs M7.1 · artefacts M7.4 · know-how M4.8 · official vs lived M6.2 · SME terms M0.2); for `know_how` one per decision without know-how and for `stories` one per kind not yet told (M5.1 went well · M5.2 went badly · M5.3 surprise). `about`: the step (or, for the step spine, the lines) it is about, or `""`. In dimension order. These feed the Follow-up guide (C5).
+Errors: `404` ("That version doesn't exist."). Used by: the Interview screen (coverage) and the Follow-up guide (C5).
+
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).
 

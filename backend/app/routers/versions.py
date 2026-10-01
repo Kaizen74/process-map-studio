@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.actions import lenses, quality, registers, versions
+from app.actions import coverage, lenses, quality, registers, versions
 from app.domain.graph import (
     AlignmentRow,
     CapabilityNote,
@@ -17,7 +17,7 @@ from app.domain.graph import (
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
-from app.domain.sensemaking import View
+from app.domain.sensemaking import CoverageReport, View
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
@@ -48,6 +48,11 @@ def get_registers(request: Request, version_id: str) -> Registers:
 @router.get("/versions/{version_id}/capability-notes")
 def get_capability_notes(request: Request, version_id: str) -> list[CapabilityNote]:
     return unwrap(lenses.get_capability_notes(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/coverage")
+def get_coverage(request: Request, version_id: str) -> CoverageReport:
+    return unwrap(coverage.get_coverage(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/glossary")
