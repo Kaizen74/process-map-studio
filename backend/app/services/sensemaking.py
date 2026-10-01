@@ -358,3 +358,42 @@ def follow_up_questions(
             for t in targets
         ]
     return out
+
+
+# --- Reflective probes (Appendix F F2; A.10; C4c) ----------------------------------------------
+
+PROBE_ID = "F2"
+PROBE_SLOT = "[SME's own words, ≤ 20 words]"
+PROBE_WORDS = 20
+
+
+def probe_claims(claims: list[ClaimRecord]) -> list[tuple[ClaimRecord, str]]:
+    """The verified interview words worth playing back (F2: "verified quotes carrying
+    constraints, risks or stated reasons"), each once, at most 20 words, in reading order: the
+    claim's quote, or for a longer quote the stated reason it carries (checked word for word by
+    S1). Words are never cut."""
+    out: list[tuple[ClaimRecord, str]] = []
+    seen: set[str] = set()
+    for c in claims:
+        interview = c.account_type is not None or c.claim_type in SENSE_CLAIM_TYPES
+        reason = str(c.payload.get("stated_reason") or "").strip()
+        carries = (
+            c.claim_type == "constraint"
+            or (c.claim_type == "capability" and c.payload.get("kind") == "weakness")
+            or bool(reason)
+        )
+        words = c.quote if len(c.quote.split()) <= PROBE_WORDS else reason
+        key = grounding.normalise_text(words)
+        if not (interview and carries) or not key or key in seen:
+            continue
+        if len(words.split()) > PROBE_WORDS:
+            continue
+        seen.add(key)
+        out.append((c, words))
+    return out
+
+
+def probe_question(wording: str, quote: str) -> str:
+    """The bank's F2 wording with the SME's words in its slot (a final full stop or semicolon
+    is dropped where the quote meets the bank's own punctuation)."""
+    return wording.replace(PROBE_SLOT, f"“{quote.strip().rstrip('.;')}”")

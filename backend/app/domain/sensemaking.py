@@ -125,7 +125,19 @@ class FollowUpQuestion(BaseModel):
     about: str = ""  # the step (or lines) it is about
 
 
+class ReflectiveProbe(BaseModel):
+    """F2 (Appendix F): an SME's own verified words played back to them in a follow-up."""
+
+    question_id: str
+    question: str
+    quote: str
+    source_id: str
+    anchor: str
+    speaker_role: str
+
+
 class CoverageReport(BaseModel):
     version_id: str
     dimensions: dict[str, CoverageDimension]
     follow_up_questions: list[FollowUpQuestion]
+    probes: list[ReflectiveProbe] = []

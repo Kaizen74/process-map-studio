@@ -78,3 +78,28 @@ def test_a_reopened_draft_keeps_the_coverage_of_its_version(drafted: Drafted) ->
     after = drafted.client.get(f"/api/versions/{reopened.json()['id']}/coverage").json()
     assert after["dimensions"] == before["dimensions"]
     assert after["follow_up_questions"] == before["follow_up_questions"]
+
+
+def test_a10_reflective_probes_quote_only_verified_words(drafted: Drafted) -> None:
+    probes = coverage(drafted)["probes"]
+    assert isinstance(probes, list)
+    assert [(p["anchor"], p["speaker_role"], p["quote"]) for p in probes] == [
+        ("07:55", "Load controller",
+         "only me and one other controller really know the configurations"),
+        ("14:05", "Load controller", "The notification from the cargo terminal often comes late."),
+        ("21:50", "Load controller", "It's still on paper and I re-key it."),
+        ("21:50", "Load controller", "at peak we're short of containers"),
+        # 22:30's lived quote is 21 words: its stated reason is played back instead.
+        ("22:30", "Load controller", "otherwise we'd miss the slot"),
+        # A.10: the landscape interview's weakness (its constraint has the same words: once).
+        ("05:52", "Ramp",
+         "The weakness is the paper loading report; it gets lost or arrives late."),
+    ]  # fmt: skip
+    a10 = probes[-1]
+    assert a10["question_id"] == "F2"
+    assert a10["question"] == (
+        "You mentioned previously that “The weakness is the paper loading report; it gets lost "
+        "or arrives late”. How do you manage that today, and where do you see the biggest risk?"
+    )
+    assert all(len(p["quote"].split()) <= 20 for p in probes)
+    assert "Priya" not in str(probes)

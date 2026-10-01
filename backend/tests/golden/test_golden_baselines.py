@@ -12,6 +12,10 @@
 - G7: the gap-analysis reports of the sample (Appendix A.7): Analysis A, and Analysis B from the
   mocked web search with traps TE1-TE9, as reported and, after a fixed set of decisions, as
   exported (run and finalise times replaced).
+- G8: the sensemaking outputs of the sample (Appendix A.8): per step its work type with the
+  quoted cues, the interview accounts it rests on (official, lived or unclear, with the cue and
+  any stated reason), its know-how and stories; the glossary, the capability notes and the
+  coverage report with its follow-up questions and probes.
 - G9: the three standard interview templates (PRD Appendix F.9) in Markdown, as downloaded.
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
@@ -100,6 +104,38 @@ def test_g4_alignment_matrix_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         matrix = client.get(f"/api/versions/{version_id}/alignment-matrix").json()
         matches_baseline("G4_alignment_matrix.json", matrix)
+
+
+def test_g8_sensemaking_of_the_sample(settings_config: AppConfig) -> None:
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        graph = client.get(f"/api/versions/{version_id}/graph").json()
+        steps = []
+        for e in graph["elements"]:
+            if e["kind"] in {"start", "end"}:
+                continue
+            detail = client.get(f"/api/elements/{e['id']}").json()
+            steps.append({
+                "label": e["label"],
+                "work_type": e["work_type"],
+                "constraint_type": e["constraint_type"],
+                "work_type_status": e["work_type_status"],
+                "work_type_cues": [c["quote"] for c in e["work_type_basis"]],
+                "accounts": [
+                    {k: a[k] for k in ("anchor", "account_type", "account_cue", "stated_reason",
+                                       "variation_condition", "question_id")}
+                    for a in detail["answers"]
+                ],
+                "account_summary": e["account_summary"],
+                "know_how": detail["know_how"],
+                "stories": detail["stories"],
+            })  # fmt: skip
+        bundle = {
+            "steps": steps,
+            "glossary": client.get(f"/api/versions/{version_id}/glossary").json(),
+            "capability_notes": client.get(f"/api/versions/{version_id}/capability-notes").json(),
+            "coverage": client.get(f"/api/versions/{version_id}/coverage").json(),
+        }
+        matches_baseline("G8_sensemaking.json", bundle)
 
 
 def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> None:

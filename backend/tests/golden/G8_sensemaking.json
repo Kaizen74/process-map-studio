@@ -1,0 +1,727 @@
+{
+  "steps": [
+    {
+      "label": "Draft load plan",
+      "work_type": "complicated",
+      "constraint_type": "governing",
+      "work_type_status": "proposed",
+      "work_type_cues": [
+        "only me and one other controller really know the configurations"
+      ],
+      "accounts": [
+        {
+          "anchor": "06:40",
+          "account_type": "lived",
+          "account_cue": "I build the preliminary load plan",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.2"
+        },
+        {
+          "anchor": "07:55",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.2"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "know_how": null,
+      "stories": [
+        {
+          "label": "Had to re-trim three flights in one night",
+          "fragment_type": "went_badly",
+          "signifiers": [
+            "Firefighting"
+          ],
+          "frequency": "maybe once a month",
+          "single_account": true,
+          "quote": "I learned it after we had to re-trim three flights in one night.",
+          "source_id": "id-1",
+          "segment_id": "id-2",
+          "anchor": "24:10"
+        }
+      ]
+    },
+    {
+      "label": "Approve load plan",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 0
+      },
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
+    },
+    {
+      "label": "Special loads OK?",
+      "work_type": "clear",
+      "constraint_type": "rigid",
+      "work_type_status": "proposed",
+      "work_type_cues": [
+        "against the checklist",
+        "Special loads shall be checked against the acceptance checklist"
+      ],
+      "accounts": [
+        {
+          "anchor": "14:05",
+          "account_type": "lived",
+          "account_cue": "Then I check special loads",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.2"
+        },
+        {
+          "anchor": "14:05",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.2"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 1
+      },
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [
+            {
+              "text": "The special loads checklist.",
+              "quote": "against the checklist",
+              "role": "Load controller",
+              "source_id": "id-1",
+              "segment_id": "id-3",
+              "anchor": "14:05"
+            }
+          ],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "low",
+        "risk_reason": "Documents, tools and learnable skills cover this call.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
+    },
+    {
+      "label": "Resolve or offload",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [
+        {
+          "anchor": "16:22",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.2"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "know_how": null,
+      "stories": []
+    },
+    {
+      "label": "Load and return LIR",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [
+        {
+          "anchor": "21:50",
+          "account_type": "lived",
+          "account_cue": "It's still on paper and I re-key it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.4"
+        },
+        {
+          "anchor": "21:50",
+          "account_type": "lived",
+          "account_cue": "I re-key it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.4"
+        },
+        {
+          "anchor": "21:50",
+          "account_type": "lived",
+          "account_cue": "We sometimes wait fifteen minutes for it",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.4"
+        },
+        {
+          "anchor": "21:50",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.4"
+        },
+        {
+          "anchor": "22:30",
+          "account_type": "official",
+          "account_cue": "Officially",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M2.4"
+        },
+        {
+          "anchor": "02:18",
+          "account_type": "lived",
+          "account_cue": "We get the preliminary load plan",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "L3"
+        },
+        {
+          "anchor": "05:52",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "L6"
+        },
+        {
+          "anchor": "02:18",
+          "account_type": "lived",
+          "account_cue": "we send them the loading report",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "L3"
+        }
+      ],
+      "account_summary": {
+        "official": 1,
+        "lived": 5,
+        "unclear": 2
+      },
+      "know_how": null,
+      "stories": []
+    },
+    {
+      "label": "Busy wave?",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [
+        {
+          "anchor": "22:30",
+          "account_type": "lived",
+          "account_cue": "What actually happens",
+          "stated_reason": "otherwise we'd miss the slot",
+          "variation_condition": "on a busy wave",
+          "question_id": "M2.4"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
+    },
+    {
+      "label": "Read report at aircraft",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [
+        {
+          "anchor": "22:30",
+          "account_type": "lived",
+          "account_cue": "What actually happens",
+          "stated_reason": "otherwise we'd miss the slot",
+          "variation_condition": "on a busy wave",
+          "question_id": "M2.4"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "know_how": null,
+      "stories": []
+    },
+    {
+      "label": "Deviation in limits?",
+      "work_type": "complex",
+      "constraint_type": "enabling",
+      "work_type_status": "proposed",
+      "work_type_cues": [
+        "There's no fixed answer.",
+        "You read the situation."
+      ],
+      "accounts": [
+        {
+          "anchor": "27:15",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M5.s1"
+        },
+        {
+          "anchor": "27:15",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M5.s1"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 2
+      },
+      "know_how": {
+        "kdp_type": "judgment",
+        "ashen": {
+          "artefacts": [
+            {
+              "text": "The loading report from Ramp.",
+              "quote": "sends back the loading report",
+              "role": "Load controller",
+              "source_id": "id-1",
+              "segment_id": "id-4",
+              "anchor": "21:50"
+            }
+          ],
+          "skills": [],
+          "heuristics": [
+            {
+              "text": "If the forward hold looks heavy on the plan, call the ramp before they start, not after.",
+              "quote": "if the forward hold looks heavy on the plan, I call the ramp before they start, not after",
+              "role": "Load controller",
+              "source_id": "id-1",
+              "segment_id": "id-2",
+              "anchor": "24:10"
+            }
+          ],
+          "experience": [
+            {
+              "text": "The rule of thumb was learned, not taught, after re-trimming three flights in one night.",
+              "quote": "Nobody taught me that; I learned it after we had to re-trim three flights in one night.",
+              "role": "Load controller",
+              "source_id": "id-1",
+              "segment_id": "id-2",
+              "anchor": "24:10"
+            }
+          ],
+          "natural_talent": []
+        },
+        "knowledge_risk": "high",
+        "risk_reason": "Rules of thumb and experience outweigh documents and skills, and few roles hold them.",
+        "cadence": null,
+        "received": [
+          "the loading report"
+        ],
+        "attended": [
+          "the captain",
+          "the weather",
+          "what's still on the belt"
+        ],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": [
+        {
+          "label": "Had to re-trim three flights in one night",
+          "fragment_type": "went_badly",
+          "signifiers": [
+            "Firefighting"
+          ],
+          "frequency": "maybe once a month",
+          "single_account": true,
+          "quote": "I learned it after we had to re-trim three flights in one night.",
+          "source_id": "id-1",
+          "segment_id": "id-2",
+          "anchor": "24:10"
+        }
+      ]
+    },
+    {
+      "label": "Approve deviation",
+      "work_type": "not_classified",
+      "constraint_type": null,
+      "work_type_status": "not_classified",
+      "work_type_cues": [],
+      "accounts": [
+        {
+          "anchor": "29:02",
+          "account_type": "unclear",
+          "account_cue": "",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M5.s1"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 0,
+        "unclear": 1
+      },
+      "know_how": {
+        "kdp_type": "decision",
+        "ashen": {
+          "artefacts": [],
+          "skills": [],
+          "heuristics": [],
+          "experience": [],
+          "natural_talent": []
+        },
+        "knowledge_risk": "unknown",
+        "risk_reason": "The interviews don't yet say what this call needs; ask the know-how questions.",
+        "cadence": null,
+        "received": [],
+        "attended": [],
+        "wanted": [],
+        "communicated_via": []
+      },
+      "stories": []
+    },
+    {
+      "label": "Issue load sheet",
+      "work_type": "clear",
+      "constraint_type": "rigid",
+      "work_type_status": "proposed",
+      "work_type_cues": [
+        "The final load sheet shall be issued through the departure control system"
+      ],
+      "accounts": [
+        {
+          "anchor": "31:10",
+          "account_type": "lived",
+          "account_cue": "Then I issue the final load sheet",
+          "stated_reason": "",
+          "variation_condition": "",
+          "question_id": "M4.3"
+        }
+      ],
+      "account_summary": {
+        "official": 0,
+        "lived": 1,
+        "unclear": 0
+      },
+      "know_how": null,
+      "stories": []
+    }
+  ],
+  "glossary": [
+    {
+      "term": "re-trim",
+      "plain_meaning": "Rebalance an aircraft's load after it has been planned.",
+      "steps": [
+        "Approve deviation"
+      ],
+      "source_id": "id-1",
+      "segment_id": "id-2",
+      "anchor": "24:10"
+    },
+    {
+      "term": "wave",
+      "plain_meaning": "A busy period of departures.",
+      "steps": [
+        "Busy wave?"
+      ],
+      "source_id": "id-1",
+      "segment_id": "id-5",
+      "anchor": "22:30"
+    },
+    {
+      "term": "forward hold",
+      "plain_meaning": "The cargo hold at the front of the aircraft.",
+      "steps": [
+        "Draft load plan"
+      ],
+      "source_id": "id-1",
+      "segment_id": "id-2",
+      "anchor": "24:10"
+    }
+  ],
+  "capability_notes": [
+    {
+      "kind": "strength",
+      "dimension": "skillset",
+      "text": "Ramp supervisors know the aircraft types inside out.",
+      "cause_type": null,
+      "steps": [
+        "Load and return LIR"
+      ],
+      "quote": "The strength is the supervisors know the aircraft types inside out.",
+      "source_id": "id-6",
+      "segment_id": "id-7",
+      "anchor": "05:52"
+    },
+    {
+      "kind": "weakness",
+      "dimension": "systems",
+      "text": "The paper loading report gets lost or arrives late.",
+      "cause_type": "system_fragmentation",
+      "steps": [
+        "Load and return LIR"
+      ],
+      "quote": "The weakness is the paper loading report; it gets lost or arrives late.",
+      "source_id": "id-6",
+      "segment_id": "id-7",
+      "anchor": "05:52"
+    }
+  ],
+  "coverage": {
+    "version_id": "id-8",
+    "dimensions": {
+      "trigger": {
+        "status": "missing",
+        "evidence_count": 0,
+        "note": ""
+      },
+      "end_point": {
+        "status": "thin",
+        "evidence_count": 1,
+        "note": "Heard for: Issue load sheet"
+      },
+      "step_spine": {
+        "status": "thin",
+        "evidence_count": 7,
+        "note": "Order not stated: Load and return LIR → Busy wave?; Read report at aircraft → Deviation in limits?"
+      },
+      "handoffs": {
+        "status": "covered",
+        "evidence_count": 2,
+        "note": ""
+      },
+      "decisions_and_criteria": {
+        "status": "covered",
+        "evidence_count": 5,
+        "note": ""
+      },
+      "approvals": {
+        "status": "thin",
+        "evidence_count": 1,
+        "note": ""
+      },
+      "exceptions": {
+        "status": "thin",
+        "evidence_count": 1,
+        "note": ""
+      },
+      "raci": {
+        "status": "covered",
+        "evidence_count": 4,
+        "note": ""
+      },
+      "work_and_wait_time": {
+        "status": "covered",
+        "evidence_count": 5,
+        "note": ""
+      },
+      "kpis": {
+        "status": "missing",
+        "evidence_count": 0,
+        "note": ""
+      },
+      "artefacts": {
+        "status": "covered",
+        "evidence_count": 2,
+        "note": ""
+      },
+      "know_how": {
+        "status": "thin",
+        "evidence_count": 4,
+        "note": "No know-how yet: Busy wave?, Approve deviation"
+      },
+      "stories": {
+        "status": "thin",
+        "evidence_count": 1,
+        "note": "Not yet told: went well, surprise"
+      },
+      "official_vs_lived": {
+        "status": "covered",
+        "evidence_count": 1,
+        "note": "Both accounts on 1 step: Load and return LIR"
+      },
+      "sme_terms": {
+        "status": "covered",
+        "evidence_count": 3,
+        "note": ""
+      }
+    },
+    "follow_up_questions": [
+      {
+        "dimension": "trigger",
+        "question_id": "M2.1",
+        "question": "Think of the last time you did this from start to finish. What set it off?",
+        "about": ""
+      },
+      {
+        "dimension": "end_point",
+        "question_id": "M2.5",
+        "question": "How did you know you were done, and who got the result?",
+        "about": ""
+      },
+      {
+        "dimension": "step_spine",
+        "question_id": "M2.2",
+        "question": "Walk me through what happened, step by step, as it actually went.",
+        "about": "Load and return LIR → Busy wave?; Read report at aircraft → Deviation in limits?"
+      },
+      {
+        "dimension": "approvals",
+        "question_id": "M7.2",
+        "question": "Who signs off, who must be consulted, and who just gets told?",
+        "about": ""
+      },
+      {
+        "dimension": "exceptions",
+        "question_id": "M2.6",
+        "question": "Was that case typical? What was the same as usual, what was different, and what surprised you?",
+        "about": ""
+      },
+      {
+        "dimension": "kpis",
+        "question_id": "M7.1",
+        "question": "How do you know this went well — what's measured, and who looks at it?",
+        "about": ""
+      },
+      {
+        "dimension": "know_how",
+        "question_id": "M4.8",
+        "question": "What would a new joiner probably get wrong here? What if the usual person were away?",
+        "about": "Busy wave?"
+      },
+      {
+        "dimension": "know_how",
+        "question_id": "M4.8",
+        "question": "What would a new joiner probably get wrong here? What if the usual person were away?",
+        "about": "Approve deviation"
+      },
+      {
+        "dimension": "stories",
+        "question_id": "M5.1",
+        "question": "Tell me about a time this went really well.",
+        "about": ""
+      },
+      {
+        "dimension": "stories",
+        "question_id": "M5.3",
+        "question": "Tell me about a time something surprised you.",
+        "about": ""
+      }
+    ],
+    "probes": [
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “only me and one other controller really know the configurations”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "only me and one other controller really know the configurations",
+        "source_id": "id-1",
+        "anchor": "07:55",
+        "speaker_role": "Load controller"
+      },
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “The notification from the cargo terminal often comes late”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "The notification from the cargo terminal often comes late.",
+        "source_id": "id-1",
+        "anchor": "14:05",
+        "speaker_role": "Load controller"
+      },
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “It's still on paper and I re-key it”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "It's still on paper and I re-key it.",
+        "source_id": "id-1",
+        "anchor": "21:50",
+        "speaker_role": "Load controller"
+      },
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “at peak we're short of containers”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "at peak we're short of containers",
+        "source_id": "id-1",
+        "anchor": "21:50",
+        "speaker_role": "Load controller"
+      },
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “otherwise we'd miss the slot”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "otherwise we'd miss the slot",
+        "source_id": "id-1",
+        "anchor": "22:30",
+        "speaker_role": "Load controller"
+      },
+      {
+        "question_id": "F2",
+        "question": "You mentioned previously that “The weakness is the paper loading report; it gets lost or arrives late”. How do you manage that today, and where do you see the biggest risk?",
+        "quote": "The weakness is the paper loading report; it gets lost or arrives late.",
+        "source_id": "id-6",
+        "anchor": "05:52",
+        "speaker_role": "Ramp"
+      }
+    ]
+  }
+}

@@ -136,3 +136,22 @@ def test_follow_ups_are_bank_questions_word_for_word() -> None:
         "Special loads OK?", "Busy wave?", "Deviation in limits?", "Approve deviation"]  # fmt: skip
     order = [list(sensemaking.COVERAGE_QUESTIONS).index(q.dimension) for q in asked]
     assert order == sorted(order)  # in dimension order
+
+
+def test_probes_play_back_short_verified_words_once() -> None:
+    long = " ".join(["word"] * 21)
+    claims = [
+        flow("constraint", account="unclear").model_copy(update={"quote": "It comes late."}),
+        item("capability", kind="weakness").model_copy(update={"quote": "It comes late."}),
+        item("capability", kind="strength").model_copy(update={"quote": "They know it well."}),
+        flow("activity").model_copy(update={"quote": "Then I issue it."}),
+        flow("activity", stated_reason="or we'd miss it").model_copy(update={"quote": long}),
+        flow("constraint").model_copy(update={"quote": long}),  # too long, no reason: left out
+        flow("constraint").model_copy(update={"account_type": None, "quote": "SOP words."}),
+    ]
+    played = [words for _, words in sensemaking.probe_claims(claims)]
+    assert played == ["It comes late.", "or we'd miss it"]
+    assert sensemaking.probe_question(wording()["F2"], "It comes late.") == (
+        "You mentioned previously that “It comes late”. How do you manage that today, and where "
+        "do you see the biggest risk?"
+    )

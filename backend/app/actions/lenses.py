@@ -43,21 +43,26 @@ class Lenses:
         return redaction.hide(text, self.terms)
 
 
+def places(session: Session, segment_ids: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    """Where each passage is (its anchor) and who said it (the speaker's role)."""
+    rows = sources_repo.segment_rows(session, segment_ids)
+    anchors = {
+        sid: parsing.segment_anchor(fmt=fmt, seq=seg.seq, page=seg.page, section=seg.section,
+                                    text=seg.text, start_ms=seg.start_ms)
+        for sid, (seg, fmt) in rows.items()
+    }  # fmt: skip
+    return anchors, sources_repo.speaker_roles(session, segment_ids)
+
+
 def load(session: Session, version_id: str, engagement_id: str) -> Lenses:
     items = [
         r
         for _, r in claims_repo.verified_rows(session, version_id)
         if r.claim_type in SENSE_CLAIM_TYPES
     ]
-    first = [r.segment_ids[0] for r in items if r.segment_ids]
-    rows = sources_repo.segment_rows(session, first)
-    anchors = {
-        sid: parsing.segment_anchor(fmt=fmt, seq=seg.seq, page=seg.page, section=seg.section,
-                                    text=seg.text, start_ms=seg.start_ms)
-        for sid, (seg, fmt) in rows.items()
-    }  # fmt: skip
+    anchors, roles = places(session, [r.segment_ids[0] for r in items if r.segment_ids])
     terms = redaction.name_replacements(session, engagement_id)
-    return Lenses(items, anchors, sources_repo.speaker_roles(session, first), terms)
+    return Lenses(items, anchors, roles, terms)
 
 
 def _where(lens: Lenses, record: ClaimRecord) -> tuple[str | None, str]:

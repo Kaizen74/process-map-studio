@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import versions
+from app.actions import lenses, redaction, versions
 from app.db import session_scope
 from app.domain.result import Err, ErrorKind, Ok, Result
-from app.domain.sensemaking import CoverageReport
+from app.domain.sensemaking import CoverageReport, ReflectiveProbe
 from app.repositories import claims as claims_repo
+from app.repositories import versions as versions_repo
 from app.services import interview_templates, sensemaking
 
 Sessions = sessionmaker[Session]
@@ -28,12 +29,29 @@ def get_coverage(sessions: Sessions, version_id: str) -> Result[CoverageReport]:
         if done is None:
             return Err(ErrorKind.NOT_FOUND, versions.VERSION_MISSING)
         claims = claims_repo.verified_with_steps(session, version_id)
+        played = sensemaking.probe_claims(claims)
+        anchors, roles = lenses.places(
+            session, [c.segment_ids[0] for c, _ in played if c.segment_ids]
+        )
+        version = versions_repo.get(session, version_id)
+        terms = redaction.name_replacements(session, version.engagement_id) if version else []
     dims, about = sensemaking.coverage_dimensions(claims, done)
     wording = {q.id: q.wording for q in bank.value.questions}
+    probes = []
+    for c, words in played:
+        segment = c.segment_ids[0] if c.segment_ids else ""
+        quote = redaction.hide(words, terms)
+        probes.append(ReflectiveProbe(
+            question_id=sensemaking.PROBE_ID,
+            question=sensemaking.probe_question(wording[sensemaking.PROBE_ID], quote),
+            quote=quote, source_id=c.source_id, anchor=anchors.get(segment, ""),
+            speaker_role=roles.get(segment, ""),
+        ))  # fmt: skip
     return Ok(
         CoverageReport(
             version_id=version_id,
             dimensions=dims,
             follow_up_questions=sensemaking.follow_up_questions(dims, about, wording),
+            probes=probes,
         )
     )
