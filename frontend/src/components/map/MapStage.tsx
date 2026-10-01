@@ -1,5 +1,6 @@
 import type { Graph, Layout } from "../../lib/mapTypes";
 import { lensLine, longestStep, markersFor, nodeName, type Lens } from "../../lib/lens";
+import { ghostLabel, type AsView } from "../../lib/views";
 import { MapEdge } from "./MapEdge";
 import { MapNode } from "./MapNode";
 import "./map.css";
@@ -8,6 +9,8 @@ export interface MapStageProps {
   graph: Graph;
   layout: Layout;
   lens: Lens;
+  /** The view drawn (§3.12.11): it picks the variant values the lens line shows. */
+  view?: AsView;
   /** 1 = 100%; the stage is scaled from the top-left (PRD §5.5). */
   scale: number;
   selectedId: string | null;
@@ -21,7 +24,7 @@ export interface MapStageProps {
  * lanes, phase band, orthogonal lines and nodes as absolutely positioned HTML. The UI never
  * computes layout. Nodes are buttons in process order, so Tab follows the process.
  */
-export function MapStage({ graph, layout, lens, scale, selectedId, onSelect, withImages }: MapStageProps) {
+export function MapStage({ graph, layout, lens, view = "done", scale, selectedId, onSelect, withImages }: MapStageProps) {
   const elements = new Map(graph.elements.map((e) => [e.id, e]));
   const roles = new Map(graph.roles.map((r) => [r.id, r.name]));
   const edgesById = new Map(graph.edges.map((e) => [e.id, e]));
@@ -81,15 +84,21 @@ export function MapStage({ graph, layout, lens, scale, selectedId, onSelect, wit
           const element = elements.get(node.id);
           if (!element) return null;
           const hasImages = withImages?.has(node.id) ?? false;
-          const name = nodeName(element, roles.get(element.lane_role_id ?? "") ?? "");
+          const base = nodeName(element, roles.get(element.lane_role_id ?? "") ?? "");
+          // A ghosted step (Show the other view) says where it belongs, in the lens line's place.
+          const name = node.ghost ? `${base}, ${ghostLabel(view)}` : base;
           return (
             <MapNode
               key={node.id}
               element={element}
               node={node}
               name={hasImages ? `${name}, has images` : name}
-              markers={markersFor(element, { hasImages })}
-              lens={lensLine(element, lens, longest)}
+              markers={node.ghost ? [] : markersFor(element, { hasImages })}
+              lens={
+                node.ghost
+                  ? { kind: "text", text: ghostLabel(view), danger: false }
+                  : lensLine(element, lens, longest, view)
+              }
               selected={node.id === selectedId}
               onSelect={onSelect}
             />

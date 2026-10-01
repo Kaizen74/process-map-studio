@@ -5,7 +5,7 @@ import { firstNeedingAttention } from "../../src/lib/review";
 import { fitScale } from "../../src/features/review/useFitScale";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor, graphFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -21,8 +21,8 @@ function backend(draft: DraftState = DRAFTED) {
     "GET /api/engagements/e1": () => ({ body: { ...ENGAGEMENT, trigger: "Flight scheduled" } }),
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
-    [`GET /api/versions/${VID}/graph`]: () => ({ body: SAMPLE.graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/graph`]: (_body, url) => ({ body: graphFor(url) }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     ...Object.fromEntries(
       Object.entries(SAMPLE.elements).map(([id, element]) => [`GET /api/elements/${id}`, () => ({ body: element })]),
     ),
@@ -53,10 +53,14 @@ describe("Review screen (PRD §5.6)", () => {
     const strip = screen.getByRole("region", { name: "Process at a glance" });
     expect(within(strip).getByText("Flight scheduled")).toBeInTheDocument();
     expect(within(strip).getByText("~75 min elapsed, ~60 min work")).toBeInTheDocument();
-    expect(within(strip).getByText("Incomplete: 3 steps without time")).toBeInTheDocument(); // v1.10: + Read report at aircraft
+    // V2: the cycle time is the As done view's (Approve load plan is in the documents only).
+    expect(within(strip).getByText("Incomplete: 2 steps without time")).toBeInTheDocument();
     expect(within(strip).getByText("Not stated")).toBeInTheDocument(); // no process KPI
-    expect(screen.getByText("10 steps · 5 lanes · 3 phases")).toBeInTheDocument(); // v1.10 A.5
-    expect(screen.getAllByRole("button", { name: /^(Activity|Decision|Approval|Start|End),/ })).toHaveLength(12);
+    // V2: the map opens As done: nine of the ten steps, in four lanes (the Load control lead's
+    // only step, Approve load plan, is in the documents only).
+    expect(screen.getByRole("radio", { name: "As done" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText("9 steps · 4 lanes · 3 phases")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^(Activity|Decision|Approval|Start|End),/ })).toHaveLength(11);
     expect(screen.getByRole("heading", { name: "How to review" })).toBeInTheDocument();
   });
 
@@ -125,13 +129,14 @@ describe("Review screen (PRD §5.6)", () => {
     const contested = within(row as HTMLElement).getAllByText("A?");
     expect(contested).toHaveLength(2);
     expect(contested[0]).toHaveClass("raci__contested");
+    // V2: the roles' own lane order, the same in either view (the drawn lanes differ per view).
     expect(within(matrix).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
       "Step",
+      "Load controller",
       "Load control lead",
+      "Ramp",
       "Airline ops",
       "Captain",
-      "Load controller",
-      "Ramp",
     ]);
     fireEvent.click(row as HTMLElement);
     expect(screen.getByRole("complementary", { name: "Step details" })).toBeInTheDocument();
@@ -171,7 +176,7 @@ describe("Review screen (PRD §5.6)", () => {
       const { container } = renderApp(PATH);
       await screen.findByText("Draft v0.1");
       const stage = container.querySelector<HTMLElement>(".map-stage");
-      expect(stage?.style.transform).toBe(`scale(${834 / SAMPLE.layout.canvas.w})`);
+      expect(stage?.style.transform).toBe(`scale(${834 / SAMPLE.views.done.canvas.w})`); // As done (V2)
       fireEvent.click(screen.getByRole("radio", { name: "100%" }));
       expect(container.querySelector<HTMLElement>(".map-stage")?.style.transform).toBe("scale(1)");
     } finally {
@@ -211,7 +216,7 @@ describe("Review screen (PRD §5.6)", () => {
         status: 500,
         body: { error: { code: "INTERNAL", message: "Something went wrong.", details: {} } },
       }),
-      [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+      [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     });
     renderApp(PATH);
     expect(await screen.findByText("The map couldn't be loaded")).toBeInTheDocument();

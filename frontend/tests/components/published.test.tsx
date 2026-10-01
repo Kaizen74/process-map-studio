@@ -5,7 +5,7 @@ import type { Graph } from "../../src/lib/mapTypes";
 import type { VersionDetail, VersionSummary } from "../../src/lib/reviewTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE } from "../sampleMap";
+import { SAMPLE, layoutFor } from "../sampleMap";
 
 const V1 = SAMPLE.graph.version.id;
 const V0 = "v-old";
@@ -56,7 +56,7 @@ function backend({ versions, draftExists = false }: { versions: VersionSummary[]
   for (const v of versions) {
     routes[`GET /api/versions/${v.id}`] = () => ({ body: detail(v) });
     routes[`GET /api/versions/${v.id}/graph`] = () => ({ body: { ...confirmed(v.state), version: { ...confirmed(v.state).version, id: v.id, label: v.label } } });
-    routes[`GET /api/versions/${v.id}/layout`] = () => ({ body: SAMPLE.layout });
+    routes[`GET /api/versions/${v.id}/layout`] = (_body, url) => ({ body: layoutFor(url) });
     routes[`GET /api/versions/${v.id}/questions`] = () => ({ body: [] });
     routes[`GET /api/versions/${v.id}/rejected-claims`] = () => ({ body: { items: [], total: 0, scrub_count: 0, instruction_like_count: 0 } });
   }

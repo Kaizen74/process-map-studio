@@ -18,6 +18,7 @@ import type { RejectedClaim } from "../../lib/reviewTypes";
 import { newStepForm, type AddStepForm } from "../../lib/addStep";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { shortcutFor, stepAlong } from "../../lib/shortcuts";
+import { asView, inView, type AsView } from "../../lib/views";
 import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
@@ -48,6 +49,14 @@ export interface WorkbenchProps {
   below?: ReactNode;
 }
 
+/** The roles in the combined map's lane order: the RACI matrix is the same in either view. */
+function laneOrder(graph: Graph): string[] {
+  return graph.roles
+    .filter((r) => r.lane_order !== null)
+    .sort((a, b) => (a.lane_order ?? 0) - (b.lane_order ?? 0))
+    .map((r) => r.id);
+}
+
 /** The toolbar's "n open gap findings" chip (PRD §5.7.7 item 11): no map marker is added. */
 function openGapChip(analyses: readonly GapAnalysis[], to: string): ReactNode {
   const open = analyses.filter((a) => a.status === "draft_report").reduce((n, a) => n + a.counts.open, 0);
@@ -64,13 +73,17 @@ function openGapChip(analyses: readonly GapAnalysis[], to: string): ReactNode {
  * version. A draft can be reviewed; a published version is the same view, read-only (§5.9).
  */
 export function Workbench({ engagementId, versionId, title, banner, below }: WorkbenchProps) {
+  const [params, setParams] = useSearchParams();
+  // As done by default (§3.12.11); the view and Show the other view live in the address.
+  const shown: AsView = asView(params.get("as"));
+  const showOther = params.get("other") === "1";
   const graph = useGraph(versionId);
-  const layout = useLayout(versionId);
+  const viewGraph = useGraph(versionId, shown); // the header strip's cycle time is per view
+  const layout = useLayout(versionId, shown, showOther);
   const pictures = useVersionImages(versionId);
   const analyses = useGapAnalyses(versionId);
   const navigate = useNavigate();
   const gapPath = engagementPath(engagementId, "gap_analysis");
-  const [params, setParams] = useSearchParams();
   const selectedId = params.get("step");
   const [lens, setLens] = useLens();
   const [zoom, setZoom] = useState<Zoom>("fit");
@@ -94,12 +107,43 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   function select(id: string | null) {
     setAdding(null);
     setViewing(null);
+    const element = id ? graph.data?.elements.find((e) => e.id === id) : undefined;
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
         if (id) next.set("step", id);
         else next.delete("step");
+        // A step only in the other view, not drawn here: show its view, so it is never out of reach.
+        const view = asView(current.get("as"));
+        if (element && !inView(element, view) && current.get("other") !== "1") {
+          if (view === "done") next.set("as", "documented");
+          else next.delete("as");
+        }
         return next;
+      },
+      { replace: true },
+    );
+  }
+
+  function setShown(next: AsView) {
+    setParams(
+      (current) => {
+        const params = new URLSearchParams(current);
+        if (next === "documented") params.set("as", "documented");
+        else params.delete("as");
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  function setShowOther(show: boolean) {
+    setParams(
+      (current) => {
+        const params = new URLSearchParams(current);
+        if (show) params.set("other", "1");
+        else params.delete("other");
+        return params;
       },
       { replace: true },
     );
@@ -138,6 +182,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const roles = new Map(g.roles.map((r) => [r.id, r.name]));
   const phases = new Map(g.phases.map((p) => [p.id, p.name]));
   const lanes = drawing.lanes.length;
+  // The caption counts what this view draws (ghosted steps belong to the other view).
+  const drawn = new Set(drawing.nodes.filter((n) => !n.ghost).map((n) => n.id));
+  const viewSteps = steps.filter((e) => drawn.has(e.id)).length;
   const start = firstNeedingAttention(g);
   const editable = g.version.state === "draft";
   const walkthrough = walkthroughCards(g.elements, pictures.data ?? []);
@@ -243,19 +290,23 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
           <h1 id="review-title" className="visually-hidden">
             {title}
           </h1>
-          <HeaderStrip process={g.process} />
+          <HeaderStrip process={viewGraph.data?.process ?? g.process} />
           <Card className="map-card">
             <MapToolbar
               view={view}
               onView={setView}
               lens={lens}
               onLens={setLens}
+              asView={shown}
+              onAsView={setShown}
+              showOther={showOther}
+              onShowOther={setShowOther}
               zoom={zoom}
               onZoom={setZoom}
-              steps={steps.length}
+              steps={viewSteps}
               lanes={lanes}
               phases={drawing.phases.length}
-              large={steps.length > MAX_STEPS || lanes > MAX_LANES}
+              large={viewSteps > MAX_STEPS || lanes > MAX_LANES}
               onAddStep={editable ? () => setAdding(newStepForm(g, addAfter())) : undefined}
               extra={openGapChip(analyses.data ?? [], `${gapPath}?version=${encodeURIComponent(versionId)}`)}
               onRefresh={editable ? () => setRefreshOpen(true) : undefined}
@@ -282,13 +333,14 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     graph={g}
                     layout={drawing}
                     lens={lens}
+                    view={shown}
                     scale={zoom === "fit" ? fit : 1}
                     selectedId={selected?.id ?? null}
                     onSelect={select}
                     withImages={stepsWithImages(pictures.data ?? [])}
                   />
                 </div>
-                <MapLegend lens={lens} />
+                <MapLegend lens={lens} view={shown} showOther={showOther} />
               </>
             )}
           </Card>
@@ -302,7 +354,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               graph={g}
               versionId={g.version.id}
               engagementId={engagementId}
-              laneOrder={drawing.lanes.map((lane) => lane.role_id)}
+              laneOrder={laneOrder(g)}
               selectedId={selected?.id ?? null}
               editable={editable}
               onSelect={select}

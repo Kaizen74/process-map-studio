@@ -10,12 +10,18 @@ export interface MapEdgeProps {
   faded: boolean;
 }
 
-/** One orthogonal line: bordered segments, a CSS-triangle arrowhead and its label chip. */
+/**
+ * One orthogonal line: bordered segments, a CSS-triangle arrowhead and its label chip. A "not
+ * described" connector (kind `gap`, As done only) is dashed; a line only in the other view is
+ * ghosted with its steps (§3.12.11).
+ */
 export function MapEdge({ edge, active, faded }: MapEdgeProps) {
   const tip = arrowhead(edge.points);
   const classes = [
     "map-edge",
     edge.is_back_edge && "map-edge--back",
+    edge.kind === "gap" && "map-edge--gap",
+    edge.ghost && "map-edge--ghost",
     active && "map-edge--active",
     faded && "map-faded",
   ]

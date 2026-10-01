@@ -1,5 +1,6 @@
 import { request } from "./request";
 import type { DraftState, Graph, Job, LintReport, RefreshCheck, RejectedClaims } from "./types";
+import type { AsView } from "../lib/views";
 
 const enc = encodeURIComponent;
 
@@ -15,7 +16,9 @@ export const getJob = (jobId: string) => request<Job>(`/jobs/${enc(jobId)}`);
 export const getRejectedClaims = (versionId: string) =>
   request<RejectedClaims>(`/versions/${enc(versionId)}/rejected-claims`);
 
-export const getGraph = (versionId: string) => request<Graph>(`/versions/${enc(versionId)}/graph`);
+/** Every step and line; with a view (§3.12.11) only its steps and lines, and its cycle time. */
+export const getGraph = (versionId: string, view?: AsView) =>
+  request<Graph>(`/versions/${enc(versionId)}/graph${view ? `?view=${view}` : ""}`);
 
 export const getLint = (versionId: string) => request<LintReport>(`/versions/${enc(versionId)}/lint`);
 

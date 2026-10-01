@@ -11,6 +11,9 @@ export interface SampleMap {
   layout: Layout;
   elements: Record<string, ElementDetail>;
   segments: Record<string, SegmentPage>;
+  /** V2 (§3.12.11): each view's layout, and As done with the documented-only steps ghosted. */
+  views: { done: Layout; documented: Layout; done_with_other: Layout };
+  view_graphs: { done: Graph; documented: Graph };
 }
 
 export const SAMPLE: SampleMap = JSON.parse(
@@ -21,4 +24,19 @@ export function elementByLabel(label: string) {
   const element = SAMPLE.graph.elements.find((e) => e.label === label);
   if (!element) throw new Error(`no element ${label}`);
   return element;
+}
+
+/** The layout the backend serves for a request URL (`?view=…&show_other=1`; none: combined). */
+export function layoutFor(url: string): Layout {
+  const query = new URLSearchParams(url.split("?")[1] ?? "");
+  const view = query.get("view");
+  if (view === "documented") return SAMPLE.views.documented;
+  if (view === "done") return query.get("show_other") ? SAMPLE.views.done_with_other : SAMPLE.views.done;
+  return SAMPLE.layout;
+}
+
+/** The graph the backend serves for a request URL (`?view=…`; none: every step and line). */
+export function graphFor(url: string): Graph {
+  const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
+  return view === "done" || view === "documented" ? SAMPLE.view_graphs[view] : SAMPLE.graph;
 }

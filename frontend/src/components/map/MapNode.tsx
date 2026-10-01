@@ -1,6 +1,6 @@
 import type { GraphElement, LayoutNode, TextPos } from "../../lib/mapTypes";
 import type { LensLine as LensLineData, MarkerKind } from "../../lib/lens";
-import { StateGlyph } from "../common";
+import { StateGlyph, WorkTypeGlyph } from "../common";
 import { placed } from "./placement";
 
 
@@ -13,6 +13,7 @@ export function LensLine({ line, pos }: { line: LensLineData; pos: TextPos }) {
         <span className={line.danger ? "mono map-lens__danger" : "mono"}>{line.text}</span>
       )}
       {line.kind === "state" && <StateGlyph state={line.state} />}
+      {line.kind === "work_type" && <WorkTypeGlyph type={line.type} proposed={line.proposed} />}
       {line.kind === "confidence" && (
         <>
           <span className="map-bar">
@@ -56,6 +57,7 @@ export function MapNode({ element, node, name, markers, lens, selected, onSelect
     `map-node--${node.shape}`,
     markers.includes("unreviewed") && "map-node--unreviewed",
     element.review_status === "rejected" && "map-node--rejected",
+    node.ghost && "map-node--ghost",
     selected && "map-node--selected",
   ]
     .filter(Boolean)
@@ -102,6 +104,7 @@ export function MapNode({ element, node, name, markers, lens, selected, onSelect
             "map-under",
             node.label_pos.align === "left" && "map-under--left",
             element.review_status === "rejected" && "map-under--rejected",
+            node.ghost && "map-under--ghost",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -113,7 +116,10 @@ export function MapNode({ element, node, name, markers, lens, selected, onSelect
           ))}
         </div>
       )}
-      <div className={element.review_status === "rejected" ? "map-faded" : undefined} aria-hidden="true">
+      <div
+        className={element.review_status === "rejected" ? "map-faded" : node.ghost ? "map-ghost-line" : undefined}
+        aria-hidden="true"
+      >
         <LensLine line={lens} pos={node.lens_pos} />
       </div>
     </>

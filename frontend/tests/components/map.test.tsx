@@ -89,7 +89,9 @@ describe("MapStage (PRD §5.5)", () => {
   it("shows each lens's line: time, state, confidence, time bars", () => {
     const lir = elementByLabel("Load and return LIR");
     let view = draw("plain");
-    expect(within(view.container).getByText("~40 min + 15 wait")).toBeInTheDocument();
+    // V2: the loading step shows the As done value where the views differ (A.9 variants).
+    expect(within(view.container).getByText("Up to fifteen minutes' wait for the report")).toBeInTheDocument();
+    expect(within(view.container).getByText("~20 min")).toBeInTheDocument();
     expect(within(view.container).getAllByText("No time stated")[0]).toHaveClass("map-lens__danger");
     view.unmount();
     view = draw("source_state");

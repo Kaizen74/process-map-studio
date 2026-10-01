@@ -153,7 +153,20 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
             c["source_id"] for e in elements.values() for c in e["evidence"] if c["segment_id"]
         )
         segments = {s: client.get(f"/api/sources/{s}/segments").json() for s in cited}
-        bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments}
+        # V2: each view's layout and graph (As done with the other view ghosted too).
+        url = f"/api/versions/{version_id}"
+        views = {
+            "done": client.get(f"{url}/layout", params={"view": "done"}).json(),
+            "documented": client.get(f"{url}/layout", params={"view": "documented"}).json(),
+            "done_with_other": client.get(
+                f"{url}/layout", params={"view": "done", "show_other": "1"}
+            ).json(),
+        }
+        view_graphs = {
+            v: client.get(f"{url}/graph", params={"view": v}).json() for v in ("done", "documented")
+        }
+        bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
+                  "views": views, "view_graphs": view_graphs}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 

@@ -1,11 +1,23 @@
-import type { Lens } from "../../lib/lens";
+import { WORK_TYPE_LABELS, type Lens } from "../../lib/lens";
+import type { WorkType } from "../../lib/mapTypes";
 import type { StanceOrState } from "../../lib/stateGlyph";
-import { StateGlyph } from "../common";
+import type { AsView } from "../../lib/views";
+import { StateGlyph, WorkTypeGlyph } from "../common";
 
 const STATES: StanceOrState[] = ["corroborated", "documented_only", "practiced_only", "contested", "trace_contradicted"];
 
+const WORK_TYPES = Object.keys(WORK_TYPE_LABELS) as WorkType[];
+
+export interface MapLegendProps {
+  lens: Lens;
+  /** The view drawn: "not described" connectors only exist As done (§3.12.11). */
+  view?: AsView;
+  /** Show the other view is on: ghosted steps are drawn. */
+  showOther?: boolean;
+}
+
 /** Always under the map (PRD §5.5): shapes, markers and lines, plus the active lens's key. */
-export function MapLegend({ lens }: { lens: Lens }) {
+export function MapLegend({ lens, view = "done", showOther = false }: MapLegendProps) {
   return (
     <div className="map-legend">
       <ul className="map-legend__list" aria-label="Map legend">
@@ -41,6 +53,18 @@ export function MapLegend({ lens }: { lens: Lens }) {
           <span className="legend-sample legend-sample--back" aria-hidden="true" />
           Rework path
         </li>
+        {view === "done" && (
+          <li>
+            <span className="legend-sample legend-sample--gap" aria-hidden="true" />
+            Not described (the lived account doesn't say what happens between)
+          </li>
+        )}
+        {showOther && (
+          <li>
+            <span className="legend-sample legend-sample--ghost" aria-hidden="true" />
+            {view === "done" ? "Only in the documented version" : "Only in practice"}
+          </li>
+        )}
       </ul>
       {lens !== "plain" && (
         <ul className="map-legend__list map-legend__lens" aria-label="Lens key">
@@ -58,6 +82,12 @@ export function MapLegend({ lens }: { lens: Lens }) {
               Bar and value; below 0.60 the bar is coral and the value in red text
             </li>
           )}
+          {lens === "work_type" &&
+            WORK_TYPES.map((type) => (
+              <li key={type}>
+                <WorkTypeGlyph type={type} />
+              </li>
+            ))}
           {lens === "time" && (
             <>
               <li>

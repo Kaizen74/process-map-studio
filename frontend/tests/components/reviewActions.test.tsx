@@ -4,7 +4,7 @@ import type { DraftState } from "../../src/api/types";
 import type { ElementDetail, Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -24,7 +24,7 @@ function statefulBackend(refuse: string | null = null) {
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
   };
   for (const [id] of Object.entries(elements)) {
     routes[`GET /api/elements/${id}`] = () => ({ body: elements[id] });

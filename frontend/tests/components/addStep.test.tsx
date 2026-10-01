@@ -4,7 +4,7 @@ import type { DraftState, Source } from "../../src/api/types";
 import type { ElementDetail, Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -54,7 +54,7 @@ function addingBackend(refusal: Refusal | null = null) {
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     "GET /api/engagements/e1/sources": () => ({ body: SOURCES }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     [`POST /api/versions/${VID}/elements`]: (body) => {
       if (refusal) {
         const details = refusal.field ? { field: refusal.field } : {};

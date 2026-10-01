@@ -131,8 +131,16 @@
   transform: translateX(-50%);
 }
 
-.map-edge--back .map-edge__segment {
+.map-edge--back .map-edge__segment,
+.map-edge--gap .map-edge__segment {
   border-style: dashed;
+}
+
+/* A line only in the other view (Show the other view, §3.12.11): faded with its steps; its label
+   chip keeps full contrast (WCAG AA, constraint 20). */
+.map-edge--ghost .map-edge__segment,
+.map-edge--ghost .map-edge__arrow {
+  opacity: 0.2;
 }
 
 .map-edge--active .map-edge__segment {
@@ -308,6 +316,24 @@
 .map-node--rejected .map-node__label,
 .map-under--rejected {
   text-decoration: line-through;
+}
+
+/* A step only in the other view (§3.12.11): a dashed, unfilled outline at reduced strength. The
+   PRD's 20% opacity applies to the shape, not the words, so they stay readable (WCAG AA). */
+.map-node--ghost,
+.map-node--ghost .map-node__diamond {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--ink-4);
+}
+.map-node--ghost .map-node__circle {
+  opacity: 0.2;
+}
+.map-node--ghost .map-node__label,
+.map-under--ghost,
+.map-ghost-line {
+  color: var(--ink-3);
+  font-style: italic;
 }
 
 .map-node__label,
@@ -503,6 +529,17 @@
   height: 0;
   border-top: var(--line-edge) dashed var(--edge);
 }
+.legend-sample--gap {
+  width: 20px;
+  height: 0;
+  border-top: var(--line-edge) dashed var(--edge);
+}
+.legend-sample--ghost {
+  width: 14px;
+  height: 10px;
+  border: var(--line-outline) dashed var(--ink-4);
+  border-radius: var(--radius-node);
+}
 
 .map-toolbar {
   display: flex;
@@ -518,6 +555,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-10);
+}
+
+.map-toolbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+  cursor: pointer;
 }
 
 .map-toolbar__label,

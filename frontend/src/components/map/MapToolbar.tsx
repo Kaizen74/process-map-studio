@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { LENSES, type Lens } from "../../lib/lens";
+import { AS_VIEWS, type AsView } from "../../lib/views";
 import { plural } from "../../lib/format";
 import { Button, Popover, SegmentedControl } from "../common";
 
@@ -11,6 +12,11 @@ export interface MapToolbarProps {
   onView: (view: MapView) => void;
   lens: Lens;
   onLens: (lens: Lens) => void;
+  /** As done (default) or As documented (§3.12.11), and whether the other view is ghosted. */
+  asView?: AsView;
+  onAsView?: (view: AsView) => void;
+  showOther?: boolean;
+  onShowOther?: (show: boolean) => void;
   zoom: Zoom;
   onZoom: (zoom: Zoom) => void;
   steps: number;
@@ -37,15 +43,19 @@ const ZOOMS = [
 ] as const;
 
 /**
- * Map | Table, the lens, Fit | 100% and the map's size (PRD §5.7.3). Lens and zoom apply to the
- * map only, so the table view leaves them out. "Add missing step" and "Refresh draft from sources"
- * sit in the overflow (More).
+ * Map | Table, the view (As done · As documented) with Show the other view, the lens, Fit | 100%
+ * and the map's size (PRD §5.7.3). View, lens and zoom apply to the map only, so the table view
+ * leaves them out. "Add missing step" and "Refresh draft from sources" sit in the overflow (More).
  */
 export function MapToolbar({
   view,
   onView,
   lens,
   onLens,
+  asView = "done",
+  onAsView,
+  showOther = false,
+  onShowOther,
   zoom,
   onZoom,
   steps,
@@ -62,7 +72,21 @@ export function MapToolbar({
   return (
     <div className="map-toolbar">
       <div className="map-toolbar__group">
-        <SegmentedControl label="View" options={VIEWS} value={view} onChange={onView} />
+        <SegmentedControl label="Map or table" options={VIEWS} value={view} onChange={onView} />
+        {map && onAsView && (
+          <>
+            <span className="map-toolbar__label" aria-hidden="true">
+              View
+            </span>
+            <SegmentedControl label="View" options={AS_VIEWS} value={asView} onChange={onAsView} />
+            {onShowOther && (
+              <label className="map-toolbar__toggle">
+                <input type="checkbox" checked={showOther} onChange={(event) => onShowOther(event.target.checked)} />
+                Show the other view
+              </label>
+            )}
+          </>
+        )}
         {map && (
           <>
             <span className="map-toolbar__label" aria-hidden="true">

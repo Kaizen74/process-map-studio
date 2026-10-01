@@ -24,7 +24,13 @@ function step(extra: Partial<GraphElement> = {}): GraphElement {
 describe("lens lines (PRD §5.5)", () => {
   it("plain: the duration in mono, or 'No time stated' in danger text", () => {
     expect(lensLine(elementByLabel("Draft load plan"), "plain")).toEqual({ kind: "text", text: "~20 min", danger: false });
-    expect(lensLine(step(), "plain")).toEqual({ kind: "text", text: "~40 min + 15 wait", danger: false });
+    // V2: where the views differ on the step (A.9 variants), the active view's time is shown.
+    expect(lensLine(step({ variants: null }), "plain")).toEqual({ kind: "text", text: "~40 min + 15 wait", danger: false });
+    expect(lensLine(step(), "plain")).toEqual({
+      kind: "text",
+      text: "Up to fifteen minutes' wait for the report",
+      danger: false,
+    });
     expect(lensLine(elementByLabel("Issue load sheet"), "plain")).toEqual({
       kind: "text",
       text: "No time stated",
@@ -67,7 +73,7 @@ describe("lens lines (PRD §5.5)", () => {
   });
 
   it("knows its lenses", () => {
-    expect(LENS_VALUES).toEqual(["plain", "source_state", "confidence", "time"]);
+    expect(LENS_VALUES).toEqual(["plain", "source_state", "confidence", "time", "work_type"]); // V2: + Work type
     expect(isLens("time")).toBe(true);
     expect(isLens("colour")).toBe(false);
   });
