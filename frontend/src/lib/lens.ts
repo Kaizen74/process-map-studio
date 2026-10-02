@@ -3,17 +3,29 @@
 // most three per node: key constraint, has images and the unreviewed outline. Pure functions;
 // components/map draws what they return.
 
-import type { GraphElement } from "./mapTypes";
+import type { GraphElement, WorkType } from "./mapTypes";
 import type { StanceOrState } from "./stateGlyph";
+import { variantFor, type AsView } from "./views";
 
-export type Lens = "plain" | "source_state" | "confidence" | "time";
+export type Lens = "plain" | "source_state" | "confidence" | "time" | "work_type";
 
 export const LENSES: readonly { value: Lens; label: string }[] = [
   { value: "plain", label: "Plain" },
   { value: "source_state", label: "Source state" },
   { value: "confidence", label: "Confidence" },
   { value: "time", label: "Time" },
+  { value: "work_type", label: "Work type" },
 ];
+
+/** PRD §5.5 Work type lens: a glyph shape and a word for each kind of work (never colour alone). */
+export const WORK_TYPE_LABELS: Readonly<Record<WorkType, string>> = {
+  clear: "Clear",
+  complicated: "Complicated",
+  complex: "Complex",
+  chaotic: "Chaotic",
+  confused: "Confused",
+  not_classified: "Not classified",
+};
 
 /** Where the lens choice is remembered in the browser (PRD §5.5). */
 export const LENS_STORAGE_KEY = "pms.lens";
@@ -38,7 +50,8 @@ export type LensLine =
   | { kind: "text"; text: string; danger: boolean }
   | { kind: "state"; state: StanceOrState }
   | { kind: "confidence"; value: number; text: string; low: boolean; bar: number }
-  | { kind: "time"; text: string; work: number; wait: number };
+  | { kind: "time"; text: string; work: number; wait: number }
+  | { kind: "work_type"; type: WorkType; label: string; proposed: boolean };
 
 export function isLens(value: unknown): value is Lens {
   return LENSES.some((lens) => lens.value === value);
@@ -54,13 +67,20 @@ export function durationText(work: number | null, wait: number | null): string {
 
 const NO_TIME: LensLine = { kind: "text", text: "No time stated", danger: true };
 
-/** The line under a node for a lens. `longest` is the most minutes (work + wait) of any step. */
-export function lensLine(element: GraphElement, lens: Lens, longest = 0): LensLine {
+/**
+ * The line under a node for a lens. `longest` is the most minutes (work + wait) of any step.
+ * Where the views differ on the step (§3.12.11 variants), the Plain lens shows the active view's
+ * time, else its owner.
+ */
+export function lensLine(element: GraphElement, lens: Lens, longest = 0, view: AsView = "done"): LensLine {
   if (!STEPS.has(element.kind)) return { kind: "none" };
   const { work_min: work, wait_min: wait } = element.time;
   const timed = TIMED.has(element.kind);
   switch (lens) {
     case "plain": {
+      const variant = variantFor(element, view);
+      if (variant.time) return { kind: "text", text: variant.time, danger: false };
+      if (variant.owner) return { kind: "text", text: `Owner: ${variant.owner}`, danger: false };
       const text = durationText(work, wait);
       if (text) return { kind: "text", text, danger: false };
       return timed ? NO_TIME : { kind: "none" };
@@ -88,6 +108,15 @@ export function lensLine(element: GraphElement, lens: Lens, longest = 0): LensLi
         text: `${work ?? 0} + ${wait ?? 0}`,
         work: Math.round((work ?? 0) * scale),
         wait: Math.round((wait ?? 0) * scale),
+      };
+    }
+    case "work_type": {
+      const type = element.work_type ?? "not_classified";
+      return {
+        kind: "work_type",
+        type,
+        label: WORK_TYPE_LABELS[type],
+        proposed: element.work_type_status === "proposed",
       };
     }
   }

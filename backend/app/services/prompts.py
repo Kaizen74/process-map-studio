@@ -13,6 +13,7 @@ import re
 from collections.abc import Sequence
 from pathlib import Path
 
+from app.domain.interview import BankQuestion
 from app.domain.models import Prompt, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
 
@@ -23,7 +24,40 @@ _HEADER = re.compile(
 _ESCAPES = str.maketrans({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})
 
 
+# The mapping codebook (Appendix E) is sent with the prompts of the stages that build the map
+# (S1, S2, S3c, S4); its own version is stamped on every draft.
+CODEBOOK = "codebook"
+CODEBOOK_STAGES = frozenset(
+    {
+        "S1_extract_interview",
+        "S1_extract_document",
+        "S1_extract_jd",
+        "S2_canonicalise",
+        "S3c_worktype",
+        "S4_assemble",
+    }
+)
+
+
 def load_prompt(name: str, prompts_dir: Path = PROMPTS_DIR) -> Result[Prompt]:
+    """A stage prompt and its version; for the map-building stages, followed by the codebook."""
+    match _read_prompt(name, prompts_dir):
+        case Err() as err:
+            return err
+        case Ok(value=prompt):
+            pass
+    if name not in CODEBOOK_STAGES:
+        return Ok(prompt)
+    match _read_prompt(CODEBOOK, prompts_dir):
+        case Err() as err:
+            return err
+        case Ok(value=codebook):
+            pass
+    text = f'{prompt.text}\n\n<codebook version="{codebook.version}">\n{codebook.text}\n</codebook>'
+    return Ok(prompt.model_copy(update={"text": text}))
+
+
+def _read_prompt(name: str, prompts_dir: Path) -> Result[Prompt]:
     path = prompts_dir / f"{name}.md"
     try:
         raw = path.read_text(encoding="utf-8")
@@ -70,11 +104,27 @@ def render_source(source_ref: str, kind: str, segments: Sequence[PromptSegment])
     lines = [f'<source id="{escape(source_ref)}" kind="{escape(kind)}">']
     for segment in segments:
         speaker = f' speaker="{escape(segment.speaker_role)}"' if segment.speaker_role else ""
+        # Interviews (§3.12.10 steps A and B): the answer block's question and the marker hints.
+        question = f' question="{escape(segment.question_id)}"' if segment.question_id else ""
+        markers = f' markers="{escape("; ".join(segment.markers))}"' if segment.markers else ""
         lines.append(
-            f'<segment id="{escape(segment.ref)}" anchor="{escape(segment.anchor)}"{speaker}>'
-            f"{escape(segment.text)}</segment>"
+            f'<segment id="{escape(segment.ref)}" anchor="{escape(segment.anchor)}"'
+            f"{speaker}{question}{markers}>{escape(segment.text)}</segment>"
         )
     lines.append("</source>")
+    return "\n".join(lines)
+
+
+def render_questions(questions: Sequence[BankQuestion]) -> str:
+    """The guide questions an interview chunk answers, with what each is designed to produce
+    (its targets), so the model knows what each answer is evidence for (§3.12.10 step A)."""
+    lines = ["<questions>"]
+    for q in questions:
+        lines.append(
+            f'<question id="{escape(q.id)}" movement="{escape(q.movement)}" '
+            f'targets="{escape("; ".join(q.targets))}">{escape(q.wording)}</question>'
+        )
+    lines.append("</questions>")
     return "\n".join(lines)
 
 

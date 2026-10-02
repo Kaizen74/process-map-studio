@@ -69,8 +69,9 @@ def test_speakers_are_listed_in_order_with_their_passage_counts(
 ) -> None:
     speakers = client.get(f"/api/sources/{transcript['id']}/speakers").json()
     assert speakers == [
-        {"label": "Interviewer", "segment_count": 2, "role_id": None, "is_interviewer": False},
-        {"label": NAME, "segment_count": 8, "role_id": None, "is_interviewer": False},
+        # v1.10 A.1: four interviewer turns (plus the closing one added above), twelve the SME's.
+        {"label": "Interviewer", "segment_count": 5, "role_id": None, "is_interviewer": False},
+        {"label": NAME, "segment_count": 12, "role_id": None, "is_interviewer": False},
     ]
 
 

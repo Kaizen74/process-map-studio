@@ -9,13 +9,16 @@ images are never part of the graph.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction
+from app.actions import lenses, redaction, view_translation
 from app.db import session_scope
-from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance
+from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance, VersionState
 from app.domain.graph import (
     AlignmentRow,
+    AnswerQuote,
     CycleTime,
     EdgeRecord,
     ElementDetail,
@@ -38,19 +41,33 @@ from app.domain.graph import (
     LintReport,
     RaciDetail,
     RaciSource,
+    WorkTypeCue,
 )
+from app.domain.interview import QuestionBank
 from app.domain.layout import Layout
+from app.domain.models import ClaimRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.domain.sensemaking import View
+from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import alignment, layout, lint, parsing
+from app.services import (
+    alignment,
+    interview_templates,
+    layout,
+    lint,
+    parsing,
+    translation,
+    views,
+)
 
 Sessions = sessionmaker[Session]
 
 VERSION_MISSING = "That version doesn't exist."
+FROZEN = {VersionState.PUBLISHED.value, VersionState.SUPERSEDED.value}
 ELEMENT_MISSING = "That step doesn't exist."
 # Edges that leave the main path: exception routes and loops back.
 OFF_MAIN_PATH = {
@@ -103,7 +120,20 @@ def cycle_time(elements: list[ElementRecord], edges: list[EdgeRecord]) -> CycleT
     return CycleTime(elapsed_min=work + wait, work_min=work, incomplete_steps=incomplete)
 
 
-def build_graph(session: Session, version_id: str) -> Graph | None:
+def combined_lines(edges: list[EdgeRecord]) -> list[EdgeRecord]:
+    """The lines of the one map that shows both views' steps: without the lines the translation
+    added for a single view where the other view's steps are left out (provenance I, PRD §3.12.10;
+    each view is drawn on its own from V1, 2026-10-01)."""
+    return [e for e in edges if not views.added_for_one_view(e.provenance, e.view_membership)]
+
+
+def build_graph(
+    session: Session, version_id: str, *, every_line: bool = False, view: View | None = None
+) -> Graph | None:
+    """The version's graph. Without `every_line` the lines are the combined map's (what the
+    layout, lint, quality card, exports and leadership read); the graph endpoint returns every
+    line with its view membership. With a view, only that view's steps and lines, and the cycle
+    time along that view's main path (§3.12.11)."""
     version = versions_repo.get(session, version_id)
     if version is None:
         return None
@@ -119,10 +149,24 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
     phases = map_repo.phases(session, version_id)
     elements = map_repo.elements(session, version_id)
     edges = map_repo.edges(session, version_id)
+    if view is not None:
+        elements = [e for e in elements if views.in_view(e.view_membership, view)]
+        shown = {e.id for e in elements}
+        edges = [
+            e
+            for e in edges
+            if views.in_view(e.view_membership, view)
+            and e.from_element_id in shown
+            and e.to_element_id in shown
+        ]
+    elif not every_line:
+        edges = combined_lines(edges)
     raci = map_repo.raci(session, version_id)
     constraints = map_repo.constraints(session, version_id)
     flags = map_repo.ai_flags(session, version_id)
     passages = map_repo.evidence(session, version_id)
+    claims_of = map_repo.element_claims(session, version_id)
+    claim_records = claims_repo.by_ids(session, [c for ids in claims_of.values() for c in ids])
     drafted_from = [
         s
         for sid in map_repo.version_source_ids(session, version_id)
@@ -173,6 +217,9 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
     graph_elements = []
     for e in elements:
         flag = next((f for f in flags if f.element_id == e.id), None)
+        accounts = translation.account_summary(
+            claim_records[c].account_type for c in claims_of.get(e.id, []) if c in claim_records
+        )
         graph_elements.append(
             GraphElement(
                 id=e.id,
@@ -225,6 +272,14 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 confidence_breakdown=list(e.confidence_breakdown),
                 needs_check=e.needs_check,
                 review_status=e.review_status,
+                account_summary=accounts,
+                practice_described=translation.practice_described(accounts),
+                variants=e.variants,
+                view_membership=e.view_membership,
+                work_type=e.work_type,
+                constraint_type=e.constraint_type,
+                work_type_basis=list(e.work_type_basis or []),
+                work_type_status=e.work_type_status,
             )
         )
 
@@ -235,7 +290,7 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
             trigger=hide(engagement.trigger),
             end_point=hide(engagement.end_point),
             kpi=hide(engagement.process_kpi),
-            cycle_time=cycle_time(elements, edges),
+            cycle_time=cycle_time(elements, edges if view else combined_lines(edges)),
         ),
         roles=[
             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
@@ -253,15 +308,23 @@ def build_graph(session: Session, version_id: str) -> Graph | None:
                 to=e.to_element_id,
                 kind=e.kind,
                 label=hide(e.label),
+                sequence_basis=e.sequence_basis,
+                view_membership=e.view_membership,
+                information_payload=hide(e.information_payload)
+                if e.information_payload is not None
+                else None,
+                typical=e.typical,
+                provenance=e.provenance,
             )
             for e in edges
         ],
     )
 
 
-def get_graph(sessions: Sessions, version_id: str) -> Result[Graph]:
+def get_graph(sessions: Sessions, version_id: str, view: View | None = None) -> Result[Graph]:
+    """Every line with its view membership; with a view, only that view's steps and lines."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
+        graph = build_graph(session, version_id, every_line=True, view=view)
     return Ok(graph) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
 
 
@@ -274,20 +337,55 @@ def get_alignment_matrix(sessions: Sessions, version_id: str) -> Result[list[Ali
     return Ok(alignment.alignment_matrix(graph))
 
 
-def get_layout(sessions: Sessions, version_id: str) -> Result[Layout]:
-    """Where the UI draws the version's map (PRD §3.9)."""
+def get_layout(
+    sessions: Sessions, version_id: str, view: View | None = None, show_other: bool = False
+) -> Result[Layout]:
+    """Where the UI draws the version's map (PRD §3.9): the combined map, or one view (§3.12.11),
+    optionally with the other view's steps ghosted."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
-    return Ok(layout.compute_layout(graph)) if graph else Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        graph = build_graph(session, version_id, every_line=True)
+    if graph is None:
+        return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+    if view is None:
+        return Ok(layout.compute_layout(views.combined(graph)))
+    if not show_other:
+        drawn = layout.compute_layout(views.view_graph(graph, view))
+        return Ok(drawn.model_copy(update={"view": view}))
+    drawn = layout.compute_layout(views.with_other_view(graph, view))
+    return Ok(views.mark_ghosts(drawn, graph, view))
 
 
-def lint_version(sessions: Sessions, version_id: str) -> Result[LintReport]:
-    """Run the lint rules on a version's graph and its layout; store the report on the version."""
+def lint_graph(every: Graph) -> LintReport:
+    """The lint rules on the map as one (with its layout), then each view's flow checks
+    (§3.12.11), from the graph with every line. Used for the stored report, the quality card and
+    publishing alike."""
+    graph = views.combined(every)
+    whole = lint.run_lint(graph, layout.compute_layout(graph))
+    per_view = lint.run_view_checks(every)
+    return LintReport(
+        failures=whole.failures + per_view.failures, warnings=whole.warnings + per_view.warnings
+    )
+
+
+def lint_for(session: Session, version_id: str) -> LintReport | None:
+    every = build_graph(session, version_id, every_line=True)
+    return lint_graph(every) if every is not None else None
+
+
+def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:
+    """Bring the views up to date after a change to the map (deterministic, no AI: new steps and
+    lines get their view membership, and each view the lines it needs, with their questions),
+    then run the lint rules and store the report on the version."""
     with session_scope(sessions) as session:
-        graph = build_graph(session, version_id)
-        if graph is None:
+        version = versions_repo.get(session, version_id)
+        # A published version never changes (constraint 8); only drafts are brought up to date.
+        if version is not None and version.state not in FROZEN:
+            view_translation.update_views(session, version_id)
+            if ask:  # the draft asks after S5, so step questions come first
+                view_translation.add_questions(session, version_id)
+        report = lint_for(session, version_id)
+        if report is None:
             return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
-        report = lint.run_lint(graph, layout.compute_layout(graph))
         versions_repo.set_lint_report(session, version_id, report.model_dump(mode="json"))
     return Ok(report)
 
@@ -301,6 +399,31 @@ def get_lint(sessions: Sessions, version_id: str) -> Result[LintReport]:
     if stored is not None:
         return Ok(LintReport.model_validate(stored))
     return lint_version(sessions, version_id)
+
+
+def _answer(
+    record: ClaimRecord,
+    where: dict[str, tuple[str, str | None]],
+    bank: QuestionBank | None,
+    hide: Callable[[str], str],
+) -> AnswerQuote:
+    first = record.segment_ids[0] if record.segment_ids else None
+    anchor, question_id = where.get(first or "", ("", None))
+    question = ""
+    if bank is not None and question_id and any(q.id == question_id for q in bank.questions):
+        question = bank.question(question_id).wording
+    return AnswerQuote(
+        quote=hide(record.quote),
+        account_type=record.account_type or "unclear",
+        account_cue=hide(str(record.payload.get("account_cue", ""))),
+        stated_reason=hide(str(record.payload.get("stated_reason", ""))),
+        variation_condition=hide(str(record.payload.get("variation_condition", ""))),
+        source_id=record.source_id,
+        segment_id=first,
+        anchor=anchor,
+        question_id=question_id,
+        question=question,
+    )
 
 
 def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
@@ -321,10 +444,35 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         names = {s.id: s.filename for s in sources}
         images = map_repo.image_count(session, element_id)
         found = gap_repo.step_findings(session, version.engagement_id, element.stable_key)
+        lens = lenses.load(session, version.id, version.engagement_id)
+        claim_ids = map_repo.element_claims(session, version.id).get(element_id, [])
+        records = claims_repo.by_ids(session, claim_ids)
+        interview = [records[c] for c in claim_ids if c in records and records[c].account_type]
+        rows = sources_repo.segment_rows(
+            session, [r.segment_ids[0] for r in interview if r.segment_ids]
+        )
+        cue_segments = [
+            str(c["segment_ids"][0])
+            for c in element.work_type_basis
+            if isinstance(c.get("segment_ids"), list) and c["segment_ids"]
+        ]
+        cue_anchors, _ = lenses.places(session, cue_segments)
+        cue_sources = {sid: sources_repo.segment_source(session, sid) or "" for sid in cue_segments}
+        # The first passage each answer cites: its anchor and the guide question it answers.
+        where = {
+            sid: (
+                parsing.segment_anchor(fmt=fmt, seq=seg.seq, page=seg.page, section=seg.section,
+                                       text=seg.text, start_ms=seg.start_ms),
+                seg.question_id,
+            )
+            for sid, (seg, fmt) in rows.items()
+        }  # fmt: skip
 
     def hide(text: str) -> str:
         return redaction.hide(text, terms)
 
+    loaded = interview_templates.load_bank()
+    bank = loaded.value if isinstance(loaded, Ok) else None
     roles = {r.id: r.name for r in graph.roles}
     phases = {p.id: p.name for p in graph.phases}
     linked = [p for p in passages if p.evidence.element_id == element_id]
@@ -362,6 +510,18 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         ElementDetail(
             **fields,
             version_id=version.id,
+            know_how=lenses.know_how(lens, element.stable_key, element.kind, element.work_type),
+            stories=lenses.stories(lens, element.stable_key),
+            work_type_cues=[
+                WorkTypeCue(
+                    quote=hide(str(c.get("quote", ""))),
+                    source_id=cue_sources.get(seg, ""),
+                    segment_id=seg or None,
+                    anchor=cue_anchors.get(seg, ""),
+                )
+                for c in element.work_type_basis
+                for seg in [str((c.get("segment_ids") or [""])[0])]
+            ],
             lane_role_name=roles.get(element.lane_role_id or "", ""),
             phase_name=phases.get(element.phase_id or "", ""),
             decider_role_name=roles.get(element.decision.decider_role_id or "", ""),
@@ -377,6 +537,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
             ],
             evidence=cards,
             image_count=images,
+            answers=[_answer(r, where, bank, hide) for r in interview],
             gap_findings=[
                 {
                     "id": f.id,

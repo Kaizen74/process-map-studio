@@ -1,8 +1,8 @@
 """The PRD Appendix A load-control engagement, set up through the real API (tests and fixtures).
 
-Roles, the sample sources and the A.1 speaker mapping (Interviewer → interviewer, Priya Nair →
-Load controller) are always the same, so the passages sent to Claude, and therefore the mock-answer
-hashes, are the same in every test.
+Roles, the sample sources and the speaker mappings (A.1: Interviewer → interviewer, Priya Nair →
+Load controller; A.10: Ramp duty manager → Ramp) are always the same, so the passages sent to
+Claude, and therefore the mock-answer hashes, are the same in every test.
 """
 
 from __future__ import annotations
@@ -26,6 +26,9 @@ SOURCES = [
     "sop_RP-02.docx",
     "jd_load_control_lead.docx",
     "jd_load_controller.docx",
+    # A.10 (P4c, C3): the landscape interview with the Ramp duty manager, part of the same
+    # engagement from P4c onward.
+    "landscape_ramp_lead.txt",
 ]
 
 
@@ -71,5 +74,15 @@ def build(client: TestClient, sources: list[str] = SOURCES) -> FixtureEngagement
         client.put(
             f"/api/sources/{uploaded['interview_transcript.txt']}/speakers",
             json={"Interviewer": "interviewer", "Priya Nair": roles["Load controller"]},
+        )
+    if "landscape_ramp_lead.txt" in uploaded:
+        # Its name doesn't say "interview", so it is read as a document until Eric sets the kind.
+        changed = client.patch(f"/api/sources/{uploaded['landscape_ramp_lead.txt']}",
+                               json={"kind": "interview_transcript"})  # fmt: skip
+        assert changed.status_code == 200, changed.text
+        wait_for_jobs(client)
+        client.put(
+            f"/api/sources/{uploaded['landscape_ramp_lead.txt']}/speakers",
+            json={"Interviewer": "interviewer", "Ramp duty manager": roles["Ramp"]},
         )
     return FixtureEngagement(engagement_id=eid, roles=roles, sources=uploaded)

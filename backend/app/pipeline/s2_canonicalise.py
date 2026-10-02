@@ -27,6 +27,7 @@ from app.domain.enums import MergeDecision, Provenance
 from app.domain.graph import ElementRecord, MergeGroup, MergeProposalRecord
 from app.domain.models import AiCallRecord, CheckOutcome, ClaimRecord, NameReplacement, RoleView
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.domain.sensemaking import SENSE_CLAIM_TYPES
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
@@ -73,8 +74,13 @@ def _field(record: ClaimRecord, name: str) -> str:
 
 def claim_refs(session: Session, version_id: str) -> list[ClaimRef]:
     """The verified claims as the call names them: `c1…` in stored order, sources `s1…` in the
-    order they first appear."""
-    rows = claims_repo.verified_rows(session, version_id)
+    order they first appear. Stories, know-how, terms and the like are not steps' claims (S3c
+    links them to the steps)."""
+    rows = [
+        (claim_id, record)
+        for claim_id, record in claims_repo.verified_rows(session, version_id)
+        if record.claim_type not in SENSE_CLAIM_TYPES
+    ]
     speaking = sources_repo.speaker_roles(session, [s for _, r in rows for s in r.segment_ids])
     source_refs: dict[str, str] = {}
     kinds: dict[str, str] = {}

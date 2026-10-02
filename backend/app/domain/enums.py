@@ -86,6 +86,7 @@ class EdgeKind(StrEnum):
     REJECT = "reject"
     REWORK = "rework"
     EXCEPTION = "exception"
+    GAP = "gap"  # v1.10: a "not described" connector, As done view only (§3.12.10 rule 7)
 
 
 class CauseType(StrEnum):
@@ -219,6 +220,12 @@ class InternalFindingType(StrEnum):
     EXCEPTION_GAP = "exception_gap"
     STALE_DOCUMENTATION = "stale_documentation"
     DOCUMENTATION_UPDATE = "documentation_update"
+    # v1.10 reality gaps (§3.12.7)
+    KNOWN_ADAPTATION = "known_adaptation"
+    UNKNOWN_RULE = "unknown_rule"
+    DISCLOSURE_GAP = "disclosure_gap"
+    CONTROL_GAP = "control_gap"
+    CONSTRAINT_MISMATCH = "constraint_mismatch"
 
 
 class ExternalFindingType(StrEnum):

@@ -5,7 +5,7 @@ import type { Graph } from "../../src/lib/mapTypes";
 import type { QualityCard } from "../../src/lib/reviewTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler, type FakeResponse } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -38,7 +38,7 @@ function backend(publish: FakeResponse) {
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     [`GET /api/versions/${VID}/quality-card`]: () => ({ body: CARD }),
     [`POST /api/versions/${VID}/publish`]: () => publish,
   };

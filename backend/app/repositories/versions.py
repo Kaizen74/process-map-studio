@@ -9,6 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.domain.models import VersionView
+from app.domain.sensemaking import SENSE_CLAIM_TYPES
 from app.repositories.tables import (
     AiFlag,
     Base,
@@ -214,6 +215,7 @@ def _row(row: MapVersion) -> dict[str, Any]:
         "published_at": row.published_at,
         "published_by": row.published_by,
         "parent_version_id": row.parent_version_id,
+        "codebook_version": row.codebook_version,
     }
 
 
@@ -300,10 +302,21 @@ def _copy[T: Base](session: Session, model: type[T], row: T, **changes: Any) -> 
 
 
 def copy_content(session: Session, from_id: str, to_id: str) -> None:
-    """Deep copy of a published map into a new draft (PRD §3.5 Reopen): phases, steps with their
-    claim links, lines, RACI, evidence links, constraints, AI flags, questions, image rows (the
-    files are shared) and sources. Reviewed steps carry over as confirmed; rejected stay rejected.
-    """
+    """Deep copy of a published map into a new draft (PRD §3.5 Reopen): the interview's stories,
+    know-how and terms, phases, steps with their claim links, lines, RACI, evidence links,
+    constraints, AI flags, questions, image rows (the files are shared) and sources. Reviewed
+    steps carry over as confirmed; rejected stay rejected."""
+    # The interview's stories, know-how, terms and the like (C1) belong to no step's claim links;
+    # they are copied with the map so the reopened draft keeps them (their step links are stable
+    # step keys, which the copied steps keep).
+    for claim in session.scalars(
+        select(Claim).where(
+            Claim.version_id == from_id,
+            Claim.verification_status == "verified",
+            Claim.claim_type.in_(SENSE_CLAIM_TYPES),
+        )
+    ):
+        _copy(session, Claim, claim, version_id=to_id)
     phases: dict[str, str] = {}
     for old in session.scalars(select(Phase).where(Phase.version_id == from_id)):
         phases[old.id] = _copy(session, Phase, old, version_id=to_id).id
@@ -381,8 +394,15 @@ def copy_content(session: Session, from_id: str, to_id: str) -> None:
 def create_reopened(
     session: Session, *, engagement_id: str, label: str, parent_id: str
 ) -> VersionView:
+    parent = session.get(MapVersion, parent_id)
     found = MapVersion(
-        engagement_id=engagement_id, label=label, state="draft", parent_version_id=parent_id
+        engagement_id=engagement_id,
+        label=label,
+        state="draft",
+        parent_version_id=parent_id,
+        # The content is the parent's, so is how it was made (run record, codebook version).
+        run_record=parent.run_record if parent else None,
+        codebook_version=parent.codebook_version if parent else None,
     )
     session.add(found)
     session.flush()
@@ -398,11 +418,15 @@ def current_map_id(session: Session, engagement_id: str) -> str | None:
     return str(published["id"]) if published else None
 
 
-def set_run_record(session: Session, version_id: str, record: dict[str, Any]) -> None:
-    """Stamp how the version's latest draft or refresh run was made (0010)."""
+def set_run_record(
+    session: Session, version_id: str, record: dict[str, Any], codebook_version: str | None = None
+) -> None:
+    """Stamp how the version's latest draft or refresh run was made (0010) and the codebook
+    version it used (Appendix E)."""
     row = session.get(MapVersion, version_id)
     if row is not None:
         row.run_record = record
+        row.codebook_version = codebook_version
         session.flush()
 
 

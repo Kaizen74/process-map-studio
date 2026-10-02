@@ -41,7 +41,8 @@ def test_the_merge_made_while_drafting_is_listed_side_by_side(drafted: Drafted) 
         ("Return loading report", "activity", "Ramp", None),
     ]
     first, second = p["groups"]
-    assert len(first["claims"]) == 4 and len(second["claims"]) == 1
+    # v1.10: + the official account; A.10 (C3): + the landscape interview's three claims.
+    assert len(first["claims"]) == 7 and len(second["claims"]) == 2
     claim = second["claims"][0]
     assert (claim["source_name"], claim["anchor"]) == ("sop_RP-02.docx", "§2")
     assert claim["quote"].startswith("The Ramp Supervisor shall return the loading report")
@@ -60,7 +61,8 @@ def test_split_puts_back_the_steps_as_drafted_and_accept_joins_them_again(
     flow = lines(drafted)
     assert {("Special loads OK?", "Load aircraft", "yes", "Yes"),
             ("Load aircraft", "Return loading report", "sequence", ""),
-            ("Return loading report", "Deviation in limits?", "sequence", ""),
+            # v1.10 A.5: after loading comes the busy-wave decision.
+            ("Return loading report", "Busy wave?", "sequence", ""),
             ("Approve deviation", "Load aircraft", "rework", "Re-trim")} <= flow  # fmt: skip
     aircraft = element(drafted, "Load and return LIR")  # the same step, now "Load aircraft"
     report_id = next(e["id"] for e in graph(drafted)["elements"]
@@ -71,10 +73,12 @@ def test_split_puts_back_the_steps_as_drafted_and_accept_joins_them_again(
     assert (report["needs_check"], report["confidence"], report["review_status"]) == (
         True, None, "draft")  # fmt: skip
     # Each step's evidence is what its own claims cite, supporting it (the stances were judged
-    # against the joined step): the interview for loading, the SOP for the report.
+    # against the joined step): the interview for loading, the SOP (and the landscape interview's
+    # hand-off, A.10) for the report.
     cited = [(c["source_name"], c["stance"]) for c in report["evidence"] if c["segment_id"]]
-    assert cited == [("sop_RP-02.docx", "supports")]
-    assert report["source_state"] == "documented_only"
+    assert cited == [("sop_RP-02.docx", "supports"), ("landscape_ramp_lead.txt", "supports")]
+    # The landscape interview's hand-off (A.10) is lived support beside the SOP.
+    assert report["source_state"] == "corroborated"
     assert (aircraft["source_state"], aircraft["divergence_types"]) == ("practiced_only", [])
     assert [(r["role_name"], r["letter"]) for r in report["raci"]] == [("Ramp", "R"), ("Ramp", "A")]
     assert lint_rules(drafted) == []
@@ -91,7 +95,7 @@ def test_split_puts_back_the_steps_as_drafted_and_accept_joins_them_again(
     assert back["needs_check"] and back["confidence"] is None
     flow = lines(drafted)
     assert not any(a == b for a, b, _, _ in flow)  # no line from a step to itself
-    assert ("Load and return LIR", "Deviation in limits?", "sequence", "") in flow
+    assert ("Load and return LIR", "Busy wave?", "sequence", "") in flow  # v1.10 A.5
     assert lint_rules(drafted) == []
 
 
@@ -123,7 +127,7 @@ def test_a_pending_proposal_can_be_kept_separate_or_accepted(drafted: Drafted) -
     assert {g["element_id"] for g in p["groups"]} == {
         drafted.ids["Draft load plan"], drafted.ids["Issue load sheet"]}  # fmt: skip
     kept = decide(drafted, pending.id, "rejected").json()
-    assert kept["decision"] == "rejected" and len(labels(drafted)) == 10
+    assert kept["decision"] == "rejected" and len(labels(drafted)) == 12  # v1.10: 10 steps + 2
     merged = decide(drafted, pending.id, "accepted").json()
     assert merged["element_id"] == drafted.ids["Draft load plan"]
     assert "Issue load sheet" not in labels(drafted) and "Plan and issue" in labels(drafted)
@@ -153,6 +157,13 @@ def test_questions_can_be_marked_answered_and_reopened(drafted: Drafted) -> None
         ("contested", "Deviation in limits?", "Close out"),
         ("gap", "", ""),
         ("gap", "", ""),
+        # A.8 (C2): decisions and approvals whose kind of work no cue shows.
+        ("work_type", "Approve load plan", "Plan"),
+        ("work_type", "Busy wave?", "Check and load"),
+        ("work_type", "Approve deviation", "Close out"),
+        # v1.10 A.9: the lines resting only on the order of mentioning.
+        ("sequence", "Busy wave?", "Check and load"),
+        ("sequence", "Deviation in limits?", "Close out"),  # A.10: the loading report explains one
     ]
     assert all(q["status"] == "open" for q in listed)
     first = listed[0]["id"]

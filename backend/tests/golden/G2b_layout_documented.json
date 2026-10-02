@@ -1,0 +1,459 @@
+{
+  "view": "documented",
+  "canvas": {
+    "w": 1112,
+    "h": 420
+  },
+  "lanes": [
+    {
+      "role_id": "id-1",
+      "label": "Load control lead",
+      "step_count": 1,
+      "y": 48,
+      "h": 124
+    },
+    {
+      "role_id": "id-2",
+      "label": "Load controller",
+      "step_count": 4,
+      "y": 172,
+      "h": 124
+    },
+    {
+      "role_id": "id-3",
+      "label": "Ramp",
+      "step_count": 1,
+      "y": 296,
+      "h": 124
+    }
+  ],
+  "phases": [
+    {
+      "phase_id": "id-4",
+      "label": "Plan",
+      "time_window": "T-120 to T-90",
+      "x": 120,
+      "w": 372
+    },
+    {
+      "phase_id": "id-5",
+      "label": "Check and load",
+      "time_window": "",
+      "x": 492,
+      "w": 248
+    },
+    {
+      "phase_id": "id-6",
+      "label": "Close out",
+      "time_window": "T-15 to T-10",
+      "x": 740,
+      "w": 372
+    }
+  ],
+  "nodes": [
+    {
+      "id": "id-7",
+      "shape": "circle",
+      "x": 174,
+      "y": 208,
+      "w": 16,
+      "h": 16,
+      "label_lines": [],
+      "label_pos": {
+        "x": 182,
+        "y": 216,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 182,
+        "y": 230,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-8",
+      "shape": "rounded_rect",
+      "x": 256,
+      "y": 194,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Draft load plan"
+      ],
+      "label_pos": {
+        "x": 306,
+        "y": 209,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 306,
+        "y": 244,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-9",
+      "shape": "pill",
+      "x": 380,
+      "y": 70,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Approve",
+        "load plan"
+      ],
+      "label_pos": {
+        "x": 430,
+        "y": 77,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 430,
+        "y": 120,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-10",
+      "shape": "diamond",
+      "x": 528,
+      "y": 190,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Special",
+        "loads OK?"
+      ],
+      "label_pos": {
+        "x": 554,
+        "y": 246,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 554,
+        "y": 280,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-11",
+      "shape": "rounded_rect",
+      "x": 628,
+      "y": 318,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Load and",
+        "return LIR"
+      ],
+      "label_pos": {
+        "x": 678,
+        "y": 325,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 678,
+        "y": 368,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-12",
+      "shape": "diamond",
+      "x": 776,
+      "y": 190,
+      "w": 52,
+      "h": 52,
+      "label_lines": [
+        "Deviation",
+        "in limits?"
+      ],
+      "label_pos": {
+        "x": 802,
+        "y": 246,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 802,
+        "y": 280,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-13",
+      "shape": "rounded_rect",
+      "x": 876,
+      "y": 194,
+      "w": 100,
+      "h": 44,
+      "label_lines": [
+        "Issue load sheet"
+      ],
+      "label_pos": {
+        "x": 926,
+        "y": 209,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 926,
+        "y": 244,
+        "align": "center"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-14",
+      "shape": "double_circle",
+      "x": 1042,
+      "y": 208,
+      "w": 16,
+      "h": 16,
+      "label_lines": [],
+      "label_pos": {
+        "x": 1050,
+        "y": 216,
+        "align": "center"
+      },
+      "lens_pos": {
+        "x": 1050,
+        "y": 230,
+        "align": "center"
+      },
+      "ghost": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "id-15",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          190,
+          216
+        ],
+        [
+          256,
+          216
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-16",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          356,
+          216
+        ],
+        [
+          368,
+          216
+        ],
+        [
+          368,
+          92
+        ],
+        [
+          380,
+          92
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-17",
+      "kind": "approve",
+      "is_back_edge": false,
+      "points": [
+        [
+          480,
+          92
+        ],
+        [
+          492,
+          92
+        ],
+        [
+          492,
+          216
+        ],
+        [
+          528,
+          216
+        ]
+      ],
+      "label": "Approve",
+      "label_pos": {
+        "x": 486,
+        "y": 83,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-18",
+      "kind": "reject",
+      "is_back_edge": true,
+      "points": [
+        [
+          430,
+          70
+        ],
+        [
+          430,
+          62
+        ],
+        [
+          306,
+          62
+        ],
+        [
+          306,
+          194
+        ]
+      ],
+      "label": "Rework",
+      "label_pos": {
+        "x": 424,
+        "y": 53,
+        "align": "right"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-19",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          580,
+          216
+        ],
+        [
+          616,
+          216
+        ],
+        [
+          616,
+          340
+        ],
+        [
+          628,
+          340
+        ]
+      ],
+      "label": "Yes",
+      "label_pos": {
+        "x": 586,
+        "y": 207,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-20",
+      "kind": "yes",
+      "is_back_edge": false,
+      "points": [
+        [
+          828,
+          216
+        ],
+        [
+          876,
+          216
+        ]
+      ],
+      "label": "Within limits",
+      "label_pos": {
+        "x": 834,
+        "y": 180,
+        "align": "left"
+      },
+      "ghost": false
+    },
+    {
+      "id": "id-21",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          976,
+          216
+        ],
+        [
+          1042,
+          216
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-22",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          356,
+          216
+        ],
+        [
+          368,
+          216
+        ],
+        [
+          368,
+          340
+        ],
+        [
+          628,
+          340
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    },
+    {
+      "id": "id-23",
+      "kind": "sequence",
+      "is_back_edge": false,
+      "points": [
+        [
+          728,
+          340
+        ],
+        [
+          740,
+          340
+        ],
+        [
+          740,
+          216
+        ],
+        [
+          776,
+          216
+        ]
+      ],
+      "label": "",
+      "label_pos": null,
+      "ghost": false
+    }
+  ]
+}

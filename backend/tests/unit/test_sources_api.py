@@ -88,7 +88,7 @@ def test_uploads_answer_at_once_and_are_read_by_a_job(client: TestClient, engage
 def test_transcripts_are_read_into_speaker_turns(client: TestClient, engagement: str) -> None:
     source = upload(client, engagement, "interview_transcript.txt").json()
     assert source["kind"] == "interview_transcript"
-    assert (source["text_status"], source["segment_count"], source["error"]) == ("ready", 9, "")
+    assert (source["text_status"], source["segment_count"], source["error"]) == ("ready", 16, "")
     page = client.get(f"/api/sources/{source['id']}/segments").json()
     assert [s["anchor"] for s in page["segments"]][:3] == ["06:38", "06:40", "07:55"]
 
@@ -107,7 +107,7 @@ def test_every_transcript_format_is_read(client: TestClient, engagement: str, na
     assert source["kind"] == "interview_transcript" and source["text_status"] == "ready"
     page = client.get(f"/api/sources/{source['id']}/segments").json()
     anchors = [s["anchor"] for s in page["segments"] if ":" in s["anchor"]]
-    assert anchors[0] == "06:38" and anchors[-1] == "31:10" and len(anchors) == 9
+    assert anchors[0] == "06:38" and anchors[-1] == "31:10" and len(anchors) == 16
 
 
 def test_name_like_speaker_labels_become_redaction_terms(
@@ -144,7 +144,7 @@ def test_changing_the_kind_to_transcript_reads_the_file_again(
     source = upload(
         client, engagement, "call notes.docx", (FIXTURES / "interview_transcript.docx").read_bytes()
     ).json()
-    assert source["kind"] == "other" and source["segment_count"] == 10
+    assert source["kind"] == "other" and source["segment_count"] == 17  # heading + 16 turns
     changed = client.patch(f"/api/sources/{source['id']}", json={"kind": "interview_transcript"})
     assert changed.json()["text_status"] == "pending" and changed.json()["job_id"]
     wait_for_jobs(client)

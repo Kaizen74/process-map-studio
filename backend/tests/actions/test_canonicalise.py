@@ -81,7 +81,8 @@ def test_the_sample_answer_file_matches_the_current_claims(sample: Drafted) -> N
 
 def test_the_sample_becomes_the_eight_steps_of_a5(sample: Drafted) -> None:
     tally = run(sample)
-    assert (tally.steps, tally.rejected, tally.merged, tally.pending_merges) == (8, 0, 1, 0)
+    # v1.10 A.5: ten steps (+ Busy wave? and Read report at aircraft).
+    assert (tally.steps, tally.rejected, tally.merged, tally.pending_merges) == (10, 0, 1, 0)
     with session_scope(sample.sessions) as session:
         elements = map_repo.elements(session, sample.version_id)
         roles = {r.id: r.name for r in engagements.list_roles(session, sample.engagement_id)}
@@ -93,6 +94,8 @@ def test_the_sample_becomes_the_eight_steps_of_a5(sample: Drafted) -> None:
         ("Special loads OK?", "decision", "Load controller"),
         ("Resolve or offload", "activity", "Airline ops"),
         ("Load and return LIR", "activity", "Ramp"),
+        ("Busy wave?", "decision", "Load controller"),
+        ("Read report at aircraft", "activity", "Load controller"),
         ("Deviation in limits?", "decision", "Load controller"),
         ("Approve deviation", "approval", "Captain"),
         ("Issue load sheet", "activity", "Load controller"),
@@ -100,13 +103,16 @@ def test_the_sample_becomes_the_eight_steps_of_a5(sample: Drafted) -> None:
     assert [e.stable_key for e in elements][:2] == ["draft-load-plan", "approve-load-plan"]
     assert all(e.provenance == "O" and e.review_status == "draft" for e in elements)
     assert all(e.source_state == "not_assessed" for e in elements)  # S3 classifies
-    assert [len(linked[e.id]) for e in elements] == [4, 2, 3, 1, 5, 3, 1, 2]
+    # v1.10 sample: Load aircraft also carries the SME's official account of the return time;
+    # A.10 (C3): and the landscape interview's two hand-offs and the paper-report constraint.
+    assert [len(linked[e.id]) for e in elements] == [4, 2, 3, 1, 9, 1, 1, 3, 1, 2]
     assert (merge.proposed_label, merge.similarity, merge.decision) == (
         "Load and return LIR",
         0.86,
         "accepted",
     )
-    assert len(merge.claim_ids) == 5 and merge.decided_at
+    # v1.10: + the official account; A.10 (C3): + the landscape interview's three claims.
+    assert len(merge.claim_ids) == 9 and merge.decided_at
 
 
 BAD_STEPS = {

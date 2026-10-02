@@ -43,6 +43,42 @@ class S1Claim(BaseModel):
     basis: str = Field(description="For I: how it follows from the cited text; for O: empty")
 
 
+class S1MarkerReview(BaseModel):
+    """A marker hint (§3.12.10 step B) the claim relies on or sets aside. A hint is never evidence:
+    a confirmation counts only if its quote is found in the cited segments."""
+
+    marker: str = Field(description="The hint as listed in the segment's markers attribute")
+    confirmed: bool = Field(description="True if the cited words bear the hint out, else false")
+    quote: str = Field(
+        description="The words, copied exactly from the cited segments, that show it"
+    )
+
+
+class S1InterviewClaim(S1Claim):
+    """An interview claim, with the account it gives (§3.12.3) and what translation needs
+    (§3.12.10): stated reasons and variation conditions, in the SME's own words."""
+
+    account_type: Literal["official", "lived", "unclear"] = Field(
+        description="official: how it is meant to work; lived: what the SME does or did; "
+        "unclear: neither is evident"
+    )
+    account_cue: str = Field(
+        description="For official or lived: the cue words, copied exactly from the cited "
+        "segments; for unclear: empty"
+    )
+    stated_reason: str = Field(
+        description="The SME's own reason for working this way, copied exactly, or empty"
+    )
+    variation_condition: str = Field(
+        description="For a variation: the condition it depends on, copied exactly (for example "
+        "'on a busy wave'), or empty"
+    )
+    markers: list[S1MarkerReview] = Field(
+        description="The marker hints on the cited segments that bear on this claim, each "
+        "confirmed or set aside with a quote"
+    )
+
+
 class S1Unknown(BaseModel):
     """Something the process needs that the passages don't say (G8): becomes a question."""
 
@@ -53,6 +89,84 @@ class S1Unknown(BaseModel):
 class S1Output(BaseModel):
     claims: list[S1Claim]
     unknowns: list[S1Unknown]
+
+
+# --- What else an interview tells (PRD §3.12.2, §3.12.6, §3.12.10 rules 4 and 10; C1) -----------
+# Each item is grounded like a claim (§3.12.9 rule 7): segment IDs and a verbatim quote; the SME's
+# own words (signifiers, terms) must be found in the cited segments. `about` names the step or
+# decision in plain words, so the items can be linked to the map's steps once they exist (S3c).
+
+
+class S1Grounded(BaseModel):
+    segment_ids: list[str] = Field(description="IDs of the segments it comes from")
+    quote: str = Field(description="Verbatim words copied from those segments, at most 40 words")
+
+
+class S1Story(S1Grounded):
+    """A fragment: an anchored micro-narrative of a real case, kept even when told once."""
+
+    label: str = Field(description="At most 12 words, in the SME's own wording where possible")
+    fragment_type: Literal[
+        "recent_case", "went_well", "went_badly", "surprise", "workaround", "other"
+    ]
+    signifiers: list[str] = Field(
+        description="The SME's own words for the situation (for example how they classed it), "
+        "each copied exactly from the cited segments"
+    )
+    frequency: str = Field(description="How often it happens, copied exactly, or empty")
+    about: str = Field(description="The steps or decisions it concerns, in plain words")
+
+
+class S1KnowHow(S1Grounded):
+    """One ASHEN item at a knowledge disclosure point (a decision, approval or judgment)."""
+
+    category: Literal["artefacts", "skills", "heuristics", "experience", "natural_talent"]
+    text: str = Field(description="The item in one plain sentence, naming roles, never people")
+    about: str = Field(description="The decision or step it is know-how for, in plain words")
+    provenance: Literal["O", "I"]
+    basis: str = Field(description="For I: how it follows from the cited text; for O: empty")
+
+
+class S1Term(S1Grounded):
+    """An SME term (glossary candidate): the word as the SME uses it and its plain meaning."""
+
+    term: str = Field(description="The term, copied exactly from the cited segments")
+    plain_meaning: str = Field(description="What it means, in plain words, from the segments")
+
+
+class S1DecisionInfo(S1Grounded):
+    """What a decision takes in and gives out (§3.12.10 rules 4 and 8), in the SME's terms."""
+
+    about: str = Field(description="The decision, in plain words")
+    cadence: Literal["daily", "weekly", "monthly", "annually", "exceptional", "none"] = Field(
+        description="How often the decision is made, only if stated; otherwise none"
+    )
+    received: list[str] = Field(description="Information the decision receives")
+    attended: list[str] = Field(description="Signals the decider pays attention to")
+    wanted: list[str] = Field(description="Information the decider says they lack")
+    communicated_via: list[str] = Field(description="How the decision is passed on")
+
+
+class S1Capability(S1Grounded):
+    """A strength or weakness the SME names (rule 10): Preserve or Improve."""
+
+    kind: Literal["strength", "weakness"]
+    dimension: Literal["skillset", "ways_of_working", "systems", "process", "structure"]
+    text: str = Field(description="The note in one plain sentence, naming roles, never people")
+    cause_type: Literal[
+        "decision_rights", "system_fragmentation", "single_point_knowledge",
+        "capacity_mismatch", "policy_control", "capability_gap", "none",
+    ] = Field(description="For a weakness: its cause type (B.9); otherwise none")  # fmt: skip
+
+
+class S1InterviewOutput(BaseModel):
+    claims: list[S1InterviewClaim]
+    unknowns: list[S1Unknown]
+    stories: list[S1Story] = []
+    know_how: list[S1KnowHow] = []
+    terms: list[S1Term] = []
+    decision_info: list[S1DecisionInfo] = []
+    capability_notes: list[S1Capability] = []
 
 
 class S0OcrOutput(BaseModel):
@@ -168,6 +282,16 @@ class S4AiFlag(BaseModel):
     basis: Literal["rule_based_automate_candidate", "judgment_support_only"]
 
 
+class S4Variant(BaseModel):
+    """How one version of the work does this step (§3.12.11 variant attributes), as the sources
+    state it; empty strings where that version says nothing different."""
+
+    owner: str = Field(description="The role that does or decides it in this version, or empty")
+    threshold: str = Field(description="The rule or threshold as this version states it, or empty")
+    time: str = Field(description="The time or deadline as this version states it, or empty")
+    trigger: str = Field(description="What starts it in this version, or empty")
+
+
 class S4Step(BaseModel):
     step_ref: str = Field(description="The step's ID from the <steps> list")
     claim_refs: list[str] = Field(description="Further claims this step's details come from")
@@ -186,6 +310,12 @@ class S4Step(BaseModel):
     k_risk: str = Field(description="Knowledge risk the claims show, or empty")
     constraints: list[S4Constraint]
     ai_flags: list[S4AiFlag] = Field(description="At most one")
+    variant_done: S4Variant = Field(
+        description="Where practice differs from the documents: the values the lived account gives"
+    )
+    variant_documented: S4Variant = Field(
+        description="Where practice differs from the documents: the values the documents give"
+    )
 
 
 class S4Edge(BaseModel):
@@ -231,7 +361,14 @@ InternalFindingType = Literal[
     "exception_gap",
     "stale_documentation",
     "documentation_update",
+    # v1.10 reality gaps (§3.12.7; C4b)
+    "known_adaptation",
+    "unknown_rule",
+    "disclosure_gap",
+    "control_gap",
+    "constraint_mismatch",
 ]
+GapClassName = Literal["effective_adaptation", "risky_drift", "obsolete_rule", "unexplained"]
 
 
 class GAEvidence(BaseModel):
@@ -258,6 +395,22 @@ class GAFinding(BaseModel):
     basis_segment_ids: list[str] = Field(
         description="For interpretation: the interview segments the basis cites; otherwise empty"
     )
+    # Reality gaps (§3.12.7): a class only from a reason the SME stated, quoted exactly.
+    gap_class: GapClassName = Field(
+        default="unexplained",
+        description="For a reality gap: the class you propose, only when an SME stated a reason; "
+        "otherwise unexplained",
+    )
+    stated_reason: str = Field(
+        default="",
+        description="The SME's reason, copied exactly from an interview segment the finding "
+        "cites; otherwise empty",
+    )
+    cause_type: Literal[
+        "decision_rights", "system_fragmentation", "single_point_knowledge",
+        "capacity_mismatch", "policy_control", "capability_gap", "none",
+    ] = Field(default="none", description="The cause type (B.9) the stated reason points to; "
+              "none without a stated reason")  # fmt: skip
 
 
 class GAUnknown(BaseModel):
@@ -315,3 +468,32 @@ class GBFinding(BaseModel):
 
 class GBStructureOutput(BaseModel):
     findings: list[GBFinding]
+
+
+# --- S3c Sensemaking (PRD §3.7, §3.12.4; C2) ---------------------------------------------------
+
+
+class S3cCue(BaseModel):
+    """A work-type cue: words copied exactly from the cited segments."""
+
+    segment_ids: list[str]
+    quote: str = Field(description="The cue words, copied exactly, at most 40 words")
+
+
+class S3cWorkType(BaseModel):
+    step_ref: str
+    work_type: Literal["clear", "complicated", "complex", "chaotic", "confused"]
+    cues: list[S3cCue] = Field(description="At least one quoted cue; without one, leave it out")
+    basis: str = Field(description="How the cues show this kind of work, in one sentence")
+
+
+class S3cLink(BaseModel):
+    """Which steps a story, know-how item, term or decision-information item is about."""
+
+    item_ref: str
+    step_refs: list[str]
+
+
+class S3cOutput(BaseModel):
+    work_types: list[S3cWorkType]
+    links: list[S3cLink]

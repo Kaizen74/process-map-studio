@@ -9,6 +9,7 @@ export { SegmentedControl, type SegmentOption, type SegmentedControlProps } from
 export { SignalMeter, type SignalMeterProps } from "./SignalMeter";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { StateGlyph, type StateGlyphProps } from "./StateGlyph";
+export { WorkTypeGlyph, type WorkTypeGlyphProps } from "./WorkTypeGlyph";
 export {
   CheckboxField,
   ChipField,

@@ -1,6 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { Button, Dialog, EmptyState, ErrorState, SelectField, Skeleton } from "../../components/common";
+import {
+  Button,
+  Dialog,
+  EmptyState,
+  ErrorState,
+  SelectField,
+  Skeleton,
+} from "../../components/common";
 import {
   BriefEditor,
   DismissForm,
@@ -41,6 +48,7 @@ import {
   openItems,
   typeLabel,
   type Brief,
+  type GapClass,
   type GapFilters,
   type GapFinding,
   type GapReport,
@@ -55,7 +63,15 @@ const DONE: Readonly<Record<DecisionAction, string>> = {
   dismissed: "Finding dismissed.",
 };
 
-function Filters({ report, filters, onChange }: { report: GapReport; filters: GapFilters; onChange: (f: GapFilters) => void }) {
+function Filters({
+  report,
+  filters,
+  onChange,
+}: {
+  report: GapReport;
+  filters: GapFilters;
+  onChange: (f: GapFilters) => void;
+}) {
   const types = [...new Set(report.findings.map((f) => f.finding_type))];
   const any = { value: "", label: "Any" };
   return (
@@ -63,21 +79,43 @@ function Filters({ report, filters, onChange }: { report: GapReport; filters: Ga
       <SelectField
         label="Type"
         value={filters.type}
-        options={[any, ...types.map((t) => ({ value: t, label: typeLabel(t) }))]}
+        options={[
+          any,
+          ...types.map((t) => ({ value: t, label: typeLabel(t) })),
+        ]}
         onChange={(type) => onChange({ ...filters, type })}
       />
       <SelectField
         label="Severity"
         value={filters.severity}
-        options={[any, ...(["high", "medium", "low"] as const).map((s) => ({ value: s, label: SEVERITY_LABELS[s] }))]}
-        onChange={(severity) => onChange({ ...filters, severity: severity as GapFilters["severity"] })}
+        options={[
+          any,
+          ...(["high", "medium", "low"] as const).map((s) => ({
+            value: s,
+            label: SEVERITY_LABELS[s],
+          })),
+        ]}
+        onChange={(severity) =>
+          onChange({ ...filters, severity: severity as GapFilters["severity"] })
+        }
       />
       {report.analysis.mode === "external" && (
         <SelectField
           label="Evidence"
           value={filters.strength}
-          options={[any, ...(["strong", "weak", "dated"] as const).map((s) => ({ value: s, label: STRENGTH_LABELS[s] }))]}
-          onChange={(strength) => onChange({ ...filters, strength: strength as GapFilters["strength"] })}
+          options={[
+            any,
+            ...(["strong", "weak", "dated"] as const).map((s) => ({
+              value: s,
+              label: STRENGTH_LABELS[s],
+            })),
+          ]}
+          onChange={(strength) =>
+            onChange({
+              ...filters,
+              strength: strength as GapFilters["strength"],
+            })
+          }
         />
       )}
       <SelectField
@@ -85,12 +123,21 @@ function Filters({ report, filters, onChange }: { report: GapReport; filters: Ga
         value={filters.disposition}
         options={[
           any,
-          ...(Object.keys(DISPOSITION_LABELS) as (keyof typeof DISPOSITION_LABELS)[]).map((d) => ({
+          ...(
+            Object.keys(
+              DISPOSITION_LABELS,
+            ) as (keyof typeof DISPOSITION_LABELS)[]
+          ).map((d) => ({
             value: d,
             label: DISPOSITION_LABELS[d],
           })),
         ]}
-        onChange={(disposition) => onChange({ ...filters, disposition: disposition as GapFilters["disposition"] })}
+        onChange={(disposition) =>
+          onChange({
+            ...filters,
+            disposition: disposition as GapFilters["disposition"],
+          })
+        }
       />
     </div>
   );
@@ -107,7 +154,12 @@ export interface GapAnalysisViewProps {
  * One analysis: its brief (Analysis B, before it runs), its progress while it runs, and then the
  * report in Facts · Interpretation · Recommendation with Eric's decision on every finding.
  */
-export function GapAnalysisView({ analysisId, engagementId, researchEnabled, settingsLink }: GapAnalysisViewProps) {
+export function GapAnalysisView({
+  analysisId,
+  engagementId,
+  researchEnabled,
+  settingsLink,
+}: GapAnalysisViewProps) {
   const report = useGapReport(analysisId, engagementId);
   const data = report.data;
   const running = isRunning(data?.analysis);
@@ -126,6 +178,7 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
   const [stepFor, setStepFor] = useState<GapFinding | null>(null);
   const [dismissFor, setDismissFor] = useState<GapFinding | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [classFor, setClassFor] = useState<Record<string, GapClass>>({});
 
   if (report.isPending) return <Skeleton height="200px" />;
   if (report.isError || !data) {
@@ -147,11 +200,25 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
     if (onMap) void navigate(stepPath(base, onMap, elementId));
   };
   const openSource = (sourceId: string) =>
-    void navigate(`${engagementPath(engagementId, "sources")}?source=${encodeURIComponent(sourceId)}`);
+    void navigate(
+      `${engagementPath(engagementId, "sources")}?source=${encodeURIComponent(sourceId)}`,
+    );
 
-  const send = (finding: GapFinding, action: DecisionAction, extra: { note?: string; step?: GapStepChoice } = {}) =>
+  // A reality gap's class goes with Eric's decision once he has changed it (§3.12.7).
+  const withClass = (finding: GapFinding): { gap_class?: GapClass } => {
+    const chosen = classFor[finding.id];
+    return chosen ? { gap_class: chosen } : {};
+  };
+  const send = (
+    finding: GapFinding,
+    action: DecisionAction,
+    extra: { note?: string; step?: GapStepChoice } = {},
+  ) =>
     decide.mutate(
-      { findingId: finding.id, decision: { disposition: action, ...extra } },
+      {
+        findingId: finding.id,
+        decision: { disposition: action, ...withClass(finding), ...extra },
+      },
       {
         onSuccess: () => {
           setStepFor(null);
@@ -175,12 +242,17 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
     onGoTo: goTo,
     onOpenSource: openSource,
     onDecide,
+    onChooseClass: (finding: GapFinding, gapClass: GapClass) =>
+      setClassFor((chosen) => ({ ...chosen, [finding.id]: gapClass })),
   };
 
   const saveThen = (brief: Brief, confirmed: boolean, then?: () => void) =>
     saveBrief.mutate(
       { brief, confirmed },
-      { onSuccess: () => then?.(), onError: (error) => setProblem(messageOf(error)) },
+      {
+        onSuccess: () => then?.(),
+        onError: (error) => setProblem(messageOf(error)),
+      },
     );
   const startRun = () =>
     run.mutate(undefined, {
@@ -214,7 +286,9 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
       {running && (
         <div className="gap-progress" aria-live="polite">
           <p>
-            {analysis.mode === "external" ? "Researching with your brief…" : "Comparing your documents with practice…"}{" "}
+            {analysis.mode === "external"
+              ? "Researching with your brief…"
+              : "Comparing your documents with practice…"}{" "}
             You can leave this screen; the analysis keeps running.
           </p>
           {job.data && <StageStepper stages={job.data.stages} />}
@@ -225,7 +299,10 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
         <>
           <ErrorState
             title="The analysis didn't finish"
-            message={analysis.error || "Something went wrong. Nothing on the map was changed."}
+            message={
+              analysis.error ||
+              "Something went wrong. Nothing on the map was changed."
+            }
             details={analysis.job_id ? `job ${analysis.job_id}` : undefined}
           />
           {analysis.mode === "external" && data.brief && (
@@ -246,16 +323,22 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
       {(analysis.status === "draft_report" || locked) && (
         <>
           <p className="gap__small">
-            {usage && `${plural(usage.calls, "AI call")} · ${(usage.input_tokens + usage.output_tokens).toLocaleString()} tokens`}
-            {analysis.mode === "external" && ` · ${plural(data.search_count, "web search", "web searches")} used`}
-            {locked ? " · Finalised: read-only" : ` · ${plural(open, "item")} waiting for your decision`}
+            {usage &&
+              `${plural(usage.calls, "AI call")} · ${(usage.input_tokens + usage.output_tokens).toLocaleString()} tokens`}
+            {analysis.mode === "external" &&
+              ` · ${plural(data.search_count, "web search", "web searches")} used`}
+            {locked
+              ? " · Finalised: read-only"
+              : ` · ${plural(open, "item")} waiting for your decision`}
           </p>
           {analysis.notes.map((note) => (
             <p key={note} className="finding__note">
               {note}
             </p>
           ))}
-          {data.findings.length > 0 && <Filters report={data} filters={filters} onChange={setFilters} />}
+          {data.findings.length > 0 && (
+            <Filters report={data} filters={filters} onChange={setFilters} />
+          )}
           {problem && (
             <p className="gap__problem" role="alert">
               {problem}
@@ -265,27 +348,49 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
             <EmptyState message="No finding passed every check. The rejected findings below show what was turned down and why." />
           )}
           {bySection(shown).map((group) => (
-            <section key={group.section} className="gap-section" aria-labelledby={`gap-${group.section}`}>
-              <h3 id={`gap-${group.section}`}>{SECTION_LABELS[group.section]}</h3>
+            <section
+              key={group.section}
+              className="gap-section"
+              aria-labelledby={`gap-${group.section}`}
+            >
+              <h3 id={`gap-${group.section}`}>
+                {SECTION_LABELS[group.section]}
+              </h3>
               {group.findings.map((f) => (
-                <FindingCard key={f.id} finding={f} {...cardProps} />
+                <FindingCard
+                  key={f.id}
+                  finding={f}
+                  chosenClass={classFor[f.id]}
+                  {...cardProps}
+                />
               ))}
             </section>
           ))}
-          {data.findings.length > 0 && shown.length === 0 && <p className="gap__small">No finding matches these filters.</p>}
+          {data.findings.length > 0 && shown.length === 0 && (
+            <p className="gap__small">No finding matches these filters.</p>
+          )}
           {data.questions.length > 0 && (
             <section className="gap-section" aria-labelledby="gap-questions">
               <h3 id="gap-questions">Questions for your SMEs</h3>
-              <p className="gap__small">Causes the sources don't explain: ask rather than guess.</p>
+              <p className="gap__small">
+                Causes the sources don't explain: ask rather than guess.
+              </p>
               {data.questions.map((f) => (
-                <FindingCard key={f.id} finding={f} {...cardProps} />
+                <FindingCard
+                  key={f.id}
+                  finding={f}
+                  chosenClass={classFor[f.id]}
+                  {...cardProps}
+                />
               ))}
             </section>
           )}
           <RejectedFindings rejected={data.rejected} />
           {data.sources.length > 0 && (
             <details className="rejected-findings">
-              <summary>Every page the search returned ({data.sources.length})</summary>
+              <summary>
+                Every page the search returned ({data.sources.length})
+              </summary>
               <ul className="source-list">
                 {data.sources.map((s) => (
                   <SourceListItem key={s.id} source={s} />
@@ -300,7 +405,9 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
                 aria-busy={finalise.isPending || undefined}
                 onClick={() =>
                   open > 0
-                    ? setProblem(`Decide on every finding first: ${open} still open.`)
+                    ? setProblem(
+                        `Decide on every finding first: ${open} still open.`,
+                      )
                     : finalise.mutate(undefined, {
                         onSuccess: () => toast("Report finalised."),
                         onError: (error) => setProblem(messageOf(error)),
@@ -311,11 +418,17 @@ export function GapAnalysisView({ analysisId, engagementId, researchEnabled, set
               </Button>
             )}
             {locked ? (
-              <a className="btn btn--secondary" href={exportUrl(analysis.id)} download>
+              <a
+                className="btn btn--secondary"
+                href={exportUrl(analysis.id)}
+                download
+              >
                 Export .md
               </a>
             ) : (
-              <p className="gap__small">Export .md becomes available once the report is finalised.</p>
+              <p className="gap__small">
+                Export .md becomes available once the report is finalised.
+              </p>
             )}
           </div>
         </>

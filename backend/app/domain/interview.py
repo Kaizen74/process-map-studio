@@ -165,3 +165,22 @@ class QuestionMatch(BaseModel):
     question_id: str
     method: Literal["tag", "wording"]
     score: float
+
+
+class Turn(BaseModel):
+    """One transcript turn as step A sees it."""
+
+    seq: int
+    is_interviewer: bool
+    text: str
+
+
+class AnsweredTurn(BaseModel):
+    """A turn's place in the question-anchored segmentation (§3.12.10 step A): an interviewer turn
+    carries the question it asks (`asked`); each SME turn carries the question of the answer block
+    it belongs to; `None` before the first matched question."""
+
+    seq: int
+    question_id: str | None
+    asked: bool
+    match: QuestionMatch | None = None

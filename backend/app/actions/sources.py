@@ -434,6 +434,7 @@ def _segment_view(
         text=item["text"] if terms is None else redaction.hide(item["text"], terms),
         cited=item["id"] in cited,
         instruction_like=item["instruction_like"],
+        question_id=item["question_id"],
         speaker_label=item["speaker_label"] if terms is None else None,
         corrected=item["corrected"],
     )

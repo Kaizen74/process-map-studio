@@ -5,24 +5,34 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.actions import quality, registers, versions
-from app.domain.graph import AlignmentRow, ElementDetail, Graph, LintReport
+from app.actions import coverage, lenses, quality, registers, versions
+from app.domain.graph import (
+    AlignmentRow,
+    CapabilityNote,
+    ElementDetail,
+    GlossaryEntry,
+    Graph,
+    LintReport,
+)
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
+from app.domain.sensemaking import CoverageReport, View
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
 
 
 @router.get("/versions/{version_id}/graph")
-def get_graph(request: Request, version_id: str) -> Graph:
-    return unwrap(versions.get_graph(request.app.state.sessions, version_id))
+def get_graph(request: Request, version_id: str, view: View | None = None) -> Graph:
+    return unwrap(versions.get_graph(request.app.state.sessions, version_id, view))
 
 
 @router.get("/versions/{version_id}/layout")
-def get_layout(request: Request, version_id: str) -> Layout:
-    return unwrap(versions.get_layout(request.app.state.sessions, version_id))
+def get_layout(
+    request: Request, version_id: str, view: View | None = None, show_other: bool = False
+) -> Layout:
+    return unwrap(versions.get_layout(request.app.state.sessions, version_id, view, show_other))
 
 
 @router.get("/versions/{version_id}/alignment-matrix")
@@ -33,6 +43,21 @@ def get_alignment_matrix(request: Request, version_id: str) -> list[AlignmentRow
 @router.get("/versions/{version_id}/registers")
 def get_registers(request: Request, version_id: str) -> Registers:
     return unwrap(registers.get_registers(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/capability-notes")
+def get_capability_notes(request: Request, version_id: str) -> list[CapabilityNote]:
+    return unwrap(lenses.get_capability_notes(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/coverage")
+def get_coverage(request: Request, version_id: str) -> CoverageReport:
+    return unwrap(coverage.get_coverage(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/glossary")
+def get_glossary(request: Request, version_id: str) -> list[GlossaryEntry]:
+    return unwrap(lenses.get_glossary(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/lint")

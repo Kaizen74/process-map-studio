@@ -1,5 +1,10 @@
 """Quality lint (PRD §3.7 lint rules L1-L12): deterministic checks over the graph, no database.
 
+`run_lint` checks the map as one (both views' steps); `run_view_checks` checks each view on its
+own (§3.12.11): every step reachable from the start, every step but the end with a way out, every
+exit drawn labelled; "not described" connectors and lines resting only on the order of mentioning
+are warnings (each also raises a validation question).
+
 Rejected elements are not on the map: they and their edges are left out before checking, so a
 step whose only connection was rejected shows up as an orphan (L9). Line crossings need the
 layout (`services/layout.py`), so that warning is checked only when a layout is given.
@@ -22,6 +27,8 @@ from app.domain.enums import (
 from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
 from app.domain.layout import Layout
 from app.services.layout import count_crossings
+from app.services.sensemaking import NEVER_AUTOMATED
+from app.services.views import NAMES, VIEWS, view_graph
 
 MAX_STEPS = 25
 MAX_LANES = 6
@@ -147,6 +154,12 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
             ):
                 fail("L10", e, f"{_name(e)} is a judgment step, so it can't be flagged for "
                                "automation.")  # fmt: skip
+            elif (
+                flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value
+                and e.work_type in NEVER_AUTOMATED
+            ):
+                fail("L10", e, f"{_name(e)} is {e.work_type} work, so it can't be flagged for "
+                               "automation.")  # fmt: skip
         # L11: exactly one Accountable, or several all marked contested.
         if step:
             contested = [r for r in e.raci if r.letter == "A" and r.contested]
@@ -187,4 +200,62 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
         if crossings > MAX_CROSSINGS:
             warn("L12", None, f"The map has {crossings} line crossings; consider changing the "
                               "lane order.")  # fmt: skip
+    return LintReport(failures=failures, warnings=warnings)
+
+
+DECIDING = {ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+
+
+def run_view_checks(graph: Graph) -> LintReport:
+    """The flow checks of each view (§3.12.11) on the graph with every line. A decision or
+    approval keeps its at-least-two-exits rule on the whole map (L4, L5): a view may leave out an
+    exit whose next step is only in the other view, but every exit it draws must be labelled."""
+    failures: list[LintIssue] = []
+    warnings: list[LintIssue] = []
+    for view in VIEWS:
+        shown = view_graph(graph, view)
+        elements = [e for e in shown.elements if e.review_status != ReviewStatus.REJECTED.value]
+        ids = {e.id for e in elements}
+        edges = [e for e in shown.edges if e.from_ in ids and e.to in ids]
+        name = NAMES[view]
+
+        def fail(
+            rule: str,
+            element: GraphElement | None,
+            message: str,
+            name: str = name,
+            view: str = view,
+        ) -> None:
+            failures.append(LintIssue(rule=rule, element_id=element.id if element else None,
+                                      message=f"{name}: {message}", view=view))  # fmt: skip
+
+        starts = [e for e in elements if e.kind == ElementKind.START.value]
+        if len(starts) != 1:
+            continue  # the start is in both views; the map as one already reports it (L9)
+        reached = _reachable(starts[0].id, edges)
+        for e in elements:
+            outgoing = [edge for edge in edges if edge.from_ == e.id]
+            if e.id not in reached:
+                fail("L9", e, f"{_name(e)} can't be reached from the start.")
+            if e.kind != ElementKind.END.value and not outgoing:
+                fail("L9", e, f"{_name(e)} has no way out (no outgoing connection).")
+            if e.kind in DECIDING:
+                unlabelled = [edge for edge in outgoing if not edge.label.strip()]
+                if unlabelled:
+                    fail("L4" if e.kind == ElementKind.DECISION.value else "L5", e,
+                         f"{_name(e)} has {len(unlabelled)} unlabelled exit(s).")  # fmt: skip
+        gaps = [edge for edge in edges if edge.kind == EdgeKind.GAP.value]
+        if gaps:
+            warnings.append(LintIssue(rule="L12", element_id=None, view=view,
+                                      message=f"{name}: {len(gaps)} \"not described\" "
+                                      "connector(s): the interview doesn't say what happens "
+                                      "there."))  # fmt: skip
+    labels = {e.id: e.label for e in graph.elements}
+    for edge in graph.edges:
+        if edge.sequence_basis == "narration_order":
+            warnings.append(LintIssue(
+                rule="L12", element_id=edge.to,
+                message=f'The line from "{labels.get(edge.from_, "")}" to '
+                f'"{labels.get(edge.to, "")}" rests only on the order the sources mention them.',
+            ))  # fmt: skip
     return LintReport(failures=failures, warnings=warnings)

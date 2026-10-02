@@ -580,6 +580,7 @@ DIVERGENCE_OF = {
     "trigger_gap": "trigger",
     "exception_gap": "exception",
 }
+NO_GAP_CLASS = "Only reality-gap findings have a gap class."
 AUDIT_ACTIONS = {
     "added_question": "Added gap finding as question",
     "added_cause": "Added gap finding to cause library",
@@ -630,6 +631,8 @@ def decide(
             return Err(ErrorKind.CONFLICT, REJECTED)
         if f.disposition != "open":
             return Err(ErrorKind.CONFLICT, DECIDED)
+        if decision.gap_class is not None and f.gap_class is None:
+            return Err(ErrorKind.VALIDATION, NO_GAP_CLASS, {"field": "gap_class"})
         keys = {e.id: e.stable_key for e in map_repo.elements(session, version.id)}
         first_key = next((keys[e] for e in f.element_ids if e in keys), None)
         draft = versions_repo.current_draft(session, version.engagement_id)
@@ -694,7 +697,8 @@ def decide(
                 ),
             )
             ref = f"cause:{cause.id}"
-        saved = repo.set_disposition(session, f.id, kind, note, ref)
+        final = decision.gap_class.value if decision.gap_class else None
+        saved = repo.set_disposition(session, f.id, kind, note, ref, final)
         audit.record(
             session,
             actor=actor_name(config),
@@ -703,8 +707,9 @@ def decide(
             target_id=f.id,
             engagement_id=version.engagement_id,
             version_id=draft.id if draft and kind != "dismissed" else version.id,
-            before={"disposition": "open"},
-            after={"disposition": kind, "note": note, "created_item_ref": ref},
+            before={"disposition": "open"} | ({"gap_class": f.gap_class} if final else {}),
+            after={"disposition": kind, "note": note, "created_item_ref": ref}
+            | ({"gap_class": final} if final else {}),
         )
         terms = redaction.name_replacements(session, version.engagement_id)
         labels = {

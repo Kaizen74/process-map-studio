@@ -4,7 +4,7 @@ import type { DraftState } from "../../src/api/types";
 import type { ElementDetail, Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -24,7 +24,7 @@ function backend() {
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
   };
   const change = (id: string, patch: Partial<ElementDetail>) => {
     const detail = elements[id];
@@ -62,7 +62,7 @@ describe("the table view (PRD §5.7.4)", () => {
     renderApp(PATH);
     fireEvent.click(await screen.findByRole("radio", { name: "Table" }));
     const table = await screen.findByRole("table", { name: "Steps in process order" });
-    expect(within(table).getAllByRole("row")).toHaveLength(9); // header + 8 steps
+    expect(within(table).getAllByRole("row")).toHaveLength(11); // header + 10 steps (v1.10 A.5)
     expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: /Contested/ }));
     const rows = within(table).getAllByRole("row").slice(1);

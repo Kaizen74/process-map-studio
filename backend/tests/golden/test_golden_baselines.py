@@ -1,7 +1,8 @@
 """Golden baselines (PRD §6.2 item 4): byte-identical outcomes on the illustrative fixture.
 
 - G1: the graph JSON of the sample engagement's draft (PRD Appendix A.5).
-- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn.
+- G2: the layout JSON of that draft (PRD §3.9): where every lane, step and line is drawn; G2a and
+  G2b the layout of each view (As done, As documented; §3.12.11).
 - G3: the Master Process Map Markdown of the sample, fully confirmed and published (PRD §7.3).
 - G4: the alignment-matrix payload of that draft (PRD §4 Views, §5.4 Matrix).
 - G5: the single-file HTML map of the same published version (the embedded font data, which is the
@@ -11,6 +12,10 @@
 - G7: the gap-analysis reports of the sample (Appendix A.7): Analysis A, and Analysis B from the
   mocked web search with traps TE1-TE9, as reported and, after a fixed set of decisions, as
   exported (run and finalise times replaced).
+- G8: the sensemaking outputs of the sample (Appendix A.8): per step its work type with the
+  quoted cues, the interview accounts it rests on (official, lived or unclear, with the cue and
+  any stated reason), its know-how and stories; the glossary, the capability notes and the
+  coverage report with its follow-up questions and probes.
 - G9: the three standard interview templates (PRD Appendix F.9) in Markdown, as downloaded.
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
@@ -86,10 +91,51 @@ def test_g2_layout_of_the_sample(settings_config: AppConfig) -> None:
         matches_baseline("G2_layout.json", layout)
 
 
+def test_g2a_and_g2b_layout_of_each_view(settings_config: AppConfig) -> None:
+    """PRD §3.12.11 (V1): the layout of As done (G2a) and of As documented (G2b)."""
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        url = f"/api/versions/{version_id}/layout"
+        matches_baseline("G2a_layout_done.json", client.get(url, params={"view": "done"}).json())
+        documented = client.get(url, params={"view": "documented"}).json()
+        matches_baseline("G2b_layout_documented.json", documented)
+
+
 def test_g4_alignment_matrix_of_the_sample(settings_config: AppConfig) -> None:
     for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
         matrix = client.get(f"/api/versions/{version_id}/alignment-matrix").json()
         matches_baseline("G4_alignment_matrix.json", matrix)
+
+
+def test_g8_sensemaking_of_the_sample(settings_config: AppConfig) -> None:
+    for client, version_id in drafted(settings_config, fixture_engagement.SOURCES):
+        graph = client.get(f"/api/versions/{version_id}/graph").json()
+        steps = []
+        for e in graph["elements"]:
+            if e["kind"] in {"start", "end"}:
+                continue
+            detail = client.get(f"/api/elements/{e['id']}").json()
+            steps.append({
+                "label": e["label"],
+                "work_type": e["work_type"],
+                "constraint_type": e["constraint_type"],
+                "work_type_status": e["work_type_status"],
+                "work_type_cues": [c["quote"] for c in e["work_type_basis"]],
+                "accounts": [
+                    {k: a[k] for k in ("anchor", "account_type", "account_cue", "stated_reason",
+                                       "variation_condition", "question_id")}
+                    for a in detail["answers"]
+                ],
+                "account_summary": e["account_summary"],
+                "know_how": detail["know_how"],
+                "stories": detail["stories"],
+            })  # fmt: skip
+        bundle = {
+            "steps": steps,
+            "glossary": client.get(f"/api/versions/{version_id}/glossary").json(),
+            "capability_notes": client.get(f"/api/versions/{version_id}/capability-notes").json(),
+            "coverage": client.get(f"/api/versions/{version_id}/coverage").json(),
+        }
+        matches_baseline("G8_sensemaking.json", bundle)
 
 
 def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> None:
@@ -107,7 +153,20 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
             c["source_id"] for e in elements.values() for c in e["evidence"] if c["segment_id"]
         )
         segments = {s: client.get(f"/api/sources/{s}/segments").json() for s in cited}
-        bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments}
+        # V2: each view's layout and graph (As done with the other view ghosted too).
+        url = f"/api/versions/{version_id}"
+        views = {
+            "done": client.get(f"{url}/layout", params={"view": "done"}).json(),
+            "documented": client.get(f"{url}/layout", params={"view": "documented"}).json(),
+            "done_with_other": client.get(
+                f"{url}/layout", params={"view": "done", "show_other": "1"}
+            ).json(),
+        }
+        view_graphs = {
+            v: client.get(f"{url}/graph", params={"view": v}).json() for v in ("done", "documented")
+        }
+        bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
+                  "views": views, "view_graphs": view_graphs}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 

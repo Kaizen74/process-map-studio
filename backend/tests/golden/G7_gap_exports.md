@@ -7,7 +7,7 @@ Advisory evidence summary: not a legal, regulatory or audit opinion.
 - [O] Plan approval by the Load control lead is documented but never mentioned in practice · High severity · steps: Approve load plan
   - SOP LC-07 §3.2 and the Load control lead's job description say the Load control lead approves the load plan before release to Ramp. The interview never mentions this approval.
   - Documents: sop LC-07 §3.2 (supports); jd load control lead ¶ 2 (supports)
-  - Practice: interview transcript (silent)
+  - Practice: interview transcript (silent); landscape ramp lead (silent)
 - [O] Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice · High severity · steps: Deviation in limits?
   - SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.
   - Documents: sop LC-07 §5 (contradicts)
@@ -20,10 +20,16 @@ Advisory evidence summary: not a legal, regulatory or audit opinion.
   - When something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes before the Load controller re-plans. No SOP or job description covers it.
   - Documents: jd load control lead (silent); jd load controller (silent); sop LC-07 (silent); sop RP-02 (silent)
   - Practice: interview transcript 16:22 (supports)
+- [O] Loading report: sent within ten minutes officially, read at the aircraft on a busy wave · Low severity · steps: Load and return LIR, Read report at aircraft
+  - Officially the Ramp sends the loading report within ten minutes; on a busy wave the Load controller walks down and reads it off the Ramp's sheet instead.
+  - Practice: interview transcript 22:30 (supports)
+  - Gap class: Effective adaptation (confirmed; from a reason an SME stated) · cause: capacity mismatch
 
 ## 2. Interpretation
 
-No pattern or likely cause was supported by what the SMEs said.
+- [I] Weight-deviation call: a fixed decider in SOP LC-07 for work the Load controller describes as having no fixed answer: SOP LC-07 §5 sets who decides on corrective action when weights deviate; the Load controller describes it as a call with no fixed answer, where you read the situation.
+  - Basis: The Load controller says there is no fixed answer and that you read the situation, which marks the call as complex work rather than a set rule.
+  - Gap class: Unexplained (confirmed; no reason stated; asked as a question)
 
 ## 3. Recommendation
 
@@ -34,6 +40,7 @@ No documentation updates proposed.
 ### Questions for the SMEs
 
 - Is the load plan approved by the Load control lead before release to Ramp, and if not, why not? · Decision: added as a validation question
+- On "Deviation in limits?": Why do people do it this way? · Decision: added as a validation question
 
 ### Decisions on the differences
 
@@ -41,6 +48,8 @@ No documentation updates proposed.
 - [O] Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice · Decision: added as a validation question
 - [O] Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice · Decision: dismissed (Checked with the process owner.)
 - [O] Offload resolution is undocumented work · Decision: dismissed (Checked with the process owner.)
+- [O] Loading report: sent within ten minutes officially, read at the aircraft on a busy wave · Decision: dismissed (Checked with the process owner.)
+- [I] Weight-deviation call: a fixed decider in SOP LC-07 for work the Load controller describes as having no fixed answer · Decision: dismissed (Checked with the process owner.)
 
 ## Rejected findings
 

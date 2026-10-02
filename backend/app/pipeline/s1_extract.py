@@ -19,13 +19,15 @@ from app.actions import redaction
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
-from app.domain.enums import SourceKind
+from app.domain.enums import InterviewType, SourceKind
+from app.domain.interview import BankQuestion, Turn
 from app.domain.models import (
     AiCallRecord,
     CheckOutcome,
     ClaimRecord,
     NameReplacement,
     PromptSegment,
+    SourceReadInfo,
     StoredSegment,
     UnknownRecord,
 )
@@ -33,11 +35,28 @@ from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
 from app.repositories import claims as claims_repo
 from app.repositories import sources as sources_repo
-from app.services import ai_service, chunking, grounding, parsing, prompts
+from app.services import (
+    ai_service,
+    chunking,
+    grounding,
+    interview_templates,
+    parsing,
+    prompts,
+    question_matching,
+    sensemaking,
+)
 
 Sessions = sessionmaker[Session]
 
 STAGE = "S1"
+# Interview fields kept in their own column or checked before they go into the payload.
+INTERVIEW = {
+    "account_type",
+    "account_cue",
+    "stated_reason",
+    "variation_condition",
+    "markers",
+}
 SOURCE_REF = "s1"
 PROMPT_BY_KIND = {
     SourceKind.INTERVIEW_TRANSCRIPT.value: "S1_extract_interview",
@@ -96,24 +115,128 @@ def chunks_for(kind: str, segments: list[PromptSegment]) -> list[list[PromptSegm
     return chunking.chunk_document(segments)
 
 
-def blocks_for(kind: str, chunk: list[PromptSegment]) -> list[dict[str, object]]:
-    return [{"type": "text", "text": prompts.render_source(SOURCE_REF, kind, chunk)}]
+def blocks_for(
+    kind: str, chunk: list[PromptSegment], questions: dict[str, BankQuestion] | None = None
+) -> list[dict[str, object]]:
+    """One chunk as sent. For an interview, the guide questions its answer blocks answer come
+    first, with their targets (§3.12.10 step A)."""
+    text = prompts.render_source(SOURCE_REF, kind, chunk)
+    asked = list(dict.fromkeys(s.question_id for s in chunk if s.question_id))
+    if questions and asked:
+        text = (
+            prompts.render_questions([questions[q] for q in asked if q in questions]) + "\n" + text
+        )
+    return [{"type": "text", "text": text}]
 
 
-def _scrub(
-    claim: ai_schemas.S1Claim, terms: list[NameReplacement]
-) -> tuple[ai_schemas.S1Claim, int]:
+# Until tailored guides exist (P4c), interviews are matched against the standard Practice
+# template's questions (PRD Appendix A.9: "the default Practice guide … without tailoring").
+DEFAULT_GUIDE = InterviewType.PRACTICE
+
+
+@dataclass(frozen=True, slots=True)
+class Prepared:
+    """One source ready for S1: its passages as sent, and for an interview the guide questions
+    its answer blocks answer."""
+
+    info: SourceReadInfo
+    terms: list[NameReplacement]
+    groups: list[list[str]]
+    segments: list[PromptSegment]
+    questions: dict[str, BankQuestion]
+
+
+def prepare(session: Session, source_id: str) -> Result[Prepared]:
+    """Passages as sent (names hidden, speakers as roles). For an interview transcript, step A
+    (each turn's guide question, stored on the passage) and step B (marker hints on the SME's
+    turns) are applied first (§3.12.10)."""
+    info = sources_repo.reading_info(session, source_id)
+    if info is None:
+        return Err(ErrorKind.NOT_FOUND, "That source doesn't exist. It may have been deleted.")
+    terms = redaction.name_replacements(session, info.engagement_id)
+    groups = role_groups(session, info.engagement_id)
+    stored = sources_repo.stored_segments(session, source_id)
+    segments = prompt_segments(stored, info.format, terms)
+    if info.kind != SourceKind.INTERVIEW_TRANSCRIPT.value:
+        return Ok(Prepared(info, terms, groups, segments, {}))
+    match interview_templates.load_bank():
+        case Err() as err:
+            return err
+        case Ok(value=bank):
+            pass
+    match sensemaking.load_lexicon():
+        case Err() as err:
+            return err
+        case Ok(value=lexicon):
+            pass
+    guide = [bank.question(q) for q in bank.template_ids(DEFAULT_GUIDE)]
+    turns = [Turn(seq=s.seq, is_interviewer=s.is_interviewer, text=s.text) for s in stored]
+    by_seq = {
+        a.seq: a.question_id for a in question_matching.answer_blocks(turns, guide, bank.questions)
+    }
+    sources_repo.set_question_ids(session, source_id, by_seq)
+    interviewer = {s.seq for s in stored if s.is_interviewer}
+    annotated = [
+        s.model_copy(
+            update={
+                "question_id": by_seq.get(s.seq) or "",
+                "markers": []
+                if s.seq in interviewer
+                else [f"{t.pretag}: {t.phrase}" for t in sensemaking.pretag(s.text, lexicon)],
+            }
+        )
+        for s in segments
+    ]
+    asked = {q for q in by_seq.values() if q}
+    return Ok(
+        Prepared(info, terms, groups, annotated, {q: bank.question(q) for q in sorted(asked)})
+    )
+
+
+FIXED_FIELDS = {"claim_type", "mechanism", "provenance", "account_type"}
+
+
+def _scrub[ClaimT: ai_schemas.S1Claim](
+    claim: ClaimT, terms: list[NameReplacement]
+) -> tuple[ClaimT, int]:
     """G10: any hidden name in the answer is replaced by its role; the hits are counted."""
     hits = 0
     fields: dict[str, object] = {}
     for name, value in claim.model_dump().items():
-        if isinstance(value, str) and name not in {"claim_type", "mechanism", "provenance"}:
+        if isinstance(value, str) and name not in FIXED_FIELDS:
             result = grounding.redact_text(value, terms)
             hits += result.hits
             fields[name] = result.text
         else:
             fields[name] = value
-    return ai_schemas.S1Claim.model_validate(fields), hits
+    return type(claim).model_validate(fields), hits
+
+
+def check_interview_fields(
+    claim: ai_schemas.S1InterviewClaim, cited: str
+) -> tuple[str, dict[str, object]]:
+    """The account tag, stated reason, variation condition and marker reviews of a verified
+    interview claim pass the quote check (G4) like every other output (§3.12.9 rule 7). A cue that
+    isn't in the cited text makes the account `unclear`; a reason, condition or marker review
+    whose words aren't there is dropped. Returns the account type and the payload fields."""
+
+    def found(words: str) -> bool:
+        return bool(words) and grounding.verify_quote(words, cited).passed
+
+    account = claim.account_type
+    if account != "unclear" and not found(claim.account_cue):
+        account = "unclear"
+    markers = [m.model_dump() for m in claim.markers if found(m.quote)]
+    return account, {
+        "account_cue": claim.account_cue if account != "unclear" else "",
+        "account_cue_dropped": claim.account_type != account,
+        "stated_reason": claim.stated_reason if found(claim.stated_reason) else "",
+        "variation_condition": (
+            claim.variation_condition if found(claim.variation_condition) else ""
+        ),
+        "markers": markers,
+        "markers_dropped": len(claim.markers) - len(markers),
+    }
 
 
 def check_claim(
@@ -138,7 +261,7 @@ def check_claim(
 
 
 def gate(
-    answer: ai_schemas.S1Output,
+    answer: ai_schemas.S1Output | ai_schemas.S1InterviewOutput,
     chunk: list[PromptSegment],
     *,
     source_id: str,
@@ -156,10 +279,17 @@ def gate(
         payload: dict[str, object] = {
             k: v
             for k, v in claim.model_dump().items()
-            if k not in {"claim_type", "segment_ids", "quote", "provenance", "basis"}
+            if k not in {"claim_type", "segment_ids", "quote", "provenance", "basis"} | INTERVIEW
         }
         payload["scrubbed"] = scrubbed
         payload["segment_refs"] = list(claim.segment_ids)
+        account: str | None = None
+        if isinstance(claim, ai_schemas.S1InterviewClaim):
+            account = "unclear"
+            if outcome.passed:
+                cited = prompts.cited_text([by_ref[ref] for ref in claim.segment_ids])
+                account, fields = check_interview_fields(claim, cited)
+                payload.update(fields)
         records.append(
             ClaimRecord(
                 source_id=source_id,
@@ -173,8 +303,18 @@ def gate(
                 verification_status="verified" if outcome.passed else "rejected",
                 rejection_reason=outcome.reason,
                 rejection_guardrail=outcome.guardrail,
+                account_type=account,
             )
         )
+    if isinstance(answer, ai_schemas.S1InterviewOutput):
+        items: list[SenseItem] = [
+            *answer.stories, *answer.know_how, *answer.terms, *answer.decision_info,
+            *answer.capability_notes,
+        ]  # fmt: skip
+        for item in items:
+            record, hits = check_sense(item, chunk, terms, source_id)
+            records.append(record)
+            scrubbed_total += hits
     unknowns = [
         UnknownRecord(
             source_id=source_id,
@@ -184,6 +324,107 @@ def gate(
         for u in answer.unknowns
     ]
     return records, unknowns, scrubbed_total
+
+
+SenseItem = (
+    ai_schemas.S1Story
+    | ai_schemas.S1KnowHow
+    | ai_schemas.S1Term
+    | ai_schemas.S1DecisionInfo
+    | ai_schemas.S1Capability
+)
+SENSE_KIND: dict[type, str] = {
+    ai_schemas.S1Story: "story",
+    ai_schemas.S1KnowHow: "know_how",
+    ai_schemas.S1Term: "sme_term",
+    ai_schemas.S1DecisionInfo: "decision_info",
+    ai_schemas.S1Capability: "capability",
+}
+TERM_NOT_FOUND = "term not found in cited text"
+
+
+def _hide_all(value: object, terms: list[NameReplacement]) -> tuple[object, int]:
+    """G10 on every text of an item (strings and lists of strings); returns the hit count."""
+    if isinstance(value, str):
+        result = grounding.redact_text(value, terms)
+        return result.text, result.hits
+    if isinstance(value, list):
+        out, hits = [], 0
+        for v in value:
+            text, n = _hide_all(v, terms)
+            out.append(text)
+            hits += n
+        return out, hits
+    return value, 0
+
+
+def check_sense(
+    item: SenseItem, chunk: list[PromptSegment], terms: list[NameReplacement], source_id: str
+) -> tuple[ClaimRecord, int]:
+    """One story, know-how item, term, decision-information item or capability note, checked like
+    a claim (§3.12.9 rule 7): names hidden (G10), cited passages sent in this call (G3), the quote
+    found in them (G4) and every number in its words found there too (G5). The SME's own words
+    must be in the passages: a term that isn't is rejected; a signifier or frequency that isn't is
+    dropped (they are recorded as observed, never inferred)."""
+    by_ref = {s.ref: s for s in chunk}
+    fields: dict[str, object] = {}
+    hits = 0
+    for name, value in item.model_dump().items():
+        if name in {"segment_ids", "quote", "provenance", "basis", "fragment_type", "category",
+                    "cadence", "kind", "dimension", "cause_type"}:  # fmt: skip
+            fields[name] = value
+            continue
+        fields[name], n = _hide_all(value, terms)
+        hits += n
+    refs: list[str] = list(item.segment_ids)
+    outcome = grounding.verify_segments(refs, by_ref)
+    cited = prompts.cited_text([by_ref[r] for r in refs]) if outcome.passed else ""
+    if outcome.passed:
+        outcome = grounding.verify_quote(item.quote, cited)
+    provenance = getattr(item, "provenance", "O")
+    basis = getattr(item, "basis", "") if provenance == "I" else ""
+    stated = " ".join(
+        str(v) if isinstance(v, str) else " ".join(map(str, v))
+        for k, v in fields.items()
+        if k not in {"segment_ids", "quote", "basis"} and isinstance(v, str | list)
+    )
+    if outcome.passed:
+        outcome = grounding.verify_numbers(stated, cited, basis)
+
+    def found(words: str) -> bool:
+        return bool(words) and grounding.verify_quote(words, cited).passed
+
+    if outcome.passed and isinstance(item, ai_schemas.S1Term) and not found(str(fields["term"])):
+        outcome = CheckOutcome(passed=False, guardrail="G4", reason=TERM_NOT_FOUND)
+    if outcome.passed and isinstance(item, ai_schemas.S1Story):
+        signifiers = [s for s in fields["signifiers"] if found(s)]  # type: ignore[attr-defined]
+        fields["signifiers_dropped"] = len(item.signifiers) - len(signifiers)
+        fields["signifiers"] = signifiers
+        if not found(str(fields["frequency"])):
+            fields["frequency"] = ""
+    kind = SENSE_KIND[type(item)]
+    text = {
+        "story": fields.get("label", ""),
+        "sme_term": f"{fields.get('term', '')}: {fields.get('plain_meaning', '')}",
+        "decision_info": fields.get("about", ""),
+    }.get(kind, fields.get("text", ""))
+    payload = {k: v for k, v in fields.items() if k not in {"segment_ids", "quote", "provenance",
+                                                           "basis"}}  # fmt: skip
+    payload |= {"text": text, "scrubbed": hits, "segment_refs": refs}
+    record = ClaimRecord(
+        source_id=source_id,
+        stage=STAGE,
+        claim_type=kind,
+        payload=payload,
+        segment_ids=[by_ref[r].segment_id for r in refs if r in by_ref],
+        quote=item.quote,
+        provenance=provenance,
+        basis=getattr(item, "basis", ""),
+        verification_status="verified" if outcome.passed else "rejected",
+        rejection_reason=outcome.reason,
+        rejection_guardrail=outcome.guardrail,
+    )
+    return record, hits
 
 
 def _dedupe(records: list[ClaimRecord]) -> list[ClaimRecord]:
@@ -213,12 +454,12 @@ def extract_source(
 ) -> Result[S1Tally]:
     """Run S1 on one source and store its checked claims and unknowns in the version."""
     with session_scope(sessions) as session:
-        info = sources_repo.reading_info(session, source_id)
-        if info is None:
-            return Err(ErrorKind.NOT_FOUND, "That source doesn't exist. It may have been deleted.")
-        terms = redaction.name_replacements(session, info.engagement_id)
-        groups = role_groups(session, info.engagement_id)
-        stored = sources_repo.stored_segments(session, source_id)
+        match prepare(session, source_id):
+            case Err() as err:
+                return err
+            case Ok(value=prepared):
+                pass
+    info, terms, groups = prepared.info, prepared.terms, prepared.groups
     prompt_name = PROMPT_BY_KIND.get(info.kind, DOCUMENT_PROMPT)
     match prompts.load_prompt(prompt_name):
         case Err() as err:
@@ -231,17 +472,21 @@ def extract_source(
         case Ok(value=repair):
             pass
 
-    segments = prompt_segments(stored, info.format, terms)
     records: list[ClaimRecord] = []
     unknowns: list[UnknownRecord] = []
     tally = S1Tally()
-    for chunk in chunks_for(info.kind, segments):
+    output_model: type[ai_schemas.S1Output] | type[ai_schemas.S1InterviewOutput] = (
+        ai_schemas.S1InterviewOutput
+        if info.kind == SourceKind.INTERVIEW_TRANSCRIPT.value
+        else ai_schemas.S1Output
+    )
+    for chunk in chunks_for(info.kind, prepared.segments):
         call = ai_service.StageCall(
             stage_id=prompt_name,
             prompt_version=prompt.version,
             system=prompt.text,
-            blocks=blocks_for(info.kind, chunk),
-            output_model=ai_schemas.S1Output,
+            blocks=blocks_for(info.kind, chunk, prepared.questions),
+            output_model=output_model,
             model=ctx.model,
             repair_prompt=repair.text,
             effort=ctx.effort,
@@ -261,7 +506,7 @@ def extract_source(
             case Ok(value=answer):
                 pass
         chunk_records, chunk_unknowns, scrubbed = gate(
-            ai_schemas.S1Output.model_validate(answer.data),
+            output_model.model_validate(answer.data),
             chunk,
             source_id=source_id,
             terms=terms,

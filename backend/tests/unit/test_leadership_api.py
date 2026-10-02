@@ -46,13 +46,16 @@ def test_the_three_parts_of_the_published_sample(published: Drafted) -> None:
     phases = [(p["name"], p["work_min"], p["wait_min"], p["rework_loops"], p["handoffs"])
               for p in body["facts"]["phases"]]  # fmt: skip
     assert phases == [
-        ("Plan", 20, 0, 1, 3),
-        ("Check and load", 80, 15, 1, 4),
+        # A.10 (C3): + the hand-overs stitched across the interviews (plan → loading, loading
+        # report → deviation check).
+        ("Plan", 20, 0, 1, 4),
+        ("Check and load", 80, 15, 1, 5),
         ("Close out", 15, 0, 1, 3),
     ]
     causes = {c["cause_type"]: c for c in body["interpretation"]["causes"]}
     assert causes["system_fragmentation"]["systemic"] is True
-    assert causes["system_fragmentation"]["evidence_weight"] == {"supporting": 3, "sources": 5}
+    # A.10 (C3): + the landscape interview's weakness (the loading report on a separate system).
+    assert causes["system_fragmentation"]["evidence_weight"] == {"supporting": 4, "sources": 6}
     assert causes["single_point_knowledge"]["systemic"] is False
     rec = body["recommendation"]
     assert (rec["recoverable_wait_min"], rec["rework_loops"]) == (15, 3)

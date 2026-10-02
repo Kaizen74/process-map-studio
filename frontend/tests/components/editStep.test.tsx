@@ -4,7 +4,7 @@ import type { DraftState } from "../../src/api/types";
 import type { ElementDetail, Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -26,7 +26,7 @@ function editingBackend(refusal: Refusal | null = null) {
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
   };
   for (const id of Object.keys(elements)) {
     routes[`GET /api/elements/${id}`] = () => ({ body: elements[id] });
@@ -71,7 +71,7 @@ describe("editing a step (PRD §5.7.6)", () => {
     expect(call?.body).toEqual({ label: "Build the load plan", kpi: "Plan issued by T-90" });
     // Auto-advance after Save: the next unreviewed step in process order.
     expect(await within(panel()).findByRole("heading", { name: "Approve load plan" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 8 steps reviewed"));
+    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 10 steps reviewed"));
   });
 
   it("refuses to save until the fields pass, with the message under the field", async () => {

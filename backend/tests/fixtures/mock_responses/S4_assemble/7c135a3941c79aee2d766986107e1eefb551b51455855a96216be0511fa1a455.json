@@ -1,0 +1,579 @@
+{
+  "phases": [
+    {
+      "name": "Plan",
+      "time_window": "T-120 to T-90",
+      "step_refs": [
+        "e1",
+        "e2"
+      ]
+    },
+    {
+      "name": "Check and load",
+      "time_window": "",
+      "step_refs": [
+        "e3",
+        "e4",
+        "e5",
+        "e6",
+        "e7"
+      ]
+    },
+    {
+      "name": "Close out",
+      "time_window": "T-15 to T-10",
+      "step_refs": [
+        "e8",
+        "e9",
+        "e10"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "step_ref": "e1",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": 20,
+      "wait_min": null,
+      "duration_text": "About twenty minutes, around T-120",
+      "complexity": "M",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "Preliminary load plan",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "Widebody plans rely on the Load controller and one other controller",
+      "constraints": [
+        {
+          "text": "Only one other controller knows the widebody configurations",
+          "cause_type": "single_point_knowledge",
+          "is_key": false,
+          "claim_refs": [
+            "c2"
+          ]
+        }
+      ],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e2",
+      "claim_refs": [],
+      "decision_mechanism": "judgment",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "Preliminary load plan",
+      "handoff_out": "Plan released to Ramp",
+      "raci": [
+        {
+          "role": "Load control lead",
+          "letter": "R"
+        },
+        {
+          "role": "Load control lead",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e3",
+      "claim_refs": [],
+      "decision_mechanism": "rule_based",
+      "decider_role": "Load controller",
+      "rule_or_threshold": "Special loads checked against the acceptance checklist",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [
+        {
+          "text": "The cargo terminal's notification often comes late",
+          "cause_type": "system_fragmentation",
+          "is_key": true,
+          "claim_refs": [
+            "c4"
+          ]
+        }
+      ],
+      "ai_flags": [
+        {
+          "component": "reasoning",
+          "input": "Special load notification and acceptance checklist",
+          "output": "Accept or refuse each special load",
+          "handoff": "Load controller",
+          "basis": "rule_based_automate_candidate"
+        }
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e4",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": 40,
+      "wait_min": null,
+      "duration_text": "Fifteen to forty minutes",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Airline ops",
+          "letter": "R"
+        },
+        {
+          "role": "Airline ops",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e5",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": 40,
+      "wait_min": 15,
+      "duration_text": "About forty minutes loading; up to fifteen minutes' wait for the report",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "Loading report to the Load controller",
+      "raci": [
+        {
+          "role": "Ramp",
+          "letter": "R"
+        },
+        {
+          "role": "Ramp",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [
+        {
+          "text": "The loading report is on paper and re-keyed",
+          "cause_type": "system_fragmentation",
+          "is_key": true,
+          "claim_refs": [
+            "c7"
+          ]
+        },
+        {
+          "text": "Containers run short at peak times",
+          "cause_type": "capacity_mismatch",
+          "is_key": true,
+          "claim_refs": [
+            "c9"
+          ]
+        }
+      ],
+      "ai_flags": [
+        {
+          "component": "perception",
+          "input": "Paper loading report",
+          "output": "Keyed loading data",
+          "handoff": "Load controller",
+          "basis": "rule_based_automate_candidate"
+        }
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "Up to fifteen minutes' wait for the report",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "Within 10 minutes of loading completion",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e8",
+      "claim_refs": [],
+      "decision_mechanism": "judgment",
+      "decider_role": "Load controller",
+      "rule_or_threshold": "Weight deviation within the airline contract tolerance",
+      "escalation": "Outside tolerance the captain decides",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "Captain",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "Load control lead",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e9",
+      "claim_refs": [],
+      "decision_mechanism": "judgment",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": 15,
+      "wait_min": null,
+      "duration_text": "Five to fifteen minutes",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Captain",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e10",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "Around T-15",
+      "complexity": "",
+      "kpi": "Final load sheet no later than T-10",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [
+        {
+          "component": "action",
+          "input": "Final load figures",
+          "output": "Load sheet issued through the departure control system",
+          "handoff": "Captain",
+          "basis": "rule_based_automate_candidate"
+        }
+      ],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e6",
+      "claim_refs": [],
+      "decision_mechanism": "rule_based",
+      "decider_role": "Load controller",
+      "rule_or_threshold": "On a busy wave",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e7",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "Loading report on the ramp's sheet",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from_ref": "start",
+      "to_ref": "e1",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e1",
+      "to_ref": "e2",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e2",
+      "to_ref": "e3",
+      "kind": "approve",
+      "label": "Approve"
+    },
+    {
+      "from_ref": "e2",
+      "to_ref": "e1",
+      "kind": "reject",
+      "label": "Rework"
+    },
+    {
+      "from_ref": "e3",
+      "to_ref": "e5",
+      "kind": "yes",
+      "label": "Yes"
+    },
+    {
+      "from_ref": "e3",
+      "to_ref": "e4",
+      "kind": "no",
+      "label": "No"
+    },
+    {
+      "from_ref": "e4",
+      "to_ref": "e1",
+      "kind": "rework",
+      "label": "Re-plan"
+    },
+    {
+      "from_ref": "e5",
+      "to_ref": "e6",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e6",
+      "to_ref": "e7",
+      "kind": "yes",
+      "label": "Yes"
+    },
+    {
+      "from_ref": "e6",
+      "to_ref": "e8",
+      "kind": "no",
+      "label": "No"
+    },
+    {
+      "from_ref": "e7",
+      "to_ref": "e8",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e8",
+      "to_ref": "e10",
+      "kind": "yes",
+      "label": "Within limits"
+    },
+    {
+      "from_ref": "e8",
+      "to_ref": "e9",
+      "kind": "no",
+      "label": "Outside limits"
+    },
+    {
+      "from_ref": "e9",
+      "to_ref": "e10",
+      "kind": "approve",
+      "label": "Accept"
+    },
+    {
+      "from_ref": "e9",
+      "to_ref": "e5",
+      "kind": "rework",
+      "label": "Re-trim"
+    },
+    {
+      "from_ref": "e10",
+      "to_ref": "end",
+      "kind": "sequence",
+      "label": ""
+    }
+  ]
+}

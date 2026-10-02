@@ -56,7 +56,10 @@ def test_a_step_comes_with_names_quotes_and_source_names(drafted: Drafted) -> No
     assert first["quote"] and first["verified"]
     silent = [c for c in cards if c["stance"] == "silent"]
     assert silent and all(c["segment_id"] is None and c["quote"] == "" for c in silent)
-    assert all(c["source_name"].endswith(".docx") for c in silent)
+    # The documents, and the landscape interview (A.10), which says nothing of drafting.
+    assert {c["source_name"] for c in silent} == {
+        "sop_RP-02.docx", "jd_load_control_lead.docx", "landscape_ramp_lead.txt",
+    }  # fmt: skip
     assert [(r["role_name"], r["letter"]) for r in plan["raci"]] == [
         ("Load controller", "R"),
         ("Load controller", "A"),

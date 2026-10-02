@@ -52,6 +52,9 @@ def _finding(row: GapFinding) -> StoredGapFinding:
         disposition=row.disposition,
         disposition_note=row.disposition_note,
         created_item_ref=row.created_item_ref,
+        gap_class=row.gap_class,
+        stated_reason=row.stated_reason or "",
+        cause_type=row.cause_type,
     )
 
 
@@ -208,10 +211,17 @@ def finding(session: Session, finding_id: str) -> tuple[str, StoredGapFinding] |
 
 
 def set_disposition(
-    session: Session, finding_id: str, disposition: str, note: str, created_item_ref: str
+    session: Session,
+    finding_id: str,
+    disposition: str,
+    note: str,
+    created_item_ref: str,
+    gap_class: str | None = None,
 ) -> StoredGapFinding:
     row = session.get(GapFinding, finding_id)
     assert row is not None
+    if gap_class is not None:
+        row.gap_class = gap_class
     row.disposition = disposition
     row.disposition_note = note
     row.created_item_ref = created_item_ref

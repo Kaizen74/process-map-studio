@@ -49,14 +49,15 @@ def test_styles_come_only_from_the_shared_tokens() -> None:
 def test_the_map_is_drawn_from_the_layout_and_links_to_each_step() -> None:
     html = render()
     anchors = re.findall(r'<a class="node [a-z_]+" href="#step-([^"]+)"', html)
-    assert len(anchors) == 10  # 8 steps plus start and end
+    assert len(anchors) == 12  # 10 steps (v1.10 A.5) plus start and end
     targets = set(re.findall(r'<article class="card step" id="step-([^"]+)"', html))
     steps = [e.id for e in md.steps(sample_graph())]
     assert targets == set(steps)
     assert set(steps) <= set(anchors)
     assert 'aria-label="Activity, Draft load plan, Load controller, Corroborated"' in html
-    assert 'aria-label="Load controller lane, 4 steps"' in html
-    assert html.count('class="lens danger"') == 2  # two steps without time, as on the map
+    assert 'aria-label="Load controller lane, 6 steps"' in html  # v1.10 A.5
+    # Three steps without time (v1.10 A.5), as on the map.
+    assert html.count('class="lens danger"') == 3
     assert '<span class="chip"' in html and 'class="arrow right"' in html
 
 

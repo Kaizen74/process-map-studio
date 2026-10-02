@@ -51,7 +51,7 @@ from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import versions as versions_repo
-from app.services import ai_service, calibration, grounding, prompts
+from app.services import ai_service, calibration, grounding, prompts, sensemaking
 
 Sessions = sessionmaker[Session]
 
@@ -68,6 +68,9 @@ FIELD_TYPES = {
     "handoff_in": "handoff",
     "handoff_out": "handoff",
     "k_risk": "constraint",
+    "variant_threshold": "threshold",
+    "variant_time": "duration",
+    "variant_trigger": "trigger",
 }
 FORMAT_FAILED = (
     "Claude's answer for 'Building the map' didn't match the expected format twice. Nothing was "
@@ -212,6 +215,27 @@ class _Gate:
             "duration", f"{what} {value:g} min", f"number not found in claims: {value:g}", "G5"
         )
         return None
+
+    def variants(
+        self, done: ai_schemas.S4Variant, documented: ai_schemas.S4Variant
+    ) -> dict[str, dict[str, str]] | None:
+        """§3.12.11 variant attributes, each value checked like every other field: an owner must
+        be a known role the step's claims name; thresholds, times and triggers may only use
+        numbers the claims state. Empty values are left out; None when nothing differs."""
+        out: dict[str, dict[str, str]] = {}
+        for view, variant in (("done", done), ("documented", documented)):
+            values: dict[str, str] = {}
+            if variant.owner.strip():
+                role_id = self.role(variant.owner, "raci")
+                name = next((r.name for r in self.roles if r.id == role_id), None)
+                if name:
+                    values["owner"] = name
+            for attribute in ("threshold", "time", "trigger"):
+                if text := self.text_field(f"variant_{attribute}", getattr(variant, attribute)):
+                    values[attribute] = text
+            if values:
+                out[view] = values
+        return out or None
 
     def role(self, name: str, claim_type: str) -> str | None:
         """A role named by the answer: names become their mapped role first (G10)."""
@@ -361,6 +385,7 @@ def assemble(
                 if element.kind == ElementKind.DECISION.value:
                     fields["decider_role_id"] = gate.role(detail.decider_role, "decision")
                 mechanism = detail.decision_mechanism
+                fields["variants"] = gate.variants(detail.variant_done, detail.variant_documented)
             if element.kind in DECIDING and mechanism == DecisionMechanism.NONE.value:
                 # Constraint 7: every decision and approval is classified; unsure → judgment.
                 stated = {str(c.record.payload.get("mechanism", "")) for c in own}
@@ -444,8 +469,12 @@ def assemble(
             flags = detail.ai_flags[:1] if detail else []
             for flag in flags:
                 automate = flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value
-                if automate and mechanism == DecisionMechanism.JUDGMENT.value:
-                    tally.dropped_flags += 1  # constraint 7: never on a judgment step
+                if automate and (
+                    mechanism == DecisionMechanism.JUDGMENT.value
+                    or element.work_type in sensemaking.NEVER_AUTOMATED
+                ):
+                    # Constraint 7: never on a judgment step, nor on complex or chaotic work.
+                    tally.dropped_flags += 1
                     continue
                 texts = [gate.scrub(t) for t in (flag.input, flag.output, flag.handoff)]
                 if not all(grounding.verify_numbers(t, gate.text).passed for t in texts):

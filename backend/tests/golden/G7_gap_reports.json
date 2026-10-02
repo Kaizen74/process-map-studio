@@ -13,9 +13,9 @@
       "finalised_at": null,
       "notes": [],
       "counts": {
-        "kept": 4,
+        "kept": 6,
         "rejected": 0,
-        "open": 5,
+        "open": 8,
         "needs_check": 0
       }
     },
@@ -77,6 +77,20 @@
             "tier": "",
             "page_age": "",
             "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-11",
+            "source_kind": "interview_transcript",
+            "source_name": "landscape ramp lead",
+            "stance": "silent",
+            "segment_id": null,
+            "anchor": "",
+            "quote": "",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
           }
         ],
         "basis": "",
@@ -93,20 +107,23 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-11",
+        "id": "id-12",
         "section": "fact",
         "finding_type": "ownership_mismatch",
         "title": "Weight-deviation decision: the Load control lead in SOP LC-07, the Captain in practice",
         "text": "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights deviate beyond the airline tolerance; in practice the captain decides. The job descriptions are silent.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -117,7 +134,7 @@
             "source_kind": "sop",
             "source_name": "sop LC-07",
             "stance": "contradicts",
-            "segment_id": "id-13",
+            "segment_id": "id-14",
             "anchor": "§5",
             "quote": "the Load Control Lead shall decide on corrective action",
             "url": "",
@@ -131,7 +148,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-14",
+            "segment_id": "id-15",
             "anchor": "27:15",
             "quote": "it's the captain who decides, not us",
             "url": "",
@@ -154,31 +171,34 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-15",
+        "id": "id-16",
         "section": "fact",
         "finding_type": "threshold_gap",
         "title": "Loading report return: 10 minutes in SOP RP-02, up to 15 minutes' wait in practice",
         "text": "SOP RP-02 §2 has the Ramp Supervisor return the loading report within 10 minutes of loading completion; the Load controller says they sometimes wait fifteen minutes for it.",
         "element_ids": [
-          "id-16"
+          "id-17"
         ],
         "elements": [
           {
-            "id": "id-16",
+            "id": "id-17",
             "label": "Load and return LIR"
           }
         ],
         "evidence": [
           {
             "side": "documents",
-            "source_id": "id-17",
+            "source_id": "id-18",
             "source_kind": "sop",
             "source_name": "sop RP-02",
             "stance": "contradicts",
-            "segment_id": "id-18",
+            "segment_id": "id-19",
             "anchor": "§2",
             "quote": "return the loading report to Load Control within 10 minutes of loading completion",
             "url": "",
@@ -192,7 +212,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-19",
+            "segment_id": "id-20",
             "anchor": "21:50",
             "quote": "We sometimes wait fifteen minutes for it",
             "url": "",
@@ -215,20 +235,23 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-20",
+        "id": "id-21",
         "section": "fact",
         "finding_type": "undocumented_work",
         "title": "Offload resolution is undocumented work",
         "text": "When something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes before the Load controller re-plans. No SOP or job description covers it.",
         "element_ids": [
-          "id-21"
+          "id-22"
         ],
         "elements": [
           {
-            "id": "id-21",
+            "id": "id-22",
             "label": "Resolve or offload"
           }
         ],
@@ -239,7 +262,7 @@
             "source_kind": "interview_transcript",
             "source_name": "interview transcript",
             "stance": "supports",
-            "segment_id": "id-22",
+            "segment_id": "id-23",
             "anchor": "16:22",
             "quote": "If something can't be accepted, the airline decides what to offload",
             "url": "",
@@ -263,7 +286,7 @@
           },
           {
             "side": "documents",
-            "source_id": "id-23",
+            "source_id": "id-24",
             "source_kind": "job_description",
             "source_name": "jd load controller",
             "stance": "silent",
@@ -291,7 +314,7 @@
           },
           {
             "side": "documents",
-            "source_id": "id-17",
+            "source_id": "id-18",
             "source_kind": "sop",
             "source_name": "sop RP-02",
             "stance": "silent",
@@ -318,13 +341,149 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
+      },
+      {
+        "id": "id-25",
+        "section": "fact",
+        "finding_type": "known_adaptation",
+        "title": "Loading report: sent within ten minutes officially, read at the aircraft on a busy wave",
+        "text": "Officially the Ramp sends the loading report within ten minutes; on a busy wave the Load controller walks down and reads it off the Ramp's sheet instead.",
+        "element_ids": [
+          "id-17",
+          "id-26"
+        ],
+        "elements": [
+          {
+            "id": "id-17",
+            "label": "Load and return LIR"
+          },
+          {
+            "id": "id-26",
+            "label": "Read report at aircraft"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-27",
+            "anchor": "22:30",
+            "quote": "Officially the ramp should send the report within ten minutes",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-27",
+            "anchor": "22:30",
+            "quote": "What actually happens on a busy wave is I walk down and read it off their sheet",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "",
+        "provenance": "O",
+        "severity": "low",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": "",
+        "gap_class": "effective_adaptation",
+        "stated_reason": "otherwise we'd miss the slot",
+        "cause_type": "capacity_mismatch"
+      },
+      {
+        "id": "id-28",
+        "section": "interpretation",
+        "finding_type": "constraint_mismatch",
+        "title": "Weight-deviation call: a fixed decider in SOP LC-07 for work the Load controller describes as having no fixed answer",
+        "text": "SOP LC-07 §5 sets who decides on corrective action when weights deviate; the Load controller describes it as a call with no fixed answer, where you read the situation.",
+        "element_ids": [
+          "id-13"
+        ],
+        "elements": [
+          {
+            "id": "id-13",
+            "label": "Deviation in limits?"
+          }
+        ],
+        "evidence": [
+          {
+            "side": "documents",
+            "source_id": "id-6",
+            "source_kind": "sop",
+            "source_name": "sop LC-07",
+            "stance": "contradicts",
+            "segment_id": "id-14",
+            "anchor": "§5",
+            "quote": "the Load Control Lead shall decide on corrective action",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          },
+          {
+            "side": "practice",
+            "source_id": "id-10",
+            "source_kind": "interview_transcript",
+            "source_name": "interview transcript",
+            "stance": "supports",
+            "segment_id": "id-29",
+            "anchor": "29:48",
+            "quote": "There's no fixed answer",
+            "url": "",
+            "tier": "",
+            "page_age": "",
+            "citation_id": ""
+          }
+        ],
+        "basis": "The Load controller says there is no fixed answer and that you read the situation, which marks the call as complex work rather than a set rule.",
+        "provenance": "I",
+        "severity": "low",
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "supported",
+        "needs_check": false,
+        "question": "",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": "",
+        "gap_class": "unexplained",
+        "stated_reason": "",
+        "cause_type": null
       }
     ],
     "rejected": [],
     "questions": [
       {
-        "id": "id-24",
+        "id": "id-30",
         "section": "recommendation",
         "finding_type": "dead_control_candidate",
         "title": "Cause not explained by the sources",
@@ -353,7 +512,45 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
+      },
+      {
+        "id": "id-31",
+        "section": "recommendation",
+        "finding_type": "constraint_mismatch",
+        "title": "Cause not explained by the sources",
+        "text": "On \"Deviation in limits?\": Why do people do it this way?",
+        "element_ids": [
+          "id-13"
+        ],
+        "elements": [
+          {
+            "id": "id-13",
+            "label": "Deviation in limits?"
+          }
+        ],
+        "evidence": [],
+        "basis": "",
+        "provenance": "",
+        "severity": null,
+        "evidence_strength": "strong",
+        "comparison": null,
+        "verification_status": "verified",
+        "rejection_guardrail": "",
+        "rejection_reason": "",
+        "verifier_verdict": "not_run",
+        "needs_check": false,
+        "question": "On \"Deviation in limits?\": Why do people do it this way?",
+        "notes": [],
+        "disposition": "open",
+        "disposition_note": "",
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       }
     ],
     "sources": [],
@@ -367,12 +564,12 @@
   },
   "external": {
     "analysis": {
-      "id": "id-25",
+      "id": "id-32",
       "version_id": "id-2",
       "version_label": "v0.1",
       "mode": "external",
       "status": "draft_report",
-      "job_id": "id-26",
+      "job_id": "id-33",
       "error": "",
       "created_at": "<time>",
       "completed_at": "<time>",
@@ -390,17 +587,17 @@
     },
     "findings": [
       {
-        "id": "id-27",
+        "id": "id-34",
         "section": "recommendation",
         "finding_type": "missing_control",
         "title": "Second-person check of the load sheet before signing",
         "text": "Guidance and regulator material have a second qualified person check the load sheet before it is signed.",
         "element_ids": [
-          "id-28"
+          "id-35"
         ],
         "elements": [
           {
-            "id": "id-28",
+            "id": "id-35",
             "label": "Issue load sheet"
           }
         ],
@@ -450,20 +647,23 @@
         ],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-29",
+        "id": "id-36",
         "section": "recommendation",
         "finding_type": "decision_rights_difference",
         "title": "Deviation tolerances agreed in writing",
         "text": "Deviation tolerances are agreed with each airline in writing.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -500,10 +700,13 @@
         ],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-30",
+        "id": "id-37",
         "section": "recommendation",
         "finding_type": "time_or_threshold_benchmark",
         "title": "Final load sheet issued by a set time",
@@ -540,20 +743,23 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-31",
+        "id": "id-38",
         "section": "recommendation",
         "finding_type": "technology_enabler",
         "title": "Automated checks of the load sheet",
         "text": "Automated tools check the load sheet and flag deviations.",
         "element_ids": [
-          "id-28"
+          "id-35"
         ],
         "elements": [
           {
-            "id": "id-28",
+            "id": "id-35",
             "label": "Issue load sheet"
           }
         ],
@@ -587,22 +793,25 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       }
     ],
     "rejected": [
       {
-        "id": "id-32",
+        "id": "id-39",
         "section": "recommendation",
         "finding_type": "kpi_practice",
         "title": "Loading report return time as a KPI",
         "text": "Loading report return time is tracked as a key performance indicator.",
         "element_ids": [
-          "id-16"
+          "id-17"
         ],
         "elements": [
           {
-            "id": "id-16",
+            "id": "id-17",
             "label": "Load and return LIR"
           }
         ],
@@ -636,10 +845,13 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-33",
+        "id": "id-40",
         "section": "recommendation",
         "finding_type": "other_difference",
         "title": "Load controllers rotate shifts weekly",
@@ -661,20 +873,23 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-34",
+        "id": "id-41",
         "section": "recommendation",
         "finding_type": "time_or_threshold_benchmark",
         "title": "Deviation decisions within 5 minutes",
         "text": "Deviation tolerances are agreed with each airline and decided within 5 minutes.",
         "element_ids": [
-          "id-12"
+          "id-13"
         ],
         "elements": [
           {
-            "id": "id-12",
+            "id": "id-13",
             "label": "Deviation in limits?"
           }
         ],
@@ -708,10 +923,13 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       },
       {
-        "id": "id-35",
+        "id": "id-42",
         "section": "recommendation",
         "finding_type": "missing_step",
         "title": "Final walk-round before departure",
@@ -748,13 +966,16 @@
         "notes": [],
         "disposition": "open",
         "disposition_note": "",
-        "created_item_ref": ""
+        "created_item_ref": "",
+        "gap_class": null,
+        "stated_reason": "",
+        "cause_type": null
       }
     ],
     "questions": [],
     "sources": [
       {
-        "id": "id-36",
+        "id": "id-43",
         "url": "https://www.iata.org/illustrative/load-control-guidance",
         "title": "Illustrative industry guidance on load control",
         "domain": "iata.org",
@@ -763,7 +984,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-37",
+        "id": "id-44",
         "url": "https://www.easa.europa.eu/illustrative/mass-and-balance",
         "title": "Illustrative regulator material on mass and balance",
         "domain": "easa.europa.eu",
@@ -772,7 +993,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-38",
+        "id": "id-45",
         "url": "https://loadplanning-software.example.com/blog/automation",
         "title": "Illustrative vendor blog on automated load planning",
         "domain": "loadplanning-software.example.com",
@@ -781,7 +1002,7 @@
         "returned_in_results": true
       },
       {
-        "id": "id-39",
+        "id": "id-46",
         "url": "https://www.unlisted.example.org/loading-kpi",
         "title": "Unlisted page",
         "domain": "unlisted.example.org",
@@ -805,6 +1026,8 @@
           "Special loads OK?",
           "Resolve or offload",
           "Load and return LIR",
+          "Busy wave?",
+          "Read report at aircraft",
           "Deviation in limits?",
           "Approve deviation",
           "Issue load sheet"
@@ -820,7 +1043,7 @@
         "blocked_domains": [],
         "recency_years": 5
       },
-      "text": "Process: Load control\nIndustry: Aviation ground handling\nAdjacent industries: Air cargo; Airport operations\nSteps of the process as it is done today:\n- Draft load plan\n- Approve load plan\n- Special loads OK?\n- Resolve or offload\n- Load and return LIR\n- Deviation in limits?\n- Approve deviation\n- Issue load sheet\nResearch questions:\n- What steps, controls and approvals do comparable processes typically include?\n- How are decision rights and approvals typically allocated?\n- What cycle-time, KPI or threshold benchmarks are published?\n- What technology or automation is commonly used?",
+      "text": "Process: Load control\nIndustry: Aviation ground handling\nAdjacent industries: Air cargo; Airport operations\nSteps of the process as it is done today:\n- Draft load plan\n- Approve load plan\n- Special loads OK?\n- Resolve or offload\n- Load and return LIR\n- Busy wave?\n- Read report at aircraft\n- Deviation in limits?\n- Approve deviation\n- Issue load sheet\nResearch questions:\n- What steps, controls and approvals do comparable processes typically include?\n- How are decision rights and approvals typically allocated?\n- What cycle-time, KPI or threshold benchmarks are published?\n- What technology or automation is commonly used?",
       "confirmed": true,
       "scan": {
         "hits": []

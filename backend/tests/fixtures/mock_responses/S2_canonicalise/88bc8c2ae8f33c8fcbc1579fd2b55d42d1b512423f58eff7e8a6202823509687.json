@@ -1,0 +1,130 @@
+{
+  "steps": [
+    {
+      "ref": "st1",
+      "kind": "activity",
+      "label": "Draft load plan",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c1",
+        "c2",
+        "c16",
+        "c23"
+      ]
+    },
+    {
+      "ref": "st2",
+      "kind": "approval",
+      "label": "Approve load plan",
+      "lane_role": "Load control lead",
+      "claim_refs": [
+        "c17",
+        "c22"
+      ]
+    },
+    {
+      "ref": "st3",
+      "kind": "decision",
+      "label": "Special loads OK?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c3",
+        "c4",
+        "c18"
+      ]
+    },
+    {
+      "ref": "st4",
+      "kind": "activity",
+      "label": "Resolve or offload",
+      "lane_role": "Airline ops",
+      "claim_refs": [
+        "c5"
+      ]
+    },
+    {
+      "ref": "st5",
+      "kind": "activity",
+      "label": "Load aircraft",
+      "lane_role": "Ramp",
+      "claim_refs": [
+        "c6",
+        "c7",
+        "c8",
+        "c9",
+        "c10",
+        "c24",
+        "c26"
+      ]
+    },
+    {
+      "ref": "st6",
+      "kind": "activity",
+      "label": "Return loading report",
+      "lane_role": "Ramp",
+      "claim_refs": [
+        "c21",
+        "c25"
+      ]
+    },
+    {
+      "ref": "st7",
+      "kind": "decision",
+      "label": "Busy wave?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c11"
+      ]
+    },
+    {
+      "ref": "st8",
+      "kind": "activity",
+      "label": "Read report at aircraft",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c11"
+      ]
+    },
+    {
+      "ref": "st9",
+      "kind": "decision",
+      "label": "Deviation in limits?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c12",
+        "c13",
+        "c19"
+      ]
+    },
+    {
+      "ref": "st10",
+      "kind": "approval",
+      "label": "Approve deviation",
+      "lane_role": "Captain",
+      "claim_refs": [
+        "c14"
+      ]
+    },
+    {
+      "ref": "st11",
+      "kind": "activity",
+      "label": "Issue load sheet",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c15",
+        "c20"
+      ]
+    }
+  ],
+  "new_roles": [],
+  "merge_proposals": [
+    {
+      "step_refs": [
+        "st5",
+        "st6"
+      ],
+      "proposed_label": "Load and return LIR",
+      "similarity": 0.86
+    }
+  ]
+}

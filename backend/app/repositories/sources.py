@@ -227,6 +227,7 @@ def segment_page(
             "text": seg.text,
             "instruction_like": seg.instruction_like,
             "corrected": seg.corrected,
+            "question_id": seg.question_id,
         }
         for seg, role_name in rows
     ]
@@ -332,6 +333,7 @@ def correct_segment(
         "text": row.text,
         "instruction_like": row.instruction_like,
         "corrected": row.corrected,
+        "question_id": row.question_id,
     }
 
 
@@ -358,6 +360,13 @@ def stored_segments(session: Session, source_id: str) -> list[StoredSegment]:
         )
         for seg, role_name in rows
     ]
+
+
+def set_question_ids(session: Session, source_id: str, by_seq: dict[int, str | None]) -> None:
+    """Step A (§3.12.10): the guide question each turn asks or answers."""
+    for seg in session.scalars(select(SourceSegment).where(SourceSegment.source_id == source_id)):
+        seg.question_id = by_seq.get(seg.seq)
+    session.flush()
 
 
 def ocr_pages(session: Session, source_id: str) -> list[int]:

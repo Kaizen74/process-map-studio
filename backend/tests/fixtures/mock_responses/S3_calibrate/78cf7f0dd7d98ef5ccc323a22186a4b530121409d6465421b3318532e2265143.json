@@ -1,0 +1,34 @@
+{
+  "stances": [
+    {
+      "step_ref": "e5",
+      "stance": "supports",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e6",
+      "stance": "supports",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "What actually happens on a busy wave",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e7",
+      "stance": "supports",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "I walk down and read it off their sheet",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

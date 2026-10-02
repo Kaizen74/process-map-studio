@@ -15,8 +15,9 @@ function route(from: string, to: string): Point[] {
 describe("edge segments and arrowheads (PRD §5.5, all four routes of §3.9)", () => {
   it("same lane: one horizontal run, arrow pointing right", () => {
     const points = route("Deviation in limits?", "Issue load sheet");
-    expect(edgeSegments(points)).toEqual([{ x: 828, y: 464, length: 48, orientation: "horizontal" }]);
-    expect(arrowhead(points)).toEqual({ x: 876, y: 464, direction: "right" });
+    // v1.10 A.5: two more columns before the deviation check (Busy wave?, Read report at aircraft).
+    expect(edgeSegments(points)).toEqual([{ x: 1076, y: 464, length: 48, orientation: "horizontal" }]);
+    expect(arrowhead(points)).toEqual({ x: 1124, y: 464, direction: "right" });
   });
 
   it("another lane: along, through the gutter, along", () => {
@@ -37,7 +38,7 @@ describe("edge segments and arrowheads (PRD §5.5, all four routes of §3.9)", (
     const points = route("Approve deviation", "Load and return LIR");
     expect(edgeSegments(points).map((s) => [s.orientation, s.length])).toEqual([
       ["vertical", 8],
-      ["horizontal", 124],
+      ["horizontal", 372], // three columns back since v1.10 A.5
       ["vertical", 256],
     ]);
     expect(arrowhead(points)).toEqual({ x: 678, y: 566, direction: "down" });

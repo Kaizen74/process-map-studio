@@ -59,12 +59,37 @@ def test_a_finding_becomes_a_question_in_the_draft(drafted: Drafted) -> None:
 
 
 def test_the_sme_question_keeps_its_wording(drafted: Drafted) -> None:
-    [question] = run_internal(drafted)["questions"]
+    question, _why = run_internal(drafted)["questions"]  # C4b: + the constraint mismatch's "why"
     saved = decide(drafted, question["id"], "added_question").json()
     questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
     added = next(q for q in questions if f"question:{q['id']}" == saved["created_item_ref"])
     assert added["question"] == question["question"]
     assert added["element_label"] == "Approve load plan"
+
+
+def test_eric_sets_the_final_gap_class(drafted: Drafted) -> None:
+    """§3.12.7: the class is proposed only from a stated reason; Eric sets the final class."""
+    report = run_internal(drafted)
+    adaptation = by_type(report)["known_adaptation"]
+    assert (adaptation["gap_class"], adaptation["stated_reason"], adaptation["cause_type"]) == (
+        "effective_adaptation", "otherwise we'd miss the slot", "capacity_mismatch")  # fmt: skip
+    bad = decide(drafted, adaptation["id"], "added_cause", gap_class="maybe")
+    assert bad.status_code == 422
+    saved = decide(drafted, adaptation["id"], "added_cause", gap_class="risky_drift")
+    assert saved.status_code == 200, saved.text
+    assert (saved.json()["gap_class"], saved.json()["disposition"]) == (
+        "risky_drift",
+        "added_cause",
+    )
+    # Only reality gaps have a class.
+    threshold = by_type(report)["threshold_gap"]
+    refused = decide(drafted, threshold["id"], "added_question", gap_class="obsolete_rule")
+    assert refused.status_code == 422
+    assert refused.json()["error"]["message"] == "Only reality-gap findings have a gap class."
+    # Deciding without a class keeps the one proposed.
+    mismatch = by_type(report)["constraint_mismatch"]
+    kept = decide(drafted, mismatch["id"], "added_question").json()
+    assert kept["gap_class"] == "unexplained"
 
 
 def test_the_cause_library_gets_an_entry_once(drafted: Drafted) -> None:
@@ -133,7 +158,7 @@ def test_decision_rules(drafted: Drafted) -> None:
     assert no_step.status_code == 422
     assert no_step.json()["error"]["message"] == "Choose where the new step goes."
     # The SME question has no passage: an observed step needs one (the Add step rule).
-    [question] = report["questions"]
+    question = report["questions"][0]
     step = {
         "kind": "activity",
         "label": "Ask about approval",
@@ -169,7 +194,8 @@ def test_finalise_and_export(drafted: Drafted) -> None:
     gid = report["analysis"]["id"]
     early = drafted.client.post(f"/api/gap-analyses/{gid}/finalise")
     assert early.status_code == 409
-    assert early.json()["error"]["message"] == "Decide on every finding first: 5 still open."
+    # A.8 (C4b): + the two reality gaps and the question the unexplained one raises.
+    assert early.json()["error"]["message"] == "Decide on every finding first: 8 still open."
     assert drafted.client.get(f"/api/gap-analyses/{gid}/export").status_code == 409
     decide_all_internal(drafted, report)
     final = drafted.client.post(f"/api/gap-analyses/{gid}/finalise")
@@ -205,8 +231,20 @@ def test_finalise_and_export(drafted: Drafted) -> None:
         "not, why not? · Decision: added as a validation question" in md  # fmt: skip
     assert "Decision: dismissed (Checked with the process owner.)" in md
     assert "Decision: added to the cause library" in md
+    # Reality gaps (§3.12.7): the class and whether an SME stated a reason, never its words.
+    assert (
+        "  - Gap class: Effective adaptation (confirmed; from a reason an SME stated) · "
+        "cause: capacity mismatch" in md
+    )
+    assert "  - Gap class: Unexplained (confirmed; no reason stated; asked as a question)" in md
+    # Each decision line carries the finding's own tag (an interpretation is inferred, I), and a
+    # place cited twice is listed once.
+    assert "- [I] Weight-deviation call: a fixed decider in SOP LC-07 for work the Load " \
+        "controller describes as having no fixed answer · Decision: dismissed" in md  # fmt: skip
+    assert "  - Practice: interview transcript 22:30 (supports)\n" in md
     # No passage's words, no names.
-    for quoted in ("We sometimes wait fifteen minutes", "it's the captain who decides", "Priya"):
+    for quoted in ("We sometimes wait fifteen minutes", "it's the captain who decides", "Priya",
+                   "otherwise we'd miss the slot"):  # fmt: skip
         assert quoted not in md
     assert md.split("## Rejected findings")[1].strip() == "None."
 
@@ -215,7 +253,7 @@ def test_the_step_panel_lists_the_findings_about_it(drafted: Drafted) -> None:
     report = run_internal(drafted)
     detail = drafted.client.get(f"/api/elements/{drafted.ids['Approve load plan']}").json()
     dead = by_type(report)["dead_control_candidate"]
-    [question] = report["questions"]
+    question = report["questions"][0]
     assert detail["gap_findings"] == [
         {
             "id": dead["id"],
@@ -250,8 +288,9 @@ def test_a_finalised_report_appears_in_the_master_map(drafted: Drafted) -> None:
     md = drafted.client.get(f"/api/versions/{drafted.version_id}/export/md").text
     section = md.split("### Gap analyses")[1]
     assert "- Documents vs practice · finalised " in section
-    assert "· 2 accepted findings: Offload resolution is undocumented work; Cause not explained " \
-        "by the sources" in section  # fmt: skip
+    # C4b: + the constraint mismatch's "why" question, added as a validation question.
+    assert "· 3 accepted findings: Offload resolution is undocumented work; Cause not explained " \
+        "by the sources; Cause not explained by the sources" in section  # fmt: skip
     html = drafted.client.get(f"/api/versions/{drafted.version_id}/export/html").text
     assert "Documents vs practice · finalised " in html
     # Published and no draft: questions and steps wait for a new draft; causes don't.

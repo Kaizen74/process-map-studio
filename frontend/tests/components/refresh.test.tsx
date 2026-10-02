@@ -4,7 +4,7 @@ import type { DraftState, RefreshCheck, RunRecord } from "../../src/api/types";
 import type { Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE } from "../sampleMap";
+import { SAMPLE, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -32,7 +32,7 @@ function backend(refusal: string | null = null, check: RefreshCheck | null = SAM
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     "GET /api/engagements/e1/sources": () => ({ body: [] }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     [`GET /api/versions/${VID}/rejected-claims`]: () => ({
       body: { items: [], total: 0, scrub_count: 0, instruction_like_count: 0 },
     }),

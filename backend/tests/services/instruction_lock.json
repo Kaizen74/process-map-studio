@@ -1,11 +1,11 @@
 {
   "GA_internal.md": {
-    "sha256": "c729c028f42a7dfe28f1e001146c559c63025fcbcdc232ff283cca81cb22bd3a",
-    "version": "1"
+    "sha256": "ea2acda5485c325c62e5862e1c1dd066eec237ae178926b379adcde3875b402b",
+    "version": "2"
   },
   "GA_verify.md": {
-    "sha256": "2dd5c2c9705b2bb146fa64100a9f74b4f82a2621ea6371f19fb5115c192ada0a",
-    "version": "1"
+    "sha256": "061b82fc76f436d11d47c55d0c87bd9051aca4ab170fe8e9b6177f6b4f34f989",
+    "version": "2"
   },
   "GB_research.md": {
     "sha256": "15a46185adec817429e4c7d1f7a4ae1e0f2de48af11897854c3b0a32c507bfe9",
@@ -32,8 +32,8 @@
     "version": "1"
   },
   "S1_extract_interview.md": {
-    "sha256": "a31d505e4cadd063ff8fa0ee65a83d4d79682c84ef3fe63b353c46317820cf5b",
-    "version": "1"
+    "sha256": "88ee6e8ab1eb73316af7bafe1d085ceafefa128da05acbbd69753ba8ad042902",
+    "version": "4"
   },
   "S1_extract_jd.md": {
     "sha256": "8ff3a9c4cbcb1302d3a30f54f5ac5251e66e3b022076a3da1bc1a966304462d1",
@@ -51,12 +51,24 @@
     "sha256": "6e588869613b91d50833d65e662affb78bbb1d31fde4f295c846b1154595950a",
     "version": "1"
   },
-  "S4_assemble.md": {
-    "sha256": "d27179cc87ad52fd657bb4519e21810e635680d84a82da235cb9673ec4fdf920",
+  "S3c_worktype.md": {
+    "sha256": "0e398fa8601457aa1ad98990de53d385cbf01b4241409541414751636816a6cc",
     "version": "1"
+  },
+  "S4_assemble.md": {
+    "sha256": "ea806b1bfacceb899e3c92fff8ee4088dd161c3272c1b13daf08843abfdb5a86",
+    "version": "2"
   },
   "S5_questions.md": {
     "sha256": "8a35a97aa38d44df014b3a3636ac7bf8b264c95353021e0f5607f57607545eb6",
+    "version": "1"
+  },
+  "codebook.md": {
+    "sha256": "78b4c75d6a8de350c859649f7c11fd8c5e8a563b0706f9e43d761425b1bc047f",
+    "version": "1"
+  },
+  "marker_lexicon.json": {
+    "sha256": "0a12bbb43c96d74660a4e1b7c2874277b047ff6444e2dba8e531ff9841ad2f08",
     "version": "1"
   },
   "question_bank.json": {

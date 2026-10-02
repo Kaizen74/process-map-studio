@@ -491,3 +491,64 @@ button.evidence:focus-visible {
 .panel-section > .btn--link {
   align-self: flex-start;
 }
+
+/* Sensemaking sections (§5.7.7 4a-4d): the SME's words as quotes, the model's reading labelled. */
+.sense-line,
+.sense-said {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+.sense-quote {
+  font-style: italic;
+}
+.sense-quote + .sense-quote::before {
+  content: " · ";
+  font-style: normal;
+}
+.sense-note {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.sense-label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-2);
+}
+.sense-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sense-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sense-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+}
+.sense-card__label {
+  font-weight: var(--weight-medium);
+}
+.sense-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+.sense-anchor {
+  font-size: var(--text-label);
+}

@@ -53,7 +53,7 @@ def test_publishing_is_refused_with_every_blocker(drafted: Drafted) -> None:
     blockers = error["details"]["blockers"]
     assert error["message"] == f"This draft can't be published yet: {len(blockers)} things to fix."
     types = [b["type"] for b in blockers]
-    assert types.count("unreviewed_element") == 7  # 8 steps, one rejected
+    assert types.count("unreviewed_element") == 9  # 10 steps (v1.10 A.5), one rejected
     assert types.count("needs_check") == 1 and types.count("pending_merge") == 1
     assert types.count("suggested_image") == 1
     lint = next(b for b in blockers if b["type"] == "lint_failure")
@@ -71,8 +71,8 @@ def test_a_green_draft_publishes_as_v1_0_and_never_changes(drafted: Drafted) -> 
     body = response.json()
     assert (body["label"], body["state"], body["published_by"]) == ("v1.0", "published", "Owner")
     assert body["published_at"] and body["quality_card"]["all_green"] is True
-    assert body["review"] == {"reviewed": 8, "total": 8}
-    assert [e["change"] for e in body["change_log"]] == ["confirmed"] * 8
+    assert body["review"] == {"reviewed": 10, "total": 10}  # v1.10 A.5
+    assert [e["change"] for e in body["change_log"]] == ["confirmed"] * 10
     assert body["change_log"][0]["step"] == "Draft load plan"
     # Published versions never change.
     assert drafted.act("Draft load plan", "reject").status_code == 409
@@ -113,7 +113,7 @@ def test_exports_of_a_published_version(drafted: Drafted) -> None:
     graph = json.loads(drafted.client.get(f"{url}/json").text)
     assert graph["version"]["quality_card"]["all_green"] is True
     rows = list(csv.reader(io.StringIO(drafted.client.get(f"{url}/csv").text.removeprefix("﻿"))))
-    assert len(rows) == 9
+    assert len(rows) == 11  # header + ten steps (v1.10 A.5)
     html = drafted.client.get(f"{url}/html")
     assert html.headers["content-disposition"].endswith('-map.html"')
     for body in (text, html.text, json.dumps(graph)):
@@ -138,7 +138,7 @@ def test_reopen_copies_the_map_into_a_locked_draft_and_publishes_as_v1_1(drafted
     draft = response.json()
     assert (draft["label"], draft["state"], draft["parent_version_id"]) == (
         "v1.1 draft", "draft", drafted.version_id)  # fmt: skip
-    assert draft["review"] == {"reviewed": 8, "total": 8} and draft["change_log"] == []
+    assert draft["review"] == {"reviewed": 10, "total": 10} and draft["change_log"] == []
     after = drafted.client.get(f"/api/versions/{draft['id']}/graph").json()
     assert shape(after) == shape(before)
     assert len(after["edges"]) == len(before["edges"])
@@ -146,7 +146,9 @@ def test_reopen_copies_the_map_into_a_locked_draft_and_publishes_as_v1_1(drafted
         "confirmed"
     }
     questions = drafted.client.get(f"/api/versions/{draft['id']}/questions").json()
-    assert len(questions) == 5
+    # v1.10 A.9: + three "order not stated" questions; A.8 (C2): + three "work type not clear";
+    # A.10 (C3): the loading report explains one of the three orders
+    assert len(questions) == 10
     # One draft at a time; only the latest published version reopens.
     again = drafted.client.post(f"/api/versions/{drafted.version_id}/reopen")
     assert (

@@ -57,8 +57,8 @@ def test_the_reviewed_sample_is_green() -> None:
     assert [c.id for c in card.checks] == [f"Q{n}" for n in range(1, 11)]
     assert all(c.status == "pass" for c in card.checks), card.checks
     assert card.all_green and quality.hard_failures(card) == 0
-    assert card.checks[0].detail == "All 8 steps are tagged O, I or R."
-    assert card.checks[9].detail == "8 steps and 5 lanes: fits a one-hour session."
+    assert card.checks[0].detail == "All 10 steps are tagged O, I or R."  # v1.10 A.5
+    assert card.checks[9].detail == "10 steps and 5 lanes: fits a one-hour session."
 
 
 def _untagged(g: Graph) -> None:
@@ -165,12 +165,12 @@ def test_the_hidden_name_is_never_repeated_in_the_card() -> None:
 
 def test_q10_is_a_warning_and_never_blocks() -> None:
     graph = reviewed()
-    for e in graph.elements[1:9]:
-        e.lane_role_id = f"lane-{e.id}"  # 8 lanes
+    for e in graph.elements[1:11]:
+        e.lane_role_id = f"lane-{e.id}"  # 10 lanes (v1.10 A.5: ten steps)
     card = quality.build_quality_card(card_input(graph))
     q10 = card.checks[9]
     assert (q10.status, q10.hard) == ("warning", False)
-    assert q10.detail == "8 steps and 8 lanes: consider splitting by phase."
+    assert q10.detail == "10 steps and 10 lanes: consider splitting by phase."
     assert card.checks[9] not in [c for c in card.checks if c.status == "fail"]
 
 

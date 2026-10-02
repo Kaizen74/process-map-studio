@@ -244,6 +244,21 @@
 .glyph .no-fill {
   fill: none;
 }
+.glyph .tone-ink {
+  fill: var(--ink-2);
+  stroke: var(--ink-2);
+}
+.glyph .tone-ink.no-fill {
+  fill: none;
+}
+.glyph__mark {
+  font-size: var(--text-micro);
+  font-weight: 500;
+  fill: var(--ink-2);
+}
+.glyph__muted {
+  color: var(--ink-3);
+}
 
 /* Dialog and popover */
 .overlay {

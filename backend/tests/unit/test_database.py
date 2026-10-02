@@ -291,6 +291,21 @@ def test_downgrade_of_0010_removes_only_the_run_record(migrated: Path) -> None:
     assert "run_record" in version_columns()
 
 
+def test_downgrade_of_0011_removes_only_the_stated_reason_and_cause_type(migrated: Path) -> None:
+    def finding_columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        columns = {c["name"] for c in inspect(engine).get_columns("gap_findings")}
+        engine.dispose()
+        return columns
+
+    before = finding_columns()
+    db.downgrade(migrated, "0010")
+    assert before - finding_columns() == {"stated_reason", "cause_type"}
+    assert "gap_class" in finding_columns()
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+
+
 def test_foreign_keys_cascade_from_engagement(migrated: Path) -> None:
     factory = db.session_factory(db.make_engine(migrated))
     with db.session_scope(factory) as session:
@@ -334,14 +349,11 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 
 
 # PRD v1.10 values that change what the app does, added with the phase that uses them (logged in
-# DECISIONS.md 2026-09-30): the "not described" gap edge (P4b, As done view) and the reality-gap
-# finding types that Analysis A may return (P4c). The test checks they are still absent, so each
-# is removed from this list when its phase adds it.
-PENDING_VALUES = {
-    "B.8": {"gap"},
-    "B.22": {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap",
-             "constraint_mismatch"},
-}  # fmt: skip
+# DECISIONS.md 2026-09-30): the reality-gap finding types that Analysis A may return (P4c). The
+# test checks they are still absent, so each is removed from this list when its phase adds it (the
+# "not described" gap edge of B.8 was added with P4b, 2026-10-01).
+# Values the PRD lists that the app doesn't use yet (none since C4b added the reality gaps).
+PENDING_VALUES: dict[str, set[str]] = {}
 
 
 def test_enums_match_appendix_b() -> None:

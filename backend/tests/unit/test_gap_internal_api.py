@@ -48,8 +48,8 @@ def test_a7_the_expected_findings_and_severities(drafted: Drafted) -> None:
     assert [s["status"] for s in job["stages"]] == ["done"] * 5
     assert job["usage"]["calls"] == 2  # GA_internal and GA_verify
     assert job["message"] == (
-        "The documents-vs-practice report is ready: 4 findings, 1 question for your SMEs, "
-        "0 rejected findings."
+        "The documents-vs-practice report is ready: 6 findings, 2 questions for your SMEs, "
+        "0 rejected findings."  # A.8 (C4b): + the two reality gaps and the question one raises
     )
     found = [
         (f["finding_type"], f["severity"], [e["label"] for e in f["elements"]], f["provenance"])
@@ -61,6 +61,9 @@ def test_a7_the_expected_findings_and_severities(drafted: Drafted) -> None:
         ("ownership_mismatch", "high", ["Deviation in limits?"], "O"),
         ("threshold_gap", "medium", ["Load and return LIR"], "O"),
         ("undocumented_work", "medium", ["Resolve or offload"], "O"),
+        # A.8 (C4b): the reality gaps (the severity rule of §3.11.1 names no reality gap: low).
+        ("known_adaptation", "low", ["Load and return LIR", "Read report at aircraft"], "O"),
+        ("constraint_mismatch", "low", ["Deviation in limits?"], "I"),
     ]
     assert all(f["verifier_verdict"] == "supported" for f in body["findings"])
     assert all(f["disposition"] == "open" and not f["needs_check"] for f in body["findings"])
@@ -71,7 +74,7 @@ def test_a7_the_expected_findings_and_severities(drafted: Drafted) -> None:
         "draft_report",
         "v0.1",
     )
-    assert analysis["counts"] == {"kept": 4, "rejected": 0, "open": 5, "needs_check": 0}
+    assert analysis["counts"] == {"kept": 6, "rejected": 0, "open": 8, "needs_check": 0}
     assert body["usage"]["calls"] == 2 and body["search_count"] == 0 and body["sources"] == []
     # The map is unchanged by the analysis (constraint 22).
     graph_after = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
@@ -92,6 +95,7 @@ def test_a7_every_finding_has_evidence_from_each_side(drafted: Drafted) -> None:
         ("documents", "sop LC-07", "§3.2", "supports"),
         ("documents", "jd load control lead", "¶ 2", "supports"),
         ("practice", "interview transcript", "", "silent"),
+        ("practice", "landscape ramp lead", "", "silent"),  # A.10 says nothing of it either
     ]
     # SOP RP-02 §2 · interview 21:50
     assert sides("threshold_gap") == [
@@ -121,7 +125,7 @@ def test_a7_every_finding_has_evidence_from_each_side(drafted: Drafted) -> None:
 
 def test_a7_the_unexplained_cause_becomes_a_question_not_a_guess(drafted: Drafted) -> None:
     body = run(drafted)
-    [question] = body["questions"]
+    question, why = body["questions"]
     assert question["question"] == (
         "Is the load plan approved by the Load control lead before release to Ramp, and if not, "
         "why not?"
@@ -133,8 +137,17 @@ def test_a7_the_unexplained_cause_becomes_a_question_not_a_guess(drafted: Drafte
     )
     assert [e["label"] for e in question["elements"]] == ["Approve load plan"]
     assert question["evidence"] == [] and question["disposition"] == "open"
-    # No finding offers a cause: interpretation needs SME passages, and none explains it.
-    assert all(f["section"] == "fact" for f in body["findings"])
+    # No finding offers a cause: interpretation needs SME passages, and none explains it. The one
+    # interpretation is A.8's constraint mismatch, whose basis is the SME's own cue (29:48); no
+    # reason was stated for it, so its class is unexplained and it asks why (§3.12.7).
+    assert [f["finding_type"] for f in body["findings"] if f["section"] != "fact"] == [
+        "constraint_mismatch"
+    ]
+    assert (why["finding_type"], why["question"], [e["label"] for e in why["elements"]]) == (
+        "constraint_mismatch",
+        'On "Deviation in limits?": Why do people do it this way?',
+        ["Deviation in limits?"],
+    )
 
 
 def test_no_name_on_the_hidden_list_reaches_the_report(drafted: Drafted) -> None:
@@ -151,16 +164,29 @@ def test_the_divergence_set_is_the_steps_where_sources_differ(drafted: Drafted) 
         ("d1", "Approve load plan", "documented_only"),
         ("d2", "Resolve or offload", "practiced_only"),
         ("d3", "Load and return LIR", "contested"),
-        ("d4", "Deviation in limits?", "contested"),
-        ("d5", "Approve deviation", "practiced_only"),
+        # v1.10 A.5: the lived busy-wave variation, in practice only (undocumented work).
+        ("d4", "Busy wave?", "practiced_only"),
+        ("d5", "Read report at aircraft", "practiced_only"),
+        ("d6", "Deviation in limits?", "contested"),
+        ("d7", "Approve deviation", "practiced_only"),
     ]
-    d4 = found.items[3]
+    d4 = found.items[5]  # Deviation in limits?
     assert d4.contested_raci == [("Captain", "A"), ("Load control lead", "A")]
     notes = [s.note for s in d4.sides if s.note]
     assert "Ownership divergence: the Load control lead decides in the SOP, the Captain in " \
         "practice." in notes  # fmt: skip
     # Only the passages behind the stances are sent, each once.
-    assert sorted(found.passages) == [f"e{n}" for n in range(1, 9)]
+    # v1.10: + the 22:30 passage behind the busy-wave steps; A.10 (C3): + the landscape
+    # interview's 02:18 passage behind the loading step; C4b: + the 29:48 work-type cue.
+    assert sorted(found.passages) == sorted(f"e{n}" for n in range(1, 12))
+    assert (d4.work_type, [found.passages[r].segment.anchor for r in d4.work_type_refs]) == (
+        "complex", ["29:48"])  # fmt: skip
+    # The official and lived accounts of the steps, with the SME's stated reason (A.8).
+    lir, reading = found.items[2], found.items[4]
+    assert {(a.account_type, found.passages[a.passage_refs[0]].segment.anchor)
+            for a in lir.accounts} == {("official", "22:30"), ("lived", "21:50"),
+                                       ("lived", "02:18")}  # fmt: skip
+    assert [a.stated_reason for a in reading.accounts] == ["otherwise we'd miss the slot"]
 
 
 def test_a_map_with_no_differences_gets_an_empty_report_without_ai(
@@ -184,7 +210,7 @@ def finding(**changes: Any) -> ai_schemas.GAFinding:
         "text": "The Ramp Supervisor returns it within 10 minutes; practice waits fifteen minutes.",
         "step_refs": ["d3"],
         "evidence": [
-            {"segment_id": "e5", "quote": "within 10 minutes of loading completion"},
+            {"segment_id": "e6", "quote": "within 10 minutes of loading completion"},
             {"segment_id": "e4", "quote": "We sometimes wait fifteen minutes for it"},
         ],
         "basis": "",
@@ -213,7 +239,7 @@ def test_a_well_grounded_finding_passes(drafted: Drafted) -> None:
             ("G3", "cites a passage that wasn't provided"),
         ),
         (
-            {"evidence": [{"segment_id": "e5", "quote": "within twenty minutes of the flight"}]},
+            {"evidence": [{"segment_id": "e6", "quote": "within twenty minutes of the flight"}]},
             ("G4", "quote not found in source"),
         ),
         (
@@ -239,7 +265,7 @@ def test_a_well_grounded_finding_passes(drafted: Drafted) -> None:
             ("G3", "a pattern or cause needs a basis citing what the SMEs said"),
         ),
         (
-            {"section": "interpretation", "basis": "The SOP says so.", "basis_segment_ids": ["e5"]},
+            {"section": "interpretation", "basis": "The SOP says so.", "basis_segment_ids": ["e6"]},
             ("G3", "a pattern or cause needs a basis citing what the SMEs said"),
         ),
         (
@@ -287,7 +313,8 @@ def with_verdicts(monkeypatch: pytest.MonkeyPatch, verdicts: dict[str, str]) -> 
 
 
 def test_the_verifier_rejects_and_flags(drafted: Drafted, monkeypatch: pytest.MonkeyPatch) -> None:
-    # f1 dead control, f2 threshold, f3 ownership, f4 undocumented work (in Claude's order).
+    # f1 dead control, f2 threshold, f3 ownership, f4 known adaptation, f5 constraint mismatch,
+    # f6 undocumented work (in Claude's order).
     with_verdicts(monkeypatch, {"f1": "supported", "f2": "not_supported", "f3": "partial"})
     body = run(drafted)
     verdicts = {
@@ -297,12 +324,14 @@ def test_the_verifier_rejects_and_flags(drafted: Drafted, monkeypatch: pytest.Mo
         "dead_control_candidate": ("supported", False),
         "ownership_mismatch": ("partial", True),
         "undocumented_work": ("partial", True),  # no verdict given: checked by Eric, never assumed
+        "known_adaptation": ("partial", True),
+        "constraint_mismatch": ("partial", True),
     }
     [rejected] = body["rejected"]
     assert (rejected["finding_type"], rejected["rejection_guardrail"]) == ("threshold_gap", "GAV")
     assert rejected["rejection_reason"] == "not_supported for Load controller"  # names hidden
     assert rejected["severity"] is None
-    assert body["analysis"]["counts"] == {"kept": 3, "rejected": 1, "open": 4, "needs_check": 2}
+    assert body["analysis"]["counts"] == {"kept": 5, "rejected": 1, "open": 7, "needs_check": 4}
 
 
 def test_with_the_verifier_off_it_is_skipped(drafted: Drafted) -> None:
@@ -357,3 +386,87 @@ def test_one_analysis_at_a_time_per_version(drafted: Drafted) -> None:
     again = drafted.client.post(f"/api/versions/{drafted.version_id}/gap-analyses/internal")
     assert again.status_code == 409
     assert again.json()["error"]["message"] == "A gap analysis is already running for this version."
+
+
+# --- Reality gaps (§3.12.7; A.8; C4b) ------------------------------------------------------------
+
+OFFICIAL = {
+    "segment_id": "e7",
+    "quote": "Officially the ramp should send the report within ten minutes",
+}
+LIVED = {"segment_id": "e7", "quote": "What actually happens on a busy wave is I walk down"}
+ADAPTATION: dict[str, Any] = {
+    "finding_type": "known_adaptation",
+    "title": "Loading report: sent officially, read at the aircraft on a busy wave",
+    "text": "Officially the Ramp sends the report; on a busy wave the Load controller reads it.",
+    "step_refs": ["d3", "d5"],
+    "evidence": [OFFICIAL, LIVED],
+}
+MISMATCH: dict[str, Any] = {
+    "finding_type": "constraint_mismatch",
+    "section": "interpretation",
+    "title": "A fixed decider in the SOP for a call with no fixed answer",
+    "text": "SOP LC-07 sets who decides; the Load controller says there's no fixed answer.",
+    "step_refs": ["d6"],
+    "evidence": [
+        {"segment_id": "e9", "quote": "the Load Control Lead shall decide on corrective action"},
+        {"segment_id": "e10", "quote": "There's no fixed answer"},
+    ],
+    "basis": "The Load controller says there's no fixed answer.",
+    "basis_segment_ids": ["e10"],
+}
+
+
+def test_a8_reality_gaps_with_a_class_only_from_a_stated_reason(drafted: Drafted) -> None:
+    d = dset(drafted)
+    kept = ga_internal.check(d, finding(**ADAPTATION, gap_class="effective_adaptation",
+                                        stated_reason="otherwise we'd miss the slot",
+                                        cause_type="capacity_mismatch"))  # fmt: skip
+    f = kept.finding
+    assert f.rejection_reason == "" and f.provenance == "O"
+    assert (f.gap_class, f.stated_reason, f.cause_type) == (
+        "effective_adaptation", "otherwise we'd miss the slot", "capacity_mismatch")  # fmt: skip
+    # Both sides compared are the SME's own accounts: no documents side is needed.
+    assert {e.side for e in f.evidence} == {"practice"}
+    # A class without a stated reason, or with a reason not in the passages: unexplained.
+    guessed = ga_internal.check(d, finding(**ADAPTATION, gap_class="risky_drift")).finding
+    assert (guessed.gap_class, guessed.stated_reason, guessed.cause_type) == (
+        "unexplained", "", None)  # fmt: skip
+    invented = ga_internal.check(d, finding(**ADAPTATION, gap_class="risky_drift",
+                                            stated_reason="to save money",
+                                            cause_type="policy_control")).finding  # fmt: skip
+    assert (invented.gap_class, invented.cause_type) == ("unexplained", None)
+    assert invented.notes == [ga_internal.REASON_NOT_FOUND]
+    # Every unexplained reality gap raises the bank's M6.4 question about its first step.
+    asked = [q.question for q in ga_internal.report(d, [guessed and ga_internal.check(
+        d, finding(**ADAPTATION))], []) if q.question]  # fmt: skip
+    assert asked == ['On "Load and return LIR": Why do people do it this way?']
+    # Other findings never carry a class, whatever the answer says.
+    plain = ga_internal.check(d, finding(gap_class="obsolete_rule")).finding
+    assert (plain.gap_class, plain.stated_reason, plain.cause_type) == (None, "", None)
+
+
+def test_a8_constraint_mismatch_needs_complex_work_and_the_prescription(drafted: Drafted) -> None:
+    d = dset(drafted)
+    kept = ga_internal.check(d, finding(**MISMATCH)).finding
+    assert (kept.rejection_reason, kept.gap_class, kept.provenance) == ("", "unexplained", "I")
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        # Load and return LIR alone has no lived account in 22:30 to compare with: quote both.
+        ({**ADAPTATION, "step_refs": ["d3"]}, ga_internal.NOT_BOTH_ACCOUNTS),
+        ({**ADAPTATION, "step_refs": ["d2"],
+          "evidence": [{"segment_id": "e3", "quote": "the airline decides what to offload"}]},
+         ga_internal.NO_ACCOUNTS),
+        ({**ADAPTATION, "evidence": [OFFICIAL]}, ga_internal.NOT_BOTH_ACCOUNTS),
+        # Approve deviation has no work type showing complex work.
+        ({**MISMATCH, "step_refs": ["d7"]}, ga_internal.NOT_COMPLEX),
+        ({**MISMATCH, "evidence": MISMATCH["evidence"][1:]}, ga_internal.NO_PRESCRIPTION),
+    ],
+)  # fmt: skip
+def test_the_gate_rejects_reality_gaps_that_dont_hold(
+    drafted: Drafted, changes: dict[str, Any], expected: str
+) -> None:
+    assert outcome(drafted, **changes) == ("G3", expected)

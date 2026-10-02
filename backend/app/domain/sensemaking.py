@@ -1,0 +1,143 @@
+"""Models for the Work-Sense translation (PRD §3.12): the marker lexicon and its pre-tags."""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel
+
+AccountType = Literal["official", "lived", "unclear"]
+
+# Claim types of what else an interview tells (C1): stored with the claims and checked like them,
+# but never grouped into steps by S2; S3c links them to the map's steps.
+SENSE_CLAIM_TYPES = frozenset({"story", "know_how", "sme_term", "decision_info", "capability"})
+
+
+class LexiconFamily(BaseModel):
+    pretag: str
+    phrases: list[str]
+
+
+class Lexicon(BaseModel):
+    """`marker_lexicon.json` (§3.12.10 Step B), stamped with the codebook version."""
+
+    version: str
+    codebook_version: str
+    families: dict[str, LexiconFamily]
+
+
+class MarkerTag(BaseModel):
+    """One pre-tag: a hint for the model to confirm or reject with a quote, never evidence."""
+
+    family: str
+    pretag: str
+    phrase: str  # as it appears in the text
+    start: int
+    end: int
+
+
+class SentenceAccount(BaseModel):
+    """The account a sentence gives (§3.12.3): official, lived or unclear, with the cue found."""
+
+    index: int
+    text: str
+    account_type: AccountType
+    cue: str
+
+
+# --- Translation into views (PRD §3.12.10 step C rules 1-7, §3.12.11) ---------------------------
+
+View = Literal["done", "documented"]  # As done (default) · As documented
+ViewMembership = Literal["both", "done_only", "documented_only"]
+SequenceBasis = Literal["explicit_order", "document_order", "dependency", "narration_order"]
+
+
+class StepPosition(BaseModel):
+    """Where one of a step's verified claims sits in its source (the order of its passages)."""
+
+    source_id: str
+    seq: int
+    lived: bool = False  # an interview claim giving the lived account
+    explicit: bool = False  # it confirmed an explicit-order marker ("first", "then", "T-90")
+
+
+class TranslationStep(BaseModel):
+    id: str
+    kind: str
+    label: str
+    source_state: str
+    provenance: str
+    interview: list[StepPosition] = []
+    documents: list[StepPosition] = []
+    handoff_in: str = ""
+    handoff_out: str = ""
+    added_by_owner: bool = False  # Eric put the step in the flow himself: its order is stated
+    lane: str = ""
+    # Rule 8 (C3): the information the step passes on and the information it receives, in the
+    # SME's terms, from the decision-information items linked to it (any interview).
+    gives: list[str] = []
+    takes: list[str] = []
+
+
+class TranslationEdge(BaseModel):
+    id: str | None = None  # None for a line translation adds
+    from_id: str
+    to_id: str
+    kind: str
+    label: str = ""
+
+
+class TranslatedEdge(TranslationEdge):
+    sequence_basis: SequenceBasis
+    view_membership: ViewMembership
+    information_payload: str | None = None  # rule 8: what passes across, in the SME's terms
+
+
+class TranslationQuestion(BaseModel):
+    element_id: str
+    question: str
+    reason: Literal["sequence", "not_described", "information"]
+
+
+class Translation(BaseModel):
+    element_views: dict[str, ViewMembership]
+    edges: list[TranslatedEdge]  # the existing lines first, then the added ones
+    questions: list[TranslationQuestion]
+
+
+# --- Coverage report (§3.12.8; C4) -------------------------------------------------------------
+
+CoverageStatus = Literal["covered", "thin", "missing"]
+
+
+class CoverageDimension(BaseModel):
+    status: CoverageStatus
+    evidence_count: int
+    note: str = ""  # what the count is made of, in plain words (step labels, never names)
+
+
+class FollowUpQuestion(BaseModel):
+    """A ready-to-ask question for a thin or missing dimension, word for word from the bank."""
+
+    dimension: str
+    question_id: str
+    question: str
+    about: str = ""  # the step (or lines) it is about
+
+
+class ReflectiveProbe(BaseModel):
+    """F2 (Appendix F): an SME's own verified words played back to them in a follow-up."""
+
+    question_id: str
+    question: str
+    quote: str
+    source_id: str
+    anchor: str
+    speaker_role: str
+
+
+class CoverageReport(BaseModel):
+    version_id: str
+    dimensions: dict[str, CoverageDimension]
+    follow_up_questions: list[FollowUpQuestion]
+    probes: list[ReflectiveProbe] = []

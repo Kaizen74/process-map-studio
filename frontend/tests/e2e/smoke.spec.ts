@@ -124,6 +124,8 @@ const DRAFT_SOURCES = [
   "sop_RP-02.docx",
   "jd_load_control_lead.docx",
   "jd_load_controller.docx",
+  // A.10 (P4c): the landscape interview with the Ramp duty manager.
+  "landscape_ramp_lead.txt",
 ];
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
@@ -141,13 +143,24 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     }
     await page.goto(`/engagements/${id}/sources`);
     await page.getByTestId("source-file-input").setInputFiles(DRAFT_SOURCES.map((name) => join(FIXTURES, name)));
-    await expect(page.getByText("5 files uploaded.")).toBeVisible();
+    await expect(page.getByText("6 files uploaded.")).toBeVisible();
     const table = page.getByRole("table", { name: "Sources for this engagement" });
-    await expect(table.getByText("Ready")).toHaveCount(5);
-    const sources = (await (await request.get(`/api/engagements/${id}/sources`)).json()) as {
-      id: string;
-      filename: string;
-    }[];
+    await expect(table.getByText("Ready")).toHaveCount(6);
+    type Listed = { id: string; filename: string; kind: string; text_status: string };
+    const sourcesNow = async () =>
+      (await (await request.get(`/api/engagements/${id}/sources`)).json()) as Listed[];
+    // Its name doesn't say "interview", so it is read as a document until its kind is set.
+    const landscape = (await sourcesNow()).find((s) => s.filename === "landscape_ramp_lead.txt");
+    const kind = await request.patch(`/api/sources/${landscape?.id ?? ""}`, { data: { kind: "interview_transcript" } });
+    expect(kind.status()).toBe(200);
+    await expect
+      .poll(async () => (await sourcesNow()).find((s) => s.id === landscape?.id)?.text_status, { timeout: 15_000 })
+      .toBe("ready");
+    const ramp = await request.put(`/api/sources/${landscape?.id ?? ""}/speakers`, {
+      data: { Interviewer: "interviewer", "Ramp duty manager": roleIds["Ramp"] },
+    });
+    expect(ramp.status()).toBe(200);
+    const sources = await sourcesNow();
     const transcript = sources.find((s) => s.filename === "interview_transcript.txt");
     const mapped = await request.put(`/api/sources/${transcript?.id ?? ""}/speakers`, {
       data: { Interviewer: "interviewer", "Priya Nair": roleIds["Load controller"] },
@@ -165,10 +178,14 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("8");
+    // v1.10 A.5: ten steps; A.9: three lines rest only on the order of mentioning (+3 questions);
+    // A.8 (C2): three decisions and approvals whose kind of work isn't clear (+3 questions).
+    // A.10 (C3): the loading report hand-off explains one of those lines (−1 question).
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("10");
     await expect(summary.getByText("Needs check").locator("xpath=following-sibling::dd")).toHaveText("0");
-    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("5");
-    await expect(summary.getByText(/Built from 21 checked claims/)).toBeVisible();
+    await expect(summary.getByText("Open questions").locator("xpath=following-sibling::dd")).toHaveText("10");
+    // v1.10 A.1, A.5, A.8 (C1); A.10 (C3): + the landscape interview and two information flows
+    await expect(summary.getByText(/Built from 40 checked claims/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Rejected claims (0)" })).toContainText("No claims were rejected");
     await expect(page.getByRole("button", { name: "Draft again from sources" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
@@ -180,10 +197,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
 
     // Review: the draft map drawn from the backend layout (P5).
     await summary.getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("0 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("0 of 10 steps reviewed")).toBeVisible();  // v1.10 A.5: ten steps
     await expect(page.locator(".version-banner").getByText(/Signal strength: Strong/)).toBeVisible();
     await expect(page.getByRole("button", { name: /^Activity, Draft load plan, Load controller/ })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Load controller lane, 4 steps" })).toBeAttached();
+    await expect(page.getByRole("group", { name: "Load controller lane, 6 steps" })).toBeAttached();
     expect(await seriousViolations(page)).toEqual([]);
     // Visual baseline (PRD §6.2 item 9): the sample's Review screen, plain lens, nothing
     // selected, at both sizes; at most 0.5% of pixels may differ. P7 added the quality card button
@@ -202,7 +219,36 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await page.getByRole("radio", { name: "Map" }).click();
       await expect(page.getByRole("radiogroup", { name: "Lens" })).toBeVisible();
     }
-    await expect(page).toHaveScreenshot("p7-review-1440x900.png");
+    // V2-V4 (§3.12.11): the map opens As done; As documented draws the documents' version (with
+    // Approve load plan, A.9), and the Work type lens shows A.8's kinds of work.
+    const viewSwitch = page.getByRole("radiogroup", { name: "View" });
+    await expect(viewSwitch.getByRole("radio", { name: "As done" })).toHaveAttribute("aria-checked", "true");
+    const approvePlan = page.getByRole("button", { name: /^Approval, Approve load plan/ });
+    await expect(approvePlan).toHaveCount(0);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-1440x900.png"), ...still });
+    await viewSwitch.getByRole("radio", { name: "As documented" }).click();
+    await expect(approvePlan).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Activity, Read report at aircraft/ })).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-documented-1440x900.png"), ...still });
+    await viewSwitch.getByRole("radio", { name: "As done" }).click();
+    const showOther = page.getByRole("checkbox", { name: "Show the other view" });
+    await showOther.click(); // the choice lives in the address, so it applies a moment later
+    await expect(showOther).toBeChecked();
+    await expect(page.getByRole("button", { name: /Approve load plan.*only in the documented version$/ })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-with-other-1440x900.png"), ...still });
+    await showOther.click();
+    await expect(showOther).not.toBeChecked();
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Work type" }).click();
+    await expect(page.locator(".map-lens", { hasText: /^Complexproposed$/ })).toBeVisible(); // A.8
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "v4-as-done-work-type-1440x900.png"), ...still });
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
+    await expect(approvePlan).toHaveCount(0);
+    // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
+    // but the rest of the journey keeps running, so other regressions are still caught.
+    await expect.soft(page).toHaveScreenshot("p7-review-1440x900.png");
     await page.setViewportSize({ width: 1080, height: 800 });
     // P12 visual pass: every step of the guided path stays in view at the smaller size (the bar
     // wraps instead of cutting off Registers, Leadership and Exports).
@@ -213,7 +259,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       const name = await step.getAttribute("aria-label");
       expect(box && barBox && box.x + box.width <= barBox.x + barBox.width + 0.5, `${name} is cut off`).toBe(true);
     }
-    await expect(page).toHaveScreenshot("p7-review-1080x800.png");
+    await expect.soft(page).toHaveScreenshot("p7-review-1080x800.png");
     await page.setViewportSize({ width: 1440, height: 900 });
     // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.
     await page.getByRole("button", { name: "Publish" }).click();
@@ -262,12 +308,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Confirm every step with auto-advance: buttons and the C shortcut, then all reviewed.
     await page.getByRole("button", { name: "Close details" }).click();
     await page.getByRole("button", { name: "Start with the first step that needs attention" }).click();
-    for (let reviewed = 1; reviewed <= 8; reviewed += 1) {
+    for (let reviewed = 1; reviewed <= 10; reviewed += 1) {
       const actions = page.getByRole("complementary", { name: "Step details" });
       await expect(actions.getByRole("button", { name: "Confirm as drafted" })).toBeVisible();
       if (reviewed % 2 === 0) await page.keyboard.press("c");
       else await actions.getByRole("button", { name: "Confirm as drafted" }).click();
-      await expect(page.getByText(`${reviewed} of 8 steps reviewed`)).toBeVisible();
+      await expect(page.getByText(`${reviewed} of 10 steps reviewed`)).toBeVisible();
     }
     await expect(page.getByText("All steps reviewed")).toBeVisible();
     await expect(page.locator(".map-node--unreviewed")).toHaveCount(0);
@@ -277,18 +323,18 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await page.getByRole("button", { name: "More" }).click();
     await page.getByRole("button", { name: "Refresh draft from sources" }).click();
     const refresh = page.getByRole("dialog", { name: "Refresh draft from sources" });
-    await expect(refresh).toContainText("The 8 steps you confirmed, edited, added or rejected stay exactly as they are.");
+    await expect(refresh).toContainText("The 10 steps you confirmed, edited, added or rejected stay exactly as they are.");
     // Anti-drift: nothing changed in Settings or the instructions since the draft was made.
     await expect(refresh).toContainText("Claude's model, settings and instructions are the same as when this draft was made.");
     expect(await seriousViolations(page)).toEqual([]);
     await refresh.getByRole("button", { name: "Refresh draft" }).click();
     await expect(page.getByRole("region", { name: "Draft v0.2" })).toBeVisible({ timeout: 30_000 });
     const changed = page.getByRole("region", { name: "What the refresh changed" });
-    await expect(changed).toContainText("The 8 steps you reviewed stayed exactly as they were.");
+    await expect(changed).toContainText("The 10 steps you reviewed stayed exactly as they were.");
     await expect(changed).toContainText("The steps you hadn't reviewed came out the same as before.");
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("region", { name: "Draft v0.2" }).getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
     await expect(page.getByText("All steps reviewed")).toBeVisible();
     await page.getByRole("tab", { name: "Audit log" }).click();
     await expect(page.getByRole("tabpanel").getByRole("row", { name: /Refreshed draft from sources/ })).toBeVisible();
@@ -338,6 +384,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // P9: coverage on Sources (G11): the share of each file the map cites, uncited passages on request.
     await page.goto(`/engagements/${id}/sources`);
     const registry = page.getByRole("table", { name: "Sources for this engagement" });
+    // v1.10 A.1: every SME turn is cited once the story, know-how and decision cues are extracted.
     await expect(registry.getByRole("row", { name: /interview_transcript\.txt/ })).toContainText("100%");
     await expect(registry.getByRole("row", { name: /sop_LC-07\.docx/ })).toContainText("50%");
     await registry.getByRole("button", { name: "sop_LC-07.docx", exact: true }).click();
@@ -355,7 +402,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // P9: the Matrix, every step against every kind of source; silence shown as silent.
     await page.getByRole("link", { name: /^Matrix/ }).click();
     const matrixTable = page.getByRole("table", { name: "How each kind of source stands on each step" });
-    await expect(matrixTable.getByRole("row")).toHaveCount(9);
+    await expect(matrixTable.getByRole("row")).toHaveCount(11);  // header + ten steps (v1.10 A.5)
     const lirRow = matrixTable.getByRole("row", { name: /Load and return LIR/ });
     await expect(lirRow).toContainText("Contradicts");
     await expect(lirRow).toContainText("Contested");
@@ -398,7 +445,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect((await publicText(page)).includes("Priya"), "a name shown on Registers").toBe(false);
 
     await page.goto(`/engagements/${id}/review`);
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
 
     // P7: every step reviewed and the card green, so Publish makes v1.0, read-only on Published.
     await expect(page.getByRole("button", { name: /Quality card: 9 of 9 green/ })).toBeVisible();
@@ -503,7 +550,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // Reopen: a new draft with every reviewed step locked.
     await page.getByRole("button", { name: "Reopen as new draft" }).click();
     await expect(page.getByText("Draft v1.1 draft")).toBeVisible();
-    await expect(page.getByText("8 of 8 steps reviewed")).toBeVisible();
+    await expect(page.getByText("10 of 10 steps reviewed")).toBeVisible();
     await expect(page.getByRole("region", { name: "Visual walkthrough" })).toContainText(CAPTION);
     expect(await seriousViolations(page)).toEqual([]);
 
@@ -512,8 +559,10 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const usage = page.getByRole("region", { name: "AI usage" });
     await expect(usage.getByRole("table")).toBeVisible();
     await expect(usage.getByText(/All time: \d+ calls/)).toBeVisible();
-    // Three interview chunks, read twice: the first draft and the refresh (P6).
-    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(6);
+    // The table lists the 50 most recent calls (the total counts every call). A draft makes 30
+    // calls (C3: + the A.10 landscape interview), so the latest run's four interview chunks are
+    // listed and the first draft's have scrolled out of the 50.
+    await expect(usage.getByRole("row").filter({ hasText: "Extracting steps (interview)" })).toHaveCount(4);
     await expect(usage.getByRole("row").filter({ hasText: "Test answer" }).first()).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     if (process.env.PMS_SCREENSHOT_DIR) {
@@ -600,13 +649,14 @@ test("interview only: draft, review and publish at Limited signal strength", asy
     await page.getByRole("button", { name: "Create draft map" }).click();
     const summary = page.getByRole("region", { name: "Draft v0.1" });
     await expect(summary).toBeVisible({ timeout: 30_000 });
-    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("7");
+    // v1.10: seven steps plus the busy-wave decision and its lived branch (A.5).
+    await expect(summary.getByText("Steps drafted").locator("xpath=following-sibling::dd")).toHaveText("9");
     await expect(summary.getByText(/Signal strength: Limited/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     // Review: the banner says Limited; the quality card warns but only the review blocks.
     await summary.getByRole("link", { name: "Start reviewing" }).click();
-    await expect(page.getByText("0 of 7 steps reviewed")).toBeVisible();
+    await expect(page.getByText("0 of 9 steps reviewed")).toBeVisible();
     await expect(page.locator(".version-banner").getByText(/Signal strength: Limited/)).toBeVisible();
     await page.getByRole("button", { name: /Quality card: 8 of 9 green/ }).click();
     await expect(page.getByText(/Signal strength: Limited\. Built from interviews only/)).toBeVisible();

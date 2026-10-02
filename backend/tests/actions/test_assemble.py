@@ -81,7 +81,8 @@ def test_the_sample_answer_file_matches(sample: Verified) -> None:
 def test_the_sample_assembles_into_a_map_that_passes_lint(sample: Verified) -> None:
     """PRD A.5: lint zero failures."""
     tally = run(sample)
-    assert (tally.phases, tally.edges, tally.dropped_edges) == (3, 13, 0)
+    # v1.10 A.5: + Busy wave? and Read report at aircraft (four lines in, one out).
+    assert (tally.phases, tally.edges, tally.dropped_edges) == (3, 16, 0)
     assert (tally.dropped_fields, tally.dropped_flags, tally.scrubbed) == (0, 0, 0)
     assert tally.contested_steps == ["Deviation in limits?"]
     report = versions_action.lint_version(sample.sessions, sample.version_id)
@@ -89,7 +90,15 @@ def test_the_sample_assembles_into_a_map_that_passes_lint(sample: Verified) -> N
     assert report.value.failures == []
     assert [w.message for w in report.value.warnings] == [
         'Approval "Approve load plan" has no time stated.',
+        'Activity "Read report at aircraft" has no time stated.',  # the SME gives none (22:30)
         'Activity "Issue load sheet" has no time stated.',
+        # v1.10 (B5, §3.7 L12): lines resting only on the order of mentioning.
+        'The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources '
+        "mention them.",
+        'The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order '
+        "the sources mention them.",
+        'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
+        "sources mention them.",
     ]
 
 
@@ -125,7 +134,30 @@ def test_the_sample_map_has_the_a5_details(sample: Verified) -> None:
         "Special loads OK?": "rule_based",
         "Deviation in limits?": "judgment",
         "Approve deviation": "judgment",
+        "Busy wave?": "rule_based",  # A.5: the condition is stated
     }
+    # Translation rule 2 (A.5, A.9): the lived variation is a decision on its condition, with
+    # the lived alternative as its "Yes" branch and the usual next step as "No".
+    named = {e.id: e.label for e in g.elements}
+    busy = {(named[e.from_], named[e.to], e.kind, e.label) for e in g.edges
+            if "Busy wave?" in (named[e.from_], named[e.to])}  # fmt: skip
+    assert busy == {
+        ("Load and return LIR", "Busy wave?", "sequence", ""),
+        ("Busy wave?", "Read report at aircraft", "yes", "Yes"),
+        ("Busy wave?", "Deviation in limits?", "no", "No"),
+    }
+    report = "Read report at aircraft"
+    after_report = [(named[e.from_], named[e.to]) for e in g.edges if named[e.from_] == report]
+    assert after_report == [(report, "Deviation in limits?")]
+    # A.9 variants: where practice and the documents differ, both values.
+    assert lir.variants == {
+        "done": {"time": "Up to fifteen minutes' wait for the report"},
+        "documented": {"time": "Within 10 minutes of loading completion"},
+    }
+    assert by["Deviation in limits?"].variants == {
+        "done": {"owner": "Captain"}, "documented": {"owner": "Load control lead"},
+    }  # fmt: skip
+    assert plan.variants is None
     # The re-trim loops back to loading, the offload back to planning.
     ids = {e.id: e.label for e in g.elements}
     loops = {(ids[e.from_], ids[e.to], e.label) for e in g.edges if e.kind == "rework"}
@@ -191,13 +223,13 @@ def bad_answer() -> dict[str, Any]:
     )
     steps["e3"]["decision_mechanism"] = "none"
     steps["e3"]["decider_role"] = "Priya Nair"
-    steps["e6"]["ai_flags"] = [
+    steps["e8"]["ai_flags"] = [  # Deviation in limits?, a judgment step
         {"component": "reasoning", "input": "Weights", "output": "Decision", "handoff": "Captain",
          "basis": "rule_based_automate_candidate"}
     ]  # fmt: skip
     steps["e5"]["handoff_out"] = "Report to Priya Nair"
     answer["phases"][0]["time_window"] = "T-200 to T-90"
-    answer["edges"].append(make_ai_fixtures.edge("e8", "e99", "sequence", ""))
+    answer["edges"].append(make_ai_fixtures.edge("e10", "e99", "sequence", ""))
     answer["edges"].append(make_ai_fixtures.edge("end", "e1", "sequence", ""))
     answer["edges"].append(make_ai_fixtures.edge("e1", "e2"))  # a duplicate
     return answer
@@ -208,7 +240,7 @@ def test_every_field_is_checked_against_the_steps_claims(
 ) -> None:
     for v in verified_with(crafted(settings_config, tmp_path, bad_answer())):
         tally = run(v)
-        assert tally.dropped_edges == 2 and tally.edges == 13
+        assert tally.dropped_edges == 2 and tally.edges == 16
         assert tally.dropped_flags == 1  # automation on a judgment step (constraint 7)
         with session_scope(v.sessions) as session:
             register = [

@@ -62,7 +62,9 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     # Same draft, next number; the claims behind the dropped twins aren't counted twice.
     state = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/draft").json()
     assert state["version"]["id"] == drafted.version_id and state["version"]["label"] == "v0.2"
-    assert state["summary"]["verified"] == 21
+    assert (
+        state["summary"]["verified"] == 40  # C1: + nine lens items; C3: + A.10
+    )  # v1.10 sample: + the 22:30 official and lived accounts
     # Every reviewed step exactly as it was: same ID, fields, RACI, evidence, status.
     for label, detail in before.items():
         after = drafted.client.get(f"/api/elements/{detail['id']}").json()
@@ -70,7 +72,7 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     # The fresh twins of reviewed steps were dropped; the unreviewed steps are new.
     labels = [e["label"] for e in graph(drafted)["elements"]]
     assert labels.count("Draft load plan") == 1 and "Issue load sheet" not in labels
-    assert len(labels) == 11  # 10 drafted (one edited name) + the added step
+    assert len(labels) == 13  # 12 drafted (v1.10 A.5; one edited name) + the added step
     assert ids_by_label(drafted)["Special loads OK?"] != unreviewed_before
     # Lines around the reviewed steps stay; those into them from fresh steps are re-pointed.
     flow = lines(drafted)
@@ -92,7 +94,9 @@ def test_reviewed_steps_are_unchanged_and_the_rest_is_replaced(drafted: Drafted)
     assert [q["status"] for q in refreshed if q["question"] == first_question["question"]] == [
         "answered"
     ]
-    assert len(refreshed) == 5
+    # v1.10 A.9: + three "order not stated" (A.10 explains one); A.8 (C2): + three "work type not
+    # clear"; never twice.
+    assert len(refreshed) == 10
     row = drafted.audit()[0]
     assert row["action"] == "Refreshed draft from sources"
     # Requirement change 2026-09-30 (run records): both runs' records are kept in the audit row.

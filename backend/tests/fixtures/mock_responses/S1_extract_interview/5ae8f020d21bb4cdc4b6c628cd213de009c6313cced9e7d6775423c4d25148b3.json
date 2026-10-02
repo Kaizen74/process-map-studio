@@ -1,0 +1,274 @@
+{
+  "claims": [
+    {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "decision",
+      "text": "If something can't be accepted, the airline decides what to offload, which takes fifteen to forty minutes.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "Airline ops",
+      "mechanism": "judgment",
+      "duration_text": "fifteen to forty minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "If something can't be accepted, the airline decides what to offload. That takes anywhere from fifteen to forty minutes.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "lived",
+      "account_cue": "It's still on paper and I re-key it",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "handoff: sends back",
+          "confirmed": true,
+          "quote": "sends back the loading report"
+        }
+      ],
+      "claim_type": "activity",
+      "text": "Ramp loads the aircraft, in forty minutes or so, and sends back the loading report.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "forty minutes or so",
+      "threshold": "",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "lived",
+      "account_cue": "I re-key it",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "constraint",
+      "text": "The loading report is still on paper and the Load controller re-keys it.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "It's still on paper and I re-key it.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "lived",
+      "account_cue": "We sometimes wait fifteen minutes for it",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "wait: wait",
+          "confirmed": true,
+          "quote": "We sometimes wait fifteen minutes for it"
+        }
+      ],
+      "claim_type": "duration",
+      "text": "The Load controller sometimes waits fifteen minutes for the loading report.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "fifteen minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "We sometimes wait fifteen minutes for it",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "unclear",
+      "account_cue": "",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [],
+      "claim_type": "constraint",
+      "text": "At peak times there is a shortage of containers.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "at peak we're short of containers",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "official",
+      "account_cue": "Officially",
+      "stated_reason": "",
+      "variation_condition": "",
+      "markers": [
+        {
+          "marker": "account_official: Officially",
+          "confirmed": true,
+          "quote": "Officially"
+        }
+      ],
+      "claim_type": "threshold",
+      "text": "The Ramp should send the loading report within ten minutes.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "within ten minutes",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "Officially the ramp should send the report within ten minutes.",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "account_type": "lived",
+      "account_cue": "What actually happens",
+      "stated_reason": "otherwise we'd miss the slot",
+      "variation_condition": "on a busy wave",
+      "markers": [
+        {
+          "marker": "account_lived: What actually happens",
+          "confirmed": true,
+          "quote": "What actually happens"
+        },
+        {
+          "marker": "variation: on a busy wave",
+          "confirmed": true,
+          "quote": "on a busy wave"
+        }
+      ],
+      "claim_type": "exception",
+      "text": "On a busy wave the Load controller walks down to the aircraft and reads the loading report off the ramp's sheet.",
+      "responsible_role": "Load controller",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "What actually happens on a busy wave is I walk down and read it off their sheet, otherwise we'd miss the slot.",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": [],
+  "stories": [
+    {
+      "segment_ids": [
+        "p9",
+        "p11"
+      ],
+      "quote": "I learned it after we had to re-trim three flights in one night.",
+      "label": "Had to re-trim three flights in one night",
+      "fragment_type": "went_badly",
+      "signifiers": [
+        "Firefighting"
+      ],
+      "frequency": "maybe once a month",
+      "about": "Draft load plan; Deviation in limits?"
+    }
+  ],
+  "know_how": [
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "if the forward hold looks heavy on the plan, I call the ramp before they start, not after",
+      "category": "heuristics",
+      "text": "If the forward hold looks heavy on the plan, call the ramp before they start, not after.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "Nobody taught me that; I learned it after we had to re-trim three flights in one night.",
+      "category": "experience",
+      "text": "The rule of thumb was learned, not taught, after re-trimming three flights in one night.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "sends back the loading report",
+      "category": "artefacts",
+      "text": "The loading report from Ramp.",
+      "about": "Deviation in limits?",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "terms": [
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "we had to re-trim three flights",
+      "term": "re-trim",
+      "plain_meaning": "Rebalance an aircraft's load after it has been planned."
+    },
+    {
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "on a busy wave",
+      "term": "wave",
+      "plain_meaning": "A busy period of departures."
+    },
+    {
+      "segment_ids": [
+        "p9"
+      ],
+      "quote": "if the forward hold looks heavy on the plan",
+      "term": "forward hold",
+      "plain_meaning": "The cargo hold at the front of the aircraft."
+    }
+  ],
+  "decision_info": [
+    {
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "sends back the loading report",
+      "about": "Deviation in limits?",
+      "cadence": "none",
+      "received": [
+        "the loading report"
+      ],
+      "attended": [],
+      "wanted": [],
+      "communicated_via": []
+    }
+  ]
+}

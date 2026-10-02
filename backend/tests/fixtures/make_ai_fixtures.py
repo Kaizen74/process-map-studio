@@ -59,6 +59,40 @@ def claim(
     }
 
 
+INTERVIEW_FIELDS: dict[str, Any] = {
+    "account_type": "unclear",
+    "account_cue": "",
+    "stated_reason": "",
+    "variation_condition": "",
+    "markers": [],
+}
+
+
+def told(
+    found: dict[str, Any],
+    account: str,
+    cue: str,
+    *,
+    reason: str = "",
+    condition: str = "",
+    markers: tuple[tuple[str, bool, str], ...] = (),
+) -> dict[str, Any]:
+    """An interview claim with the account it gives (PRD §3.12.3, A.8), the SME's stated reason
+    and variation condition, and the marker hints it confirms or sets aside (§3.12.10 B)."""
+    return found | {
+        "account_type": account,
+        "account_cue": cue,
+        "stated_reason": reason,
+        "variation_condition": condition,
+        "markers": [{"marker": m, "confirmed": ok, "quote": q} for m, ok, q in markers],
+    }
+
+
+def as_interview(answer: dict[str, Any]) -> dict[str, Any]:
+    """Every interview claim carries the interview fields (unclear and empty unless told)."""
+    return answer | {"claims": [INTERVIEW_FIELDS | c for c in answer["claims"]]}
+
+
 OFFLOAD = claim(
     "decision",
     "If something can't be accepted, the airline decides what to offload, which takes fifteen "
@@ -75,15 +109,24 @@ OFFLOAD = claim(
 ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("interview_transcript.txt", 0): {
         "claims": [
-            claim(
-                "activity",
-                "The Load controller builds the preliminary load plan from the booked figures, "
-                "around T-120, in about twenty minutes.",
-                ["p2"],
-                "I build the preliminary load plan off the booked figures, usually around T-120. "
-                "Takes me about twenty minutes.",
-                responsible="Load controller",
-                duration="about twenty minutes",
+            told(
+                claim(
+                    "activity",
+                    "The Load controller builds the preliminary load plan from the booked "
+                    "figures, around T-120, in about twenty minutes.",
+                    ["p2"],
+                    "I build the preliminary load plan off the booked figures, usually around "
+                    "T-120. Takes me about twenty minutes.",
+                    responsible="Load controller",
+                    duration="about twenty minutes",
+                ),
+                "lived",
+                "I build the preliminary load plan",
+                markers=(
+                    ("explicit_order: First thing", True, "First thing"),
+                    # "usually" here is about timing, not a variant path: set aside (crit. 63).
+                    ("variation: usually", False, "usually around T-120"),
+                ),
             ),
             claim(
                 "constraint",
@@ -93,14 +136,24 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                 "only me and one other controller really know the configurations",
                 responsible="Load controller",
             ),
-            claim(
-                "decision",
-                "The Load controller checks special loads, dangerous goods and live animals "
-                "against the checklist.",
-                ["p4"],
-                "I check special loads, dangerous goods and live animals, against the checklist",
-                decider="Load controller",
-                mechanism="rule_based",
+            told(
+                claim(
+                    "decision",
+                    "The Load controller checks special loads, dangerous goods and live animals "
+                    "against the checklist.",
+                    ["p4"],
+                    "I check special loads, dangerous goods and live animals, against the "
+                    "checklist",
+                    decider="Load controller",
+                    mechanism="rule_based",
+                ),
+                "lived",
+                "Then I check special loads",
+                markers=(
+                    ("explicit_order: Then", True, "Then I check special loads"),
+                    ("control_note: check", True, "I check special loads"),
+                    ("work_type_clear: checklist", True, "against the checklist"),
+                ),
             ),
             claim(
                 "constraint",
@@ -120,35 +173,83 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("interview_transcript.txt", 1): {
         "claims": [
             OFFLOAD,  # the same claim from the overlapping window; stored once
-            claim(
-                "activity",
-                "Ramp loads the aircraft, in forty minutes or so, and sends back the loading "
-                "report.",
-                ["p6"],
-                "Ramp loads the aircraft, forty minutes or so, and sends back the loading report.",
-                responsible="Ramp",
-                duration="forty minutes or so",
+            told(
+                claim(
+                    "activity",
+                    "Ramp loads the aircraft, in forty minutes or so, and sends back the loading "
+                    "report.",
+                    ["p7"],
+                    "Ramp loads the aircraft, forty minutes or so, and sends back the loading "
+                    "report.",
+                    responsible="Ramp",
+                    duration="forty minutes or so",
+                ),
+                "lived",
+                "It's still on paper and I re-key it",
+                markers=(("handoff: sends back", True, "sends back the loading report"),),
             ),
-            claim(
-                "constraint",
-                "The loading report is still on paper and the Load controller re-keys it.",
-                ["p6"],
-                "It's still on paper and I re-key it.",
-                responsible="Load controller",
+            told(
+                claim(
+                    "constraint",
+                    "The loading report is still on paper and the Load controller re-keys it.",
+                    ["p7"],
+                    "It's still on paper and I re-key it.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "I re-key it",
             ),
-            claim(
-                "duration",
-                "The Load controller sometimes waits fifteen minutes for the loading report.",
-                ["p6"],
+            told(
+                claim(
+                    "duration",
+                    "The Load controller sometimes waits fifteen minutes for the loading report.",
+                    ["p7"],
+                    "We sometimes wait fifteen minutes for it",
+                    responsible="Load controller",
+                    duration="fifteen minutes",
+                ),
+                "lived",
                 "We sometimes wait fifteen minutes for it",
-                responsible="Load controller",
-                duration="fifteen minutes",
+                markers=(("wait: wait", True, "We sometimes wait fifteen minutes for it"),),
             ),
             claim(
                 "constraint",
                 "At peak times there is a shortage of containers.",
-                ["p6"],
+                ["p7"],
                 "at peak we're short of containers",
+            ),
+            # 22:30 (A.8): the first sentence is the official account, the second the lived one.
+            told(
+                claim(
+                    "threshold",
+                    "The Ramp should send the loading report within ten minutes.",
+                    ["p8"],
+                    "Officially the ramp should send the report within ten minutes.",
+                    responsible="Ramp",
+                    threshold="within ten minutes",
+                ),
+                "official",
+                "Officially",
+                markers=(("account_official: Officially", True, "Officially"),),
+            ),
+            told(
+                claim(
+                    "exception",
+                    "On a busy wave the Load controller walks down to the aircraft and reads the "
+                    "loading report off the ramp's sheet.",
+                    ["p8"],
+                    "What actually happens on a busy wave is I walk down and read it off their "
+                    "sheet, otherwise we'd miss the slot.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "What actually happens",
+                reason="otherwise we'd miss the slot",
+                condition="on a busy wave",
+                markers=(
+                    ("account_lived: What actually happens", True, "What actually happens"),
+                    ("variation: on a busy wave", True, "on a busy wave"),
+                ),
             ),
         ],
         "unknowns": [],
@@ -158,7 +259,7 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "decision",
                 "If the weight deviation is outside tolerance, the captain decides.",
-                ["p7"],
+                ["p12"],
                 "If the weight deviation is outside tolerance, it's the captain who decides, not us.",
                 decider="Captain",
                 mechanism="judgment",
@@ -167,25 +268,30 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
             claim(
                 "threshold",
                 "The weight tolerance depends on the airline contract.",
-                ["p7"],
+                ["p12"],
                 "The tolerance depends on the airline contract.",
             ),
             claim(
                 "approval",
                 "The captain either accepts the deviation or asks for a re-trim, which takes five "
                 "to fifteen minutes.",
-                ["p8"],
+                ["p13"],
                 "The captain either accepts or asks for a re-trim. Five to fifteen minutes.",
                 accountable="Captain",
                 mechanism="judgment",
                 duration="Five to fifteen minutes",
             ),
-            claim(
-                "activity",
-                "The Load controller issues the final load sheet around T-15.",
-                ["p9"],
-                "Then I issue the final load sheet, around T-15.",
-                responsible="Load controller",
+            told(
+                claim(
+                    "activity",
+                    "The Load controller issues the final load sheet around T-15.",
+                    ["p16"],
+                    "Then I issue the final load sheet, around T-15.",
+                    responsible="Load controller",
+                ),
+                "lived",
+                "Then I issue the final load sheet",
+                markers=(("explicit_order: Then", True, "Then I issue"),),
             ),
         ],
         "unknowns": [],
@@ -283,6 +389,200 @@ ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     },
 }
 
+
+def grounded(refs: list[str], quote: str, **fields: Any) -> dict[str, Any]:
+    return {"segment_ids": refs, "quote": quote} | fields
+
+
+# What else the A.1 interview tells (PRD §3.12.2, A.8; C1): the 24:10 story with the SME's own
+# signifier and frequency (24:46), the know-how at the special-loads and deviation decisions, the
+# SME terms, and what the deviation call attends to. S3c links them to the steps.
+SENSE: dict[tuple[str, int], dict[str, Any]] = {
+    ("interview_transcript.txt", 0): {
+        "know_how": [
+            grounded(
+                ["p4"],
+                "against the checklist",
+                category="artefacts",
+                text="The special loads checklist.",
+                about="Special loads OK?",
+                provenance="O",
+                basis="",
+            ),
+        ],
+    },
+    ("interview_transcript.txt", 1): {
+        "stories": [
+            grounded(
+                ["p9", "p11"],
+                "I learned it after we had to re-trim three flights in one night.",
+                label="Had to re-trim three flights in one night",
+                fragment_type="went_badly",
+                signifiers=["Firefighting"],
+                frequency="maybe once a month",
+                about="Draft load plan; Deviation in limits?",
+            ),
+        ],
+        "know_how": [
+            grounded(
+                ["p9"],
+                "if the forward hold looks heavy on the plan, I call the ramp before "
+                "they start, not after",
+                category="heuristics",
+                text="If the forward hold looks heavy on the plan, call the ramp before they "
+                "start, not after.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+            grounded(
+                ["p9"],
+                "Nobody taught me that; I learned it after we had to re-trim three "
+                "flights in one night.",
+                category="experience",
+                text="The rule of thumb was learned, not taught, after re-trimming three "
+                "flights in one night.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+            grounded(
+                ["p7"],
+                "sends back the loading report",
+                category="artefacts",
+                text="The loading report from Ramp.",
+                about="Deviation in limits?",
+                provenance="O",
+                basis="",
+            ),
+        ],
+        "terms": [
+            grounded(
+                ["p9"],
+                "we had to re-trim three flights",
+                term="re-trim",
+                plain_meaning="Rebalance an aircraft's load after it has been planned.",
+            ),
+            grounded(
+                ["p8"], "on a busy wave", term="wave", plain_meaning="A busy period of departures."
+            ),
+            grounded(
+                ["p9"],
+                "if the forward hold looks heavy on the plan",
+                term="forward hold",
+                plain_meaning="The cargo hold at the front of the aircraft.",
+            ),
+        ],
+    },
+    ("interview_transcript.txt", 2): {
+        "decision_info": [
+            grounded(
+                ["p15"],
+                "It depends on the captain, the weather, what's still on the belt.",
+                about="Deviation in limits?",
+                cadence="none",
+                received=[],
+                attended=["the captain", "the weather", "what's still on the belt"],
+                wanted=[],
+                communicated_via=[],
+            ),
+        ],
+    },
+}
+# Information in and out of steps in the A.1 interview (rule 8: what a step passes on and what
+# another receives), for stitching with the landscape interview (A.10, C3).
+SENSE[("interview_transcript.txt", 0)]["decision_info"] = [
+    grounded(
+        ["p2"],
+        "I build the preliminary load plan",
+        about="Draft load plan",
+        cadence="none",
+        received=[],
+        attended=[],
+        wanted=[],
+        communicated_via=["the preliminary load plan"],
+    ),
+]
+SENSE[("interview_transcript.txt", 1)]["decision_info"] = [
+    grounded(
+        ["p7"],
+        "sends back the loading report",
+        about="Deviation in limits?",
+        cadence="none",
+        received=["the loading report"],
+        attended=[],
+        wanted=[],
+        communicated_via=[],
+    ),
+]
+# A.10: the Ramp duty manager's landscape interview (L3 interfaces, L6 capability).
+ANSWERS[("landscape_ramp_lead.txt", 0)] = {
+    "claims": [
+        told(
+            claim(
+                "handoff",
+                "Ramp gets the preliminary load plan from Load control.",
+                ["p2"],
+                "We get the preliminary load plan from load control",
+                responsible="Ramp",
+            ),
+            "lived",
+            "We get the preliminary load plan",
+        ),
+        told(
+            claim(
+                "handoff",
+                "Once loading is done, Ramp sends the loading report to Load control.",
+                ["p2"],
+                "once loading is done we send them the loading report",
+                responsible="Ramp",
+            ),
+            "lived",
+            "we send them the loading report",
+        ),
+        claim(
+            "constraint",
+            "The loading report is on paper; it gets lost or arrives late.",
+            ["p4"],
+            "The weakness is the paper loading report; it gets lost or arrives late.",
+        ),
+    ],
+    "unknowns": [],
+    "decision_info": [
+        grounded(
+            ["p2"],
+            "We get the preliminary load plan from load control, and once loading "
+            "is done we send them the loading report.",
+            about="Load and return LIR",
+            cadence="none",
+            received=["the preliminary load plan"],
+            attended=[],
+            wanted=[],
+            communicated_via=["the loading report"],
+        ),
+    ],
+    "capability_notes": [
+        grounded(
+            ["p4"],
+            "The strength is the supervisors know the aircraft types inside out.",
+            kind="strength",
+            dimension="skillset",
+            text="Ramp supervisors know the aircraft types inside out.",
+            cause_type="none",
+        ),
+        grounded(
+            ["p4"],
+            "The weakness is the paper loading report; it gets lost or arrives late.",
+            kind="weakness",
+            dimension="systems",
+            text="The paper loading report gets lost or arrives late.",
+            cause_type="system_fragmentation",
+        ),
+    ],
+}
+for _key, _items in SENSE.items():
+    ANSWERS[_key] = ANSWERS[_key] | _items
+
 # PRD Appendix A.6 traps T1-T6 (T7-T8 concern the verifier, phase P4). Each must be rejected with
 # the stated guardrail or scrubbed; the well-grounded claim alongside them must pass.
 TRAPS_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
@@ -346,14 +646,16 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                "If something can't be accepted, the airline decides what to offload."),
     ]},
     ("interview_transcript.txt", 1): {"stances": [
-        stance("e5", "supports", ["p6"],
+        stance("e5", "supports", ["p7"],
                "Ramp loads the aircraft, forty minutes or so, and sends back the loading report."),
+        stance("e6", "supports", ["p8"], "What actually happens on a busy wave"),
+        stance("e7", "supports", ["p8"], "I walk down and read it off their sheet"),
     ]},
     ("interview_transcript.txt", 2): {"stances": [
-        stance("e6", "supports", ["p7"],
+        stance("e8", "supports", ["p12"],
                "If the weight deviation is outside tolerance, it's the captain who decides, not us."),
-        stance("e7", "supports", ["p8"], "The captain either accepts or asks for a re-trim."),
-        stance("e8", "supports", ["p9"], "Then I issue the final load sheet, around T-15."),
+        stance("e9", "supports", ["p13"], "The captain either accepts or asks for a re-trim."),
+        stance("e10", "supports", ["p16"], "Then I issue the final load sheet, around T-15."),
     ]},
     ("sop_LC-07.docx", 0): {"stances": [
         stance("e1", "supports", ["p3"],
@@ -362,11 +664,14 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
                "Control Lead before release to Ramp."),
         stance("e3", "supports", ["p6"],
                "Special loads shall be checked against the acceptance checklist before loading."),
-        stance("e6", "contradicts", ["p8"], "the Load Control Lead shall decide on corrective action",
+        stance("e8", "contradicts", ["p8"], "the Load Control Lead shall decide on corrective action",
                "ownership", "Ownership divergence: the Load control lead decides in the SOP, the "
                "Captain in practice."),
-        stance("e8", "supports", ["p10"], "The final load sheet shall be issued through the "
+        stance("e10", "supports", ["p10"], "The final load sheet shall be issued through the "
                "departure control system no later than T-10."),
+    ]},
+    ("landscape_ramp_lead.txt", 0): {"stances": [
+        stance("e5", "supports", ["p2"], "once loading is done we send them the loading report"),
     ]},
     ("sop_RP-02.docx", 0): {"stances": [
         stance("e5", "contradicts", ["p2"], "The Ramp Supervisor shall return the loading report "
@@ -380,7 +685,7 @@ S3_ANSWERS: dict[tuple[str, int], dict[str, Any]] = {
     ("jd_load_controller.docx", 0): {"stances": [
         stance("e1", "supports", ["p2"], JD_CONTROLLER_QUOTE),
         stance("e3", "supports", ["p2"], JD_CONTROLLER_QUOTE),
-        stance("e8", "supports", ["p2"], JD_CONTROLLER_QUOTE),
+        stance("e10", "supports", ["p2"], JD_CONTROLLER_QUOTE),
     ]},
 }  # fmt: skip
 
@@ -401,20 +706,28 @@ def step(ref: str, kind: str, label: str, lane: str, claims: list[int]) -> dict[
     }
 
 
-# S2 for the sample: the eight steps of Appendix A.5, built from the 21 verified claims (c1-c13
-# interview, c14-c18 SOP LC-07, c19 SOP RP-02, c20-c21 job descriptions). "Load and return LIR"
-# comes from two steps merged at 0.86 (pre-merged, listed as accepted).
+# S2 for the sample: the eight steps of Appendix A.5, built from the 23 verified claims (c1-c15
+# interview, c16-c20 SOP LC-07, c21 SOP RP-02, c22-c23 job descriptions). "Load and return LIR"
+# comes from two steps merged at 0.86 (pre-merged, listed as accepted); it also carries the
+# SME's official account of the return time (c10). The lived busy-wave variation (c11) is left
+# out here: translation places it (B4).
 S2_ANSWER: dict[str, Any] = {
     "steps": [
-        step("st1", "activity", "Draft load plan", "Load controller", [1, 2, 14, 21]),
-        step("st2", "approval", "Approve load plan", "Load control lead", [15, 20]),
-        step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 16]),
+        step("st1", "activity", "Draft load plan", "Load controller", [1, 2, 16, 23]),
+        step("st2", "approval", "Approve load plan", "Load control lead", [17, 22]),
+        step("st3", "decision", "Special loads OK?", "Load controller", [3, 4, 18]),
         step("st4", "activity", "Resolve or offload", "Airline ops", [5]),
-        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
-        step("st6", "activity", "Return loading report", "Ramp", [19]),
-        step("st7", "decision", "Deviation in limits?", "Load controller", [10, 11, 17]),
-        step("st8", "approval", "Approve deviation", "Captain", [12]),
-        step("st9", "activity", "Issue load sheet", "Load controller", [13, 18]),
+        # A.10 (C3): the landscape interview's hand-offs and constraint (c24-c26).
+        step("st5", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10, 24, 26]),
+        step("st6", "activity", "Return loading report", "Ramp", [21, 25]),
+        # Translation rule 2 (A.5, A.9): the lived variation "on a busy wave" (c11) becomes a
+        # decision on that condition with the lived alternative as its "Yes" branch; listed where
+        # it happens in the process.
+        step("st7", "decision", "Busy wave?", "Load controller", [11]),
+        step("st8", "activity", "Read report at aircraft", "Load controller", [11]),
+        step("st9", "decision", "Deviation in limits?", "Load controller", [12, 13, 19]),
+        step("st10", "approval", "Approve deviation", "Captain", [14]),
+        step("st11", "activity", "Issue load sheet", "Load controller", [15, 20]),
     ],
     "new_roles": [],
     "merge_proposals": [
@@ -426,23 +739,21 @@ OCR_DEFAULT = {"lines": ["Section 2.4 Container checks (illustrative scanned pag
 
 def chunk_hashes(sessions: Any, built: Any) -> dict[tuple[str, int], tuple[str, str]]:
     """(source, chunk) → (stage, input hash) for a built sample engagement, as the app sends it."""
-    from app.actions import redaction
     from app.db import session_scope
+    from app.domain.result import Ok
     from app.pipeline import s1_extract
-    from app.repositories import sources as sources_repo
     from app.services import ai_service
 
     found: dict[tuple[str, int], tuple[str, str]] = {}
     for name, source_id in built.sources.items():
         with session_scope(sessions) as session:
-            info = sources_repo.reading_info(session, source_id)
-            terms = redaction.name_replacements(session, built.engagement_id)
-            stored = sources_repo.stored_segments(session, source_id)
-        assert info is not None
-        stage = s1_extract.PROMPT_BY_KIND.get(info.kind, s1_extract.DOCUMENT_PROMPT)
-        segments = s1_extract.prompt_segments(stored, info.format, terms)
-        for index, chunk in enumerate(s1_extract.chunks_for(info.kind, segments)):
-            blocks = s1_extract.blocks_for(info.kind, chunk)
+            result = s1_extract.prepare(session, source_id)  # exactly as S1 prepares it
+        assert isinstance(result, Ok), result
+        prepared = result.value
+        kind = prepared.info.kind
+        stage = s1_extract.PROMPT_BY_KIND.get(kind, s1_extract.DOCUMENT_PROMPT)
+        for index, chunk in enumerate(s1_extract.chunks_for(kind, prepared.segments)):
+            blocks = s1_extract.blocks_for(kind, chunk, prepared.questions)
             found[(name, index)] = (stage, ai_service.input_hash(stage, blocks))
     return found
 
@@ -578,6 +889,92 @@ def verdicts(count: int, verdict: str = "supported", reason: str = "") -> dict[s
     }  # fmt: skip
 
 
+S3C_EMPTY: dict[str, Any] = {"work_types": [], "links": []}
+
+
+def s3c_call(sessions: Any, version_id: str) -> tuple[str, dict[str, str], list[tuple[str, str]]]:
+    """The S3c call for a version: its input hash, the call's source ref per file name and the
+    item ref per item text, exactly as the stage sends them."""
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.pipeline import s3c_sensemaking as s3c
+    from app.pipeline.s3_calibrate import step_refs
+    from app.repositories import sources, versions
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        assert version is not None
+        terms = redaction.name_replacements(session, version.engagement_id)
+        steps = step_refs(session, version_id)
+        items = s3c.items_for(session, version_id)
+        passages = s3c.passages_for(session, steps, items, terms)
+        names = {}
+        for sref, _kind, segments in passages:
+            owner = sources.segment_source(session, segments[0].segment_id)
+            found = sources.get(session, owner or "")
+            assert found is not None
+            names[found.filename] = sref
+        blocks = s3c.blocks_for(steps, items, passages)
+    item_refs = [(str(i.record.payload["text"]), i.ref) for i in items]
+    return ai_service.input_hash(s3c.STAGE_ID, blocks), names, item_refs
+
+
+def s3c_answer(names: dict[str, str], items: list[tuple[str, str]]) -> dict[str, Any]:
+    """A.8 work types with quoted cues, and what each story, know-how item, term and decision
+    information item is about (C2)."""
+    interview, sop = names["interview_transcript.txt"], names["sop_LC-07.docx"]
+
+    def cue(source: str, seq: int, quote: str) -> dict[str, Any]:
+        return {"segment_ids": [f"{source}.p{seq}"], "quote": quote}
+
+    def item(text_start: str) -> str:
+        return next(ref for text, ref in items if text.startswith(text_start))
+
+    def refs_of(text: str) -> list[str]:
+        return [ref for t, ref in items if t == text]
+
+    return {
+        "work_types": [
+            {"step_ref": "e1", "work_type": "complicated",
+             "cues": [cue(interview, 3, "only me and one other controller really know the "
+                                        "configurations")],
+             "basis": "The plan for widebodies needs someone experienced."},
+            {"step_ref": "e3", "work_type": "clear",
+             "cues": [cue(interview, 4, "against the checklist"),
+                      cue(sop, 6, "Special loads shall be checked against the acceptance "
+                                  "checklist")],
+             "basis": "Special loads are checked against a fixed checklist."},
+            {"step_ref": "e8", "work_type": "complex",
+             "cues": [cue(interview, 15, "There's no fixed answer."),
+                      cue(interview, 15, "You read the situation.")],
+             "basis": "The SME says there is no fixed answer and the situation is read."},
+            {"step_ref": "e10", "work_type": "clear",
+             "cues": [cue(sop, 10, "The final load sheet shall be issued through the departure "
+                                  "control system")],
+             "basis": "Issuing the load sheet follows a fixed rule."},
+        ],
+        "links": [
+            {"item_ref": item("The special loads checklist"), "step_refs": ["e3"]},
+            {"item_ref": item("Had to re-trim"), "step_refs": ["e1", "e8"]},
+            {"item_ref": item("If the forward hold"), "step_refs": ["e8"]},
+            {"item_ref": item("The rule of thumb"), "step_refs": ["e8"]},
+            {"item_ref": item("The loading report"), "step_refs": ["e8"]},
+            {"item_ref": item("re-trim:"), "step_refs": ["e9"]},
+            {"item_ref": item("wave:"), "step_refs": ["e6"]},
+            {"item_ref": item("forward hold:"), "step_refs": ["e1"]},
+            *({"item_ref": ref, "step_refs": [step]} for ref, step in (
+                (refs_of("Deviation in limits?")[0], "e8"),
+                (refs_of("Deviation in limits?")[1], "e8"),
+                (item("Draft load plan"), "e1"),
+                (item("Load and return LIR"), "e5"),
+                (item("Ramp supervisors know"), "e5"),
+                (item("The paper loading report"), "e5"),
+            )),
+        ],
+    }  # fmt: skip
+
+
 def s4_hash(sessions: Any, version_id: str) -> str:
     """The input hash of the S4 call for a version, exactly as the stage sends it."""
     from app.actions import redaction
@@ -658,12 +1055,17 @@ TRAPS_S3B: dict[str, dict[str, Any]] = {
 }
 
 
+def variant(**values: str) -> dict[str, str]:
+    return {"owner": "", "threshold": "", "time": "", "trigger": ""} | values
+
+
 def s4_step(ref: str, **fields: Any) -> dict[str, Any]:
     base: dict[str, Any] = {
         "step_ref": ref, "claim_refs": [], "decision_mechanism": "none", "decider_role": "",
         "rule_or_threshold": "", "escalation": "", "work_min": None, "wait_min": None,
         "duration_text": "", "complexity": "", "kpi": "", "handoff_in": "", "handoff_out": "",
         "raci": [], "k_risk": "", "constraints": [], "ai_flags": [],
+        "variant_done": variant(), "variant_documented": variant(),
     }  # fmt: skip
     base.update(fields)
     return base
@@ -684,8 +1086,8 @@ LC, LEAD = "Load controller", "Load control lead"
 S4_ANSWER: dict[str, Any] = {
     "phases": [
         {"name": "Plan", "time_window": "T-120 to T-90", "step_refs": ["e1", "e2"]},
-        {"name": "Check and load", "time_window": "", "step_refs": ["e3", "e4", "e5"]},
-        {"name": "Close out", "time_window": "T-15 to T-10", "step_refs": ["e6", "e7", "e8"]},
+        {"name": "Check and load", "time_window": "", "step_refs": ["e3", "e4", "e5", "e6", "e7"]},
+        {"name": "Close out", "time_window": "T-15 to T-10", "step_refs": ["e8", "e9", "e10"]},
     ],
     "steps": [
         s4_step("e1", raci=raci((LC, "R"), (LC, "A")), work_min=20, complexity="M",
@@ -720,17 +1122,28 @@ S4_ANSWER: dict[str, Any] = {
                 ],
                 ai_flags=[{"component": "perception", "input": "Paper loading report",
                            "output": "Keyed loading data", "handoff": "Load controller",
-                           "basis": "rule_based_automate_candidate"}]),
-        s4_step("e6", raci=raci((LC, "R")), decision_mechanism="judgment", decider_role=LC,
+                           "basis": "rule_based_automate_candidate"}],
+                # A.9 variants: the documents' ten minutes against practice's wait of up to 15.
+                variant_done=variant(time="Up to fifteen minutes' wait for the report"),
+                variant_documented=variant(time="Within 10 minutes of loading completion")),
+        s4_step("e8", raci=raci((LC, "R")), decision_mechanism="judgment", decider_role=LC,
                 rule_or_threshold="Weight deviation within the airline contract tolerance",
-                escalation="Outside tolerance the captain decides"),
-        s4_step("e7", raci=raci(("Captain", "A")), decision_mechanism="judgment", work_min=15,
+                escalation="Outside tolerance the captain decides",
+                # A.9 variants: who decides outside tolerance, in practice and per the SOP.
+                variant_done=variant(owner="Captain"),
+                variant_documented=variant(owner="Load control lead")),
+        s4_step("e9", raci=raci(("Captain", "A")), decision_mechanism="judgment", work_min=15,
                 duration_text="Five to fifteen minutes"),
-        s4_step("e8", raci=raci((LC, "R"), (LC, "A")), kpi="Final load sheet no later than T-10",
+        s4_step("e10", raci=raci((LC, "R"), (LC, "A")), kpi="Final load sheet no later than T-10",
                 duration_text="Around T-15",
                 ai_flags=[{"component": "action", "input": "Final load figures",
                            "output": "Load sheet issued through the departure control system",
                            "handoff": "Captain", "basis": "rule_based_automate_candidate"}]),
+        # The busy-wave decision (A.5: rule-based, the condition is stated) and its lived branch.
+        s4_step("e6", raci=raci((LC, "R"), (LC, "A")), decision_mechanism="rule_based",
+                decider_role=LC, rule_or_threshold="On a busy wave"),
+        s4_step("e7", raci=raci((LC, "R"), (LC, "A")),
+                handoff_in="Loading report on the ramp's sheet"),
     ],
     "edges": [
         edge("start", "e1"),
@@ -741,11 +1154,14 @@ S4_ANSWER: dict[str, Any] = {
         edge("e3", "e4", "no", "No"),
         edge("e4", "e1", "rework", "Re-plan"),
         edge("e5", "e6"),
-        edge("e6", "e8", "yes", "Within limits"),
-        edge("e6", "e7", "no", "Outside limits"),
-        edge("e7", "e8", "approve", "Accept"),
-        edge("e7", "e5", "rework", "Re-trim"),
-        edge("e8", "end"),
+        edge("e6", "e7", "yes", "Yes"),
+        edge("e6", "e8", "no", "No"),
+        edge("e7", "e8"),
+        edge("e8", "e10", "yes", "Within limits"),
+        edge("e8", "e9", "no", "Outside limits"),
+        edge("e9", "e10", "approve", "Accept"),
+        edge("e9", "e5", "rework", "Re-trim"),
+        edge("e10", "end"),
     ],
 }  # fmt: skip
 S4_EMPTY: dict[str, list[Any]] = {"phases": [], "steps": [], "edges": []}
@@ -814,7 +1230,7 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
             ["d3"],
             [
                 (
-                    "e5",
+                    "e6",  # A.10 (C3): the landscape interview's passage is e5
                     "return the loading report to Load Control within 10 minutes of loading "
                     "completion",
                 ),
@@ -828,12 +1244,54 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
             "SOP LC-07 §5 has the Load Control Lead decide on corrective action when weights "
             "deviate beyond the airline tolerance; in practice the captain decides. The job "
             "descriptions are silent.",
-            ["d4"],
+            ["d6"],
             [
-                ("e7", "the Load Control Lead shall decide on corrective action"),
-                ("e6", "it's the captain who decides, not us"),
+                ("e9", "the Load Control Lead shall decide on corrective action"),
+                ("e8", "it's the captain who decides, not us"),
             ],
         ),
+        # A.8 (C4b): the reality gaps. The official account (22:30, first sentence) is on the
+        # loading step, the lived one with its stated reason on reading the report at the aircraft.
+        ga_finding(
+            "known_adaptation",
+            "Loading report: sent within ten minutes officially, read at the aircraft on a busy "
+            "wave",
+            "Officially the Ramp sends the loading report within ten minutes; on a busy wave the "
+            "Load controller walks down and reads it off the Ramp's sheet instead.",
+            ["d3", "d5"],
+            [
+                ("e7", "Officially the ramp should send the report within ten minutes"),
+                (
+                    "e7",
+                    "What actually happens on a busy wave is I walk down and read it off their "
+                    "sheet",
+                ),
+            ],
+        )
+        | {
+            "gap_class": "effective_adaptation",
+            "stated_reason": "otherwise we'd miss the slot",
+            "cause_type": "capacity_mismatch",
+        },
+        ga_finding(
+            "constraint_mismatch",
+            "Weight-deviation call: a fixed decider in SOP LC-07 for work the Load controller "
+            "describes as having no fixed answer",
+            "SOP LC-07 §5 sets who decides on corrective action when weights deviate; the Load "
+            "controller describes it as a call with no fixed answer, where you read the "
+            "situation.",
+            ["d6"],
+            [
+                ("e9", "the Load Control Lead shall decide on corrective action"),
+                ("e10", "There's no fixed answer"),
+            ],
+        )
+        | {
+            "section": "interpretation",
+            "basis": "The Load controller says there is no fixed answer and that you read the "
+            "situation, which marks the call as complex work rather than a set rule.",
+            "basis_segment_ids": ["e10"],
+        },
         ga_finding(
             "undocumented_work",
             "Offload resolution is undocumented work",
@@ -855,6 +1313,25 @@ GA_INTERNAL_ANSWER: dict[str, Any] = {
 }
 
 
+def resolve_ga_refs(dset: Any) -> None:
+    """Check each finding's evidence names the passage that holds its quote, as the call numbers
+    them (`e<n>` follow the diverging steps, so a new source shifts them): fails with the right
+    number so the answer above can be corrected (the tests read it as written)."""
+    from app.services import grounding
+
+    def ref_for(quote: str) -> str:
+        wanted = grounding.normalise_text(quote)
+        for ref, passage in dset.passages.items():
+            if wanted in grounding.normalise_text(passage.segment.text):
+                return str(ref)
+        raise AssertionError(f"no passage holds: {quote}")
+
+    for finding in GA_INTERNAL_ANSWER["findings"]:
+        for e in finding["evidence"]:
+            right = ref_for(e["quote"])
+            assert e["segment_id"] == right, f"{e['quote']!r} is in {right}, not {e['segment_id']}"
+
+
 def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
     """The input hashes of the GA_internal call and, with its answer as filed, the GA_verify call."""
     from app.db import session_scope
@@ -865,6 +1342,7 @@ def ga_hashes(sessions: Any, version_id: str) -> tuple[str, str]:
     with session_scope(sessions) as session:
         dset = ga.divergence_set(session, version_id)
     assert dset is not None
+    resolve_ga_refs(dset)
     output = GAInternalOutput.model_validate(GA_INTERNAL_ANSWER)
     checked = [ga.check(dset, f) for f in output.findings]
     rejected = [c.finding.rejection_reason for c in checked if c.finding.rejection_reason]
@@ -996,7 +1474,7 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
                    "Guidance and regulator material have a second qualified person check the load "
                    "sheet before it is signed.",
                    "checked by a second qualified person before it is signed",
-                   ["c1", "c2"], ["m8"], "different"),
+                   ["c1", "c2"], ["m10"], "different"),
         gb_finding("time_or_threshold_benchmark", "Final load sheet issued by a set time",
                    "Guidance issues the final load sheet no later than 15 minutes before "
                    "departure.",
@@ -1006,7 +1484,7 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
         gb_finding("technology_enabler", "Automated checks of the load sheet",
                    "Automated tools check the load sheet and flag deviations.",
                    "Automated tools check the load sheet and flag deviations",
-                   ["c4"], ["m8"], "absent"),
+                   ["c4"], ["m10"], "absent"),
         # TE1: a page the search never returned → GX2.
         gb_finding("kpi_practice", "Loading report return time as a KPI",
                    "Loading report return time is tracked as a key performance indicator.",
@@ -1020,12 +1498,12 @@ GB_STRUCTURE_ANSWER: dict[str, Any] = {
                    "Deviation tolerances are agreed with each airline and decided within "
                    "5 minutes.",
                    "Deviation tolerances are agreed with each airline in writing",
-                   ["c6"], ["m6"], "different"),
+                   ["c6"], ["m8"], "different"),
         # TE7: one link to a step that isn't on the map → link removed and flagged.
         gb_finding("decision_rights_difference", "Deviation tolerances agreed in writing",
                    "Deviation tolerances are agreed with each airline in writing.",
                    "Deviation tolerances are agreed with each airline in writing",
-                   ["c6"], ["m6", "m99"], "different"),
+                   ["c6"], ["m8", "m99"], "different"),
         # TE8: well cited, but the verifier answers not_supported → rejected GAV.
         gb_finding("missing_step", "Final walk-round before departure",
                    "A final walk-round confirms the hold doors and loading before departure.",
@@ -1133,10 +1611,12 @@ INTERVIEW_ONLY_S2: dict[str, Any] = {
         step("st1", "activity", "Draft load plan", "Load controller", [1, 2]),
         step("st2", "decision", "Special loads OK?", "Load controller", [3, 4]),
         step("st3", "activity", "Resolve or offload", "Airline ops", [5]),
-        step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9]),
-        step("st5", "decision", "Deviation in limits?", "Load controller", [10, 11]),
-        step("st6", "approval", "Approve deviation", "Captain", [12]),
-        step("st7", "activity", "Issue load sheet", "Load controller", [13]),
+        step("st4", "activity", "Load aircraft", "Ramp", [6, 7, 8, 9, 10]),
+        step("st5", "decision", "Busy wave?", "Load controller", [11]),
+        step("st6", "activity", "Read report at aircraft", "Load controller", [11]),
+        step("st7", "decision", "Deviation in limits?", "Load controller", [12, 13]),
+        step("st8", "approval", "Approve deviation", "Captain", [14]),
+        step("st9", "activity", "Issue load sheet", "Load controller", [15]),
     ],
     "new_roles": [],
     "merge_proposals": [],
@@ -1144,8 +1624,8 @@ INTERVIEW_ONLY_S2: dict[str, Any] = {
 # The full sample's step refs (see S3_ANSWERS) → labels in the interview-only draft.
 FULL_LABELS = {
     "e1": "Draft load plan", "e3": "Special loads OK?", "e4": "Resolve or offload",
-    "e5": "Load aircraft", "e6": "Deviation in limits?", "e7": "Approve deviation",
-    "e8": "Issue load sheet",
+    "e5": "Load aircraft", "e8": "Deviation in limits?", "e9": "Approve deviation",
+    "e10": "Issue load sheet", "e6": "Busy wave?", "e7": "Read report at aircraft",
 }  # fmt: skip
 
 
@@ -1176,7 +1656,13 @@ def interview_only_s4(refs: dict[str, str]) -> dict[str, Any]:
     Accountable role); the T-10 KPI stays in, and is rejected, because only the SOP states it."""
     steps = [
         {**s, "step_ref": remap(s["step_ref"], refs)}
-        | ({"raci": raci((LC, "R"), (LC, "A"))} if s["step_ref"] == "e6" else {})
+        | (
+            {"raci": raci((LC, "R"), (LC, "A"))}
+            if FULL_LABELS.get(s["step_ref"]) == "Deviation in limits?"
+            else {}
+        )
+        # With no document, nothing differs from one: no variants (§3.12.11).
+        | {"variant_done": variant(), "variant_documented": variant()}
         for s in S4_ANSWER["steps"]
         if s["step_ref"] != "e2"
     ]
@@ -1225,9 +1711,10 @@ def main() -> None:
         for stage in (*S1_STAGES, "S0_ocr_page"):
             shutil.rmtree(root / stage, ignore_errors=True)
     for key, (stage, digest) in hashes.items():
-        write(MOCKS, stage, digest, ANSWERS.get(key, EMPTY))
+        fill = as_interview if stage == "S1_extract_interview" else (lambda a: a)
+        write(MOCKS, stage, digest, fill(ANSWERS.get(key, EMPTY)))
         if key in TRAPS_ANSWERS:
-            write(TRAPS, stage, digest, TRAPS_ANSWERS[key])
+            write(TRAPS, stage, digest, fill(TRAPS_ANSWERS[key]))
     for stage in S1_STAGES:
         write(MOCKS, stage, "default", EMPTY)
         write(TRAPS, stage, "default", EMPTY)
@@ -1249,12 +1736,19 @@ def main() -> None:
         for stage, empty in (
             ("S3_calibrate", S3_EMPTY),
             ("S3b_verify", S3B_EMPTY),
+            ("S3c_worktype", S3C_EMPTY),
             ("S4_assemble", S4_EMPTY),
             ("S5_questions", S5_EMPTY),
         ):
             shutil.rmtree(root / stage, ignore_errors=True)
             write(root, stage, "default", empty)
-    from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify, s4_assemble
+    from app.pipeline import (
+        s2_canonicalise,
+        s3_calibrate,
+        s3b_verify,
+        s3c_sensemaking,
+        s4_assemble,
+    )
 
     with sample_app() as (app, client, built):
         version_id = draft_version(app, client, built)
@@ -1268,6 +1762,9 @@ def main() -> None:
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        digest, names, items = s3c_call(sessions, version_id)
+        write(MOCKS, "S3c_worktype", digest, s3c_answer(names, items))
+        run_stage(app, s3c_sensemaking.sense, version_id)
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), S4_ANSWER)
         run_stage(app, s4_assemble.assemble, version_id)
         write(MOCKS, "S5_questions", s5_hash(sessions, version_id), S5_ANSWER)

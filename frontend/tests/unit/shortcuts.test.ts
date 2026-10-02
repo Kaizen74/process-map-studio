@@ -24,14 +24,15 @@ describe("review shortcuts (PRD §5.8)", () => {
     expect(shortcutFor(press(key))?.kind).toBe(kind);
   });
 
-  it("1–4 switch lens in toolbar order", () => {
-    expect(["1", "2", "3", "4"].map((k) => shortcutFor(press(k)))).toEqual([
+  it("1–5 switch lens in toolbar order", () => {
+    expect(["1", "2", "3", "4", "5"].map((k) => shortcutFor(press(k)))).toEqual([
       { kind: "lens", lens: "plain" },
       { kind: "lens", lens: "source_state" },
       { kind: "lens", lens: "confidence" },
       { kind: "lens", lens: "time" },
+      { kind: "lens", lens: "work_type" }, // V2
     ]);
-    expect(shortcutFor(press("5"))).toBeNull();
+    expect(shortcutFor(press("6"))).toBeNull();
   });
 
   it("is ignored while typing, and with Ctrl, Alt or Command held", () => {

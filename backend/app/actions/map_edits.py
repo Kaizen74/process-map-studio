@@ -218,7 +218,8 @@ def _check_edge(
         return _invalid("to", "A line can't go from a step to itself.")
     if source.kind == ElementKind.END.value or target.kind == ElementKind.START.value:
         return _invalid("to", "Lines can't leave the end or go into the start.")
-    if edge.kind not in {k.value for k in EdgeKind}:
+    # "Not described" connectors are drawn by the translation only, where practice is silent.
+    if edge.kind not in {k.value for k in EdgeKind} - {EdgeKind.GAP.value}:
         return _invalid("kind", "Choose the kind of line from the list.")
     label = edge.label.strip()
     if len(label) > 60:
@@ -235,7 +236,10 @@ def _check_edge(
 
 def _view(edge: EdgeRecord) -> GraphEdge:
     return GraphEdge(id=edge.id, from_=edge.from_element_id, to=edge.to_element_id,
-                     kind=edge.kind, label=edge.label)  # fmt: skip
+                     kind=edge.kind, label=edge.label, sequence_basis=edge.sequence_basis,
+                     view_membership=edge.view_membership,
+                     information_payload=edge.information_payload, typical=edge.typical,
+                     provenance=edge.provenance)  # fmt: skip
 
 
 def _plain(edge: EdgeRecord) -> dict[str, str]:
@@ -286,9 +290,10 @@ def _change_edge(
                 [result] = map_repo.add_edges(session, version_id, [edge])
                 action, before, after = "Added line", None, _plain(result)
             else:
+                # A line Eric edits is his: no longer one the translation re-works (provenance I).
                 fields = {"from_element_id": edge.from_element_id,
                           "to_element_id": edge.to_element_id, "kind": edge.kind,
-                          "label": edge.label}  # fmt: skip
+                          "label": edge.label, "provenance": Provenance.OBSERVED.value}  # fmt: skip
                 updated = map_repo.update_edge(session, current.id, fields)
                 assert updated is not None
                 result = updated
@@ -305,7 +310,11 @@ def _change_edge(
             after=after,
         )
     versions_action.lint_version(sessions, version_id)
-    return Ok(_view(result) if result else None)
+    if result is None:
+        return Ok(None)
+    with session_scope(sessions) as session:  # as stored after the views were brought up to date
+        stored = map_repo.edge(session, result.id)
+    return Ok(_view(stored[1] if stored else result))
 
 
 def add_edge(

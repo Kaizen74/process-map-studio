@@ -9,6 +9,7 @@ import re
 import pytest
 
 from app.domain.enums import InterviewType
+from app.domain.interview import Turn
 from app.services import question_matching as matching
 from tests.services.test_question_bank import bank
 
@@ -111,3 +112,36 @@ def test_normalise_ignores_punctuation_quotes_and_case() -> None:
         "\u201cWhat\u2019s the BUSIEST part?\u201d \u2014 and then\u2026"
     ) == ("what's the busiest part and then")
     assert re.fullmatch(r"[a-z0-9' ]+", matching.normalise(bank().question("M4.5").wording))
+
+
+# --- Answer blocks over a whole transcript (§3.12.10 step A; acceptance criterion 62) ----------
+
+
+def test_answer_blocks_carry_the_question_until_the_next_matched_one() -> None:
+    practice = [bank().question(q) for q in bank().template_ids(InterviewType.PRACTICE)]
+    turns = [
+        Turn(seq=1, is_interviewer=False, text="Before any question, the SME says hello."),
+        Turn(seq=2, is_interviewer=True, text=A1_INTERVIEWER["06:38"]),
+        Turn(seq=3, is_interviewer=False, text="First thing, I build the plan."),
+        Turn(seq=4, is_interviewer=True, text="Sorry, could you say that again?"),  # free talk
+        Turn(seq=5, is_interviewer=False, text="I build the plan around T-120."),
+        Turn(seq=6, is_interviewer=True, text=A1_INTERVIEWER["21:45"]),
+        Turn(seq=7, is_interviewer=False, text="We wait fifteen minutes."),
+        Turn(seq=8, is_interviewer=True, text="[L3] How does your team interface with Ramp?"),
+        Turn(seq=9, is_interviewer=False, text="We get the plan from load control."),
+    ]
+    blocks = matching.answer_blocks(turns, practice, bank().questions)
+    assert [(b.seq, b.question_id, b.asked) for b in blocks] == [
+        (1, None, False),
+        (2, "M2.2", True),
+        (3, "M2.2", False),
+        (4, None, False),  # unmatched interviewer turn: free conversation, still extracted …
+        (5, "M2.2", False),  # … and the block it sits in goes on
+        (6, "M2.4", True),
+        (7, "M2.4", False),
+        (8, "L3", True),  # a tagged bank question outside the guide still counts
+        (9, "L3", False),
+    ]
+    assert blocks[5].match is not None and blocks[5].match.method == "wording"
+    # Without the bank, a tag outside the guide is not trusted; its wording doesn't match either.
+    assert matching.answer_blocks(turns[7:8], practice)[0].question_id is None

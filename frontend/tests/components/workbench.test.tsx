@@ -5,7 +5,7 @@ import type { Graph } from "../../src/lib/mapTypes";
 import type { AuditEntry, LintReport, MergeProposal, Question, RejectedClaims } from "../../src/lib/reviewTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -73,7 +73,7 @@ function backend(state: "draft" | "published" = "draft") {
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     "GET /api/engagements/e1/sources": () => ({ body: [] }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
     [`GET /api/versions/${VID}/questions`]: () => ({ body: questions }),
     [`GET /api/versions/${VID}/rejected-claims`]: () => ({ body: REJECTED }),
     [`GET /api/versions/${VID}/audit`]: () => ({ body: AUDIT }),

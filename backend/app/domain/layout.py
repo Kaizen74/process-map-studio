@@ -57,6 +57,7 @@ class LayoutNode(BaseModel):
     label_lines: list[str]
     label_pos: TextPos
     lens_pos: TextPos
+    ghost: bool = False  # §3.12.11: only in the other view (drawn with "Show the other view")
 
 
 class LayoutEdge(BaseModel):
@@ -68,9 +69,11 @@ class LayoutEdge(BaseModel):
     points: list[tuple[int, int]]
     label: str
     label_pos: TextPos | None
+    ghost: bool = False  # a line only the other view draws
 
 
 class Layout(BaseModel):
+    view: str | None = None  # "done" · "documented" · None (the combined map)
     canvas: LayoutCanvas
     lanes: list[LayoutLane]
     phases: list[LayoutPhase]

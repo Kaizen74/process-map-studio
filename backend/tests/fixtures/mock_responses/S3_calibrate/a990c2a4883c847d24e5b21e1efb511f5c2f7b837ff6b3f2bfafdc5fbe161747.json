@@ -1,0 +1,14 @@
+{
+  "stances": [
+    {
+      "step_ref": "e5",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "once loading is done we send them the loading report",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

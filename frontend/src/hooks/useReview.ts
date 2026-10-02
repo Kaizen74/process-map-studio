@@ -18,21 +18,26 @@ import {
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { ElementDetail, Graph } from "../api/types";
+import type { AsView } from "../lib/views";
 
 // Keys follow PRD §5.8 "invalidate graph, layout, quality-card and lint for the version".
-export function useGraph(versionId: string | null) {
+export function useGraph(versionId: string | null, view?: AsView) {
   return useQuery({
-    queryKey: ["versions", versionId ?? "", "graph"],
-    queryFn: () => getGraph(versionId ?? ""),
+    queryKey: ["versions", versionId ?? "", "graph", ...(view ? [view] : [])],
+    queryFn: () => getGraph(versionId ?? "", view),
     enabled: Boolean(versionId),
   });
 }
 
-export function useLayout(versionId: string | null) {
+/** One view's layout (the workbench), or the combined map's when no view is given. */
+export function useLayout(versionId: string | null, view?: AsView, showOther = false) {
   return useQuery({
-    queryKey: ["versions", versionId ?? "", "layout"],
-    queryFn: () => getLayout(versionId ?? ""),
+    queryKey: ["versions", versionId ?? "", "layout", ...(view ? [view, showOther] : [])],
+    queryFn: () => getLayout(versionId ?? "", view, showOther),
     enabled: Boolean(versionId),
+    // Switching views keeps the map on screen until the other view's layout arrives (never
+    // another version's map).
+    placeholderData: (previous, query) => (query?.queryKey[1] === versionId ? previous : undefined),
   });
 }
 

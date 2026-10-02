@@ -4,7 +4,7 @@ import type { DraftState } from "../../src/api/types";
 import type { ElementDetail, Graph } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const PATH = "/engagements/e1/review";
@@ -24,7 +24,7 @@ function statefulBackend(refuse: string | null = null) {
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/draft": () => ({ body: draft }),
     [`GET /api/versions/${VID}/graph`]: () => ({ body: graph }),
-    [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+    [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
   };
   for (const [id] of Object.entries(elements)) {
     routes[`GET /api/elements/${id}`] = () => ({ body: elements[id] });
@@ -57,7 +57,7 @@ describe("reviewing steps on the map (PRD §5.7.5, §5.8)", () => {
     const confirmUrl = `POST /api/elements/${elementByLabel("Draft load plan").id}/confirm`;
     await waitFor(() => expect(api.calls.some((c) => c.key === confirmUrl)).toBe(true));
     expect(await within(panel()).findByRole("heading", { name: "Approve load plan" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 8 steps reviewed"));
+    await waitFor(() => expect(screen.getByText(/steps reviewed/)).toHaveTextContent("1 of 10 steps reviewed"));
     fireEvent.click(screen.getByRole("button", { name: /^Activity, Draft load plan/ }));
     expect(await within(panel()).findByText("Confirmed · locked against AI re-runs")).toBeInTheDocument();
   });
@@ -82,7 +82,7 @@ describe("reviewing steps on the map (PRD §5.7.5, §5.8)", () => {
     expect(await within(panel()).findByRole("heading", { name: "Draft load plan" })).toBeInTheDocument();
     const plan = container.querySelector(`[data-node="${elementByLabel("Draft load plan").id}"]`);
     expect(plan).toHaveClass("map-node--unreviewed");
-    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("0 of 8 steps reviewed");
+    expect(screen.getByText(/steps reviewed/)).toHaveTextContent("0 of 10 steps reviewed");
   });
 
   it("says when every step is reviewed", async () => {

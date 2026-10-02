@@ -5,7 +5,7 @@ import { WalkthroughStrip } from "../../src/components/map";
 import { stepsWithImages, walkthroughCards, type StepImage } from "../../src/lib/images";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
-import { SAMPLE, elementByLabel } from "../sampleMap";
+import { SAMPLE, elementByLabel, layoutFor } from "../sampleMap";
 
 const VID = SAMPLE.graph.version.id;
 const STEP_KINDS = new Set(["activity", "decision", "approval"]);
@@ -113,7 +113,7 @@ describe("pictures on the Review screen", () => {
       "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
       "GET /api/engagements/e1/draft": () => ({ body: DRAFTED }),
       [`GET /api/versions/${VID}/graph`]: () => ({ body: SAMPLE.graph }),
-      [`GET /api/versions/${VID}/layout`]: () => ({ body: SAMPLE.layout }),
+      [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
       [`GET /api/versions/${VID}/images`]: () => ({ body: images }),
       ...Object.fromEntries(
         Object.entries(SAMPLE.elements).map(([id, element]) => [`GET /api/elements/${id}`, () => ({ body: element })]),

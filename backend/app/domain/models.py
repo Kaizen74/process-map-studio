@@ -243,6 +243,8 @@ class SegmentView(BaseModel):
     # Only with raw=1 (owner-only correction editor): the speaker label as written in the file.
     speaker_label: str | None = None
     corrected: bool = False
+    # Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted.
+    question_id: str | None = None
 
 
 class SegmentPatch(BaseModel):
@@ -420,6 +422,10 @@ class PromptSegment(BaseModel):
     speaker_role: str = ""
     page: int | None = None
     start_ms: int | None = None
+    # Interviews (§3.12.10 steps A and B): the guide question of the answer block, and the marker
+    # pre-tags as hints ("explicit_order: First thing").
+    question_id: str = ""
+    markers: list[str] = []
 
 
 class Prompt(BaseModel):
@@ -453,6 +459,7 @@ class ClaimRecord(BaseModel):
     verification_status: str
     rejection_reason: str = ""
     rejection_guardrail: str = ""
+    account_type: str | None = None  # interview claims (B.28): official · lived · unclear
 
 
 class UnknownRecord(BaseModel):
@@ -772,6 +779,7 @@ class VersionSummary(BaseModel):
     published_by: str | None
     parent_version_id: str | None
     signal: SignalStrength | None = None
+    codebook_version: str | None = None  # Appendix E: the codebook the draft was made with
 
 
 class ChangeEntry(BaseModel):

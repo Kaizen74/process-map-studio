@@ -87,18 +87,20 @@ def calls(c: Calibrated) -> int:
 
 def test_every_sample_step_has_a_verifier_answer(sample: Calibrated) -> None:
     hashes = make_ai_fixtures.s3b_hashes(sample.sessions, sample.version_id)
-    assert len(hashes) == 8
+    assert len(hashes) == 10  # v1.10 A.5: ten steps
     folder = make_ai_fixtures.MOCKS / s3b.STAGE_ID
     assert [k for k, (h, _) in hashes.items() if not (folder / f"{h}.json").exists()] == []
 
 
 def test_the_sample_is_supported_throughout(sample: Calibrated) -> None:
     tally = run(sample)
-    assert (tally.supported, tally.partial, tally.rejected, tally.removed_steps) == (21, 0, 0, 0)
+    # A.10 (C3): + the landscape interview's three claims on the loading step.
+    assert (tally.supported, tally.partial, tally.rejected, tally.removed_steps) == (27, 0, 0, 0)
     with session_scope(sample.sessions) as session:
         elements = map_repo.elements(session, sample.version_id)
-    assert len(elements) == 8 and not any(e.needs_check for e in elements)
-    assert verdict_counts(sample)["supported"] == 21
+    assert len(elements) == 10 and not any(e.needs_check for e in elements)
+    # v1.10 sample: every S1 flow claim is on a step (the busy-wave claim on two: 27 checks).
+    assert verdict_counts(sample)["supported"] == 26
 
 
 def test_trap_t7_is_rejected_by_the_verifier_and_t8_needs_a_check(traps: Calibrated) -> None:
@@ -126,9 +128,11 @@ def test_trap_t7_is_rejected_by_the_verifier_and_t8_needs_a_check(traps: Calibra
 def test_switching_the_verifier_off_makes_no_calls(sample: Calibrated) -> None:
     before = calls(sample)
     tally = run(sample, verifier_enabled=False)
-    assert (tally.not_run, tally.supported) == (21, 0)
+    assert (tally.not_run, tally.supported) == (27, 0)
     assert calls(sample) == before
-    assert verdict_counts(sample) == {"not_run": 21}
+    # Every S1 claim of the sample (C1, C3: the fourteen stories, know-how items, terms,
+    # information flows and capability notes are never sent to the verifier; "not run" either way).
+    assert verdict_counts(sample) == {"not_run": 40}
 
 
 def test_a_claim_without_a_verdict_is_checked_not_assumed(

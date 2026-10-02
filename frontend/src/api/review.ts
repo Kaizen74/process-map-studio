@@ -2,11 +2,16 @@ import { request } from "./request";
 import type { AuditEntry, ElementDetail, Layout, MergeProposal, Question, SegmentPage } from "./types";
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
+import type { AsView } from "../lib/views";
 
 const enc = encodeURIComponent;
 
 // API_CONTRACT.md → Draft (layout) and Review (phase P5). The graph itself: api/draft.ts.
-export const getLayout = (versionId: string) => request<Layout>(`/versions/${enc(versionId)}/layout`);
+/** The map's layout: one view (§3.12.11), optionally with the other view's steps ghosted. */
+export const getLayout = (versionId: string, view?: AsView, showOther = false) => {
+  const query = view ? `?view=${view}${showOther ? "&show_other=1" : ""}` : "";
+  return request<Layout>(`/versions/${enc(versionId)}/layout${query}`);
+};
 
 export const getElement = (elementId: string) => request<ElementDetail>(`/elements/${enc(elementId)}`);
 

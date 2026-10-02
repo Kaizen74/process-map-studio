@@ -20,7 +20,7 @@ from app.domain.exports import (
 )
 from app.domain.graph import Graph
 from app.domain.quality import QualityCard, QualityCheck
-from app.services import exports
+from app.services import exports, views
 
 ROOT = Path(__file__).resolve().parents[3]
 G1 = ROOT / "backend" / "tests" / "golden" / "G1_graph.json"
@@ -28,7 +28,8 @@ SAMPLE = ROOT / "frontend" / "tests" / "fixtures" / "sample_map.json"
 
 
 def sample_graph() -> Graph:
-    return Graph.model_validate(json.loads(G1.read_text(encoding="utf-8")))
+    # The map as the exports read it (both views' steps, without the lines added for one view).
+    return views.combined(Graph.model_validate(json.loads(G1.read_text(encoding="utf-8"))))
 
 
 def card(green: bool = True) -> QualityCard:
@@ -81,7 +82,9 @@ def test_facts_list_sources_pain_points_and_source_states_without_quotes() -> No
     assert "| sop_LC-07.docx | SOP | 2025-03-01 | Load control office | Yes |" in facts
     assert "| interview_transcript.txt | Interview | — | — | No |" in facts
     pains = [line for line in facts.splitlines() if line.startswith("- [O] ")]
-    assert len(pains) == 4  # the four observed constraints of the sample
+    # The four observed constraints of the sample and the weakness the Ramp duty manager names
+    # (A.10, C3: the paper loading report gets lost or arrives late).
+    assert len(pains) == 5
     assert all("(step: " in line and "interview_transcript.txt" in line for line in pains[:1])
     assert "| Contested | 2 |" in facts and "| Corroborated | 3 |" in facts
 
@@ -106,10 +109,11 @@ def test_every_element_line_carries_its_provenance() -> None:
         line for line in interpretation.splitlines() if line.startswith("| ") and "---" not in line
     ]
     step_rows = [row for row in table_rows if not row.startswith("| Step |")]
-    assert len(step_rows) == 4  # the sample's activities
+    assert len(step_rows) == 5  # the sample's activities (v1.10 A.5: + Read report at aircraft)
     assert all("| [O] |" in row for row in step_rows)
     decisions = [line for line in interpretation.splitlines() if line.startswith("- ")]
-    assert len(decisions) == 4 and all(line.startswith("- [O] ") for line in decisions)
+    # v1.10 A.5: + Busy wave?
+    assert len(decisions) == 5 and all(line.startswith("- [O] ") for line in decisions)
     assert "- [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: " in md
 
 
@@ -179,8 +183,8 @@ def test_raci_csv_is_steps_by_roles() -> None:
     rows = list(csv.reader(io.StringIO(text.removeprefix("﻿"))))
     assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
                        "Ramp", "Airline ops", "Captain"]  # fmt: skip
-    assert len(rows) == 9  # header + 8 steps; start and end are not steps
-    assert rows[6] == [
+    assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
+    assert rows[8] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
         "Deviation in limits?",
         "decision",
         "Load controller",

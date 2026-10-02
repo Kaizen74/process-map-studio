@@ -7,6 +7,8 @@ writes. `Graph` is the intermediate representation: the graph endpoint, the lint
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 # --- Stored records ----------------------------------------------------------------------------
@@ -52,6 +54,16 @@ class ElementRecord(Record):
     confidence_breakdown: list[dict[str, object]] = []
     needs_check: bool = False
     review_status: str = "draft"  # B.7
+    # PRD v1.10 (§3.12; columns from migration 0009).
+    work_type: str | None = None  # B.29
+    constraint_type: str | None = None  # B.30
+    work_type_basis: list[Any] | None = None
+    sme_work_type_signifier: str | None = None
+    work_type_status: str | None = None
+    view_membership: str | None = None  # B.35
+    variants: dict[str, Any] | None = None  # {"done": {owner, threshold, time, trigger}, ...}
+    level: str | None = None  # B.39
+    parent_element_id: str | None = None
 
 
 class EdgeRecord(Record):
@@ -60,6 +72,11 @@ class EdgeRecord(Record):
     kind: str  # B.8
     label: str = ""
     provenance: str = "O"
+    # PRD v1.10 (§3.12.10, §3.12.11; columns from migration 0009).
+    sequence_basis: str | None = None  # B.34
+    typical: bool | None = None
+    view_membership: str | None = None  # B.35
+    information_payload: str | None = None
 
 
 class RaciRecord(Record):
@@ -237,6 +254,14 @@ class GraphEvidence(Out):
     note: str = ""
 
 
+class AccountSummary(Out):
+    """The accounts a step's interview claims give (§3.12.3, B.28)."""
+
+    official: int = 0
+    lived: int = 0
+    unclear: int = 0
+
+
 class GraphElement(Out):
     id: str
     stable_key: str
@@ -262,6 +287,21 @@ class GraphElement(Out):
     confidence_breakdown: list[dict[str, object]]
     needs_check: bool
     review_status: str
+    # v1.10 (§3.12.3): the accounts its interview claims give; practice_described False marks
+    # "Practice not described" (only the official account), None when the interview is silent.
+    account_summary: AccountSummary = AccountSummary()
+    practice_described: bool | None = None
+    # §3.12.11: where the views differ on this step, both values (owner, threshold, time,
+    # trigger): {"done": {...}, "documented": {...}}; null when they don't.
+    variants: dict[str, dict[str, str]] | None = None
+    # §3.12.11 (B.35): both · done_only · documented_only; null on maps drafted before v1.10.
+    view_membership: str | None = None
+    # §3.12.4 (B.29, B.30; C2): the kind of work, its constraint type, the quoted cues
+    # [{segment_ids, quote}] and proposed · confirmed · not_classified; null before v1.10.
+    work_type: str | None = None
+    constraint_type: str | None = None
+    work_type_basis: list[dict[str, Any]] = []
+    work_type_status: str | None = None
 
 
 class GraphEdge(Out):
@@ -270,6 +310,13 @@ class GraphEdge(Out):
     to: str
     kind: str
     label: str
+    # §3.12.10-3.12.11 (B.34, B.35): why the line is there and which views draw it; null on maps
+    # drafted before v1.10 and on lines Eric added.
+    sequence_basis: str | None = None
+    view_membership: str | None = None
+    information_payload: str | None = None
+    typical: bool | None = None
+    provenance: str = "O"  # I: added by the translation for one view (§3.12.10 rules 1 and 7)
 
 
 class Graph(Out):
@@ -288,6 +335,7 @@ class LintIssue(Out):
     rule: str  # L1 … L12
     element_id: str | None
     message: str
+    view: str | None = None  # v1.10 §3.12.11: "done" or "documented" for a per-view check
 
 
 class LintReport(Out):
@@ -326,6 +374,94 @@ class RaciDetail(Out):
     sources: list[RaciSource]
 
 
+class AnswerQuote(Out):
+    """One interview answer behind a step: the quote, the account it gives and its cue, the SME's
+    stated reason and variation condition, where it is, and the question that prompted it."""
+
+    quote: str
+    account_type: str
+    account_cue: str
+    stated_reason: str
+    variation_condition: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+    question_id: str | None
+    question: str
+
+
+class AshenItem(Out):
+    """One know-how item at a knowledge disclosure point, with the passage that shows it."""
+
+    text: str
+    quote: str
+    role: str  # the speaker's role, never a person (§3.12.6: natural talent at role level only)
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class KnowHow(Out):
+    """§3.12.6 (C2b): the ASHEN profile of a knowledge disclosure point, its computed knowledge
+    risk and why, and the decision's cadence and information in and out (§3.12.10 rule 4)."""
+
+    kdp_type: str  # decision · judgment
+    ashen: dict[str, list[AshenItem]]
+    knowledge_risk: str  # high · medium · low · unknown
+    risk_reason: str
+    cadence: str | None = None
+    received: list[str] = []
+    attended: list[str] = []
+    wanted: list[str] = []
+    communicated_via: list[str] = []
+
+
+class WorkTypeCue(Out):
+    """A quoted cue behind a step's work type (§3.12.4), with where it is (§5.7.7 4a)."""
+
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class StoryCard(Out):
+    """§3.12.2 (C2b): a fragment the SME told, with their own words for it; kept when told once."""
+
+    label: str
+    fragment_type: str
+    signifiers: list[str]
+    frequency: str
+    single_account: bool
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class CapabilityNote(Out):
+    """Rule 10 (C3): a strength to preserve or a weakness to improve, as the SME named it."""
+
+    kind: str  # strength (Preserve) · weakness (Improve)
+    dimension: str  # B.36
+    text: str
+    cause_type: str | None
+    steps: list[str]
+    quote: str
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
+class GlossaryEntry(Out):
+    term: str
+    plain_meaning: str
+    steps: list[str]
+    source_id: str
+    segment_id: str | None
+    anchor: str
+
+
 class ElementDetail(Out):
     """The graph element, with names, quotes and source names for the panel (never exported)."""
 
@@ -359,6 +495,21 @@ class ElementDetail(Out):
     review_status: str
     image_count: int
     gap_findings: list[dict[str, object]]
+    account_summary: AccountSummary = AccountSummary()
+    practice_described: bool | None = None
+    variants: dict[str, dict[str, str]] | None = None
+    view_membership: str | None = None
+    work_type: str | None = None
+    constraint_type: str | None = None
+    work_type_basis: list[dict[str, Any]] = []
+    work_type_status: str | None = None
+    # §5.7.7 4a (V3): the work type's quoted cues with their anchors (names hidden).
+    work_type_cues: list[WorkTypeCue] = []
+    # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
+    # was translated from, each with the guide question that prompted it. App only, never exported.
+    answers: list[AnswerQuote] = []
+    know_how: KnowHow | None = None
+    stories: list[StoryCard] = []
 
 
 # --- Alignment matrix (PRD §4 Views, §5.4 Matrix; phase P9) ------------------------------------

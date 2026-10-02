@@ -31,7 +31,7 @@ export const SHORTCUTS: readonly { keys: string; action: string }[] = [
   { keys: "E", action: "Edit the selected step" },
   { keys: "R", action: "Reject the selected step" },
   { keys: "Esc", action: "Close the source, the edit form or this list" },
-  { keys: "1 – 4", action: `Switch lens: ${LENSES.map((l) => l.label).join(", ")}` },
+  { keys: "1 – 5", action: `Switch lens: ${LENSES.map((l) => l.label).join(", ")}` },
   { keys: "?", action: "Show this list" },
 ];
 
@@ -49,7 +49,7 @@ export function shortcutFor(press: KeyPress): Shortcut | null {
   if (press.ctrlKey || press.altKey || press.metaKey || isTyping(press.target)) return null;
   const letter = LETTERS[press.key.length === 1 ? press.key.toLowerCase() : press.key];
   if (letter) return letter;
-  const lens = /^[1-4]$/.test(press.key) ? LENSES[Number(press.key) - 1] : undefined;
+  const lens = /^[1-5]$/.test(press.key) ? LENSES[Number(press.key) - 1] : undefined;
   return lens ? { kind: "lens", lens: lens.value } : null;
 }
 

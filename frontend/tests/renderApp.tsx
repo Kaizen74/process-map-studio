@@ -10,7 +10,7 @@ export interface FakeResponse {
   body: unknown;
 }
 
-export type Handler = (body: unknown) => FakeResponse;
+export type Handler = (body: unknown, url: string) => FakeResponse;
 
 /** Steps and versions have no pictures unless a test gives them some (phase P8). */
 const NO_PICTURES = /^GET \/api\/(elements|versions)\/[^/]+\/images$/;
@@ -84,7 +84,7 @@ export function fakeApi(routes: Record<string, Handler>) {
     calls.push({ key, body });
     const handler = routes[key];
     const result = handler
-      ? handler(body)
+      ? handler(body, url)
       : NO_PICTURES.test(key)
         ? { body: [] }
         : key === PLANS
