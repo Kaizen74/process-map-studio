@@ -11,6 +11,7 @@ import {
   listSegmentsAround,
   reviewElement,
   setQuestionStatus,
+  setWorkType,
   updateElement,
   type MergeChoice,
   type ReviewAction,
@@ -18,6 +19,7 @@ import {
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { ElementDetail, Graph } from "../api/types";
+import type { ChoosableWorkType } from "../lib/mapTypes";
 import type { AsView } from "../lib/views";
 
 // Keys follow PRD §5.8 "invalidate graph, layout, quality-card and lint for the version".
@@ -121,6 +123,19 @@ export function useEditStep(versionId: string, engagementId: string) {
       if ("kind" in patch || "lane_role_id" in patch) {
         await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
       }
+    },
+  });
+}
+
+/** Confirm or change a step's work type (V3b); not optimistic, so a refusal shows its message. */
+export function useSetWorkType(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ elementId, workType }: { elementId: string; workType: ChoosableWorkType }) =>
+      setWorkType(elementId, workType),
+    onSuccess: (detail: ElementDetail) => {
+      client.setQueryData(["elements", detail.id], detail);
+      refreshReview(client, versionId, engagementId);
     },
   });
 }

@@ -734,6 +734,18 @@ Errors `422` name the field (`details.field`, for example `"label"`, `"raci"`, `
 ### PUT /api/elements/{eid}/raci (phase P6)
 Replace a step's RACI. Request: `[{"role_id": "…", "letter": "A", "contested": false}]`. Same rules as `raci` above; response and effects as `PATCH`. Entries that stay (same role and letter) keep the passages behind them. Used by: Review edit form (P6).
 
+### PUT /api/elements/{eid}/work-type (2026-10-05, V3b; PRD §4 Review, §3.12.4, §5.7.7 4a, criterion 54)
+Confirm or change a step's work type (the panel's Work type section). Request: `{"work_type": "complex", "constraint_type": "enabling", "confirm": true}`.
+- `work_type`: clear · complicated · complex · chaotic · confused (B.29; `not_classified` can't be chosen: "Choose the kind of work this step is."). `constraint_type` (B.30) is optional: left out, it follows the work type (clear rigid, complicated governing, complex enabling, chaotic absent, confused none); sent, it must be a B.30 value or `null`. `confirm` must be `true` (`422`, `details.field: "confirm"`).
+- Only steps (activity, decision, approval) of a draft version; a rejected step must be restored first (`409`); published (`409`); start and end (`422`).
+- The step's `work_type_status` becomes `confirmed`. **Confirming the proposed type** (same work type and constraint type) leaves the step's review status as it is. **Changing it** is Eric's edit: the step becomes `edited` (an `added` step stays `added`), so it is locked like any edit.
+- A confirmed work type is kept through refresh even when the step itself was not yet reviewed: the fresh run's step with the same key takes Eric's work type, constraint type and `confirmed` status.
+- A complex or chaotic step is never an automation candidate (constraint 7): an AI flag with an automation basis (`rule_based_automate_candidate`) is removed, and a decision or approval marked `rule_based` becomes `judgment` (criterion 55: complex steps are judgment steps). Both are listed in the audit row.
+- The work-type question for the step ("Work type not clear") is marked answered.
+- Audit row "Confirmed work type" or "Changed work type" with `work_type`, `constraint_type`, `work_type_status` (and any removed flag or changed mechanism) before and after; the stored lint report is refreshed.
+Response `200`: the element as `GET /api/elements/{eid}`. Errors `404`, `409`, `422` (`details.field`). Used by: Review panel 4a (Confirm · Change).
+The edit form (`PATCH`) follows the same rule: an AI flag with an automation basis on a complex or chaotic step is refused (`422`, `details.field: "ai_flag.basis"`).
+
 ### POST /api/versions/{vid}/elements (phase P6)
 Add a missing step (Eric's own, never an AI claim).
 Request: `{"kind": "activity", "label": "Check fuel figures", "lane_role_id": "…", "after_element_id": "…", "provenance": "O", "segment_ids": ["…"], "r_reference": "", "mechanism": "judgment"}`.

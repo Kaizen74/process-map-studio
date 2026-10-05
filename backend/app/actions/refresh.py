@@ -3,20 +3,22 @@
 The draft job runs every stage again into a temporary version (state `building`); `fold` then
 moves the fresh map into the draft being refreshed. Steps Eric confirmed, edited, added or
 rejected stay exactly as they are (constraint 8); everything else is replaced by the fresh run,
-and a replaced step's pictures follow it to its fresh successor.
+and a replaced step's pictures follow it to its fresh successor, as does a work type Eric confirmed
+on a step he hadn't otherwise reviewed (V3b).
 """
 
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.domain.enums import ReviewStatus
+from app.domain.enums import AiBasis, DecisionMechanism, ReviewStatus
 from app.domain.graph import ElementRecord
 from app.domain.models import RefreshChanges, StepRename
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import images as images_repo
 from app.repositories import versions as versions_repo
+from app.services import sensemaking
 
 KEPT = {
     ReviewStatus.CONFIRMED.value,
@@ -100,6 +102,26 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
 
     # A replaced step's pictures (and Eric's keep or discard of them) go to its fresh successor.
     images_repo.move(session, successor)
+    # So does a work type Eric confirmed (with what it implies: never automated, a judgment step).
+    confirmed_types = {
+        successor[e.id]: e
+        for e in replaced
+        if e.id in successor and e.work_type_status == sensemaking.CONFIRMED
+    }
+    fresh_flags = {f.element_id: f for f in map_repo.ai_flags(session, fresh_id)}
+    for step_id, before in confirmed_types.items():
+        updates: dict[str, object] = {
+            "work_type": before.work_type,
+            "constraint_type": before.constraint_type,
+            "work_type_status": sensemaking.CONFIRMED,
+        }
+        if before.work_type in sensemaking.NEVER_AUTOMATED:
+            flag = fresh_flags.get(step_id)
+            if flag is not None and flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value:
+                map_repo.replace_ai_flag(session, step_id, None)
+            if before.kind in {"decision", "approval"}:
+                updates["decision_mechanism"] = DecisionMechanism.JUDGMENT.value
+        map_repo.update_element(session, step_id, updates)
 
     # Out with the draft's replaced content, in with the fresh.
     versions_repo.clear_for_refresh(session, draft_id, set(keep))

@@ -552,3 +552,12 @@ button.evidence:focus-visible {
 .sense-anchor {
   font-size: var(--text-label);
 }
+/* 4a: Confirm or change the work type (V3b). */
+.work-type-choice {
+  margin-top: var(--space-8);
+}
+.work-type-choice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}

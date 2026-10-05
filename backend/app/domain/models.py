@@ -685,6 +685,17 @@ class ElementPatch(BaseModel):
     raci: list[RaciInput] | None = None
 
 
+class WorkTypeInput(BaseModel):
+    """Confirm or change a step's work type (API_CONTRACT.md → Review: PUT …/work-type).
+    `constraint_type` left out follows the work type; sent as `null` it clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    work_type: str
+    constraint_type: str | None = None
+    confirm: bool = False
+
+
 class NewStep(BaseModel):
     """Eric's own step (API_CONTRACT.md → Review: POST /versions/{vid}/elements)."""
 

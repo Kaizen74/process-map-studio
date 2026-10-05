@@ -303,6 +303,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await steps.getByRole("button", { name: "Special loads OK?", exact: true }).click();
     await expect(heading("Special loads OK?")).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+    // V3b: Eric confirms the proposed work type (the step itself stays to be reviewed).
+    const details = page.getByRole("complementary", { name: "Step details" });
+    await details.getByRole("button", { name: "Confirm work type" }).click();
+    await expect(details.getByText("You confirmed this work type.")).toBeVisible();
+    await expect(details.getByRole("button", { name: "Confirm as drafted" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("radio", { name: "Map" }).click();
 
     // Confirm every step with auto-advance: buttons and the C shortcut, then all reviewed.

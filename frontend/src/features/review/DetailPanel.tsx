@@ -18,7 +18,7 @@ import {
   type PassageLink,
 } from "../../components/panel";
 import { ErrorState, Skeleton } from "../../components/common";
-import { useElement } from "../../hooks/useReview";
+import { useElement, useSetWorkType } from "../../hooks/useReview";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
@@ -66,6 +66,7 @@ export function DetailPanel({
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
+  const workType = useSetWorkType(images.versionId, images.engagementId);
   const step = STEPS.has(element.kind);
   // A know-how item, story, cue or answer opens in the source viewer like an evidence card.
   const openPassage = (passage: PassageLink) => {
@@ -138,7 +139,20 @@ export function DetailPanel({
           <ConfidenceBreakdown element={detail.data} />
           <RoleAccountability element={detail.data} />
           <DecisionRights element={detail.data} />
-          <WorkTypeSection element={detail.data} typicalResponses={typicalResponses} onOpen={openPassage} />
+          <WorkTypeSection
+            element={detail.data}
+            typicalResponses={typicalResponses}
+            onOpen={openPassage}
+            choice={
+              review && element.review_status !== "rejected"
+                ? {
+                    busy: workType.isPending,
+                    error: workType.isError ? messageOf(workType.error) : null,
+                    onSave: (type) => workType.mutate({ elementId: element.id, workType: type }),
+                  }
+                : undefined
+            }
+          />
           <KnowHowSection knowHow={detail.data.know_how} onOpen={openPassage} />
           <StoriesSection stories={detail.data.stories} onOpen={openPassage} />
           <OfficialLivedSection element={detail.data} onOpen={openPassage} />

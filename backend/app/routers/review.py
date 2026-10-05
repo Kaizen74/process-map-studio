@@ -17,6 +17,7 @@ from app.domain.models import (
     QuestionStatus,
     QuestionView,
     RaciInput,
+    WorkTypeInput,
 )
 from app.routers.http import unwrap
 
@@ -53,6 +54,12 @@ def edit(request: Request, element_id: str, patch: ElementPatch) -> ElementDetai
 def set_raci(request: Request, element_id: str, raci: list[RaciInput]) -> ElementDetail:
     state = request.app.state
     return unwrap(review.set_raci(state.config, state.sessions, element_id, raci))
+
+
+@router.put("/elements/{element_id}/work-type")
+def set_work_type(request: Request, element_id: str, body: WorkTypeInput) -> ElementDetail:
+    state = request.app.state
+    return unwrap(review.set_work_type(state.config, state.sessions, element_id, body))
 
 
 @router.get("/versions/{version_id}/audit")

@@ -181,6 +181,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/elements/{element}", None),
     ("POST", "/api/elements/{element}/confirm", None),
     ("PATCH", "/api/elements/{element}", {"kpi": "Decided by T-15"}),
+    ("PUT", "/api/elements/{element}/work-type", {"work_type": "complicated", "confirm": True}),
     ("GET", "/api/versions/{map}/audit", None),
     ("GET", "/api/versions/{map}/questions", None),
     ("GET", "/api/versions/{map}/merge-proposals", None),

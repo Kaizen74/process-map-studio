@@ -21,11 +21,13 @@ from app.domain.enums import (
     AiBasis,
     AiComponent,
     CauseType,
+    ConstraintType,
     DecisionMechanism,
     ElementKind,
     Provenance,
     RaciLetter,
     ReviewStatus,
+    WorkType,
 )
 from app.domain.graph import AiFlagRecord, ConstraintRecord, ElementDetail, RaciRecord
 from app.domain.models import (
@@ -36,13 +38,14 @@ from app.domain.models import (
     ElementPatch,
     HandoffInput,
     RaciInput,
+    WorkTypeInput,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import versions as versions_repo
-from app.services import grounding
+from app.services import grounding, sensemaking
 
 Sessions = sessionmaker[Session]
 
@@ -139,6 +142,7 @@ def get_audit(sessions: Sessions, version_id: str) -> Result[list[AuditEntry]]:
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 DECIDING = {ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 CLASSIFIED = {DecisionMechanism.RULE_BASED.value, DecisionMechanism.JUDGMENT.value}
+JUDGMENT = DecisionMechanism.JUDGMENT.value
 MAX_MINUTES = 10_000
 TEXT_LIMITS = {
     "duration_text": 200,
@@ -225,9 +229,15 @@ def check_raci(kind: str, raci: list[RaciInput], roles: set[str]) -> Result[None
 
 
 def check_step(
-    step: StepFields, roles: set[str], hidden: list[str], *, raci: bool = True
+    step: StepFields,
+    roles: set[str],
+    hidden: list[str],
+    *,
+    raci: bool = True,
+    work_type: str | None = None,
 ) -> Result[None]:
-    """The field rules of PRD §5.7.6; the first problem found, naming its field."""
+    """The field rules of PRD §5.7.6; the first problem found, naming its field. `work_type` is
+    the step's stored work type (complex and chaotic steps are never automation candidates)."""
     label = step.label.strip()
     if not label or len(label) > 120 or "\n" in label:
         return _invalid("label", "Please give the step a name of up to 120 characters.")
@@ -280,6 +290,12 @@ def check_step(
             return _invalid(
                 "ai_flag.basis",
                 "A judgment step is never an automation candidate. Choose support only.",
+            )
+        if automate and work_type in sensemaking.NEVER_AUTOMATED:
+            return _invalid(
+                "ai_flag.basis",
+                f"This step is {work_type} work, so it is never an automation candidate. "
+                "Choose support only.",
             )
     return check_raci(step.kind, step.raci, roles) if raci else Ok(None)
 
@@ -366,7 +382,9 @@ def edit(
         after = _patched(before, patch)
         roles = {r.id for r in engagements_repo.list_roles(session, version.engagement_id)}
         hidden = [t.term for t in redaction.name_replacements(session, version.engagement_id)]
-        check = check_step(after, roles, hidden, raci="raci" in sent or "kind" in sent)
+        check = check_step(
+            after, roles, hidden, raci="raci" in sent or "kind" in sent, work_type=element.work_type
+        )
         if isinstance(check, Err):
             return check
         old, new = _plain(before), _plain(after)
@@ -451,3 +469,91 @@ def _write(
             [RaciRecord(element_id=element_id, role_id=r.role_id, letter=r.letter,
                         contested=r.contested) for r in step.raci],
         )  # fmt: skip
+
+
+# --- Work type: confirm or change (PRD §3.12.4, §5.7.7 4a, criterion 54; 2026-10-05, V3b) -------
+
+CHOOSABLE_WORK_TYPES = [w.value for w in WorkType if w is not WorkType.NOT_CLASSIFIED]
+CONSTRAINT_TYPES = {c.value for c in ConstraintType}
+WORK_TYPE_QUESTION = "work_type"
+
+
+def set_work_type(
+    config: AppConfig, sessions: Sessions, element_id: str, body: WorkTypeInput
+) -> Result[ElementDetail]:
+    """Eric confirms the proposed work type or changes it (API_CONTRACT.md → Review)."""
+    if not body.confirm:
+        return _invalid("confirm", "Confirm the work type to save it.")
+    if body.work_type not in CHOOSABLE_WORK_TYPES:
+        return _invalid("work_type", "Choose the kind of work this step is.")
+    constraint = (
+        body.constraint_type
+        if "constraint_type" in body.model_fields_set
+        else sensemaking.CONSTRAINT_FOR.get(body.work_type)
+    )
+    if constraint is not None and constraint not in CONSTRAINT_TYPES:
+        return _invalid("constraint_type", "Choose the constraint type from the list.")
+    actor = actor_name(config)
+    with session_scope(sessions) as session:
+        element = map_repo.element(session, element_id)
+        version_id = map_repo.element_version_id(session, element_id)
+        version = versions_repo.get(session, version_id) if version_id else None
+        if element is None or version is None:
+            return Err(ErrorKind.NOT_FOUND, ELEMENT_MISSING)
+        if version.state != DRAFT_STATE:
+            return Err(ErrorKind.CONFLICT, NOT_A_DRAFT)
+        if element.kind in STRUCTURAL:
+            return Err(ErrorKind.VALIDATION, STRUCTURAL_STEP, {"field": "kind"})
+        if element.review_status == ReviewStatus.REJECTED.value:
+            return Err(ErrorKind.CONFLICT, EDIT_REJECTED)
+        before: dict[str, object] = {
+            "work_type": element.work_type,
+            "constraint_type": element.constraint_type,
+            "work_type_status": element.work_type_status,
+        }
+        after: dict[str, object] = {
+            "work_type": body.work_type,
+            "constraint_type": constraint,
+            "work_type_status": sensemaking.CONFIRMED,
+        }
+        changed = (element.work_type, element.constraint_type) != (body.work_type, constraint)
+        status = element.review_status
+        if changed and status != ReviewStatus.ADDED.value:
+            status = ReviewStatus.EDITED.value
+        updates = dict(after)
+        if status != element.review_status:
+            before["review_status"], after["review_status"] = element.review_status, status
+            updates["review_status"] = status
+        # Complex or chaotic work is never an automation candidate, and is a judgment step
+        # (constraint 7, criterion 55).
+        if body.work_type in sensemaking.NEVER_AUTOMATED:
+            flag = next(
+                (f for f in map_repo.ai_flags(session, version.id) if f.element_id == element_id),
+                None,
+            )
+            if flag is not None and flag.basis == AiBasis.RULE_BASED_AUTOMATE_CANDIDATE.value:
+                map_repo.replace_ai_flag(session, element_id, None)
+                before["ai_flag"], after["ai_flag"] = flag.basis, None
+            if element.kind in DECIDING and element.decision_mechanism != JUDGMENT:
+                updates["decision_mechanism"] = JUDGMENT
+                before["decision_mechanism"] = element.decision_mechanism
+                after["decision_mechanism"] = JUDGMENT
+        if before == after:
+            return versions_action.get_element(sessions, element_id)
+        map_repo.update_element(session, element_id, updates)
+        for q in map_repo.questions(session, version.id):
+            if q.element_id == element_id and q.reason == WORK_TYPE_QUESTION and q.status == "open":
+                map_repo.set_question_status(session, q.id, "answered")
+        audit.record(
+            session,
+            actor=actor,
+            action="Changed work type" if changed else "Confirmed work type",
+            target_type="element",
+            target_id=element_id,
+            engagement_id=version.engagement_id,
+            version_id=version.id,
+            before=before,
+            after=after,
+        )
+    versions_action.lint_version(sessions, version.id)
+    return versions_action.get_element(sessions, element_id)
