@@ -1,11 +1,72 @@
 # Project State
-*Last updated: 2026-10-01 (session 17) — update after EVERY increment*
+*Last updated: 2026-10-05 (session 18) — update after EVERY increment*
 
 ## What this project is
-Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.10 from 2026-09-30; built up to P12 against v1.5, see DECISIONS.md).
+Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.11, adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
 
 ## Current status
-Phase P5 (layout and map view) is complete (2026-09-27, tag `phase-p5`); its work was merged into `main` in pull request #7 and the visual-baseline check follows on branch `claude/charming-davinci-sck1cq`. Phase P6 (review workbench) is complete (2026-09-27, tag `phase-p6` created locally) and merged into `main` (pull request #8). Phase P7 (quality card, publish, exports) is complete (2026-09-28, tag `phase-p7` created locally) and merged into `main` (pull request #9). Phase P8 (images) is complete (2026-09-28, tag `phase-p8` created locally) and merged into `main` (pull request #10). Phase P9 (matrix, registers, cause library) is complete (2026-09-28, tag `phase-p9` created locally); merged into `main` (pull request #11). Phase P10 (gap analysis, optional feature) is complete (2026-09-29, tag `phase-p10` created locally). Phase P11 (leadership view) is complete (2026-09-29, tag `phase-p11` created locally). The P10 and P11 work was merged into `main` (pull request #12). Now: Phase P12 (live run, polish and handover).
+PRD v1.11 adopted 2026-10-05 (session 18). Phases P0a–P12 were built against v1.5, with v1.10's templates, P4b, most of P4c and the P5 views added in sessions 16–17; the audit and plan below list what v1.11 still needs, core gaps first. Work is on branch `claude/charming-davinci-sck1cq` (pull requests #1–#20 merged into `main`).
+
+## Phases (PRD v1.11 "Build map")
+**Core** (a usable, publishable, evidence-traced map from interviews and documents): P0a · P0b · P1 · P2 · P3 · P4 · **P4b** · P5 · P6 · P7.
+**Optional** (switchable in Settings once the module switches exist; never break the core): P4c sensemaking and interview tools · P8 images · P9 matrix and registers · P10 gap analysis · **P10b system records, value calculator, step disposition (new in v1.11)** · P11 leadership · P12 live run and handover.
+Rule: build in phase order; no optional phase starts while a core acceptance criterion fails.
+
+## This session (2026-10-05, session 18) — goal: adopt PRD v1.11, close the core gaps, then P4c, then the optional phases (incl. P10b)
+Start: working tree clean at 959a7ab (no increment in progress); last clean-copy check 12 of 13 (only the Review visual baseline, waiting for Eric's approval of `docs/screens/v4-candidate-review-*.png`). The new PRD in place adds expected failures only in tests that read the PRD (Appendix B enums), fixed by increment K0.
+
+**Audit against PRD v1.11 (Done / Partly / Not started)**
+| Phase | Status | Evidence | Acceptance criteria |
+|---|---|---|---|
+| P0a Foundations | Done | `run_checks.sh`, `scripts/check_secrets.py`, `scripts/check_readme.py`, launchers; `test_secret_check.py`, `tests/architecture/`, `test_readme_check.py`, `test_launchers*.py` | 1, 37, 38 met; 39 partly (launchers not yet double-clicked on a Mac) |
+| P0b Design system, shell, Settings | Done | `shared/design_tokens.json`, `components/common/*`, `features/settings/*`; token-sync, no-raw-colour, contrast tests; axe browser checks | 2, 3, 23 met |
+| P1 Engagements, documents, templates | Done | `actions/engagements.py`, `sources.py`, `readiness.py`, `services/parsing.py`, `interview_templates.py`; G9; `test_interview_templates*.py` | 4 (documents), 77–79, 81 (templates) met |
+| P2 Transcripts, speakers, redaction | Done | `pipeline/s0_normalise.py`, `actions/redaction.py`; `test_s0_normalise.py`, `test_speakers_api.py`, browser privacy scan | 4, 22 met |
+| P3 AI service, grounded extraction | Done | `services/ai_service.py`, `grounding.py`, `pipeline/s1_extract.py`; `test_grounding*.py`, G6 (A.6 traps T1–T8) | 5, 6 met |
+| P4 Canonicalise, calibrate, verify, assemble | Partly | `s2_canonicalise.py`, `s3_calibrate.py`, `s3b_verify.py`, `s4_assemble.py`, `s5_questions.py`, `services/lint.py`; G1, G6 | 7–12 met; L12 warnings "work type not confirmed" and "fewer than three stories" missing |
+| P4b Translation core | Partly | `services/question_matching.py`, `prompts/codebook.md`, `marker_lexicon.json`, `pipeline/s4b_translate.py`, `services/translation.py`, `services/views.py`; `test_translation.py`, `test_acceptance_v110.py` (A.5, A.9), G2a, G2b | 51, 57, 62–67 met; rule 9 (element levels and parents) not built |
+| P4c Sensemaking and interview tools | Partly | `pipeline/s3c_sensemaking.py`, `actions/lenses.py`, `actions/coverage.py`, `pipeline/ga_internal.py` (reality gaps); `test_coverage_report.py`, `test_interview_coverage_api.py`, G8, `test_acceptance_v110.py` (A.8, A.10) | 50, 52, 53, 55, 56, 71, 72 met; 54 partly (confirm/change missing), 73 partly (not in registers/leadership/Master Map); 49, 58, 61, 68, 69, 70, 74 (in guides), 75, 76, 80 not met |
+| P5 Layout and map view | Done (one approval pending) | `services/layout.py` per view, `components/map/*`, `lib/views.ts`, panel 4a–4d; G2, G2a, G2b; `views.test.tsx`, `sensemaking.test.tsx` | 13, 15–20 met; 14 waits for Eric's approval of the v4 Review candidates |
+| P6 Review workbench | Partly | `actions/review.py`, `map_edits.py`, `refresh.py`, `features/review/*`; browser smoke path | 24, 25 met; "confirm or change work type" (V3b) missing |
+| P7 Quality card, publish, exports | Partly | `services/quality.py` (Q1–Q10), `actions/publish.py`, `services/exports.py`, `export_html.py`; G3, G5 | 26, 27, 30, 32 met; 29 partly (§7.3 v1.10/v1.11 sections, View column and both views missing); Q11 (and Q12) missing |
+| P8 Images | Done | `services/images.py`, `actions/images.py`, ImagesSection, walkthrough strip | 28 met |
+| P9 Matrix, registers, cause library | Partly | `services/alignment.py`, `actions/registers.py`, `actions/causes.py`; G4 | 31 met (v1.5 level); matrix SME official/lived layers and registers Stories, Glossary, Emerging themes, Preserve / Improve missing (59 partly) |
+| P10 Gap analysis | Done | `pipeline/ga_internal.py`, `gb_external.py`, `services/gap.py`; G7; traps TE1–TE9 | 41–48, 56 met |
+| P10b System records, value, disposition | Not started | — | 82–94 not met |
+| P11 Leadership | Partly | `services/leadership.py`, LeadershipScreen | 31 met (v1.5 level); work-type mix, Imagined vs done, Preserve / Improve, quantified bottlenecks, disposition and value missing |
+| P12 Live run, handover | Partly | `tests/live/*`, clean-clone rehearsal, release notes, visual pass | 35, 40 met; 34 (live run) and 36 (v1.0.0 tag and release) not met |
+
+**Plan (one increment ≈ 30 min; each: contract first, tests, full checks, commit, push, this file).** Items marked *waits* need a choice or approval from Eric (DECISIONS.md, v1.11 impact table, decisions A–C).
+(a) Core gaps
+- [x] K0 — PRD v1.11 sync: PRD committed alone; CLAUDE.md (24 constraints, Appendix C rules); migration 0012 (v1.11 tables and element columns, unused until P10b); enums B.40–B.43 (values of unbuilt phases pending in the enum test); impact table in DECISIONS.md; this file
+- [ ] K1 — V3b (P6): `PUT /elements/{eid}/work-type` (confirm or change; draft only; audit row; kept through refresh; complex or chaotic drops an automation-candidate flag); panel 4a Confirm / Change
+- [ ] K2 — Rule 9 (P4b) and layout rule 10 (P5): element level and parent from landscape interviews, finest level drawn, "Part of" in the panel, table grouped (decision C, recommended option: crafted test case)
+- [ ] K3 — *waits for decision B*: Q11 and Q12 on the quality card, L12 warnings (work types not confirmed, fewer than three stories), the Master Process Map to §7.3 (View column, both views, F/I/R content) and the HTML export with both views; G3 and G5 candidates saved under `docs/review/` for Eric's approval
+- [ ] K4 — *waits for Eric*: approve the v4 Review candidates (`docs/screens/v4-candidate-review-1440x900.png`, `-1080x800.png`) → copy over `p7-review-*.png`; 13 of 13
+(b) Finish P4c
+- [ ] C5a — interviewee profiles (`/engagements/{id}/interviewees`, contract first) and the Interview screen profile form
+- [ ] C5b — `IG_generate` (AI, mocked): tailored Landscape / Practice / Follow-up guides with the F.3 opener, role modules and F.8 tailoring rules; checks (IDs, probes, targets, SOP claims only in M6–M7, time budget, no names, no banned words)
+- [ ] C5c — guide editor and Word / Markdown export in the F.9 layout (criteria 49, 61, 69, 80)
+- [ ] C5d — Interview screen Coverage tab and the Follow-up guide from coverage, open questions and "not described" connectors (50 UI, 68, 74)
+- [ ] C6 — validation pack (Markdown from Review; criterion 75)
+- [ ] C7 — codebook tier 2 conventions on Setup and tier 3 emerging themes (accept, rename, dismiss; criterion 58)
+- [ ] C8 — lane-boundary findings from L5, F1, F4 answers (criterion 76); landscape-level answers into rule 9 (criterion 70)
+(c) Optional phases, in order
+- [ ] P9u — matrix layers SME official / SME lived; registers Stories, Glossary, Emerging themes, Preserve / Improve (59, 73)
+- [ ] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82)
+- [ ] R2 — P10b: migration 0012 (event_logs, events without any user column, case_key_maps, activity_alignment, mining_metrics, role_costs, value_assumptions; element disposition columns); `services/mining.py` parsing and column suggestion; A.11 fixture generator (fixed seed)
+- [ ] R3 — P10b: import job (column map, time zone, in-memory resource → role map, validation report, approval gate, > 20% dropped refused); resource-value scan test (83, 84)
+- [ ] R4 — P10b: metrics (volume, transitions, work and wait, cycle time, variants, rework, handoffs, exception share; ≥ 5 cases) precomputed; metrics endpoint (85, 94)
+- [ ] R5 — P10b: alignment (deterministic + `SR_align`, Eric confirms), system-trace evidence, `system_trace` edges, codebook v2 (86, 87)
+- [ ] R6 — P10b: Analysis A system findings (hidden work, offline work, sequence drift, estimate gap, measured rework) and severities (88)
+- [ ] R7 — P10b UI: System records screen (template, upload, wizard, log list, alignment table, metrics)
+- [ ] R8 — P10b UI: Volume and wait lens, panel 4e, Variants tab with Hidden work and Add as step (89)
+- [ ] R9 — P10b: `value` and `disposition` services, role costs, assumptions, `PUT /elements/{eid}/disposition`, L10 rules, value endpoint (90, 91)
+- [ ] R10 — P10b UI: disposition and value in the panel, registers, Settings Regional and Optional modules (decision A; 93)
+- [ ] R11 — P10b: wider intake .xlsx, .csv, .eml (openpyxl, standard `email`; header names → redaction terms; 92)
+- [ ] R12 — P10b: G10 baseline candidate (approval), 500k-event import timing, close P10b
+- [ ] L1 — P11 update: work-type mix, Imagined vs done, Preserve / Improve, quantified bottlenecks, disposition and value summary
+- [ ] P12 — live run on Eric's PC (criterion 34), tags and v1.0.0 release (36)
 
 ## This session (2026-10-01, session 17) — goal: transcript to workflow (PRD v1.10 §8 feature prompt: P4b, the parts of P4c it needs, and the P5 views)
 Start: working tree clean, `main` merged in (Eric re-uploaded the same v1.10 PRD; no file changed), 13 of 13 checks green. P0a–P4 and P5 (single view) are complete as built against v1.5; nothing of v1.10's P4b (translation core) or P4c (sensemaking) exists beyond the empty columns and tables of migration 0009; P5 draws one view only.

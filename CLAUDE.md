@@ -31,6 +31,7 @@ The files are the project memory. If chat memory and these files disagree, the f
 21. **Private repository, plain-language README.** Code is pushed only to Eric's designated private GitHub repository. README.md follows Appendix D, is written for a non-technical reader, and is updated in the same increment as any change to installing, starting, updating or configuring the app.
 22. **Gap analysis is advisory and on demand.** It runs only when Eric starts it and never changes the map by itself. Internal findings carry evidence from every side they compare. External findings carry sources actually returned by the web search in the same request, pass the GX checks and the verifier, and are always provenance `R`. External research sends only an approved brief that has passed the confidentiality scan; transcripts, documents and map content are never sent to web search.
 23. **Sensemaking integrity (§3.12.9).** The SME's own meaning comes first: SME signifiers and terms are observed data; the model's interpretations of stories, patterns and work types are inferred and shown separately. Stories told once are kept and flagged, not discarded. Interview claims are tagged official, lived or unclear, and the interview is always labelled work-as-disclosed. Work types need quoted evidence cues. Natural talent and know-how are recorded at role level only. All UI copy, prompts and exports use non-blaming vocabulary. The As done view shows only what lived accounts or traces support; gaps are shown as "not described", never filled with invented steps.
+24. **System data describes the process, never people.** System-record metrics are computed and shown at role and step level only; raw user IDs from logs are converted to roles during import and never stored; no metric is shown for fewer than 5 cases; a log is imported only after Eric confirms the data owner approved the extract. Every value figure carries an evidence label (measured, estimated, mixed or assumed), and scenarios are labelled "potential, not committed".
 
 ## Code structure (PRD §3.2)
 - routers/: HTTP only; call exactly one action.
@@ -46,7 +47,7 @@ The files are the project memory. If chat memory and these files disagree, the f
 Every AI claim needs segment IDs, a verbatim quote and (if inferred) a basis. Claims failing segment, quote, number or role checks are rejected and logged, never shown on the map. No outside knowledge. Unknowns become questions, not elements. Confidence is computed with a breakdown, never self-reported. Names on the redaction list never appear outside the three owner-only screens. Gap analysis (§3.11) is advisory: it never changes the map; external findings must cite sources returned by the same search and pass GX1–GX6 and the verifier; web research sends only the approved, scan-clean brief.
 
 ## Sensemaking (PRD §3.12, Appendices E and F)
-- Five lenses per interview: Flow, Stories, Know-how (ASHEN), Work type (Cynefin-informed), Reality gap (official · lived · documented · traced).
+- Five evidence strands per interview: Flow, Stories, Know-how (ASHEN), Work type (Cynefin-informed), Reality gap (official · lived · documented · traced).
 - SME meaning first: SME signifiers and terms are observed; model interpretations are inferred and shown separately. Keep single-account stories.
 - Work type needs quoted cues; complex steps are judgment steps; complex or chaotic steps never carry automation flags.
 - Codebook tiers: invariants never change; conventions may be overridden with a reason; emergent themes are proposed, never forced.
@@ -54,6 +55,7 @@ Every AI claim needs segment IDs, a verbatim quote and (if inferred) a basis. Cl
 - Interviews follow the Appendix F question bank; answers are anchored to question IDs; marker tags are hints confirmed by quotes; the label is the translation, the quote is the proof.
 - Standard interview templates (Appendix F.9; 60-minute Landscape and Practice, 30-minute Follow-up) are generated from question_bank.json only, in Word and Markdown.
 - Interview types (Landscape, Practice, Follow-up) follow Appendix F; decision information in/out stitches flows across interviews; strengths and weaknesses feed Preserve / Improve.
+- System records (§3.13) are role- and step-level only: resource IDs mapped to roles in memory and never stored; nothing shown under 5 cases; import only after data-owner approval. Value figures always carry an evidence label; scenarios are potential, not committed. Dispositions: complex or chaotic steps are never Automate or AI-assisted.
 - Two views: As done (default, lived and traced evidence only, "not described" connectors instead of invented steps) and As documented.
 
 ## UI (PRD §5)

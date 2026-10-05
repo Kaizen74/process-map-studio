@@ -25,6 +25,9 @@ PRD_TABLES = {
     # PRD v1.10 §3.12 (migration 0009), filled from phases P4b and P4c.
     "fragments", "knowledge_points", "glossary_terms", "emergent_themes", "interviewee_profiles",
     "capability_notes", "interview_guides", "coverage_reports",
+    # PRD v1.11 §3.13-3.14 (migration 0012), filled from phase P10b.
+    "event_logs", "events", "case_key_maps", "activity_alignment", "mining_metrics",
+    "role_costs", "value_assumptions",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -73,7 +76,7 @@ def test_prd_columns_are_all_present(migrated: Path) -> None:
                 missing.append(f"{table}.{name}")
     engine.dispose()
     assert missing == []
-    assert checked >= 296  # every PRD v1.10 column is read (guards the parser against skipping)
+    assert checked >= 343  # every PRD v1.11 column is read (guards the parser against skipping)
 
 
 def test_every_table_has_id_and_created_at(migrated: Path) -> None:
@@ -247,6 +250,7 @@ def test_downgrade_of_0009_removes_only_the_v1_10_tables_and_columns(migrated: P
         "fragments", "knowledge_points", "glossary_terms", "emergent_themes",
         "interviewee_profiles", "capability_notes", "interview_guides", "coverage_reports",
     }  # fmt: skip
+    db.downgrade(migrated, "0009")  # measure what 0009 itself added (later updates add more)
     engine = db.make_engine(migrated)
     before = {t: {c["name"] for c in inspect(engine).get_columns(t)} for t in ("elements", "edges")}
     engine.dispose()
@@ -352,8 +356,15 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 # DECISIONS.md 2026-09-30): the reality-gap finding types that Analysis A may return (P4c). The
 # test checks they are still absent, so each is removed from this list when its phase adds it (the
 # "not described" gap edge of B.8 was added with P4b, 2026-10-01).
-# Values the PRD lists that the app doesn't use yet (none since C4b added the reality gaps).
-PENDING_VALUES: dict[str, set[str]] = {}
+# PRD v1.11 (2026-10-05, DECISIONS.md impact table item 4): values that change what the app does,
+# added with the phase that uses them: the new source kinds (group notes with P4c's interview tools,
+# spreadsheets and email threads with P10b's wider intake), the system-record findings and the
+# system-recorded sequence basis (P10b). The new vocabularies B.40-B.43 exist already (unused).
+PENDING_VALUES: dict[str, set[str]] = {
+    "B.1": {"group_notes", "working_spreadsheet", "email_thread"},
+    "B.22": {"hidden_work", "offline_work", "sequence_drift", "estimate_gap", "measured_rework"},
+    "B.34": {"system_trace"},
+}
 
 
 def test_enums_match_appendix_b() -> None:
@@ -364,7 +375,7 @@ def test_enums_match_appendix_b() -> None:
         for cls in vars(enums).values()
         if isinstance(cls, type) and issubclass(cls, enums.StrEnum) and cls is not enums.StrEnum
     }
-    assert len(rows) == 39 == len(by_id)
+    assert len(rows) == 43 == len(by_id)
     for bid, values in rows:
         expected = [re.sub(r"\s*\(.*?\)", "", v).strip().split()[0] for v in values.split("·")]
         pending = PENDING_VALUES.get(bid, set())
@@ -386,3 +397,36 @@ def test_manage_reports_and_applies_updates(tmp_path: Path) -> None:
     run("upgrade")
     assert (tmp_path / "app.db").exists()
     assert run("pending-migrations").stdout.strip() == "0"
+
+
+def test_downgrade_of_0012_removes_only_the_v1_11_tables_and_columns(migrated: Path) -> None:
+    new_tables = {
+        "event_logs", "events", "case_key_maps", "activity_alignment", "mining_metrics",
+        "role_costs", "value_assumptions",
+    }  # fmt: skip
+
+    def element_columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        columns = {c["name"] for c in inspect(engine).get_columns("elements")}
+        engine.dispose()
+        return columns
+
+    before = element_columns()
+    db.downgrade(migrated, "0011")
+    assert new_tables.isdisjoint(table_names(migrated))
+    assert before - element_columns() == {
+        "disposition", "disposition_suggested", "disposition_reason", "risk_flag",
+        "time_override_min", "volume_override_month",
+    }  # fmt: skip
+    assert "parent_element_id" in element_columns()
+    db.upgrade(migrated)
+    assert db.pending_migrations(migrated) == 0
+    assert new_tables <= table_names(migrated)
+
+
+def test_events_table_has_no_user_column(migrated: Path) -> None:
+    """Constraint 24: raw user IDs from system logs are never stored."""
+    engine = db.make_engine(migrated)
+    columns = {c["name"] for c in inspect(engine).get_columns("events")}
+    engine.dispose()
+    assert {"resource", "user", "user_id", "resource_id"}.isdisjoint(columns)
