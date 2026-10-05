@@ -263,6 +263,25 @@ The template file. `docx`: Word (`application/vnd.openxmlformats-officedocument.
 - `Content-Disposition: attachment; filename="interview-template-practice.docx"` (or `.md`; `landscape`, `follow-up`).
 Errors: `422 VALIDATION` ("Choose landscape, practice or follow_up." · "Choose docx or md."). No personal names, no SOP claims before M6, no banned words (tests).
 
+## Interviewee profiles (PRD §4 Interview and sensemaking, §3.12.8, Appendix F.8 rule 1) — phase P4c (2026-10-05, C5a)
+
+Who a tailored interview guide is for: a role, function or stakeholder group, never a person (constraint 10). The generator (C5b) picks the interview type and fills the opener's brackets from it.
+
+### Profile object
+```json
+{"id": "…", "engagement_id": "…", "role_id": "…" | null, "role_name": "Load controller" | "",
+ "stakeholder_group": "Ramp", "interview_type": "landscape" | "practice" | "follow_up",
+ "referred_by_role": "Ramp duty manager", "previous_profile_id": "…" | null, "created_at": "…"}
+```
+
+### POST /api/engagements/{id}/profiles · GET /api/engagements/{id}/profiles
+POST request: `{"role_id", "stakeholder_group", "interview_type", "referred_by_role", "previous_profile_id"}` — `interview_type` required (B.38); `role_id` one of the engagement's roles or `null`; `stakeholder_group` and `referred_by_role` up to 120 characters on one line; a role or a stakeholder group is required ("Say whose interview this is: choose a role or name the stakeholder group."); `previous_profile_id` another profile of this engagement or `null` (the earlier session a follow-up builds on). No text may contain a name on the hidden-names list ("…contains a name from your list of names to hide. Use the role instead."). Response `201`: profile, and an audit row "Added interviewee profile". GET response `200`: the engagement's profiles, oldest first.
+Errors: `404` (engagement), `422` naming the field (`details.field`).
+
+### PATCH /api/profiles/{pid}
+Any of the POST fields; the same rules (a profile can't name itself as its previous session). Response `200`: profile; audit row "Edited interviewee profile" with the changed fields. Errors `404`, `422`.
+Used by: Interview screen, Guides tab (C5a).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

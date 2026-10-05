@@ -40,11 +40,11 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 (a) Core gaps
 - [x] K0 — PRD v1.11 sync: PRD committed alone; CLAUDE.md (24 constraints, Appendix C rules); migration 0012 (v1.11 tables and element columns, unused until P10b); enums B.40–B.43 (values of unbuilt phases pending in the enum test); impact table in DECISIONS.md; this file
 - [x] K1 — V3b (P6): `PUT /elements/{eid}/work-type` (confirm keeps the review status, change is an edit; kept through refresh; complex or chaotic drops an automation flag and makes a decision a judgment); the edit form refuses automation on complex work; panel 4a Confirm / Change; latency, screen and browser checks
-- [ ] K2 — Rule 9 (P4b) and layout rule 10 (P5): element level and parent from landscape interviews, finest level drawn, "Part of" in the panel, table grouped (decision C, recommended option: crafted test case)
+- [ ] K2 — *waits for decision C and approval of G1* (the graph JSON gains `level` and `parent_element_id`, PRD §3.6, so G1 changes): Rule 9 (P4b) and layout rule 10 (P5): element level and parent from landscape interviews, finest level drawn, "Part of" in the panel, table grouped (decision C, recommended option: crafted test case)
 - [ ] K3 — *waits for decision B*: Q11 and Q12 on the quality card, L12 warnings (work types not confirmed, fewer than three stories), the Master Process Map to §7.3 (View column, both views, F/I/R content) and the HTML export with both views; G3 and G5 candidates saved under `docs/review/` for Eric's approval
 - [ ] K4 — *waits for Eric*: approve the v4 Review candidates (`docs/screens/v4-candidate-review-1440x900.png`, `-1080x800.png`) → copy over `p7-review-*.png`; 13 of 13
 (b) Finish P4c
-- [ ] C5a — interviewee profiles (`/engagements/{id}/interviewees`, contract first) and the Interview screen profile form
+- [x] C5a — interviewee profiles (`/engagements/{id}/profiles`, `PATCH /profiles/{pid}`, contract first; roles or groups only, hidden names refused; audited) and the Interview screen **Interviewees** section (add, list, edit); screen, browser (axe) and latency checks
 - [ ] C5b — `IG_generate` (AI, mocked): tailored Landscape / Practice / Follow-up guides with the F.3 opener, role modules and F.8 tailoring rules; checks (IDs, probes, targets, SOP claims only in M6–M7, time budget, no names, no banned words)
 - [ ] C5c — guide editor and Word / Markdown export in the F.9 layout (criteria 49, 61, 69, 80)
 - [ ] C5d — Interview screen Coverage tab and the Follow-up guide from coverage, open questions and "not described" connectors (50 UI, 68, 74)
