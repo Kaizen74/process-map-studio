@@ -1,13 +1,40 @@
 # PRD: Process Map Studio — current-state process mapping app
-| Status: BUILD-READY v1.10 | Date: 2026-09-25 | Owner: Eric Yim | Build tool: Claude Code |
+| Status: BUILD-READY v1.11 | Date: 2026-09-25 | Owner: Eric Yim | Build tool: Claude Code |
 
 This is the **single source of truth** for the build. Keep this exact file name (`PRD_ProcessMapStudio.md`); the version is shown in the line above. Earlier PRD files and the UI supplement are fully merged here; if any are in the build folder, delete them. Version history is in Appendix G for context only; Claude Code must not act on it.
 
-## What's new in v1.10 (standard interview templates; 60-minute interviews)
-1. **Downloadable standard interview templates** (Landscape, Practice, Follow-up) in Word and Markdown, generated from the question bank with question IDs, a minute plan, notes space and a coverage checklist (Appendix F.9). Available from the home screen and the Interview screen, even before an engagement exists.
-2. **60-minute standard** for stakeholder interviews (Landscape and Practice); Follow-up 30 minutes. Movement timings rebalanced to sum exactly.
-3. **Built early (P1)** so interviews can start with consistent questions while the rest of the app is being built.
-4. Tailored guides also export to Word; API, UI, tests (golden baseline G9), acceptance criteria 77–81 and a new §8 prompt updated to match.
+## What's new in v1.11 (system records, value, disposition; coherence and practicality review)
+**New, additive (optional modules; nothing already built is removed):**
+1. **System records module (§3.13):** upload event-log exports from ERP, CRM or HR systems (CSV or Excel; no live connectors), a downloadable **data request template** for IT, an import wizard with privacy safeguards (user IDs converted to roles and discarded; nothing shown for fewer than 5 cases; data-owner approval), built-in metrics (volume, waits, rework, variants, handoffs), and alignment of system activities to map steps. New findings: hidden work, offline work, sequence drift, estimate gap, measured rework.
+2. **Value calculator (§3.14):** hours and cost per step from measured or estimated time × volume × role cost, with disposition scenarios clearly labelled as potential, not committed.
+3. **Step disposition (§3.15):** Delete · Automate (rules) · AI-assisted · Human approves · Keep human — suggested from work type, rule vs judgment and risk; decided by Eric.
+4. **Wider evidence intake:** working spreadsheets (.xlsx, .csv) and email threads (.eml) as artefacts, with redaction and consent.
+5. New constraint 24; sixth map lens "Volume and wait"; panel section 4e "System data"; bottom tab "Variants"; phase **P10b**; fixture A.11; golden baseline G10; enums B.40–B.43; acceptance criteria 82–94; a new §8 **Update prompt** for revising the PRD mid-build.
+
+**Coherence and practicality fixes:**
+6. **Build map** (top of the document): which sections to read per phase, and the **core vs optional** split (core = P0a–P7 plus P4b).
+7. The interview "lenses" in §3.12.2 are renamed **evidence strands**, so "lens" means only the map lenses.
+8. Sequence evidence now ranks system-recorded order strongest; all references to lens counts and keyboard shortcuts updated (`1`–`6`).
+9. Exports, leadership view, registers and README updated for the new modules.
+
+---
+
+## Build map for Claude Code (read this first)
+**Core vs optional.** The **core product** (a usable, publishable, evidence-traced map from interviews and documents) is phases **P0a–P7 plus P4b**. Everything after is valuable but optional and can be switched off in Settings without breaking the core: P4c (sensemaking and interview tools), P8 (images), P9 (matrix, registers), P10 (gap analysis), **P10b (system records, value, disposition)**, P11 (leadership), P12 (live run and handover). Build in phase order; do not start an optional phase while a core acceptance criterion fails.
+
+| Phase | Sections to read before building |
+|---|---|
+| P0a–P0b | §2, §3.1–3.4, §3.10, §5.1–5.3, §6, Appendices C–D |
+| P1–P2 | §3.5, §3.7 (S0), §3.8 (G10), §5.4 (Home, Setup, Sources, Interview → Templates), Appendix F.9 |
+| P3–P4 | §3.6–3.8, Appendix A (A.1–A.6), Appendix E |
+| P4b–P4c | §3.12, Appendices A.8–A.10, E, F |
+| P5–P7 | §3.9, §5.5–5.9, §7.2–7.3 |
+| P8–P9 | §5.4 (Matrix, Registers), §5.7.7 (Images) |
+| P10 | §3.11, Appendix A.7 |
+| P10b | §3.13–3.15, Appendix A.11 |
+| P11–P12 | §5.4 (Leadership), §6.3, §7.1 |
+
+**If the PRD is updated during the build:** changes are additive unless stated in "What's new". Claude Code compares the new PRD with the last committed version (`git diff PRD_ProcessMapStudio.md`), writes an impact table in DECISIONS.md (change → affected phases and files → action), finishes or safely closes the increment in progress, then continues in phase order.
 
 ---
 
@@ -31,8 +58,9 @@ Once the build is finished, the **README** on your GitHub repository page is you
 - An app on your own computer. For one process, you upload an SME interview transcript, SOPs, job descriptions and supporting documents.
 - Claude Opus reads everything and **drafts** a current-state swimlane map: activities, roles, RACI, decision rights, approvals, timings, KPIs and constraints. Every element links to the exact passage it came from.
 - The app **checks the AI's work before you see it**. Any claim whose quote, number or source reference can't be found in your documents is thrown out and listed for you, never drawn on the map.
-- A calm, modern **review workbench**: the whole process on one screen, five "lenses" that re-read the same map by source agreement, confidence, time or type of work, one click from any step to its proof, and a guided flow that always takes you to the next step needing attention.
+- A calm, modern **review workbench**: the whole process on one screen, six "lenses" that re-read the same map by source agreement, confidence, time, type of work or measured volume and wait, one click from any step to its proof, and a guided flow that always takes you to the next step needing attention.
 - An **interview guide** tailored to each process that blends focused process questions with natural, story-based conversation, and a **coverage report** afterwards showing what still needs asking. Each question is designed to produce specific evidence, so the app can turn the SME's actual words into the workflow as it is really performed. The app keeps the SME's stories, rules of thumb and own words, and lets you switch the map between **as done** and **as documented**.
+- Optionally, upload **system records** (event-log exports from SAP, Salesforce, Workday or similar) to see real volumes, waiting times, rework and hidden work on every step, put an indicative value on each step, and decide per step whether to delete, automate, use AI, keep a human approver, or keep it human.
 - When you want a second opinion, run an optional **gap analysis**: how the SME's account differs from the SOPs and job descriptions, and how the process compares with published best practice in the same or adjacent industries. Findings come with their evidence or sources, and nothing changes on the map unless you accept it.
 - Nothing is published until you have reviewed every element and the quality card is fully green. The published map is interactive and exports to Markdown, JSON, CSV and a single-file HTML map. Images appear only inside the app.
 
@@ -54,7 +82,7 @@ Single user in v1: Eric, as process designer and sole validator, on a desktop or
 5. Source calibration: five source states, six divergence types, job-description accountability test.
 6. Merge adjudication of similar steps across sources.
 7. Deterministic quality lint and the publish quality card.
-8. The full UI in §5: app shell with guided navigation, home screen with first-run checklist, Setup, Interview (guide and coverage report), Sources (with source viewer and speaker mapping), Draft (live stage progress), Review workbench (map with five lenses, table view, detail panel, source viewer, quality card, bottom tabs, walkthrough strip), Published, Matrix, Gap analysis (optional), Registers, Leadership, Exports, Settings.
+8. The full UI in §5: app shell with guided navigation, home screen with first-run checklist, Setup, Interview (guide and coverage report), Sources (with source viewer and speaker mapping), System records (optional), Draft (live stage progress), Review workbench (map with six lenses, table view, detail panel, source viewer, quality card, bottom tabs, walkthrough strip), Published, Matrix, Gap analysis (optional), Registers, Leadership, Exports, Settings.
 9. Two-step lifecycle: Draft → Published. Published versions are read-only; reopening creates a new draft version.
 10. Step images: upload, app-suggested images extracted from PDFs, privacy gate, walkthrough strip. Interactive UI only.
 11. Alignment matrix, registers (K-RISK, AI flags, constraints, external practice, validation questions, rejected claims), cause library.
@@ -64,6 +92,7 @@ Single user in v1: Eric, as process designer and sole validator, on a desktop or
 15. Private GitHub repository with a non-technical README (setup, start, update, move, back up, troubleshoot), double-click launchers, automatic database backup before updates, and a secret check that keeps keys and data out of GitHub.
 16. **On-demand gap analysis** (§3.11): A. documents vs practice; B. external best-practice research via web search from an approved brief. Advisory only; findings dispositioned by Eric.
 17. **Work-Sense elicitation and sensemaking** (§3.12): downloadable standard interview templates (60 minutes; Word and Markdown), interview guide and question bank, question-anchored verbatim-to-workflow translation, As done / As documented views, coverage report, account tagging, stories, know-how (ASHEN), work type (Cynefin-informed), reality-gap findings, three-tier codebook, glossary and emerging themes.
+18. **System records, value and disposition** (§3.13–3.15, optional): event-log upload with data request template, import wizard and privacy safeguards; metrics; alignment to steps; value calculator; step disposition. Wider artefact intake (.xlsx, .csv, .eml).
 
 ### 1.4 OUT of scope (explicitly not built now)
 - Raw audio upload and transcription of any kind.
@@ -75,6 +104,8 @@ Single user in v1: Eric, as process designer and sole validator, on a desktop or
 - Dark-mode colour values (token names are fixed now; the dark palette is a later value swap).
 - Automatic application of any gap-analysis finding to the map (every finding needs Eric's disposition).
 - Web research that sends transcripts, documents or map content (only the approved generic brief is sent).
+- Live connectors to SAP, Salesforce, Workday or other systems; background agents in client systems; real-time process mining; any person-level analytics from system data.
+- Outlook `.msg` files (save as `.eml` or PDF instead; the common `.msg` parser is GPL-licensed).
 - AI-opportunity scoring and prioritisation (Eric's existing skills handle this from the exports).
 - BPMN export, "ask the map", role-network metrics, cross-engagement pattern suggestions (§10).
 
@@ -107,6 +138,7 @@ Non-negotiable. Any conflict between a later instruction and these constraints m
 21. **Private repository, plain-language README.** Code is pushed only to Eric's designated private GitHub repository. README.md follows Appendix D, is written for a non-technical reader, and is updated in the same increment as any change to installing, starting, updating or configuring the app.
 22. **Gap analysis is advisory and on demand.** It runs only when Eric starts it and never changes the map by itself. Internal findings carry evidence from every side they compare. External findings carry sources actually returned by the web search in the same request, pass the GX checks and the verifier, and are always provenance `R`. External research sends only an approved brief that has passed the confidentiality scan; transcripts, documents and map content are never sent to web search.
 23. **Sensemaking integrity (§3.12.9).** The SME's own meaning comes first: SME signifiers and terms are observed data; the model's interpretations of stories, patterns and work types are inferred and shown separately. Stories told once are kept and flagged, not discarded. Interview claims are tagged official, lived or unclear, and the interview is always labelled work-as-disclosed. Work types need quoted evidence cues. Natural talent and know-how are recorded at role level only. All UI copy, prompts and exports use non-blaming vocabulary. The As done view shows only what lived accounts or traces support; gaps are shown as "not described", never filled with invented steps.
+24. **System data describes the process, never people.** System-record metrics are computed and shown at role and step level only; raw user IDs from logs are converted to roles during import and never stored; no metric is shown for fewer than 5 cases; a log is imported only after Eric confirms the data owner approved the extract. Every value figure carries an evidence label (measured, estimated, mixed or assumed), and scenarios are labelled "potential, not committed".
 
 
 ---
@@ -146,9 +178,10 @@ Non-negotiable. Any conflict between a later instruction and these constraints m
 
 **Services (capability blocks, not one "do everything" function):**
 - `ai_service`: `call_claude(stage_id, prompt_version, blocks, output_schema) -> Result[dict]`; `list_models()`; `get_model(model_id)`; `call_claude_with_web_search(brief, max_uses, domain_policy) -> Result[ResearchResponse]` (answer text, citations, search results, search count, tool errors, usage). The only module that imports the `anthropic` SDK.
-- `parsing`: `parse_docx`, `parse_pdf_text`, `split_pdf_page`, `extract_pdf_images`, `parse_transcript_text`, `parse_vtt`, `parse_srt`, `detect_speakers` → segments with anchors.
+- `parsing`: `parse_docx`, `parse_pdf_text`, `split_pdf_page`, `extract_pdf_images`, `parse_transcript_text`, `parse_vtt`, `parse_srt`, `parse_xlsx` (openpyxl; anchors = sheet!cell), `parse_eml` (standard library `email`; headers' names added to redaction terms), `detect_speakers` → segments with anchors.
 - `chunking`: `chunk_transcript(segments, window_min, overlap_min)`, `chunk_document(segments, max_pages)`.
 - `grounding`: `verify_segments`, `verify_quote`, `verify_numbers`, `verify_roles`, `scan_redaction_terms`, `redact_text`, `detect_instruction_like`, `normalise_text`, `verify_citations` (§3.8, §3.11).
+- `mining`: `parse_log`, `suggest_column_map`, `compute_metrics`, `compute_variants`, `suggest_alignment`; `value`: `step_value`, `scenario`; `disposition`: `suggest_disposition`.
 - `gap`: `build_brief`, `scan_brief`, `classify_source_tier`, `severity_internal`, `severity_external`, `render_gap_report_md`.
 - `sensemaking`: `match_questions`, `pretag_markers`, `pretag_account_type`, `derive_view_membership`, `validate_work_type_cues`, `knowledge_risk`, `build_coverage_report`, `scan_banned_words`.
 - `calibration`: `assign_source_state(stances)`, `jd_accountability_test(...)`, `derive_confidence(...)`.
@@ -193,16 +226,16 @@ process-map-studio/
       main.py  config.py  db.py
       domain/        models.py  enums.py  result.py
       routers/       one module per resource
-      actions/       engagements.py sources.py review.py publish.py images.py settings.py exports.py views.py gap.py interview.py
+      actions/       engagements.py sources.py review.py publish.py images.py settings.py exports.py views.py gap.py interview.py system_records.py value.py
       pipeline/      s0_normalise.py s1_extract.py s2_canonicalise.py s3_calibrate.py s3b_verify.py s4_assemble.py s3c_sensemaking.py s5_questions.py ig_generate.py ga_internal.py gb_external.py jobs.py
-      services/      ai_service.py parsing.py chunking.py grounding.py calibration.py lint.py quality.py layout.py exports.py images.py settings_store.py gap.py sensemaking.py
+      services/      ai_service.py parsing.py chunking.py grounding.py calibration.py lint.py quality.py layout.py exports.py images.py settings_store.py gap.py sensemaking.py mining.py value.py disposition.py
       repositories/  engagements.py sources.py versions.py elements.py images.py audit.py jobs.py ai_calls.py gap.py
-      prompts/       S0_ocr_page.md S1_extract_interview.md S1_extract_document.md S1_extract_jd.md S2_canonicalise.md S3_calibrate.md S3b_verify.md S4_assemble.md S5_questions.md R_repair.md GA_internal.md GA_verify.md GB_research.md GB_structure.md GB_verify.md S3c_worktype.md IG_generate.md codebook.md marker_lexicon.json question_bank.json
+      prompts/       S0_ocr_page.md S1_extract_interview.md S1_extract_document.md S1_extract_jd.md S2_canonicalise.md S3_calibrate.md S3b_verify.md S4_assemble.md S5_questions.md R_repair.md GA_internal.md GA_verify.md GB_research.md GB_structure.md GB_verify.md SR_align.md S3c_worktype.md IG_generate.md codebook.md marker_lexicon.json question_bank.json
       schemas_ai/    one JSON schema per stage
     migrations/
     tests/
       unit/ services/ actions/ architecture/ golden/ latency/ live/ (manual only)
-      fixtures/engagement_load_control/   fixtures/mock_responses/<stage_id>/   fixtures/traps/   fixtures/gap/   fixtures/sensemaking/
+      fixtures/engagement_load_control/   fixtures/mock_responses/<stage_id>/   fixtures/traps/   fixtures/gap/   fixtures/sensemaking/   fixtures/landscape/   fixtures/system/
   frontend/
     public/fonts/  IBM Plex Sans and Mono woff2
     scripts/       generate-tokens.mjs
@@ -225,6 +258,8 @@ process-map-studio/
 | `WEB_SEARCH_MAX_USES_CAP` | `20` | Upper limit on searches per research run |
 | `OWNER_NAME` | `Owner` | Name shown as validator on published versions and exports; set in Settings |
 | `APP_PORT` | `8000` | Local port for the app |
+| `CURRENCY` | `SGD` | Currency for the value calculator; set in Settings |
+| `DEFAULT_TIMEZONE` | `Asia/Singapore` | Default time zone for system-log import |
 | `DATA_DIR` | `./data` | Storage root |
 
 **Settings screen:**
@@ -257,7 +292,7 @@ All tables have `id` (UUID string) and `created_at`.
 | `unknowns` | version_id, source_id, question, segment_ids (json) — gaps the model flagged instead of guessing |
 | `map_versions` | engagement_id, label, state (B.13), parent_version_id, published_at, published_by, change_log (json), lint_report (json), quality_card (json), codebook_version |
 | `phases` | version_id, name, time_window, sort_order |
-| `elements` | version_id, stable_key, kind (B.2), label, lane_role_id, phase_id, work_min, wait_min, duration_text, complexity (L/M/H/null), kpi, decision_mechanism (B.6), decider_role_id, rule_or_threshold, escalation, handoff_in, handoff_out, provenance (B.3), r_reference, source_state (B.4), divergence_types (json, B.5), k_risk, confidence (0–1, derived), confidence_breakdown (json list of {label, delta}), needs_check (bool), review_status (B.7), work_type (B.29), constraint_type (B.30), work_type_basis (json: cues with segment IDs), sme_work_type_signifier (nullable), work_type_status (proposed/confirmed/not_classified), practice_described (bool), view_membership (B.35), variants (json: {done:{…}, documented:{…}} for owner, threshold, time, trigger), level (B.39), parent_element_id (nullable; the landscape activity a practice step belongs to) |
+| `elements` | version_id, stable_key, kind (B.2), label, lane_role_id, phase_id, work_min, wait_min, duration_text, complexity (L/M/H/null), kpi, decision_mechanism (B.6), decider_role_id, rule_or_threshold, escalation, handoff_in, handoff_out, provenance (B.3), r_reference, source_state (B.4), divergence_types (json, B.5), k_risk, confidence (0–1, derived), confidence_breakdown (json list of {label, delta}), needs_check (bool), review_status (B.7), work_type (B.29), constraint_type (B.30), work_type_basis (json: cues with segment IDs), sme_work_type_signifier (nullable), work_type_status (proposed/confirmed/not_classified), practice_described (bool), view_membership (B.35), variants (json: {done:{…}, documented:{…}} for owner, threshold, time, trigger), level (B.39), parent_element_id (nullable; the landscape activity a practice step belongs to), disposition (B.41, nullable), disposition_suggested (B.41), disposition_reason, risk_flag (none/financial/safety/regulatory), time_override_min (nullable, R), volume_override_month (nullable, R) |
 | `element_claims` | element_id, claim_id (only verified claims) |
 | `raci` | element_id, role_id, letter (B.10), contested (bool), provenance |
 | `edges` | version_id, from_element_id, to_element_id, kind (B.8), label, provenance, sequence_basis (B.34), typical (bool; for judgment-step typical responses), view_membership (B.35), information_payload (nullable: what passes across, in SME terms) |
@@ -270,6 +305,13 @@ All tables have `id` (UUID string) and `created_at`.
 | `cause_library` | engagement_id, element_stable_key, divergence_type, pattern, inferred_cause, cause_type, provenance, validation_result (pending/confirmed/refuted) |
 | `audit_log` | version_id, actor, action, target_type, target_id, before (json), after (json) |
 | `jobs` | engagement_id, type, status (queued/running/done/failed), stage, progress, message, error |
+| `event_logs` | engagement_id, name, system, file_ref, timezone, window_start, window_end, column_map (json), validation_report (json), approved_by_role, approved_at, status (uploaded/mapped/imported/failed) |
+| `events` | log_id, case_id, activity, ts_start, ts_end (nullable), role_id (nullable), case_attributes (json) — **no resource or user ID column** |
+| `case_key_maps` | engagement_id, from_log_id, to_log_id, from_case_id, to_case_id |
+| `activity_alignment` | log_id, activity, element_id (nullable), status (B.43), reason, confirmed_at |
+| `mining_metrics` | log_id, scope (activity/transition/case/variant/role), key, metrics (json: counts, median, p90, rework, handoffs, exception share), case_count |
+| `role_costs` | engagement_id, role_id, hourly_cost, currency, note |
+| `value_assumptions` | engagement_id, disposition (B.41), reduction_pct, note |
 | `ai_calls` | job_id, stage_id, prompt_version, model, input_tokens, output_tokens, duration_ms, status, input_hash, web_searches |
 | `gap_analyses` | version_id, mode (B.21), status (B.27), brief (json), brief_confirmed (bool), brief_scan (json), settings (json: max_searches, domain policy, recency_years), model, search_count, usage (json), created_at, completed_at, finalised_at |
 | `gap_findings` | analysis_id, section (fact/interpretation/recommendation), finding_type (B.22 or B.23), title, text, element_ids (json), evidence (json: segment IDs and quotes per side, or citation refs), basis, provenance (O/I/R), severity (B.26), evidence_strength (strong/weak/dated), comparison (absent/different), confidence, verification_status (B.18), rejection_guardrail (B.20), rejection_reason, verifier_verdict (B.19), disposition (B.25), disposition_note, created_item_ref, gap_class (B.32, internal findings) |
@@ -357,7 +399,7 @@ The export also carries every §3.5 element and edge field added for §3.12 (lev
 
 **Refresh draft from sources** (after Eric adds a source) reruns S1–S5 but writes only to elements still in `draft`. Locked elements are untouched; new conflicts with locked elements become validation questions.
 
-**Lint rules** (`services/lint.py`). Hard failures block publishing: L1 every element has provenance; L2 every O/I element has ≥1 verified evidence link; L3 every R element has `r_reference`; L4 every decision has ≥2 labelled outgoing edges; L5 every approval has approve and reject/rework edges; L6 every activity has exactly one R and its lane equals that role; L7 every approval's lane equals its A role (if contested: the SOP's A, with divergence `ownership`); L8 every decision's lane equals its decider; L9 every element except start is reachable from start and every element except end has an outgoing edge; L10 every AI flag has component, input, output, handoff and basis, and none marked automate sits on a judgment step or on a step whose work type is complex or chaotic; L11 exactly one A per element, or several all marked contested. Warnings: L12 more than 25 steps or 6 lanes; steps without time; steps without KPI where expected; AI flags outside 3–7; more than 3 edge crossings; edges whose only sequence basis is narration order (each also raises a validation question); decisions, approvals and judgment steps without a confirmed work type; stories fewer than three (one good, one bad, one surprising).
+**Lint rules** (`services/lint.py`). Hard failures block publishing: L1 every element has provenance; L2 every O/I element has ≥1 verified evidence link; L3 every R element has `r_reference`; L4 every decision has ≥2 labelled outgoing edges; L5 every approval has approve and reject/rework edges; L6 every activity has exactly one R and its lane equals that role; L7 every approval's lane equals its A role (if contested: the SOP's A, with divergence `ownership`); L8 every decision's lane equals its decider; L9 every element except start is reachable from start and every element except end has an outgoing edge; L10 every AI flag has component, input, output, handoff and basis, and none marked automate sits on a judgment step or on a step whose work type is complex or chaotic; no step with disposition Automate or AI-assisted lacks a valid AI flag, and no complex or chaotic step has either disposition; L11 exactly one A per element, or several all marked contested. Warnings: L12 more than 25 steps or 6 lanes; steps without time; steps without KPI where expected; AI flags outside 3–7; more than 3 edge crossings; edges whose only sequence basis is narration order (each also raises a validation question); decisions, approvals and judgment steps without a confirmed work type; stories fewer than three (one good, one bad, one surprising).
 
 ### 3.8 Grounding and hallucination guardrails
 The model is allowed to read and structure; it is not allowed to add. Twelve layered controls, most of them deterministic so they can be tested offline:
@@ -529,8 +571,8 @@ Cynefin® and SenseMaker® are registered trademarks of The Cynefin Company. The
 | 6 | **Meaning belongs to the SME first** (emic before etic) | The SME's own descriptions of a story (how often, who decided, what kind of situation) are recorded as observed; the model's interpretation is recorded separately as inferred; the SME's terms go in a glossary |
 | 7 | **Match the method to the work** | Each step and decision gets a work type (Cynefin domain) that changes how it is mapped, documented and flagged for automation |
 
-#### 3.12.2 Five lenses the app extracts from every interview
-| Lens | Question it answers | What is stored | Where it shows |
+#### 3.12.2 Five evidence strands the app extracts from every interview
+| Strand | Question it answers | What is stored | Where it shows |
 |---|---|---|---|
 | **Flow** | What happens, who does it, in what order, where it branches | Steps, edges (with sequence basis), RACI, time, KPIs | The map |
 | **Stories** | What happened in real cases, good and bad | Fragments: anchored micro-narratives with the SME's own signifiers | Panel "Stories"; Stories register |
@@ -650,6 +692,87 @@ The map can be drawn two ways from the same graph. **As done** (default) shows t
 - **Layout** is computed per view (`?view=done|documented`); both are deterministic and golden-tested (G2a, G2b). Cycle time in the header is computed per view.
 - **Quality and publishing:** each view must independently pass the flow checks (start reachable, every exit labelled, no orphans); `gap` connectors are warnings, not failures, and each raises a validation question. Both views are published together; exports carry both (§7.3).
 
+### 3.13 System records module (optional): event logs from ERP, CRM and HR systems
+**Purpose.** Add the quantitative trace of work-as-done that interviews and documents cannot give: how many cases pass through each step, how long they wait, how often work loops back, which variants exist, and where the recorded flow drifts from both the documented and the described process. Interviews give the *why*, documents give the *should*, system records give the *what* at scale. The module is optional: the app delivers full value without it.
+
+**Scope (v1).** Batch exports uploaded by Eric (CSV or Excel). **No live connectors** to SAP, Salesforce, Workday or other systems, no background agents in client systems, no person-level analytics. No external process-mining library is used (PM4Py is AGPL; constraint 19); the calculations below are simple and built in `services/mining.py`.
+
+#### 3.13.1 Inputs
+| Column | Required | Notes |
+|---|---|---|
+| `case_id` | Yes | The work item (e.g. flight, purchase order, contract) |
+| `activity` | Yes | The recorded event or status change, as named in the system |
+| `timestamp` | Yes | Event time (start time when `end_timestamp` is present) |
+| `end_timestamp` | No | If present, work time and wait time can be separated |
+| `resource` | No | User ID or name in the system; **mapped to a role at import and then discarded** (§3.13.3) |
+| `role` | No | Preferred over `resource` when the extract can provide it |
+| `system` | No | Source system name (for multi-system logs) |
+| `case_attributes` | No | Any extra columns (e.g. region, product, amount band) kept as filters |
+- Several logs per engagement are allowed (one per system). A **case-key mapping** links logs where the same case has different IDs; without it, each log is analysed separately and stitching across systems relies on alignment to the map (§3.13.4).
+- Recommended window: 3–6 months; minimum 4 weeks. Size target: up to 1 million events per engagement.
+
+#### 3.13.2 Data request template (downloadable, like the interview templates)
+Word and Markdown, plus a CSV header file, generated deterministically:
+1. Purpose in plain language ("to measure volumes and waiting times in [process]; no individual performance analysis").
+2. Process scope and the start and end events (from the scope card).
+3. Date window requested.
+4. The column table above, marking required fields, with one sample row.
+5. Privacy requirements: provide `role` rather than user IDs where possible; if user IDs are included they are converted to roles on import and discarded; no free-text comment fields; no customer personal data.
+6. Format (CSV UTF-8 or Excel), one file per system.
+7. Data owner approval box (name, role, date) and the retention promise ("stored only on the analyst's computer and deleted with the engagement").
+
+#### 3.13.3 Import wizard (job; deterministic)
+1. **Upload** → header auto-match by name similarity (e.g. "Case ID", "Order No." → `case_id`); Eric confirms or corrects each mapping.
+2. **Timestamp parsing** with format detection; time zone set per log (default from Settings).
+3. **Resource → role mapping:** a table of distinct resource values with suggested roles (from existing roles and any `role` column); Eric maps each to a role or "unknown role". Raw resource values are held only in memory during the import and **never written to disk or the database**.
+4. **Validation report** (plain language): rows read · cases · activities · date range · rows dropped and why (unparseable time, missing case or activity, duplicates) · cases with a single event · events outside the window. Import is refused if required columns are missing or more than 20% of rows are dropped (Eric can see why and fix the extract).
+5. **Approval confirmation:** Eric ticks "The data owner approved this extract for this purpose" and enters the approver's role. Without it the log stays unimported.
+6. Precompute metrics (§3.13.5) into tables so every metric endpoint meets p95 < 200 ms.
+
+#### 3.13.4 Alignment of system activities to map steps
+- Deterministic first pass: label similarity between log activities and element labels/glossary terms, plus role match; then an AI pass (`SR_align.md`) may propose matches **only between existing log activity names and existing elements**, each with a reason; matches are grounded (no new names) and never applied without Eric's confirmation.
+- Eric confirms in an **alignment table**: one or more log activities → one step; a log activity → **none** (becomes a *hidden work* candidate); a step → **no system record** (becomes *offline / not recorded*).
+- Aligned steps receive a **system trace** evidence item: log name, window, cases, and metrics (no quotes). System trace is a **trace** layer (§3.12.7): it can corroborate or contradict the lived and documented accounts.
+- System-recorded order between aligned steps gives edges `sequence_basis = system_trace`, the strongest basis (Appendix E tier 2 updated).
+
+#### 3.13.5 Metrics (deterministic formulas; `services/mining.py`)
+| Metric | Definition |
+|---|---|
+| Volume | Events and distinct cases per activity, per month |
+| Transition | For consecutive events A→B in a case: count, median and 90th-percentile elapsed time |
+| Work and wait | With `end_timestamp`: work = end − start; wait = next start − end. Without it: elapsed time between events, labelled **"working and waiting (not separable)"** |
+| Case cycle time | First to last event per case: median, 90th percentile |
+| Variants | Distinct ordered activity sequences per case; top 10 by frequency with % of cases and cumulative coverage |
+| Rework | Share of cases where an activity occurs more than once |
+| Handoffs | Consecutive events in a case performed by different roles |
+| Exception share | Share of cases not following the most common variant |
+| Minimum group size | A metric is shown for a step, role or filter only when it is based on **at least 5 cases**; otherwise "too few cases to show" |
+
+#### 3.13.6 What the module adds to the rest of the app
+- **New reality-gap findings** in Analysis A (B.22): `hidden_work` (log activity with no matching step), `offline_work` (described or documented step with no system record), `sequence_drift` (system order differs from As done or As documented), `estimate_gap` (SME or SOP time vs measured median, flagged when they differ by more than 50%), `measured_rework` (rework above 10% of cases), and stronger evidence for `dead_control_candidate` (documented control with no system record and no SME mention). Severity rules extend §3.11.1: hidden work or sequence drift on a decision or approval is High.
+- **"Volume and wait" lens** (sixth map lens): lens line "1,240 cases/mo · wait 4 h (median)" for aligned steps; "No system data" in muted text otherwise.
+- **Panel section "System data"** (4e): volume, cases, median and 90th-percentile wait and work, rework %, variants passing through, data window and log name, and the comparison "SME estimate ~10 min · SOP 10 min · measured median 14 min".
+- **Bottom tab "Variants"**: top variants with % of cases, each comparable to the As done and As documented paths; a **Hidden work** list with **Add as step** (creates an `O` element with system-trace evidence).
+- **As done view:** aligned steps show system-backed evidence; system order outranks narration order.
+- **Leadership view:** quantified bottlenecks (volume × wait per phase) replace estimates where data exists, each figure labelled measured or estimated.
+
+### 3.14 Value calculator (optional)
+- **Inputs:** a loaded hourly cost per role (Eric enters; currency in Settings); per step, time per case and volume per month taken in this order of preference: measured from system records → SME estimate (verified quote) → Eric's override (`R`, with a note).
+- **Outputs per step and phase:** hours per month and cost per month, each labelled **Measured**, **Estimated** or **Mixed**.
+- **Scenarios:** an expected time reduction per disposition (defaults, all editable and shown as assumptions: Delete 100% · Automate (rules) 80% · AI-assisted 50% · Human approves 30% · Keep human 0%) gives potential capacity released (hours) and cost per month.
+- **Presentation rules:** facts (measured figures), interpretation (estimates) and recommendation (scenarios) are visually separate; scenarios are labelled "potential, not committed"; no figure is shown without its evidence label. Money is never shown per person.
+
+### 3.15 Step disposition (the four-bucket decision, plus "keep human")
+Each step gets a disposition, suggested deterministically and decided by Eric:
+| Disposition | Meaning | Suggested when |
+|---|---|---|
+| **Delete** | Remove the step | Gap class `obsolete_rule`; or a documented control with no system record, no SME mention and no stated purpose (`dead_control_candidate`) |
+| **Automate (rules)** | Plain, rule-based automation | Work type clear and mechanism rule-based, not an approval |
+| **AI-assisted** | An AI agent prepares or decides with expert oversight | Work type complicated, or a clear step needing unstructured-document reading |
+| **Human approves** | AI or automation prepares; a human authorises | Approvals; steps with financial, safety or regulatory risk (risk flag on the element) |
+| **Keep human** | Human judgment, with decision support at most | Work type complex or chaotic; knowledge risk High with heuristics or experience dominant |
+Rules: Automate and AI-assisted require a valid AI flag (L10); complex and chaotic steps can never be Automate or AI-assisted; the suggestion shows its reason; Eric's choice is audited. Dispositions feed the value calculator, the AI-flag register, the leadership Recommendation panel and the Master Process Map.
+
 ---
 
 ## 4. API contract (mirror into API_CONTRACT.md before coding each endpoint)
@@ -669,7 +792,7 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | | POST `/settings/test-connection` | — | `{key_valid, model_available, capabilities:{pdf_input, structured_outputs}, message}` |
 | | GET `/settings/usage` | `?limit` | `[ai_calls rows]` |
 | Engagements | POST · GET `/engagements`; GET · PATCH · DELETE `/engagements/{id}` | scope card fields | engagement; list items add `{latest_version:{label,state}, review_progress:{reviewed,total}, sources_count, updated_at}`; DELETE removes all files |
-| | GET `/engagements/{id}/readiness` | — | `{key_set, transcripts_ready, documents_ready, speakers_unmapped, draft_exists, blockers_count, nav:{setup,interview,sources,draft,review,published,matrix,gap_analysis,registers,leadership,exports: done\|attention\|not_started}, next_step, missing:[plain-language strings]}` |
+| | GET `/engagements/{id}/readiness` | — | `{key_set, transcripts_ready, documents_ready, speakers_unmapped, draft_exists, blockers_count, nav:{setup,interview,sources,system_records,draft,review,published,matrix,gap_analysis,registers,leadership,exports: done\|attention\|not_started}, next_step, missing:[plain-language strings]}` |
 | Sources | POST `/engagements/{id}/sources` (multipart: file, kind, version_date, owner, controlled_copy) | | source; parsing runs as a job |
 | | GET `/engagements/{id}/sources`; PATCH · DELETE `/sources/{sid}` | | |
 | | GET `/sources/{sid}/segments` | `?page&uncited_only&raw` (`raw=1` only for the correction editor) | `{segments:[{id, anchor, speaker_role, text (redacted), cited, instruction_like}], coverage_pct}` |
@@ -695,11 +818,22 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | Publish | POST `/versions/{vid}/publish` | — | `200 version` or `409 PUBLISH_BLOCKED` with `details.blockers: [{type: unreviewed_element \| needs_check \| pending_merge \| suggested_image \| lint_failure \| quality_check, id, element_id, message}]` |
 | | POST `/versions/{vid}/reopen` | — | new draft (v1.0 → v1.1) |
 | Views | GET `/versions/{vid}/alignment-matrix` | | `[{element_id, label, sop, interview, jd, artefact, state, divergence_types}]`, cells `supports \| contradicts \| silent \| not_applicable` |
-| | GET `/versions/{vid}/registers` | | `{k_risk, ai_flags, constraints_by_cause, external_practice, questions, rejected_claims, stories, glossary, themes, preserve_improve}` |
+| | GET `/versions/{vid}/registers` | | `{k_risk, ai_flags, constraints_by_cause, external_practice, questions, rejected_claims, stories, glossary, themes, preserve_improve, hidden_work, dispositions}` |
 | | GET `/versions/{vid}/leadership` | | `{facts:{phases:[{phase_id,name,work_min,wait_min,rework_loops,handoffs,divergence_counts}]}, interpretation:{causes:[{cause_type,systemic,phases,evidence_weight,confidence,element_ids}]}, recommendation:{recoverable_wait_min, rework_loops, ai_flags, decisions_needed:[{cause_type,text}]}}` (Leadership screen, §5.4) |
 | | PUT `/versions/{vid}/leadership/decisions` | `[{cause_type, text}]` | saved "Decision needed" lines |
 | Images | POST `/elements/{eid}/images` (multipart: file, caption, image_type, redaction_confirmed) | | image (metadata stripped); 422 if a field is missing or redaction not confirmed |
 | | GET `/elements/{eid}/images`; PATCH `/images/{iid}` (`status`, caption); DELETE `/images/{iid}`; GET `/images/{iid}/file` | | |
+| System records | POST `/engagements/{id}/event-logs` (multipart: file, name, system, timezone) | | log (`uploaded`) + suggested column map |
+| | PUT `/event-logs/{lid}/column-map` · PUT `/event-logs/{lid}/role-map` | column → B.40 field / resource value → role_id (resource values held in the import session only) | log |
+| | **Job** POST `/event-logs/{lid}/import` | `{approved_by_role, confirm_approval: true}` | job → validation report; `409 APPROVAL_REQUIRED` without confirmation; `422` if required columns are missing or > 20% of rows dropped |
+| | GET `/event-logs/{lid}`; DELETE `/event-logs/{lid}` | | log with validation report / removes events and metrics |
+| | GET `/event-logs/{lid}/metrics?scope=activity\|transition\|case\|variant\|role` | | precomputed metrics (only groups with ≥ 5 cases) |
+| | GET · PUT `/event-logs/{lid}/alignment`; **AI** POST `/event-logs/{lid}/alignment/suggest` | `[{activity, element_id\|null, status}]` | alignment table |
+| | POST `/engagements/{id}/case-key-maps` (multipart CSV) | | mapping count |
+| | GET `/templates/data-request?format=docx\|md\|csv` | — | data request template (§3.13.2; no engagement needed) |
+| Value and disposition | GET · PUT `/engagements/{id}/role-costs`; GET · PUT `/engagements/{id}/value-assumptions` | | rows |
+| | GET `/versions/{vid}/value` | `?view=done` | per step and phase: hours, cost, evidence label; scenario totals |
+| | PUT `/elements/{eid}/disposition` | `{disposition, note}` | element + audit row (Automate and AI-assisted require a valid AI flag; refused for complex or chaotic steps) |
 | Cause library | GET `/engagements/{id}/cause-library`; PATCH `/cause-library/{cid}` | validation_result | entry |
 | Gap analysis | **AI** POST `/versions/{vid}/gap-analyses/internal` | — | job → draft report |
 | | POST `/versions/{vid}/gap-analyses/external` | — | `201` analysis with a generated brief (no AI, nothing sent) |
@@ -779,7 +913,7 @@ Rule: meaning is never carried by colour alone. Every state pairs colour with sh
 ### 5.3 App shell, navigation and global patterns
 **Top bar (all screens):** product name "Process Map Studio" · current engagement name, with an "Illustrative fixture" note when the fixture engagement is open · engagement navigation · **Engagements** · **Settings**.
 
-**Engagement navigation doubles as a guided path:** Setup · Interview · Sources · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Gap analysis is labelled **Optional** and never carries the "Next" chip. Each item has a small status glyph from `GET /engagements/{id}/readiness`: done (filled), needs attention (coral ring with a count, for example unresolved speakers or blockers), not started (hollow). The next recommended item carries a subtle "Next" chip. The nav scrolls horizontally if narrow.
+**Engagement navigation doubles as a guided path:** Setup · Interview · Sources · System records · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Gap analysis and System records are labelled **Optional** and never carries the "Next" chip. Each item has a small status glyph from `GET /engagements/{id}/readiness`: done (filled), needs attention (coral ring with a count, for example unresolved speakers or blockers), not started (hollow). The next recommended item carries a subtle "Next" chip. The nav scrolls horizontally if narrow.
 
 **Global patterns:**
 | Pattern | Rule |
@@ -799,15 +933,16 @@ Rule: meaning is never carried by colour alone. Every state pairs colour with sh
 | **Setup** | Two cards side by side. *Mapping conventions* (codebook tier 2): granularity (coarse, standard, fine), label style (standard wording or SME wording), phase naming. *Process scope*: name, trigger, end point, in-scope roles (chips), out of scope, process KPI, industry, adjacent industries (chips), and **confidential terms** (chips: company, client, site and system names that must never be sent to web research); inline validation. *Roles and lanes*: list with drag handles for lane order, alias chips, "system role" toggle, add role; a mini lane preview shows the order as it will appear on the map | Empty roles: "Roles are also created from your sources when the draft runs. Add any you already know." |
 | **Interview** | Three tabs. **Templates** (always available): three cards — Landscape (60 min), Practice (60 min), Follow-up (30 min) — each with a one-line purpose, the minute plan and **Download Word** · **Download Markdown**. **Guide**: an **interviewee profile** (role, stakeholder group, interview type — Landscape, Practice or Follow-up — referred by, previous session), then **Generate interview guide** from the profile, scope card, roles, documents and (for follow-ups) verified quotes; the opener, the type's question sets and any role modules; the eight movements (Appendix F) as editable cards, each question showing its ID, probes and what it is for (targets), SME terms once known, artefact requests and the coverage checklist; SOP-derived probes visibly parked in M6–M7 with the note "held back to avoid anchoring the SME"; **Download guide (Word or Markdown)**. **Coverage** (after a draft or refresh): one row per dimension with a covered / thin / missing glyph and evidence count, and a ready-to-use list of follow-up questions grouped for a 20–30 minute Follow-up interview, with **Create Follow-up guide**, **Copy** and **Download .md** | No guide yet: "Generate a guide from your scope and documents, or write your own." No transcript yet: coverage explains it appears after the first draft |
 | **Sources** | Large drop zone at the top listing accepted formats (.docx .pdf .txt .vtt .srt). Registry table: file, kind (select), format, version date, owner, controlled copy (toggle), status chip (Reading… · Ready · Failed + reason), coverage % (after a draft). Row click opens the full-width **source viewer** (same component as §5.7.8, wider). For transcripts, a **Speaker mapping** card sits above the viewer: each detected speaker label → role dropdown or "Interviewer"; **Redaction list** chips below (auto-added from name-like labels, tagged "from speaker label"; add or remove terms). This card, the redaction list and the correction editor are the only places names are shown | Unsupported file: message naming accepted formats. Readiness line at the bottom: "Ready to draft" or exactly what is missing ("Map 1 speaker in interview_transcript.txt") |
+| **System records** (optional) | **Download data request template** (Word, Markdown, CSV header). Upload card per log; a stepped **import wizard**: Map columns → Time zone → Map users to roles (shows distinct resource values only during this step, with the note "These are not stored") → Validation report → "The data owner approved this extract" + approver role → Import. Log list with status, window, cases and events. **Alignment table**: each system activity with its suggested step, reason and status (Confirm · Choose another step · Hidden work); steps with no system record listed below. **Metrics** tab: volume, waits, rework, handoffs, variants (top 10 with coverage %), every figure hidden below 5 cases | No logs: explains what system records add and links to the template. Import refused: lists each reason in plain language with how to fix the extract |
 | **Draft** | *Readiness checklist* (API key set · at least one transcript ready · all speakers mapped; documents recommended — without them the As documented view and reality-gap analysis stay empty and the checklist says so), then **Create draft map**. While running: vertical stage stepper — Reading the documents · Extracting steps from each source · Checking every quote against your documents · Comparing sources · Independent verification · Building the map · Writing validation questions — each with status and elapsed time; live counters "Claims verified n · rejected n"; tokens used so far. On completion: summary card (steps drafted, needs check, rejected claims, open questions) and **Start reviewing**. **Refresh draft from sources** uses the same screen with the note "Steps you've confirmed, edited or added won't change." | Failure: plain message, **Retry**, **Copy details**. Not ready: the checklist shows what is missing with links |
 | **Review** | The workbench (§5.6–5.8) | See §5.7 |
 | **Published** | The workbench in read-only mode (§5.9) with a version picker and the change log | No published version: "Nothing published yet. Review and publish from the Review screen." |
 | **Matrix** | Toolbar: divergence-type filter chips, sort by severity. Table with sticky first column (step) and sticky header; columns SOP/manual · Interview · JD · Executed artefacts · State · Divergence. Cells use the state glyphs with text alternatives. Row click opens the Review screen with that element selected | No draft yet: empty state linking to Draft |
 | **Registers** | Segmented control: K-RISK · AI flags · Constraints by cause · External practice (R) · Validation questions · Rejected claims · Stories · Glossary · Emerging themes (Accept · Rename · Dismiss) · Preserve / Improve (by capability dimension). Each is a card list using the same components as the review tabs (§5.7.10), with "Go to step" links | Empty register: one line explaining what would appear here |
 | **Gap analysis** (optional) | Two cards side by side. **Documents vs practice**: one-line purpose, what it uses ("only your uploaded sources"), rough cost ("about n AI calls"), **Run analysis**. **External best practice**: one-line purpose, what is sent ("only the research brief you approve"), status of web research (on/off with a link to Settings), **Prepare research brief**. Below: history of analyses (date, version, mode, status, finding counts by severity). **Brief editor** (Analysis B): generic process name, industry and adjacent-industry chips, region focus, editable generic step list, research questions, source policy (max searches slider 3–20, allowed *or* blocked domains, recency limit); a live **confidentiality scan** panel highlighting each hit with **Remove**; the checkbox "This brief contains no confidential information"; **Run research**. **Progress:** plain stages (Searching · Reading sources · Checking every source · Independent verification · Comparing with your map) with "searches used n of max". **Report:** Facts · Interpretation · Recommendation sections; filters by type, severity, evidence strength and disposition; each **finding card** shows a type chip, severity glyph with text, title, text, linked-step chips (open in Review), evidence (internal: two-sided evidence cards reusing EvidenceCard; external: **source cards** with title, domain, tier chip, date, excerpt ≤ 25 words, "Open source" in a new tab), confidence and verifier chips, and disposition buttons **Add as validation question · Add to cause library · Add as step · Dismiss** (reason required). Collapsible **Rejected findings** with guardrail IDs. **Finalise report** and **Export .md** | Web research off: card explains how to turn it on. Brief blocked: the scan panel lists exactly what to remove. Search tool unavailable: "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." |
-| **Leadership** | Three columns with text headers **Facts · Interpretation · Recommendation** (distinguished by headers and dividers, not colour). *Facts*: phases as horizontal bars (work solid ink, wait coral hatch) with rework-loop and cross-lane-handoff counts and divergence counts by type. *Facts* also shows the **work-type mix** (share of steps that are clear, complicated, complex, chaotic, confused). *Interpretation*: an **Imagined vs done** panel (reality-gap findings by comparison layer and gap class, with the pressures behind them), then one card per cause type (B.9) with a **Systemic** or **Local** chip, evidence weight ("supported by 4 of 5 sources") and confidence. *Recommendation*: **Preserve / Improve** (strengths to keep and weaknesses to fix, by capability dimension), recoverable wait time, rework loops, top AI flags in the fixed five-field block, and an editable "Decision needed" line per systemic cause. Every figure links to the elements behind it | Needs a published version; otherwise explains why |
+| **Leadership** | Three columns with text headers **Facts · Interpretation · Recommendation** (distinguished by headers and dividers, not colour). *Facts*: phases as horizontal bars (work solid ink, wait coral hatch) with rework-loop and cross-lane-handoff counts and divergence counts by type. *Facts* also shows **quantified bottlenecks** (volume × wait per phase, labelled measured or estimated) and the **work-type mix** (share of steps that are clear, complicated, complex, chaotic, confused). *Interpretation*: an **Imagined vs done** panel (reality-gap findings by comparison layer and gap class, with the pressures behind them), then one card per cause type (B.9) with a **Systemic** or **Local** chip, evidence weight ("supported by 4 of 5 sources") and confidence. *Recommendation*: **Disposition summary and value** (steps and hours by disposition; scenario capacity released, labelled potential), **Preserve / Improve** (strengths to keep and weaknesses to fix, by capability dimension), recoverable wait time, rework loops, top AI flags in the fixed five-field block, and an editable "Decision needed" line per systemic cause. Every figure links to the elements behind it | Needs a published version; otherwise explains why |
 | **Exports** | Four cards: Master Process Map (.md), Graph (.json), RACI (.csv), Interactive map (.html). Each: one-line description, what is excluded ("No images, verbatim quotes or names"), the version's quality card status, **Download**. A fifth card, **Gap analysis reports**, lists finalised reports with **Download .md** | Not published or not green: the button explains "Publish a version with a green quality card first" and links to Review |
-| **Settings** | Cards: *Your name* (shown as the validator on published versions and exports). *Claude connection* (masked key field showing only the last 4 characters, Save, **Test connection** with a pass/fail list: key valid · model available · PDF input · structured outputs). *Model* (dropdown from the Models API, effort, verifier toggle with a one-line explanation: "Checks every step a second time against only its evidence. Costs more; raises accuracy."). *Web research* (off by default; switch with the explanation "Lets the optional external best-practice analysis search the web using only a brief you approve. Each search is billed by Anthropic."; **Test web search** uses one search and reports whether web search is enabled for the organisation). *AI usage* (table by call, daily totals, web searches). *About* (app version, PRD version) | Key rejected: "Your API key was rejected. Copy it again from the Claude Console and paste it here." |
+| **Settings** | Cards: *Your name* (shown as the validator on published versions and exports). *Regional* (currency for the value calculator; default time zone for system logs). *Optional modules* (switch on or off: gap analysis, web research, system records, value calculator; switching off hides the screens and lenses, never deletes data). *Claude connection* (masked key field showing only the last 4 characters, Save, **Test connection** with a pass/fail list: key valid · model available · PDF input · structured outputs). *Model* (dropdown from the Models API, effort, verifier toggle with a one-line explanation: "Checks every step a second time against only its evidence. Costs more; raises accuracy."). *Web research* (off by default; switch with the explanation "Lets the optional external best-practice analysis search the web using only a brief you approve. Each search is billed by Anthropic."; **Test web search** uses one search and reports whether web search is enabled for the organisation). *AI usage* (table by call, daily totals, web searches). *About* (app version, PRD version) | Key rejected: "Your API key was rejected. Copy it again from the Claude Console and paste it here." |
 
 ### 5.5 Map rendering
 **Approach:** render the map as absolutely positioned HTML elements inside one stage element sized to the backend canvas: lanes, phase band, nodes, orthogonal edge segments (zero-width or zero-height bordered divs), CSS-triangle arrowheads and label chips. Text stays crisp, selectable and accessible. The stage is scaled from the top-left with `transform: scale(s)`. **Fit** = `min(1, containerWidth / canvasWidth)`, floor 0.5, recalculated with a ResizeObserver. **100%** = scale 1 with horizontal scroll. `lib/edges.ts` (pure, unit-tested) converts backend edge points to segments and arrowheads. The UI never computes layout.
@@ -838,6 +973,7 @@ Rule: meaning is never carried by colour alone. Every state pairs colour with sh
 | Source state | State glyph + label | Glyph shape (§5.2) + text |
 | Confidence | 46 px bar + two-decimal value; below 0.60 the bar is coral and the value danger text | Bar length + number |
 | Time | Work bar (solid ink) + wait bar (coral 45° hatch, outlined) + "work + wait" in mono | Solid vs hatched pattern + numbers |
+| Volume and wait | "1,240 cases/mo · wait 4 h (median)" in mono for steps aligned to system records; "No system data" muted otherwise; "too few cases" below 5 | Text and numbers |
 | Work type | Work-type glyph + label (Clear · Complicated · Complex · Chaotic · Confused · Not classified); "proposed" in muted text until Eric confirms | Glyph shape + text (clear = filled square, complicated = square with inner line, complex = open circle with dot, chaotic = open triangle, confused = question mark, not classified = dashed square) |
 
 The legend adds a lens-specific key when a lens is active. The lens choice persists in the browser (`localStorage` key `pms.lens`). Lenses are view-only: they never change data, exports or the quality card.
@@ -865,7 +1001,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 
 **5.7.2 Header strip.** Four cards from the graph `process` block, for the active view (a small caption says "As done" or "As documented"): Trigger · End point · Cycle time ("~X min elapsed, ~Y min work"; if `incomplete_steps > 0`, a danger line "Incomplete: n steps without time") · Process KPI.
 
-**5.7.3 Map toolbar.** Segmented controls `Map | Table`, `View: As done · As documented` (default As done) with a **Show the other view** toggle, `Lens: Plain · Source state · Confidence · Time · Work type`, `Fit | 100%`, and a caption "n steps · n lanes · n phases". When lint L12 triggers (> 25 steps or > 6 lanes) the caption becomes danger text: "Large map: consider splitting by phase".
+**5.7.3 Map toolbar.** Segmented controls `Map | Table`, `View: As done · As documented` (default As done) with a **Show the other view** toggle, `Lens: Plain · Source state · Confidence · Time · Work type · Volume and wait`, `Fit | 100%`, and a caption "n steps · n lanes · n phases". When lint L12 triggers (> 25 steps or > 6 lanes) the caption becomes danger text: "Large map: consider splitting by phase".
 
 **5.7.4 Table view.** Columns: Step · Kind · Lane · Prov · Source state · Time · Confidence · Review. Filter chips: All steps · Needs check · Unreviewed · Contested. Row click selects (same selection state as the map). Inline editing of label, R, A, time and KPI uses the shared validation rules in `src/lib/validation.ts`. The table holds every value the map shows (it is the accessible equivalent).
 
@@ -888,6 +1024,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 4b. **Know-how** — ASHEN in five short rows (Artefacts · Skills · Heuristics · Experience · Natural talent, role level), each with anchors; the knowledge-risk level and why; decision cadence; information received, attended to, wanted, and how the decision is communicated.
 4c. **Stories** — fragment cards: SME-worded label, story type, the SME's own signifiers, "single account" tag when relevant, anchor opening the source viewer.
 4d. **Official vs lived** — when both accounts exist for the step, side by side with anchors and the SME's stated reason; otherwise "Practice not described" when only the official account exists. Where the views differ (owner, threshold, time, trigger), both values are shown with their sources. Each quote card also shows the question that prompted it (ID and wording) so Eric sees the context of every answer.
+4e. **System data** (when aligned to system records) — volume, cases, median and 90th-percentile wait and work, rework %, variants passing through, data window and log; the comparison "SME estimate · SOP · measured". **Disposition** (all steps) — suggested disposition with its reason, Eric's choice (draft only), and the step's hours and cost per month with the evidence label.
 5. **Handoff** and **Time**, side by side. Time shows work, wait, window and complexity.
 6. **KPI.**
 7. **Key challenges and constraints** — coral dot, text, "cause type · provenance · source anchor".
@@ -904,7 +1041,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 - On open, scroll the target segment into view within the panel using the panel's own `scrollTop` (not `scrollIntoView`, which would scroll the whole page).
 - Footer note: "Speaker names are replaced by roles. Quotes stay in the app and never appear in exports."
 
-**5.7.9 Quality card popover and publish blockers.** Ten rows Q1–Q10: mono ID, status glyph (filled approval circle = pass · coral open ring = fail · grey square = warning), name, detail line (danger text when failing). Footer legend. When Publish is blocked, the same popover opens titled "Publish blocked" with the blockers from `409 PUBLISH_BLOCKED details.blockers` listed above the card: each a danger-tinted row with a mono type (`unreviewed_element`, `needs_check`, `pending_merge`, `suggested_image`, `lint_failure`, `quality_check`) and a message. Clicking a row selects the element and closes the popover. Closes on Close, `Esc` or an outside click.
+**5.7.9 Quality card popover and publish blockers.** Rows Q1–Q12 (Q1–Q9 hard checks, Q10–Q12 warnings; Q12 only when system records are used): mono ID, status glyph (filled approval circle = pass · coral open ring = fail · grey square = warning), name, detail line (danger text when failing). Footer legend. When Publish is blocked, the same popover opens titled "Publish blocked" with the blockers from `409 PUBLISH_BLOCKED details.blockers` listed above the card: each a danger-tinted row with a mono type (`unreviewed_element`, `needs_check`, `pending_merge`, `suggested_image`, `lint_failure`, `quality_check`) and a message. Clicking a row selects the element and closes the popover. Closes on Close, `Esc` or an outside click.
 
 **5.7.10 Bottom tabs.**
 - **RACI matrix:** steps × roles; mono letters; A letters weight 500; `A?` in danger text; empty cells a light "·"; rejected rows faded and struck through; selected row tinted; row click selects. Caption explains `A?`.
@@ -913,6 +1050,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 - **Audit log:** mono time · action (500) · target. Newest first.
 - **Merge decisions:** competing claims side by side with quotes and similarity; **Accept merge · Keep separate · Split**.
 - **Lint:** failures then warnings; each row links to its element.
+- **Variants** (when system records exist): top variants with % of cases, each comparable to the As done and As documented paths; **Hidden work** list with **Add as step**.
 
 **5.7.11 Visual walkthrough strip.** Horizontal scroll of 200 px cards in process order: image (or a striped placeholder showing the image type), "Step n · name", caption. The selected step's card has an ink border. Header note "In-app only · never exported · metadata stripped". Hidden when there are no images.
 
@@ -928,7 +1066,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 | Publish (green) | Published mode: read-only banner, review outlines removed, actions hidden, Reopen shown |
 | Reopen | New draft version; statuses carry over as confirmed |
 
-**Keyboard:** `J` / `K` next / previous element in process order · `C` confirm · `E` edit · `R` reject · `Esc` closes the viewer, popover or edit form · `1`–`5` switch lens · `V` switches view · `?` shows the shortcut list. All shortcuts are ignored while a text input, select or textarea has focus.
+**Keyboard:** `J` / `K` next / previous element in process order · `C` confirm · `E` edit · `R` reject · `Esc` closes the viewer, popover or edit form · `1`–`6` switch lens · `V` switches view · `?` shows the shortcut list. All shortcuts are ignored while a text input, select or textarea has focus.
 
 **Data freshness:** mutations use TanStack Query optimistic updates, then invalidate `graph`, `layout`, `quality-card` and `lint` for the version. Kind or lane edits wait for the new layout before redrawing. A failed mutation rolls back and shows the error pattern (§5.3).
 
@@ -955,6 +1093,7 @@ src/features/review/       ReviewScreen  useReviewSelection  useAutoAdvance  use
 src/features/published/    PublishedScreen (reuses review components with readOnly)
 src/features/matrix/  registers/  leadership/  exports/  settings/
 src/features/interview/    InterviewScreen  GuideEditor  CoverageReport
+src/features/system/       SystemRecordsScreen  ImportWizard  AlignmentTable  MetricsView
 src/features/gap/          GapAnalysisScreen  BriefEditor  BriefScanPanel  ResearchProgress  GapReport  FindingCard  SourceCard
 src/components/shell/      TopBar  EngagementNav  VersionBanner  ReviewProgress  QualityCardPopover  BlockerList  Toast
 src/components/map/        MapStage  Lane  PhaseBand  Node  EdgeSegment  Arrowhead  EdgeLabel  Marker  LensLine  Legend  MapToolbar
@@ -1019,7 +1158,7 @@ The owner is non-technical. Project memory, quality control and documentation li
 1. **Static:** `ruff check`, `ruff format --check`, `mypy app` (backend); `eslint`, `tsc --noEmit` (frontend). **0 warnings.**
 2. **Architecture and design system:** layer-boundary test (§3.2); eslint import restriction; tokens.css in sync with `shared/design_tokens.json`; no raw colours in `components/` or `features/`.
 3. **Unit, action and component tests:** `pytest` with coverage ≥ 85% on `services/` and `actions/`; `vitest` for `lib/` and components.
-4. **Golden baselines (byte-identical):** G1 graph JSON from the fixture · G2a/G2b layout JSON (As done / As documented) · G3 Master Map Markdown · G4 alignment-matrix payload · G5 HTML export · G6 trap-fixture outcome (Appendix A.6) · G7 gap-analysis reports from the fixture (Analysis A, and Analysis B from mocked web search responses; Appendix A.7) · G9 standard interview templates (Markdown, per type) · G8 sensemaking outputs from the fixture (account tags, fragments, work types, knowledge points, coverage report; Appendix A.8).
+4. **Golden baselines (byte-identical):** G1 graph JSON from the fixture · G2a/G2b layout JSON (As done / As documented) · G3 Master Map Markdown · G4 alignment-matrix payload · G5 HTML export · G6 trap-fixture outcome (Appendix A.6) · G7 gap-analysis reports from the fixture (Analysis A, and Analysis B from mocked web search responses; Appendix A.7) · G9 standard interview templates (Markdown, per type) · G10 system-records outputs from fixture A.11 (column map, validation report, metrics, alignment, findings, dispositions, value) · G8 sensemaking outputs from the fixture (account tags, fragments, work types, knowledge points, coverage report; Appendix A.8).
 5. **Latency:** p95 < 200 ms on every non-AI endpoint against the fixture data set.
 6. **Smoke (Playwright, offline mocks):** create engagement → upload fixture transcript and documents → map speakers → draft → select via each entry point (node, table, RACI, progress, walkthrough) → open evidence → confirm all with auto-advance → keep suggested image → publish → published view is read-only → reopen → export Markdown.
 7. **Accessibility:** axe-core on every screen built so far: 0 serious or critical violations.
@@ -1056,7 +1195,8 @@ The owner is non-technical. Project memory, quality control and documentation li
 | **P8 Images** | Upload with caption, type and redaction gate; metadata stripping; suggestion keep/discard; marker; gallery; walkthrough strip; publish blocked by unresolved suggestions | Metadata removed (no GPS after upload); 422 paths; no image data or references in any export; marker only when visible images exist | "Steps can carry images in the app; exports stay image-free" |
 | **P9 Matrix, registers, cause library** | Alignment matrix endpoint and screen (four layers: SOP/manual · SME official · SME lived · executed artefacts, plus JD); Registers screen (including Stories, Glossary, Emerging themes, Preserve / Improve); coverage (G11) on Sources; cause-library entries for contested and trace-contradicted elements; **G4 baseline** | Sorting and filters; silence shown as silent; cause-library creation; axe on new screens | "Source alignment, registers and the cause library are available" |
 | **P10 Gap analysis (optional feature)** | Setup fields (industry, adjacent industries, confidential terms); `gap` service (brief builder, confidentiality scan, source tiers, severity rules); Analysis A pipeline; `ai_service.call_claude_with_web_search` (verify tool version, error blocks and `pause_turn` handling against the current docs first); Analysis B pipeline with citation capture, structuring call, GX1–GX6 and verifier; dispositions; finalise; report export; Gap analysis screen, "Gap findings" panel section and toolbar chip; Settings web research card and test; **G7 baseline** | Analysis A: A.7 expected findings and severities; every finding has evidence from each side; unexplained causes become questions. Analysis B (mocked): traps TE1–TE9; nothing is sent while the brief is unconfirmed or has scan hits; the request contains only the brief; dispositions create the right items; the map is unchanged by any analysis; exports have 0 redaction-term hits; axe on the new screen | "Eric can run a documents-vs-practice gap analysis and, after approving a safe brief, an external best-practice comparison" |
-| **P11 Leadership view** | Leadership endpoint and screen; systemic vs local rule; work-type mix; Imagined vs done panel; drill-back links | Systemic flag logic; F/I/R columns separate; every figure traceable; axe | "The leadership view shows where the process jams and why" |
+| **P10b System records, value, disposition (optional)** | Data request template (Word, Markdown, CSV); `mining` service (parsing, column suggestion, metrics, variants); import wizard with in-memory resource-to-role mapping and approval gate; case-key maps; alignment (deterministic + `SR_align`, Eric confirms); system-trace evidence and `system_trace` sequence basis; new Analysis A findings; Volume and wait lens; panel 4e; Variants tab; `value` and `disposition` services; Settings regional and optional-module switches; wider intake (.xlsx, .csv, .eml); **G10 baseline** | A.11 expected outcomes; no resource values in the database, files or logs after import (scan test); no metric below 5 cases; import refused without approval or with > 20% dropped rows; disposition rules (complex/chaotic never Automate or AI-assisted; Automate requires an AI flag); value figures always labelled; 500k-event import completes as a job without blocking the UI | "System records show real volumes, waits and hidden work, and every step has a disposition and an indicative value" |
+| **P11 Leadership view** | Leadership endpoint and screen; quantified bottlenecks; disposition and value summary; systemic vs local rule; work-type mix; Imagined vs done panel; drill-back links | Systemic flag logic; F/I/R columns separate; every figure traceable; axe | "The leadership view shows where the process jams and why" |
 | **P12 Live run, polish and handover** | With Eric's key: run the fixture twice live; record the evaluation in DECISIONS.md; tune prompts only if thresholds are missed; final visual pass at 1440 × 900 and 1080 × 800 with Eric's approval; complete GUIDE.md and README.md (no placeholders left); **clean-clone rehearsal** following README.md literally (§3.10); tag `v1.0.0` and create the GitHub release with plain-language notes | `pytest -m live` (manual): 100% of published evidence verified · 0 numbers absent from sources · ≥ 8 of 10 expected elements found (A.5) · the injected instruction in A.3 had no effect · element set stable across both runs (≥ 8 of 10 shared) · live As done view matches A.9 · clean-clone rehearsal passes · Analysis A finds the A.7 divergences · live S3c assigns the A.8 work types with quoted cues · Analysis B: 0 findings without citations, 100% of cited URLs returned by the search, brief scan 0 hits | "End-to-end run with the real Claude model verified against the quality thresholds" |
 
 **Regression list:** all prior unit, action, component and architecture suites; golden baselines G1–G7; visual baselines; accessibility and privacy scans; the Playwright smoke path. These stay green from the phase they first appear.
@@ -1163,6 +1303,21 @@ The owner is non-technical. Project memory, quality control and documentation li
 80. Tailored guides export to Word and Markdown in the same layout.
 81. Templates and guides contain no SOP claims before M6, no personal names and no banned words.
 
+**System records, value and disposition (optional)**
+82. The data request template downloads as Word, Markdown and a CSV header from the System records screen without an engagement-specific setup.
+83. The import wizard suggests column mappings, parses timestamps with the chosen time zone, maps resource values to roles in memory only, shows a plain-language validation report, and refuses import without data-owner approval, without required columns or with more than 20% of rows dropped.
+84. After import, no resource or user ID value exists in the database, files, exports or application logs (automated scan).
+85. Metrics (volume, transitions with median and 90th percentile, work and wait or "not separable", case cycle time, variants with coverage, rework, handoffs, exception share) match the §3.13.5 definitions on fixture A.11, and nothing is shown for fewer than 5 cases.
+86. Alignment proposes matches only between existing activity names and existing steps; nothing applies until Eric confirms; unaligned activities become hidden work and unrecorded steps become offline work.
+87. Aligned steps carry system-trace evidence; system-recorded order produces `system_trace` edges; trace contradictions update source states.
+88. Analysis A reports hidden work, offline work, sequence drift, estimate gaps (> 50% difference) and measured rework (> 10%), with severities per §3.13.6.
+89. The Volume and wait lens, panel section 4e, the Variants tab and the Hidden work list work on the fixture.
+90. The value calculator computes hours and cost per step from measured, estimated or overridden inputs, labels every figure, shows scenarios as potential, and never shows money per person.
+91. Every step has a suggested disposition with its reason; Eric's choice is audited; complex or chaotic steps cannot be Automate or AI-assisted; Automate and AI-assisted require a valid AI flag.
+92. Spreadsheets (.xlsx, .csv) and email threads (.eml) upload as artefacts with anchors; email header names become redaction terms.
+93. Optional modules can be switched off in Settings; switching off hides their screens and lenses and never deletes data; the core works with every optional module off.
+94. A 500,000-event log imports as a background job with progress, and all metric endpoints meet p95 < 200 ms afterwards.
+
 ### 7.2 Publish quality card (all hard checks must be green)
 | # | Check | Green when | Type |
 |---|---|---|---|
@@ -1177,6 +1332,7 @@ The owner is non-technical. Project memory, quality control and documentation li
 | Q9 | Images contained | 0 image data or image references in any rendered export | Hard |
 | Q10 | 60-minute validatable | ≤ 25 steps and ≤ 6 lanes | Warning |
 | Q11 | Work types confirmed | Every decision, approval and judgment step has a confirmed work type | Warning |
+| Q12 | System alignment complete | Every imported log activity is aligned, or marked hidden work (only when system records are used) | Warning |
 
 The card is stored with the version and printed at the top of every export. Additional warnings (steps without time or KPI, AI flags outside 3–7) are listed beneath it.
 
@@ -1184,7 +1340,7 @@ The card is stored with the version and printed at the top of every export. Addi
 ```
 # [Process] — Master Process Map
 Version vX.Y · published [date] · validated by [owner name from Settings]
-[Quality card: Q1–Q10 with status]
+[Quality card: Q1–Q12 with status]
 
 ## 1. Facts: what the sources tell us
 - Source registry (kind, version date, owner, controlled copy) — no verbatim quotes
@@ -1214,6 +1370,8 @@ Glossary of SME terms
 - Open validation questions (for the offline SME session)
 - Cause library entries (pending validation)
 - Gap analyses (finalised only): mode, date, counts of accepted findings, titles
+- Disposition by step and value summary (hours and cost per month by evidence label; scenarios labelled potential, not committed)
+- System records summary: logs, windows, cases; hidden and offline work; aligned-step metrics (role and step level only, ≥ 5 cases)
 ```
 Every element line carries its provenance tag. Role names only. No images, no verbatim quotes.
 
@@ -1229,7 +1387,7 @@ The owner, Eric, is non-technical. He will not read or edit code. Speak to him a
 
 Do these steps in order:
 1. Ask me for the link to my designated private GitHub repository. If I don't have one, give me the steps in PRD Appendix D section D.2 and wait. Connect this folder to it (never make it public).
-2. Create CLAUDE.md in the repo root exactly as in PRD Appendix C, pasting PRD section 2 (Binding constraints, items 1-23) word for word where Appendix C says so.
+2. Create CLAUDE.md in the repo root exactly as in PRD Appendix C, pasting PRD section 2 (Binding constraints, items 1-24) word for word where Appendix C says so.
 3. Create PROJECT_STATE.md, DECISIONS.md, GUIDE.md, API_CONTRACT.md and README.md (from PRD Appendix D) as described in PRD sections 6.1 and 3.10. Set up the secret check and pre-commit hook before the first commit, so the API key and the data folder can never reach GitHub.
 4. Check this computer has Python 3.12 and Node LTS. If either is missing, stop and give me exact click-by-click install steps, then wait.
 5. Build Phase P0a only (PRD section 6.3). Follow the session protocol (6.1) and testing standards (6.2): increments of about 30 minutes; after each, run ./run_checks.sh in full, review the staged diff, commit with a plain-language message, push to GitHub, update PROJECT_STATE.md.
@@ -1283,6 +1441,23 @@ Focus this session on the standard interview templates feature of Process Map St
 6. Save the three Word templates to docs/samples/ and tell me exactly which files to open so I can check them in Word. Wait for my approval before saving the Markdown versions as the G9 golden baseline.
 7. Update README.md (Everyday use) and GUIDE.md so I know where to download the templates and how to use the question IDs during an interview.
 8. Never weaken a test or change the question wording in the bank without logging the reason in DECISIONS.md and telling me. Finish with the report card: what works now, checks passing (X of Y), pushed to GitHub (yes/no), acceptance criteria met, the exact resume point.
+```
+
+### Update prompt: PRD revised during the build (review, resume, build new features)
+```
+I have replaced PRD_ProcessMapStudio.md in this folder with a revised version (v1.11). Review it, safely resume the work in progress, and then build what is new, in phase order.
+
+1. Before anything else, read CLAUDE.md, PROJECT_STATE.md and DECISIONS.md. Do not rely on memory of earlier chats; the files are the truth.
+2. Make the current work safe first. Run git status and ./run_checks.sh, but do NOT commit the new PRD yet. If an increment was in progress: finish it if it is small and its checks can go green, otherwise revert it to the last green commit recorded in PROJECT_STATE.md. Tell me in one line which you did and why.
+3. Read the full revised PRD, starting with "Build map for Claude Code" and "What's new in v1.11". Then run git diff PRD_ProcessMapStudio.md to see exactly what changed since the last committed version.
+4. Write an impact table in DECISIONS.md and show it to me in plain language: each change → which phases, files and tests it affects → action (none / adjust existing work / new work). Flag anything that conflicts with work already built and give me 2-3 options with your recommendation before changing built behaviour.
+5. Commit the new PRD on its own ("Update PRD to v1.11"). Update CLAUDE.md so its pasted binding constraints match PRD section 2 (now items 1-24) and its rules match Appendix C. Update PROJECT_STATE.md with the new phase list (including P10b) and the core / optional split.
+6. Audit the whole app against the revised PRD and give me a status table per phase (Done / Partly done / Not started), with evidence (file and test names) and the acceptance criteria met. Pay particular attention to the interview analysis and translation work in progress: P3, P4, P4b, P4c and P5 (PRD §3.7, §3.8, §3.12, §3.9, §5.5-5.7; fixtures A.1, A.5, A.8, A.9, A.10; golden baselines G1, G2a, G2b, G6, G8).
+7. Plan the work in ~30-minute increments, written into PROJECT_STATE.md, in this order: (a) close any gaps in the core (P0a-P7 plus P4b) until every core acceptance criterion passes; (b) finish P4c; (c) continue the optional phases in order, including the new P10b (system records, data request template, value calculator, step disposition; PRD §3.13-3.15, fixture A.11, golden baseline G10). Do not start an optional phase while a core criterion fails.
+8. Build one increment at a time following PRD §3.2 (code structure), §3.8 (grounding), §5 (UI, tokens only) and §6.1-6.2 (session protocol and tests): contract first for any API change; tests in the same increment; full ./run_checks.sh; diff review; commit and push; update PROJECT_STATE.md after each. Migrations stay additive.
+9. Non-negotiables: never loosen a grounding threshold, never delete or weaken a test, never let the UI compute layout, never store raw user IDs from system logs, never show a system metric based on fewer than 5 cases. If an expected fixture outcome can't be met, stop and explain in plain language with options.
+10. Whenever a phase produces something I should look at (screenshots, Word templates, the data request template), save it under docs/ and tell me exactly which file to open; wait for my approval before saving any visual or golden baseline.
+11. Finish with the report card: what works now, checks passing (X of Y), pushed to GitHub (yes/no), acceptance criteria met (core and optional), the exact resume point, and the suggested next session goal. Update GUIDE.md and, if setup or starting changed, README.md.
 ```
 
 ### Bug-fix prompt
@@ -1461,10 +1636,16 @@ Also add table-driven unit tests for `calibration.assign_source_state` covering 
 ```
 Expected: L3 answer produces a candidate edge Load and return LIR → (Load controller) with `information_payload = "loading report"` stitched to the interview's 21:50 information-in (`dependency`); "preliminary load plan" stitched as information out of Draft load plan → information in of Load and return LIR. Capability notes: strength (skillset: supervisors' aircraft-type knowledge) → Preserve; weakness (process/systems: paper loading report) → Improve and a constraint (system_fragmentation). A follow-up probe F2 is generated quoting "it gets lost or arrives late".
 
+**A.11 System records fixture** (`fixtures/system/`; generated by `generate_log.py` with a fixed random seed so the file is identical on every run; drives G10)
+- `dcs_log.csv`: 200 cases (flights) over 8 weeks; columns `case_id, activity, timestamp, end_timestamp, resource, system`; resources are fictional user codes mapped to roles in the fixture's role map.
+- Activities: `Plan created` → `Special load checked` → `Loading report received` → `Weight deviation checked` → `Load sheet issued`; `Plan revised` in about 18% of cases (after `Special load checked`); `Manual weight override` in about 12% of cases (before `Load sheet issued`); **no** `Plan approved` events.
+- Wait from loading completion to `Loading report received`: median about 14 minutes, 90th percentile about 25.
+Expected: alignment proposes `Plan created` → Draft load plan, `Special load checked` → Special loads OK?, `Loading report received` → Load and return LIR, `Weight deviation checked` → Deviation in limits?, `Load sheet issued` → Issue load sheet; `Plan revised` → rework into Draft load plan; `Manual weight override` → **hidden work** (no matching step); Approve load plan → **no system record** (strengthens `dead_control_candidate`; disposition suggestion **Delete**, reason shown); Read report at aircraft → **offline work**; `estimate_gap` on Load and return LIR (SOP 10 min vs measured median about 14 min is within 50%, so **no** estimate-gap finding; documented as a negative test); `measured_rework` on Draft load plan (about 18%); volume about 25 cases per week on every aligned step; every metric based on at least 5 cases; no resource codes stored anywhere after import.
+
 ## Appendix B — Controlled vocabularies (enums)
 | ID | Name | Values |
 |---|---|---|
-| B.1 | source kind | interview_transcript · sop · manual · job_description · executed_artefact · other |
+| B.1 | source kind | interview_transcript · group_notes · sop · manual · job_description · executed_artefact · working_spreadsheet · email_thread · other (system logs are imported separately, §3.13) |
 | B.2 | element kind | activity · decision · approval · start · end (a **judgment step** is a decision with mechanism `judgment`, work type `complex` and exits marked `typical`) |
 | B.3 | provenance | O (observed) · I (inferred) · R (recommended from external practice; added by Eric with a reference, or accepted from a verified external gap finding) |
 | B.4 | source state | corroborated · documented_only · practiced_only · contested · trace_contradicted · not_assessed |
@@ -1485,7 +1666,7 @@ Expected: L3 answer produces a candidate edge Load and return LIR → (Load cont
 | B.19 | verifier verdict | supported · partial · not_supported · not_run |
 | B.20 | rejection guardrail | G3 (segment) · G4 (quote) · G5 (number or role) · G6 (verifier) · G10 (redaction block) · GX1 (no source) · GX2 (source not returned by search) · GX3 (claim not in cited text) · GAV (gap verifier) |
 | B.21 | gap analysis mode | internal (documents vs practice) · external (best practice) |
-| B.22 | internal finding type | dead_control_candidate · undocumented_work · ownership_mismatch · threshold_gap · sequence_gap · trigger_gap · exception_gap · stale_documentation · documentation_update · known_adaptation · unknown_rule · disclosure_gap · control_gap · constraint_mismatch |
+| B.22 | internal finding type | hidden_work · offline_work · sequence_drift · estimate_gap · measured_rework · dead_control_candidate · undocumented_work · ownership_mismatch · threshold_gap · sequence_gap · trigger_gap · exception_gap · stale_documentation · documentation_update · known_adaptation · unknown_rule · disclosure_gap · control_gap · constraint_mismatch |
 | B.23 | external finding type | missing_step · missing_control · sequence_difference · decision_rights_difference · time_or_threshold_benchmark · kpi_practice · technology_enabler · other_difference |
 | B.24 | external source tier | standards_body · regulator · industry_association · academic · peer_operator · consultancy · vendor · news · other |
 | B.25 | finding disposition | open · added_question · added_cause · added_step · dismissed |
@@ -1497,12 +1678,16 @@ Expected: L3 answer produces a candidate edge Load and return LIR → (Load cont
 | B.31 | fragment type | recent_case · went_well · went_badly · surprise · workaround · other |
 | B.32 | gap class | effective_adaptation · risky_drift · obsolete_rule · unexplained |
 | B.33 | ASHEN category | artefacts · skills · heuristics · experience · natural_talent |
-| B.34 | sequence basis | explicit_order · document_order · dependency · narration_order |
+| B.34 | sequence basis (strongest first) | system_trace · explicit_order · document_order · dependency · narration_order |
 | B.35 | view membership | both · done_only · documented_only |
 | B.36 | capability dimension | skillset · ways_of_working · systems · process · structure |
 | B.37 | decision cadence | daily · weekly · monthly · annually · exceptional |
 | B.38 | interview type | landscape · practice · follow_up |
 | B.39 | element level | landscape · practice |
+| B.40 | system log column | case_id · activity · timestamp · end_timestamp · resource · role · system · case_attribute |
+| B.41 | disposition | delete · automate_rules · ai_assisted · human_approves · keep_human |
+| B.42 | value evidence label | measured · estimated · mixed · assumed |
+| B.43 | alignment status | proposed · confirmed · hidden_work · no_system_record |
 
 ---
 
@@ -1518,7 +1703,7 @@ A local app that turns SME interview transcripts and process documents (SOPs, ma
 The files are the project memory. If chat memory and these files disagree, the files win.
 
 ## Binding constraints
-[Paste PRD section 2, items 1–23, word for word.]
+[Paste PRD section 2, items 1–24, word for word.]
 
 ## Code structure (PRD §3.2)
 - routers/: HTTP only; call exactly one action.
@@ -1534,7 +1719,7 @@ The files are the project memory. If chat memory and these files disagree, the f
 Every AI claim needs segment IDs, a verbatim quote and (if inferred) a basis. Claims failing segment, quote, number or role checks are rejected and logged, never shown on the map. No outside knowledge. Unknowns become questions, not elements. Confidence is computed with a breakdown, never self-reported. Names on the redaction list never appear outside the three owner-only screens. Gap analysis (§3.11) is advisory: it never changes the map; external findings must cite sources returned by the same search and pass GX1–GX6 and the verifier; web research sends only the approved, scan-clean brief.
 
 ## Sensemaking (PRD §3.12, Appendices E and F)
-- Five lenses per interview: Flow, Stories, Know-how (ASHEN), Work type (Cynefin-informed), Reality gap (official · lived · documented · traced).
+- Five evidence strands per interview: Flow, Stories, Know-how (ASHEN), Work type (Cynefin-informed), Reality gap (official · lived · documented · traced).
 - SME meaning first: SME signifiers and terms are observed; model interpretations are inferred and shown separately. Keep single-account stories.
 - Work type needs quoted cues; complex steps are judgment steps; complex or chaotic steps never carry automation flags.
 - Codebook tiers: invariants never change; conventions may be overridden with a reason; emergent themes are proposed, never forced.
@@ -1542,6 +1727,7 @@ Every AI claim needs segment IDs, a verbatim quote and (if inferred) a basis. Cl
 - Interviews follow the Appendix F question bank; answers are anchored to question IDs; marker tags are hints confirmed by quotes; the label is the translation, the quote is the proof.
 - Standard interview templates (Appendix F.9; 60-minute Landscape and Practice, 30-minute Follow-up) are generated from question_bank.json only, in Word and Markdown.
 - Interview types (Landscape, Practice, Follow-up) follow Appendix F; decision information in/out stitches flows across interviews; strengths and weaknesses feed Preserve / Improve.
+- System records (§3.13) are role- and step-level only: resource IDs mapped to roles in memory and never stored; nothing shown under 5 cases; import only after data-owner approval. Value figures always carry an evidence label; scenarios are potential, not committed. Dispositions: complex or chaotic steps are never Automate or AI-assisted.
 - Two views: As done (default, lived and traced evidence only, "not described" connectors instead of invented steps) and As documented.
 
 ## UI (PRD §5)
@@ -1671,6 +1857,7 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 | "Your API key was rejected" | Copy a fresh key from platform.claude.com → paste it in Settings → Test connection |
 | Drafting stops with an error | Click **Copy details** on the error, open Claude Code in the app folder, paste the Bug-fix prompt from the PRD and the copied details |
 | "Web search isn't enabled for your Anthropic organisation" (external best-practice analysis) | Sign in to platform.claude.com, open your organisation's settings and enable web search (or ask your organisation admin). Then in the app: Settings → **Test web search** |
+| A system log won't import | Open the validation report on the System records screen: it lists each problem (for example a missing column or unreadable dates). Send the data request template to your IT contact and ask for a corrected extract |
 | Anything else | {{support_line}} |
 
 ## For builders
@@ -1705,7 +1892,7 @@ The codebook is injected into the S1, S2, S3c and S4 prompts with worked example
 | **Unit of work** | One activity = one Responsible role producing one outcome or handoff. Split when the role changes or something is handed over. Merge consecutive micro-actions by the same role with no handoff or decision between them | Granularity: coarse (8–12 steps) · standard (12–20) · fine (20–25) |
 | **Element type** | Chooses between paths → decision (phrased as a question, with its criterion). Sign-off by someone other than the doer → approval. Waiting or queueing → wait time on a step, not a step. Checking without branching → activity with a control note. Complex judgment → judgment step (§3.12.5). Otherwise → activity | — |
 | **Naming** | Verb + object, at most 5 words, sentence case, no role or person names. The SME's own term may be used as the label when it is the everyday name for the step; it is added to the glossary with a plain meaning | Label style: standard wording · SME wording |
-| **Sequence evidence** | Each edge records `sequence_basis` (B.34), strongest to weakest: explicit order words or times → document step order → dependency (something must exist before it is used) → order of narration. Edges resting only on narration order raise a validation question | — |
+| **Sequence evidence** | Each edge records `sequence_basis` (B.34), strongest to weakest: system-recorded order (§3.13.4) → explicit order words or times → document step order → dependency (something must exist before it is used) → order of narration. Edges resting only on narration order raise a validation question | — |
 | **Phases** | Boundaries at handoffs between functions, stated milestones or stated time windows; SME phase names preferred | Phase naming: SME terms · standard terms |
 | **RACI** | R does the work; one A owns the outcome or signs off; C gives two-way input; I is told. If unclear, a validation question rather than a guess | — |
 | **Time** | Work and wait kept separate; ranges kept as ranges; no conversion unless stated | — |
@@ -1905,6 +2092,12 @@ Eric enters the outcomes as edits (no in-app SME step).
 ---
 
 ## Appendix G — Version history (context only; do not act on it)
+### Changes in v1.10 (standard interview templates; 60-minute interviews)
+1. **Downloadable standard interview templates** (Landscape, Practice, Follow-up) in Word and Markdown, generated from the question bank with question IDs, a minute plan, notes space and a coverage checklist (Appendix F.9). Available from the home screen and the Interview screen, even before an engagement exists.
+2. **60-minute standard** for stakeholder interviews (Landscape and Practice); Follow-up 30 minutes. Movement timings rebalanced to sum exactly.
+3. **Built early (P1)** so interviews can start with consistent questions while the rest of the app is being built.
+4. Tailored guides also export to Word; API, UI, tests (golden baseline G9), acceptance criteria 77–81 and a new §8 prompt updated to match.
+
 ### Changes in v1.9 (coherence and robustness review)
 1. **Phase P4b split** into P4b (translation core) and P4c (sensemaking and interview tools) so each fits a session.
 2. **Two-level maps made concrete:** elements now carry a `level` (landscape or practice) and `parent_element_id`; the map draws the finest level available, so landscape and practice interviews never duplicate steps.
