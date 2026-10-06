@@ -25,7 +25,8 @@ Appendix A), saved so the filled-in version can be checked in Word too:
   says what earlier interviews covered, and the five blank rows take one question in turn from the
   SME's own words to play back (F2), the coverage report's gaps (for example M2.1, what sets the
   process off), the open validation questions (F6) and the lane boundaries (F4: "On “Load and
-  return LIR”, how does your team work with Ramp?").
+  return LIR”, how does your team work with Ramp?") and how often each exception route happens
+  (M5.s2, "How often does something like that happen?", about "Special loads OK? → No").
 - `interview-guide-landscape-sample.docx` — Landscape guide for the Ramp group: the role module
   holds four questions Claude drafted (RM1–RM4, illustrative offline answers) that passed the app's
   checks; a fifth, which quoted the SOP, was left out.

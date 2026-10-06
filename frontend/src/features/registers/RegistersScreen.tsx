@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../components/common";
 import {
   AiFlagList,
   BoundaryList,
+  ExceptionList,
   CauseList,
   ConstraintGroups,
   ExternalPracticeList,
@@ -15,6 +17,7 @@ import { useEngagement } from "../../hooks/useEngagements";
 import {
   useCauseLibrary,
   useDecideTheme,
+  useExceptions,
   useLaneBoundaries,
   useRegisters,
   useThemes,
@@ -22,6 +25,7 @@ import {
   useVersions,
 } from "../../hooks/useVersions";
 import { currentMap, stepPath } from "../../lib/currentMap";
+import { AS_VIEWS, type AsView } from "../../lib/views";
 import { saveText } from "../../lib/download";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
@@ -59,8 +63,11 @@ export function RegistersScreen() {
   const validate = useValidateCause(engagementId);
   const themes = useThemes(engagementId);
   const decide = useDecideTheme(engagementId);
+  const chosenRegister = registerKey(params.get("register"));
   const boundaries = useLaneBoundaries(map?.id ?? null);
-  const chosen = registerKey(params.get("register"));
+  const [exceptionsView, setExceptionsView] = useState<AsView>("done");
+  const unusual = useExceptions(map?.id ?? null, exceptionsView, chosenRegister === "exceptions");
+  const chosen = chosenRegister;
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -94,8 +101,8 @@ export function RegistersScreen() {
         <h1 id="registers-title">Registers</h1>
         <p className="screen__intro">
           The lists behind the map{title ? ` (${title})` : ""}: knowledge risks, AI flags, constraints, recommended
-          practice, questions for your SME, rejected claims and lane boundaries, and the cause library and emerging themes for
-          this engagement.
+          practice, questions for your SME, rejected claims, lane boundaries and exceptions and workarounds, and the cause
+          library and emerging themes for this engagement.
         </p>
       </div>
       {(versions.isPending || (map !== null && registers.isPending)) && <Skeleton height="200px" />}
@@ -203,6 +210,25 @@ export function RegistersScreen() {
                     }
                   />
                 )}
+              </>
+            )}
+            {chosen === "exceptions" && (
+              <>
+                <p className="tab-intro">
+                  How much of the process is the usual route and how much is exception handling, rework and workarounds.
+                  As done shows what people actually do; compare it with As documented. Nothing here changes the map.
+                </p>
+                <SegmentedControl label="View" options={AS_VIEWS} value={exceptionsView} onChange={(v) => setExceptionsView(v as AsView)} />
+                {unusual.isPending && <Skeleton height="120px" />}
+                {unusual.isError && (
+                  <ErrorState
+                    title="The exceptions couldn't be loaded"
+                    message={messageOf(unusual.error)}
+                    details={copyDetailsOf(unusual.error)}
+                    onRetry={() => void unusual.refetch()}
+                  />
+                )}
+                {unusual.data && <ExceptionList report={unusual.data} onGoTo={goTo} />}
               </>
             )}
             {chosen === "boundaries" && (

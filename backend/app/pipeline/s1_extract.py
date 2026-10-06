@@ -55,6 +55,7 @@ INTERVIEW = {
     "account_cue",
     "stated_reason",
     "variation_condition",
+    "frequency",
     "markers",
 }
 SOURCE_REF = "s1"
@@ -215,10 +216,11 @@ def _scrub[ClaimT: ai_schemas.S1Claim](
 def check_interview_fields(
     claim: ai_schemas.S1InterviewClaim, cited: str
 ) -> tuple[str, dict[str, object]]:
-    """The account tag, stated reason, variation condition and marker reviews of a verified
-    interview claim pass the quote check (G4) like every other output (§3.12.9 rule 7). A cue that
-    isn't in the cited text makes the account `unclear`; a reason, condition or marker review
-    whose words aren't there is dropped. Returns the account type and the payload fields."""
+    """The account tag, stated reason, variation condition, frequency and marker reviews of a
+    verified interview claim pass the quote check (G4) like every other output (§3.12.9 rule 7).
+    A cue that isn't in the cited text makes the account `unclear`; a reason, condition,
+    frequency or marker review whose words aren't there is dropped. Returns the account type and
+    the payload fields."""
 
     def found(words: str) -> bool:
         return bool(words) and grounding.verify_quote(words, cited).passed
@@ -234,6 +236,7 @@ def check_interview_fields(
         "variation_condition": (
             claim.variation_condition if found(claim.variation_condition) else ""
         ),
+        "frequency": claim.frequency if found(claim.frequency) else "",
         "markers": markers,
         "markers_dropped": len(claim.markers) - len(markers),
     }

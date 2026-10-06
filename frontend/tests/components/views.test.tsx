@@ -5,7 +5,7 @@ import { lensLine } from "../../src/lib/lens";
 import { asView, ghostLabel, inView, variantFor } from "../../src/lib/views";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
-import { SAMPLE, elementByLabel, graphFor, layoutFor } from "../sampleMap";
+import { SAMPLE, elementByLabel, exceptionsFor, graphFor, layoutFor } from "../sampleMap";
 
 // PRD §3.12.11 and §5.7.3 (V2): the map drawn As done (default) or As documented, with Show the
 // other view, "not described" connectors and the Work type lens. The backend lays out each view;
@@ -193,6 +193,7 @@ describe("Review screen with the views (PRD §5.7.3)", () => {
       }),
       [`GET /api/versions/${VID}/graph`]: (_body, url) => ({ body: graphFor(url) }),
       [`GET /api/versions/${VID}/layout`]: (_body, url) => ({ body: layoutFor(url) }),
+      [`GET /api/versions/${VID}/exceptions`]: (_body, url) => ({ body: exceptionsFor(url) }),
       ...Object.fromEntries(
         Object.entries(SAMPLE.elements).map(([id, element]) => [`GET /api/elements/${id}`, () => ({ body: element })]),
       ),
@@ -212,6 +213,28 @@ describe("Review screen with the views (PRD §5.7.3)", () => {
     fireEvent.click(screen.getByRole("radio", { name: "As done" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Show the other view" }));
     expect(await screen.findByRole("button", { name: /Approve load plan.*only in the documented version$/ })).toBeInTheDocument();
+  });
+
+  it("the Exceptions lens asks the backend for this view's routes and shows them under each step (X3)", async () => {
+    const { calls, fetchMock } = backend();
+    const { container } = renderApp("/engagements/e1/review");
+    await screen.findByRole("radio", { name: "As done" });
+    const asked = () => calls.filter((c) => c.key === `GET /api/versions/${VID}/exceptions`).length;
+    expect(asked()).toBe(0); // only while the lens is on
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Lens" })).getByRole("radio", { name: "Exceptions" }));
+    await waitFor(() => expect(container.querySelectorAll(".map-lens").length).toBeGreaterThan(0));
+    const lines = () => [...container.querySelectorAll(".map-lens")].map((l) => l.textContent);
+    await waitFor(() => expect(lines()).toContain("Workaround"));
+    expect(lines().filter((t) => t === "Exception")).toHaveLength(2); // Resolve or offload, Approve deviation
+    expect(lines().filter((t) => t === "Usual route")).toHaveLength(6); // the six usual steps As done
+    const key = screen.getByRole("list", { name: "Lens key" });
+    expect(key).toHaveTextContent("Exception on the route taken when a check fails (the line into it says when)");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("radio", { name: "As documented" }));
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/exceptions?view=documented"))).toBe(true),
+    );
+    await waitFor(() => expect(lines()).not.toContain("Exception")); // the documents describe no exception route
   });
 
   it("choosing a step only in the other view shows that view, so no step is out of reach", async () => {

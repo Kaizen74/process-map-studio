@@ -387,6 +387,7 @@ class AnswerQuote(Out):
     account_cue: str
     stated_reason: str
     variation_condition: str
+    frequency: str = ""  # how often, in the SME's words (X1, 2026-10-06)
     source_id: str
     segment_id: str | None
     anchor: str

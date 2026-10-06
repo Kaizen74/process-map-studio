@@ -442,6 +442,7 @@ def _answer(
         account_cue=hide(str(record.payload.get("account_cue", ""))),
         stated_reason=hide(str(record.payload.get("stated_reason", ""))),
         variation_condition=hide(str(record.payload.get("variation_condition", ""))),
+        frequency=hide(str(record.payload.get("frequency", ""))),
         source_id=record.source_id,
         segment_id=first,
         anchor=anchor,

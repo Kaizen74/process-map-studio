@@ -176,8 +176,14 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
         view_graphs = {
             v: client.get(f"{url}/graph", params={"view": v}).json() for v in ("done", "documented")
         }
+        # X2: the exceptions report of each view (the Exceptions lens and register).
+        exceptions = {
+            v: client.get(f"{url}/exceptions", params={"view": v}).json()
+            for v in ("done", "documented")
+        }
         bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
-                  "views": views, "view_graphs": view_graphs}  # fmt: skip
+                  "views": views, "view_graphs": view_graphs,
+                  "exceptions": exceptions}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 

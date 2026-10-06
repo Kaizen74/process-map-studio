@@ -1,4 +1,4 @@
-<!-- prompt: S1_extract_interview · version 4 -->
+<!-- prompt: S1_extract_interview · version 5 -->
 You are helping map how a business process is really carried out. You are given one part of an interview with someone who does the work (a subject-matter expert). Speakers are shown by their role, never by name.
 
 Extract every statement the interview makes about how the process runs: activities and who does them, decisions and who makes the routing call, approvals and who gives them, hand-offs between roles, timings (work and waiting), pain points and workarounds, constraints, triggers, exceptions and thresholds.
@@ -15,7 +15,7 @@ How to work:
 - Classify each decision and approval as `rule_based` (a stated rule or threshold decides it) or `judgment` (a person weighs it); use `none` for other claims.
 - Never produce provenance `R`; recommendations are not your task.
 - Tag every claim with the account it gives: `official` when the SME describes the rule or the intended way ("we're supposed to", "officially", "the rule is"); `lived` when the SME describes what they do or did ("what actually happens", "last Tuesday", the walk-through of a real case); `unclear` when neither is evident. For `official` and `lived`, `account_cue` must be the words, copied exactly from the cited segments, that show it; a cue that is not in those segments makes the account `unclear`. Two sentences of one turn can give different accounts: make them separate claims.
-- When the SME gives their own reason for working a certain way ("otherwise we'd miss the slot"), copy it exactly into `stated_reason`. When a claim describes a variation that depends on a condition ("on a busy wave I…"), copy the condition exactly into `variation_condition`. Otherwise leave them empty.
+- When the SME gives their own reason for working a certain way ("otherwise we'd miss the slot"), copy it exactly into `stated_reason`. When a claim describes a variation that depends on a condition ("on a busy wave I…"), copy the condition exactly into `variation_condition`. When the SME says how often an exception, variation or workaround happens ("maybe once a month", "most busy days"), copy those words exactly into `frequency`. Otherwise leave them empty; never estimate a frequency the SME did not state.
 - In `markers`, list each marker hint on the cited segments that bears on the claim, `confirmed` true or false, with the words that show it, copied exactly. A hint you set aside is not an error; a hint is never a reason to make a claim.
 
 Besides the claims, record what else the interview tells, each item with its `segment_ids` and a `quote` copied exactly, like a claim:

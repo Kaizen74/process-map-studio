@@ -120,7 +120,8 @@ def test_a_follow_up_guide_plays_back_the_sme_s_words(drafted: Drafted) -> None:
     filled = f_series["rows"][6:]  # after F1 to F6, the five blank reflective-probe rows
     # Rule 7 (criterion 68): the SME's own words, the coverage gaps, the open validation
     # questions, the "not described" ones (none on this map) and the lane-boundary findings
-    # (C8: one shared delivery on this map, asked with F4), one of each in turn.
+    # (C8: one shared delivery on this map, asked with F4) and how often each exception route
+    # happens (X2, M5.s2), one of each in turn.
     questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
     open_ = [q["question"] for q in questions
              if q["status"] == "open" and q["reason"] != "not_described"]  # fmt: skip
@@ -134,8 +135,10 @@ def test_a_follow_up_guide_plays_back_the_sme_s_words(drafted: Drafted) -> None:
         # Asked of the load controller, so the other team is the Ramp (the Responsible).
         ("F4", f"On “{lanes[0]['label']}”, how does your team work with Ramp? "
                "It sounds like both show up together."),
-        ("F2", probes[1]["question"]),
+        # X2: how often the first exception route happens (nobody has said).
+        ("M5.s2", "How often does something like that happen?"),
     ]  # fmt: skip
+    assert filled[4]["note"] == "about Special loads OK? → No: Resolve or offload"
     assert filled[1]["note"] == (f"about {gaps[0]['about']}" if gaps[0]["about"] else "")
     assert all(r["minutes"] for r in filled)
     # No earlier interview named: [topics] stays for the interviewer to fill.

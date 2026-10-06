@@ -4,6 +4,7 @@ import { AiFlagList, CauseList, ConstraintGroups, ExternalPracticeList, KRiskLis
 import type { CauseEntry, Registers } from "../../src/lib/registers";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
+import { exceptionsFor } from "../sampleMap";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -191,6 +192,7 @@ describe("Registers screen (PRD §5.4)", () => {
     return fakeApi({
       "GET /api/engagements/e1/themes": () => ({ body: themes }),
       "GET /api/versions/v2/lane-boundaries": () => ({ body: boundaries }),
+      "GET /api/versions/v2/exceptions": (_, url) => ({ body: exceptionsFor(url ?? "") }),
       "PATCH /api/themes/t1": (body) => {
         const patch = body as { status: string; theme?: string };
         if (patch.theme === "Blame the crew") {
@@ -227,6 +229,7 @@ describe("Registers screen (PRD §5.4)", () => {
       "Cause library",
       "Emerging themes",
       "Lane boundaries",
+      "Exceptions and workarounds",
     ]);
     expect(await seriousViolations(container)).toEqual([]);
     for (const [name, text] of [
@@ -295,6 +298,58 @@ describe("Registers screen (PRD §5.4)", () => {
     expect(gap).toHaveTextContent("Guide questionsL5");
     expect(await seriousViolations(container)).toEqual([]);
     fireEvent.click(within(shared).getByRole("button", { name: "Go to Load and return LIR" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
+  });
+
+  it("exceptions and workarounds: facts, routes, loops, the SME's reason, what to ask (X3, sample As done)", async () => {
+    const { calls } = backend();
+    const { container } = renderApp("/engagements/e1/registers?register=exceptions");
+    expect(
+      await screen.findByText(
+        "3 of 9 steps (33%) are off the usual route: 2 on exception routes, 1 variation. 2 rework loops; 1 workaround. The exception routes add 4 hand-overs.",
+      ),
+    ).toBeInTheDocument();
+    const routes = screen.getByRole("list", { name: "Exception routes and variations" });
+    const cards = within(routes).getAllByRole("listitem");
+    expect(cards.map((c) => c.querySelector(".register-card__title")?.textContent)).toEqual([
+      "Special loads OK? → No Exception route",
+      "Busy wave? → on a busy wave Variation",
+      "Deviation in limits? → Outside limits Exception route",
+    ]);
+    expect(cards[0]).toHaveTextContent("Then it goes back to Draft load plan (Re-plan).");
+    expect(cards[0]).toHaveTextContent("Extra hand-overs2");
+    expect(cards[0]).toHaveTextContent("FrequencyNot stated yet");
+    expect(cards[1]).toHaveTextContent("Reason the SME gaveotherwise we'd miss the slot");
+    expect(cards[2]).toHaveTextContent(
+      "Then it rejoins the usual route at Issue load sheet (Accept), or goes back to Load and return LIR (Re-trim).",
+    );
+    const loops = screen.getByRole("list", { name: "Rework loops" });
+    expect(within(loops).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Resolve or offload goes back to Draft load plan (Re-plan) Go to Resolve or offload",
+      "Approve deviation goes back to Load and return LIR (Re-trim) Go to Approve deviation",
+    ]);
+    const workarounds = screen.getByRole("list", { name: "Workarounds" });
+    expect(within(workarounds).getByRole("listitem")).toHaveTextContent(
+      "Read report at aircraft · Load controllerWhen: on a busy waveReason the SME gave: otherwise we'd miss the slotHow often: not stated yet",
+    );
+    const ask = screen.getByRole("list", { name: "Questions still to ask" });
+    expect(within(ask).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(ask).getAllByRole("listitem")[0]).toHaveTextContent(
+      "[M5.s2] How often does something like that happen? (about Special loads OK? → No: Resolve or offload)",
+    );
+    expect(await seriousViolations(container)).toEqual([]);
+    // As documented: the documents describe none of it, only their own rework loop.
+    fireEvent.click(screen.getByRole("radio", { name: "As documented" }));
+    expect(await screen.findByText("No exception routes or variations in this view.")).toBeInTheDocument();
+    expect(calls.map((c) => c.key).filter((k) => k.endsWith("/exceptions"))).toHaveLength(2);
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("an exceptions route's Go to opens its first step on Review", async () => {
+    backend();
+    renderApp("/engagements/e1/registers?register=exceptions");
+    const routes = await screen.findByRole("list", { name: "Exception routes and variations" });
+    fireEvent.click(within(routes).getByRole("button", { name: "Go to Resolve or offload" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
   });
 

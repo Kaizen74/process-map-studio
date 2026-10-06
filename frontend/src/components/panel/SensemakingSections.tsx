@@ -279,6 +279,11 @@ function AnswerCard({ answer, onOpen }: { answer: AnswerQuote; onOpen: Open }) {
           Reason given: <Quote text={answer.stated_reason} />
         </p>
       )}
+      {answer.frequency && (
+        <p>
+          How often: <Quote text={answer.frequency} />
+        </p>
+      )}
       {answer.question_id && (
         <p className="sense-note">
           Asked: <span className="mono">[{answer.question_id}]</span>{" "}

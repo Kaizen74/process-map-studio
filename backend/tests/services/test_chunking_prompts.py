@@ -100,7 +100,7 @@ STAGES = [
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
 VERSIONS = {
-    "S1_extract_interview": "4",  # C1: stories, know-how, terms, decision info, capability
+    "S1_extract_interview": "5",  # X1: frequency of exceptions, variations and workarounds
     "S1_extract_jd": "2",
     "S2_canonicalise": "3",  # C7a: the mapping conventions
     "S4_assemble": "3",  # C7a: the mapping conventions
@@ -292,7 +292,7 @@ def test_the_research_prompts_forbid_general_knowledge() -> None:
 def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -> None:
     """What a run record stamps: each instruction file's version by name."""
     versions = prompts.instruction_versions()
-    assert versions["S1_extract_interview"] == "4"
+    assert versions["S1_extract_interview"] == "5"
     assert versions["S3c_worktype"] == "2"
     assert versions["question_bank"] == "1.0"
     (tmp_path / "A.md").write_text("<!-- prompt: A · version 3 -->\nDo the task.\n", "utf-8")

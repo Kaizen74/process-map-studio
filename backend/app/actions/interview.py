@@ -15,7 +15,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import boundaries, coverage, questions, redaction, versions
+from app.actions import boundaries, coverage, exceptions, questions, redaction, versions
 from app.actions.draft import now_iso
 from app.actions.engagements import actor_name
 from app.actions.interview_templates import MEDIA, UNKNOWN_FORMAT
@@ -182,8 +182,9 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
                 has_earlier: bool) -> Result[GuideContext]:  # fmt: skip
     """Rule 7 (criterion 68): the latest map's F2 probes, its coverage report's questions for
     thin or missing dimensions, its open validation questions (F6), its "not described"
-    questions (F5) and its lane-boundary findings (F4 or F1, C8), one of each in
-    turn; `[topics]` from what the report shows as covered."""
+    questions (F5), its lane-boundary findings (F4 or F1, C8) and how often each exception
+    route and workaround happens (M5.s2, X2), one of each in turn; `[topics]` from what the
+    report shows as covered."""
     with session_scope(sessions) as session:
         map_id = versions_repo.current_map_id(session, engagement_id)
         open_questions = (
@@ -199,6 +200,9 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
     if isinstance(found, Err):
         return found
     lanes = [boundary_service.follow_up_question(f, ctx.role) for f in found.value]
+    unusual = exceptions.get_exceptions(sessions, map_id, "done")
+    if isinstance(unusual, Err):
+        return unusual
     rows = templates.interleave(
         [FollowUp(question_id=p.question_id, wording=p.question) for p in report.value.probes],
         [FollowUp(question_id=q.question_id, wording=q.question, about=q.about)
@@ -208,6 +212,8 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
         [FollowUp(question_id="F5", wording=q.question) for q in open_questions
          if q.reason == "not_described"],
         [FollowUp(question_id=qid, wording=wording) for qid, wording in lanes],
+        [FollowUp(question_id=q.question_id, wording=q.wording, about=q.about)
+         for q in unusual.value.questions],
     )  # fmt: skip
     covered = [name.replace("_", " ") for name, d in report.value.dimensions.items()
                if d.status == "covered"]  # fmt: skip

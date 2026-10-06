@@ -256,6 +256,17 @@ describe("4d Official vs lived", () => {
     expect(await seriousViolations(container)).toEqual([]);
   });
 
+  it("a lived answer shows how often it happens, in the SME's words, only when stated (X1)", () => {
+    const lir = detail("Load and return LIR");
+    const answers = (lir.answers ?? []).map((a, n) =>
+      n === 0 ? { ...a, frequency: "most busy days" } : a,
+    );
+    render(<OfficialLivedSection element={{ ...lir, answers }} onOpen={vi.fn()} />);
+    const section = screen.getByRole("region", { name: "Official vs lived" });
+    expect(within(section).getAllByText(/How often:/)).toHaveLength(1);
+    expect(within(section).getByText(/How often:/)).toHaveTextContent("How often: most busy days");
+  });
+
   it("'Practice not described' when only the official account exists; nothing when there is neither", () => {
     const lir = detail("Load and return LIR");
     const officialOnly = {
