@@ -184,3 +184,42 @@ class AnsweredTurn(BaseModel):
     question_id: str | None
     asked: bool
     match: QuestionMatch | None = None
+
+
+# --- Interviewee profiles (API_CONTRACT.md → Interviewee profiles; F.8 rule 1; C5a) ------------
+
+
+class ProfileInput(BaseModel):
+    """A new interviewee profile: a role or stakeholder group, never a person (constraint 10)."""
+
+    model_config = {"extra": "forbid"}
+
+    role_id: str | None = None
+    stakeholder_group: str = ""
+    interview_type: str
+    referred_by_role: str = ""
+    previous_profile_id: str | None = None
+
+
+class ProfilePatch(BaseModel):
+    """Only the fields sent change."""
+
+    model_config = {"extra": "forbid"}
+
+    role_id: str | None = None
+    stakeholder_group: str | None = None
+    interview_type: str | None = None
+    referred_by_role: str | None = None
+    previous_profile_id: str | None = None
+
+
+class ProfileView(BaseModel):
+    id: str
+    engagement_id: str
+    role_id: str | None
+    role_name: str
+    stakeholder_group: str
+    interview_type: str
+    referred_by_role: str
+    previous_profile_id: str | None
+    created_at: str

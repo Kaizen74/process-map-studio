@@ -3,6 +3,7 @@ import type { AuditEntry, ElementDetail, Layout, MergeProposal, Question, Segmen
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { AsView } from "../lib/views";
+import type { ChoosableWorkType } from "../lib/mapTypes";
 
 const enc = encodeURIComponent;
 
@@ -28,6 +29,13 @@ export const reviewElement = (elementId: string, action: ReviewAction) =>
 /** Edit a step: only the fields sent change (PATCH /elements/{eid}). */
 export const updateElement = (elementId: string, patch: Partial<StepPatch>) =>
   request<ElementDetail>(`/elements/${enc(elementId)}`, { method: "PATCH", body: patch });
+
+/** Confirm or change a step's work type (PUT /elements/{eid}/work-type; V3b). */
+export const setWorkType = (elementId: string, workType: ChoosableWorkType) =>
+  request<ElementDetail>(`/elements/${enc(elementId)}/work-type`, {
+    method: "PUT",
+    body: { work_type: workType, confirm: true },
+  });
 
 /** Add a missing step: Eric's own, observed with passages or recommended with a reference. */
 export const addStep = (versionId: string, body: NewStepBody) =>

@@ -1,0 +1,2912 @@
+diff --git a/API_CONTRACT.md b/API_CONTRACT.md
+index 1cf5b2d..4362f6e 100644
+--- a/API_CONTRACT.md
++++ b/API_CONTRACT.md
+@@ -393,7 +393,7 @@ Response `200`:
+ The version's map as the graph of PRD §3.6 (also the future `.json` export): `version`, `process` (name, trigger, end point, KPI, `cycle_time: {elapsed_min, work_min, incomplete_steps}` along the main path), `roles`, `phases`, `elements`, `edges` (`from`, `to`, `kind`, `label`, `sequence_basis`, `view_membership`, `information_payload`, `typical`, `provenance`).
+ - `?view=done|documented` (2026-10-01, B5): only that view's steps and the lines between them (a line is in a view when its membership is `both` or that view's, and both its ends are). Without it, every step and every line. Any other value: `422`.
+ - Edge `provenance` (2026-10-01): `O`, or `I` for a line the translation added where one view leaves out the other view's steps. Until each view is drawn on its own (V1), the layout, lint, quality card, exports and leadership read the **combined** map: every step, and every line except those `I` lines with a view membership.
+-Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_min, wait_min, text}, complexity, kpi, decision: {mechanism, decider_role_id, rule_or_threshold, escalation}, handoff: {in, out}, raci: [{role_id, letter, contested}], provenance, r_reference, source_state, divergence_types, constraints: [{text, provenance, cause_type, is_key}], k_risk, ai_flag: {component, input, output, handoff, basis} | null, evidence: [{segment_id, source_id, source_kind, stance, anchor, verified, note}], confidence, confidence_breakdown: [{label, delta}], needs_check, review_status, account_summary: {official, lived, unclear}, practice_described, variants, view_membership, work_type, constraint_type, work_type_basis, work_type_status`.
++Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_min, wait_min, text}, complexity, kpi, decision: {mechanism, decider_role_id, rule_or_threshold, escalation}, handoff: {in, out}, raci: [{role_id, letter, contested}], provenance, r_reference, source_state, divergence_types, constraints: [{text, provenance, cause_type, is_key}], k_risk, ai_flag: {component, input, output, handoff, basis} | null, evidence: [{segment_id, source_id, source_kind, stance, anchor, verified, note}], confidence, confidence_breakdown: [{label, delta}], needs_check, review_status, account_summary: {official, lived, unclear}, practice_described, variants, view_membership, work_type, constraint_type, work_type_basis, work_type_status, level, parent_element_id`.
+ - `work_type` (2026-10-01, C2, PRD §3.12.4, B.29): clear · complicated · complex · chaotic · confused · not_classified; `constraint_type` (B.30) follows from it (clear rigid, complicated governing, complex enabling, chaotic absent; null for confused or not classified); `work_type_basis`: the quoted cues `[{"segment_ids": [...], "quote": "..."}]`, each found in the passages it cites; `work_type_status`: proposed · confirmed · not_classified (no cue passed the checks). Steps Eric reviewed keep theirs. A complex or chaotic step is never an automation candidate (S4 drops such a flag; lint L10 fails one). Null on maps drafted before v1.10.
+ - `view_membership` (2026-10-01, PRD §3.12.11, B.35) on every element and edge: `both` · `done_only` · `documented_only`. Elements: corroborated, contested, trace-contradicted and not-assessed steps (and start and end) → `both`; practiced-only → `done_only`; documented-only and every `R` element → `documented_only`. Edges: the views both ends are in, except that a line both views could draw is `documented_only` where practice goes another way between the same steps (and `done_only` the other way round). `null` on maps drafted before v1.10 and on lines Eric added.
+ - `sequence_basis` (2026-10-01, PRD §3.12.10, B.34) on every edge, strongest first: `explicit_order` (the lived account states the order, "first … then", or the line is a stated exit, loop, trigger or end point) · `document_order` (one document describes the steps in that order) · `dependency` (what one step hands over is what the next takes in) · `narration_order` (only the order of mentioning; raises a validation question with reason `sequence`).
+@@ -401,6 +401,7 @@ Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_
+ - `information_payload` (2026-10-01, C3, rule 8): what passes across a line, in the SME's terms (for example "loading report"), when what one step passes on is what the next receives; the stitching adds a **candidate line** (`provenance: I`, `sequence_basis: dependency`, in the views both ends are in) between steps in different lanes with no line yet, even when the two sides come from different interviews. Information passed on that no step receives, or received from no step, becomes a validation question (reason `information`). `typical` (a judgment step's typical response) stays `null` for now.
+ - `variants` (2026-10-01, PRD §3.12.11): where practice and the documents describe the same step differently, both values, `{"done": {"owner"?, "threshold"?, "time"?, "trigger"?}, "documented": {…}}` (only the attributes that differ; each value checked like every S4 field: an owner must be a known role the step's claims name, numbers must appear in its claims); `null` when nothing differs.
+ - `account_summary` (2026-10-01, PRD §3.12.3): how many of the step's verified interview claims give the official account (how it is meant to work), the lived account (what the SME does or did) or neither; `practice_described`: `true` when a lived claim describes the step, `false` when only the official account does (shown as "Practice not described"), `null` when the interview gives no account of it.
++- `level` and `parent_element_id` (2026-10-06, K2; PRD §3.12.10 rule 9, §3.9 rule 10, B.39): a step whose verified interview claims all answer Landscape questions (`L1`–`L7`, by question ID) and that no document describes is `landscape` (team-level); every other step is `practice`. A practice step in the same lane and phase as a landscape **activity** is linked to it through `parent_element_id` (with several such activities, the one whose label shares most words with the step's; none on a tie). Both are `null` on a map with no landscape step (one level). With `?view=`, the layout, lint and graph of a view draw the **finest level**: a landscape activity with practice steps under it is left out, and its lines go to the practice steps where its own flow starts (those with no line in from another of its steps) and come from those where it ends (no line out to another of its steps); a landscape activity with no practice steps is drawn as a normal activity. The panel shows "Part of: …" and the table view groups the practice steps under it.
+ - Every source the draft was made from appears in each element's `evidence`; a source that says nothing about the element is `silent` with `segment_id: null` (constraint 4).
+ - Names on the hidden list are replaced by roles in every text. Verbatim quotes and images are never included.
+ - Start and end are elements of kind `start` and `end` (from the scope card's trigger and end point) with no confidence.
+@@ -437,6 +438,7 @@ The lint report of PRD §3.7 (L1–L12), stored on the version when the draft is
+  "warnings": [{"rule": "L12", "element_id": "…", "message": "Activity \"Issue load sheet\" has no time stated."}]}
+ ```
+ Each issue also has `view` (2026-10-01, B5): `null` for a check on the map as one; `"done"` or `"documented"` for a view's own flow checks (PRD §3.12.11), with the message starting "As done:" or "As documented:". Per view: every step reachable from the start (L9), every step but the end with a way out (L9), every exit the view draws labelled (L4 decisions, L5 approvals); "not described" connectors are an L12 warning per view. On the map as one, each line whose sequence basis is `narration_order` is an L12 warning ("The line from "A" to "B" rests only on the order the sources mention them."), with its validation question. The same report feeds the quality card and the publish blockers. Failures block publishing (P7); warnings are listed beneath the quality card. Since P5 the warnings include "The map has n line crossings; consider changing the lane order." (L12, more than 3 crossings in the layout). A version without a stored report is linted on request.
++2026-10-06 (K3, PRD v1.10 L12): two more warnings on the map as one: "n decisions, approvals or judgment steps without a confirmed work type: "…", "…", "…" and n more." (`element_id` the first of them; none on maps drafted before v1.10) and, when the version was drafted from at least one interview, "Fewer than three kinds of story: none yet about a time it went well (M5.1); a time it went badly (M5.2); a time something surprised (M5.3)." naming only the kinds missing.
+ Errors: `404`. Used by: Draft summary (P4), Review Lint tab (P6), quality card (P7).
+ 
+ ### GET /api/versions/{vid}/quality-card (phase P7)
+@@ -451,6 +453,7 @@ Response `200`:
+  "all_green": false}
+ ```
+ - `status`: `pass` · `fail` (hard checks Q1–Q9) · `warning` (Q10 only, when above 25 steps or 6 lanes). `all_green`: every hard check passes.
++- 2026-10-06 (K3, PRD v1.10–1.11 §7.2): **Q11** "Work types confirmed" (warning): every decision, approval and judgment step (mechanism judgment, or complex or chaotic work) has a work type Eric confirmed (`PUT /elements/{eid}/work-type`); detail "n decisions, approvals or judgment steps without a confirmed work type: “…”, “…”, “…” and n more."; passes on maps drafted before v1.10 (no work types). **Q12** "System alignment complete" (warning) is on the card only when the engagement uses system records (P10b): every imported log activity aligned or marked hidden work. Checks are always in order Q1…Q11(, Q12).
+ - Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
+ - `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map), and, for a map drafted from interviews only, "Signal strength: Limited. Built from interviews only; confirm the steps with a document or another SME before relying on them." (a warning, never a blocker). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
+ Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
+@@ -681,7 +684,7 @@ Reopen the latest published version as a new draft. Request: none. Response `201
+ Errors: `404`; `409` "Only the latest published version can be reopened." · "There is already a draft. Review or refresh it instead."
+ 
+ ### GET /api/versions/{vid}/export/{fmt}
+-Download an export of a published version; `fmt`: `md` (Master Process Map, §7.3) · `json` (graph JSON with the quality card) · `csv` (RACI) · `html` (the single-file offline map). Response `200`: the file (`text/markdown`, `application/json`, `text/csv`, `text/html`, UTF-8) with `Content-Disposition: attachment; filename="load-control-v1-0-master-map.md"` (`…-graph.json`, `…-raci.csv`, `…-map.html`). Role names only; no images, verbatim quotes or names; rejected steps left out; the stored quality card printed at the top. An audit row "Exported md" (etc.); the guided path's **Exports** step is done once anything was exported.
++Download an export of a published version; `fmt`: `md` (Master Process Map, §7.3) · `json` (graph JSON with the quality card) · `csv` (RACI) · `html` (the single-file offline map). Response `200`: the file (`text/markdown`, `application/json`, `text/csv`, `text/html`, UTF-8) with `Content-Disposition: attachment; filename="load-control-v1-0-master-map.md"` (`…-graph.json`, `…-raci.csv`, `…-map.html`). Role names only; no images, verbatim quotes or names; rejected steps left out; the stored quality card printed at the top. Since 2026-10-06 (K3) the Master Process Map follows PRD v1.11 §7.3 in full: section 1 adds **Stories** (SME-worded labels, story type, source and anchor; never the quote) and **Strengths as stated (preserve)**; section 2 adds a **View** column (both · as done · as documented), **Two views: as done and as documented** (each view's steps, those only in it, and its "not described" connectors), **Work type and know-how** (work type with proposed/confirmed per step; knowledge risk and dominant ASHEN category per decision point), **Official vs lived** (steps with both accounts and how the views differ on owner, threshold, time or trigger; steps with the official account only) and **Glossary of SME terms**; section 3 starts with **Preserve / Improve** (by capability dimension) and **Reality gaps by gap class** (from finalised documents-vs-practice analyses, with the stated reason) and ends with **Disposition and value** and **System records** ("Not used in this engagement." while those optional modules are off, decision A). Every heading is always printed, with a plain line when empty. The HTML map has the same sections, draws **both views** (As done, then As documented; "not described" connectors dashed), and each step's details add View and Work type. An audit row "Exported md" (etc.); the guided path's **Exports** step is done once anything was exported.
+ Errors: `404` (version, or unknown `fmt`: "Choose md, json, csv or html."); `409` "Publish a version with a green quality card first." (a draft, or a card that isn't green).
+ 
+ ## Review (PRD §4 Review, §5.6–§5.8) — phase P5
+diff --git a/GUIDE.md b/GUIDE.md
+index bb22d42..8a8bcbc 100644
+--- a/GUIDE.md
++++ b/GUIDE.md
+@@ -173,7 +173,7 @@ Pictures help you and your SMEs see what a step looks like. They stay inside the
+ 5. Everything here is worked out from the published map, with no AI calls and role names only.
+ 
+ ### Quality card and publishing, step by step
+-1. The Review banner shows **Quality card: n of 9 green** with a dot (orange until everything is green). Click it to see all ten checks: provenance, verified evidence, labelled exits, lanes and ownership, AI flags, fully reviewed, facts/interpretation/recommendation kept apart, no hidden names in the exports, no images in the exports, and map size (a size warning never stops you publishing). A failing check says in red what to fix; warnings such as steps without a time are listed beneath.
++1. The Review banner shows **Quality card: n of 9 green** with a dot (orange until everything is green). Click it to see all the checks: provenance, verified evidence, labelled exits, lanes and ownership, AI flags, fully reviewed, facts/interpretation/recommendation kept apart, no hidden names in the exports, no images in the exports, map size, and **work types confirmed** (whether every decision, approval and judgment step has a work type you confirmed). Map size and work types are warnings: they never stop you publishing. A failing check says in red what to fix; warnings such as steps without a time are listed beneath.
+ 2. Click **Publish**. If anything still stops it, the same box opens as **Publish blocked** and lists every item (for example "“Draft load plan” hasn't been reviewed yet"). Click an item to go straight to its step.
+ 3. When everything is green, **Publish** makes the first published version **v1.0** (then v1.1, v1.2 …), records you as the validator and opens the **Published** screen. A published version never changes.
+ 
+@@ -184,7 +184,7 @@ Pictures help you and your SMEs see what a step looks like. They stay inside the
+ 4. **Reopen as new draft** (on the latest version) makes a new draft, for example **v1.1 draft**, with every step you reviewed still locked, and opens it on Review. Review it, then publish it as v1.1. While a draft is open, the button becomes a link to it.
+ 
+ ### Exports, step by step
+-1. **Exports** offers four downloads of a published version (choose the **Version** at the top): **Master Process Map (.md)** (the full write-up in three sections: facts, interpretation, recommendation), **Graph (.json)** (the map as data, for other tools), **RACI (.csv)** (opens in a spreadsheet) and **Interactive map (.html)** (the swimlane map in one file that opens in any browser, even offline; click a step to jump to its details).
++1. **Exports** offers four downloads of a published version (choose the **Version** at the top): **Master Process Map (.md)** (the full write-up in three sections: facts, including the SMEs' stories and the strengths they named; interpretation, including which view each step belongs to (as done, as documented or both), the work type and know-how of each step, official versus lived accounts and the glossary of SME terms; recommendation, starting with what to preserve and improve and the reality gaps), **Graph (.json)** (the map as data, for other tools), **RACI (.csv)** (opens in a spreadsheet) and **Interactive map (.html)** (both swimlane maps, as done and as documented, in one file that opens in any browser, even offline; click a step to jump to its details).
+ 2. Every export uses role names only and leaves out images, verbatim quotes and the names on your hidden-names list. Rejected steps are left out. The quality card is printed at the top.
+ 3. Before anything is published, the screen explains that you need a published version with a green quality card first.
+ 4. The fifth card, **Gap analysis reports**, lists the chosen version's finalised gap reports with **Download .md**.
+@@ -227,6 +227,7 @@ A typical engagement, start to finish (each step has its own section above):
+ 9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
+ 
+ ## What changed recently
++- 2026-10-06: **Fuller exports and two levels of detail.** You approved the new Review screenshots. The Master Process Map and the HTML map now follow the full PRD template: stories, strengths, both views, work types and know-how, official versus lived accounts, the glossary, preserve and improve, and reality gaps. The HTML map draws both views. The quality card has a new warning, **Work types confirmed**. A step described only at team level in a landscape interview (for example "Manage loading") now has the detailed steps from practice interviews nested under it: the map draws the detailed steps, the step details say **Part of: …**, and the table lists them under it. (Waiting for your approval of the new export reference files; see docs/review/README.md.)
+ - 2026-10-05: **PRD v1.11 adopted.** On a draft you can now **confirm or change a step's work type** in its details (complex or chaotic work is never flagged for automation), and the **Interview** screen lists your **interviewees** by role or group, ready for tailored guides. New optional modules from v1.11 (system records, value calculator, step disposition) are planned after the remaining interview tools.
+ - 2026-10-01: **Interviews mapped as the work is really done.** A second interview (the ramp duty manager's) joins the sample, and the app now joins steps across interviews where one person passes on what another receives (the preliminary load plan, the loading report). The Review map opens **As done** and switches to **As documented**, with **Show the other view**, a **Work type** lens, and "Not described" lines where an interview skips a step. Step details now show the work type, know-how, stories and the official and lived accounts side by side. Gap analysis also finds reality gaps (where "officially" and "what actually happens" differ) with a gap class only when the SME gave a reason. Behind the scenes the app works out what the interviews covered and what still needs asking, with ready-to-ask follow-up questions in the SME's own words; these will appear on the Interview screen with the follow-up guide. The new Review screenshots wait for your approval (see the report).
+ - 2026-09-30: **Guardrails against drift between runs.** Claude's instructions can no longer change without a new version (the checks stop it). Every draft and refresh records how it was made, and the **Refresh draft from sources** dialog tells you when the model, effort, verifier or instructions differ from that record. After a refresh, the Draft screen says what changed among the steps you hadn't reviewed. The approved interview templates are now fixed (golden baseline G9), and the Review screenshots with Interview in the step bar are the approved ones.
+diff --git a/backend/app/actions/quality.py b/backend/app/actions/quality.py
+index aecc556..5de26da 100644
+--- a/backend/app/actions/quality.py
++++ b/backend/app/actions/quality.py
+@@ -14,18 +14,23 @@ from functools import cache
+ 
+ from sqlalchemy.orm import Session, sessionmaker
+ 
++from app.actions import lenses, redaction
+ from app.actions import questions as questions_action
+-from app.actions import redaction
+ from app.actions import versions as versions_action
+ from app.actions.engagements import actor_name
+ from app.config import DESIGN_TOKENS_FILE, FONTS_DIR, AppConfig
+ from app.db import session_scope
+ from app.domain.enums import VerificationStatus, VersionState
+ from app.domain.exports import (
++    ExportCapability,
+     ExportCause,
+     ExportGapReport,
+     ExportInput,
++    ExportKnowHow,
+     ExportQuestion,
++    ExportRealityGap,
++    ExportStory,
++    ExportTerm,
+     SourceEntry,
+ )
+ from app.domain.graph import Graph
+@@ -37,11 +42,73 @@ from app.repositories import elements as map_repo
+ from app.repositories import gap as gap_repo
+ from app.repositories import sources as sources_repo
+ from app.repositories import versions as versions_repo
+-from app.services import export_html, exports, quality, views
++from app.services import export_html, exports, quality, sensemaking, views
+ 
+ Sessions = sessionmaker[Session]
+ 
+ FORMATS = ("md", "json", "csv", "html")
++# The reality-gap finding types of Analysis A (B.22, §3.12.7) shown in §7.3 section 3.
++REALITY_GAPS = {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap",
++                "constraint_mismatch"}  # fmt: skip
++
++
++def _dominant(counts: dict[str, int]) -> str:
++    """The ASHEN category with most items (the first in ASHEN order on a tie)."""
++    best = max(sensemaking.ASHEN, key=lambda k: counts.get(k, 0))
++    return best if counts.get(best, 0) else "none described"
++
++
++def sensemaking_content(
++    session: Session, version_id: str, engagement_id: str, graph: Graph, names: dict[str, str]
++) -> tuple[list[ExportStory], list[ExportCapability], list[ExportTerm], list[ExportKnowHow]]:
++    """Stories, strengths and weaknesses, the glossary and know-how per decision point, from the
++    version's checked interview items (names hidden, no verbatim quotes; §7.3)."""
++    lens = lenses.load(session, version_id, engagement_id)
++    on_map = [e for e in graph.elements if e.review_status != "rejected"]
++    labels = {e.stable_key: e.label for e in on_map}
++
++    def steps_of(about: object) -> list[str]:
++        return [labels[k] for k in about if k in labels] if isinstance(about, list) else []
++
++    def where(source_id: str, segment_ids: list[str]) -> str:
++        anchor = lens.anchors.get(segment_ids[0], "") if segment_ids else ""
++        return " ".join(x for x in (names.get(source_id, "Interview"), anchor) if x)
++
++    stories: list[ExportStory] = []
++    capabilities: list[ExportCapability] = []
++    glossary: list[ExportTerm] = []
++    seen: set[str] = set()
++    for r in lens.items:
++        about = r.payload.get("about_steps")
++        if r.claim_type == "story":
++            stories.append(ExportStory(
++                label=lens.hide(str(r.payload.get("text", ""))),
++                fragment_type=str(r.payload.get("fragment_type", "other")),
++                steps=steps_of(about), where=where(r.source_id, r.segment_ids),
++            ))  # fmt: skip
++        elif r.claim_type == "capability":
++            capabilities.append(ExportCapability(
++                kind=str(r.payload.get("kind", "")), dimension=str(r.payload.get("dimension", "")),
++                text=lens.hide(str(r.payload.get("text", ""))), steps=steps_of(about),
++            ))  # fmt: skip
++        elif r.claim_type == "sme_term":
++            term = str(r.payload.get("term", ""))
++            if term.lower() not in seen:
++                seen.add(term.lower())
++                glossary.append(ExportTerm(
++                    term=lens.hide(term),
++                    plain_meaning=lens.hide(str(r.payload.get("plain_meaning", ""))),
++                    steps=steps_of(about),
++                ))  # fmt: skip
++    know_how: list[ExportKnowHow] = []
++    for e in on_map:
++        kh = lenses.know_how(lens, e.stable_key, e.kind, e.work_type)
++        if kh is not None:
++            counts = {k: len(v) for k, v in kh.ashen.items()}
++            know_how.append(ExportKnowHow(
++                element_id=e.id, knowledge_risk=kh.knowledge_risk, dominant=_dominant(counts),
++            ))  # fmt: skip
++    return stories, capabilities, glossary, know_how
+ 
+ 
+ @cache
+@@ -53,8 +120,14 @@ def html_assets() -> tuple[dict[str, object], dict[str, bytes]]:
+ 
+ 
+ def export_input(
+-    config: AppConfig, session: Session, version_id: str, graph: Graph
++    config: AppConfig,
++    session: Session,
++    version_id: str,
++    graph: Graph,
++    every: Graph | None = None,
+ ) -> ExportInput | None:
++    """`graph` is the map as one; `every` the graph with every line (built here when not given;
++    the quality card passes the one it already built)."""
+     version = versions_repo.get(session, version_id)
+     if version is None:
+         return None
+@@ -101,7 +174,36 @@ def export_input(
+         for a in reversed(gap_repo.for_version(session, version_id))
+         if a.status == "finalised"
+     ]
++    names = {s.id: redaction.hide(s.filename, terms) for s in sources}
++    every = every or versions_action.build_graph(session, version_id, every_line=True)
++    view_graphs: dict[str, Graph] = (
++        {str(v): views.view_graph(every, v) for v in views.VIEWS}
++        if every is not None and any(e.view_membership for e in every.elements)
++        else {}
++    )
++    reality_gaps = [
++        ExportRealityGap(
++            gap_class=f.gap_class or "unexplained",
++            title=redaction.hide(f.title, terms),
++            stated_reason=redaction.hide(f.stated_reason, terms),
++        )
++        for a in reversed(gap_repo.for_version(session, version_id))
++        if a.status == "finalised" and a.mode == "internal"
++        for f in gap_repo.findings(session, a.id)
++        if f.finding_type in REALITY_GAPS
++        and f.verification_status == "verified"
++        and f.disposition != "dismissed"
++    ]
++    stories, capabilities, glossary, know_how = sensemaking_content(
++        session, version_id, version.engagement_id, graph, names
++    )
+     return ExportInput(
++        stories=stories,
++        capabilities=capabilities,
++        glossary=glossary,
++        know_how=know_how,
++        view_graphs=view_graphs,
++        reality_gaps=reality_gaps,
+         graph=graph,
+         sources=[
+             SourceEntry(
+@@ -138,7 +240,7 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
+     if every is None:
+         return None
+     graph = views.combined(every)  # the map as one, built once
+-    data = export_input(config, session, version_id, graph)
++    data = export_input(config, session, version_id, graph, every)
+     if data is None:
+         return None
+     version = versions_repo.get(session, version_id)
+@@ -161,7 +263,9 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
+     return quality.build_quality_card(
+         QualityInput(
+             graph=graph,
+-            lint=versions_action.lint_graph(every),
++            lint=versions_action.lint_graph(
++                every, versions_action.story_types(session, version_id)
++            ),
+             pending_merges=pending,
+             open_image_suggestions=map_repo.suggested_image_count(session, version_id),
+             unverified_claims=unverified,
+diff --git a/backend/app/actions/versions.py b/backend/app/actions/versions.py
+index 4ff238d..f5170b0 100644
+--- a/backend/app/actions/versions.py
++++ b/backend/app/actions/versions.py
+@@ -15,7 +15,14 @@ from sqlalchemy.orm import Session, sessionmaker
+ 
+ from app.actions import lenses, redaction, view_translation
+ from app.db import session_scope
+-from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance, VersionState
++from app.domain.enums import (
++    EdgeKind,
++    ElementKind,
++    ReviewStatus,
++    SourceKind,
++    Stance,
++    VersionState,
++)
+ from app.domain.graph import (
+     AlignmentRow,
+     AnswerQuote,
+@@ -280,6 +287,8 @@ def build_graph(
+                 constraint_type=e.constraint_type,
+                 work_type_basis=list(e.work_type_basis or []),
+                 work_type_status=e.work_type_status,
++                level=e.level,
++                parent_element_id=e.parent_element_id,
+             )
+         )
+ 
+@@ -347,7 +356,7 @@ def get_layout(
+     if graph is None:
+         return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+     if view is None:
+-        return Ok(layout.compute_layout(views.combined(graph)))
++        return Ok(layout.compute_layout(views.finest_level(views.combined(graph))))
+     if not show_other:
+         drawn = layout.compute_layout(views.view_graph(graph, view))
+         return Ok(drawn.model_copy(update={"view": view}))
+@@ -355,21 +364,39 @@ def get_layout(
+     return Ok(views.mark_ghosts(drawn, graph, view))
+ 
+ 
+-def lint_graph(every: Graph) -> LintReport:
++def story_types(session: Session, version_id: str) -> set[str] | None:
++    """The kinds of story (B.31) the version's interviews told; None without an interview."""
++    kinds = {
++        source.kind
++        for sid in map_repo.version_source_ids(session, version_id)
++        if (source := sources_repo.get(session, sid)) is not None
++    }
++    if SourceKind.INTERVIEW_TRANSCRIPT.value not in kinds:
++        return None
++    return {
++        str(r.payload.get("fragment_type", "other"))
++        for _, r in claims_repo.verified_rows(session, version_id)
++        if r.claim_type == "story"
++    }
++
++
++def lint_graph(every: Graph, stories: set[str] | None = None) -> LintReport:
+     """The lint rules on the map as one (with its layout), then each view's flow checks
+-    (§3.12.11), from the graph with every line. Used for the stored report, the quality card and
+-    publishing alike."""
++    (§3.12.11), then the sensemaking warnings (work types, stories), from the graph with every
++    line. Used for the stored report, the quality card and publishing alike."""
+     graph = views.combined(every)
+     whole = lint.run_lint(graph, layout.compute_layout(graph))
+     per_view = lint.run_view_checks(every)
++    sense = lint.run_sensemaking_warnings(graph, stories)
+     return LintReport(
+-        failures=whole.failures + per_view.failures, warnings=whole.warnings + per_view.warnings
++        failures=whole.failures + per_view.failures,
++        warnings=whole.warnings + per_view.warnings + sense.warnings,
+     )
+ 
+ 
+ def lint_for(session: Session, version_id: str) -> LintReport | None:
+     every = build_graph(session, version_id, every_line=True)
+-    return lint_graph(every) if every is not None else None
++    return lint_graph(every, story_types(session, version_id)) if every is not None else None
+ 
+ 
+ def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:
+diff --git a/backend/app/actions/view_translation.py b/backend/app/actions/view_translation.py
+index 7fb9751..9b9f4aa 100644
+--- a/backend/app/actions/view_translation.py
++++ b/backend/app/actions/view_translation.py
+@@ -76,9 +76,11 @@ def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
+             if not seqs:
+                 continue
+             if SourceKind.INTERVIEW_TRANSCRIPT.value in kinds:
++                questions = [rows[s][0].question_id for s in claim.segment_ids if s in rows]
+                 interview.append(StepPosition(
+                     source_id=claim.source_id, seq=min(seqs),
+                     lived=claim.account_type == "lived", explicit=_explicit(claim),
++                    question_ids=[q for q in questions if q],
+                 ))  # fmt: skip
+             elif kinds & DOCUMENTS:
+                 documents.append(StepPosition(source_id=claim.source_id, seq=min(seqs)))
+@@ -87,14 +89,15 @@ def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
+             provenance=e.provenance, interview=interview, documents=documents,
+             handoff_in=e.handoff_in, handoff_out=e.handoff_out,
+             added_by_owner=e.review_status == ReviewStatus.ADDED.value,
+-            lane=e.lane_role_id or "", gives=gives.get(e.stable_key, []),
++            lane=e.lane_role_id or "", phase=e.phase_id or "", gives=gives.get(e.stable_key, []),
+             takes=takes.get(e.stable_key, []),
+         ))  # fmt: skip
+     return steps
+ 
+ 
+-def _translation(session: Session, version_id: str) -> Translation | None:
+-    steps = steps_for(session, version_id)
++def _translation(
++    session: Session, version_id: str, steps: list[TranslationStep]
++) -> Translation | None:
+     if not steps:
+         return None
+     return translation.translate(steps, [
+@@ -112,7 +115,12 @@ def update_views(session: Session, version_id: str) -> Tally:
+     for stored in map_repo.edges(session, version_id):
+         if added_by_translation(stored.provenance, stored.view_membership):
+             map_repo.delete_edge(session, stored.id)
+-    result = _translation(session, version_id)
++    steps = steps_for(session, version_id)
++    # Rule 9 (K2): levels and parents, worked out again like the views; both None on a map with
++    # one level.
++    for element_id, (level, parent) in translation.levels(steps).items():
++        map_repo.update_element(session, element_id, {"level": level, "parent_element_id": parent})
++    result = _translation(session, version_id, steps)
+     if result is None:
+         return tally
+     for element_id, view in result.element_views.items():
+@@ -140,7 +148,7 @@ def update_views(session: Session, version_id: str) -> Tally:
+ def add_questions(session: Session, version_id: str) -> int:
+     """The translation's validation questions (order not stated; not described), never twice
+     (a question already asked, open or answered, is not asked again)."""
+-    result = _translation(session, version_id)
++    result = _translation(session, version_id, steps_for(session, version_id))
+     if result is None:
+         return 0
+     phases = {e.id: e.phase_id for e in map_repo.elements(session, version_id)}
+diff --git a/backend/app/domain/exports.py b/backend/app/domain/exports.py
+index 79902b9..73ba93d 100644
+--- a/backend/app/domain/exports.py
++++ b/backend/app/domain/exports.py
+@@ -45,6 +45,47 @@ class ExportGapReport(BaseModel):
+     accepted: list[str]  # titles of findings added as a question, cause or step
+ 
+ 
++class ExportStory(BaseModel):
++    """A story fragment as the SME labelled it (§7.3 section 1): never the verbatim quote."""
++
++    label: str
++    fragment_type: str  # B.31
++    steps: list[str]
++    where: str  # "<source name> <anchor>"
++
++
++class ExportCapability(BaseModel):
++    """A strength to preserve or a weakness to improve, by capability dimension (B.36)."""
++
++    kind: str  # strength · weakness
++    dimension: str
++    text: str
++    steps: list[str]
++
++
++class ExportTerm(BaseModel):
++    term: str
++    plain_meaning: str
++    steps: list[str]
++
++
++class ExportKnowHow(BaseModel):
++    """One line per decision point (§7.3 section 2): knowledge risk and the dominant ASHEN
++    category (the one with most items; "none described" when every category is empty)."""
++
++    element_id: str
++    knowledge_risk: str
++    dominant: str
++
++
++class ExportRealityGap(BaseModel):
++    """A reality-gap finding of a finalised documents-vs-practice analysis (§3.12.7)."""
++
++    gap_class: str  # B.32 (unexplained when no reason was stated)
++    title: str
++    stated_reason: str
++
++
+ class ExportInput(BaseModel):
+     graph: Graph
+     sources: list[SourceEntry]
+@@ -59,3 +100,15 @@ class ExportInput(BaseModel):
+     #: Pending cause-library entries for the map's steps, and finalised gap reports (phase P10).
+     causes: list[ExportCause] = []
+     gap_reports: list[ExportGapReport] = []
++    # PRD v1.10-1.11 §7.3 (K3, 2026-10-06): the sensemaking content, both views and the optional
++    # modules. Graphs per view ("done", "documented") carry their own lines and "not described"
++    # connectors; empty for maps drafted before v1.10.
++    view_graphs: dict[str, Graph] = {}
++    stories: list[ExportStory] = []
++    capabilities: list[ExportCapability] = []
++    glossary: list[ExportTerm] = []
++    know_how: list[ExportKnowHow] = []
++    reality_gaps: list[ExportRealityGap] = []
++    #: Optional modules in use (§3.13-3.15; decision A: off until Eric turns them on in P10b).
++    value_calculator_on: bool = False
++    system_records_on: bool = False
+diff --git a/backend/app/domain/graph.py b/backend/app/domain/graph.py
+index 1e90c9c..0fd178f 100644
+--- a/backend/app/domain/graph.py
++++ b/backend/app/domain/graph.py
+@@ -302,6 +302,10 @@ class GraphElement(Out):
+     constraint_type: str | None = None
+     work_type_basis: list[dict[str, Any]] = []
+     work_type_status: str | None = None
++    # §3.12.10 rule 9 (B.39; K2): landscape · practice, and the landscape activity a practice step
++    # belongs to; both null on a map with one level (and before v1.10).
++    level: str | None = None
++    parent_element_id: str | None = None
+ 
+ 
+ class GraphEdge(Out):
+@@ -503,6 +507,8 @@ class ElementDetail(Out):
+     constraint_type: str | None = None
+     work_type_basis: list[dict[str, Any]] = []
+     work_type_status: str | None = None
++    level: str | None = None  # B.39 (K2)
++    parent_element_id: str | None = None
+     # §5.7.7 4a (V3): the work type's quoted cues with their anchors (names hidden).
+     work_type_cues: list[WorkTypeCue] = []
+     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step
+diff --git a/backend/app/domain/quality.py b/backend/app/domain/quality.py
+index 502a745..8978e69 100644
+--- a/backend/app/domain/quality.py
++++ b/backend/app/domain/quality.py
+@@ -1,5 +1,6 @@
+-"""The publish quality card (PRD §7.2): ten checks, all hard ones green before a version can be
+-published. Stored with the version and printed at the top of every export."""
++"""The publish quality card (PRD §7.2): Q1-Q9 hard checks, all green before a version can be
++published, and the warnings Q10-Q12 (Q12 only with system records). Stored with the version and
++printed at the top of every export."""
+ 
+ from __future__ import annotations
+ 
+@@ -13,7 +14,7 @@ CheckStatus = Literal["pass", "fail", "warning"]
+ 
+ 
+ class QualityCheck(Out):
+-    id: str  # Q1 … Q10
++    id: str  # Q1 … Q12
+     name: str
+     status: CheckStatus
+     hard: bool
+@@ -24,7 +25,7 @@ class QualityCard(Out):
+     checks: list[QualityCheck]
+     #: Extra warnings listed beneath the card (steps without time or KPI, AI flags outside 3-7 ...).
+     warnings: list[str]
+-    #: True when every hard check passes (Q10 is only a warning).
++    #: True when every hard check passes (Q10-Q12 are only warnings).
+     all_green: bool
+ 
+ 
+@@ -43,3 +44,6 @@ class QualityInput(BaseModel):
+     hidden_terms: list[str]
+     #: Kinds of the sources the version was drafted from (its signal strength, P12).
+     source_kinds: list[str] = []
++    #: Q12 (v1.11): imported system-log activities neither aligned nor marked hidden work; None
++    #: when the engagement uses no system records (the check is then left off the card).
++    unaligned_activities: int | None = None
+diff --git a/backend/app/domain/sensemaking.py b/backend/app/domain/sensemaking.py
+index d85a15e..ca3f626 100644
+--- a/backend/app/domain/sensemaking.py
++++ b/backend/app/domain/sensemaking.py
+@@ -59,6 +59,8 @@ class StepPosition(BaseModel):
+     seq: int
+     lived: bool = False  # an interview claim giving the lived account
+     explicit: bool = False  # it confirmed an explicit-order marker ("first", "then", "T-90")
++    # The guide questions its passages answer (Step A), e.g. ["L2"]; rule 9 (K2) reads them.
++    question_ids: list[str] = []
+ 
+ 
+ class TranslationStep(BaseModel):
+@@ -73,6 +75,7 @@ class TranslationStep(BaseModel):
+     handoff_out: str = ""
+     added_by_owner: bool = False  # Eric put the step in the flow himself: its order is stated
+     lane: str = ""
++    phase: str = ""  # rule 9 (K2): a practice step nests under a landscape activity of its phase
+     # Rule 8 (C3): the information the step passes on and the information it receives, in the
+     # SME's terms, from the decision-information items linked to it (any interview).
+     gives: list[str] = []
+diff --git a/backend/app/services/export_html.css b/backend/app/services/export_html.css
+index 08aca5b..d7b4a6a 100644
+--- a/backend/app/services/export_html.css
++++ b/backend/app/services/export_html.css
+@@ -37,7 +37,7 @@ th { font-weight: var(--weight-medium); color: var(--ink-3); }
+ .seg { position: absolute; border: 0 solid var(--edge); }
+ .seg.h { height: 0; border-top-width: var(--line-edge); transform: translateY(-50%); }
+ .seg.v { width: 0; border-left-width: var(--line-edge); transform: translateX(-50%); }
+-.back .seg { border-style: dashed; }
++.back .seg, .gap .seg { border-style: dashed; }
+ .arrow { position: absolute; width: 0; height: 0; border: 4px solid transparent; }
+ .arrow.right { border-right-width: 0; border-left: 7px solid var(--edge); transform: translate(-7px, -4px); }
+ .arrow.left { border-left-width: 0; border-right: 7px solid var(--edge); transform: translate(0, -4px); }
+diff --git a/backend/app/services/export_html.py b/backend/app/services/export_html.py
+index fb763ff..18495e4 100644
+--- a/backend/app/services/export_html.py
++++ b/backend/app/services/export_html.py
+@@ -4,7 +4,8 @@ Drawn from the backend layout of the published map (rejected steps left out), st
+ shared design tokens (`shared/design_tokens.json`, passed in) and the self-hosted IBM Plex fonts
+ embedded as data (passed in as bytes). A Content-Security-Policy forbids every outside request;
+ there is no script: each step on the map links to its details further down the page.
+-Sections as the Master Process Map: 1 Facts, 2 Interpretation, 3 Recommendation. Role names
++Sections as the Master Process Map: 1 Facts, 2 Interpretation, 3 Recommendation. Both views are
++drawn (As done, then As documented; §3.12.11), with "not described" connectors dashed. Role names
+ only; no verbatim quotes; no images.
+ """
+ 
+@@ -15,7 +16,7 @@ from html import escape
+ from itertools import pairwise
+ from pathlib import Path
+ 
+-from app.domain.enums import ElementKind, Provenance
++from app.domain.enums import EdgeKind, ElementKind, Provenance
+ from app.domain.exports import ExportInput
+ from app.domain.graph import Graph, GraphElement
+ from app.domain.layout import Layout, TextPos
+@@ -130,7 +131,8 @@ def _map(graph: Graph, layout: Layout) -> str:
+         for p in layout.phases[1:]
+     ]
+     for edge in layout.edges:
+-        parts = [f'<div class="{"back" if edge.is_back_edge else "edge"}" aria-hidden="true">']
++        kind = "gap" if edge.kind == EdgeKind.GAP.value else "back" if edge.is_back_edge else "edge"
++        parts = [f'<div class="{kind}" aria-hidden="true">']
+         points = edge.points
+         for (x1, y1), (x2, y2) in pairwise(points):
+             if y1 == y2 and x1 != x2:
+@@ -185,7 +187,8 @@ def _map(graph: Graph, layout: Layout) -> str:
+     out.append(
+         '<p class="legend">Rounded box: activity · Diamond: decision · Pill: approval · '
+         "Dot: start · Double ring: end · Orange dot: key constraint · Dashed line: a loop back "
+-        "(rework or re-plan) · Under each step: its time</p>"
++        "(rework or re-plan), or a step the interview doesn't describe · Under each step: its "
++        "time</p>"
+     )
+     return "\n".join(out)
+ 
+@@ -252,6 +255,13 @@ def _facts(data: ExportInput, graph: Graph) -> str:
+             ],
+         )
+     )
++    parts.append("<h3>Stories</h3>")
++    stories = [f"<li>{e(md.story_line(x))}</li>" for x in data.stories]
++    parts.append(f"<ul>{''.join(stories)}</ul>" if stories else "<p>No stories recorded.</p>")
++    parts.append("<h3>Strengths as stated (preserve)</h3>")
++    strengths = [f"<li>{e(md.capability_line(c))}</li>" for c in data.capabilities
++                 if c.kind == "strength"]  # fmt: skip
++    parts.append(f"<ul>{''.join(strengths)}</ul>" if strengths else "<p>No strengths stated.</p>")
+     parts.append("</section>")
+     return "\n".join(parts)
+ 
+@@ -270,6 +280,10 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
+         ("Time", f"work {md.minutes(el.time.work_min)}, wait {md.minutes(el.time.wait_min)}"
+                  + (f" ({el.time.text})" if el.time.text else "")),
+     ]  # fmt: skip
++    if el.view_membership:
++        rows.append(("View", md.view_word(el)))
++    if el.work_type:
++        rows.append(("Work type", md.work_type_text(el)))
+     if el.complexity:
+         rows.append(("Complexity", el.complexity))
+     if el.kpi:
+@@ -325,7 +339,7 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
+         '<section aria-labelledby="interpretation">',
+         f'<h2 id="interpretation">{e(md.INTERPRETATION[3:])}</h2>',
+         '<p class="note">Select a step to read its details below.</p>',
+-        _map(graph, layout),
++        *_maps(data, graph, layout),
+         "<h3>Steps</h3>",
+     ]
+     parts += [_details(data, graph, el) for el in md.steps(graph)]
+@@ -341,14 +355,72 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
+         )
+     )
+     parts.append('<p class="note">A? means the sources disagree about who is accountable.</p>')
++    parts.append("<h3>Two views: as done and as documented</h3>")
++    parts.append(_list(md.two_views_lines(data)))
++    know_how = {k.element_id: k for k in data.know_how}
++    parts.append("<h3>Work type and know-how</h3>")
++    parts.append(
++        _table(
++            ["Step", "Work type", "Know-how (knowledge risk · dominant ASHEN)"],
++            [
++                [
++                    f"[{e(el.provenance)}] {e(el.label)}",
++                    e(md.work_type_text(el)),
++                    e(f"{kh.knowledge_risk} · {md.ASHEN_WORDS.get(kh.dominant, kh.dominant)}")
++                    if (kh := know_how.get(el.id))
++                    else "—",
++                ]
++                for el in md.steps(graph)
++            ],
++        )
++    )
++    parts.append("<h3>Official vs lived</h3>")
++    parts.append(_list(md.official_lived_lines(graph)))
++    parts.append("<h3>Glossary of SME terms</h3>")
++    terms = [
++        f"<li><b>{e(t.term)}</b>: {e(t.plain_meaning or 'meaning not stated')}"
++        + (f" (step: {e(', '.join(t.steps))})" if t.steps else "")
++        + "</li>"
++        for t in data.glossary
++    ]
++    parts.append(f"<ul>{''.join(terms)}</ul>" if terms else "<p>No SME terms recorded.</p>")
+     parts.append("</section>")
+     return "\n".join(parts)
+ 
+ 
++def _list(lines: list[str]) -> str:
++    """Markdown-style lines ("- …") as a list; a lone sentence as a paragraph."""
++    items = [x.removeprefix("- ") for x in lines if x.startswith("- ")]
++    if not items:
++        return "".join(f"<p>{e(x)}</p>" for x in lines)
++    return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in items) + "</ul>"
++
++
++VIEW_TITLES = {
++    "done": "Map as done: the work as actually performed",
++    "documented": "Map as documented: the documents' version",
++}
++
++
++def _maps(data: ExportInput, graph: Graph, layout: Layout) -> list[str]:
++    """Both views, each drawn from its own backend layout (§3.12.11); the one map before v1.10."""
++    if not data.view_graphs:
++        return [_map(graph, layout)]
++    parts = []
++    for view, title in VIEW_TITLES.items():
++        drawn = md.on_the_map(data.view_graphs[view])
++        parts += [f"<h3>{e(title)}</h3>", _map(drawn, compute_layout(drawn))]
++    return parts
++
++
+ def _recommendation(data: ExportInput, graph: Graph) -> str:
+     parts = [
+         '<section aria-labelledby="recommendation">',
+         f'<h2 id="recommendation">{e(md.RECOMMENDATION[3:])}</h2>',
++        "<h3>Preserve / Improve</h3>",
++        _list(md.preserve_improve_lines(data)),
++        "<h3>Reality gaps by gap class</h3>",
++        _list(md.reality_gap_lines(data)),
+         "<h3>AI flags</h3>",
+     ]
+     flagged = [el for el in md.steps(graph) if el.ai_flag is not None]
+@@ -402,6 +474,8 @@ def _recommendation(data: ExportInput, graph: Graph) -> str:
+     parts.append("<h3>Gap analyses</h3>")
+     reports = [f"<li>{e(md.gap_report_line(r).removeprefix('- '))}</li>" for r in data.gap_reports]
+     parts.append(f"<ul>{''.join(reports)}</ul>" if reports else "<p>No finalised gap analyses.</p>")
++    parts += ["<h3>Disposition and value</h3>", f"<p>{md.NOT_USED}</p>"]
++    parts += ["<h3>System records</h3>", f"<p>{md.NOT_USED}</p>"]
+     parts.append("</section>")
+     return "\n".join(parts)
+ 
+diff --git a/backend/app/services/exports.py b/backend/app/services/exports.py
+index 1ed7888..6f6d02b 100644
+--- a/backend/app/services/exports.py
++++ b/backend/app/services/exports.py
+@@ -26,7 +26,13 @@ from app.domain.enums import (
+     SourceState,
+     Stance,
+ )
+-from app.domain.exports import ExportCause, ExportGapReport, ExportInput
++from app.domain.exports import (
++    ExportCapability,
++    ExportCause,
++    ExportGapReport,
++    ExportInput,
++    ExportStory,
++)
+ from app.domain.graph import Graph, GraphElement
+ from app.domain.quality import QualityCard
+ from app.services import signal
+@@ -88,6 +94,23 @@ REASONS = {
+ EXIT_WORDS = {kind.value: kind.value.capitalize() for kind in EdgeKind}
+ STATUS_WORDS = {"pass": "Pass", "fail": "Fail", "warning": "Warning"}
+ NO_PHASE = "Without a phase"
++NOT_USED = "Not used in this engagement."
++NOT_DESCRIBED = '"not described" connector'
++VIEW_WORDS = {"both": "both", "done_only": "as done", "documented_only": "as documented"}
++WORK_TYPES = {"clear": "Clear", "complicated": "Complicated", "complex": "Complex",
++              "chaotic": "Chaotic", "confused": "Confused",
++              "not_classified": "Not classified"}  # fmt: skip
++WORK_STATUS = {"proposed": "proposed", "confirmed": "confirmed"}
++STORY_TYPES = {"recent_case": "recent case", "went_well": "went well", "went_badly": "went badly",
++               "surprise": "surprise", "workaround": "workaround", "other": "other"}  # fmt: skip
++DIMENSIONS = {"skillset": "Skillset", "ways_of_working": "Ways of working", "systems": "Systems",
++              "process": "Process", "structure": "Structure"}  # fmt: skip
++GAP_CLASSES = {"effective_adaptation": "Effective adaptation", "risky_drift": "Risky drift",
++               "obsolete_rule": "Obsolete rule", "unexplained": "Unexplained"}  # fmt: skip
++ASHEN_WORDS = {"artefacts": "artefacts", "skills": "skills", "heuristics": "heuristics",
++               "experience": "experience", "natural_talent": "natural talent",
++               "none described": "none described"}  # fmt: skip
++VARIANT_FIELDS = ("owner", "threshold", "time", "trigger")
+ 
+ # Headings of the fixed template, in order (the quality card's Q7 checks them).
+ FACTS = "## 1. Facts: what the sources tell us"
+@@ -192,6 +215,72 @@ def steps(graph: Graph) -> list[GraphElement]:
+     return [e for e in graph.elements if e.kind in STEP_KINDS]
+ 
+ 
++def view_word(element: GraphElement) -> str:
++    """Which view draws the step: both · as done · as documented (both before v1.10)."""
++    return VIEW_WORDS.get(element.view_membership or "both", "both")
++
++
++def work_type_text(element: GraphElement) -> str:
++    """ "Complex (proposed)", "Clear (confirmed)", "Not classified" or "—" before v1.10."""
++    if element.work_type is None:
++        return "—"
++    words = WORK_TYPES.get(element.work_type, element.work_type)
++    status = WORK_STATUS.get(element.work_type_status or "")
++    return f"{words} ({status})" if status else words
++
++
++def story_line(story: ExportStory) -> str:
++    about = f"; step: {', '.join(story.steps)}" if story.steps else ""
++    kind = STORY_TYPES.get(story.fragment_type, story.fragment_type)
++    return f"[O] {story.label} ({kind} · {story.where}{about})"
++
++
++def capability_line(c: ExportCapability) -> str:
++    about = f" (step: {', '.join(c.steps)})" if c.steps else ""
++    return f"[O] {DIMENSIONS.get(c.dimension, c.dimension)}: {c.text}{about}"
++
++
++def two_views_lines(data: ExportInput) -> list[str]:
++    """What each view draws (§3.12.11; both views are published together)."""
++    done, documented = data.view_graphs.get("done"), data.view_graphs.get("documented")
++    if done is None or documented is None:
++        return ["This map was drafted before the two views; it has one view."]
++    lines = []
++    for name, graph, other in (("As done", done, documented), ("As documented", documented, done)):
++        own = [e.label for e in steps(on_the_map(graph))]
++        others = {e.label for e in steps(on_the_map(other))}
++        only = [label for label in own if label not in others]
++        gaps = sum(1 for edge in graph.edges if edge.kind == EdgeKind.GAP.value)
++        line = f"- {name}: {plural(len(own), 'step')}"
++        line += f"; only here: {', '.join(only)}" if only else "; no steps of its own"
++        if gaps:
++            line += f"; {plural(gaps, NOT_DESCRIBED)}"
++        lines.append(line + ".")
++    return lines
++
++
++def official_lived_lines(graph: Graph) -> list[str]:
++    """Per step where the interviews give both accounts (no verbatim quotes)."""
++    lines = []
++    for e in steps(graph):
++        if e.practice_described is False:
++            lines.append(f"- {tag(e)} {e.label}: official account only (practice not described).")
++            continue
++        if not (e.account_summary.official and e.account_summary.lived):
++            continue
++        done = (e.variants or {}).get("done", {})
++        documented = (e.variants or {}).get("documented", {})
++        differ = [
++            f"{f} (as done: {done.get(f) or 'not stated'}; as documented: "
++            f"{documented.get(f) or 'not stated'})"
++            for f in VARIANT_FIELDS
++            if done.get(f) != documented.get(f)
++        ]
++        detail = f"they differ on {'; '.join(differ)}" if differ else "no difference recorded"
++        lines.append(f"- {tag(e)} {e.label}: official and lived accounts both given; {detail}.")
++    return lines or ["No step has both an official and a lived account."]
++
++
+ # --- Master Process Map (Markdown) -------------------------------------------------------------
+ 
+ 
+@@ -240,6 +329,12 @@ def _facts(data: ExportInput, graph: Graph) -> list[str]:
+     for state, words in STATES.items():
+         count = sum(1 for e in steps(graph) if e.source_state == state)
+         lines.append(f"| {words} | {count} |")
++
++    lines += ["", "### Stories", ""]
++    lines += [f"- {story_line(story)}" for story in data.stories] or ["No stories recorded."]
++    lines += ["", "### Strengths as stated (preserve)", ""]
++    strengths = [c for c in data.capabilities if c.kind == "strength"]
++    lines += [f"- {capability_line(c)}" for c in strengths] or ["No strengths stated."]
+     return lines
+ 
+ 
+@@ -256,7 +351,7 @@ def _phase_groups(graph: Graph) -> list[tuple[str, str, list[GraphElement]]]:
+     return [g for g in groups if g[2]]
+ 
+ 
+-def _interpretation(graph: Graph) -> list[str]:
++def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
+     roles = {r.id: r.name for r in graph.roles}
+     labels = {e.id: e.label for e in graph.elements}
+     lines = [INTERPRETATION]
+@@ -273,13 +368,13 @@ def _interpretation(graph: Graph) -> list[str]:
+         if activities:
+             lines += [
+                 "",
+-                "| Step | Lane | Prov | Source state | Time (work/wait) | Complexity "
++                "| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity "
+                 "| Data in → out | Flags |",
+-                "|---|---|---|---|---|---|---|---|",
++                "|---|---|---|---|---|---|---|---|---|",
+             ]
+             for e in activities:
+                 time = f"{minutes(e.time.work_min)} / {minutes(e.time.wait_min)}"
+-                data = (
++                flow = (
+                     f"{e.handoff.in_ or '—'} → {e.handoff.out or '—'}"
+                     if e.handoff.in_ or e.handoff.out
+                     else "—"
+@@ -294,9 +389,10 @@ def _interpretation(graph: Graph) -> list[str]:
+                     if present
+                 ]
+                 lines.append(
+-                    f"| {cell(e.label)} | {cell(roles.get(e.lane_role_id or '', ''))} | {tag(e)} "
++                    f"| {cell(e.label)} | {view_word(e)} "
++                    f"| {cell(roles.get(e.lane_role_id or '', ''))} | {tag(e)} "
+                     f"| {STATES.get(e.source_state, e.source_state)} | {time} "
+-                    f"| {e.complexity or '—'} | {cell(data)} | {', '.join(flags) or '—'} |"
++                    f"| {e.complexity or '—'} | {cell(flow)} | {', '.join(flags) or '—'} |"
+                 )
+         if deciding:
+             lines += ["", "Decisions and approvals:", ""]
+@@ -344,11 +440,55 @@ def _interpretation(graph: Graph) -> list[str]:
+         lines += [f"| {words} | {cell(', '.join(members))} |" for words, members in found]
+     else:
+         lines.append("No divergences between the sources.")
++
++    lines += ["", "### Two views: as done and as documented", "", *two_views_lines(data)]
++    know_how = {k.element_id: k for k in data.know_how}
++    lines += [
++        "",
++        "### Work type and know-how",
++        "",
++        "| Step | Work type | Know-how (knowledge risk · dominant ASHEN) |",
++        "|---|---|---|",
++    ]
++    for e in steps(graph):
++        kh = know_how.get(e.id)
++        known = f"{kh.knowledge_risk} · {ASHEN_WORDS.get(kh.dominant, kh.dominant)}" if kh else "—"
++        lines.append(f"| {tag(e)} {cell(e.label)} | {work_type_text(e)} | {known} |")
++    lines += ["", "### Official vs lived", "", *official_lived_lines(graph)]
++    lines += ["", "### Glossary of SME terms", ""]
++    lines += [
++        f"- {t.term}: {t.plain_meaning or 'meaning not stated'}"
++        + (f" (step: {', '.join(t.steps)})" if t.steps else "")
++        for t in data.glossary
++    ] or ["No SME terms recorded."]
+     return lines
+ 
+ 
++def preserve_improve_lines(data: ExportInput) -> list[str]:
++    lines = []
++    for key, words in DIMENSIONS.items():
++        keep = [c.text for c in data.capabilities if c.dimension == key and c.kind == "strength"]
++        fix = [c.text for c in data.capabilities if c.dimension == key and c.kind == "weakness"]
++        if keep or fix:
++            parts = [f"preserve: {'; '.join(keep)}" if keep else "",
++                     f"improve: {'; '.join(fix)}" if fix else ""]  # fmt: skip
++            lines.append(f"- {words}: {' · '.join(p for p in parts if p)}")
++    return lines or ["No strengths or weaknesses recorded."]
++
++
++def reality_gap_lines(data: ExportInput) -> list[str]:
++    lines = []
++    for key, words in GAP_CLASSES.items():
++        for g in (g for g in data.reality_gaps if g.gap_class == key):
++            reason = f"stated reason: {g.stated_reason}" if g.stated_reason else "no reason stated"
++            lines.append(f"- [I] {words}: {g.title} ({reason})")
++    return lines or ["No reality gaps from a finalised documents-vs-practice analysis."]
++
++
+ def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
+-    lines = [RECOMMENDATION, "", "### AI flags", ""]
++    lines = [RECOMMENDATION, "", "### Preserve / Improve", ""]
++    lines += [*preserve_improve_lines(data), "", "### Reality gaps by gap class", ""]
++    lines += [*reality_gap_lines(data), "", "### AI flags", ""]
+     flagged = [e for e in steps(graph) if e.ai_flag is not None]
+     for e in flagged:
+         flag = e.ai_flag
+@@ -392,6 +532,9 @@ def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
+     lines += [cause_line(c) for c in data.causes] or ["No cause library entries yet."]
+     lines += ["", "### Gap analyses", ""]
+     lines += [gap_report_line(r) for r in data.gap_reports] or ["No finalised gap analyses."]
++    # Optional modules (v1.11 §3.13-3.15); built with phase P10b, off until Eric turns them on.
++    lines += ["", "### Disposition and value", "", NOT_USED]
++    lines += ["", "### System records", "", NOT_USED]
+     return lines
+ 
+ 
+@@ -426,7 +569,7 @@ def render_master_map_md(data: ExportInput) -> str:
+         + [""]
+         + _facts(data, graph)
+         + [""]
+-        + _interpretation(graph)
++        + _interpretation(data, graph)
+         + [""]
+         + _recommendation(data, graph)
+     )
+diff --git a/backend/app/services/lint.py b/backend/app/services/lint.py
+index ddf02ca..341b8eb 100644
+--- a/backend/app/services/lint.py
++++ b/backend/app/services/lint.py
+@@ -13,6 +13,7 @@ layout (`services/layout.py`), so that warning is checked only when a layout is
+ from __future__ import annotations
+ 
+ from collections import deque
++from collections.abc import Collection
+ 
+ from app.domain.enums import (
+     AiBasis,
+@@ -27,7 +28,7 @@ from app.domain.enums import (
+ from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
+ from app.domain.layout import Layout
+ from app.services.layout import count_crossings
+-from app.services.sensemaking import NEVER_AUTOMATED
++from app.services.sensemaking import NEVER_AUTOMATED, awaiting_work_type
+ from app.services.views import NAMES, VIEWS, view_graph
+ 
+ MAX_STEPS = 25
+@@ -259,3 +260,42 @@ def run_view_checks(graph: Graph) -> LintReport:
+                 f'"{labels.get(edge.to, "")}" rests only on the order the sources mention them.',
+             ))  # fmt: skip
+     return LintReport(failures=failures, warnings=warnings)
++
++
++# The three kinds of story every Practice interview asks for (M5.1-M5.3; §3.7 L12 warning).
++STORIES_WANTED = (
++    ("went_well", "a time it went well (M5.1)"),
++    ("went_badly", "a time it went badly (M5.2)"),
++    ("surprise", "a time something surprised (M5.3)"),
++)
++
++
++def run_sensemaking_warnings(graph: Graph, story_types: Collection[str] | None) -> LintReport:
++    """L12 warnings of PRD v1.10 (K3): decisions, approvals and judgment steps without a confirmed
++    work type, and fewer than the three kinds of story (one good, one bad, one surprising).
++    `story_types` are the fragment types (B.31) the version's interviews told; None when the
++    version has no interview (stories come only from interviews)."""
++    kept = [e for e in graph.elements if e.review_status != ReviewStatus.REJECTED.value]
++    warnings = []
++    awaiting = awaiting_work_type([e for e in kept if e.kind in STEP_KINDS])
++    if awaiting:
++        shown = ", ".join(f'"{e.label}"' for e in awaiting[:3])
++        more = f" and {len(awaiting) - 3} more" if len(awaiting) > 3 else ""
++        many = (
++            "decision, approval or judgment step"
++            if len(awaiting) == 1
++            else ("decisions, approvals or judgment steps")
++        )
++        warnings.append(LintIssue(
++            rule="L12", element_id=awaiting[0].id,
++            message=f"{len(awaiting)} {many} without a confirmed work type: {shown}{more}.",
++        ))  # fmt: skip
++    if story_types is not None:
++        missing = [words for kind, words in STORIES_WANTED if kind not in story_types]
++        if missing:
++            warnings.append(LintIssue(
++                rule="L12", element_id=None,
++                message="Fewer than three kinds of story: none yet about " + "; ".join(missing)
++                + ".",
++            ))  # fmt: skip
++    return LintReport(failures=[], warnings=warnings)
+diff --git a/backend/app/services/quality.py b/backend/app/services/quality.py
+index 5e82acb..f714fca 100644
+--- a/backend/app/services/quality.py
++++ b/backend/app/services/quality.py
+@@ -1,6 +1,7 @@
+-"""The publish quality card (PRD §7.2): ten checks over the map, its lint report and its rendered
++"""The publish quality card (PRD §7.2): checks over the map, its lint report and its rendered
+ exports. Pure: `build_quality_card(QualityInput) -> QualityCard`. Q1-Q9 are hard (all must pass to
+-publish); Q10 is a warning. Rejected steps are not on the map and count for nothing. Details say
++publish); Q10 and Q11 are warnings, and Q12 (a warning) is on the card only when the engagement
++uses system records. Rejected steps are not on the map and count for nothing. Details say
+ what to fix in plain words and never repeat a hidden name.
+ """
+ 
+@@ -12,7 +13,7 @@ from app.domain.enums import Provenance, ReviewStatus
+ from app.domain.graph import GraphElement
+ from app.domain.quality import CheckStatus, QualityCard, QualityCheck, QualityInput
+ from app.services import exports as md
+-from app.services import signal
++from app.services import sensemaking, signal
+ from app.services.grounding import scan_redaction_terms
+ from app.services.lint import MAX_LANES, MAX_STEPS
+ 
+@@ -21,6 +22,8 @@ SIGNAL_WARNING = signal.QUALITY_WARNING
+ EVIDENCED = {Provenance.OBSERVED.value, Provenance.INFERRED.value}
+ PROVENANCES = {p.value for p in Provenance}
+ STEP_KINDS = md.STEP_KINDS
++DECIDING_ONE = "decision, approval or judgment step"
++DECIDING_MANY = "decisions, approvals or judgment steps"
+ 
+ # Recommendation-type content: it may appear only in section 3 of an export (Q7).
+ RECOMMENDATION_MARKERS = [
+@@ -32,6 +35,12 @@ RECOMMENDATION_MARKERS = [
+     "<h3>Knowledge-risk register</h3>",
+     "<h3>External-practice register</h3>",
+     "<h3>Open validation questions</h3>",
++    "### Preserve / Improve",
++    "### Reality gaps by gap class",
++    "### Disposition and value",
++    "<h3>Preserve / Improve</h3>",
++    "<h3>Reality gaps by gap class</h3>",
++    "<h3>Disposition and value</h3>",
+ ]
+ HTML_SECTIONS = [
+     'aria-labelledby="facts"',
+@@ -47,7 +56,7 @@ IMAGE_PATTERN = re.compile(
+ def _names(elements: list[GraphElement], limit: int = 3) -> str:
+     shown = ", ".join(f"“{e.label}”" for e in elements[:limit])
+     more = len(elements) - limit
+-    return shown + (f" and {md.plural(more, 'more')}" if more > 0 else "")
++    return shown + (f" and {more} more" if more > 0 else "")
+ 
+ 
+ def _check(cid: str, name: str, failed: bool, ok: str, bad: str, hard: bool = True) -> QualityCheck:
+@@ -235,6 +244,34 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
+         )
+     )
+ 
++    # Q11 work types confirmed (warning, PRD v1.10 §7.2).
++    awaiting = sensemaking.awaiting_work_type(steps)
++    checks.append(
++        _check(
++            "Q11",
++            "Work types confirmed",
++            bool(awaiting),
++            "Every decision, approval and judgment step has a confirmed work type.",
++            f"{md.plural(len(awaiting), DECIDING_ONE, DECIDING_MANY)} without a confirmed work "
++            f"type: {_names(awaiting)}.",
++            hard=False,
++        )
++    )
++
++    # Q12 system alignment complete (warning, PRD v1.11; only when system records are used).
++    if inp.unaligned_activities is not None:
++        checks.append(
++            _check(
++                "Q12",
++                "System alignment complete",
++                inp.unaligned_activities > 0,
++                "Every imported system activity is aligned to a step or marked hidden work.",
++                f"{md.plural(inp.unaligned_activities, 'system activity', 'system activities')} "
++                "not yet aligned to a step or marked hidden work.",
++                hard=False,
++            )
++        )
++
+     warnings = [w.message for w in inp.lint.warnings]
+     strength = signal.signal_strength(inp.source_kinds)
+     if strength is not None and strength.level == "limited":
+diff --git a/backend/app/services/sensemaking.py b/backend/app/services/sensemaking.py
+index 35f03e5..4e3faf9 100644
+--- a/backend/app/services/sensemaking.py
++++ b/backend/app/services/sensemaking.py
+@@ -7,13 +7,14 @@ from __future__ import annotations
+ 
+ import json
+ import re
++from collections.abc import Sequence
+ from dataclasses import dataclass
+ from functools import cache
+ from pathlib import Path
+ 
+ from pydantic import ValidationError
+ 
+-from app.domain.graph import Graph
++from app.domain.graph import Graph, GraphElement
+ from app.domain.models import ClaimRecord, PromptSegment
+ from app.domain.result import Err, ErrorKind, Ok, Result
+ from app.domain.sensemaking import (
+@@ -110,6 +111,23 @@ CONSTRAINT_FOR: dict[str, str | None] = {
+ NEVER_AUTOMATED = frozenset({"complex", "chaotic"})
+ 
+ 
++def awaiting_work_type(elements: Sequence[GraphElement]) -> list[GraphElement]:
++    """Decisions, approvals and judgment steps whose work type Eric hasn't confirmed yet (lint L12
++    and quality check Q11, PRD §7.2). Nothing on a map drafted before v1.10 (no work types)."""
++    if all(e.work_type is None for e in elements):
++        return []
++    return [
++        e
++        for e in elements
++        if (
++            e.kind in ("decision", "approval")
++            or e.decision.mechanism == "judgment"
++            or e.work_type in NEVER_AUTOMATED
++        )
++        and e.work_type_status != CONFIRMED
++    ]
++
++
+ @dataclass(frozen=True, slots=True)
+ class CueCheck:
+     """The cues that passed (each with the real passage IDs and the quote) and how many didn't."""
+diff --git a/backend/app/services/translation.py b/backend/app/services/translation.py
+index e43b882..e5ecdee 100644
+--- a/backend/app/services/translation.py
++++ b/backend/app/services/translation.py
+@@ -3,6 +3,7 @@
+ 
+ from __future__ import annotations
+ 
++import re
+ from collections.abc import Iterable
+ 
+ from app.domain.graph import AccountSummary
+@@ -283,3 +284,51 @@ def translate(steps: list[TranslationStep], edges: list[TranslationEdge]) -> Tra
+                 "later but don't say it comes next.",
+             ))  # fmt: skip
+     return Translation(element_views=views, edges=out, questions=questions)
++
++
++# --- Rule 9: landscape and practice levels (§3.12.10 rule 9, §3.9 rule 10, B.39; K2) -----------
++
++LANDSCAPE_QUESTION = re.compile(r"L[1-7]")
++STEP_KINDS = {"activity", "decision", "approval"}
++
++
++def is_landscape(step: TranslationStep) -> bool:
++    """Every verified interview claim answers a Landscape question, and no document describes it."""
++    ids = [q for p in step.interview for q in p.question_ids]
++    return (
++        bool(step.interview)
++        and not step.documents
++        and all(p.question_ids for p in step.interview)
++        and all(LANDSCAPE_QUESTION.fullmatch(q) for q in ids)
++    )
++
++
++def _words(label: str) -> set[str]:
++    return {w for w in re.findall(r"[a-z0-9]+", label.lower()) if len(w) > 2}
++
++
++def levels(steps: list[TranslationStep]) -> dict[str, tuple[str | None, str | None]]:
++    """Each step's level and the landscape activity it belongs to (same lane, same phase). Both
++    None on a map with no landscape step (one level); start and end never have a level."""
++    landscape = {s.id for s in steps if s.kind in STEP_KINDS and is_landscape(s)}
++    result: dict[str, tuple[str | None, str | None]] = {}
++    for s in steps:
++        if not landscape or s.kind not in STEP_KINDS:
++            result[s.id] = (None, None)
++            continue
++        if s.id in landscape:
++            result[s.id] = ("landscape", None)
++            continue
++        candidates = [
++            p for p in steps
++            if p.id in landscape and p.kind == "activity" and p.lane == s.lane
++            and p.phase == s.phase
++        ]  # fmt: skip
++        parent = candidates[0].id if len(candidates) == 1 else None
++        if len(candidates) > 1:
++            scored = sorted(((len(_words(p.label) & _words(s.label)), p.id) for p in candidates),
++                            reverse=True)  # fmt: skip
++            best, runner_up = scored[0][0], scored[1][0]
++            parent = scored[0][1] if best > runner_up else None
++        result[s.id] = ("practice", parent)
++    return result
+diff --git a/backend/app/services/views.py b/backend/app/services/views.py
+index 7b7fb22..1a87982 100644
+--- a/backend/app/services/views.py
++++ b/backend/app/services/views.py
+@@ -6,7 +6,7 @@ none, and everything on it is in both views. A line is in a view only if both it
+ 
+ from __future__ import annotations
+ 
+-from app.domain.graph import Graph
++from app.domain.graph import Graph, GraphEdge
+ from app.domain.layout import Layout
+ from app.domain.sensemaking import View
+ 
+@@ -45,7 +45,7 @@ def with_other_view(graph: Graph, view: View) -> Graph:
+         if not added_for_one_view(e.provenance, e.view_membership)
+         or in_view(e.view_membership, view)
+     ]
+-    return graph.model_copy(update={"edges": edges})
++    return finest_level(graph.model_copy(update={"edges": edges}))
+ 
+ 
+ def mark_ghosts(layout: Layout, graph: Graph, view: View) -> Layout:
+@@ -64,7 +64,8 @@ def mark_ghosts(layout: Layout, graph: Graph, view: View) -> Layout:
+ 
+ 
+ def view_graph(graph: Graph, view: View) -> Graph:
+-    """The graph as one view draws it: its steps and the lines between them."""
++    """The graph as one view draws it: its steps and the lines between them, at the finest
++    level (§3.9 rule 10)."""
+     elements = [e for e in graph.elements if in_view(e.view_membership, view)]
+     ids = {e.id for e in elements}
+     edges = [
+@@ -72,4 +73,53 @@ def view_graph(graph: Graph, view: View) -> Graph:
+         for e in graph.edges
+         if in_view(e.view_membership, view) and e.from_ in ids and e.to in ids
+     ]
+-    return graph.model_copy(update={"elements": elements, "edges": edges})
++    return finest_level(graph.model_copy(update={"elements": elements, "edges": edges}))
++
++
++def finest_level(graph: Graph) -> Graph:
++    """Rule 10 of §3.9 (K2): a landscape activity with practice steps under it is not drawn; its
++    lines go to the practice steps where its own flow starts and come from those where it ends.
++    A landscape activity without practice steps stays as a normal activity."""
++    present = {e.id for e in graph.elements}
++    children: dict[str, list[str]] = {}
++    for e in graph.elements:
++        if e.parent_element_id in present:
++            children.setdefault(e.parent_element_id, []).append(e.id)
++    hidden = {p for p in children if any(x.id == p and x.level == "landscape"
++                                         for x in graph.elements)}  # fmt: skip
++    if not hidden:
++        return graph
++    kept_edges: list[GraphEdge] = []
++    seen = {(e.from_, e.to, e.kind) for e in graph.edges if e.from_ not in hidden
++            and e.to not in hidden}  # fmt: skip
++    for edge in graph.edges:
++        if edge.from_ not in hidden and edge.to not in hidden:
++            kept_edges.append(edge)
++            continue
++        sources = _ends(graph, edge.from_, children, hidden, start=False)
++        targets = _ends(graph, edge.to, children, hidden, start=True)
++        for a in sources:
++            for b in targets:
++                key = (a, b, edge.kind)
++                if a != b and key not in seen:
++                    seen.add(key)
++                    kept_edges.append(edge.model_copy(update={"id": f"{edge.id}:{a}:{b}",
++                                                              "from_": a, "to": b}))  # fmt: skip
++    elements = [e for e in graph.elements if e.id not in hidden]
++    return graph.model_copy(update={"elements": elements, "edges": kept_edges})
++
++
++def _ends(
++    graph: Graph, element_id: str, children: dict[str, list[str]], hidden: set[str], *, start: bool
++) -> list[str]:
++    """The element itself, or for a hidden landscape activity its practice steps where its flow
++    starts (no line in from a sibling) or ends (no line out to a sibling)."""
++    if element_id not in hidden:
++        return [element_id]
++    family = set(children[element_id])
++    inside = [e for e in graph.edges if e.from_ in family and e.to in family]
++    if start:
++        ends = [c for c in children[element_id] if not any(e.to == c for e in inside)]
++    else:
++        ends = [c for c in children[element_id] if not any(e.from_ == c for e in inside)]
++    return ends or children[element_id][:1]
+diff --git a/backend/tests/actions/test_assemble.py b/backend/tests/actions/test_assemble.py
+index e2a33c4..cf96c39 100644
+--- a/backend/tests/actions/test_assemble.py
++++ b/backend/tests/actions/test_assemble.py
+@@ -99,6 +99,10 @@ def test_the_sample_assembles_into_a_map_that_passes_lint(sample: Verified) -> N
+         "the sources mention them.",
+         'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
+         "sources mention them.",
++        # Requirement change 2026-10-06 (K3, PRD v1.10 L12): the sample interview tells one story,
++        # about a time it went badly.
++        "Fewer than three kinds of story: none yet about a time it went well (M5.1); a time "
++        "something surprised (M5.3).",
+     ]
+ 
+ 
+diff --git a/backend/tests/golden/G1_graph.json b/backend/tests/golden/G1_graph.json
+index 43772eb..e19b83b 100644
+--- a/backend/tests/golden/G1_graph.json
++++ b/backend/tests/golden/G1_graph.json
+@@ -117,7 +117,9 @@
+       "work_type": null,
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": null
++      "work_type_status": null,
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-11",
+@@ -260,7 +262,9 @@
+           "quote": "only me and one other controller really know the configurations"
+         }
+       ],
+-      "work_type_status": "proposed"
++      "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-22",
+@@ -385,7 +389,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-25",
+@@ -535,7 +541,9 @@
+           "quote": "Special loads shall be checked against the acceptance checklist"
+         }
+       ],
+-      "work_type_status": "proposed"
++      "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-28",
+@@ -660,7 +668,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-30",
+@@ -827,7 +837,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-34",
+@@ -952,7 +964,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-36",
+@@ -1077,7 +1091,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-37",
+@@ -1233,7 +1249,9 @@
+           "quote": "You read the situation."
+         }
+       ],
+-      "work_type_status": "proposed"
++      "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-41",
+@@ -1353,7 +1371,9 @@
+       "work_type": "not_classified",
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": "not_classified"
++      "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-43",
+@@ -1495,7 +1515,9 @@
+           "quote": "The final load sheet shall be issued through the departure control system"
+         }
+       ],
+-      "work_type_status": "proposed"
++      "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null
+     },
+     {
+       "id": "id-46",
+@@ -1545,7 +1567,9 @@
+       "work_type": null,
+       "constraint_type": null,
+       "work_type_basis": [],
+-      "work_type_status": null
++      "work_type_status": null,
++      "level": null,
++      "parent_element_id": null
+     }
+   ],
+   "edges": [
+diff --git a/backend/tests/golden/G3_master_map.md b/backend/tests/golden/G3_master_map.md
+index 5a17b92..7209334 100644
+--- a/backend/tests/golden/G3_master_map.md
++++ b/backend/tests/golden/G3_master_map.md
+@@ -18,6 +18,7 @@ Signal strength: Strong (3 of 3). Built from interviews and a written procedure
+ | Q8 Anonymised | Pass | No name from your list of names to hide appears in any export. |
+ | Q9 Images contained | Pass | No image or image reference in any export. |
+ | Q10 60-minute validatable | Pass | 10 steps and 5 lanes: fits a one-hour session. |
++| Q11 Work types confirmed | Warning | 5 decisions, approvals or judgment steps without a confirmed work type: “Approve load plan”, “Special loads OK?”, “Busy wave?” and 2 more. |
+ 
+ All hard checks green: yes.
+ 
+@@ -27,6 +28,8 @@ Warnings:
+ - Activity "Issue load sheet" has no time stated.
+ - The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources mention them.
+ - The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order the sources mention them.
++- 5 decisions, approvals or judgment steps without a confirmed work type: "Approve load plan", "Special loads OK?", "Busy wave?" and 2 more.
++- Fewer than three kinds of story: none yet about a time it went well (M5.1); a time something surprised (M5.3).
+ 
+ ## 1. Facts: what the sources tell us
+ 
+@@ -60,6 +63,14 @@ Warnings:
+ | Trace contradicted | 0 |
+ | Not assessed | 0 |
+ 
++### Stories
++
++- [O] Had to re-trim three flights in one night (went badly · interview_transcript.txt 24:10; step: Draft load plan, Deviation in limits?)
++
++### Strengths as stated (preserve)
++
++- [O] Skillset: Ramp supervisors know the aircraft types inside out. (step: Load and return LIR)
++
+ ## 2. Interpretation: how the process works
+ 
+ ### Phase 1: Plan
+@@ -67,9 +78,9 @@ Warnings:
+ Time window: T-120 to T-90.
+ Purpose: covers 2 steps, from “Draft load plan” to “Approve load plan”.
+ 
+-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+-|---|---|---|---|---|---|---|---|
+-| Draft load plan | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
++| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
++|---|---|---|---|---|---|---|---|---|
++| Draft load plan | both | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
+ 
+ Decisions and approvals:
+ 
+@@ -82,11 +93,11 @@ This phase has 1 activity and 1 decision or approval, involving Load controller,
+ Time window: not stated.
+ Purpose: covers 5 steps, from “Special loads OK?” to “Read report at aircraft”.
+ 
+-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+-|---|---|---|---|---|---|---|---|
+-| Resolve or offload | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
+-| Load and return LIR | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
+-| Read report at aircraft | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
++| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
++|---|---|---|---|---|---|---|---|---|
++| Resolve or offload | as done | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
++| Load and return LIR | both | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
++| Read report at aircraft | as done | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
+ 
+ Decisions and approvals:
+ 
+@@ -100,9 +111,9 @@ This phase has 3 activities and 2 decisions or approvals, involving Load control
+ Time window: T-15 to T-10.
+ Purpose: covers 3 steps, from “Deviation in limits?” to “Issue load sheet”.
+ 
+-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+-|---|---|---|---|---|---|---|---|
+-| Issue load sheet | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
++| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
++|---|---|---|---|---|---|---|---|---|
++| Issue load sheet | both | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
+ 
+ Decisions and approvals:
+ 
+@@ -135,8 +146,47 @@ A? means the sources disagree about who is accountable.
+ | Ownership | Deviation in limits? |
+ | Threshold | Load and return LIR |
+ 
++### Two views: as done and as documented
++
++- As done: 9 steps; only here: Resolve or offload, Busy wave?, Read report at aircraft, Approve deviation.
++- As documented: 6 steps; only here: Approve load plan.
++
++### Work type and know-how
++
++| Step | Work type | Know-how (knowledge risk · dominant ASHEN) |
++|---|---|---|
++| [O] Draft load plan | Complicated (proposed) | — |
++| [O] Approve load plan | Not classified | unknown · none described |
++| [O] Special loads OK? | Clear (proposed) | low · artefacts |
++| [O] Resolve or offload | Not classified | — |
++| [O] Load and return LIR | Not classified | — |
++| [O] Busy wave? | Not classified | unknown · none described |
++| [O] Read report at aircraft | Not classified | — |
++| [O] Deviation in limits? | Complex (proposed) | high · artefacts |
++| [O] Approve deviation | Not classified | unknown · none described |
++| [O] Issue load sheet | Clear (proposed) | — |
++
++### Official vs lived
++
++- [O] Load and return LIR: official and lived accounts both given; they differ on time (as done: Up to fifteen minutes' wait for the report; as documented: Within 10 minutes of loading completion).
++
++### Glossary of SME terms
++
++- re-trim: Rebalance an aircraft's load after it has been planned. (step: Approve deviation)
++- wave: A busy period of departures. (step: Busy wave?)
++- forward hold: The cargo hold at the front of the aircraft. (step: Draft load plan)
++
+ ## 3. Recommendation: enablement and gaps
+ 
++### Preserve / Improve
++
++- Skillset: preserve: Ramp supervisors know the aircraft types inside out.
++- Systems: improve: The paper loading report gets lost or arrives late.
++
++### Reality gaps by gap class
++
++No reality gaps from a finalised documents-vs-practice analysis.
++
+ ### AI flags
+ 
+ **[O] Special loads OK?**
+@@ -192,3 +242,11 @@ No steps from external practice.
+ ### Gap analyses
+ 
+ No finalised gap analyses.
++
++### Disposition and value
++
++Not used in this engagement.
++
++### System records
++
++Not used in this engagement.
+diff --git a/backend/tests/golden/G5_map.html b/backend/tests/golden/G5_map.html
+index 2487aa9..619b366 100644
+--- a/backend/tests/golden/G5_map.html
++++ b/backend/tests/golden/G5_map.html
+@@ -125,7 +125,7 @@ th { font-weight: var(--weight-medium); color: var(--ink-3); }
+ .seg { position: absolute; border: 0 solid var(--edge); }
+ .seg.h { height: 0; border-top-width: var(--line-edge); transform: translateY(-50%); }
+ .seg.v { width: 0; border-left-width: var(--line-edge); transform: translateX(-50%); }
+-.back .seg { border-style: dashed; }
++.back .seg, .gap .seg { border-style: dashed; }
+ .arrow { position: absolute; width: 0; height: 0; border: 4px solid transparent; }
+ .arrow.right { border-right-width: 0; border-left: 7px solid var(--edge); transform: translate(-7px, -4px); }
+ .arrow.left { border-left-width: 0; border-right: 7px solid var(--edge); transform: translate(0, -4px); }
+@@ -170,7 +170,7 @@ footer { margin-top: var(--space-32); color: var(--ink-4); font-size: var(--text
+ <body>
+ <main>
+ <header><h1>Load control — Master Process Map</h1><p class="meta">Version v1.0 · published 28 Sep 2026 · validated by Owner</p><p class="meta signal">Signal strength: Strong (3 of 3). Built from interviews and a written procedure (SOP or manual): steps can be corroborated or contested.</p></header>
+-<div class="card"><table><caption class="note">Quality card</caption><thead><tr><th>Check</th><th>Name</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td class="mono">Q1</td><td>Provenance green</td><td class="pass">Pass</td><td>All 10 steps are tagged O, I or R.</td></tr><tr><td class="mono">Q2</td><td>Evidence verified</td><td class="pass">Pass</td><td>Every observed or inferred step has a verified passage.</td></tr><tr><td class="mono">Q3</td><td>Diamonds closed</td><td class="pass">Pass</td><td>Every decision and approval has all its exits, each labelled.</td></tr><tr><td class="mono">Q4</td><td>Lanes and ownership</td><td class="pass">Pass</td><td>Every step sits in the right lane, has one Accountable role and is connected.</td></tr><tr><td class="mono">Q5</td><td>Flags executable</td><td class="pass">Pass</td><td>Every AI flag is complete, and none is on a judgment step.</td></tr><tr><td class="mono">Q6</td><td>Fully reviewed</td><td class="pass">Pass</td><td>Every step, merge and suggested image has been reviewed.</td></tr><tr><td class="mono">Q7</td><td>Facts, interpretation and recommendation separated</td><td class="pass">Pass</td><td>The exports keep facts, interpretation and recommendation in their own sections.</td></tr><tr><td class="mono">Q8</td><td>Anonymised</td><td class="pass">Pass</td><td>No name from your list of names to hide appears in any export.</td></tr><tr><td class="mono">Q9</td><td>Images contained</td><td class="pass">Pass</td><td>No image or image reference in any export.</td></tr><tr><td class="mono">Q10</td><td>60-minute validatable</td><td class="pass">Pass</td><td>10 steps and 5 lanes: fits a one-hour session.</td></tr></tbody></table><p>All hard checks green: yes.</p><p>Warnings:</p><ul><li>Approval &quot;Approve load plan&quot; has no time stated.</li><li>Activity &quot;Read report at aircraft&quot; has no time stated.</li><li>Activity &quot;Issue load sheet&quot; has no time stated.</li><li>The line from &quot;Load and return LIR&quot; to &quot;Busy wave?&quot; rests only on the order the sources mention them.</li><li>The line from &quot;Read report at aircraft&quot; to &quot;Deviation in limits?&quot; rests only on the order the sources mention them.</li></ul></div>
++<div class="card"><table><caption class="note">Quality card</caption><thead><tr><th>Check</th><th>Name</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td class="mono">Q1</td><td>Provenance green</td><td class="pass">Pass</td><td>All 10 steps are tagged O, I or R.</td></tr><tr><td class="mono">Q2</td><td>Evidence verified</td><td class="pass">Pass</td><td>Every observed or inferred step has a verified passage.</td></tr><tr><td class="mono">Q3</td><td>Diamonds closed</td><td class="pass">Pass</td><td>Every decision and approval has all its exits, each labelled.</td></tr><tr><td class="mono">Q4</td><td>Lanes and ownership</td><td class="pass">Pass</td><td>Every step sits in the right lane, has one Accountable role and is connected.</td></tr><tr><td class="mono">Q5</td><td>Flags executable</td><td class="pass">Pass</td><td>Every AI flag is complete, and none is on a judgment step.</td></tr><tr><td class="mono">Q6</td><td>Fully reviewed</td><td class="pass">Pass</td><td>Every step, merge and suggested image has been reviewed.</td></tr><tr><td class="mono">Q7</td><td>Facts, interpretation and recommendation separated</td><td class="pass">Pass</td><td>The exports keep facts, interpretation and recommendation in their own sections.</td></tr><tr><td class="mono">Q8</td><td>Anonymised</td><td class="pass">Pass</td><td>No name from your list of names to hide appears in any export.</td></tr><tr><td class="mono">Q9</td><td>Images contained</td><td class="pass">Pass</td><td>No image or image reference in any export.</td></tr><tr><td class="mono">Q10</td><td>60-minute validatable</td><td class="pass">Pass</td><td>10 steps and 5 lanes: fits a one-hour session.</td></tr><tr><td class="mono">Q11</td><td>Work types confirmed</td><td class="warning">Warning</td><td>5 decisions, approvals or judgment steps without a confirmed work type: “Approve load plan”, “Special loads OK?”, “Busy wave?” and 2 more.</td></tr></tbody></table><p>All hard checks green: yes.</p><p>Warnings:</p><ul><li>Approval &quot;Approve load plan&quot; has no time stated.</li><li>Activity &quot;Read report at aircraft&quot; has no time stated.</li><li>Activity &quot;Issue load sheet&quot; has no time stated.</li><li>The line from &quot;Load and return LIR&quot; to &quot;Busy wave?&quot; rests only on the order the sources mention them.</li><li>The line from &quot;Read report at aircraft&quot; to &quot;Deviation in limits?&quot; rests only on the order the sources mention them.</li><li>5 decisions, approvals or judgment steps without a confirmed work type: &quot;Approve load plan&quot;, &quot;Special loads OK?&quot;, &quot;Busy wave?&quot; and 2 more.</li><li>Fewer than three kinds of story: none yet about a time it went well (M5.1); a time something surprised (M5.3).</li></ul></div>
+ <section aria-labelledby="facts">
+ <h2 id="facts">1. Facts: what the sources tell us</h2>
+ <h3>Source registry</h3>
+@@ -179,86 +179,135 @@ footer { margin-top: var(--space-32); color: var(--ink-4); font-size: var(--text
+ <ul><li>[O] Only one other controller knows the widebody configurations (step: Draft load plan · interview_transcript.txt 06:40; sop_LC-07.docx §3.1; jd_load_controller.docx ¶ 2)</li><li>[O] The cargo terminal&#x27;s notification often comes late (step: Special loads OK? · interview_transcript.txt 14:05; sop_LC-07.docx §4; jd_load_controller.docx ¶ 2)</li><li>[O] The paper loading report gets lost or arrives late. (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)</li><li>[O] The loading report is on paper and re-keyed (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)</li><li>[O] Containers run short at peak times (step: Load and return LIR · interview_transcript.txt 21:50; landscape_ramp_lead.txt 02:18)</li></ul>
+ <h3>How well the sources agree</h3>
+ <div class="scroll"><table><thead><tr><th scope="col">Source state</th><th scope="col">Steps</th></tr></thead><tbody><tr><td>Corroborated</td><td>3</td></tr><tr><td>Documented only</td><td>1</td></tr><tr><td>Practiced only</td><td>4</td></tr><tr><td>Contested</td><td>2</td></tr><tr><td>Trace contradicted</td><td>0</td></tr><tr><td>Not assessed</td><td>0</td></tr></tbody></table></div>
++<h3>Stories</h3>
++<ul><li>[O] Had to re-trim three flights in one night (went badly · interview_transcript.txt 24:10; step: Draft load plan, Deviation in limits?)</li></ul>
++<h3>Strengths as stated (preserve)</h3>
++<ul><li>[O] Skillset: Ramp supervisors know the aircraft types inside out. (step: Load and return LIR)</li></ul>
+ </section>
+ <section aria-labelledby="interpretation">
+ <h2 id="interpretation">2. Interpretation: how the process works</h2>
+ <p class="note">Select a step to read its details below.</p>
+-<div class="scroll"><div class="map" role="group" aria-label="Swimlane map" style="width:1360px;height:668px">
++<h3>Map as done: the work as actually performed</h3>
++<div class="scroll"><div class="map" role="group" aria-label="Swimlane map" style="width:1236px;height:544px">
++<div class="band" style="height:48px"><span style="left:0;width:var(--layout-map-label-column)"><small>Phase</small></span>
++<span style="left:120px;width:248px"><b>Plan</b><small class="mono">T-120 to T-90</small></span>
++<span style="left:368px;width:496px"><b>Check and load</b><small class="mono"></small></span>
++<span style="left:864px;width:372px"><b>Close out</b><small class="mono">T-15 to T-10</small></span>
++</div>
++<div class="lane" role="group" aria-label="Airline ops lane, 1 step" style="top:48px;height:124px"><span><b>Airline ops</b><small>1 step</small></span></div>
++<div class="lane even" role="group" aria-label="Captain lane, 1 step" style="top:172px;height:124px"><span><b>Captain</b><small>1 step</small></span></div>
++<div class="lane" role="group" aria-label="Load controller lane, 6 steps" style="top:296px;height:124px"><span><b>Load controller</b><small>6 steps</small></span></div>
++<div class="lane even" role="group" aria-label="Ramp lane, 1 step" style="top:420px;height:124px"><span><b>Ramp</b><small>1 step</small></span></div>
++<div class="divider" style="left:368px;height:544px"></div>
++<div class="divider" style="left:864px;height:544px"></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:190px;top:340px;width:66px"></i><i class="arrow right" style="left:256px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:456px;top:340px;width:36px"></i><i class="seg v" style="left:492px;top:340px;height:124px"></i><i class="seg h" style="left:492px;top:464px;width:12px"></i><i class="arrow right" style="left:504px;top:464px"></i><span class="chip" style="left:462px;top:331px;transform:translateX(0) translateY(-50%)">Yes</span></div>
++<div class="edge" aria-hidden="true"><i class="seg v" style="left:430px;top:114px;height:200px"></i><i class="arrow up" style="left:430px;top:114px"></i><span class="chip" style="left:424px;top:304px;transform:translateX(-100%) translateY(-50%)">No</span></div>
++<div class="back" aria-hidden="true"><i class="seg v" style="left:430px;top:62px;height:8px"></i><i class="seg h" style="left:306px;top:62px;width:124px"></i><i class="seg v" style="left:306px;top:62px;height:256px"></i><i class="arrow down" style="left:306px;top:318px"></i><span class="chip" style="left:424px;top:53px;transform:translateX(-100%) translateY(-50%)">Re-plan</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:604px;top:464px;width:12px"></i><i class="seg v" style="left:616px;top:340px;height:124px"></i><i class="seg h" style="left:616px;top:340px;width:36px"></i><i class="arrow right" style="left:652px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:704px;top:340px;width:48px"></i><i class="arrow right" style="left:752px;top:340px"></i><span class="chip" style="left:710px;top:331px;transform:translateX(0) translateY(-50%)">Yes</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:704px;top:340px;width:196px"></i><i class="arrow right" style="left:900px;top:340px"></i><span class="chip" style="left:710px;top:349px;transform:translateX(0) translateY(-50%)">No</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:852px;top:340px;width:48px"></i><i class="arrow right" style="left:900px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:952px;top:340px;width:48px"></i><i class="arrow right" style="left:1000px;top:340px"></i><span class="chip" style="left:958px;top:304px;transform:translateX(0) translateY(-50%)">Within limits</span></div>
++<div class="edge" aria-hidden="true"><i class="seg v" style="left:926px;top:238px;height:76px"></i><i class="arrow up" style="left:926px;top:238px"></i><span class="chip" style="left:920px;top:304px;transform:translateX(-100%) translateY(-50%)">Outside limits</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:976px;top:216px;width:12px"></i><i class="seg v" style="left:988px;top:216px;height:124px"></i><i class="seg h" style="left:988px;top:340px;width:12px"></i><i class="arrow right" style="left:1000px;top:340px"></i><span class="chip" style="left:982px;top:207px;transform:translateX(0) translateY(-50%)">Accept</span></div>
++<div class="back" aria-hidden="true"><i class="seg v" style="left:926px;top:186px;height:8px"></i><i class="seg h" style="left:554px;top:186px;width:372px"></i><i class="seg v" style="left:554px;top:186px;height:256px"></i><i class="arrow down" style="left:554px;top:442px"></i><span class="chip" style="left:920px;top:177px;transform:translateX(-100%) translateY(-50%)">Re-trim</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:1100px;top:340px;width:66px"></i><i class="arrow right" style="left:1166px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:340px;width:12px"></i><i class="seg v" style="left:368px;top:340px;height:124px"></i><i class="seg h" style="left:368px;top:464px;width:136px"></i><i class="arrow right" style="left:504px;top:464px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:604px;top:464px;width:260px"></i><i class="seg v" style="left:864px;top:340px;height:124px"></i><i class="seg h" style="left:864px;top:340px;width:36px"></i><i class="arrow right" style="left:900px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:340px;width:48px"></i><i class="arrow right" style="left:404px;top:340px"></i></div>
++<a class="node circle" href="#step-id-1" aria-label="Start, Flight scheduled" title="Flight scheduled" style="left:174px;top:332px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
++<a class="node rounded_rect" href="#step-id-2" aria-label="Activity, Draft load plan, Load controller, Corroborated" title="Draft load plan" style="left:256px;top:318px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Draft load plan</span></span></a>
++<div class="lens" aria-hidden="true" style="left:306px;top:368px;transform:translateX(-50%)">~20 min</div>
++<a class="node diamond" href="#step-id-3" aria-label="Decision, Special loads OK?, Load controller, Corroborated" title="Special loads OK?" style="left:404px;top:314px;width:52px;height:52px"><span class="dia"></span><span class="key"></span></a>
++<div class="under" aria-hidden="true" style="left:430px;top:370px;transform:translateX(-50%)"><span>Special</span><span>loads OK?</span></div>
++<a class="node rounded_rect" href="#step-id-4" aria-label="Activity, Resolve or offload, Airline ops, Practiced only" title="Resolve or offload" style="left:380px;top:70px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Resolve</span><span>or offload</span></span></a>
++<div class="lens" aria-hidden="true" style="left:438px;top:120px;transform:translateX(0)">~40 min</div>
++<a class="node rounded_rect" href="#step-id-5" aria-label="Activity, Load and return LIR, Ramp, Contested" title="Load and return LIR" style="left:504px;top:442px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Load and</span><span>return LIR</span></span><span class="key"></span></a>
++<div class="lens" aria-hidden="true" style="left:554px;top:492px;transform:translateX(-50%)">~40 min + 15 wait</div>
++<a class="node diamond" href="#step-id-6" aria-label="Decision, Busy wave?, Load controller, Practiced only" title="Busy wave?" style="left:652px;top:314px;width:52px;height:52px"><span class="dia"></span></a>
++<div class="under" aria-hidden="true" style="left:678px;top:370px;transform:translateX(-50%)"><span>Busy wave?</span></div>
++<a class="node rounded_rect" href="#step-id-7" aria-label="Activity, Read report at aircraft, Load controller, Practiced only" title="Read report at aircraft" style="left:752px;top:318px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Read report</span><span>at aircraft</span></span></a>
++<div class="lens danger" aria-hidden="true" style="left:802px;top:368px;transform:translateX(-50%)">No time stated</div>
++<a class="node diamond" href="#step-id-8" aria-label="Decision, Deviation in limits?, Load controller, Contested" title="Deviation in limits?" style="left:900px;top:314px;width:52px;height:52px"><span class="dia"></span></a>
++<div class="under" aria-hidden="true" style="left:926px;top:370px;transform:translateX(-50%)"><span>Deviation</span><span>in limits?</span></div>
++<a class="node pill" href="#step-id-9" aria-label="Approval, Approve deviation, Captain, Practiced only" title="Approve deviation" style="left:876px;top:194px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Approve</span><span>deviation</span></span></a>
++<div class="lens" aria-hidden="true" style="left:934px;top:244px;transform:translateX(0)">~15 min</div>
++<a class="node rounded_rect" href="#step-id-10" aria-label="Activity, Issue load sheet, Load controller, Corroborated" title="Issue load sheet" style="left:1000px;top:318px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Issue load sheet</span></span></a>
++<div class="lens danger" aria-hidden="true" style="left:1050px;top:368px;transform:translateX(-50%)">No time stated</div>
++<a class="node double_circle" href="#step-id-11" aria-label="End, Final load sheet issued" title="Final load sheet issued" style="left:1166px;top:332px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
++</div></div>
++<p class="legend">Rounded box: activity · Diamond: decision · Pill: approval · Dot: start · Double ring: end · Orange dot: key constraint · Dashed line: a loop back (rework or re-plan), or a step the interview doesn't describe · Under each step: its time</p>
++<h3>Map as documented: the documents&#x27; version</h3>
++<div class="scroll"><div class="map" role="group" aria-label="Swimlane map" style="width:1112px;height:420px">
+ <div class="band" style="height:48px"><span style="left:0;width:var(--layout-map-label-column)"><small>Phase</small></span>
+ <span style="left:120px;width:372px"><b>Plan</b><small class="mono">T-120 to T-90</small></span>
+-<span style="left:492px;width:496px"><b>Check and load</b><small class="mono"></small></span>
+-<span style="left:988px;width:372px"><b>Close out</b><small class="mono">T-15 to T-10</small></span>
++<span style="left:492px;width:248px"><b>Check and load</b><small class="mono"></small></span>
++<span style="left:740px;width:372px"><b>Close out</b><small class="mono">T-15 to T-10</small></span>
+ </div>
+ <div class="lane" role="group" aria-label="Load control lead lane, 1 step" style="top:48px;height:124px"><span><b>Load control lead</b><small>1 step</small></span></div>
+-<div class="lane even" role="group" aria-label="Airline ops lane, 1 step" style="top:172px;height:124px"><span><b>Airline ops</b><small>1 step</small></span></div>
+-<div class="lane" role="group" aria-label="Captain lane, 1 step" style="top:296px;height:124px"><span><b>Captain</b><small>1 step</small></span></div>
+-<div class="lane even" role="group" aria-label="Load controller lane, 6 steps" style="top:420px;height:124px"><span><b>Load controller</b><small>6 steps</small></span></div>
+-<div class="lane" role="group" aria-label="Ramp lane, 1 step" style="top:544px;height:124px"><span><b>Ramp</b><small>1 step</small></span></div>
+-<div class="divider" style="left:492px;height:668px"></div>
+-<div class="divider" style="left:988px;height:668px"></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:190px;top:464px;width:66px"></i><i class="arrow right" style="left:256px;top:464px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:464px;width:12px"></i><i class="seg v" style="left:368px;top:92px;height:372px"></i><i class="seg h" style="left:368px;top:92px;width:12px"></i><i class="arrow right" style="left:380px;top:92px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:480px;top:92px;width:12px"></i><i class="seg v" style="left:492px;top:92px;height:372px"></i><i class="seg h" style="left:492px;top:464px;width:36px"></i><i class="arrow right" style="left:528px;top:464px"></i><span class="chip" style="left:486px;top:83px;transform:translateX(0) translateY(-50%)">Approve</span></div>
+-<div class="back" aria-hidden="true"><i class="seg v" style="left:430px;top:62px;height:8px"></i><i class="seg h" style="left:292px;top:62px;width:138px"></i><i class="seg v" style="left:292px;top:62px;height:380px"></i><i class="arrow down" style="left:292px;top:442px"></i><span class="chip" style="left:424px;top:53px;transform:translateX(-100%) translateY(-50%)">Rework</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:580px;top:464px;width:36px"></i><i class="seg v" style="left:616px;top:464px;height:124px"></i><i class="seg h" style="left:616px;top:588px;width:12px"></i><i class="arrow right" style="left:628px;top:588px"></i><span class="chip" style="left:586px;top:455px;transform:translateX(0) translateY(-50%)">Yes</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg v" style="left:554px;top:238px;height:200px"></i><i class="arrow up" style="left:554px;top:238px"></i><span class="chip" style="left:548px;top:428px;transform:translateX(-100%) translateY(-50%)">No</span></div>
+-<div class="back" aria-hidden="true"><i class="seg v" style="left:554px;top:186px;height:8px"></i><i class="seg h" style="left:320px;top:186px;width:234px"></i><i class="seg v" style="left:320px;top:186px;height:256px"></i><i class="arrow down" style="left:320px;top:442px"></i><span class="chip" style="left:548px;top:177px;transform:translateX(-100%) translateY(-50%)">Re-plan</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:728px;top:588px;width:12px"></i><i class="seg v" style="left:740px;top:464px;height:124px"></i><i class="seg h" style="left:740px;top:464px;width:36px"></i><i class="arrow right" style="left:776px;top:464px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:828px;top:464px;width:48px"></i><i class="arrow right" style="left:876px;top:464px"></i><span class="chip" style="left:834px;top:455px;transform:translateX(0) translateY(-50%)">Yes</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:828px;top:464px;width:196px"></i><i class="arrow right" style="left:1024px;top:464px"></i><span class="chip" style="left:834px;top:473px;transform:translateX(0) translateY(-50%)">No</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:976px;top:464px;width:48px"></i><i class="arrow right" style="left:1024px;top:464px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:1076px;top:464px;width:48px"></i><i class="arrow right" style="left:1124px;top:464px"></i><span class="chip" style="left:1082px;top:428px;transform:translateX(0) translateY(-50%)">Within limits</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg v" style="left:1050px;top:362px;height:76px"></i><i class="arrow up" style="left:1050px;top:362px"></i><span class="chip" style="left:1044px;top:428px;transform:translateX(-100%) translateY(-50%)">Outside limits</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:1100px;top:340px;width:12px"></i><i class="seg v" style="left:1112px;top:340px;height:124px"></i><i class="seg h" style="left:1112px;top:464px;width:12px"></i><i class="arrow right" style="left:1124px;top:464px"></i><span class="chip" style="left:1106px;top:331px;transform:translateX(0) translateY(-50%)">Accept</span></div>
+-<div class="back" aria-hidden="true"><i class="seg v" style="left:1050px;top:310px;height:8px"></i><i class="seg h" style="left:678px;top:310px;width:372px"></i><i class="seg v" style="left:678px;top:310px;height:256px"></i><i class="arrow down" style="left:678px;top:566px"></i><span class="chip" style="left:1044px;top:301px;transform:translateX(-100%) translateY(-50%)">Re-trim</span></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:1224px;top:464px;width:66px"></i><i class="arrow right" style="left:1290px;top:464px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:464px;width:12px"></i><i class="seg v" style="left:368px;top:464px;height:124px"></i><i class="seg h" style="left:368px;top:588px;width:260px"></i><i class="arrow right" style="left:628px;top:588px"></i></div>
+-<div class="edge" aria-hidden="true"><i class="seg h" style="left:728px;top:588px;width:260px"></i><i class="seg v" style="left:988px;top:464px;height:124px"></i><i class="seg h" style="left:988px;top:464px;width:36px"></i><i class="arrow right" style="left:1024px;top:464px"></i></div>
+-<a class="node circle" href="#step-id-1" aria-label="Start, Flight scheduled" title="Flight scheduled" style="left:174px;top:456px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
+-<a class="node rounded_rect" href="#step-id-2" aria-label="Activity, Draft load plan, Load controller, Corroborated" title="Draft load plan" style="left:256px;top:442px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Draft load plan</span></span></a>
+-<div class="lens" aria-hidden="true" style="left:306px;top:492px;transform:translateX(-50%)">~20 min</div>
+-<a class="node pill" href="#step-id-3" aria-label="Approval, Approve load plan, Load control lead, Documented only" title="Approve load plan" style="left:380px;top:70px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Approve</span><span>load plan</span></span></a>
++<div class="lane even" role="group" aria-label="Load controller lane, 4 steps" style="top:172px;height:124px"><span><b>Load controller</b><small>4 steps</small></span></div>
++<div class="lane" role="group" aria-label="Ramp lane, 1 step" style="top:296px;height:124px"><span><b>Ramp</b><small>1 step</small></span></div>
++<div class="divider" style="left:492px;height:420px"></div>
++<div class="divider" style="left:740px;height:420px"></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:190px;top:216px;width:66px"></i><i class="arrow right" style="left:256px;top:216px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:216px;width:12px"></i><i class="seg v" style="left:368px;top:92px;height:124px"></i><i class="seg h" style="left:368px;top:92px;width:12px"></i><i class="arrow right" style="left:380px;top:92px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:480px;top:92px;width:12px"></i><i class="seg v" style="left:492px;top:92px;height:124px"></i><i class="seg h" style="left:492px;top:216px;width:36px"></i><i class="arrow right" style="left:528px;top:216px"></i><span class="chip" style="left:486px;top:83px;transform:translateX(0) translateY(-50%)">Approve</span></div>
++<div class="back" aria-hidden="true"><i class="seg v" style="left:430px;top:62px;height:8px"></i><i class="seg h" style="left:306px;top:62px;width:124px"></i><i class="seg v" style="left:306px;top:62px;height:132px"></i><i class="arrow down" style="left:306px;top:194px"></i><span class="chip" style="left:424px;top:53px;transform:translateX(-100%) translateY(-50%)">Rework</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:580px;top:216px;width:36px"></i><i class="seg v" style="left:616px;top:216px;height:124px"></i><i class="seg h" style="left:616px;top:340px;width:12px"></i><i class="arrow right" style="left:628px;top:340px"></i><span class="chip" style="left:586px;top:207px;transform:translateX(0) translateY(-50%)">Yes</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:828px;top:216px;width:48px"></i><i class="arrow right" style="left:876px;top:216px"></i><span class="chip" style="left:834px;top:180px;transform:translateX(0) translateY(-50%)">Within limits</span></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:976px;top:216px;width:66px"></i><i class="arrow right" style="left:1042px;top:216px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:356px;top:216px;width:12px"></i><i class="seg v" style="left:368px;top:216px;height:124px"></i><i class="seg h" style="left:368px;top:340px;width:260px"></i><i class="arrow right" style="left:628px;top:340px"></i></div>
++<div class="edge" aria-hidden="true"><i class="seg h" style="left:728px;top:340px;width:12px"></i><i class="seg v" style="left:740px;top:216px;height:124px"></i><i class="seg h" style="left:740px;top:216px;width:36px"></i><i class="arrow right" style="left:776px;top:216px"></i></div>
++<a class="node circle" href="#step-id-1" aria-label="Start, Flight scheduled" title="Flight scheduled" style="left:174px;top:208px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
++<a class="node rounded_rect" href="#step-id-2" aria-label="Activity, Draft load plan, Load controller, Corroborated" title="Draft load plan" style="left:256px;top:194px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Draft load plan</span></span></a>
++<div class="lens" aria-hidden="true" style="left:306px;top:244px;transform:translateX(-50%)">~20 min</div>
++<a class="node pill" href="#step-id-12" aria-label="Approval, Approve load plan, Load control lead, Documented only" title="Approve load plan" style="left:380px;top:70px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Approve</span><span>load plan</span></span></a>
+ <div class="lens danger" aria-hidden="true" style="left:430px;top:120px;transform:translateX(-50%)">No time stated</div>
+-<a class="node diamond" href="#step-id-4" aria-label="Decision, Special loads OK?, Load controller, Corroborated" title="Special loads OK?" style="left:528px;top:438px;width:52px;height:52px"><span class="dia"></span><span class="key"></span></a>
+-<div class="under" aria-hidden="true" style="left:554px;top:494px;transform:translateX(-50%)"><span>Special</span><span>loads OK?</span></div>
+-<a class="node rounded_rect" href="#step-id-5" aria-label="Activity, Resolve or offload, Airline ops, Practiced only" title="Resolve or offload" style="left:504px;top:194px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Resolve</span><span>or offload</span></span></a>
+-<div class="lens" aria-hidden="true" style="left:562px;top:244px;transform:translateX(0)">~40 min</div>
+-<a class="node rounded_rect" href="#step-id-6" aria-label="Activity, Load and return LIR, Ramp, Contested" title="Load and return LIR" style="left:628px;top:566px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Load and</span><span>return LIR</span></span><span class="key"></span></a>
+-<div class="lens" aria-hidden="true" style="left:678px;top:616px;transform:translateX(-50%)">~40 min + 15 wait</div>
+-<a class="node diamond" href="#step-id-7" aria-label="Decision, Busy wave?, Load controller, Practiced only" title="Busy wave?" style="left:776px;top:438px;width:52px;height:52px"><span class="dia"></span></a>
+-<div class="under" aria-hidden="true" style="left:802px;top:494px;transform:translateX(-50%)"><span>Busy wave?</span></div>
+-<a class="node rounded_rect" href="#step-id-8" aria-label="Activity, Read report at aircraft, Load controller, Practiced only" title="Read report at aircraft" style="left:876px;top:442px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Read report</span><span>at aircraft</span></span></a>
+-<div class="lens danger" aria-hidden="true" style="left:926px;top:492px;transform:translateX(-50%)">No time stated</div>
+-<a class="node diamond" href="#step-id-9" aria-label="Decision, Deviation in limits?, Load controller, Contested" title="Deviation in limits?" style="left:1024px;top:438px;width:52px;height:52px"><span class="dia"></span></a>
+-<div class="under" aria-hidden="true" style="left:1050px;top:494px;transform:translateX(-50%)"><span>Deviation</span><span>in limits?</span></div>
+-<a class="node pill" href="#step-id-10" aria-label="Approval, Approve deviation, Captain, Practiced only" title="Approve deviation" style="left:1000px;top:318px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Approve</span><span>deviation</span></span></a>
+-<div class="lens" aria-hidden="true" style="left:1058px;top:368px;transform:translateX(0)">~15 min</div>
+-<a class="node rounded_rect" href="#step-id-11" aria-label="Activity, Issue load sheet, Load controller, Corroborated" title="Issue load sheet" style="left:1124px;top:442px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Issue load sheet</span></span></a>
+-<div class="lens danger" aria-hidden="true" style="left:1174px;top:492px;transform:translateX(-50%)">No time stated</div>
+-<a class="node double_circle" href="#step-id-12" aria-label="End, Final load sheet issued" title="Final load sheet issued" style="left:1290px;top:456px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
++<a class="node diamond" href="#step-id-3" aria-label="Decision, Special loads OK?, Load controller, Corroborated" title="Special loads OK?" style="left:528px;top:190px;width:52px;height:52px"><span class="dia"></span><span class="key"></span></a>
++<div class="under" aria-hidden="true" style="left:554px;top:246px;transform:translateX(-50%)"><span>Special</span><span>loads OK?</span></div>
++<a class="node rounded_rect" href="#step-id-5" aria-label="Activity, Load and return LIR, Ramp, Contested" title="Load and return LIR" style="left:628px;top:318px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Load and</span><span>return LIR</span></span><span class="key"></span></a>
++<div class="lens" aria-hidden="true" style="left:678px;top:368px;transform:translateX(-50%)">~40 min + 15 wait</div>
++<a class="node diamond" href="#step-id-8" aria-label="Decision, Deviation in limits?, Load controller, Contested" title="Deviation in limits?" style="left:776px;top:190px;width:52px;height:52px"><span class="dia"></span></a>
++<div class="under" aria-hidden="true" style="left:802px;top:246px;transform:translateX(-50%)"><span>Deviation</span><span>in limits?</span></div>
++<a class="node rounded_rect" href="#step-id-10" aria-label="Activity, Issue load sheet, Load controller, Corroborated" title="Issue load sheet" style="left:876px;top:194px;width:100px;height:44px"><span class="label" aria-hidden="true"><span>Issue load sheet</span></span></a>
++<div class="lens danger" aria-hidden="true" style="left:926px;top:244px;transform:translateX(-50%)">No time stated</div>
++<a class="node double_circle" href="#step-id-11" aria-label="End, Final load sheet issued" title="Final load sheet issued" style="left:1042px;top:208px;width:16px;height:16px"><span class="dot" style="width:16px;height:16px"></span></a>
+ </div></div>
+-<p class="legend">Rounded box: activity · Diamond: decision · Pill: approval · Dot: start · Double ring: end · Orange dot: key constraint · Dashed line: a loop back (rework or re-plan) · Under each step: its time</p>
++<p class="legend">Rounded box: activity · Diamond: decision · Pill: approval · Dot: start · Double ring: end · Orange dot: key constraint · Dashed line: a loop back (rework or re-plan), or a step the interview doesn't describe · Under each step: its time</p>
+ <h3>Steps</h3>
+-<article class="card step" id="step-id-2" aria-labelledby="h-id-2"><h3 id="h-id-2">[O] Draft load plan</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Plan</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work 20 min, wait not stated (About twenty minutes, around T-120)</dd><dt>Complexity</dt><dd>M</dd><dt>Data in → out</dt><dd>— → Preliminary load plan</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Constraint</dt><dd>[O] Only one other controller knows the widebody configurations</dd><dt>Sources</dt><dd>interview_transcript.txt 06:40 · supports; sop_LC-07.docx §3.1 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-3" aria-labelledby="h-id-3"><h3 id="h-id-3">[O] Approve load plan</h3><dl><dt>Kind</dt><dd>Approval</dd><dt>Lane</dt><dd>Load control lead</dd><dt>Phase</dt><dd>Plan</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Documented only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Load control lead</dd><dt>Exits</dt><dd>Approve → Special loads OK?; Rework → Draft load plan</dd><dt>Data in → out</dt><dd>Preliminary load plan → Plan released to Ramp</dd><dt>Roles</dt><dd>Load control lead: Responsible; Load control lead: Accountable</dd><dt>Sources</dt><dd>sop_LC-07.docx §3.2 · supports; jd_load_control_lead.docx ¶ 2 · supports; interview_transcript.txt · silent; sop_RP-02.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-4" aria-labelledby="h-id-4"><h3 id="h-id-4">[O] Special loads OK?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>Mechanism</dt><dd>rule-based</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>Special loads checked against the acceptance checklist</dd><dt>Exits</dt><dd>Yes → Load and return LIR; No → Resolve or offload</dd><dt>Roles</dt><dd>Load controller: Accountable</dd><dt>Constraint</dt><dd>[O] The cargo terminal&#x27;s notification often comes late (key)</dd><dt>Sources</dt><dd>interview_transcript.txt 14:05 · supports; sop_LC-07.docx §4 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-5" aria-labelledby="h-id-5"><h3 id="h-id-5">[O] Resolve or offload</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Airline ops</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work 40 min, wait not stated (Fifteen to forty minutes)</dd><dt>Roles</dt><dd>Airline ops: Responsible; Airline ops: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 16:22 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-6" aria-labelledby="h-id-6"><h3 id="h-id-6">[O] Load and return LIR</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Ramp</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Contested</dd><dt>Time</dt><dd>work 40 min, wait 15 min (About forty minutes loading; up to fifteen minutes&#x27; wait for the report)</dd><dt>Data in → out</dt><dd>— → Loading report to the Load controller</dd><dt>Roles</dt><dd>Ramp: Responsible; Ramp: Accountable</dd><dt>Constraint</dt><dd>[O] The paper loading report gets lost or arrives late.</dd><dt>Constraint</dt><dd>[O] The loading report is on paper and re-keyed (key)</dd><dt>Constraint</dt><dd>[O] Containers run short at peak times (key)</dd><dt>Sources</dt><dd>interview_transcript.txt 21:50 · supports; sop_RP-02.docx §2 · contradicts; landscape_ramp_lead.txt 02:18 · supports; sop_LC-07.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent</dd></dl></article>
+-<article class="card step" id="step-id-7" aria-labelledby="h-id-7"><h3 id="h-id-7">[O] Busy wave?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>Mechanism</dt><dd>rule-based</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>On a busy wave</dd><dt>Exits</dt><dd>Yes → Read report at aircraft; No → Deviation in limits?</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 22:30 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-8" aria-labelledby="h-id-8"><h3 id="h-id-8">[O] Read report at aircraft</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>Data in → out</dt><dd>Loading report on the ramp&#x27;s sheet → —</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 22:30 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-9" aria-labelledby="h-id-9"><h3 id="h-id-9">[O] Deviation in limits?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Contested</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>Weight deviation within the airline contract tolerance</dd><dt>Escalation</dt><dd>Outside tolerance the captain decides</dd><dt>Exits</dt><dd>Within limits → Issue load sheet; Outside limits → Approve deviation</dd><dt>Roles</dt><dd>Load controller: Responsible; Captain: Accountable (contested); Load control lead: Accountable (contested)</dd><dt>Sources</dt><dd>interview_transcript.txt 27:15 · supports; sop_LC-07.docx §5 · contradicts; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-10" aria-labelledby="h-id-10"><h3 id="h-id-10">[O] Approve deviation</h3><dl><dt>Kind</dt><dd>Approval</dd><dt>Lane</dt><dd>Captain</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work 15 min, wait not stated (Five to fifteen minutes)</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Captain</dd><dt>Exits</dt><dd>Accept → Issue load sheet; Re-trim → Load and return LIR</dd><dt>Roles</dt><dd>Captain: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 29:02 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+-<article class="card step" id="step-id-11" aria-labelledby="h-id-11"><h3 id="h-id-11">[O] Issue load sheet</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work not stated, wait not stated (Around T-15)</dd><dt>KPI</dt><dd>Final load sheet no later than T-10</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 31:10 · supports; sop_LC-07.docx §6 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-2" aria-labelledby="h-id-2"><h3 id="h-id-2">[O] Draft load plan</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Plan</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work 20 min, wait not stated (About twenty minutes, around T-120)</dd><dt>View</dt><dd>both</dd><dt>Work type</dt><dd>Complicated (proposed)</dd><dt>Complexity</dt><dd>M</dd><dt>Data in → out</dt><dd>— → Preliminary load plan</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Constraint</dt><dd>[O] Only one other controller knows the widebody configurations</dd><dt>Sources</dt><dd>interview_transcript.txt 06:40 · supports; sop_LC-07.docx §3.1 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-12" aria-labelledby="h-id-12"><h3 id="h-id-12">[O] Approve load plan</h3><dl><dt>Kind</dt><dd>Approval</dd><dt>Lane</dt><dd>Load control lead</dd><dt>Phase</dt><dd>Plan</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Documented only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>View</dt><dd>as documented</dd><dt>Work type</dt><dd>Not classified</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Load control lead</dd><dt>Exits</dt><dd>Approve → Special loads OK?; Rework → Draft load plan</dd><dt>Data in → out</dt><dd>Preliminary load plan → Plan released to Ramp</dd><dt>Roles</dt><dd>Load control lead: Responsible; Load control lead: Accountable</dd><dt>Sources</dt><dd>sop_LC-07.docx §3.2 · supports; jd_load_control_lead.docx ¶ 2 · supports; interview_transcript.txt · silent; sop_RP-02.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-3" aria-labelledby="h-id-3"><h3 id="h-id-3">[O] Special loads OK?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>View</dt><dd>both</dd><dt>Work type</dt><dd>Clear (proposed)</dd><dt>Mechanism</dt><dd>rule-based</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>Special loads checked against the acceptance checklist</dd><dt>Exits</dt><dd>Yes → Load and return LIR; No → Resolve or offload</dd><dt>Roles</dt><dd>Load controller: Accountable</dd><dt>Constraint</dt><dd>[O] The cargo terminal&#x27;s notification often comes late (key)</dd><dt>Sources</dt><dd>interview_transcript.txt 14:05 · supports; sop_LC-07.docx §4 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-4" aria-labelledby="h-id-4"><h3 id="h-id-4">[O] Resolve or offload</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Airline ops</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work 40 min, wait not stated (Fifteen to forty minutes)</dd><dt>View</dt><dd>as done</dd><dt>Work type</dt><dd>Not classified</dd><dt>Roles</dt><dd>Airline ops: Responsible; Airline ops: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 16:22 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-5" aria-labelledby="h-id-5"><h3 id="h-id-5">[O] Load and return LIR</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Ramp</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Contested</dd><dt>Time</dt><dd>work 40 min, wait 15 min (About forty minutes loading; up to fifteen minutes&#x27; wait for the report)</dd><dt>View</dt><dd>both</dd><dt>Work type</dt><dd>Not classified</dd><dt>Data in → out</dt><dd>— → Loading report to the Load controller</dd><dt>Roles</dt><dd>Ramp: Responsible; Ramp: Accountable</dd><dt>Constraint</dt><dd>[O] The paper loading report gets lost or arrives late.</dd><dt>Constraint</dt><dd>[O] The loading report is on paper and re-keyed (key)</dd><dt>Constraint</dt><dd>[O] Containers run short at peak times (key)</dd><dt>Sources</dt><dd>interview_transcript.txt 21:50 · supports; sop_RP-02.docx §2 · contradicts; landscape_ramp_lead.txt 02:18 · supports; sop_LC-07.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent</dd></dl></article>
++<article class="card step" id="step-id-6" aria-labelledby="h-id-6"><h3 id="h-id-6">[O] Busy wave?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>View</dt><dd>as done</dd><dt>Work type</dt><dd>Not classified</dd><dt>Mechanism</dt><dd>rule-based</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>On a busy wave</dd><dt>Exits</dt><dd>Yes → Read report at aircraft; No → Deviation in limits?</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 22:30 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-7" aria-labelledby="h-id-7"><h3 id="h-id-7">[O] Read report at aircraft</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Check and load</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>View</dt><dd>as done</dd><dt>Work type</dt><dd>Not classified</dd><dt>Data in → out</dt><dd>Loading report on the ramp&#x27;s sheet → —</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 22:30 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-8" aria-labelledby="h-id-8"><h3 id="h-id-8">[O] Deviation in limits?</h3><dl><dt>Kind</dt><dd>Decision</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Contested</dd><dt>Time</dt><dd>work not stated, wait not stated</dd><dt>View</dt><dd>both</dd><dt>Work type</dt><dd>Complex (proposed)</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Load controller</dd><dt>Rule or threshold</dt><dd>Weight deviation within the airline contract tolerance</dd><dt>Escalation</dt><dd>Outside tolerance the captain decides</dd><dt>Exits</dt><dd>Within limits → Issue load sheet; Outside limits → Approve deviation</dd><dt>Roles</dt><dd>Load controller: Responsible; Captain: Accountable (contested); Load control lead: Accountable (contested)</dd><dt>Sources</dt><dd>interview_transcript.txt 27:15 · supports; sop_LC-07.docx §5 · contradicts; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-9" aria-labelledby="h-id-9"><h3 id="h-id-9">[O] Approve deviation</h3><dl><dt>Kind</dt><dd>Approval</dd><dt>Lane</dt><dd>Captain</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Practiced only</dd><dt>Time</dt><dd>work 15 min, wait not stated (Five to fifteen minutes)</dd><dt>View</dt><dd>as done</dd><dt>Work type</dt><dd>Not classified</dd><dt>Mechanism</dt><dd>judgment</dd><dt>Decider</dt><dd>Captain</dd><dt>Exits</dt><dd>Accept → Issue load sheet; Re-trim → Load and return LIR</dd><dt>Roles</dt><dd>Captain: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 29:02 · supports; sop_LC-07.docx · silent; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; jd_load_controller.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
++<article class="card step" id="step-id-10" aria-labelledby="h-id-10"><h3 id="h-id-10">[O] Issue load sheet</h3><dl><dt>Kind</dt><dd>Activity</dd><dt>Lane</dt><dd>Load controller</dd><dt>Phase</dt><dd>Close out</dd><dt>Provenance</dt><dd>Observed (O)</dd><dt>Source state</dt><dd>Corroborated</dd><dt>Time</dt><dd>work not stated, wait not stated (Around T-15)</dd><dt>View</dt><dd>both</dd><dt>Work type</dt><dd>Clear (proposed)</dd><dt>KPI</dt><dd>Final load sheet no later than T-10</dd><dt>Roles</dt><dd>Load controller: Responsible; Load controller: Accountable</dd><dt>Sources</dt><dd>interview_transcript.txt 31:10 · supports; sop_LC-07.docx §6 · supports; jd_load_controller.docx ¶ 2 · supports; sop_RP-02.docx · silent; jd_load_control_lead.docx · silent; landscape_ramp_lead.txt · silent</dd></dl></article>
+ <h3>RACI</h3>
+ <div class="scroll"><table><thead><tr><th scope="col">Step</th><th scope="col">Load controller</th><th scope="col">Load control lead</th><th scope="col">Ramp</th><th scope="col">Airline ops</th><th scope="col">Captain</th></tr></thead><tbody><tr><td>[O] Draft load plan</td><td>R A</td><td>·</td><td>·</td><td>·</td><td>·</td></tr><tr><td>[O] Approve load plan</td><td>·</td><td>R A</td><td>·</td><td>·</td><td>·</td></tr><tr><td>[O] Special loads OK?</td><td>A</td><td>·</td><td>·</td><td>·</td><td>·</td></tr><tr><td>[O] Resolve or offload</td><td>·</td><td>·</td><td>·</td><td>R A</td><td>·</td></tr><tr><td>[O] Load and return LIR</td><td>·</td><td>·</td><td>R A</td><td>·</td><td>·</td></tr><tr><td>[O] Busy wave?</td><td>R A</td><td>·</td><td>·</td><td>·</td><td>·</td></tr><tr><td>[O] Read report at aircraft</td><td>R A</td><td>·</td><td>·</td><td>·</td><td>·</td></tr><tr><td>[O] Deviation in limits?</td><td>R</td><td>A?</td><td>·</td><td>·</td><td>A?</td></tr><tr><td>[O] Approve deviation</td><td>·</td><td>·</td><td>·</td><td>·</td><td>A</td></tr><tr><td>[O] Issue load sheet</td><td>R A</td><td>·</td><td>·</td><td>·</td><td>·</td></tr></tbody></table></div>
+ <p class="note">A? means the sources disagree about who is accountable.</p>
++<h3>Two views: as done and as documented</h3>
++<ul><li>As done: 9 steps; only here: Resolve or offload, Busy wave?, Read report at aircraft, Approve deviation.</li><li>As documented: 6 steps; only here: Approve load plan.</li></ul>
++<h3>Work type and know-how</h3>
++<div class="scroll"><table><thead><tr><th scope="col">Step</th><th scope="col">Work type</th><th scope="col">Know-how (knowledge risk · dominant ASHEN)</th></tr></thead><tbody><tr><td>[O] Draft load plan</td><td>Complicated (proposed)</td><td>—</td></tr><tr><td>[O] Approve load plan</td><td>Not classified</td><td>unknown · none described</td></tr><tr><td>[O] Special loads OK?</td><td>Clear (proposed)</td><td>low · artefacts</td></tr><tr><td>[O] Resolve or offload</td><td>Not classified</td><td>—</td></tr><tr><td>[O] Load and return LIR</td><td>Not classified</td><td>—</td></tr><tr><td>[O] Busy wave?</td><td>Not classified</td><td>unknown · none described</td></tr><tr><td>[O] Read report at aircraft</td><td>Not classified</td><td>—</td></tr><tr><td>[O] Deviation in limits?</td><td>Complex (proposed)</td><td>high · artefacts</td></tr><tr><td>[O] Approve deviation</td><td>Not classified</td><td>unknown · none described</td></tr><tr><td>[O] Issue load sheet</td><td>Clear (proposed)</td><td>—</td></tr></tbody></table></div>
++<h3>Official vs lived</h3>
++<ul><li>[O] Load and return LIR: official and lived accounts both given; they differ on time (as done: Up to fifteen minutes&#x27; wait for the report; as documented: Within 10 minutes of loading completion).</li></ul>
++<h3>Glossary of SME terms</h3>
++<ul><li><b>re-trim</b>: Rebalance an aircraft&#x27;s load after it has been planned. (step: Approve deviation)</li><li><b>wave</b>: A busy period of departures. (step: Busy wave?)</li><li><b>forward hold</b>: The cargo hold at the front of the aircraft. (step: Draft load plan)</li></ul>
+ </section>
+ <section aria-labelledby="recommendation">
+ <h2 id="recommendation">3. Recommendation: enablement and gaps</h2>
++<h3>Preserve / Improve</h3>
++<ul><li>Skillset: preserve: Ramp supervisors know the aircraft types inside out.</li><li>Systems: improve: The paper loading report gets lost or arrives late.</li></ul>
++<h3>Reality gaps by gap class</h3>
++<p>No reality gaps from a finalised documents-vs-practice analysis.</p>
+ <h3>AI flags</h3>
+-<div class="card"><p><a href="#step-id-4">[O] Special loads OK?</a></p><dl><dt>Component</dt><dd>Reasoning</dd><dt>Input</dt><dd>Special load notification and acceptance checklist</dd><dt>Output</dt><dd>Accept or refuse each special load</dd><dt>Handoff</dt><dd>Load controller</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
+-<div class="card"><p><a href="#step-id-6">[O] Load and return LIR</a></p><dl><dt>Component</dt><dd>Perception</dd><dt>Input</dt><dd>Paper loading report</dd><dt>Output</dt><dd>Keyed loading data</dd><dt>Handoff</dt><dd>Load controller</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
+-<div class="card"><p><a href="#step-id-11">[O] Issue load sheet</a></p><dl><dt>Component</dt><dd>Action</dd><dt>Input</dt><dd>Final load figures</dd><dt>Output</dt><dd>Load sheet issued through the departure control system</dd><dt>Handoff</dt><dd>Captain</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
++<div class="card"><p><a href="#step-id-3">[O] Special loads OK?</a></p><dl><dt>Component</dt><dd>Reasoning</dd><dt>Input</dt><dd>Special load notification and acceptance checklist</dd><dt>Output</dt><dd>Accept or refuse each special load</dd><dt>Handoff</dt><dd>Load controller</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
++<div class="card"><p><a href="#step-id-5">[O] Load and return LIR</a></p><dl><dt>Component</dt><dd>Perception</dd><dt>Input</dt><dd>Paper loading report</dd><dt>Output</dt><dd>Keyed loading data</dd><dt>Handoff</dt><dd>Load controller</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
++<div class="card"><p><a href="#step-id-10">[O] Issue load sheet</a></p><dl><dt>Component</dt><dd>Action</dd><dt>Input</dt><dd>Final load figures</dd><dt>Output</dt><dd>Load sheet issued through the departure control system</dd><dt>Handoff</dt><dd>Captain</dd><dt>Basis</dt><dd>Rule-based: an automation candidate</dd></dl></div>
+ <h3>Knowledge-risk register</h3>
+ <ul><li>[O] Draft load plan: Widebody plans rely on the Load controller and one other controller</li></ul>
+ <h3>External-practice register</h3>
+@@ -269,6 +318,10 @@ footer { margin-top: var(--space-32); color: var(--ink-4); font-size: var(--text
+ <ul><li>[O] Load and return LIR · threshold: Threshold divergence: 10 min in the SOP vs up to 15 min wait in practice. [I] Likely cause: The loading report is on paper and re-keyed</li><li>[O] Deviation in limits? · ownership: Ownership divergence: the Load control lead decides in the SOP, the Captain in practice. Likely cause: not known yet: ask your SMEs.</li></ul>
+ <h3>Gap analyses</h3>
+ <p>No finalised gap analyses.</p>
++<h3>Disposition and value</h3>
++<p>Not used in this engagement.</p>
++<h3>System records</h3>
++<p>Not used in this engagement.</p>
+ </section>
+ <footer>Role names only. No images, verbatim quotes or names. Made with Process Map Studio.</footer>
+ </main>
+diff --git a/backend/tests/golden/test_golden_baselines.py b/backend/tests/golden/test_golden_baselines.py
+index 84b7e12..4b44bae 100644
+--- a/backend/tests/golden/test_golden_baselines.py
++++ b/backend/tests/golden/test_golden_baselines.py
+@@ -20,7 +20,9 @@
+ 
+ Record IDs and times change on every run, so each ID is replaced by a stable token in order of
+ first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the
+-diff of the baseline file, and log the reason in DECISIONS.md (PRD §6.2 rules).
++diff of the baseline file, and log the reason in DECISIONS.md (PRD §6.2 rules). To show Eric a
++change before it is accepted, run with PMS_GOLDEN_CANDIDATES=<folder>: each output is also written
++there under its baseline's name, and the baselines are left alone (2026-10-06).
+ """
+ 
+ from __future__ import annotations
+@@ -59,8 +61,17 @@ def stable_ids(data: Any) -> Any:
+     return json.loads(UUID.sub(token, text))
+ 
+ 
++def write_candidate(name: str, rendered: str) -> None:
++    """With PMS_GOLDEN_CANDIDATES set, the output also goes there for Eric to review."""
++    folder = os.environ.get("PMS_GOLDEN_CANDIDATES")
++    if folder:
++        Path(folder).mkdir(parents=True, exist_ok=True)
++        (Path(folder) / name).write_text(rendered, encoding="utf-8")
++
++
+ def matches_baseline(name: str, data: Any, folder: Path = HERE) -> None:
+     rendered = json.dumps(stable_ids(data), indent=2, ensure_ascii=False) + "\n"
++    write_candidate(name, rendered)
+     path = folder / name
+     if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
+         path.write_text(rendered, encoding="utf-8")
+@@ -184,6 +195,7 @@ def matches_text_baseline(name: str, text: str) -> None:
+     rendered = FONT_DATA.sub(
+         lambda m: f"data:font/woff2;base64,<{len(m.group(1))} characters>", rendered
+     )
++    write_candidate(name, rendered)
+     path = HERE / name
+     if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
+         path.write_text(rendered, encoding="utf-8")
+diff --git a/backend/tests/services/test_export_html.py b/backend/tests/services/test_export_html.py
+index 93805e6..7647024 100644
+--- a/backend/tests/services/test_export_html.py
++++ b/backend/tests/services/test_export_html.py
+@@ -99,3 +99,47 @@ def test_the_quality_card_heads_the_page() -> None:
+     assert html.index("Quality card") < html.index('aria-labelledby="facts"')
+     assert '<td class="warning">Warning</td>' in html
+     assert "Quality card: not worked out yet." in render(quality_card=None)
++
++
++def test_both_views_are_drawn_with_not_described_lines_dashed() -> None:
++    """§3.12.11: both views are published together (K3, 2026-10-06)."""
++    from tests.services.test_exports import sensemaking_data
++
++    html = export_html.render_map_html(sensemaking_data(), TOKENS, FONTS)
++    done = html.index("<h3>Map as done: the work as actually performed</h3>")
++    documented = html.index("<h3>Map as documented: the documents&#x27; version</h3>")
++    assert done < documented < html.index("<h3>Steps</h3>")
++    assert html.count('role="group" aria-label="Swimlane map"') == 2
++    as_done = html[done:documented]
++    assert 'aria-label="Activity, Read report at aircraft' in as_done
++    assert 'aria-label="Approval, Approve load plan' not in as_done
++    assert 'aria-label="Approval, Approve load plan' in html[documented:]
++    assert ".back .seg, .gap .seg { border-style: dashed; }" in html
++    assert "<dt>View</dt><dd>as done</dd>" in html and "<dt>Work type</dt>" in html
++    for heading in ("Stories", "Strengths as stated (preserve)", "Work type and know-how",
++                    "Official vs lived", "Glossary of SME terms", "Preserve / Improve",
++                    "Reality gaps by gap class", "Disposition and value",
++                    "System records"):  # fmt: skip
++        assert html.count(f"<h3>{heading}</h3>") == 1, heading
++
++
++def test_a_not_described_connector_is_drawn_dashed() -> None:
++    from app.domain.graph import GraphEdge
++    from tests.services.test_exports import sensemaking_data
++
++    inp = sensemaking_data()
++    done = inp.view_graphs["done"]
++    on_map = md.steps(done)
++    first, last = on_map[0], on_map[-1]
++    gap = GraphEdge(id="gap-1", from_=first.id, to=last.id, kind="gap", label="Not described",
++                    view_membership="done_only", provenance="I")  # fmt: skip
++    done = done.model_copy(update={"edges": [*done.edges, gap]})
++    inp = inp.model_copy(update={"view_graphs": {**inp.view_graphs, "done": done}})
++    html = export_html.render_map_html(inp, TOKENS, FONTS)
++    assert html.count('<div class="gap" aria-hidden="true">') == 1
++    assert "a step the interview doesn't describe" in html  # the legend says what it means
++
++
++def test_a_map_from_before_the_views_is_drawn_once() -> None:
++    html = render()
++    assert html.count('role="group" aria-label="Swimlane map"') == 1
+diff --git a/backend/tests/services/test_exports.py b/backend/tests/services/test_exports.py
+index 1de9b40..9c2ac36 100644
+--- a/backend/tests/services/test_exports.py
++++ b/backend/tests/services/test_exports.py
+@@ -265,3 +265,80 @@ def test_the_exports_state_the_signal_strength() -> None:
+     limited = exports.render_master_map_md(data(sources=interview))
+     assert "\nSignal strength: Limited (1 of 3). Built from interviews only." in limited
+     assert "Signal strength" not in exports.render_master_map_md(data(sources=[]))
++
++
++# --- §7.3 v1.10-1.11 content (K3, 2026-10-06) ----------------------------------------------------
++
++
++def sensemaking_data() -> ExportInput:
++    from app.domain.exports import (
++        ExportCapability,
++        ExportKnowHow,
++        ExportRealityGap,
++        ExportStory,
++        ExportTerm,
++    )
++
++    every = Graph.model_validate(json.loads(G1.read_text(encoding="utf-8")))
++    graph = views.combined(every)
++    deviation = next(e for e in graph.elements if e.label == "Deviation in limits?")
++    return data(
++        graph,
++        view_graphs={v: views.view_graph(every, v) for v in views.VIEWS},
++        stories=[ExportStory(label="Had to re-trim three flights in one night",
++                             fragment_type="went_badly", steps=["Deviation in limits?"],
++                             where="interview_transcript.txt 24:10")],
++        capabilities=[
++            ExportCapability(kind="strength", dimension="skillset",
++                             text="Supervisors know the aircraft types.", steps=[]),
++            ExportCapability(kind="weakness", dimension="systems",
++                             text="The paper report gets lost.", steps=["Load and return LIR"]),
++        ],
++        glossary=[ExportTerm(term="wave", plain_meaning="A busy period.", steps=["Busy wave?"])],
++        know_how=[ExportKnowHow(element_id=deviation.id, knowledge_risk="high",
++                                dominant="heuristics")],
++        reality_gaps=[ExportRealityGap(gap_class="effective_adaptation",
++                                       title="The report is read at the aircraft",
++                                       stated_reason="the paper sheet arrives late")],
++    )  # fmt: skip
++
++
++def section(text: str, start: str, end: str) -> str:
++    return text.split(start, 1)[1].split(end, 1)[0]
++
++
++def test_the_master_map_carries_the_v1_11_template() -> None:
++    md = exports.render_master_map_md(sensemaking_data())
++    facts = section(md, exports.FACTS, exports.INTERPRETATION)
++    interpretation = section(md, exports.INTERPRETATION, exports.RECOMMENDATION)
++    recommendation = md.split(exports.RECOMMENDATION, 1)[1]
++    assert "- [O] Had to re-trim three flights in one night (went badly · " in facts
++    assert "### Strengths as stated (preserve)" in facts
++    assert "- [O] Skillset: Supervisors know the aircraft types." in facts
++    assert "| Step | View | Lane |" in interpretation
++    assert "| Read report at aircraft | as done |" in interpretation
++    assert "- As done: 9 steps; only here: " in interpretation
++    assert "- As documented: 6 steps; only here: Approve load plan." in interpretation
++    assert "| [O] Deviation in limits? | Complex (proposed) | high · heuristics |" in interpretation
++    assert (
++        "### Official vs lived" in interpretation and "### Glossary of SME terms" in interpretation
++    )
++    assert "- wave: A busy period. (step: Busy wave?)" in interpretation
++    assert recommendation.index("### Preserve / Improve") < recommendation.index("### AI flags")
++    assert "- Systems: improve: The paper report gets lost." in recommendation
++    assert ("- [I] Effective adaptation: The report is read at the aircraft "
++            "(stated reason: the paper sheet arrives late)") in recommendation  # fmt: skip
++    assert recommendation.count("Not used in this engagement.") == 2  # decision A: modules off
++    assert "Preserve / Improve" not in facts + interpretation  # recommendations stay in section 3
++
++
++def test_every_new_heading_is_printed_even_when_empty() -> None:
++    md = exports.render_master_map_md(data())
++    for heading in ("### Stories", "### Strengths as stated (preserve)",
++                    "### Two views: as done and as documented", "### Work type and know-how",
++                    "### Official vs lived", "### Glossary of SME terms", "### Preserve / Improve",
++                    "### Reality gaps by gap class", "### Disposition and value",
++                    "### System records"):  # fmt: skip
++        assert md.count(heading) == 1, heading
++    assert "No stories recorded." in md and "No SME terms recorded." in md
++    assert "This map was drafted before the two views; it has one view." in md
+diff --git a/backend/tests/services/test_levels.py b/backend/tests/services/test_levels.py
+new file mode 100644
+index 0000000..8a87046
+--- /dev/null
++++ b/backend/tests/services/test_levels.py
+@@ -0,0 +1,106 @@
++"""Rule 9 of §3.12.10 and rule 10 of §3.9 (K2, 2026-10-06): landscape and practice levels.
++
++Decision C (Eric, 2026-10-06): proved with a crafted case, because fixture A.10 has no landscape
++activity. A Landscape interview (L2) names the team-level activity "Manage loading" in the Ramp
++lane; a Practice interview describes "Load the aircraft" and "Return the loading report" in the
++same lane and phase. The practice steps nest under the landscape activity, the map draws the
++finest level, and nothing is duplicated.
++"""
++
++from __future__ import annotations
++
++from app.domain.graph import Graph, GraphElement
++from app.domain.sensemaking import StepPosition, TranslationStep
++from app.services import layout, translation, views
++from tests.services.test_lint import CAPTAIN, LC, clean, edge, element
++
++RAMP = CAPTAIN  # a second lane of the crafted map
++
++
++def step(key: str, *questions: str, kind: str = "activity", lane: str = RAMP, phase: str = "p1",
++         documents: bool = False) -> TranslationStep:  # fmt: skip
++    return TranslationStep(
++        id=key, kind=kind, label=key.replace("_", " ").capitalize(), source_state="corroborated",
++        provenance="O", lane=lane, phase=phase,
++        interview=[StepPosition(source_id="s", seq=i, question_ids=[q])
++                   for i, q in enumerate(questions)],
++        documents=[StepPosition(source_id="sop", seq=1)] if documents else [],
++    )  # fmt: skip
++
++
++def test_landscape_answers_make_a_landscape_activity_and_practice_steps_nest_under_it() -> None:
++    steps = [
++        step("manage_loading", "L2"),
++        step("load_the_aircraft", "M2.2"),
++        step("return_the_loading_report", "M2.2", "L3"),  # one practice answer is enough
++        step("plan_the_load", "M2.2", lane=LC),  # another lane: no parent
++        step("check_the_sheet", "M3.2", phase="p2"),  # another phase: no parent
++    ]
++    assert translation.levels(steps) == {
++        "manage_loading": ("landscape", None),
++        "load_the_aircraft": ("practice", "manage_loading"),
++        "return_the_loading_report": ("practice", "manage_loading"),
++        "plan_the_load": ("practice", None),
++        "check_the_sheet": ("practice", None),
++    }
++
++
++def test_one_level_maps_keep_no_level_and_documents_are_never_landscape() -> None:
++    assert translation.levels([step("a", "M2.2"), step("b", "M4.1")]) == {
++        "a": (None, None),
++        "b": (None, None),
++    }
++    # A step a document also describes, or with an unmatched answer, is not landscape.
++    assert translation.levels([step("a", "L2", documents=True)]) == {"a": (None, None)}
++    unmatched = step("a", "L2").model_copy(
++        update={"interview": [StepPosition(source_id="s", seq=1)]}
++    )
++    assert translation.levels([unmatched]) == {"a": (None, None)}
++
++
++def test_with_two_landscape_activities_the_closer_label_wins_and_a_tie_nests_nowhere() -> None:
++    steps = [
++        step("manage_loading", "L2"),
++        step("manage_catering", "L2"),
++        step("check_loading_weights", "M2.2"),
++        step("walk_the_ramp", "M2.2"),
++    ]
++    result = translation.levels(steps)
++    assert result["check_loading_weights"] == ("practice", "manage_loading")
++    assert result["walk_the_ramp"] == ("practice", None)
++
++
++def nested_graph() -> Graph:
++    """start → manage (landscape) → end, with load → report under manage."""
++    graph = clean()
++    start, end = graph.elements[0], graph.elements[-1]
++    manage = element("manage", "activity", lane_role_id=RAMP, level="landscape")
++    load = element("load", "activity", lane_role_id=RAMP, level="practice",
++                   parent_element_id="manage")  # fmt: skip
++    report = element("report", "activity", lane_role_id=RAMP, level="practice",
++                     parent_element_id="manage")  # fmt: skip
++    elements: list[GraphElement] = [start, manage, load, report, end]
++    edges = [edge("start", "manage"), edge("manage", "end"), edge("load", "report")]
++    return graph.model_copy(update={"elements": elements, "edges": edges})
++
++
++def test_the_map_draws_the_finest_level_and_rejoins_the_flow() -> None:
++    graph = nested_graph()
++    drawn = views.finest_level(graph)
++    assert [e.id for e in drawn.elements] == ["start", "load", "report", "end"]
++    assert [(e.from_, e.to) for e in drawn.edges] == [
++        ("start", "load"),  # the line into "manage" now starts its own flow
++        ("report", "end"),  # and the line out leaves from where it ends
++        ("load", "report"),
++    ]
++    boxes = {n.id for n in layout.compute_layout(drawn).nodes}
++    assert "manage" not in boxes and {"load", "report"} <= boxes  # no duplicated activity
++    # Each view draws the finest level too (the per-view graph, layout and flow checks).
++    assert "manage" not in {e.id for e in views.view_graph(graph, "done").elements}
++
++
++def test_a_landscape_activity_without_practice_steps_is_drawn_as_usual() -> None:
++    graph = nested_graph()
++    loose = [e.model_copy(update={"parent_element_id": None}) for e in graph.elements]
++    alone = graph.model_copy(update={"elements": loose})
++    assert views.finest_level(alone) is alone
+diff --git a/backend/tests/services/test_lint.py b/backend/tests/services/test_lint.py
+index 7bc88cd..66fe639 100644
+--- a/backend/tests/services/test_lint.py
++++ b/backend/tests/services/test_lint.py
+@@ -410,3 +410,35 @@ def test_complex_or_chaotic_work_is_never_an_automation_candidate() -> None:
+         'Decision "Check" is complex work, so it can\'t be flagged for automation.'
+     )
+     assert run_lint(replace(clean(), "check", work_type="clear")).failures == []
++
++
++# --- L12 sensemaking warnings (PRD v1.10 §3.7; K3, 2026-10-06) ----------------------------------
++
++
++def test_decision_points_without_a_confirmed_work_type_are_one_warning() -> None:
++    from app.services.lint import run_sensemaking_warnings
++
++    graph = clean()
++    assert run_sensemaking_warnings(graph, None).warnings == []  # no work types: drafted pre-v1.10
++    graph = replace(graph, "approve", work_type="complicated", work_type_status="proposed")
++    graph = replace(graph, "check", work_type="clear", work_type_status="confirmed")
++    graph = replace(graph, "plan", work_type="complex", work_type_status="proposed")
++    [warning] = run_sensemaking_warnings(graph, None).warnings
++    assert (warning.rule, warning.element_id) == ("L12", "plan")
++    assert warning.message == (
++        '2 decisions, approvals or judgment steps without a confirmed work type: "Plan", "Approve".'
++    )  # the complex activity counts as a judgment step; the confirmed decision doesn't
++    assert run_sensemaking_warnings(graph, None).failures == []  # a warning, never a failure
++
++
++def test_fewer_than_the_three_kinds_of_story_is_a_warning() -> None:
++    from app.services.lint import run_sensemaking_warnings
++
++    graph = clean()
++    assert run_sensemaking_warnings(graph, None).warnings == []  # no interview: no stories asked
++    [warning] = run_sensemaking_warnings(graph, {"went_badly", "other"}).warnings
++    assert warning.message == (
++        "Fewer than three kinds of story: none yet about a time it went well (M5.1); "
++        "a time something surprised (M5.3)."
++    )
++    assert run_sensemaking_warnings(graph, {"went_well", "went_badly", "surprise"}).warnings == []
+diff --git a/backend/tests/services/test_quality.py b/backend/tests/services/test_quality.py
+index 35cf29f..b8f8f9a 100644
+--- a/backend/tests/services/test_quality.py
++++ b/backend/tests/services/test_quality.py
+@@ -1,5 +1,6 @@
+ """The publish quality card (PRD §7.2): each check turns red on a crafted fixture and green on the
+-fully reviewed sample; Q10 is only a warning; a failing detail never repeats a hidden name."""
++fully reviewed sample; Q10-Q12 are only warnings (Q12 only with system records); a failing detail
++never repeats a hidden name."""
+ 
+ from __future__ import annotations
+ 
+@@ -54,8 +55,11 @@ def statuses(inp: QualityInput) -> dict[str, str]:
+ 
+ def test_the_reviewed_sample_is_green() -> None:
+     card = quality.build_quality_card(card_input())
+-    assert [c.id for c in card.checks] == [f"Q{n}" for n in range(1, 11)]
+-    assert all(c.status == "pass" for c in card.checks), card.checks
++    # Requirement change 2026-10-06 (PRD v1.10-1.11 §7.2, K3): Q11 joins the card as a warning;
++    # Q12 only when system records are used. The sample's work types are still proposed.
++    assert [c.id for c in card.checks] == [f"Q{n}" for n in range(1, 12)]
++    assert all(c.status == "pass" for c in card.checks if c.id != "Q11"), card.checks
++    assert (card.checks[10].status, card.checks[10].hard) == ("warning", False)
+     assert card.all_green and quality.hard_failures(card) == 0
+     assert card.checks[0].detail == "All 10 steps are tagged O, I or R."  # v1.10 A.5
+     assert card.checks[9].detail == "10 steps and 5 lanes: fits a one-hour session."
+@@ -190,3 +194,39 @@ def test_an_interview_only_map_gets_a_warning_never_a_blocker() -> None:
+     assert quality.SIGNAL_WARNING in limited.warnings and limited.all_green
+     strong = quality.build_quality_card(card_input(source_kinds=["interview_transcript", "sop"]))
+     assert quality.SIGNAL_WARNING not in strong.warnings
++
++
++def test_more_than_three_names_end_with_how_many_more() -> None:
++    """Bug found 2026-10-06 (Q11 on the sample): "and 2 mores" instead of "and 2 more"."""
++    graph = sample_graph()
++    steps = [e for e in graph.elements if e.kind in renderers.STEP_KINDS][:5]
++    text = quality._names(steps)
++    assert text.endswith(" and 2 more"), text
++
++
++def test_q11_warns_until_every_decision_point_has_a_confirmed_work_type() -> None:
++    graph = reviewed()
++    deciding = [e for e in graph.elements if e.kind in ("decision", "approval")]
++    assert deciding and any(e.work_type for e in graph.elements)  # a v1.10 sample
++    card = quality.build_quality_card(card_input(graph))
++    q11 = card.checks[10]
++    assert q11.detail.startswith(f"{len(deciding)} decisions, approvals or judgment steps "
++                                 "without a confirmed work type: ")  # fmt: skip
++    for e in deciding:
++        e.work_type_status = "confirmed"
++    assert statuses(card_input(graph))["Q11"] == "pass"
++    # A map drafted before v1.10 has no work types: nothing to confirm.
++    for e in graph.elements:
++        e.work_type, e.work_type_status = None, None
++    assert statuses(card_input(graph))["Q11"] == "pass"
++    assert card.all_green  # a warning never blocks publishing
++
++
++def test_q12_is_on_the_card_only_with_system_records() -> None:
++    assert "Q12" not in statuses(card_input())
++    assert statuses(card_input(unaligned_activities=0))["Q12"] == "pass"
++    card = quality.build_quality_card(card_input(unaligned_activities=2))
++    q12 = card.checks[-1]
++    assert (q12.id, q12.status, q12.hard) == ("Q12", "warning", False)
++    assert q12.detail == "2 system activities not yet aligned to a step or marked hidden work."
++    assert card.all_green
+diff --git a/backend/tests/unit/test_quality_api.py b/backend/tests/unit/test_quality_api.py
+index 927132b..bf8030c 100644
+--- a/backend/tests/unit/test_quality_api.py
++++ b/backend/tests/unit/test_quality_api.py
+@@ -41,7 +41,17 @@ def test_confirming_every_step_turns_it_green(drafted: Drafted) -> None:
+             assert response.status_code == 200, response.text
+     body = card(drafted)
+     assert body["all_green"] is True
+-    assert [c["status"] for c in body["checks"]] == ["pass"] * 10
++    # Requirement change 2026-10-06 (K3, PRD §7.2): Q11 warns until Eric confirms the work types
++    # of the decisions, approvals and judgment steps; a warning never blocks publishing.
++    assert [c["status"] for c in body["checks"]] == ["pass"] * 10 + ["warning"]
++    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
++    for e in graph["elements"]:
++        if e["kind"] in ("decision", "approval") or e["work_type"] in ("complex", "chaotic"):
++            chosen = e["work_type"] if e["work_type"] != "not_classified" else "complicated"
++            response = drafted.client.put(f"/api/elements/{e['id']}/work-type",
++                                          json={"work_type": chosen, "confirm": True})  # fmt: skip
++            assert response.status_code == 200, response.text
++    assert [c["status"] for c in card(drafted)["checks"]] == ["pass"] * 11
+     ready = readiness(drafted)
+     assert ready["blockers_count"] == 0 and ready["nav"]["review"] == "done"
+ 
+diff --git a/frontend/src/components/panel/PanelHeader.tsx b/frontend/src/components/panel/PanelHeader.tsx
+index c03c1bc..ae3d334 100644
+--- a/frontend/src/components/panel/PanelHeader.tsx
++++ b/frontend/src/components/panel/PanelHeader.tsx
+@@ -31,10 +31,12 @@ export interface PanelHeaderProps {
+   element: GraphElement;
+   laneName: string;
+   phaseName: string;
++  /** The landscape activity a practice step is part of (K2), or "". */
++  partOf?: string | undefined;
+ }
+ 
+ /** Overline "Kind · Phase", the title, "Lane · role" and the chips in PRD §5.7.5 order. */
+-export function PanelHeader({ element, laneName, phaseName }: PanelHeaderProps) {
++export function PanelHeader({ element, laneName, phaseName, partOf }: PanelHeaderProps) {
+   const kind = KINDS[element.kind] ?? element.kind;
+   const step = STEPS.has(element.kind);
+   const contested = element.source_state === "contested" || element.source_state === "trace_contradicted";
+@@ -45,6 +47,7 @@ export function PanelHeader({ element, laneName, phaseName }: PanelHeaderProps)
+         {element.label}
+       </h2>
+       {laneName && <p className="panel-header__lane">Lane · {laneName}</p>}
++      {partOf && <p className="panel-header__lane">Part of: {partOf}</p>}
+       {step && (
+         <div className="panel-header__chips">
+           <Chip>{kind}</Chip>
+diff --git a/frontend/src/components/table/StepTable.tsx b/frontend/src/components/table/StepTable.tsx
+index 868c8cd..65018a6 100644
+--- a/frontend/src/components/table/StepTable.tsx
++++ b/frontend/src/components/table/StepTable.tsx
+@@ -88,6 +88,7 @@ export function StepTable({
+                     >
+                       {row.label}
+                     </button>
++                    {row.partOf && <span className="step-table__part-of">{row.partOf}</span>}
+                   </th>
+                   <td>{row.kind}</td>
+                   <td>{row.lane}</td>
+diff --git a/frontend/src/components/table/table.css b/frontend/src/components/table/table.css
+index 5360e1b..750c042 100644
+--- a/frontend/src/components/table/table.css
++++ b/frontend/src/components/table/table.css
+@@ -68,3 +68,10 @@
+   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+   gap: var(--space-10);
+ }
++/* A practice step under a landscape activity (K2, §3.9 rule 10). */
++.step-table__part-of {
++  display: block;
++  font-size: var(--text-label);
++  font-weight: var(--weight-regular);
++  color: var(--ink-3);
++}
+diff --git a/frontend/src/features/review/DetailPanel.tsx b/frontend/src/features/review/DetailPanel.tsx
+index d82f47f..7de10fb 100644
+--- a/frontend/src/features/review/DetailPanel.tsx
++++ b/frontend/src/features/review/DetailPanel.tsx
+@@ -29,6 +29,8 @@ export interface DetailPanelProps {
+   element: GraphElement;
+   laneName: string;
+   phaseName: string;
++  /** The landscape activity a practice step is part of (K2), or "". */
++  partOf?: string | undefined;
+   /** Review actions; omitted where the version can't change. */
+   review?:
+     | {
+@@ -57,6 +59,7 @@ export function DetailPanel({
+   element,
+   laneName,
+   phaseName,
++  partOf,
+   review,
+   images,
+   onOpenEvidence,
+@@ -82,7 +85,7 @@ export function DetailPanel({
+   };
+   return (
+     <div className="panel-stack">
+-      <PanelHeader element={element} laneName={laneName} phaseName={phaseName} />
++      <PanelHeader element={element} laneName={laneName} phaseName={phaseName} partOf={partOf} />
+       {!step && (
+         <p className="inline-note">
+           {element.kind === "start" ? "Where the process starts" : "Where the process ends"}, from the engagement's
+diff --git a/frontend/src/features/review/Workbench.tsx b/frontend/src/features/review/Workbench.tsx
+index a9c843d..f1f2e07 100644
+--- a/frontend/src/features/review/Workbench.tsx
++++ b/frontend/src/features/review/Workbench.tsx
+@@ -410,6 +410,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
+               typicalResponses={g.edges.filter((e) => e.from === selected.id && e.typical).map((e) => e.label)}
+               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
+               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
++              partOf={g.elements.find((e) => e.id === selected.parent_element_id)?.label}
+               review={
+                 editable
+                   ? {
+diff --git a/frontend/src/lib/mapTypes.ts b/frontend/src/lib/mapTypes.ts
+index d35f0a7..afdb489 100644
+--- a/frontend/src/lib/mapTypes.ts
++++ b/frontend/src/lib/mapTypes.ts
+@@ -62,6 +62,10 @@ export interface GraphElement {
+   constraint_type?: "rigid" | "governing" | "enabling" | "absent" | null;
+   work_type_basis?: { segment_ids: string[]; quote: string }[];
+   work_type_status?: "proposed" | "confirmed" | "not_classified" | null;
++  /** §3.12.10 rule 9 (K2): landscape · practice, and the landscape activity a practice step is
++   * part of; null on a map with one level. */
++  level?: "landscape" | "practice" | null;
++  parent_element_id?: string | null;
+ }
+ 
+ export type WorkType = "clear" | "complicated" | "complex" | "chaotic" | "confused" | "not_classified";
+diff --git a/frontend/src/lib/table.ts b/frontend/src/lib/table.ts
+index 947ff69..031b21a 100644
+--- a/frontend/src/lib/table.ts
++++ b/frontend/src/lib/table.ts
+@@ -18,6 +18,8 @@ export interface StepRow {
+   review: string;
+   needsCheck: boolean;
+   rejected: boolean;
++  /** "Part of: <landscape activity>" for a practice step under one (K2), else "". */
++  partOf: string;
+ }
+ 
+ const STEPS = new Set(["activity", "decision", "approval"]);
+@@ -54,8 +56,15 @@ export function filterOptions(graph: Graph): { value: TableFilter; label: string
+ /** The steps in process order, as table rows, with only those the filter shows. */
+ export function tableRows(graph: Graph, filter: TableFilter): StepRow[] {
+   const roles = new Map(graph.roles.map((r) => [r.id, r.name]));
+-  return graph.elements
+-    .filter((e) => STEPS.has(e.kind) && MATCHES[filter](e))
++  const labels = new Map(graph.elements.map((e) => [e.id, e.label]));
++  // Practice steps are listed right after the landscape activity they are part of (§3.9 rule 10).
++  const shown = graph.elements.filter((e) => STEPS.has(e.kind) && MATCHES[filter](e));
++  const parentShown = (e: (typeof shown)[number]) =>
++    e.parent_element_id ? shown.some((p) => p.id === e.parent_element_id) : false;
++  const grouped = shown.flatMap((e) =>
++    parentShown(e) ? [] : [e, ...shown.filter((c) => c.parent_element_id === e.id)],
++  );
++  return grouped
+     .map((e) => ({
+       id: e.id,
+       label: e.label,
+@@ -68,5 +77,6 @@ export function tableRows(graph: Graph, filter: TableFilter): StepRow[] {
+       review: e.needs_check && e.review_status === "draft" ? "Unreviewed · needs check" : (REVIEW[e.review_status] ?? e.review_status),
+       needsCheck: e.needs_check && e.review_status === "draft",
+       rejected: e.review_status === "rejected",
++      partOf: e.parent_element_id ? `Part of: ${labels.get(e.parent_element_id) ?? ""}` : "",
+     }));
+ }
+diff --git a/frontend/tests/components/panel.test.tsx b/frontend/tests/components/panel.test.tsx
+index 01c2df5..9fbae19 100644
+--- a/frontend/tests/components/panel.test.tsx
++++ b/frontend/tests/components/panel.test.tsx
+@@ -132,6 +132,12 @@ describe("panel sections", () => {
+     expect(screen.getByText("Contested")).toHaveClass("chip--danger");
+     expect(screen.getByText("Divergence · ownership")).toHaveClass("chip--danger");
+     expect(screen.getByText("Unreviewed")).toHaveClass("chip--dashed");
++    expect(screen.queryByText(/^Part of:/)).toBeNull();
++  });
++
++  it("a practice step says which landscape activity it is part of (K2)", () => {
++    render(<PanelHeader element={elementByLabel("Draft load plan")} laneName="Load controller" phaseName="Plan" partOf="Manage loading" />);
++    expect(screen.getByText("Part of: Manage loading")).toBeInTheDocument();
+   });
+ 
+   it("has no serious accessibility problems", async () => {
+diff --git a/frontend/tests/e2e/smoke.spec.ts b/frontend/tests/e2e/smoke.spec.ts
+index 1004825..f2bf3b9 100644
+--- a/frontend/tests/e2e/smoke.spec.ts
++++ b/frontend/tests/e2e/smoke.spec.ts
+@@ -513,8 +513,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
+     });
+     offline.on("pageerror", (e) => errors.push(String(e)));
+     await offline.setContent(files.html ?? "", { waitUntil: "load" });
+-    await expect(offline.getByRole("group", { name: "Swimlane map" })).toBeVisible();
+-    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).click();
++    // K3 (2026-10-06): both views are published together, so the file draws two maps.
++    await expect(offline.getByRole("group", { name: "Swimlane map" })).toHaveCount(2);
++    await expect(offline.getByRole("heading", { name: "Map as done: the work as actually performed" })).toBeVisible();
++    await expect(offline.getByRole("heading", { name: "Map as documented: the documents' version" })).toBeVisible();
++    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).first().click();
+     await expect(offline.locator(".step:target")).toContainText("Draft load plan");
+     expect(requests, "the HTML map asked for something outside itself").toEqual([]);
+     expect(errors, "the HTML map logged errors").toEqual([]);
+diff --git a/frontend/tests/fixtures/sample_map.json b/frontend/tests/fixtures/sample_map.json
+index e56afe5..12ef1d8 100644
+--- a/frontend/tests/fixtures/sample_map.json
++++ b/frontend/tests/fixtures/sample_map.json
+@@ -118,7 +118,9 @@
+         "work_type": null,
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": null
++        "work_type_status": null,
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-11",
+@@ -261,7 +263,9 @@
+             "quote": "only me and one other controller really know the configurations"
+           }
+         ],
+-        "work_type_status": "proposed"
++        "work_type_status": "proposed",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-22",
+@@ -386,7 +390,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-25",
+@@ -536,7 +542,9 @@
+             "quote": "Special loads shall be checked against the acceptance checklist"
+           }
+         ],
+-        "work_type_status": "proposed"
++        "work_type_status": "proposed",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-28",
+@@ -661,7 +669,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-30",
+@@ -828,7 +838,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-34",
+@@ -953,7 +965,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-36",
+@@ -1078,7 +1092,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-37",
+@@ -1234,7 +1250,9 @@
+             "quote": "You read the situation."
+           }
+         ],
+-        "work_type_status": "proposed"
++        "work_type_status": "proposed",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-41",
+@@ -1354,7 +1372,9 @@
+         "work_type": "not_classified",
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": "not_classified"
++        "work_type_status": "not_classified",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-43",
+@@ -1496,7 +1516,9 @@
+             "quote": "The final load sheet shall be issued through the departure control system"
+           }
+         ],
+-        "work_type_status": "proposed"
++        "work_type_status": "proposed",
++        "level": null,
++        "parent_element_id": null
+       },
+       {
+         "id": "id-46",
+@@ -1546,7 +1568,9 @@
+         "work_type": null,
+         "constraint_type": null,
+         "work_type_basis": [],
+-        "work_type_status": null
++        "work_type_status": null,
++        "level": null,
++        "parent_element_id": null
+       }
+     ],
+     "edges": [
+@@ -2622,6 +2646,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": null,
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [],
+       "know_how": null,
+@@ -2791,6 +2817,8 @@
+         }
+       ],
+       "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [
+         {
+           "quote": "only me and one other controller really know the configurations",
+@@ -2988,6 +3016,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [],
+       "know_how": {
+@@ -3178,6 +3208,8 @@
+         }
+       ],
+       "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [
+         {
+           "quote": "against the checklist",
+@@ -3392,6 +3424,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [
+         {
+@@ -3598,6 +3632,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [
+         {
+@@ -3846,6 +3882,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [
+         {
+@@ -4026,6 +4064,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [
+         {
+@@ -4240,6 +4280,8 @@
+         }
+       ],
+       "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [
+         {
+           "quote": "There's no fixed answer.",
+@@ -4485,6 +4527,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": "not_classified",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [
+         {
+@@ -4682,6 +4726,8 @@
+         }
+       ],
+       "work_type_status": "proposed",
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [
+         {
+           "quote": "The final load sheet shall be issued through the departure control system",
+@@ -4762,6 +4808,8 @@
+       "constraint_type": null,
+       "work_type_basis": [],
+       "work_type_status": null,
++      "level": null,
++      "parent_element_id": null,
+       "work_type_cues": [],
+       "answers": [],
+       "know_how": null,
+@@ -7465,7 +7513,9 @@
+           "work_type": null,
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": null
++          "work_type_status": null,
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-11",
+@@ -7608,7 +7658,9 @@
+               "quote": "only me and one other controller really know the configurations"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-25",
+@@ -7758,7 +7810,9 @@
+               "quote": "Special loads shall be checked against the acceptance checklist"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-28",
+@@ -7883,7 +7937,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-30",
+@@ -8050,7 +8106,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-34",
+@@ -8175,7 +8233,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-36",
+@@ -8300,7 +8360,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-37",
+@@ -8456,7 +8518,9 @@
+               "quote": "You read the situation."
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-41",
+@@ -8576,7 +8640,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-43",
+@@ -8718,7 +8784,9 @@
+               "quote": "The final load sheet shall be issued through the departure control system"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-46",
+@@ -8768,7 +8836,9 @@
+           "work_type": null,
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": null
++          "work_type_status": null,
++          "level": null,
++          "parent_element_id": null
+         }
+       ],
+       "edges": [
+@@ -9085,7 +9155,9 @@
+           "work_type": null,
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": null
++          "work_type_status": null,
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-11",
+@@ -9228,7 +9300,9 @@
+               "quote": "only me and one other controller really know the configurations"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-22",
+@@ -9353,7 +9427,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-25",
+@@ -9503,7 +9579,9 @@
+               "quote": "Special loads shall be checked against the acceptance checklist"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-30",
+@@ -9670,7 +9748,9 @@
+           "work_type": "not_classified",
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": "not_classified"
++          "work_type_status": "not_classified",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-37",
+@@ -9826,7 +9906,9 @@
+               "quote": "You read the situation."
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-43",
+@@ -9968,7 +10050,9 @@
+               "quote": "The final load sheet shall be issued through the departure control system"
+             }
+           ],
+-          "work_type_status": "proposed"
++          "work_type_status": "proposed",
++          "level": null,
++          "parent_element_id": null
+         },
+         {
+           "id": "id-46",
+@@ -10018,7 +10102,9 @@
+           "work_type": null,
+           "constraint_type": null,
+           "work_type_basis": [],
+-          "work_type_status": null
++          "work_type_status": null,
++          "level": null,
++          "parent_element_id": null
+         }
+       ],
+       "edges": [
+diff --git a/frontend/tests/unit/table.test.ts b/frontend/tests/unit/table.test.ts
+index 86606d1..e9ecfb5 100644
+--- a/frontend/tests/unit/table.test.ts
++++ b/frontend/tests/unit/table.test.ts
+@@ -3,6 +3,22 @@ import { filterOptions, tableRows } from "../../src/lib/table";
+ import { SAMPLE } from "../sampleMap";
+ 
+ describe("the table view's rows (PRD §5.7.4)", () => {
++  it("lists practice steps right after the landscape activity they are part of (K2)", () => {
++    const graph = structuredClone(SAMPLE.graph);
++    const steps = graph.elements.filter((e) => !["start", "end"].includes(e.kind));
++    const [parent, , , child] = steps;
++    if (!parent || !child) throw new Error("sample too small");
++    graph.elements = graph.elements.map((e) =>
++      e.id === parent.id ? { ...e, level: "landscape" } : e.id === child.id ? { ...e, level: "practice", parent_element_id: parent.id } : e,
++    );
++    const rows = tableRows(graph, "all");
++    const at = rows.findIndex((r) => r.id === parent.id);
++    expect(rows[at + 1]?.id).toBe(child.id);
++    expect(rows[at + 1]?.partOf).toBe(`Part of: ${parent.label}`);
++    expect(rows.filter((r) => r.partOf)).toHaveLength(1);
++    expect(rows).toHaveLength(steps.length); // grouped, never duplicated
++  });
++
+   it("one row per step in process order, holding what the map shows", () => {
+     const rows = tableRows(SAMPLE.graph, "all");
+     expect(rows.map((r) => r.label)).toEqual(

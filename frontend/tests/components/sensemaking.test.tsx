@@ -19,6 +19,67 @@ function detail(label: string): ElementDetail {
   return found;
 }
 
+describe("4a Work type: confirm or change (V3b)", () => {
+  it("offers Confirm for a proposed type and saves that type; nothing to choose without the prop", async () => {
+    const onSave = vi.fn();
+    const { container, rerender } = render(
+      <WorkTypeSection
+        element={detail("Deviation in limits?")}
+        onOpen={vi.fn()}
+        choice={{ busy: false, onSave }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm work type" }));
+    expect(onSave).toHaveBeenCalledWith("complex");
+    expect(await seriousViolations(container)).toEqual([]);
+    rerender(<WorkTypeSection element={detail("Deviation in limits?")} onOpen={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: /work type/ })).toBeNull(); // published or rejected
+  });
+
+  it("Change opens a choice of the five work types with what complex means; Cancel keeps the type", () => {
+    const onSave = vi.fn();
+    render(
+      <WorkTypeSection
+        element={detail("Issue load sheet")}
+        onOpen={vi.fn()}
+        choice={{ busy: false, onSave }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Change work type" }));
+    const select = screen.getByRole("combobox", { name: "Work type" });
+    expect(
+      Array.from((select as HTMLSelectElement).options).map((o) => o.textContent),
+    ).toEqual(["Clear", "Complicated", "Complex", "Chaotic", "Confused"]);
+    expect(screen.getByText(/never an automation candidate/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Change work type" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Work type" }), { target: { value: "chaotic" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save work type" }));
+    expect(onSave).toHaveBeenCalledWith("chaotic");
+  });
+
+  it("a confirmed type says so and only offers Change; an unclassified one offers Choose; a refusal shows", () => {
+    const confirmed = { ...detail("Issue load sheet"), work_type_status: "confirmed" } as ElementDetail;
+    const { rerender } = render(
+      <WorkTypeSection element={confirmed} onOpen={vi.fn()} choice={{ busy: false, onSave: vi.fn() }} />,
+    );
+    expect(screen.getByText("You confirmed this work type.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm work type" })).toBeNull();
+    expect(screen.queryByText("proposed")).toBeNull();
+    rerender(
+      <WorkTypeSection
+        element={detail("Busy wave?")}
+        onOpen={vi.fn()}
+        choice={{ busy: false, onSave: vi.fn(), error: "This step is rejected. Restore it before editing it." }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Choose work type" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm work type" })).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent("Restore it before editing it.");
+  });
+});
+
 describe("4a Work type", () => {
   it("the SME's own word first, then the work type with its quoted cues (A.8: complex, 29:48)", async () => {
     const onOpen = vi.fn();

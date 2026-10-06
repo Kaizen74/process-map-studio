@@ -15,6 +15,7 @@ import {
 } from "../../lib/panelText";
 import { Chip, WorkTypeGlyph } from "../common";
 import { PanelSection as Section } from "./PanelSections";
+import { WorkTypeChoice, type WorkTypeChoiceProps } from "./WorkTypeChoice";
 
 // The detail panel's sensemaking sections (PRD §5.7.7 4a-4d; V3): the kind of work, the know-how
 // at the step, the stories told about it and the official and lived accounts. The SME's own words
@@ -54,10 +55,13 @@ export function WorkTypeSection({
   element,
   typicalResponses = [],
   onOpen,
+  choice,
 }: {
   element: ElementDetail;
   typicalResponses?: readonly string[];
   onOpen: Open;
+  /** Confirm or change (V3b); omitted where the version can't change. */
+  choice?: Omit<WorkTypeChoiceProps, "type" | "confirmed"> | undefined;
 }) {
   const type = (element.work_type ?? null) as WorkType | null;
   if (!type) return null;
@@ -131,6 +135,14 @@ export function WorkTypeSection({
             </div>
           )}
         </dl>
+      )}
+      {choice && (
+        <WorkTypeChoice
+          key={`${element.id}-${type}`}
+          type={type}
+          confirmed={element.work_type_status === "confirmed"}
+          {...choice}
+        />
       )}
     </Section>
   );

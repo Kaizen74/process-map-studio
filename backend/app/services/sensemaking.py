@@ -99,6 +99,7 @@ def pretag_account_type(text: str, lexicon: Lexicon) -> list[SentenceAccount]:
 
 NOT_CLASSIFIED = "not_classified"
 PROPOSED = "proposed"
+CONFIRMED = "confirmed"  # Eric confirmed or changed it (V3b)
 CONSTRAINT_FOR: dict[str, str | None] = {
     "clear": "rigid",
     "complicated": "governing",

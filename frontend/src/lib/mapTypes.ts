@@ -65,6 +65,9 @@ export interface GraphElement {
 }
 
 export type WorkType = "clear" | "complicated" | "complex" | "chaotic" | "confused" | "not_classified";
+/** The work types Eric can choose (V3b); "not classified" is the model's answer, not a choice. */
+export type ChoosableWorkType = Exclude<WorkType, "not_classified">;
+export const CHOOSABLE_WORK_TYPES: readonly ChoosableWorkType[] = ["clear", "complicated", "complex", "chaotic", "confused"];
 
 export type ViewMembership = "both" | "done_only" | "documented_only";
 export type SequenceBasis = "explicit_order" | "document_order" | "dependency" | "narration_order";

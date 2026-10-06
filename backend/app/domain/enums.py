@@ -395,3 +395,46 @@ class ElementLevel(StrEnum):
 
     LANDSCAPE = "landscape"
     PRACTICE = "practice"
+
+
+# PRD v1.11 (P10b system records, value calculator, step disposition): vocabularies only until
+# P10b uses them.
+class SystemLogColumn(StrEnum):
+    """B.40 system log column."""
+
+    CASE_ID = "case_id"
+    ACTIVITY = "activity"
+    TIMESTAMP = "timestamp"
+    END_TIMESTAMP = "end_timestamp"
+    RESOURCE = "resource"
+    ROLE = "role"
+    SYSTEM = "system"
+    CASE_ATTRIBUTE = "case_attribute"
+
+
+class StepDisposition(StrEnum):
+    """B.41 disposition."""
+
+    DELETE = "delete"
+    AUTOMATE_RULES = "automate_rules"
+    AI_ASSISTED = "ai_assisted"
+    HUMAN_APPROVES = "human_approves"
+    KEEP_HUMAN = "keep_human"
+
+
+class ValueEvidence(StrEnum):
+    """B.42 value evidence label."""
+
+    MEASURED = "measured"
+    ESTIMATED = "estimated"
+    MIXED = "mixed"
+    ASSUMED = "assumed"
+
+
+class AlignmentStatus(StrEnum):
+    """B.43 alignment status."""
+
+    PROPOSED = "proposed"
+    CONFIRMED = "confirmed"
+    HIDDEN_WORK = "hidden_work"
+    NO_SYSTEM_RECORD = "no_system_record"

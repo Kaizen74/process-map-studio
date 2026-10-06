@@ -224,6 +224,13 @@ class Element(Row):
     variants: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     level: Mapped[str | None] = mapped_column(String(16), nullable=True)
     parent_element_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    # PRD v1.11 (0012): step disposition (B.41), risk flag and Eric's value overrides (§3.14-3.15).
+    disposition: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    disposition_suggested: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    disposition_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    risk_flag: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    time_override_min: Mapped[float | None] = mapped_column(Float, nullable=True)
+    volume_override_month: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ElementClaim(Row):
@@ -546,3 +553,80 @@ class CoverageReport(Row):
     source_id: Mapped[str | None] = opt_fk("sources.id")
     dimensions: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     follow_up_questions: Mapped[list[Any]] = mapped_column(JSON, default=list)
+
+
+# --- System records, value calculator (PRD v1.11 §3.13-3.14; migration 0012; filled in P10b) ----
+
+
+class EventLog(Row):
+    __tablename__ = "event_logs"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    name: Mapped[str] = mapped_column(Text)
+    system: Mapped[str] = mapped_column(Text, default="")
+    file_ref: Mapped[str] = mapped_column(Text, default="")
+    timezone: Mapped[str] = mapped_column(String(64))
+    window_start: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    window_end: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    column_map: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    validation_report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    approved_by_role: Mapped[str] = mapped_column(Text, default="")
+    approved_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="uploaded")
+
+
+class Event(Row):
+    """One recorded event. No resource or user column (constraint 24)."""
+
+    __tablename__ = "events"
+    log_id: Mapped[str] = fk("event_logs.id")
+    case_id: Mapped[str] = mapped_column(Text)
+    activity: Mapped[str] = mapped_column(Text)
+    ts_start: Mapped[str] = mapped_column(String(32))
+    ts_end: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    role_id: Mapped[str | None] = opt_fk("roles.id")
+    case_attributes: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class CaseKeyMap(Row):
+    __tablename__ = "case_key_maps"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    from_log_id: Mapped[str] = fk("event_logs.id")
+    to_log_id: Mapped[str] = fk("event_logs.id")
+    from_case_id: Mapped[str] = mapped_column(Text)
+    to_case_id: Mapped[str] = mapped_column(Text)
+
+
+class ActivityAlignment(Row):
+    __tablename__ = "activity_alignment"
+    log_id: Mapped[str] = fk("event_logs.id")
+    activity: Mapped[str] = mapped_column(Text)
+    element_id: Mapped[str | None] = opt_fk("elements.id")
+    status: Mapped[str] = mapped_column(String(24), default="proposed")  # B.43
+    reason: Mapped[str] = mapped_column(Text, default="")
+    confirmed_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+class MiningMetric(Row):
+    __tablename__ = "mining_metrics"
+    log_id: Mapped[str] = fk("event_logs.id")
+    scope: Mapped[str] = mapped_column(String(16))  # activity/transition/case/variant/role
+    key: Mapped[str] = mapped_column(Text)
+    metrics: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    case_count: Mapped[int] = mapped_column(Integer)
+
+
+class RoleCost(Row):
+    __tablename__ = "role_costs"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    role_id: Mapped[str] = fk("roles.id")
+    hourly_cost: Mapped[float] = mapped_column(Float)
+    currency: Mapped[str] = mapped_column(String(8))
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class ValueAssumption(Row):
+    __tablename__ = "value_assumptions"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    disposition: Mapped[str] = mapped_column(String(16))  # B.41
+    reduction_pct: Mapped[float] = mapped_column(Float)
+    note: Mapped[str] = mapped_column(Text, default="")

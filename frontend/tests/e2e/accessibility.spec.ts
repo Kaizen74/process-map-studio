@@ -57,6 +57,15 @@ test.describe("accessibility and offline assets", () => {
       await page.goto(`/engagements/${id}/interview`);
       await expect(page.getByRole("region", { name: "Practice (60 min)" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
+      // C5a: an interviewee is added by stakeholder group (roles only, never a name).
+      const interviewees = page.getByRole("region", { name: "Interviewees" });
+      await interviewees.getByRole("button", { name: "Add interviewee" }).click();
+      const profileForm = interviewees.getByRole("form", { name: "Add interviewee" });
+      await profileForm.getByRole("textbox", { name: "Stakeholder group" }).fill("Ramp");
+      expect(await seriousViolations(page)).toEqual([]);
+      await profileForm.getByRole("button", { name: "Add interviewee" }).click();
+      await expect(interviewees.getByRole("list", { name: "Interviewees" })).toContainText("Ramp");
+      expect(await seriousViolations(page)).toEqual([]);
 
       const upload = await request.post(`/api/engagements/${id}/sources`, {
         multipart: { file: { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("[00:05] Interviewer: Hello") } },
