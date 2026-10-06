@@ -44,8 +44,8 @@
     "version": "2"
   },
   "S2_canonicalise.md": {
-    "sha256": "ac0210532605527b6208a683767b99a516e1b899dd18dfdb25092cedc3e2da34",
-    "version": "2"
+    "sha256": "a33ea75a283493bbcde17df49e67f0dcf82a637f3be4c9b7cde0bf8c64906c1f",
+    "version": "3"
   },
   "S3_calibrate.md": {
     "sha256": "ec6fa0dc24674b0fb06520a4e7642285f0f0d163c74ef2df38cdb03012cfe877",
@@ -60,8 +60,8 @@
     "version": "1"
   },
   "S4_assemble.md": {
-    "sha256": "ea806b1bfacceb899e3c92fff8ee4088dd161c3272c1b13daf08843abfdb5a86",
-    "version": "2"
+    "sha256": "9b90c60fa6d24dbaf31ccf168481dbf345c57941172820581202d2ded12948f0",
+    "version": "3"
   },
   "S5_questions.md": {
     "sha256": "8a35a97aa38d44df014b3a3636ac7bf8b264c95353021e0f5607f57607545eb6",

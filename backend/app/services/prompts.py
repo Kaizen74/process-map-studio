@@ -93,6 +93,19 @@ def instruction_versions(prompts_dir: Path = PROMPTS_DIR) -> dict[str, str]:
     }
 
 
+DEFAULT_CONVENTIONS = {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"}
+
+
+def render_conventions(conventions: dict[str, str] | None) -> str:
+    """Eric's codebook tier 2 choices (C7a) as a data line for S2 and S4, or "" when they are the
+    defaults the codebook already states (so nothing extra is sent)."""
+    chosen = {**DEFAULT_CONVENTIONS, **(conventions or {})}
+    if chosen == DEFAULT_CONVENTIONS:
+        return ""
+    attrs = " ".join(f'{k}="{escape(chosen[k])}"' for k in DEFAULT_CONVENTIONS)
+    return f"<conventions {attrs}/>"
+
+
 def escape(text: str) -> str:
     """Source text can't close a tag or open a new one (G9)."""
     return text.translate(_ESCAPES)

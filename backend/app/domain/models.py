@@ -78,6 +78,21 @@ class ModelUpdate(BaseModel):
 # --- Engagements and roles (API_CONTRACT.md → Engagements and roles) -------------------------
 
 
+class MappingConventions(BaseModel):
+    """Codebook tier 2 conventions Eric sets per engagement (PRD Appendix E, §5.4 Setup; C7a)."""
+
+    granularity: str = "standard"  # coarse (8-12 steps) · standard (12-20) · fine (20-25)
+    label_style: str = "standard"  # standard wording · sme (the SME's own term)
+    phase_naming: str = "sme"  # sme terms · standard terms
+
+
+CONVENTION_CHOICES: dict[str, tuple[str, ...]] = {
+    "granularity": ("coarse", "standard", "fine"),
+    "label_style": ("standard", "sme"),
+    "phase_naming": ("sme", "standard"),
+}
+
+
 class ScopeFields(BaseModel):
     """Process scope card fields (PRD §5.4 Setup). All optional so PATCH can send any subset."""
 
@@ -91,6 +106,7 @@ class ScopeFields(BaseModel):
     industry: str | None = None
     adjacent_industries: list[str] | None = None
     confidential_terms: list[str] | None = None
+    conventions: dict[str, str] | None = None  # MappingConventions, checked by the action
 
 
 class EngagementCreate(ScopeFields):
@@ -109,6 +125,7 @@ class EngagementView(BaseModel):
     industry: str
     adjacent_industries: list[str]
     confidential_terms: list[str]
+    conventions: MappingConventions = MappingConventions()
     status: str
     created_at: str
     updated_at: str

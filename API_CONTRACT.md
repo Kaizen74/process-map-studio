@@ -119,6 +119,7 @@ An engagement is one process being mapped. Deleting it removes all its rows **an
  "in_scope_roles": ["Load controller", "Ramp"], "out_of_scope": "Fuelling",
  "process_kpi": "Load sheet issued by T-10", "industry": "Aviation ground handling",
  "adjacent_industries": ["Air cargo"], "confidential_terms": ["Acme Ground Services"],
+ "conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"},
  "status": "active", "created_at": "2026-09-26T09:00:00+00:00", "updated_at": "…"}
 ```
 Rules: `name` 1–120 characters (required). Text fields up to 2,000 characters. List fields (`in_scope_roles`, `adjacent_industries`, `confidential_terms`): up to 50 items, each 1–120 characters, duplicates (ignoring case) removed, no line breaks. `confidential_terms` are company, client, site and system names that must never be sent to web research (PRD §3.11); they are **not** redacted from the app or internal exports.
@@ -135,6 +136,7 @@ Used by: Home engagement cards.
 
 ### GET /api/engagements/{id} · PATCH /api/engagements/{id} · DELETE /api/engagements/{id}
 GET → `200` engagement object. PATCH → any scope fields (same rules) → `200` engagement object. DELETE → `204`, removes rows and files.
+**Mapping conventions** (C7a, 2026-10-06; PRD Appendix E tier 2, §5.4 Setup, criterion 58): the engagement object also has `"conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"}` (these defaults until Eric sets them). `granularity`: `coarse` (8–12 steps) · `standard` (12–20) · `fine` (20–25); `label_style`: `standard` (verb + object, at most 5 words) · `sme` (the SME's own everyday name for the step, where there is one; added to the glossary with a plain meaning); `phase_naming`: `sme` · `standard`. PATCH sends the whole `conventions` object (`422` naming `conventions.<field>` for an unknown value); a change writes the "Edited process scope" audit row. They take effect at the next draft or refresh: S2 (canonicalise) and S4 (assemble) receive `<conventions granularity="…" label_style="…" phase_naming="…"/>` with their data when any setting differs from the defaults (with the defaults nothing extra is sent: the codebook already states them), and follow them, departing only with a stated reason.
 Errors: `404 NOT_FOUND` ("That engagement doesn't exist. It may have been deleted."); `422 VALIDATION`.
 Used by: Setup screen (scope card), Home (delete, from P1 UI), top bar (engagement name).
 

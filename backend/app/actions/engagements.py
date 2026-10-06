@@ -16,9 +16,11 @@ from app.actions.settings import effective_settings
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import (
+    CONVENTION_CHOICES,
     EngagementCreate,
     EngagementSummary,
     EngagementView,
+    MappingConventions,
     RoleCreate,
     RolePatch,
     RoleView,
@@ -38,6 +40,7 @@ LIST_LIMIT = 50
 ITEM_LIMIT = 120
 
 _LABELS = {
+    "conventions": "Mapping conventions",
     "name": "Engagement name",
     "process_name": "Process name",
     "trigger": "Trigger",
@@ -76,6 +79,25 @@ def _clean_list(field: str, values: list[str]) -> Result[list[str]]:
     return Ok(cleaned)
 
 
+CONVENTION_WORDS = {
+    "granularity": "Choose coarse, standard or fine.",
+    "label_style": "Choose standard wording or SME wording.",
+    "phase_naming": "Choose SME terms or standard terms.",
+}
+
+
+def _clean_conventions(value: dict[str, str]) -> Result[dict[str, str]]:
+    """The whole tier 2 settings object (C7a): every field known, every value one of its choices;
+    a field not sent keeps its default."""
+    for name in value:
+        if name not in CONVENTION_CHOICES:
+            return _invalid(f"conventions.{name}", "That isn't a mapping convention.")
+    for name, choices in CONVENTION_CHOICES.items():
+        if name in value and value[name] not in choices:
+            return _invalid(f"conventions.{name}", CONVENTION_WORDS[name])
+    return Ok(MappingConventions.model_validate(value).model_dump())
+
+
 def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, Any]]:
     """Validate and tidy the scope-card fields that were sent."""
     sent = fields.model_dump(exclude_unset=True)
@@ -83,6 +105,13 @@ def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, 
     for field, value in sent.items():
         if value is None:
             return _invalid(field, f"{_LABELS[field]} can't be empty.")
+        if field == "conventions":
+            match _clean_conventions(value):
+                case Err() as err:
+                    return err
+                case Ok(value=conventions):
+                    cleaned[field] = conventions
+            continue
         if field in _LIST_FIELDS:
             match _clean_list(field, value):
                 case Err() as err:

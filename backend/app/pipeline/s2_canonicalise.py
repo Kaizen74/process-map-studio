@@ -130,8 +130,12 @@ def render(refs: list[ClaimRef], roles: list[RoleView]) -> str:
     return "\n".join(lines)
 
 
-def blocks_for(refs: list[ClaimRef], roles: list[RoleView]) -> list[dict[str, object]]:
-    return [{"type": "text", "text": render(refs, roles)}]
+def blocks_for(
+    refs: list[ClaimRef], roles: list[RoleView], conventions: str = ""
+) -> list[dict[str, object]]:
+    """The data sent; Eric's mapping conventions first when he changed them (C7a)."""
+    text = render(refs, roles)
+    return [{"type": "text", "text": f"{conventions}\n{text}" if conventions else text}]
 
 
 def claims_text(claims: list[ClaimRef]) -> str:
@@ -231,6 +235,10 @@ def canonicalise(
         roles = engagements_repo.list_roles(session, version.engagement_id)
         terms = redaction.name_replacements(session, version.engagement_id)
         groups = role_groups(session, version.engagement_id)
+        engagement = engagements_repo.get(session, version.engagement_id)
+        conventions = prompts.render_conventions(
+            engagement.conventions.model_dump() if engagement else None
+        )
     if not refs:
         return Ok(tally)  # nothing verified, nothing to map
     match prompts.load_prompt(STAGE_ID):
@@ -247,7 +255,7 @@ def canonicalise(
         stage_id=STAGE_ID,
         prompt_version=prompt.version,
         system=prompt.text,
-        blocks=blocks_for(refs, roles),
+        blocks=blocks_for(refs, roles, conventions),
         output_model=ai_schemas.S2Output,
         model=ctx.model,
         repair_prompt=repair.text,

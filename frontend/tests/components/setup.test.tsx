@@ -258,3 +258,29 @@ describe("Setup: roles and lanes", () => {
     expect(await seriousViolations(container)).toEqual([]);
   });
 });
+
+describe("Mapping conventions (C7a; PRD §5.4 Setup, Appendix E tier 2, criterion 58)", () => {
+  it("shows the defaults, saves Eric's choices and says when they apply", async () => {
+    const api = setupApi([], {
+      "PATCH /api/engagements/e1": (body) => ({
+        body: { ...ENGAGEMENT, ...(body as object) },
+      }),
+    });
+    const { container } = renderApp(PATH);
+    const card = await screen.findByRole("form", { name: "Mapping conventions" });
+    const granularity = within(card).getByRole("radiogroup", { name: "Granularity" });
+    expect(within(granularity).getByRole("radio", { name: "Standard" })).toHaveAttribute("aria-checked", "true");
+    expect(card).toHaveTextContent("about 12–20 steps");
+    expect(within(card).getByRole("button", { name: "Saved" })).toBeInTheDocument();
+    fireEvent.click(within(granularity).getByRole("radio", { name: "Fine" }));
+    fireEvent.click(within(within(card).getByRole("radiogroup", { name: "Step labels" })).getByRole("radio", { name: "SME wording" }));
+    expect(card).toHaveTextContent("about 20–25 steps");
+    expect(card).toHaveTextContent("The interviewee's own everyday name for a step");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(card).getByRole("button", { name: "Save conventions" }));
+    expect(await screen.findByText("Mapping conventions saved. They apply from the next draft or refresh.")).toBeInTheDocument();
+    expect(api.calls.find((c) => c.key === "PATCH /api/engagements/e1")?.body).toEqual({
+      conventions: { granularity: "fine", label_style: "sme", phase_naming: "sme" },
+    });
+  });
+});

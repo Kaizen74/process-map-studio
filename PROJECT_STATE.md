@@ -90,7 +90,7 @@ Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12
 - [x] C5c-2 — Interview screen tabs (Templates · Guide · Coverage, PRD §5.4); Guide tab: the movements as editable cards (ID, question, probes, targets), SOP probes parked in M6 with the note, Save, downloads
 - [x] C5d — Coverage tab: one row per dimension (covered / thin / missing glyph and count), follow-up questions, **Create Follow-up guide**, **Copy**, **Download .md** (criteria 50 UI, 68, 74)
 - [x] C6 — validation pack: `GET /versions/{vid}/validation-pack` (F.7 pack plus open validation questions, Markdown) and a Review screen download (criterion 75)
-- [ ] C7a — mapping conventions (codebook tier 2): `PATCH /engagements/{id}` `conventions` (granularity, label style, phase naming, with a reason when overriding), the Setup card, and the drafting stages given the settings (criterion 58)
+- [x] C7a — mapping conventions (codebook tier 2): `PATCH /engagements/{id}` `conventions` (granularity, label style, phase naming, with a reason when overriding), the Setup card, and the drafting stages given the settings (criterion 58)
 - [ ] C7b — emerging themes (tier 3): proposed by S3c from story fragments (AI, mocked, checked), `GET /engagements/{id}/themes`, `PATCH /themes/{tid}` (accept, rename, dismiss), Registers "Emerging themes" (criterion 58)
 - [ ] C8 — lane-boundary findings from L5, F1, F4 answers (one Responsible, shared delivery noted; criterion 76); check criterion 70 on the A.10 fixture
 - [ ] C9 — close P4c: acceptance check of criteria 49–76, G1/G8 still green, GUIDE.md, tag `phase-p4c`

@@ -14,6 +14,7 @@ from app.domain.enums import ElementKind, ReviewStatus
 from app.domain.models import (
     EngagementSummary,
     EngagementView,
+    MappingConventions,
     ReviewProgress,
     RoleView,
     VersionLabel,
@@ -41,6 +42,7 @@ SCOPE_COLUMNS = (
     "process_kpi",
     "industry",
     "adjacent_industries",
+    "conventions",
 )
 
 
@@ -67,6 +69,7 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         industry=row.industry,
         adjacent_industries=list(row.adjacent_industries),
         confidential_terms=_confidential_terms(session, row.id),
+        conventions=MappingConventions.model_validate(row.conventions or {}),
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,
