@@ -1,0 +1,608 @@
+diff --git a/backend/app/actions/quality.py b/backend/app/actions/quality.py
+index 2031975..46e99b9 100644
+--- a/backend/app/actions/quality.py
++++ b/backend/app/actions/quality.py
+@@ -14,6 +14,7 @@ from functools import cache
+ 
+ from sqlalchemy.orm import Session, sessionmaker
+ 
++from app.actions import exceptions as exceptions_action
+ from app.actions import lenses, redaction
+ from app.actions import questions as questions_action
+ from app.actions import versions as versions_action
+@@ -193,7 +194,9 @@ def export_input(
+     stories, capabilities, glossary, know_how = sensemaking_content(
+         session, version_id, version.engagement_id, graph, names
+     )
++    exceptions = exceptions_action.report_for(session, version_id, "done") if view_graphs else None
+     return ExportInput(
++        exceptions=exceptions,
+         stories=stories,
+         capabilities=capabilities,
+         glossary=glossary,
+diff --git a/backend/app/actions/versions.py b/backend/app/actions/versions.py
+index 0a9aac9..04f6b12 100644
+--- a/backend/app/actions/versions.py
++++ b/backend/app/actions/versions.py
+@@ -54,7 +54,7 @@ from app.domain.interview import QuestionBank
+ from app.domain.layout import Layout
+ from app.domain.models import ClaimRecord
+ from app.domain.result import Err, ErrorKind, Ok, Result
+-from app.domain.sensemaking import View
++from app.domain.sensemaking import ExceptionEdgeInput, ExceptionStepInput, View
+ from app.repositories import claims as claims_repo
+ from app.repositories import elements as map_repo
+ from app.repositories import engagements as engagements_repo
+@@ -63,6 +63,7 @@ from app.repositories import sources as sources_repo
+ from app.repositories import versions as versions_repo
+ from app.services import (
+     alignment,
++    exceptions,
+     interview_templates,
+     layout,
+     lint,
+@@ -87,38 +88,54 @@ TIMED_KINDS = {ElementKind.ACTIVITY.value, ElementKind.APPROVAL.value}
+ STRUCTURAL = {ElementKind.START.value, ElementKind.END.value}
+ 
+ 
+-def main_path(elements: list[ElementRecord], edges: list[EdgeRecord]) -> list[ElementRecord]:
+-    """The route from start to end that follows no exception or loop-back edge.
+-
+-    At each step the first main-path edge (in stored order) is taken; a step already visited
+-    ends the walk, so a cycle can never loop forever.
+-    """
++def main_path(
++    elements: list[ElementRecord],
++    edges: list[EdgeRecord],
++    conditions: dict[str, str] | None = None,
++) -> list[ElementRecord]:
++    """The usual route from start to end (X5, 2026-10-06, Eric's decision): no exception exit,
++    loop back or variation step (`conditions`: a step's lived variation condition, by element
++    ID); where the usual route splits, the longest way through it (`exceptions.usual_path`). A
++    cycle never loops forever."""
+     by_id = {e.id: e for e in elements if e.review_status != ReviewStatus.REJECTED.value}
+-    start = next((e for e in by_id.values() if e.kind == ElementKind.START.value), None)
+-    path: list[ElementRecord] = []
+-    seen: set[str] = set()
+-    current = start
+-    while current is not None and current.id not in seen:
+-        path.append(current)
+-        seen.add(current.id)
+-        nxt = next(
+-            (
+-                by_id[edge.to_element_id]
+-                for edge in edges
+-                if edge.from_element_id == current.id
+-                and edge.kind not in OFF_MAIN_PATH
+-                and edge.to_element_id in by_id
+-            ),
+-            None,
+-        )
+-        current = nxt
+-    return path
+-
+-
+-def cycle_time(elements: list[ElementRecord], edges: list[EdgeRecord]) -> CycleTime:
+-    """Work and elapsed minutes along the main path; activities and approvals without any time
++    found = conditions or {}
++    steps = [
++        ExceptionStepInput(element_id=e.id, label=e.label, kind=e.kind,
++                           condition=found.get(e.id, ""))
++        for e in by_id.values()
++    ]  # fmt: skip
++    lines = [
++        ExceptionEdgeInput(from_id=e.from_element_id, to_id=e.to_element_id, kind=e.kind,
++                           label=e.label)
++        for e in edges
++    ]  # fmt: skip
++    minutes = {e.id: float((e.work_min or 0) + (e.wait_min or 0)) for e in by_id.values()}
++    return [by_id[i] for i in exceptions.usual_path(steps, lines, minutes)]
++
++
++def lived_conditions(
++    claims_of: dict[str, list[str]], records: dict[str, ClaimRecord]
++) -> dict[str, str]:
++    """Each step's variation condition from its verified lived claims ("on a busy wave")."""
++    out: dict[str, str] = {}
++    for element_id, ids in claims_of.items():
++        for c in ids:
++            r = records.get(c)
++            text = str(r.payload.get("variation_condition") or "").strip() if r else ""
++            if r and r.verification_status == "verified" and r.account_type == "lived" and text:
++                out[element_id] = text
++                break
++    return out
++
++
++def cycle_time(
++    elements: list[ElementRecord],
++    edges: list[EdgeRecord],
++    conditions: dict[str, str] | None = None,
++) -> CycleTime:
++    """Work and elapsed minutes along the usual route; activities and approvals without any time
+     are counted as incomplete (decisions carry no time of their own)."""
+-    path = main_path(elements, edges)
++    path = main_path(elements, edges, conditions)
+     work = sum(e.work_min or 0 for e in path)
+     wait = sum(e.wait_min or 0 for e in path)
+     incomplete = sum(
+@@ -156,6 +173,15 @@ def build_graph(
+     phases = map_repo.phases(session, version_id)
+     elements = map_repo.elements(session, version_id)
+     edges = map_repo.edges(session, version_id)
++    # The combined map's cycle time is the As done view's: the time the work takes as done (X5).
++    timed_view: View = view or "done"
++    timed_elements = [e for e in elements if views.in_view(e.view_membership, timed_view)]
++    timed_ids = {e.id for e in timed_elements}
++    timed_edges = [
++        e for e in edges
++        if views.in_view(e.view_membership, timed_view)
++        and e.from_element_id in timed_ids and e.to_element_id in timed_ids
++    ]  # fmt: skip
+     if view is not None:
+         elements = [e for e in elements if views.in_view(e.view_membership, view)]
+         shown = {e.id for e in elements}
+@@ -295,7 +321,9 @@ def build_graph(
+             trigger=hide(engagement.trigger),
+             end_point=hide(engagement.end_point),
+             kpi=hide(engagement.process_kpi),
+-            cycle_time=cycle_time(elements, edges if view else combined_lines(edges)),
++            cycle_time=cycle_time(
++                timed_elements, timed_edges, lived_conditions(claims_of, claim_records)
++            ),
+         ),
+         roles=[
+             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
+diff --git a/backend/app/domain/exports.py b/backend/app/domain/exports.py
+index 73ba93d..f49c93f 100644
+--- a/backend/app/domain/exports.py
++++ b/backend/app/domain/exports.py
+@@ -8,6 +8,7 @@ from pydantic import BaseModel
+ 
+ from app.domain.graph import Graph
+ from app.domain.quality import QualityCard
++from app.domain.sensemaking import ExceptionReport
+ 
+ 
+ class SourceEntry(BaseModel):
+@@ -109,6 +110,8 @@ class ExportInput(BaseModel):
+     glossary: list[ExportTerm] = []
+     know_how: list[ExportKnowHow] = []
+     reality_gaps: list[ExportRealityGap] = []
++    #: Exceptions, rework and workarounds of the As done view (X6, 2026-10-06, Eric's decision).
++    exceptions: ExceptionReport | None = None
+     #: Optional modules in use (§3.13-3.15; decision A: off until Eric turns them on in P10b).
+     value_calculator_on: bool = False
+     system_records_on: bool = False
+diff --git a/backend/app/services/exceptions.py b/backend/app/services/exceptions.py
+index 858de48..c65e12c 100644
+--- a/backend/app/services/exceptions.py
++++ b/backend/app/services/exceptions.py
+@@ -19,6 +19,8 @@ words from its verified lived claims, names already hidden), a report out. Never
+ from __future__ import annotations
+ 
+ from collections import defaultdict, deque
++from collections.abc import Mapping
++from dataclasses import dataclass
+ from typing import Literal
+ 
+ from app.domain.sensemaking import (
+@@ -72,13 +74,20 @@ def _first(values: list[str]) -> str:
+     return next((v for v in values if v.strip()), "")
+ 
+ 
+-def analyse(
+-    steps: list[ExceptionStepInput],
+-    edges: list[ExceptionEdgeInput],
+-    view: View,
+-    ask: str,
+-) -> ExceptionReport:
+-    """The report for one view; `ask` is the bank's wording of M5.s2."""
++@dataclass
++class _Routes:
++    """How the steps of a view are reached (see the module docstring)."""
++
++    by_id: dict[str, ExceptionStepInput]
++    loops: list[ExceptionEdgeInput]
++    forward: list[ExceptionEdgeInput]
++    out: dict[str, list[ExceptionEdgeInput]]
++    usual: set[str]
++    variation: set[str]
++    usual_edges: list[ExceptionEdgeInput]  # the lines the usual route takes
++
++
++def _classify(steps: list[ExceptionStepInput], edges: list[ExceptionEdgeInput]) -> _Routes:
+     by_id = {s.element_id: s for s in steps}
+     edges = [e for e in edges if e.from_id in by_id and e.to_id in by_id]
+     loops = loop_edges(edges)
+@@ -97,6 +106,15 @@ def analyse(
+         and all(by_id[e.from_id].kind in deciding for e in into[s.element_id])
+     }  # fmt: skip
+ 
++    def usual_line(e: ExceptionEdgeInput) -> bool:
++        """A line the usual route may take: no exception exit, except a "No" whose sibling
++        leads into a variation (the variation is the condition)."""
++        if e.to_id in seeds:
++            return False
++        if e.kind not in EXCEPTION_EXITS:
++            return True
++        return e.kind == "no" and any(x is not e and x.to_id in seeds for x in out[e.from_id])
++
+     starts = [s.element_id for s in steps if s.kind == "start"] or [
+         s.element_id for s in steps if not into[s.element_id]
+     ]
+@@ -105,17 +123,9 @@ def analyse(
+     while queue:
+         node = queue.popleft()
+         for e in out[node]:
+-            target = e.to_id
+-            if target in usual or target in seeds:
+-                continue
+-            if e.kind in EXCEPTION_EXITS:
+-                normal_no = e.kind == "no" and any(
+-                    x is not e and x.to_id in seeds for x in out[node]
+-                )
+-                if not normal_no:
+-                    continue
+-            usual.add(target)
+-            queue.append(target)
++            if e.to_id not in usual and usual_line(e):
++                usual.add(e.to_id)
++                queue.append(e.to_id)
+ 
+     variation: set[str] = set()
+     queue = deque(seeds)
+@@ -125,6 +135,68 @@ def analyse(
+             continue
+         variation.add(node)
+         queue.extend(e.to_id for e in out[node])
++    usual_edges = [e for e in forward if e.from_id in usual and e.to_id in usual and usual_line(e)]
++    return _Routes(by_id, loops, forward, out, usual, variation, usual_edges)
++
++
++def usual_path(steps: list[ExceptionStepInput], edges: list[ExceptionEdgeInput],
++               minutes: Mapping[str, float]) -> list[str]:  # fmt: skip
++    """The usual route from the start, step by step: where the usual route splits (work in
++    parallel, or lines that skip steps), the longest way through it in minutes, then in steps,
++    so the cycle time is the time a usual case takes (X5). Ends at the end where it can."""
++    found = _classify(steps, edges)
++    start = next((s.element_id for s in steps if s.kind == "start"), None)
++    if start is None:
++        return []
++    nexts: dict[str, list[str]] = defaultdict(list)
++    for e in found.usual_edges:
++        nexts[e.from_id].append(e.to_id)
++    # Lines that close a cycle (found by a walk from the start) are left out: a DAG remains.
++    stack: set[str] = set()
++    done: set[str] = set()
++    keep: dict[str, list[str]] = defaultdict(list)
++
++    def walk(node: str) -> None:
++        stack.add(node)
++        for target in nexts[node]:
++            if target in stack:
++                continue
++            keep[node].append(target)
++            if target not in done:
++                walk(target)
++        stack.discard(node)
++        done.add(node)
++
++    walk(start)
++    best: dict[str, tuple[tuple[bool, float, int], list[str]]] = {}
++
++    def longest(node: str) -> tuple[tuple[bool, float, int], list[str]]:
++        if node in best:
++            return best[node]
++        here = minutes.get(node, 0.0)
++        ending = found.by_id[node].kind == "end"
++        options = [longest(t) for t in keep[node]]
++        if options:
++            (reaches, mins, count), path = max(options, key=lambda o: o[0])
++            result = ((reaches, mins + here, count + 1), [node, *path])
++        else:
++            result = ((ending, here, 1), [node])
++        best[node] = result
++        return result
++
++    return longest(start)[1]
++
++
++def analyse(
++    steps: list[ExceptionStepInput],
++    edges: list[ExceptionEdgeInput],
++    view: View,
++    ask: str,
++) -> ExceptionReport:
++    """The report for one view; `ask` is the bank's wording of M5.s2."""
++    routed = _classify(steps, edges)
++    by_id, loops, forward, out = routed.by_id, routed.loops, routed.forward, routed.out
++    usual, variation = routed.usual, routed.variation
+ 
+     def route_of(element_id: str) -> StepRoute:
+         if element_id in usual:
+diff --git a/backend/app/services/export_html.py b/backend/app/services/export_html.py
+index 38635d6..a254c27 100644
+--- a/backend/app/services/export_html.py
++++ b/backend/app/services/export_html.py
+@@ -365,6 +365,8 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
+     parts.append('<p class="note">A? means the sources disagree about who is accountable.</p>')
+     parts.append("<h3>Two views: as done and as documented</h3>")
+     parts.append(_list(md.two_views_lines(data)))
++    parts.append(f"<h3>{e(md.EXCEPTIONS_HEADING)}</h3>")
++    parts.append(_list(md.exception_lines(data)))
+     know_how = {k.element_id: k for k in data.know_how}
+     parts.append("<h3>Work type and know-how</h3>")
+     parts.append(
+diff --git a/backend/app/services/exports.py b/backend/app/services/exports.py
+index 6f6d02b..1deed58 100644
+--- a/backend/app/services/exports.py
++++ b/backend/app/services/exports.py
+@@ -35,6 +35,7 @@ from app.domain.exports import (
+ )
+ from app.domain.graph import Graph, GraphElement
+ from app.domain.quality import QualityCard
++from app.domain.sensemaking import ExceptionSummary, RouteExit
+ from app.services import signal
+ 
+ STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+@@ -259,6 +260,66 @@ def two_views_lines(data: ExportInput) -> list[str]:
+     return lines
+ 
+ 
++EXCEPTIONS_HEADING = "Exceptions, rework and workarounds (as done)"
++EXIT_WORDS = {"loops_back": "goes back to", "rejoins": "rejoins the usual route at"}
++
++
++def exception_summary(s: ExceptionSummary) -> str:
++    """One line of facts (the same words as the Registers screen)."""
++    if s.steps == 0:
++        return "No steps in this view yet."
++    off = s.exception_steps + s.variation_steps
++    if off == 0 and s.rework_loops == 0 and s.workarounds == 0:
++        every = "The only step is" if s.steps == 1 else f"All {s.steps} steps are"
++        return f"{every} on the usual route; no exception routes, rework loops or workarounds."
++    variations = plural(s.variation_steps, "variation")
++    text = (f"{off} of {plural(s.steps, 'step')} ({round(s.off_usual_share * 100)}%) are off "
++            f"the usual route: {s.exception_steps} on exception routes, {variations}. "
++            f"{plural(s.rework_loops, 'rework loop')}; "
++            f"{plural(s.workarounds, 'workaround')}.")  # fmt: skip
++    if s.extra_handoffs:
++        text += f" The exception routes add {plural(s.extra_handoffs, 'hand-over')}."
++    return text
++
++
++def _exit(x: RouteExit) -> str:
++    why = f" ({x.edge_label})" if x.edge_label else ""
++    return "ends the process" if x.kind == "ends" else f"{EXIT_WORDS[x.kind]} {x.label}{why}"
++
++
++def exception_lines(data: ExportInput) -> list[str]:
++    """How much of the process, as done, is exception handling (X6): facts from the map's
++    structure and the SME's own words (reasons and frequencies), then what is still to ask."""
++    report = data.exceptions
++    if report is None:
++        return ["This map was drafted before the two views; exceptions are not worked out."]
++    lines = [f"- {exception_summary(report.summary)}"]
++    for r in report.routes:
++        kind = "Exception route" if r.kind == "exception" else "Variation"
++        lanes = f" ({', '.join(r.lanes)})" if r.lanes else ""
++        line = f"- {kind}: {r.from_label} → {r.condition}: {' → '.join(r.labels)}{lanes}"
++        line += f"; then it {', or '.join(_exit(x) for x in r.exits) or 'stops'}"
++        line += f"; {plural(r.handoffs, 'extra hand-over')}"
++        line += f"; how often: {r.frequency or 'not stated yet'}"
++        if r.stated_reason:
++            line += f"; reason given: “{r.stated_reason}”"
++        lines.append(line + ".")
++    lines += [f"- Rework loop: {x.from_label} goes back to {x.to_label}"
++              + (f" ({x.label})." if x.label else ".") for x in report.loops]  # fmt: skip
++    for w in report.workarounds:
++        why = (
++            f"reason given: “{w.stated_reason}”"
++            if w.stated_reason
++            else "told as a workaround story"
++        )
++        when = f" ({w.condition})" if w.condition else ""
++        lines.append(f"- Workaround: {w.label}{when}, {w.lane}; {why}; "
++                     f"how often: {w.frequency or 'not stated yet'}.")  # fmt: skip
++    lines += [f"- Still to ask [{q.question_id}]: {q.wording} (about {q.about})"
++              for q in report.questions]  # fmt: skip
++    return lines
++
++
+ def official_lived_lines(graph: Graph) -> list[str]:
+     """Per step where the interviews give both accounts (no verbatim quotes)."""
+     lines = []
+@@ -442,6 +503,7 @@ def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
+         lines.append("No divergences between the sources.")
+ 
+     lines += ["", "### Two views: as done and as documented", "", *two_views_lines(data)]
++    lines += ["", f"### {EXCEPTIONS_HEADING}", "", *exception_lines(data)]
+     know_how = {k.element_id: k for k in data.know_how}
+     lines += [
+         "",
+diff --git a/backend/tests/services/test_exceptions.py b/backend/tests/services/test_exceptions.py
+index 2aa116e..0cc3f5a 100644
+--- a/backend/tests/services/test_exceptions.py
++++ b/backend/tests/services/test_exceptions.py
+@@ -182,3 +182,32 @@ def test_lines_to_unknown_or_rejected_steps_are_ignored_and_cycles_end() -> None
+     edges = [e("Start", "A"), e("A", "B"), e("B", "A"), e("B", "End"), e("A", "gone")]
+     report = run(steps, edges)
+     assert routes(report) == {"A": "usual", "B": "usual"}
++
++
++def test_the_usual_path_takes_the_long_way_through_the_usual_route_not_the_workaround() -> None:
++    """X5: the cycle time's route. The stitched hand-over line Plan → Load is stored first, but
++    the usual route goes through the special-loads check; the busy-wave workaround and the
++    exception routes are left out."""
++    minutes = {"Plan": 20, "Load": 55, "Read at aircraft": 10, "Resolve": 40}
++    path = exceptions.usual_path(SAMPLE_STEPS, SAMPLE_EDGES, minutes)
++    assert path == ["Start", "Plan", "Special OK?", "Load", "Busy?", "In limits?", "Issue", "End"]
++
++
++def test_the_usual_path_prefers_more_minutes_then_more_steps_and_reaches_the_end() -> None:
++    steps = [s("Start", "start"), s("A"), s("B"), s("C"), s("Dead end"), s("End", "end")]
++    edges = [e("Start", "A"), e("A", "B"), e("A", "C"), e("B", "End"), e("C", "End"),
++             e("Start", "Dead end")]  # fmt: skip
++    assert exceptions.usual_path(steps, edges, {"B": 5, "C": 30, "Dead end": 99}) == [
++        "Start",
++        "A",
++        "C",
++        "End",
++    ]  # parallel work: the longer branch; a dead end never wins
++    assert exceptions.usual_path(steps, edges, {}) == ["Start", "A", "B", "End"]  # a tie: first
++
++
++def test_the_usual_path_survives_cycles_and_needs_a_start() -> None:
++    steps = [s("Start", "start"), s("A"), s("B"), s("End", "end")]
++    edges = [e("Start", "A"), e("A", "B"), e("B", "A"), e("B", "End")]
++    assert exceptions.usual_path(steps, edges, {}) == ["Start", "A", "B", "End"]
++    assert exceptions.usual_path([s("A")], [], {}) == []
+diff --git a/backend/tests/services/test_exports_exceptions.py b/backend/tests/services/test_exports_exceptions.py
+new file mode 100644
+index 0000000..2618a88
+--- /dev/null
++++ b/backend/tests/services/test_exports_exceptions.py
+@@ -0,0 +1,65 @@
++"""Exceptions, rework and workarounds in the Master Process Map and the HTML map (X6,
++2026-10-06, Eric's decision): the same lines in both, facts and the SME's own words only."""
++
++from __future__ import annotations
++
++from app.domain.exports import ExportInput
++from app.domain.graph import CycleTime, Graph, GraphProcess, GraphVersion
++from app.domain.sensemaking import ExceptionEdgeInput, ExceptionStepInput
++from app.services import exceptions, exports
++from tests.services.test_exceptions import ASK, SAMPLE_EDGES, SAMPLE_STEPS
++
++
++def bundle(with_report: bool = True) -> ExportInput:
++    graph = Graph(
++        version=GraphVersion(id="v", label="v0.1", state="draft"),
++        process=GraphProcess(name="Load control", trigger="", end_point="", kpi="",
++                             cycle_time=CycleTime(elapsed_min=0, work_min=0, incomplete_steps=0)),
++        roles=[], phases=[], elements=[], edges=[],
++    )  # fmt: skip
++    report = exceptions.analyse(SAMPLE_STEPS, SAMPLE_EDGES, "done", ASK) if with_report else None
++    return ExportInput(graph=graph, sources=[], published_at="", validated_by="",
++                       open_questions=[], exceptions=report)  # fmt: skip
++
++
++def test_the_lines_give_the_facts_routes_loops_workarounds_and_what_to_ask() -> None:
++    lines = exports.exception_lines(bundle())
++    assert lines[0] == (
++        "- 3 of 9 steps (33%) are off the usual route: 2 on exception routes, 1 variation. "
++        "2 rework loops; 1 workaround. The exception routes add 4 hand-overs."
++    )
++    assert lines[2] == (
++        "- Variation: Busy? → on a busy wave: Read at aircraft (Load controller); then it rejoins "
++        "the usual route at In limits?; 0 extra hand-overs; how often: not stated yet; reason "
++        "given: “otherwise we'd miss the slot”."
++    )
++    assert "- Rework loop: Resolve goes back to Plan (Re-plan)." in lines
++    assert sum(1 for x in lines if x.startswith("- Still to ask [M5.s2]")) == 3
++    assert all(x.startswith("- ") for x in lines)  # the HTML map lists every line
++
++
++def test_a_map_from_before_the_two_views_says_so() -> None:
++    assert exports.exception_lines(bundle(with_report=False)) == [
++        "This map was drafted before the two views; exceptions are not worked out."
++    ]
++
++
++def test_the_summary_for_a_quiet_map_and_an_empty_one() -> None:
++    def step(key: str, kind: str = "activity") -> ExceptionStepInput:
++        return ExceptionStepInput(element_id=key, label=key, kind=kind)
++
++    def line(a: str, b: str) -> ExceptionEdgeInput:
++        return ExceptionEdgeInput(from_id=a, to_id=b, kind="sequence")
++
++    steps = [step("Start", "start"), step("Do"), step("Check"), step("End", "end")]
++    lines = [line("Start", "Do"), line("Do", "Check"), line("Check", "End")]
++    report = exceptions.analyse(steps, lines, "done", ASK)
++    assert exports.exception_summary(report.summary) == (
++        "All 2 steps are on the usual route; no exception routes, rework loops or workarounds."
++    )
++    one = report.summary.model_copy(update={"steps": 1, "usual_steps": 1})
++    assert exports.exception_summary(one) == (
++        "The only step is on the usual route; no exception routes, rework loops or workarounds."
++    )
++    empty = report.summary.model_copy(update={"steps": 0})
++    assert exports.exception_summary(empty) == "No steps in this view yet."
+diff --git a/backend/tests/unit/test_translation.py b/backend/tests/unit/test_translation.py
+index 0a518bb..fb921cd 100644
+--- a/backend/tests/unit/test_translation.py
++++ b/backend/tests/unit/test_translation.py
+@@ -421,12 +421,17 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
+     ]  # fmt: skip
+     # + the two stitched lines in each view (A.10, C3)
+     assert len(done["edges"]) == 16 and len(documented["edges"]) == 9
+-    # Cycle time per view (§3.12.11): each view's main path has two steps without time; the map
+-    # as one has three (Approve load plan is only in As documented).
+-    assert done["process"]["cycle_time"] == documented["process"]["cycle_time"] == {
++    # Cycle time per view (§3.12.11) along the usual route (X5, 2026-10-06, Eric's decision):
++    # As done no longer runs through the busy-wave workaround (Read report at aircraft, no time),
++    # so only Issue load sheet lacks a time; As documented also has Approve load plan. The map as
++    # one takes the As done view's (it was 3 when it mixed both views' steps).
++    assert done["process"]["cycle_time"] == {
++        "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 1,
++    }  # fmt: skip
++    assert documented["process"]["cycle_time"] == {
+         "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 2,
+     }  # fmt: skip
+-    assert drafted.client.get(url).json()["process"]["cycle_time"]["incomplete_steps"] == 3
++    assert drafted.client.get(url).json()["process"]["cycle_time"] == done["process"]["cycle_time"]
+     bad = drafted.client.get(url, params={"view": "both"})
+     assert bad.status_code == 422
+     lint = drafted.client.get(f"/api/versions/{drafted.version_id}/lint").json()
+diff --git a/frontend/src/lib/exceptions.ts b/frontend/src/lib/exceptions.ts
+index 8387598..8c1fd09 100644
+--- a/frontend/src/lib/exceptions.ts
++++ b/frontend/src/lib/exceptions.ts
+@@ -102,7 +102,8 @@ export function summaryText(s: ExceptionSummary): string {
+   if (s.steps === 0) return "No steps in this view yet.";
+   const off = s.exception_steps + s.variation_steps;
+   if (off === 0 && s.rework_loops === 0 && s.workarounds === 0) {
+-    return `All ${plural(s.steps, "step", "steps")} are on the usual route; no exception routes, rework loops or workarounds.`;
++    const every = s.steps === 1 ? "The only step is" : `All ${s.steps} steps are`;
++    return `${every} on the usual route; no exception routes, rework loops or workarounds.`;
+   }
+   const parts = [
+     `${off} of ${plural(s.steps, "step", "steps")} (${Math.round(s.off_usual_share * 100)}%) are off the usual route: ${s.exception_steps} on exception routes, ${plural(s.variation_steps, "variation", "variations")}.`,
+diff --git a/frontend/tests/components/review.test.tsx b/frontend/tests/components/review.test.tsx
+index 10219a8..d94f46b 100644
+--- a/frontend/tests/components/review.test.tsx
++++ b/frontend/tests/components/review.test.tsx
+@@ -54,7 +54,9 @@ describe("Review screen (PRD §5.6)", () => {
+     expect(within(strip).getByText("Flight scheduled")).toBeInTheDocument();
+     expect(within(strip).getByText("~75 min elapsed, ~60 min work")).toBeInTheDocument();
+     // V2: the cycle time is the As done view's (Approve load plan is in the documents only).
+-    expect(within(strip).getByText("Incomplete: 2 steps without time")).toBeInTheDocument();
++    // X5 (Eric's decision): along the usual route, so the busy-wave workaround (no time) is no
++    // longer counted; only Issue load sheet lacks a time.
++    expect(within(strip).getByText("Incomplete: 1 step without time")).toBeInTheDocument();
+     expect(within(strip).getByText("Not stated")).toBeInTheDocument(); // no process KPI
+     // V2: the map opens As done: nine of the ten steps, in four lanes (the Load control lead's
+     // only step, Approve load plan, is in the documents only).
+diff --git a/frontend/tests/fixtures/sample_map.json b/frontend/tests/fixtures/sample_map.json
+index db23a76..67b6514 100644
+--- a/frontend/tests/fixtures/sample_map.json
++++ b/frontend/tests/fixtures/sample_map.json
+@@ -14,7 +14,7 @@
+       "cycle_time": {
+         "elapsed_min": 75.0,
+         "work_min": 60.0,
+-        "incomplete_steps": 3
++        "incomplete_steps": 1
+       }
+     },
+     "roles": [
+@@ -7428,7 +7428,7 @@
+         "cycle_time": {
+           "elapsed_min": 75.0,
+           "work_min": 60.0,
+-          "incomplete_steps": 2
++          "incomplete_steps": 1
+         }
+       },
+       "roles": [
