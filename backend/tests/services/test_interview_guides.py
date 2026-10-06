@@ -12,7 +12,7 @@ import pytest
 from docx.document import Document as DocxDocument
 
 from app.domain.enums import InterviewType
-from app.domain.interview import DocumentRow, GuideContext, InterviewDocument
+from app.domain.interview import DocumentRow, GuideContext, InterviewDocument, RoleQuestion
 from app.services import interview_templates as templates
 from app.services import wording
 from tests.services.test_interview_templates import LAYOUT, TOTALS, rows_before_contrast, units
@@ -197,3 +197,73 @@ def test_every_guide_question_stores_its_movement_targets_and_priority(ctx: Guid
     assert (
         "Flow (roles, lanes)" not in files and "Stated reasons; risks" not in files
     )  # not printed
+
+
+# --- Role modules (F.4, F.8 rule 3; IG_generate, C5b) -----------------------------------------
+
+GOOD = RoleQuestion(based_on="L3", wording="How does the Ramp team hand the report back?",
+                    probes=["What passes across?"])  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    ("question", "reason"),
+    [
+        (GOOD.model_copy(update={"based_on": "L6"}), "isn't based on L3, L4 or L5"),
+        (GOOD.model_copy(update={"wording": "Tell me about handoffs."}), "ending with a question"),
+        (GOOD.model_copy(update={"wording": "How?\nWhy?"}), "ending with a question"),
+        (GOOD.model_copy(update={"wording": "x" * 300 + "?"}), "ending with a question"),
+        (GOOD.model_copy(update={"probes": []}), "one to three short probes"),
+        (GOOD.model_copy(update={"probes": ["a?", "b?", "c?", "d?"]}), "one to three"),
+        (GOOD.model_copy(update={"probes": [" "]}), "one to three short probes"),
+        (GOOD.model_copy(update={"wording": "Where was the violation at handover?"}), "blaming"),
+        (GOOD.model_copy(update={"probes": ["Was it an error by the crew?"]}), "blaming"),
+        (GOOD.model_copy(update={"wording": "The SOP says ten minutes. Is that right?"}),
+         "what the documents say"),
+        (GOOD.model_copy(update={"probes": ["What does the procedure say?"]}),
+         "what the documents say"),
+        (GOOD.model_copy(update={"wording": "How does Priya hand the report back?"}),
+         "hidden-names list"),
+    ],
+)  # fmt: skip
+def test_a_role_question_failing_a_check_is_left_out(question: RoleQuestion, reason: str) -> None:
+    checked = templates.check_role_questions(bank(), [question, GOOD], ["Priya"])
+    assert [r.wording for r in checked.kept] == [GOOD.wording]
+    assert checked.kept[0].id == "RM1"
+    [(_, why)] = checked.left_out
+    assert reason in why
+
+
+def test_kept_role_questions_are_numbered_and_carry_their_base_s_targets() -> None:
+    proposed = [GOOD.model_copy(update={"based_on": b, "wording": f"Question {n} about {b}?"})
+                for n, b in enumerate(["L3", "L4", "L5", "L3", "L4", "L5"])]  # fmt: skip
+    proposed.insert(2, proposed[0].model_copy(update={"wording": "question 0 ABOUT l3 ?"}))
+    checked = templates.check_role_questions(bank(), proposed, [])
+    assert [r.id for r in checked.kept] == ["RM1", "RM2", "RM3", "RM4", "RM5"]
+    assert [why for _, why in checked.left_out] == [
+        "It repeats another question.", "The module already has five questions."]  # fmt: skip
+    for row, base in zip(checked.kept, ["L3", "L4", "L5", "L3", "L4"], strict=True):
+        assert row.targets == bank().question(base).targets
+        assert (row.movement, row.priority) == ("L", "standard")
+        assert row.probes == ["What passes across?"]
+
+
+@pytest.mark.parametrize("kept", [0, 2, 4, 5])
+def test_the_role_module_keeps_its_eight_minutes_and_the_plan_adds_up(kept: int) -> None:
+    rows = templates.check_role_questions(
+        bank(), [GOOD.model_copy(update={"wording": f"Question {n}?"}) for n in range(kept)], []
+    ).kept
+    doc = templates.with_role_module(
+        templates.tailor(
+            bank(), PRACTICE.model_copy(update={"interview_type": InterviewType.LANDSCAPE})
+        ),
+        rows,
+        "" if kept else "left blank",
+    )
+    module = next(t for t in doc.tables if t.label.startswith(templates.ROLE_MODULE))
+    assert [r.id for r in module.rows] == [r.id for r in rows] + [""] * max(0, 4 - kept)
+    assert sum(units(r.minutes) for r in module.rows) == module.minutes * 2 == 16
+    assert sum(p.minutes for p in doc.plan) == 60
+    assert doc.generation_note == ("" if kept else "left blank")
+    md = templates.render_markdown(doc)
+    assert all(f"| {r.id} | {r.wording} |" in md for r in rows)
+    assert "left blank" not in md  # the note is for the screen, not the file

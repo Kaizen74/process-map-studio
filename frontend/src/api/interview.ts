@@ -1,7 +1,7 @@
-import type { GuideSummary, Profile, ProfileInput } from "../lib/interview";
+import type { GuideStarted, GuideSummary, Profile, ProfileInput } from "../lib/interview";
 import { request } from "./request";
 
-export type { GuideSummary, Profile, ProfileInput };
+export type { GuideStarted, GuideSummary, Profile, ProfileInput };
 
 // API_CONTRACT.md → Interviewee profiles (phase P4c, C5a).
 const enc = encodeURIComponent;
@@ -20,7 +20,7 @@ export const listGuides = (engagementId: string) =>
   request<GuideSummary[]>(`/engagements/${enc(engagementId)}/interview-guides`);
 
 export const makeGuide = (engagementId: string, profileId: string) =>
-  request<GuideSummary>(`/engagements/${enc(engagementId)}/interview-guide`, {
+  request<GuideStarted>(`/engagements/${enc(engagementId)}/interview-guide`, {
     method: "POST",
     body: { profile_id: profileId },
   });

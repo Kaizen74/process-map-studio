@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, Request, Response
 from app.actions import interview
 from app.domain.interview import (
     GuideInput,
+    GuideStarted,
     GuideSummary,
     GuideView,
     ProfileInput,
@@ -41,10 +42,10 @@ def list_guides(request: Request, engagement_id: str) -> list[GuideSummary]:
     return unwrap(interview.list_guides(request.app.state.sessions, engagement_id))
 
 
-@router.post("/engagements/{engagement_id}/interview-guide", status_code=201)
-def make_guide(request: Request, engagement_id: str, body: GuideInput) -> GuideView:
+@router.post("/engagements/{engagement_id}/interview-guide", status_code=202)
+def make_guide(request: Request, engagement_id: str, body: GuideInput) -> GuideStarted:
     state = request.app.state
-    return unwrap(interview.make_guide(state.config, state.sessions, engagement_id, body))
+    return unwrap(interview.make_guide(state.sessions, engagement_id, body, state.worker.submit))
 
 
 @router.get("/engagements/{engagement_id}/interview-guide")

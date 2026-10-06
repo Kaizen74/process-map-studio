@@ -9,38 +9,48 @@ templates. Deterministic; nothing is sent to Claude.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import coverage, questions, redaction, versions
+from app.actions.draft import now_iso
 from app.actions.engagements import actor_name
 from app.actions.interview_templates import MEDIA, UNKNOWN_FORMAT
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import InterviewType
 from app.domain.interview import (
+    DocumentRow,
     GuideContext,
     GuideInput,
+    GuideStarted,
     GuideSummary,
     GuideView,
     InterviewDocument,
     ProfileInput,
     ProfilePatch,
     ProfileView,
+    QuestionBank,
     TemplateFile,
 )
+from app.domain.models import JobStage, NameReplacement
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.pipeline import ig_generate
+from app.pipeline.context import ai_context
 from app.repositories import audit
 from app.repositories import engagements as engagements_repo
 from app.repositories import interview as interview_repo
+from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
 from app.services import grounding
 from app.services import interview_templates as templates
 from app.services.alignment import STEPS
 
 Sessions = sessionmaker[Session]
+Enqueue = Callable[[str], None]
 
 ENGAGEMENT_MISSING = "That engagement doesn't exist."
 PROFILE_MISSING = "That interviewee profile doesn't exist."
@@ -189,33 +199,182 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
     return Ok(ctx.model_copy(update={"follow_ups": rows, "topics": topics}))
 
 
+GUIDE_JOB = "interview_guide"
+GUIDE_STAGES = (
+    ("gather", "Reading the scope, roles and map"),
+    ("generate", ig_generate.STAGE_NAME),
+    ("check", "Checking every question"),
+    ("save", "Saving the guide"),
+)
+GUIDE_FAILED = (
+    "Something went wrong while making this guide. Nothing was saved. "
+    "Try again, or use Copy details to report it."
+)
+MAX_HANDOFFS = 15
+NOT_DRAFTED = "The role-module rows are left blank for you: {why}"
+NO_QUESTION_KEPT = "none of Claude's questions passed the app's checks."
+
+
 def make_guide(
-    config: AppConfig, sessions: Sessions, engagement_id: str, body: GuideInput
-) -> Result[GuideView]:
-    bank = templates.load_bank()
-    if isinstance(bank, Err):
-        return bank
+    sessions: Sessions, engagement_id: str, body: GuideInput, enqueue: Enqueue
+) -> Result[GuideStarted]:
+    """Queue a new version of one interviewee's guide (a background job, F.8 rule 3 uses AI)."""
     with session_scope(sessions) as session:
         if engagements_repo.get(session, engagement_id) is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
         profile = interview_repo.profile(session, body.profile_id)
         if profile is None or profile.engagement_id != engagement_id:
             return _invalid("profile_id", PROFILE_ELSEWHERE)
+        job = jobs_repo.create(
+            session, engagement_id=engagement_id, job_type=GUIDE_JOB, target_id=profile.id,
+            stages=[JobStage(id=sid, name=name, status="waiting") for sid, name in GUIDE_STAGES],
+        )  # fmt: skip
+    enqueue(job.id)
+    return Ok(GuideStarted(job_id=job.id, profile_id=profile.id))
+
+
+class _Stages:
+    """The job's stage stepper, saved as each stage starts and ends."""
+
+    def __init__(self, sessions: Sessions, job_id: str) -> None:
+        self.sessions, self.job_id = sessions, job_id
+        self.stages = [JobStage(id=sid, name=name, status="waiting") for sid, name in GUIDE_STAGES]
+
+    def mark(self, sid: str, status: str) -> None:
+        stage = next(s for s in self.stages if s.id == sid)
+        stage.status = status
+        if status == "running":
+            stage.started_at = now_iso()
+        else:
+            stage.started_at = stage.started_at or now_iso()
+            stage.finished_at = now_iso()
+        done = sum(1 for s in self.stages if s.status == "done") / len(self.stages)
+        with session_scope(self.sessions) as session:
+            jobs_repo.update(session, self.job_id, stages=self.stages, progress=done,
+                             stage=stage.name if status == "running" else None)  # fmt: skip
+
+
+def _role_module_input(
+    session: Session, engagement_id: str, profile: ProfileView, hidden: list[NameReplacement]
+) -> ig_generate.RoleModuleInput:
+    """The scope card, roles and the latest map's handoffs involving the interviewee's lane
+    (every handoff between lanes when the profile names a group, not a role)."""
+    engagement = engagements_repo.get(session, engagement_id)
+    assert engagement is not None
+    roles = [r.name for r in engagements_repo.list_roles(session, engagement_id)]
+    handoffs: list[dict[str, str]] = []
+    map_id = versions_repo.current_map_id(session, engagement_id)
+    graph = versions.build_graph(session, map_id) if map_id else None  # labels already hidden
+    if graph is not None:
+        lane = {r.id: r.name for r in graph.roles}
+        steps = {e.id: e for e in graph.elements}
+        for edge in graph.edges:
+            a, b = steps.get(edge.from_), steps.get(edge.to)
+            if a is None or b is None or not a.lane_role_id or not b.lane_role_id:
+                continue
+            if a.lane_role_id == b.lane_role_id:
+                continue
+            if profile.role_id and profile.role_id not in (a.lane_role_id, b.lane_role_id):
+                continue
+            handoffs.append(
+                {
+                    "from_role": lane.get(a.lane_role_id, ""),
+                    "step": a.label,
+                    "to_role": lane.get(b.lane_role_id, ""),
+                    "next_step": b.label,
+                }
+            )
+
+    def hide(text: str) -> str:
+        return redaction.hide(text, hidden)
+
+    return ig_generate.RoleModuleInput(
+        group=hide(profile.stakeholder_group or profile.role_name),
+        process=hide(engagement.process_name or engagement.name),
+        trigger=hide(engagement.trigger), end_point=hide(engagement.end_point),
+        roles=[hide(r) for r in roles], handoffs=handoffs[:MAX_HANDOFFS],
+    )  # fmt: skip
+
+
+def _role_module(
+    config: AppConfig, sessions: Sessions, bank: QuestionBank, data: ig_generate.RoleModuleInput,
+    hidden: list[str], job_id: str, stages: _Stages,
+) -> tuple[list[DocumentRow], str, str]:  # fmt: skip
+    """(kept rows, note when left blank, audit outcome). Any AI failure leaves the rows blank
+    with the reason; the guide is still made (the deterministic guide is the fallback)."""
+    stages.mark("generate", "running")
+    match ai_context(config):
+        case Err(message=why):
+            stages.mark("generate", "failed")
+            return [], NOT_DRAFTED.format(why=why), "left blank"
+        case Ok(value=ctx):
+            pass
+    proposed = ig_generate.draft_role_module(sessions, ctx, bank, data, job_id)
+    if isinstance(proposed, Err):
+        stages.mark("generate", "failed")
+        return [], NOT_DRAFTED.format(why=proposed.message), "left blank"
+    stages.mark("generate", "done")
+    stages.mark("check", "running")
+    checked = templates.check_role_questions(bank, proposed.value, hidden)
+    stages.mark("check", "done")
+    if not checked.kept:
+        return [], NOT_DRAFTED.format(why=NO_QUESTION_KEPT), "left blank"
+    return checked.kept, "", "drafted"
+
+
+def run_guide(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]:
+    """Make the guide a job asked for: the deterministic guide (G1), plus for a Landscape
+    interview the role module Claude drafts and the app checks."""
+    bank = templates.load_bank()
+    if isinstance(bank, Err):
+        return bank
+    with session_scope(sessions) as session:
+        job = jobs_repo.get(session, job_id)
+        profile = interview_repo.profile(session, job.target_id or "") if job else None
+    if job is None or profile is None or job.engagement_id is None:
+        return Err(ErrorKind.NOT_FOUND, PROFILE_MISSING)
+    engagement_id = job.engagement_id
+    stages = _Stages(sessions, job_id)
+    stages.mark("gather", "running")
+    with session_scope(sessions) as session:
         ctx = _context(session, engagement_id, profile)
+        terms = redaction.name_replacements(session, engagement_id)
+        landscape = profile.interview_type == InterviewType.LANDSCAPE.value
+        data = _role_module_input(session, engagement_id, profile, terms) if landscape else None
     if ctx.interview_type == "follow_up":
         filled = _follow_ups(sessions, engagement_id, ctx, profile.previous_profile_id is not None)
         if isinstance(filled, Err):
+            stages.mark("gather", "failed")
             return filled
         ctx = filled.value
+    stages.mark("gather", "done")
     document = templates.tailor(bank.value, ctx)
+    outcome = "not asked"
+    if data is not None:
+        rows, note, outcome = _role_module(
+            config, sessions, bank.value, data, ctx.hidden_terms, job_id, stages
+        )
+        document = templates.with_role_module(document, rows, note)
+    for sid in ("generate", "check"):
+        if next(s for s in stages.stages if s.id == sid).status == "waiting":
+            stages.mark(sid, "done")
+    stages.mark("save", "running")
     with session_scope(sessions) as session:
         made = interview_repo.add_guide(session, engagement_id, profile.id, document)
         audit.record(session, actor=actor_name(config), action="Made interview guide",
                      target_type="interview_guide", target_id=made.id,
                      engagement_id=engagement_id,
                      after={"profile_id": profile.id, "version": made.version,
-                            "interview_type": made.interview_type})  # fmt: skip
-        return Ok(made)
+                            "interview_type": made.interview_type,
+                            "role_module": outcome})  # fmt: skip
+    stages.mark("save", "done")
+    kept = sum(1 for t in document.tables for r in t.rows if r.id.startswith("RM"))
+    message = f"Guide version {made.version} made."
+    if outcome == "drafted":
+        message += f" {kept} role-module question{'s' if kept != 1 else ''} drafted and checked."
+    elif outcome == "left blank":
+        message += " " + document.generation_note
+    return Ok(message)
 
 
 def list_guides(sessions: Sessions, engagement_id: str) -> Result[list[GuideSummary]]:

@@ -19,6 +19,10 @@
     "sha256": "b3185e74d20ac4c19a5d7b2e8039d316d144bb947e38264f29f33ea665fc3a4d",
     "version": "1"
   },
+  "IG_generate.md": {
+    "sha256": "268daf663e59af5b381ec2b989eef4871f077f898e0ecf1e74ea6448a66492ca",
+    "version": "1"
+  },
   "R_repair.md": {
     "sha256": "4971ca642242918283cde45bdb31193e1a1adffec7eb191a0be0d547825c730d",
     "version": "1"

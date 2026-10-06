@@ -128,18 +128,21 @@ export interface ProfileListProps {
   guides?: ReadonlyMap<string, GuideSummary> | undefined;
   /** Make a (new version of the) guide; without it the list shows no guide actions. */
   onMakeGuide?: ((profile: Profile) => void) | undefined;
-  /** The interviewee whose guide is being made, and a refusal to show under it. */
+  /** The interviewee whose guide is being made, and the stage it has reached. */
   making?: string | null | undefined;
-  makeError?: { profileId: string; message: string } | null | undefined;
+  stage?: string | undefined;
+  /** What became of the last guide asked for: the job's message, or why it failed. */
+  outcome?: { profileId: string; message: string; failed: boolean } | null | undefined;
 }
 
 /** Make guide, then Download Word · Download Markdown of the latest version. */
-function GuideActions({ profile, guide, onMake, making, error }: {
+function GuideActions({ profile, guide, onMake, making, stage, outcome }: {
   profile: Profile;
   guide: GuideSummary | undefined;
   onMake: (profile: Profile) => void;
   making: boolean;
-  error: string | undefined;
+  stage: string;
+  outcome: { message: string; failed: boolean } | undefined;
 }) {
   const name = profileName(profile);
   return (
@@ -166,9 +169,19 @@ function GuideActions({ profile, guide, onMake, making, error }: {
           <span className="visually-hidden">for {name}</span>
         </Button>
       </span>
-      {error && (
+      {making && stage && (
+        <p className="profile-list__meta" role="status">
+          {stage}…
+        </p>
+      )}
+      {outcome?.failed && outcome.message && (
         <p className="panel-danger" role="alert">
-          {error}
+          {outcome.message}
+        </p>
+      )}
+      {outcome && !outcome.failed && outcome.message && (
+        <p className="profile-list__meta" role="status">
+          {outcome.message}
         </p>
       )}
     </div>
@@ -176,7 +189,7 @@ function GuideActions({ profile, guide, onMake, making, error }: {
 }
 
 /** The engagement's interviewees, oldest first, each with its interview type and what it builds on. */
-export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, makeError }: ProfileListProps) {
+export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, stage, outcome }: ProfileListProps) {
   const byId = new Map(profiles.map((p) => [p.id, p]));
   return (
     <ul className="profile-list" aria-label="Interviewees">
@@ -197,7 +210,8 @@ export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, mak
                   guide={guides?.get(profile.id)}
                   onMake={onMakeGuide}
                   making={making === profile.id}
-                  error={makeError?.profileId === profile.id ? makeError.message : undefined}
+                  stage={stage ?? ""}
+                  outcome={outcome?.profileId === profile.id ? outcome : undefined}
                 />
               )}
             </div>

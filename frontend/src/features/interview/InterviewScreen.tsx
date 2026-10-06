@@ -35,8 +35,11 @@ function Interviewees({ engagementId }: { engagementId: string }) {
   };
   const list = profiles.data ?? [];
   const latest = new Map((guides.data ?? []).flatMap((g) => (g.profile_id ? [[g.profile_id, g] as const] : [])));
-  const making = make.isPending ? (make.variables ?? null) : null;
-  const makeError = make.isError && make.variables ? { profileId: make.variables, message: messageOf(make.error) } : null;
+  // A refusal to start (the job never ran) shows under the interviewee like a failed job.
+  const outcome =
+    make.outcome && make.outcome.failed && !make.outcome.message && make.startError
+      ? { ...make.outcome, message: messageOf(make.startError) }
+      : make.outcome;
   return (
     <section className="interview-templates" aria-labelledby="interviewees-title">
       <h2 id="interviewees-title" className="interview-templates__title">
@@ -74,9 +77,10 @@ function Interviewees({ engagementId }: { engagementId: string }) {
           profiles={list}
           onEdit={(p) => setEditing(p)}
           guides={latest}
-          onMakeGuide={(p) => make.mutate(p.id)}
-          making={making}
-          makeError={makeError}
+          onMakeGuide={(p) => make.make(p.id)}
+          making={make.making}
+          stage={make.stage}
+          outcome={outcome}
         />
       )}
       {list.length > 0 && editing === null && (

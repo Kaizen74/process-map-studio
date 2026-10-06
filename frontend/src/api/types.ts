@@ -231,7 +231,7 @@ export interface JobStage {
 export interface Job {
   id: string;
   engagement_id: string | null;
-  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external";
+  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external" | "interview_guide";
   target_id: string | null;
   status: JobStatus;
   stage: string;

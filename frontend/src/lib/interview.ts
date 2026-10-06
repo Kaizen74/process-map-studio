@@ -34,6 +34,12 @@ export function profileName(profile: Pick<Profile, "role_name" | "stakeholder_gr
   return [profile.role_name, profile.stakeholder_group].filter(Boolean).join(" · ");
 }
 
+/** POST /engagements/{id}/interview-guide: the job making a new version (C5b). */
+export interface GuideStarted {
+  job_id: string;
+  profile_id: string;
+}
+
 /** GET /engagements/{id}/interview-guides: an interviewee's latest tailored guide (G2). */
 export interface GuideSummary {
   id: string;

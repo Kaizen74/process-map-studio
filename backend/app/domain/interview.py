@@ -159,6 +159,9 @@ class InterviewDocument(BaseModel):
     coverage_checklist: list[str]  # item 7
     close_items: list[str]  # item 8
     footer: str  # item 9
+    # A tailored guide only: why the role-module rows were left blank, in plain words (C5b); not
+    # printed in the files.
+    generation_note: str = ""
 
 
 class TemplateFile(BaseModel):
@@ -255,6 +258,26 @@ class GuideContext(BaseModel):
     sop_steps: list[str] = []  # practice M6.5: steps only the documents describe, process order
     follow_ups: list[tuple[str, str]] = []  # follow-up: (F-series ID, wording), in priority order
     hidden_terms: list[str] = []
+
+
+class RoleQuestion(BaseModel):
+    """One role-module question as Claude proposed it (IG_generate), before the app's checks."""
+
+    based_on: str
+    wording: str
+    probes: list[str] = []
+
+
+class RoleModuleCheck(BaseModel):
+    """The role-module questions kept (as guide rows) and why the others were left out."""
+
+    kept: list[DocumentRow]
+    left_out: list[tuple[str, str]] = []  # (wording, reason in plain words)
+
+
+class GuideStarted(BaseModel):
+    job_id: str
+    profile_id: str
 
 
 class GuideInput(BaseModel):

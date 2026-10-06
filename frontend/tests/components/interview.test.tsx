@@ -204,18 +204,26 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
   });
 });
 
-describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
+describe("Tailored guides (G2, C5b; PRD Appendix F.8, F.9, criteria 69 and 80)", () => {
   const GUIDE = { id: "g1", profile_id: "p1", interview_type: "landscape", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+  const JOB = {
+    id: "j1", engagement_id: "e1", type: "interview_guide", target_id: "p1", status: "done", stage: "",
+    progress: 1, message: "Guide version 1 made. 4 role-module questions drafted and checked.", error: "",
+    usage: { calls: 1, input_tokens: 900, output_tokens: 300 }, claims: { verified: 0, rejected: 0 },
+    stages: [], created_at: "2026-10-06T09:00:00+00:00",
+  };
 
   it("makes a guide for an interviewee, then offers Word and Markdown downloads and a new version", async () => {
     let guides: unknown[] = [];
     const api = interviewApi({
       "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
       "GET /api/engagements/e1/interview-guides": () => ({ body: guides }),
+      // C5b: making a guide is a background job; the screen follows it, then lists the guide.
       "POST /api/engagements/e1/interview-guide": () => {
         guides = [GUIDE];
-        return { status: 201, body: { ...GUIDE, engagement_id: "e1", edited: false, document: {} } };
+        return { status: 202, body: { job_id: "j1", profile_id: "p1" } };
       },
+      "GET /api/jobs/j1": () => ({ body: JOB }),
     });
     const { container } = renderApp(PATH);
     const section = await screen.findByRole("region", { name: "Interviewees" });
@@ -229,6 +237,9 @@ describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
       }),
     );
     expect(await within(list).findByText("Guide version 1 (Landscape)")).toBeInTheDocument();
+    expect(await within(list).findByRole("status")).toHaveTextContent(
+      "Guide version 1 made. 4 role-module questions drafted and checked.",
+    );
     expect(within(list).getByRole("link", { name: "Download Word guide for Ramp agent · Ramp" })).toHaveAttribute(
       "href",
       "/api/engagements/e1/interview-guide/export?profile_id=p1&format=docx",
@@ -259,5 +270,20 @@ describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
     const list = within(section).getByRole("list", { name: "Interviewees" });
     fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
     expect(await within(list).findByRole("alert")).toHaveTextContent("Choose one of this engagement's interviewees.");
+  });
+
+  it("says plainly when making the guide failed", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
+      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j1", profile_id: "p1" } }),
+      "GET /api/jobs/j1": () => ({
+        body: { ...JOB, status: "failed", message: "", error: "Something went wrong while making this guide. Nothing was saved." },
+      }),
+    });
+    renderApp(PATH);
+    const list = await screen.findByRole("list", { name: "Interviewees" });
+    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
+    expect(await within(list).findByRole("alert")).toHaveTextContent("Something went wrong while making this guide.");
+    expect(within(list).getByText("No guide yet")).toBeInTheDocument();
   });
 });

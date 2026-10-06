@@ -28,6 +28,8 @@ from app.domain.interview import (
     GuideContext,
     InterviewDocument,
     QuestionBank,
+    RoleModuleCheck,
+    RoleQuestion,
     TemplatePlanRow,
     TemplateSection,
     TemplateSummary,
@@ -397,3 +399,81 @@ def _tailored_table(
 def guide_filename(kind: InterviewType, who: str, fmt: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", who.lower()).strip("-") or "interviewee"
     return f"interview-guide-{kind.value.replace('_', '-')}-{slug}.{fmt}"
+
+
+# --- Role modules (F.4, F.8 rule 3; IG_generate, C5b): Claude's questions, checked here ---------
+
+ROLE_MODULE = "Role module"  # the Landscape table whose blank rows the module fills
+ROLE_BASES = ("L3", "L4", "L5")
+MAX_ROLE_QUESTIONS = 5
+MAX_QUESTION = 300
+MAX_PROBE = 200
+
+
+def _key(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _role_problem(q: RoleQuestion, hidden: list[str], seen: set[str]) -> str:
+    """Why a proposed role-module question can't be used (plain words), or "" if it can."""
+    if q.based_on not in ROLE_BASES:
+        return "It isn't based on L3, L4 or L5."
+    text = q.wording.strip()
+    if not text or "\n" in text or len(text) > MAX_QUESTION or not text.endswith("?"):
+        return "It isn't one plain question ending with a question mark."
+    probes = [p.strip() for p in q.probes]
+    if not 1 <= len(probes) <= 3 or any(not p or "\n" in p or len(p) > MAX_PROBE for p in probes):
+        return "It needs one to three short probes."
+    every = " ".join([text, *probes])
+    if wording.banned_words(every):
+        return "It uses a blaming word."
+    if wording.sop_claims(every):
+        return "It says what the documents say (that waits for M6)."
+    if grounding.scan_redaction_terms(every, hidden):
+        return "It contains a name from the hidden-names list."
+    if _key(text) in seen:
+        return "It repeats another question."
+    return ""
+
+
+def check_role_questions(
+    bank: QuestionBank, proposed: list[RoleQuestion], hidden: list[str]
+) -> RoleModuleCheck:
+    """The proposed questions that pass every check, as guide rows `RM1`… (at most five, in the
+    order proposed), each with the targets of the L-question it is based on; and the others with
+    the reason they were left out."""
+    kept: list[DocumentRow] = []
+    left_out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for q in proposed:
+        reason = _role_problem(q, hidden, seen)
+        if not reason and len(kept) == MAX_ROLE_QUESTIONS:
+            reason = "The module already has five questions."
+        if reason:
+            left_out.append((q.wording, reason))
+            continue
+        seen.add(_key(q.wording))
+        base = bank.question(q.based_on)
+        kept.append(DocumentRow(
+            id=f"RM{len(kept) + 1}", wording=q.wording.strip(),
+            probes=[p.strip() for p in q.probes], minutes="", movement=base.movement,
+            targets=purpose(base), priority="standard",
+        ))  # fmt: skip
+    return RoleModuleCheck(kept=kept, left_out=left_out)
+
+
+def with_role_module(
+    doc: InterviewDocument, rows: list[DocumentRow], note: str = ""
+) -> InterviewDocument:
+    """The role-module table with these questions first, then blank rows up to the template's
+    count; the module's minutes shared among its rows (the plan still adds up)."""
+    tables = []
+    for table in doc.tables:
+        if table.label.startswith(ROLE_MODULE):
+            blanks = max(0, len(table.rows) - len(rows))
+            every = [*rows, *(DocumentRow(minutes="") for _ in range(blanks))]
+            parts = [minutes_label(p) for p in share(table.minutes, [1] * len(every))]
+            every = [r.model_copy(update={"minutes": m}) for r, m in zip(every, parts, strict=True)]
+            table = table.model_copy(update={"rows": every})
+        tables.append(table)
+    return doc.model_copy(update={"tables": tables, "generation_note": note})
