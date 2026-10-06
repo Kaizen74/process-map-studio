@@ -73,7 +73,31 @@ export type RegisterKey =
   | "questions"
   | "rejected"
   | "causes"
-  | "themes";
+  | "themes"
+  | "boundaries";
+
+/** GET /versions/{vid}/lane-boundaries (C8): teams' activities overlapping or falling between them. */
+export type BoundaryKind = "shared_delivery" | "gap" | "boundary";
+
+export interface LaneBoundary {
+  element_id: string;
+  label: string;
+  kind: BoundaryKind | string;
+  responsible: string;
+  consulted: string[];
+  note: string;
+  question_ids: string[];
+}
+
+export const BOUNDARY_KIND_LABELS: Readonly<Record<BoundaryKind, string>> = {
+  shared_delivery: "Shared delivery",
+  gap: "Falls between teams",
+  boundary: "Boundary discussed",
+};
+
+export function boundaryKindLabel(kind: string): string {
+  return BOUNDARY_KIND_LABELS[kind as BoundaryKind] ?? kind;
+}
 
 /** GET /engagements/{id}/themes (C7b): a pattern across two or more stories. */
 export type ThemeStatus = "proposed" | "accepted" | "dismissed";
@@ -107,6 +131,7 @@ export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "rejected", label: "Rejected claims" },
   { value: "causes", label: "Cause library" },
   { value: "themes", label: "Emerging themes" },
+  { value: "boundaries", label: "Lane boundaries" },
 ];
 
 export function registerKey(value: string | null): RegisterKey {

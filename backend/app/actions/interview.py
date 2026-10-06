@@ -15,7 +15,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import coverage, questions, redaction, versions
+from app.actions import boundaries, coverage, questions, redaction, versions
 from app.actions.draft import now_iso
 from app.actions.engagements import actor_name
 from app.actions.interview_templates import MEDIA, UNKNOWN_FORMAT
@@ -47,6 +47,7 @@ from app.repositories import engagements as engagements_repo
 from app.repositories import interview as interview_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
+from app.services import boundaries as boundary_service
 from app.services import grounding
 from app.services import interview_templates as templates
 from app.services.alignment import STEPS
@@ -180,8 +181,9 @@ def _context(session: Session, engagement_id: str, profile: ProfileView) -> Guid
 def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
                 has_earlier: bool) -> Result[GuideContext]:  # fmt: skip
     """Rule 7 (criterion 68): the latest map's F2 probes, its coverage report's questions for
-    thin or missing dimensions, its open validation questions (F6) and its "not described"
-    questions (F5), one of each in turn; `[topics]` from what the report shows as covered."""
+    thin or missing dimensions, its open validation questions (F6), its "not described"
+    questions (F5) and its lane-boundary findings (F4 or F1, C8), one of each in
+    turn; `[topics]` from what the report shows as covered."""
     with session_scope(sessions) as session:
         map_id = versions_repo.current_map_id(session, engagement_id)
         open_questions = (
@@ -193,6 +195,10 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
     report = coverage.get_coverage(sessions, map_id)
     if isinstance(report, Err):
         return report
+    found = boundaries.lane_boundaries(sessions, map_id)
+    if isinstance(found, Err):
+        return found
+    lanes = [boundary_service.follow_up_question(f, ctx.role) for f in found.value]
     rows = templates.interleave(
         [FollowUp(question_id=p.question_id, wording=p.question) for p in report.value.probes],
         [FollowUp(question_id=q.question_id, wording=q.question, about=q.about)
@@ -201,6 +207,7 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
          if q.reason != "not_described"],
         [FollowUp(question_id="F5", wording=q.question) for q in open_questions
          if q.reason == "not_described"],
+        [FollowUp(question_id=qid, wording=wording) for qid, wording in lanes],
     )  # fmt: skip
     covered = [name.replace("_", " ") for name, d in report.value.dimensions.items()
                if d.status == "covered"]  # fmt: skip

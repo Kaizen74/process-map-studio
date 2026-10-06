@@ -6,6 +6,7 @@ import {
   getRegisters,
   getVersion,
   listCauses,
+  listLaneBoundaries,
   listThemes,
   listVersions,
   publishVersion,
@@ -113,3 +114,12 @@ export function useDecideTheme(engagementId: string) {
   });
 }
 
+
+/** Where teams' activities overlap or fall between them on a map (C8); read-only. */
+export function useLaneBoundaries(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "lane-boundaries"],
+    queryFn: () => listLaneBoundaries(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}

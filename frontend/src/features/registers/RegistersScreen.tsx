@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../components/common";
 import {
   AiFlagList,
+  BoundaryList,
   CauseList,
   ConstraintGroups,
   ExternalPracticeList,
@@ -14,6 +15,7 @@ import { useEngagement } from "../../hooks/useEngagements";
 import {
   useCauseLibrary,
   useDecideTheme,
+  useLaneBoundaries,
   useRegisters,
   useThemes,
   useValidateCause,
@@ -57,6 +59,7 @@ export function RegistersScreen() {
   const validate = useValidateCause(engagementId);
   const themes = useThemes(engagementId);
   const decide = useDecideTheme(engagementId);
+  const boundaries = useLaneBoundaries(map?.id ?? null);
   const chosen = registerKey(params.get("register"));
 
   if (engagement.isError) {
@@ -91,7 +94,8 @@ export function RegistersScreen() {
         <h1 id="registers-title">Registers</h1>
         <p className="screen__intro">
           The lists behind the map{title ? ` (${title})` : ""}: knowledge risks, AI flags, constraints, recommended
-          practice, questions for your SME and rejected claims, and the cause library for this engagement.
+          practice, questions for your SME, rejected claims and lane boundaries, and the cause library and emerging themes for
+          this engagement.
         </p>
       </div>
       {(versions.isPending || (map !== null && registers.isPending)) && <Skeleton height="200px" />}
@@ -199,6 +203,25 @@ export function RegistersScreen() {
                     }
                   />
                 )}
+              </>
+            )}
+            {chosen === "boundaries" && (
+              <>
+                <p className="tab-intro">
+                  Where the interviews say teams share a step or that it falls between them. The map keeps one Responsible
+                  (the step&apos;s lane) and lists the others as Consulted; settle each with the teams. Nothing here changes
+                  the map.
+                </p>
+                {boundaries.isPending && <Skeleton height="120px" />}
+                {boundaries.isError && (
+                  <ErrorState
+                    title="The lane boundaries couldn't be loaded"
+                    message={messageOf(boundaries.error)}
+                    details={copyDetailsOf(boundaries.error)}
+                    onRetry={() => void boundaries.refetch()}
+                  />
+                )}
+                {boundaries.data && <BoundaryList items={boundaries.data} onGoTo={goTo} />}
               </>
             )}
           </section>

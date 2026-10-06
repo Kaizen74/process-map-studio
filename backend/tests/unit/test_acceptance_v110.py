@@ -171,3 +171,23 @@ def test_a10_stitching_capability_notes_and_the_probe(drafted: Drafted) -> None:
     probes = get(drafted, f"versions/{drafted.version_id}/coverage")["probes"]
     assert any("it gets lost or arrives late" in p["question"] and p["question_id"] == "F2"
                for p in probes)  # fmt: skip
+
+
+def test_a10_landscape_answers_join_practice_steps_without_duplication(drafted: Drafted) -> None:
+    """Criterion 70 on the fixture (C8; the nesting itself is proved with a crafted case, Decision
+    C, because A.10 names no team-level activity of its own): the landscape interview's answers
+    (L3, L6) give the Ramp its lane, the interfaces (the stitched hand-overs) and the lane
+    boundary on the practice step they describe; they add no step of their own, so no step is
+    duplicated and the map keeps one level."""
+    g = graph(drafted)
+    labels = [e["label"] for e in g["elements"]]
+    assert len(labels) == len(set(labels))
+    lanes = {r["id"]: r["name"] for r in g["roles"]}
+    lir = next(e for e in g["elements"] if e["label"] == "Load and return LIR")
+    assert lanes[lir["lane_role_id"]] == "Ramp"
+    assert all(e["level"] is None and e["parent_element_id"] is None for e in g["elements"])
+    # Its decision rights stay where they were: the one Responsible is the Ramp; the load
+    # controller, whom the landscape interview also names on the step, is Consulted (C8).
+    found = get(drafted, f"versions/{drafted.version_id}/lane-boundaries")
+    assert [(f["label"], f["responsible"], f["consulted"]) for f in found] == [
+        ("Load and return LIR", "Ramp", ["Load controller"])]  # fmt: skip

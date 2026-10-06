@@ -1,7 +1,7 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
 import type { AlignmentRow } from "../lib/matrix";
-import type { CauseEntry, Registers, Theme, ThemeStatus, ValidationResult } from "../lib/registers";
+import type { CauseEntry, LaneBoundary, Registers, Theme, ThemeStatus, ValidationResult } from "../lib/registers";
 
 const enc = encodeURIComponent;
 
@@ -37,3 +37,7 @@ export const listThemes = (engagementId: string) => request<Theme[]>(`/engagemen
 export const decideTheme = (themeId: string, body: { status: ThemeStatus; theme?: string; note?: string }) =>
   request<Theme>(`/themes/${enc(themeId)}`, { method: "PATCH", body });
 
+
+// API_CONTRACT.md → GET /api/versions/{vid}/lane-boundaries (C8).
+export const listLaneBoundaries = (versionId: string) =>
+  request<LaneBoundary[]>(`/versions/${enc(versionId)}/lane-boundaries`);

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import coverage, lenses, quality, registers, validation_pack, versions
+from app.actions import boundaries, coverage, lenses, quality, registers, validation_pack, versions
 from app.domain.graph import (
     AlignmentRow,
     CapabilityNote,
@@ -17,7 +17,7 @@ from app.domain.graph import (
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
-from app.domain.sensemaking import CoverageReport, View
+from app.domain.sensemaking import CoverageReport, LaneBoundaryFinding, View
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
@@ -53,6 +53,11 @@ def get_capability_notes(request: Request, version_id: str) -> list[CapabilityNo
 @router.get("/versions/{version_id}/coverage")
 def get_coverage(request: Request, version_id: str) -> CoverageReport:
     return unwrap(coverage.get_coverage(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/lane-boundaries")
+def get_lane_boundaries(request: Request, version_id: str) -> list[LaneBoundaryFinding]:
+    return unwrap(boundaries.lane_boundaries(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/validation-pack")

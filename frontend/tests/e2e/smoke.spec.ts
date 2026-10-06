@@ -445,6 +445,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);
     }
+    // C8: the sample's shared loading step, one Responsible and the load controller Consulted.
+    await registerChoice.getByRole("radio", { name: "Lane boundaries" }).click();
+    await expect(page.getByRole("listitem").filter({ hasText: "Load and return LIR" })).toContainText(
+      "One Responsible (Ramp), the others Consulted",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
     await registerChoice.getByRole("radio", { name: "Cause library" }).click();
     const lirCause = page.getByRole("listitem").filter({ hasText: "Threshold divergence" });
     await expect(lirCause).toContainText("Possible cause (inferred from this step's constraints");

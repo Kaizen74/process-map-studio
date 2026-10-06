@@ -220,6 +220,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/capability-notes", None),
     ("GET", "/api/versions/{map}/coverage", None),
     ("GET", "/api/versions/{map}/validation-pack", None),
+    ("GET", "/api/versions/{map}/lane-boundaries", None),
     ("GET", "/api/engagements/{eid}/cause-library", None),
     ("GET", "/api/engagements/{sample_eid}/themes", None),
     ("GET", "/api/versions/{map}/gap-analyses", None),

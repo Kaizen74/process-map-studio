@@ -230,3 +230,32 @@ class ThemePatch(BaseModel):
     status: str
     theme: str | None = None
     note: str | None = None
+
+
+class BoundaryClaim(BaseModel):
+    """One checked claim behind a step, as the lane-boundary check reads it (C8): the guide
+    question its passage answers, the role it names as doing the work, its words (names hidden)."""
+
+    question_id: str = ""
+    responsible: str = ""
+    text: str = ""
+
+
+class BoundaryStep(BaseModel):
+    element_id: str
+    label: str
+    lane_role: str
+    claims: list[BoundaryClaim]
+
+
+class LaneBoundaryFinding(BaseModel):
+    """Where the interviews describe teams' activities overlapping or falling between them
+    (PRD F.4 L5, F.6 F1 and F4, criterion 76). Advisory: never changes the map."""
+
+    element_id: str
+    label: str
+    kind: Literal["shared_delivery", "gap", "boundary"]
+    responsible: str
+    consulted: list[str]
+    note: str
+    question_ids: list[str]

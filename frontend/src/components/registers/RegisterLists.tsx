@@ -1,6 +1,7 @@
 import {
   VALIDATION_LABELS,
   basisLabel,
+  boundaryKindLabel,
   causeTypeLabel,
   componentLabel,
   type AiFlagItem,
@@ -8,6 +9,7 @@ import {
   type ConstraintGroup,
   type ExternalPracticeItem,
   type KRiskItem,
+  type LaneBoundary,
   type ValidationResult,
 } from "../../lib/registers";
 import { divergenceLabel } from "../../lib/matrix";
@@ -224,6 +226,54 @@ export function CauseList({ entries, busyId, onGoTo, onValidate }: CauseListProp
           </li>
         );
       })}
+    </ul>
+  );
+}
+
+/**
+ * Lane boundaries (PRD F.4 L5, F.6 F1 and F4, criterion 76; C8): where the interviews describe
+ * teams' activities overlapping or falling between them. The map keeps one Responsible (the
+ * step's lane); the other teams are Consulted. Advisory: nothing here changes the map.
+ */
+export function BoundaryList({ items, onGoTo }: { items: readonly LaneBoundary[]; onGoTo: GoTo }) {
+  if (items.length === 0) {
+    return (
+      <p className="tab-empty">
+        No lane boundaries found. A step appears here when the interviews say more than one team does it, or that it
+        falls between teams.
+      </p>
+    );
+  }
+  return (
+    <ul className="tab-cards">
+      {items.map((item) => (
+        <li key={item.element_id} className="register-card">
+          <p className="register-card__title">
+            {item.label}{" "}
+            <Chip tone={item.kind === "gap" ? "decision" : "neutral"} dashed={item.kind !== "shared_delivery"}>
+              {boundaryKindLabel(item.kind)}
+            </Chip>
+          </p>
+          <dl className="register-fields">
+            <div>
+              <dt>Responsible</dt>
+              <dd>{item.responsible || "No role yet"}</dd>
+            </div>
+            <div>
+              <dt>Consulted</dt>
+              <dd>{item.consulted.length > 0 ? item.consulted.join(", ") : "None named"}</dd>
+            </div>
+            {item.question_ids.length > 0 && (
+              <div>
+                <dt>Guide questions</dt>
+                <dd className="mono">{item.question_ids.join(", ")}</dd>
+              </div>
+            )}
+          </dl>
+          <p>{item.note}</p>
+          <GoToStep elementId={item.element_id} label={item.label} onGoTo={onGoTo} />
+        </li>
+      ))}
     </ul>
   );
 }

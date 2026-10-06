@@ -172,11 +172,25 @@ describe("Registers screen (PRD §5.4)", () => {
     },
   ];
 
-  function backend(versions: unknown[] = [DRAFT]) {
+  const BOUNDARIES = [
+    {
+      element_id: "e5", label: "Load and return LIR", kind: "shared_delivery", responsible: "Ramp",
+      consulted: ["Load controller"], question_ids: [],
+      note: "Shared delivery: Load controller also take part. One Responsible (Ramp), the others Consulted; confirm with the teams.",
+    },
+    {
+      element_id: "e1", label: "Draft load plan", kind: "gap", responsible: "Load controller", consulted: [],
+      question_ids: ["L5"],
+      note: "The interviews say this falls between teams. The map keeps one Responsible (Load controller); confirm it with the teams.",
+    },
+  ];
+
+  function backend(versions: unknown[] = [DRAFT], boundaries: unknown[] = BOUNDARIES) {
     let causes = CAUSES;
     let themes = THEMES;
     return fakeApi({
       "GET /api/engagements/e1/themes": () => ({ body: themes }),
+      "GET /api/versions/v2/lane-boundaries": () => ({ body: boundaries }),
       "PATCH /api/themes/t1": (body) => {
         const patch = body as { status: string; theme?: string };
         if (patch.theme === "Blame the crew") {
@@ -212,6 +226,7 @@ describe("Registers screen (PRD §5.4)", () => {
       "Rejected claims",
       "Cause library",
       "Emerging themes",
+      "Lane boundaries",
     ]);
     expect(await seriousViolations(container)).toEqual([]);
     for (const [name, text] of [
@@ -264,6 +279,29 @@ describe("Registers screen (PRD §5.4)", () => {
     expect(await within(card).findByText("Accepted")).toBeInTheDocument();
     fireEvent.click(within(card).getByRole("button", { name: "Dismiss" }));
     expect(await screen.findByText("Theme dismissed.")).toBeInTheDocument();
+  });
+
+  it("lane boundaries show one Responsible and the teams Consulted, with the note (C8, criterion 76)", async () => {
+    backend();
+    const { container } = renderApp("/engagements/e1/registers?register=boundaries");
+    const shared = (await screen.findByText("Load and return LIR")).closest("li") as HTMLElement;
+    expect(shared).toHaveTextContent("Shared delivery");
+    expect(shared).toHaveTextContent("ResponsibleRamp");
+    expect(shared).toHaveTextContent("ConsultedLoad controller");
+    expect(shared).toHaveTextContent("One Responsible (Ramp), the others Consulted");
+    const gap = screen.getByText("Draft load plan").closest("li") as HTMLElement;
+    expect(gap).toHaveTextContent("Falls between teams");
+    expect(gap).toHaveTextContent("ConsultedNone named");
+    expect(gap).toHaveTextContent("Guide questionsL5");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(shared).getByRole("button", { name: "Go to Load and return LIR" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
+  });
+
+  it("no lane boundaries: says what would put a step there", async () => {
+    backend([DRAFT], []);
+    renderApp("/engagements/e1/registers?register=boundaries");
+    expect(await screen.findByText(/No lane boundaries found/)).toBeInTheDocument();
   });
 
   it("Go to opens the step on Review", async () => {
