@@ -282,6 +282,35 @@ Errors: `404` (engagement), `422` naming the field (`details.field`).
 Any of the POST fields; the same rules (a profile can't name itself as its previous session). Response `200`: profile; audit row "Edited interviewee profile" with the changed fields. Errors `404`, `422`.
 Used by: Interview screen, Guides tab (C5a).
 
+## Tailored interview guides (PRD §4 Interview and sensemaking, §3.12.8, Appendix F.8–F.9, criterion 80) — 2026-10-06, G1
+
+A guide for one interviewee profile, in the same F.9 layout as the standard templates, exported to Word and Markdown. G1 builds it **deterministically** (no AI) from the question bank, the profile and the engagement: the parts of the F.8 tailoring rules that need no AI. Wording from the bank is never changed; filled-in brackets and added probes are the only differences from the standard template. The AI tailoring (`IG_generate`: role modules, reworded probes) comes with P4c C5b and will make the POST a background job.
+
+### Guide object
+```json
+{"id": "…", "engagement_id": "…", "profile_id": "…", "interview_type": "practice",
+ "version": 2, "edited": false, "created_at": "…",
+ "document": {"kind": "practice", "title": "Practice interview guide: Ramp agent · Ramp", "stamp": "…",
+              "header_fields": ["Engagement / process", …], "header_values": {"Engagement / process": "Load control", …},
+              "record": "…", "opener": ["…"], … the InterviewDocument of the templates …}}
+```
+
+### POST /api/engagements/{id}/interview-guide
+Request: `{"profile_id": "…"}`. Makes a new version of that profile's guide (version 1, 2, …). Response `201`: the guide. What is filled in (F.8):
+- **Rule 1** the interview type is the profile's; title "<Type> interview guide: <role · group>".
+- **Rule 2** header values: Engagement / process (process name), Interviewee role, Stakeholder group, Referred by (role); Date, Interviewer and Recording consent stay blank. Opener brackets: `[end-to-end scope …]` → "<process> process, from <trigger> to <end point>" (the opener already says "the") (what the scope card has), `[business]` → the engagement name, `[area]` → the stakeholder group (else the role), `[referrer role]` → Referred by; a bracket with nothing to fill stays as it is.
+- **Rule 5** (Practice): M6.5 gets one probe per step of the engagement's latest map that only the documents describe ("The procedure mentions “<step>”. Where does that happen in practice?"), at most five, in process order; none before a draft exists. They appear only in M6 (no SOP claims before M6).
+- **Rule 7** (Follow-up): the blank reflective-probe rows are filled, in order, with the latest map's F2 probes from the coverage report, then its open validation questions (F6), then its "not described" questions (F5), as many as there are blank rows; `[topics]` in the opener → the dimensions the latest map's coverage report shows as covered, when the profile names an earlier interview (profiles are not linked to sources, so the map's report stands for what earlier interviews covered).
+- **Rule 8**: nothing with a banned (blaming) word or a name on the hidden-names list is filled in (left as the bracket or the blank row). Minutes and question IDs are those of the standard template (rule 6, F.9 plan).
+Audit row "Made interview guide". Errors: `404` (engagement), `422` (`details.field: "profile_id"`, a profile of another engagement or none).
+
+### GET /api/engagements/{id}/interview-guide?profile_id=
+The latest version. `404` "No guide yet for this interviewee." when none.
+
+### GET /api/engagements/{id}/interview-guide/export?profile_id=&format=docx|md
+The latest version as a file, in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
+Used by: Interview screen, Interviewees (G2).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

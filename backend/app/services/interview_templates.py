@@ -6,6 +6,7 @@ Explicit inputs (the bank and the interview type) and structured results; no fil
 
 from __future__ import annotations
 
+import re
 from io import BytesIO
 from pathlib import Path
 
@@ -23,6 +24,7 @@ from app.domain.enums import InterviewType
 from app.domain.interview import (
     DocumentRow,
     DocumentTable,
+    GuideContext,
     InterviewDocument,
     QuestionBank,
     TemplatePlanRow,
@@ -30,6 +32,7 @@ from app.domain.interview import (
     TemplateSummary,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
+from app.services import grounding, wording
 
 BANK_FILE = Path(__file__).resolve().parent.parent / "prompts" / "question_bank.json"
 ORDER = (InterviewType.LANDSCAPE, InterviewType.PRACTICE, InterviewType.FOLLOW_UP)
@@ -169,7 +172,7 @@ def render_markdown(doc: InterviewDocument) -> str:
     lines = [f"# {doc.title}", "", doc.stamp, "", "## Interview details", ""]
     lines += ["| Field | Entry |", "|---|---|"]
     for field in doc.header_fields:
-        entry = "☐" if field.endswith("☐") else ""
+        entry = "☐" if field.endswith("☐") else _cell(doc.header_values.get(field, ""))
         lines.append(f"| {field.removesuffix(' ☐')} | {entry} |")
     lines += ["", "## Opener (F.3)", "", f"**{doc.record}**", ""]
     for n, paragraph in enumerate(doc.opener):
@@ -270,7 +273,7 @@ def render_docx(doc: InterviewDocument) -> bytes:
     for field in doc.header_fields:
         cells = header.add_row().cells
         _cell_text(cells[0], field.removesuffix(" ☐"), bold=True)
-        cells[1].text = "☐" if field.endswith("☐") else ""
+        cells[1].text = "☐" if field.endswith("☐") else doc.header_values.get(field, "")
     word.add_heading("Opener (F.3)", level=1)  # item 3
     word.add_paragraph().add_run(doc.record).bold = True
     for paragraph in doc.opener:
@@ -304,3 +307,66 @@ def render_docx(doc: InterviewDocument) -> bytes:
     out = BytesIO()
     word.save(out)
     return out.getvalue()
+
+
+# --- Tailored guides (F.8 rules 1, 2, 5, 7; G1): the template, filled in --------------------
+
+MAX_SOP_PROBES = 5  # F.8 rule 5
+SOP_PROBE = "The procedure mentions “{step}”. Where does that happen in practice?"
+FILLED_HEADER = ("Engagement / process", "Interviewee role", "Stakeholder group",
+                 "Referred by (role)")  # fmt: skip
+
+
+def _safe(text: str, hidden: list[str]) -> bool:
+    """Plain, non-blaming and without a hidden name (F.8 rule 8)."""
+    return bool(text.strip()) and not wording.banned_words(text) and not (
+        grounding.scan_redaction_terms(text, hidden))  # fmt: skip
+
+
+def _fill(text: str, bracket: str, value: str, hidden: list[str]) -> str:
+    return text.replace(bracket, value) if _safe(value, hidden) else text
+
+
+def tailor(bank: QuestionBank, ctx: GuideContext) -> InterviewDocument:
+    """The standard template of the profile's type with its brackets, header and probe rows filled
+    in from the engagement; question IDs, wording, order and minutes stay the bank's."""
+    doc = build(bank, ctx.interview_type)
+    hidden = ctx.hidden_terms
+    values = dict(zip(FILLED_HEADER, (ctx.process, ctx.role, ctx.stakeholder_group,
+                                      ctx.referrer_role), strict=True))  # fmt: skip
+    header = {k: v for k, v in values.items() if _safe(v, hidden)}
+    opener = []
+    for paragraph in doc.opener:
+        text = paragraph
+        scope = re.search(r"\[end-to-end scope[^\]]*\]", text)
+        if scope:
+            text = _fill(text, scope.group(0), ctx.scope, hidden)
+        text = _fill(text, "[business]", ctx.business, hidden)
+        text = _fill(text, "[area]", ctx.area, hidden)
+        text = _fill(text, "[referrer role]", ctx.referrer_role, hidden)
+        text = _fill(text, "[topics]", ctx.topics, hidden)
+        opener.append(text)
+    tables = [_tailored_table(t, ctx, hidden) for t in doc.tables]
+    spec = bank.templates[ctx.interview_type]
+    title = f"{spec.title} interview guide" + (f": {ctx.who}" if _safe(ctx.who, hidden) else "")
+    return doc.model_copy(update={"title": title, "header_values": header, "opener": opener,
+                                  "tables": tables})  # fmt: skip
+
+
+def _tailored_table(table: DocumentTable, ctx: GuideContext, hidden: list[str]) -> DocumentTable:
+    rows = []
+    sop = [SOP_PROBE.format(step=s) for s in ctx.sop_steps if _safe(s, hidden)][:MAX_SOP_PROBES]
+    follow_ups = [(qid, text) for qid, text in ctx.follow_ups if _safe(text, hidden)]
+    for row in table.rows:
+        if row.id == "M6.5" and sop:  # rule 5: only in M6, where the documents come in
+            row = row.model_copy(update={"probes": [*row.probes, *sop]})
+        elif not row.id and ctx.interview_type == InterviewType.FOLLOW_UP and follow_ups:
+            qid, text = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
+            row = row.model_copy(update={"id": qid, "wording": text})
+        rows.append(row)
+    return table.model_copy(update={"rows": rows})
+
+
+def guide_filename(kind: InterviewType, who: str, fmt: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", who.lower()).strip("-") or "interviewee"
+    return f"interview-guide-{kind.value.replace('_', '-')}-{slug}.{fmt}"

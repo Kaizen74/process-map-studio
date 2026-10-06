@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-05 (session 18) — update after EVERY increment*
+*Last updated: 2026-10-06 (session 19) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.11, adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -45,6 +45,8 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] K4 — Eric approved the v4 Review candidates (2026-10-06): copied over `docs/screens/p7-review-*.png`; browser checks 15 of 15
 (b) Finish P4c
 - [x] C5a — interviewee profiles (`/engagements/{id}/profiles`, `PATCH /profiles/{pid}`, contract first; roles or groups only, hidden names refused; audited) and the Interview screen **Interviewees** section (add, list, edit); screen, browser (axe) and latency checks
+- [x] G1 — tailored guides, deterministic part (criterion 80; 13 of 13 checks, pushed): `POST·GET /engagements/{id}/interview-guide`, `GET …/interview-guide/export` (Word, Markdown); F.8 rules 1, 2, 5, 7, 8 filled from the profile, scope card and latest map; `tests/services/test_interview_guides.py`, `tests/unit/test_interview_guides_api.py`, latency; two sample guides in `docs/samples/`
+- [ ] G2 (next) — Interview screen: **Make guide** per interviewee, then **Download Word** / **Download Markdown**; screen, browser (axe) checks; README and GUIDE
 - [ ] C5b — `IG_generate` (AI, mocked): tailored Landscape / Practice / Follow-up guides with the F.3 opener, role modules and F.8 tailoring rules; checks (IDs, probes, targets, SOP claims only in M6–M7, time budget, no names, no banned words)
 - [ ] C5c — guide editor and Word / Markdown export in the F.9 layout (criteria 49, 61, 69, 80)
 - [ ] C5d — Interview screen Coverage tab and the Follow-up guide from coverage, open questions and "not described" connectors (50 UI, 68, 74)
@@ -73,6 +75,8 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 **Resume point:** if Eric has answered, do K4 (copy the approved candidates over `docs/screens/p7-review-*.png`, run the browser check, log it), then K3 and K2 (save candidate goldens under `docs/review/`, ask for approval, then replace the goldens). If not, continue P4c with C5b (`IG_generate` tailored guides: deterministic F.8 skeleton from the question bank, profile, scope card, roles and the latest draft; one AI call for the role-module wording, checked like every AI output with a deterministic fallback; `POST /engagements/{id}/interview-guide` job, `GET·PATCH …/interview-guide?profile_id=`, export docx/md), then C5c–C8. P10b starts only after every core criterion passes.
 
 **Session 19 (2026-10-06).** Eric approved the v4 Review screenshots (K4), chose options A–C, and approved the K2/K3 candidates: K2 and K3 are committed with the new goldens G1, G3 and G5. Every core gap from the v1.11 audit is now closed. Next: P4c (C5b tailored guides onward), then P9 updates and P10b.
+
+**Templates focus (session 19, Eric's request):** audit of the standard interview templates: question bank, generator (F.9 layout, minute plans 60 / 60 / 30), templates endpoint, home card and Interview screen, A.9 matching with template wording, G9 (approved 2026-09-30) and the three Word samples (unchanged, still identical to what the app makes) are all done; criteria 77, 78, 79, 81 met. Missing was criterion 80 (tailored guides exported to Word and Markdown): G1 adds the backend, G2 the screen.
 
 **Mock regression pass (2026-10-06, Eric's request):** full `./run_checks.sh` on cfc68bc: 12 of 13 (1,321 backend tests incl. G1–G9 and the A.5/A.8/A.9/A.10 end-to-end proof, 480 screen tests, 15 browser tests with axe and the privacy scan); the only failure is the Review visual baseline awaiting Eric's approval (about 1% of pixels differ). A route probe found every API call the screens make has a backend route; backend routes with no screen yet: line editing (add/change/remove a line), `PUT …/raci` (the edit form sends RACI with the step), coverage, glossary and capability notes (planned Interview and Registers screens).
 

@@ -7,8 +7,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain.interview import ProfileView
-from app.repositories.tables import IntervieweeProfile, Role
+from app.domain.interview import GuideView, InterviewDocument, ProfileView
+from app.repositories.tables import IntervieweeProfile, InterviewGuide, Role
 
 
 def _view(session: Session, row: IntervieweeProfile) -> ProfileView:
@@ -62,3 +62,46 @@ def _columns(fields: dict[str, Any]) -> dict[str, Any]:
     if "previous_profile_id" in out:
         out["previous_profile_session"] = out.pop("previous_profile_id")
     return out
+
+
+# --- Tailored guides (PRD §3.5 `interview_guides`; G1) -----------------------------------------
+
+
+def _guide(row: InterviewGuide) -> GuideView:
+    return GuideView(
+        id=row.id,
+        engagement_id=row.engagement_id,
+        profile_id=row.profile_id,
+        interview_type=row.interview_type,
+        version=row.version,
+        edited=row.edited,
+        created_at=row.created_at,
+        document=InterviewDocument.model_validate(row.content),
+    )
+
+
+def latest_guide(session: Session, profile_id: str) -> GuideView | None:
+    row = session.scalars(
+        select(InterviewGuide)
+        .where(InterviewGuide.profile_id == profile_id)
+        .order_by(InterviewGuide.version.desc())
+        .limit(1)
+    ).first()
+    return _guide(row) if row else None
+
+
+def add_guide(
+    session: Session, engagement_id: str, profile_id: str, document: InterviewDocument
+) -> GuideView:
+    """A new version of this profile's guide (1, 2, …); earlier versions are kept."""
+    latest = latest_guide(session, profile_id)
+    row = InterviewGuide(
+        engagement_id=engagement_id,
+        profile_id=profile_id,
+        interview_type=document.kind.value,
+        version=latest.version + 1 if latest else 1,
+        content=document.model_dump(mode="json"),
+    )
+    session.add(row)
+    session.flush()
+    return _guide(row)

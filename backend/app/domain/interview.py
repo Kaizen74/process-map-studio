@@ -139,6 +139,8 @@ class InterviewDocument(BaseModel):
     title: str  # item 1
     stamp: str  # item 1: question bank version · Process Map Studio
     header_fields: list[str]  # item 2
+    # A tailored guide's filled-in header entries (G1); empty for the standard templates.
+    header_values: dict[str, str] = {}
     record: str  # item 3
     opener: list[str]
     opener_note: str
@@ -223,3 +225,42 @@ class ProfileView(BaseModel):
     referred_by_role: str
     previous_profile_id: str | None
     created_at: str
+
+
+# --- Tailored guides (API_CONTRACT.md → Tailored interview guides; F.8; G1) --------------------
+
+
+class GuideContext(BaseModel):
+    """What a guide is tailored from (F.8 rules 1, 2, 5, 7), names already hidden by the caller.
+    Every text is filled in only if it passes the wording and hidden-name checks."""
+
+    interview_type: InterviewType
+    who: str  # "Ramp agent · Ramp": the profile's role and stakeholder group
+    process: str = ""
+    scope: str = ""  # "the Load control process, from Flight scheduled to Final load sheet issued"
+    business: str = ""
+    area: str = ""
+    referrer_role: str = ""
+    role: str = ""
+    stakeholder_group: str = ""
+    topics: str = ""  # follow-up: what the earlier interview covered
+    sop_steps: list[str] = []  # practice M6.5: steps only the documents describe, process order
+    follow_ups: list[tuple[str, str]] = []  # follow-up: (F-series ID, wording), in priority order
+    hidden_terms: list[str] = []
+
+
+class GuideInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    profile_id: str
+
+
+class GuideView(BaseModel):
+    id: str
+    engagement_id: str
+    profile_id: str | None
+    interview_type: str
+    version: int
+    edited: bool
+    created_at: str
+    document: InterviewDocument

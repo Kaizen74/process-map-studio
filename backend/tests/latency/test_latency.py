@@ -132,7 +132,18 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
         if e["kind"] not in ("start", "end"):
             assert client.post(f"/api/elements/{e['id']}/confirm").status_code == 200
     assert client.post(f"/api/versions/{published}/publish").status_code == 200
+    # A practice interviewee on the sample map with a tailored guide (G1).
+    interviewee = client.post(
+        f"/api/engagements/{built.engagement_id}/profiles",
+        json={"stakeholder_group": "Ramp", "interview_type": "practice"},
+    ).json()["id"]
+    guide = client.post(
+        f"/api/engagements/{built.engagement_id}/interview-guide", json={"profile_id": interviewee}
+    )
+    assert guide.status_code == 201, guide.text
     return client, ids | {
+        "sample_eid": built.engagement_id,
+        "interviewee": interviewee,
         "published": published,
         "gap": started["analysis_id"],
         "brief": external["analysis"]["id"],
@@ -168,6 +179,17 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("PATCH", "/api/segments/{segment}", {"text": "Walk me through the last flight you planned."}),
     ("GET", "/api/engagements/{eid}/redaction-terms", None),
     ("GET", "/api/engagements/{eid}/profiles", None),
+    ("GET", "/api/engagements/{sample_eid}/interview-guide?profile_id={interviewee}", None),
+    (
+        "GET",
+        "/api/engagements/{sample_eid}/interview-guide/export?profile_id={interviewee}&format=docx",
+        None,
+    ),
+    (
+        "GET",
+        "/api/engagements/{sample_eid}/interview-guide/export?profile_id={interviewee}&format=md",
+        None,
+    ),
     ("GET", "/api/engagements/{eid}/draft", None),
     ("GET", "/api/jobs/{draft_job}", None),
     ("GET", "/api/versions/{version}/rejected-claims", None),
@@ -231,6 +253,24 @@ def test_endpoint_p95_under_budget(loaded: Loaded, method: str, path: str, body:
     p95 = p95_ms(call)
     print(f"\n{method} {path}: p95 {p95:.1f} ms")  # shown with pytest -s
     assert p95 < BUDGET_MS, f"{method} {path}: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
+@pytest.mark.parametrize("interview_type", ["practice", "follow_up"])
+def test_making_a_guide_p95_under_budget(loaded: Loaded, interview_type: str) -> None:
+    """Making a tailored guide reads the profile, the scope card and the map (G1); each call is a
+    new version, so this answers 201."""
+    client, ids = loaded
+    url = f"/api/engagements/{ids['sample_eid']}"
+    body = {"stakeholder_group": "Ramp", "interview_type": interview_type}
+    pid = client.post(f"{url}/profiles", json=body).json()["id"]
+
+    def call() -> None:
+        response = client.post(f"{url}/interview-guide", json={"profile_id": pid})
+        assert response.status_code == 201, response.text
+
+    p95 = p95_ms(call)
+    print(f"\nPOST interview-guide ({interview_type}): p95 {p95:.1f} ms")  # shown with pytest -s
+    assert p95 < BUDGET_MS, f"POST interview-guide: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
 
 
 @pytest.mark.parametrize("name", ["sop_LC-07.docx", "manual_extract.pdf"])
