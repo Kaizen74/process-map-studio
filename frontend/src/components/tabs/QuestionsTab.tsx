@@ -9,12 +9,31 @@ export interface QuestionsTabProps {
   onGoTo: (elementId: string) => void;
   onCopy: () => void;
   onDownload: () => void;
+  /** The validation session pack (F.7, criterion 75): a plain link, the server names the file. */
+  packUrl?: string | undefined;
+}
+
+function PackLink({ href }: { href: string }) {
+  return (
+    <a className="btn btn--secondary" href={href} download>
+      Download validation pack
+    </a>
+  );
 }
 
 /** Validation questions for the offline session (PRD §5.7.10), grouped by phase. */
-export function QuestionsTab({ questions, onStatus, onGoTo, onCopy, onDownload }: QuestionsTabProps) {
+export function QuestionsTab({ questions, onStatus, onGoTo, onCopy, onDownload, packUrl }: QuestionsTabProps) {
   if (questions.length === 0) {
-    return <p className="tab-empty">No questions. Every step was clear enough in your sources to need none.</p>;
+    return (
+      <div className="tab-stack">
+        <p className="tab-empty">No questions. Every step was clear enough in your sources to need none.</p>
+        {packUrl && (
+          <div className="tab-actions">
+            <PackLink href={packUrl} />
+          </div>
+        )}
+      </div>
+    );
   }
   return (
     <div className="tab-stack">
@@ -22,6 +41,7 @@ export function QuestionsTab({ questions, onStatus, onGoTo, onCopy, onDownload }
         <p className="tab-intro">Ask these in the session with the people who do the work, then mark them answered.</p>
         <Button onClick={onCopy}>Copy all</Button>
         <Button onClick={onDownload}>Download .md</Button>
+        {packUrl && <PackLink href={packUrl} />}
       </div>
       {byPhase(questions).map((group) => (
         <section key={group.phase} className="tab-group" aria-label={group.phase}>

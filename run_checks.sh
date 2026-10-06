@@ -74,8 +74,10 @@ else
 fi
 
 # 2-3. Architecture, unit and action tests
+# The speed tests (p95 < 200 ms) run without the coverage tracer, which roughly doubles the time
+# of Python-heavy endpoints and so measured the tracer rather than the app (2026-10-06).
 check "Backend tests (architecture, unit, actions; coverage >= 85% on services and actions)" \
-  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider --cov --cov-report=term"
+  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider --cov --cov-report=term --ignore=tests/latency && '$PY' -m pytest -p no:cacheprovider tests/latency"
 
 echo "-------------------------"
 echo "$PASSED of $TOTAL checks passing"

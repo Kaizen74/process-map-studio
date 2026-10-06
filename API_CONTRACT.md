@@ -893,6 +893,15 @@ What the interviews covered and what still needs asking (2026-10-01, C4, PRD §3
 - `probes` (2026-10-01, C4c, Appendix F F2, A.10): reflective probes that quote an SME back to themself, `[{"question_id": "F2", "question": "You mentioned previously that “The weakness is the paper loading report; it gets lost or arrives late”. How do you manage that today, and where do you see the biggest risk?", "quote", "source_id", "anchor", "speaker_role"}]`. One per distinct verified interview quote that carries a constraint, a weakness or a stated reason, word for word as S1 checked it (only a final full stop or semicolon is dropped where it meets the bank's wording), at most 20 words: a longer quote is left out, never cut, unless it carries a stated reason, which is then played back instead (S1 found it word for word), names hidden, in the order the interviews were read. `source_id` and `speaker_role` say whom to ask.
 Errors: `404` ("That version doesn't exist."). Used by: the Interview screen (coverage) and the Follow-up guide (C5).
 
+### GET /api/versions/{vid}/validation-pack (C6, 2026-10-06; PRD Appendix F.7, criterion 75)
+The validation session pack as a Markdown file (`text/markdown; charset=utf-8`, `Content-Disposition: attachment; filename="validation-pack-v0.1.md"`), for a session with the SME alongside the draft map. Deterministic; nothing is sent to Claude; names hidden; no banned words. In this order:
+1. **Walk the As done view**: "Is this how it actually happens?", then the As done view's steps in process order with their lane role, and its "not described" gaps ("Between "A" and "B": not described").
+2. **Dissent round, then assent round**: the two F.7 questions.
+3. **Contrast without evaluation**: up to three steps where the views differ — a step whose owner, threshold, time or trigger differs between the views first, then steps only the documents describe, then steps only the interviews describe — each with "As done: …" and "As documented: …" side by side and "What do you make of the difference?"; if none, the pack says so.
+4. **Preserve / improve check**: the interviews' strengths ("Of these strengths, which must we keep?") and weaknesses ("Of these weaknesses, which matter most?") from the capability notes; if none, the two open questions instead.
+5. **Open validation questions**: the version's open questions, each with the step it is about.
+A footer: "Process Map Studio · <process> <version label> · enter the outcomes as edits on the Review screen". Errors: `404` ("That version doesn't exist."). Used by: Review screen, **Download validation pack** (C6).
+
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).
 

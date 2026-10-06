@@ -22,7 +22,7 @@ import {
 import { saveText } from "../../lib/download";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { Graph } from "../../lib/mapTypes";
-import { questionsFileName, questionsMarkdown } from "../../lib/questions";
+import { questionsFileName, questionsMarkdown, validationPackUrl } from "../../lib/questions";
 import type { RejectedClaim } from "../../lib/reviewTypes";
 
 type TabId = "raci" | "questions" | "rejected" | "audit" | "merges" | "lint";
@@ -131,6 +131,7 @@ export function WorkbenchTabs({
                 onGoTo={onSelect}
                 onCopy={() => void copyAll()}
                 onDownload={() => saveText(questionsFileName(graph.version.label), markdown())}
+                packUrl={validationPackUrl(graph.version.id)}
               />
               {setStatus.error != null && (
                 <p className="field__error" role="alert">

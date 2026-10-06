@@ -144,3 +144,33 @@ class CoverageReport(BaseModel):
     dimensions: dict[str, CoverageDimension]
     follow_up_questions: list[FollowUpQuestion]
     probes: list[ReflectiveProbe] = []
+
+
+# --- Validation session pack (Appendix F.7, criterion 75; C6) ----------------------------------
+
+
+class PackStep(BaseModel):
+    label: str
+    role: str = ""
+
+
+class PackContrast(BaseModel):
+    """One step whose As done and As documented accounts differ, side by side, unjudged."""
+
+    step: str
+    done: str
+    documented: str
+
+
+class ValidationPackInput(BaseModel):
+    """What the pack is made of, names already hidden by the caller."""
+
+    process: str
+    version_label: str
+    steps: list[PackStep] = []  # the As done view, in process order
+    gaps: list[tuple[str, str]] = []  # "not described" between these two steps
+    contrasts: list[PackContrast] = []
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+    questions: list[tuple[str, str]] = []  # (the step it is about, or "", the question)
+    stamp: str = ""

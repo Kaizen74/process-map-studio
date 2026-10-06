@@ -4,6 +4,7 @@ versioned, audited and exported to Word and Markdown in the template layout."""
 
 from __future__ import annotations
 
+import re
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -367,3 +368,31 @@ def test_an_edit_breaking_a_rule_is_refused_and_nothing_saved(drafted: Drafted) 
     nobody = profile(drafted, stakeholder_group="Airline ops", interview_type="practice")
     none_yet = drafted.client.patch(guide_url(drafted) + f"?profile_id={nobody}", json=body)
     assert none_yet.status_code == 404
+
+
+def test_the_validation_pack_downloads_from_the_draft(drafted: Drafted) -> None:
+    """Criterion 75 (F.7): the As done walk-through, dissent and assent, contrast without
+    evaluation, the preserve / improve check and the open questions, as Markdown."""
+    terms = f"/api/engagements/{drafted.engagement_id}/redaction-terms"
+    assert drafted.client.post(terms, json={"term": "Busy"}).status_code == 201
+    response = drafted.client.get(f"/api/versions/{drafted.version_id}/validation-pack")
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"].startswith("text/markdown")
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="validation-pack-v0.1.md"')  # fmt: skip
+    text = response.text
+    done = drafted.client.get(f"/api/versions/{drafted.version_id}/graph?view=done").json()
+    walk = [e["label"] for e in done["elements"] if e["kind"] in ("activity", "decision",
+                                                                  "approval")]  # fmt: skip
+    listed = re.findall(r"^\d+\. (.+) \(", text, flags=re.MULTILINE)
+    assert listed == walk and "Approve load plan" not in walk  # documents only: not in As done
+    assert "- **Approve load plan**" in text  # ... so it is a contrast
+    assert "  - As done: The interviews don't describe this step." in text
+    assert text.count("  - As done: ") <= 3
+    questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
+    for q in questions:
+        if q["status"] == "open":
+            assert q["question"].replace("Busy", "[name]") in text or q["question"] in text
+    assert "Busy" not in text  # a name on the hidden-names list never appears
+    assert wording.banned_words(text) == []
+    assert drafted.client.get("/api/versions/nope/validation-pack").status_code == 404

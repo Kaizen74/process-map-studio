@@ -168,6 +168,10 @@ describe("the workbench tabs (PRD §5.7.10)", () => {
     expect(createObjectURL).toHaveBeenCalled();
     expect(click).toHaveBeenCalled();
     click.mockRestore();
+    // C6 (criterion 75): the F.7 validation session pack, made by the server.
+    const pack = within(tab).getByRole("link", { name: "Download validation pack" });
+    expect(pack).toHaveAttribute("download");
+    expect(pack.getAttribute("href")).toMatch(/^\/api\/versions\/[^/]+\/validation-pack$/);
   });
 
   it("rejected claims: open the passage, or add the step from it", async () => {
