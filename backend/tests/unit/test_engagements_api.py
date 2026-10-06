@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.config import AppConfig
+from app.db import session_scope
 from app.main import create_app
+from app.repositories.tables import AuditRow
 
 
 @pytest.fixture()
@@ -57,3 +60,41 @@ def test_roles_endpoints(client: TestClient) -> None:
     names = [r["name"] for r in client.get(f"/api/engagements/{engagement_id}/roles").json()]
     assert names == ["Ramp", "Load controller"]
     assert client.patch("/api/roles/nope", json={"name": "x"}).status_code == 404
+
+
+def test_mapping_conventions_are_set_per_engagement(client: TestClient) -> None:
+    """C7a (Appendix E tier 2, criterion 58): defaults until set, the whole object sent, each
+    value one of its choices, audited like the rest of the scope."""
+    created = client.post("/api/engagements", json={"name": "Load control"}).json()
+    assert created["conventions"] == {"granularity": "standard", "label_style": "standard",
+                                      "phase_naming": "sme"}  # fmt: skip
+    url = f"/api/engagements/{created['id']}"
+    chosen = {"granularity": "fine", "label_style": "sme", "phase_naming": "standard"}
+    saved = client.patch(url, json={"conventions": chosen})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["conventions"] == chosen
+    assert client.get(url).json()["conventions"] == chosen
+    partial = client.patch(url, json={"conventions": {"granularity": "coarse"}}).json()
+    assert partial["conventions"] == {
+        "granularity": "coarse",
+        "label_style": "standard",
+        "phase_naming": "sme",
+    }  # unsent fields: the defaults
+    for body, field in (
+        ({"granularity": "tiny"}, "conventions.granularity"),
+        ({"label_style": "fancy"}, "conventions.label_style"),
+        ({"phase_naming": "x"}, "conventions.phase_naming"),
+        ({"colour": "blue"}, "conventions.colour"),
+    ):
+        refused = client.patch(url, json={"conventions": body})
+        assert refused.status_code == 422, refused.text
+        assert refused.json()["error"]["details"]["field"] == field
+    assert client.get(url).json()["conventions"]["granularity"] == "coarse"  # nothing saved
+    with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        rows = list(session.scalars(
+            select(AuditRow).where(AuditRow.engagement_id == created["id"],
+                                   AuditRow.action == "Edited process scope")
+            .order_by(AuditRow.created_at)
+        ))  # fmt: skip
+        assert [r.after for r in rows] == [{"conventions": chosen},
+                                           {"conventions": partial["conventions"]}]  # fmt: skip

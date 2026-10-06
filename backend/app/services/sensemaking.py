@@ -26,8 +26,9 @@ from app.domain.sensemaking import (
     Lexicon,
     MarkerTag,
     SentenceAccount,
+    ThemeProposal,
 )
-from app.services import grounding, prompts
+from app.services import grounding, prompts, wording
 from app.services.prompts import PROMPTS_DIR
 
 LEXICON_FILE = PROMPTS_DIR / "marker_lexicon.json"
@@ -416,3 +417,42 @@ def probe_question(wording: str, quote: str) -> str:
     """The bank's F2 wording with the SME's words in its slot (a final full stop or semicolon
     is dropped where the quote meets the bank's own punctuation)."""
     return wording.replace(PROBE_SLOT, f"“{quote.strip().rstrip('.;')}”")
+
+
+# --- Emerging themes (Appendix E tier 3; C7b) ------------------------------------------------
+
+MAX_THEME = 80
+MIN_STORIES = 2
+
+
+def theme_problem(name: str, hidden: list[str]) -> str:
+    """Why a theme name can't be used (plain words), or ""."""
+    text = name.strip()
+    if not text or "\n" in text or len(text) > MAX_THEME:
+        return f"Give the theme a short name on one line (up to {MAX_THEME} characters)."
+    if wording.banned_words(text):
+        return "Use non-blaming words for the theme."
+    if grounding.scan_redaction_terms(text, hidden):
+        return "The theme contains a name from your list of names to hide."
+    return ""
+
+
+def check_themes(
+    proposals: list[ThemeProposal], stories: set[str], taken: set[str], hidden: list[str]
+) -> list[ThemeProposal]:
+    """The proposed themes the app keeps (§3.12.9 rule 3: proposed, never forced): a usable name,
+    at least two different stories behind it, a basis, not a repeat of a theme already there."""
+    kept: list[ThemeProposal] = []
+    seen = {t.strip().lower() for t in taken}
+    for p in proposals:
+        behind = list(dict.fromkeys(c for c in p.claim_ids if c in stories))
+        name = " ".join(p.theme.split())
+        if theme_problem(name, hidden) or len(behind) < MIN_STORIES or not p.basis.strip():
+            continue
+        if wording.banned_words(p.basis) or grounding.scan_redaction_terms(p.basis, hidden):
+            continue
+        if name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        kept.append(ThemeProposal(theme=name, claim_ids=behind, basis=" ".join(p.basis.split())))
+    return kept

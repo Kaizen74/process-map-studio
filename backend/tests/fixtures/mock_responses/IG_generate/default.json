@@ -1,0 +1,29 @@
+{
+  "questions": [
+    {
+      "based_on": "L3",
+      "wording": "When the Ramp team hands the loading report back to the Load controller, what passes across and how?",
+      "probes": ["Is it a document, a call or a message?", "What happens when it arrives late?"]
+    },
+    {
+      "based_on": "L4",
+      "wording": "When a special load turns up at the aircraft, who on the Ramp side decides what happens next, and who is told?",
+      "probes": ["Does it always work that way?"]
+    },
+    {
+      "based_on": "L5",
+      "wording": "Which activities around loading does the Ramp team manage, and which belong to Load control? Where do they overlap?",
+      "probes": ["Who is held accountable when the figures don't match?", "Who talks to the airline?"]
+    },
+    {
+      "based_on": "L3",
+      "wording": "The SOP says the loading report comes back within 10 minutes. Does it?",
+      "probes": ["What gets in the way?"]
+    },
+    {
+      "based_on": "L4",
+      "wording": "Who on the Ramp side can stop loading if something looks wrong, and how do they let the others know?",
+      "probes": ["How often does that happen?", "What happens after?"]
+    }
+  ]
+}

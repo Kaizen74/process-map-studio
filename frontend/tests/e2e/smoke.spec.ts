@@ -346,6 +346,15 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("tabpanel").getByRole("row", { name: /Refreshed draft from sources/ })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Review after refresh").toBe(false);
+    // C6 (criterion 75): the validation session pack downloads from the Review screen.
+    await page.getByRole("tab", { name: /^Validation questions/ }).click();
+    const pack = page.getByRole("tabpanel").getByRole("link", { name: "Download validation pack" });
+    expect(await seriousViolations(page)).toEqual([]);
+    const packFile = await request.get((await pack.getAttribute("href")) ?? "");
+    expect(packFile.status()).toBe(200);
+    const packText = await packFile.text();
+    expect(packText).toContain("## 3. Contrast without evaluation");
+    expect(packText.includes("Priya"), "a name in the validation pack").toBe(false);
 
     // P8: a photo on a step. The form explains what is missing; the stored copy keeps no camera
     // or GPS details; the step gets the has-images marker and the walkthrough strip appears.
@@ -431,11 +440,17 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const registerChoice = page.getByRole("radiogroup", { name: "Register" });
     await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims"]) {
+    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims", "Emerging themes"]) {
       await registerChoice.getByRole("radio", { name }).click();
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);
     }
+    // C8: the sample's shared loading step, one Responsible and the load controller Consulted.
+    await registerChoice.getByRole("radio", { name: "Lane boundaries" }).click();
+    await expect(page.getByRole("listitem").filter({ hasText: "Load and return LIR" })).toContainText(
+      "One Responsible (Ramp), the others Consulted",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
     await registerChoice.getByRole("radio", { name: "Cause library" }).click();
     const lirCause = page.getByRole("listitem").filter({ hasText: "Threshold divergence" });
     await expect(lirCause).toContainText("Possible cause (inferred from this step's constraints");

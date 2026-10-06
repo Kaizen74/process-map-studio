@@ -161,9 +161,44 @@ describe("Registers screen (PRD §5.4)", () => {
     parent_version_id: null,
   };
 
-  function backend(versions: unknown[] = [DRAFT]) {
+  const THEMES = [
+    {
+      id: "t1", version_id: "v2", theme: "Workarounds at peak times", basis: "Both stories describe a workaround when the wave is busy.",
+      status: "proposed", note: "", created_at: "2026-10-06T09:00:00+00:00",
+      fragments: [
+        { claim_id: "k1", text: "Had to re-trim three flights in one night", quote: "", fragment_type: "went_badly", source_id: "s1", anchor: "12:40" },
+        { claim_id: "k2", text: "We held the bags until the second wave", quote: "", fragment_type: "surprise", source_id: "s1", anchor: "18:05" },
+      ],
+    },
+  ];
+
+  const BOUNDARIES = [
+    {
+      element_id: "e5", label: "Load and return LIR", kind: "shared_delivery", responsible: "Ramp",
+      consulted: ["Load controller"], question_ids: [],
+      note: "Shared delivery: Load controller also take part. One Responsible (Ramp), the others Consulted; confirm with the teams.",
+    },
+    {
+      element_id: "e1", label: "Draft load plan", kind: "gap", responsible: "Load controller", consulted: [],
+      question_ids: ["L5"],
+      note: "The interviews say this falls between teams. The map keeps one Responsible (Load controller); confirm it with the teams.",
+    },
+  ];
+
+  function backend(versions: unknown[] = [DRAFT], boundaries: unknown[] = BOUNDARIES) {
     let causes = CAUSES;
+    let themes = THEMES;
     return fakeApi({
+      "GET /api/engagements/e1/themes": () => ({ body: themes }),
+      "GET /api/versions/v2/lane-boundaries": () => ({ body: boundaries }),
+      "PATCH /api/themes/t1": (body) => {
+        const patch = body as { status: string; theme?: string };
+        if (patch.theme === "Blame the crew") {
+          return { status: 422, body: { error: { code: "VALIDATION", message: "Use non-blaming words for the theme.", details: { field: "theme" } } } };
+        }
+        themes = themes.map((t) => ({ ...t, status: patch.status, theme: patch.theme ?? t.theme }));
+        return { body: themes[0] };
+      },
       "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
       "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
       "GET /api/engagements/e1/versions": () => ({ body: versions }),
@@ -190,6 +225,8 @@ describe("Registers screen (PRD §5.4)", () => {
       "Validation questions",
       "Rejected claims",
       "Cause library",
+      "Emerging themes",
+      "Lane boundaries",
     ]);
     expect(await seriousViolations(container)).toEqual([]);
     for (const [name, text] of [
@@ -214,6 +251,57 @@ describe("Registers screen (PRD §5.4)", () => {
     expect(calls.find((c) => c.key === "PATCH /api/cause-library/c1")?.body).toEqual({ validation_result: "confirmed" });
     expect(await within(lir).findByRole("button", { name: "Reopen" })).toBeInTheDocument();
     expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("emerging themes show their stories and can be accepted, renamed or dismissed (C7b, criterion 58)", async () => {
+    const { calls } = backend();
+    const { container } = renderApp("/engagements/e1/registers?register=themes");
+    const card = (await screen.findAllByText("Workarounds at peak times"))[0]?.closest("li") as HTMLElement;
+    expect(card).toHaveTextContent("Proposed");
+    expect(card).toHaveTextContent("What the stories have in common (inferred): Both stories describe a workaround");
+    const stories = within(card).getByRole("list", { name: "Stories behind Workarounds at peak times" });
+    expect(within(stories).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Had to re-trim three flights in one night · 12:40",
+      "We held the bags until the second wave · 18:05",
+    ]);
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(card).getByRole("button", { name: "Rename Workarounds at peak times" }));
+    const form = within(card).getByRole("form", { name: "Rename Workarounds at peak times" });
+    fireEvent.change(within(form).getByRole("textbox", { name: "New name" }), { target: { value: "Blame the crew" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Accept with this name" }));
+    expect(await within(card).findByRole("alert")).toHaveTextContent("Use non-blaming words for the theme.");
+    fireEvent.click(within(card).getByRole("button", { name: "Accept" }));
+    expect(await screen.findByText("Theme accepted.")).toBeInTheDocument();
+    expect(calls.filter((c) => c.key === "PATCH /api/themes/t1").map((c) => c.body)).toEqual([
+      { status: "accepted", theme: "Blame the crew" },
+      { status: "accepted" },
+    ]);
+    expect(await within(card).findByText("Accepted")).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole("button", { name: "Dismiss" }));
+    expect(await screen.findByText("Theme dismissed.")).toBeInTheDocument();
+  });
+
+  it("lane boundaries show one Responsible and the teams Consulted, with the note (C8, criterion 76)", async () => {
+    backend();
+    const { container } = renderApp("/engagements/e1/registers?register=boundaries");
+    const shared = (await screen.findByText("Load and return LIR")).closest("li") as HTMLElement;
+    expect(shared).toHaveTextContent("Shared delivery");
+    expect(shared).toHaveTextContent("ResponsibleRamp");
+    expect(shared).toHaveTextContent("ConsultedLoad controller");
+    expect(shared).toHaveTextContent("One Responsible (Ramp), the others Consulted");
+    const gap = screen.getByText("Draft load plan").closest("li") as HTMLElement;
+    expect(gap).toHaveTextContent("Falls between teams");
+    expect(gap).toHaveTextContent("ConsultedNone named");
+    expect(gap).toHaveTextContent("Guide questionsL5");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(shared).getByRole("button", { name: "Go to Load and return LIR" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
+  });
+
+  it("no lane boundaries: says what would put a step there", async () => {
+    backend([DRAFT], []);
+    renderApp("/engagements/e1/registers?register=boundaries");
+    expect(await screen.findByText(/No lane boundaries found/)).toBeInTheDocument();
   });
 
   it("Go to opens the step on Review", async () => {

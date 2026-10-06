@@ -1,16 +1,19 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
+  decideTheme,
   getAlignmentMatrix,
   getQualityCard,
   getRegisters,
   getVersion,
   listCauses,
+  listLaneBoundaries,
+  listThemes,
   listVersions,
   publishVersion,
   reopenVersion,
   validateCause,
 } from "../api/versions";
-import type { ValidationResult } from "../lib/registers";
+import type { ThemeStatus, ValidationResult } from "../lib/registers";
 import { refreshReview } from "./useReview";
 
 export function useQualityCard(versionId: string | null) {
@@ -93,5 +96,30 @@ export function useValidateCause(engagementId: string) {
       void client.invalidateQueries({ queryKey: ["engagements", engagementId, "cause-library"] });
       void client.invalidateQueries({ queryKey: ["versions"], predicate: (q) => q.queryKey[2] === "audit" });
     },
+  });
+}
+
+/** The engagement's emerging themes (C7b). */
+export function useThemes(engagementId: string) {
+  return useQuery({ queryKey: ["engagements", engagementId, "themes"], queryFn: () => listThemes(engagementId) });
+}
+
+/** Accept (optionally renamed), dismiss or reopen a theme; the audit log changes too. */
+export function useDecideTheme(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ themeId, status, theme }: { themeId: string; status: ThemeStatus; theme?: string }) =>
+      decideTheme(themeId, theme === undefined ? { status } : { status, theme }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["engagements", engagementId, "themes"] }),
+  });
+}
+
+
+/** Where teams' activities overlap or fall between them on a map (C8); read-only. */
+export function useLaneBoundaries(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "lane-boundaries"],
+    queryFn: () => listLaneBoundaries(versionId ?? ""),
+    enabled: Boolean(versionId),
   });
 }

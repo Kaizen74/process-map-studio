@@ -5,15 +5,18 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query, Request, Response
 
-from app.actions import interview
+from app.actions import interview, themes
 from app.domain.interview import (
+    GuideEdit,
     GuideInput,
+    GuideStarted,
     GuideSummary,
     GuideView,
     ProfileInput,
     ProfilePatch,
     ProfileView,
 )
+from app.domain.sensemaking import ThemePatch, ThemeView
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["interview"])
@@ -41,15 +44,25 @@ def list_guides(request: Request, engagement_id: str) -> list[GuideSummary]:
     return unwrap(interview.list_guides(request.app.state.sessions, engagement_id))
 
 
-@router.post("/engagements/{engagement_id}/interview-guide", status_code=201)
-def make_guide(request: Request, engagement_id: str, body: GuideInput) -> GuideView:
+@router.post("/engagements/{engagement_id}/interview-guide", status_code=202)
+def make_guide(request: Request, engagement_id: str, body: GuideInput) -> GuideStarted:
     state = request.app.state
-    return unwrap(interview.make_guide(state.config, state.sessions, engagement_id, body))
+    return unwrap(interview.make_guide(state.sessions, engagement_id, body, state.worker.submit))
 
 
 @router.get("/engagements/{engagement_id}/interview-guide")
 def get_guide(request: Request, engagement_id: str, profile_id: str = "") -> GuideView:
     return unwrap(interview.get_guide(request.app.state.sessions, engagement_id, profile_id))
+
+
+@router.patch("/engagements/{engagement_id}/interview-guide")
+def edit_guide(
+    request: Request, engagement_id: str, body: GuideEdit, profile_id: str = ""
+) -> GuideView:
+    state = request.app.state
+    return unwrap(
+        interview.edit_guide(state.config, state.sessions, engagement_id, profile_id, body)
+    )
 
 
 @router.get("/engagements/{engagement_id}/interview-guide/export")
@@ -63,3 +76,14 @@ def export_guide(
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/engagements/{engagement_id}/themes")
+def list_themes(request: Request, engagement_id: str) -> list[ThemeView]:
+    return unwrap(themes.list_themes(request.app.state.sessions, engagement_id))
+
+
+@router.patch("/themes/{theme_id}")
+def update_theme(request: Request, theme_id: str, body: ThemePatch) -> ThemeView:
+    state = request.app.state
+    return unwrap(themes.update_theme(state.config, state.sessions, theme_id, body))

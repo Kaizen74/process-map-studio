@@ -56,3 +56,9 @@ export function questionsMarkdown(questions: readonly Question[], processName: s
 export function questionsFileName(versionLabel: string): string {
   return `validation-questions-${versionLabel.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "draft"}.md`;
 }
+
+/** GET /versions/{vid}/validation-pack: the F.7 session pack with the open questions (C6). */
+export function validationPackUrl(versionId: string): string {
+  return `/api/versions/${encodeURIComponent(versionId)}/validation-pack`;
+}
+

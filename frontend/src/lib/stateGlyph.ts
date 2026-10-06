@@ -11,7 +11,11 @@ export type StanceOrState =
   | "contested"
   | "trace_contradicted"
   | "not_assessed"
-  | "not_applicable";
+  | "not_applicable"
+  // Coverage report (§3.12.8): how well the interviews covered a dimension.
+  | "covered"
+  | "thin"
+  | "missing";
 
 export type GlyphShape =
   | "filled-circle"
@@ -50,6 +54,9 @@ export const STATE_GLYPHS: Readonly<Record<StanceOrState, GlyphSpec>> = {
   not_assessed: { shape: "outlined-square", tone: "neutral", label: "Not assessed", dangerText: false },
   // Alignment matrix (P9): the engagement has no source of that kind.
   not_applicable: { shape: "dash", tone: "neutral", label: "No source of this kind", dangerText: false },
+  covered: { shape: "filled-circle", tone: "good", label: "Covered", dangerText: false },
+  thin: { shape: "left-half", tone: "neutral", label: "Thin", dangerText: false },
+  missing: { shape: "dashed-ring", tone: "neutral", label: "Missing", dangerText: false },
 };
 
 export function glyphFor(state: StanceOrState): GlyphSpec {

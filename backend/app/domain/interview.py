@@ -123,6 +123,14 @@ class DocumentRow(BaseModel):
     probes: list[str] = []
     minutes: str  # "2", "1½", "½", or "in story" for a signifier asked within a story
     signifier: bool = False
+    # F.8 rule 9: what the guide stores for every question, for the editor and the matcher. Not
+    # printed in the files (the F.9 layout has no column for them).
+    movement: str = ""
+    targets: list[str] = []
+    priority: str = ""
+    # SOP-derived probes (F.8 rule 5), only ever on M6.5: printed after the probes, shown in the
+    # editor as "held back to avoid anchoring the SME".
+    held_back: list[str] = []
 
 
 class DocumentTable(BaseModel):
@@ -151,6 +159,9 @@ class InterviewDocument(BaseModel):
     coverage_checklist: list[str]  # item 7
     close_items: list[str]  # item 8
     footer: str  # item 9
+    # A tailored guide only: why the role-module rows were left blank, in plain words (C5b); not
+    # printed in the files.
+    generation_note: str = ""
 
 
 class TemplateFile(BaseModel):
@@ -230,6 +241,15 @@ class ProfileView(BaseModel):
 # --- Tailored guides (API_CONTRACT.md → Tailored interview guides; F.8; G1) --------------------
 
 
+class FollowUp(BaseModel):
+    """One question for a Follow-up guide's blank rows: a bank ID (F2, F5, F6 or the M-question
+    of a thin dimension), its wording, and the step it is about ("" if none)."""
+
+    question_id: str
+    wording: str
+    about: str = ""
+
+
 class GuideContext(BaseModel):
     """What a guide is tailored from (F.8 rules 1, 2, 5, 7), names already hidden by the caller.
     Every text is filled in only if it passes the wording and hidden-name checks."""
@@ -245,8 +265,52 @@ class GuideContext(BaseModel):
     stakeholder_group: str = ""
     topics: str = ""  # follow-up: what the earlier interview covered
     sop_steps: list[str] = []  # practice M6.5: steps only the documents describe, process order
-    follow_ups: list[tuple[str, str]] = []  # follow-up: (F-series ID, wording), in priority order
+    follow_ups: list[FollowUp] = []  # follow-up: the rows to fill, in order (rule 7)
     hidden_terms: list[str] = []
+
+
+class RoleQuestion(BaseModel):
+    """One role-module question as Claude proposed it (IG_generate), before the app's checks."""
+
+    based_on: str
+    wording: str
+    probes: list[str] = []
+
+
+class RoleModuleCheck(BaseModel):
+    """The role-module questions kept (as guide rows) and why the others were left out."""
+
+    kept: list[DocumentRow]
+    left_out: list[tuple[str, str]] = []  # (wording, reason in plain words)
+
+
+class RowEdit(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    id: str = ""
+    wording: str = ""
+    probes: list[str] = []
+    held_back: list[str] = []
+
+
+class TableEdit(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    label: str
+    rows: list[RowEdit]
+
+
+class GuideEdit(BaseModel):
+    """Eric's edits to a guide (C5c): every section and row, in order."""
+
+    model_config = {"extra": "forbid"}
+
+    tables: list[TableEdit]
+
+
+class GuideStarted(BaseModel):
+    job_id: str
+    profile_id: str
 
 
 class GuideInput(BaseModel):

@@ -19,6 +19,10 @@
     "sha256": "b3185e74d20ac4c19a5d7b2e8039d316d144bb947e38264f29f33ea665fc3a4d",
     "version": "1"
   },
+  "IG_generate.md": {
+    "sha256": "268daf663e59af5b381ec2b989eef4871f077f898e0ecf1e74ea6448a66492ca",
+    "version": "1"
+  },
   "R_repair.md": {
     "sha256": "4971ca642242918283cde45bdb31193e1a1adffec7eb191a0be0d547825c730d",
     "version": "1"
@@ -40,8 +44,8 @@
     "version": "2"
   },
   "S2_canonicalise.md": {
-    "sha256": "ac0210532605527b6208a683767b99a516e1b899dd18dfdb25092cedc3e2da34",
-    "version": "2"
+    "sha256": "a33ea75a283493bbcde17df49e67f0dcf82a637f3be4c9b7cde0bf8c64906c1f",
+    "version": "3"
   },
   "S3_calibrate.md": {
     "sha256": "ec6fa0dc24674b0fb06520a4e7642285f0f0d163c74ef2df38cdb03012cfe877",
@@ -52,12 +56,12 @@
     "version": "1"
   },
   "S3c_worktype.md": {
-    "sha256": "0e398fa8601457aa1ad98990de53d385cbf01b4241409541414751636816a6cc",
-    "version": "1"
+    "sha256": "eb73e5b1b1f53d255479d1da2d5eb9c8ec3417f8f5cfe51de8bea2b70b095ac1",
+    "version": "2"
   },
   "S4_assemble.md": {
-    "sha256": "ea806b1bfacceb899e3c92fff8ee4088dd161c3272c1b13daf08843abfdb5a86",
-    "version": "2"
+    "sha256": "9b90c60fa6d24dbaf31ccf168481dbf345c57941172820581202d2ded12948f0",
+    "version": "3"
   },
   "S5_questions.md": {
     "sha256": "8a35a97aa38d44df014b3a3636ac7bf8b264c95353021e0f5607f57607545eb6",

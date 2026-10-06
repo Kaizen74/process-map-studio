@@ -16,6 +16,11 @@ const PROFILE = {
   created_at: "2026-10-05T09:00:00+00:00",
 };
 
+/** The Interviewees and their guides are on the Guide tab (PRD §5.4 tabs; C5c). */
+async function openGuideTab() {
+  fireEvent.click(await screen.findByRole("tab", { name: "Guide" }));
+}
+
 function interviewApi(extra: Parameters<typeof fakeApi>[0] = {}) {
   return fakeApi({
     "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
@@ -76,7 +81,10 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
     const followUp = screen.getByRole("region", { name: "Follow-up (30 min)" });
     expect(within(followUp).getAllByRole("row").at(-1)).toHaveTextContent("Total30");
     expect(screen.getByText(/Say or note the question ID \(for example \[M2\.2\]\)/)).toBeInTheDocument();
-    expect(screen.getByText(/The coverage report is not available on this screen yet; the standard templates and tailored guides work/)).toBeInTheDocument();
+    // PRD §5.4: three tabs, Templates first.
+    const tabs = within(screen.getByRole("tablist", { name: "Interview" })).getAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual(["Templates", "Guide", "Coverage"]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(await seriousViolations(container)).toEqual([]);
   });
 
@@ -128,6 +136,7 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
       },
     });
     const { container } = renderApp(PATH);
+    await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
     expect(await within(section).findByText(/No interviewees yet/)).toBeInTheDocument();
     fireEvent.click(within(section).getByRole("button", { name: "Add interviewee" }));
@@ -160,6 +169,7 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
       }),
     });
     renderApp(PATH);
+    await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
     fireEvent.click(await within(section).findByRole("button", { name: "Add interviewee" }));
     const form = within(section).getByRole("form", { name: "Add interviewee" });
@@ -179,6 +189,7 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
       "POST /api/engagements/e1/profiles": (body) => ({ status: 201, body: { ...PROFILE, id: "p2", ...(body as object) } }),
     });
     renderApp(PATH);
+    await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
     fireEvent.click(await within(section).findByRole("button", { name: "Add interviewee" }));
     const form = within(section).getByRole("form", { name: "Add interviewee" });
@@ -204,20 +215,29 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
   });
 });
 
-describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
+describe("Tailored guides (G2, C5b; PRD Appendix F.8, F.9, criteria 69 and 80)", () => {
   const GUIDE = { id: "g1", profile_id: "p1", interview_type: "landscape", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+  const JOB = {
+    id: "j1", engagement_id: "e1", type: "interview_guide", target_id: "p1", status: "done", stage: "",
+    progress: 1, message: "Guide version 1 made. 4 role-module questions drafted and checked.", error: "",
+    usage: { calls: 1, input_tokens: 900, output_tokens: 300 }, claims: { verified: 0, rejected: 0 },
+    stages: [], created_at: "2026-10-06T09:00:00+00:00",
+  };
 
   it("makes a guide for an interviewee, then offers Word and Markdown downloads and a new version", async () => {
     let guides: unknown[] = [];
     const api = interviewApi({
       "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
       "GET /api/engagements/e1/interview-guides": () => ({ body: guides }),
+      // C5b: making a guide is a background job; the screen follows it, then lists the guide.
       "POST /api/engagements/e1/interview-guide": () => {
         guides = [GUIDE];
-        return { status: 201, body: { ...GUIDE, engagement_id: "e1", edited: false, document: {} } };
+        return { status: 202, body: { job_id: "j1", profile_id: "p1" } };
       },
+      "GET /api/jobs/j1": () => ({ body: JOB }),
     });
     const { container } = renderApp(PATH);
+    await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
     const list = await within(section).findByRole("list", { name: "Interviewees" });
     expect(await within(list).findByText("No guide yet")).toBeInTheDocument();
@@ -229,6 +249,9 @@ describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
       }),
     );
     expect(await within(list).findByText("Guide version 1 (Landscape)")).toBeInTheDocument();
+    expect(await within(list).findByRole("status")).toHaveTextContent(
+      "Guide version 1 made. 4 role-module questions drafted and checked.",
+    );
     expect(within(list).getByRole("link", { name: "Download Word guide for Ramp agent · Ramp" })).toHaveAttribute(
       "href",
       "/api/engagements/e1/interview-guide/export?profile_id=p1&format=docx",
@@ -254,10 +277,225 @@ describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
       }),
     });
     renderApp(PATH);
+    await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
     expect(await within(section).findByText("The tailored guides couldn't be loaded")).toBeInTheDocument();
     const list = within(section).getByRole("list", { name: "Interviewees" });
     fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
     expect(await within(list).findByRole("alert")).toHaveTextContent("Choose one of this engagement's interviewees.");
+  });
+
+  it("says plainly when making the guide failed", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
+      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j1", profile_id: "p1" } }),
+      "GET /api/jobs/j1": () => ({
+        body: { ...JOB, status: "failed", message: "", error: "Something went wrong while making this guide. Nothing was saved." },
+      }),
+    });
+    renderApp(PATH);
+    await openGuideTab();
+    const list = await screen.findByRole("list", { name: "Interviewees" });
+    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
+    expect(await within(list).findByRole("alert")).toHaveTextContent("Something went wrong while making this guide.");
+    expect(within(list).getByText("No guide yet")).toBeInTheDocument();
+  });
+});
+
+describe("Guide editor (C5c; PRD §5.4 Guide tab, criterion 49)", () => {
+  const SUMMARY = { id: "g1", profile_id: "p1", interview_type: "practice", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+  const row = (over: Record<string, unknown>) => ({
+    id: "", lead_in: "", wording: "", note: "", probes: [], minutes: "2", signifier: false, movement: "",
+    targets: [], priority: "standard", held_back: [], ...over,
+  });
+  const GUIDE_VIEW = {
+    id: "g1", engagement_id: "e1", profile_id: "p1", interview_type: "practice", version: 1, edited: false,
+    created_at: "2026-10-06T09:00:00+00:00",
+    document: {
+      kind: "practice", title: "Practice interview guide: Ramp agent · Ramp", minutes: 60, generation_note: "",
+      tables: [
+        { label: "M2 — The last real case: the As done spine", minutes: 14, note: "", rows: [
+          row({ id: "M2.2", wording: "Walk me through what happened, step by step.", probes: ["And then?"],
+                movement: "M2", targets: ["Flow (steps)"], priority: "core", minutes: "3½" }),
+          row({}),
+        ] },
+        { label: "M6 — Contrast: official vs lived; now bring the documents", minutes: 6, note: "", rows: [
+          row({ id: "M6.5", wording: "SOP-derived (generator inserts, max 5):", movement: "M6", targets: ["Reality gap"],
+                held_back: ["The procedure mentions “Approve load plan”. Where does that happen in practice?"] }),
+        ] },
+      ],
+    },
+  };
+
+  function editorApi(patch: (body: unknown) => { status?: number; body: unknown }) {
+    return interviewApi({
+      "GET /api/engagements/e1/profiles": () => ({ body: [{ ...PROFILE, interview_type: "practice" }] }),
+      "GET /api/engagements/e1/interview-guides": () => ({ body: [SUMMARY] }),
+      "GET /api/engagements/e1/interview-guide": () => ({ body: GUIDE_VIEW }),
+      "PATCH /api/engagements/e1/interview-guide": patch,
+    });
+  }
+
+  it("opens the guide as editable cards, parks SOP probes in M6, and saves the edits", async () => {
+    const api = editorApi((body) => ({ body: { ...GUIDE_VIEW, edited: true, document: GUIDE_VIEW.document, _sent: body } }));
+    const { container } = renderApp(PATH);
+    await openGuideTab();
+    const list = await screen.findByRole("list", { name: "Interviewees" });
+    fireEvent.click(await within(list).findByRole("button", { name: "Edit guide for Ramp agent · Ramp" }));
+    const form = await screen.findByRole("form", { name: "Edit Practice interview guide: Ramp agent · Ramp" });
+    expect(within(form).getByRole("heading", { name: /M2 — The last real case/ })).toBeInTheDocument();
+    expect(form).toHaveTextContent("M2.2 · 3½ min · for: Flow (steps)");
+    const question = within(form).getByRole("textbox", { name: "Question M2.2" });
+    expect(question).toHaveValue("Walk me through what happened, step by step.");
+    const held = within(form).getByRole("textbox", { name: "Held-back probes for M6.5 (one per line)" });
+    expect(held).toHaveValue("The procedure mentions “Approve load plan”. Where does that happen in practice?");
+    expect(within(form).getByText(/Held back to avoid anchoring the SME/)).toBeInTheDocument();
+    fireEvent.change(question, { target: { value: "Walk me through the last flight you loaded." } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Probes for M2.2 (one per line)" }), {
+      target: { value: "And then?\nWho did that?" },
+    });
+    fireEvent.change(within(form).getByRole("textbox", { name: /^Your question \(M2/ }), {
+      target: { value: "What would a new colleague find hardest?" },
+    });
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(form).getByRole("button", { name: "Save guide" }));
+    await waitFor(() => expect(api.calls.some((c) => c.key === "PATCH /api/engagements/e1/interview-guide")).toBe(true));
+    const sent = api.calls.find((c) => c.key === "PATCH /api/engagements/e1/interview-guide")?.body as {
+      tables: { label: string; rows: { id: string; wording: string; probes: string[]; held_back: string[] }[] }[];
+    };
+    expect(sent.tables.map((t) => t.label)).toEqual(GUIDE_VIEW.document.tables.map((t) => t.label));
+    expect(sent.tables[0]?.rows[0]).toEqual({
+      id: "M2.2", wording: "Walk me through the last flight you loaded.", probes: ["And then?", "Who did that?"], held_back: [],
+    });
+    expect(sent.tables[0]?.rows[1]).toMatchObject({ id: "", wording: "What would a new colleague find hardest?" });
+    expect(await within(form).findByRole("status")).toHaveTextContent("Saved.");
+  });
+
+  it("shows a refusal under the question it names and keeps the edits", async () => {
+    editorApi(() => ({
+      status: 422,
+      body: { error: { code: "VALIDATION", message: "Keep what the documents say for M6, after the interviewee has described the work in their own words.", details: { field: "tables[0].rows[0].wording" } } },
+    }));
+    renderApp(PATH);
+    await openGuideTab();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit guide for Ramp agent · Ramp" }));
+    const form = await screen.findByRole("form", { name: /^Edit Practice interview guide/ });
+    const question = within(form).getByRole("textbox", { name: "Question M2.2" });
+    fireEvent.change(question, { target: { value: "The SOP says to walk through it. Do you?" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Save guide" }));
+    await waitFor(() => expect(question).toHaveAttribute("aria-invalid", "true"));
+    expect(within(form).getByRole("alert")).toHaveTextContent("Not saved: Keep what the documents say for M6");
+    expect(question).toHaveValue("The SOP says to walk through it. Do you?");
+    fireEvent.click(within(form).getByRole("button", { name: "Close editor" }));
+    expect(screen.queryByRole("form", { name: /^Edit Practice interview guide/ })).toBeNull();
+  });
+});
+
+describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
+  const MAP = {
+    id: "v1", engagement_id: "e1", label: "v0.1", state: "draft", created_at: "2026-10-06T09:00:00+00:00",
+    published_at: null, published_by: null, parent_version_id: null, signal: null,
+  };
+  const dim = (status: string, evidence_count: number, note = "") => ({ status, evidence_count, note });
+  const REPORT = {
+    version_id: "v1",
+    dimensions: {
+      trigger: dim("missing", 0), end_point: dim("thin", 1), step_spine: dim("covered", 6),
+      handoffs: dim("covered", 3), decisions_and_criteria: dim("covered", 2), approvals: dim("thin", 1),
+      exceptions: dim("thin", 1), raci: dim("covered", 4), work_and_wait_time: dim("covered", 2),
+      kpis: dim("missing", 0), artefacts: dim("covered", 2), know_how: dim("thin", 1, "1 of 2 decisions"),
+      stories: dim("thin", 2), official_vs_lived: dim("covered", 1, "Both accounts on 1 step: Load and return LIR"),
+      sme_terms: dim("covered", 2),
+    },
+    follow_up_questions: [
+      { dimension: "trigger", question_id: "M2.1", question: "What sets it off?", about: "" },
+      { dimension: "know_how", question_id: "M4.8", question: "What would a new colleague need to know?", about: "Busy wave?" },
+    ],
+    probes: [
+      { question_id: "F2", question: "You mentioned previously that “at peak we're short of containers”. How do you manage that today?",
+        quote: "at peak we're short of containers", source_id: "s1", anchor: "05:52", speaker_role: "Ramp" },
+    ],
+  };
+
+  it("explains that coverage appears after the first draft", async () => {
+    interviewApi({ "GET /api/engagements/e1/versions": () => ({ body: [] }) });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    expect(await screen.findByText(/The coverage report appears after the first draft/)).toBeInTheDocument();
+  });
+
+  it("shows every dimension with shape and text, the follow-up questions, Copy and Download", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/versions": () => ({ body: [MAP] }),
+      "GET /api/versions/v1/coverage": () => ({ body: REPORT }),
+    });
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    const createObjectURL = vi.fn(() => "blob:follow-up");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const { container } = renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    const table = await screen.findByRole("table", { name: "What the interviews covered (v0.1)" });
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(15);
+    expect(rows[0]).toHaveTextContent("TriggerMissing0");
+    expect(rows[11]).toHaveTextContent("Know-how at each decisionThin11 of 2 decisions");
+    expect(rows[2]).toHaveTextContent("Step spineCovered6");
+    expect(within(table).getAllByText("Covered")[0]?.closest("[data-shape]")).toHaveAttribute("data-shape", "filled-circle");
+    const asks = screen.getByRole("list", { name: "Questions for thin or missing dimensions" });
+    expect(within(asks).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "[M2.1] What sets it off?",
+      "[M4.8] What would a new colleague need to know? (about Busy wave?)",
+    ]);
+    expect(screen.getByRole("list", { name: "In the interviewee's own words" })).toHaveTextContent("ask the Ramp");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    const copied = String((writeText.mock.calls[0] as unknown[] | undefined)?.[0]);
+    expect(copied).toContain("# Follow-up questions (v0.1)");
+    expect(copied).toContain("- [M4.8] What would a new colleague need to know? (about Busy wave?) — Know-how at each decision: thin");
+    expect(copied).toContain("## In the interviewee's own words");
+    expect(await screen.findByText("Copied the follow-up questions.")).toHaveAttribute("role", "status");
+    fireEvent.click(screen.getByRole("button", { name: "Download .md" }));
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(click).toHaveBeenCalled();
+    click.mockRestore();
+  });
+
+  it("creates a Follow-up guide for an earlier interviewee and shows it on the Guide tab", async () => {
+    let profiles: unknown[] = [PROFILE];
+    const api = interviewApi({
+      "GET /api/engagements/e1/versions": () => ({ body: [MAP] }),
+      "GET /api/versions/v1/coverage": () => ({ body: REPORT }),
+      "GET /api/engagements/e1/profiles": () => ({ body: profiles }),
+      "POST /api/engagements/e1/profiles": (body) => {
+        const created = { ...PROFILE, id: "p2", ...(body as object) };
+        profiles = [PROFILE, created];
+        return { status: 201, body: created };
+      },
+      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j2", profile_id: "p2" } }),
+      "GET /api/jobs/j2": () => ({
+        body: { id: "j2", engagement_id: "e1", type: "interview_guide", target_id: "p2", status: "running", stage: "Saving the guide",
+                progress: 0.75, message: "", error: "", usage: null, claims: { verified: 0, rejected: 0 }, stages: [],
+                created_at: "2026-10-06T09:00:00+00:00" },
+      }),
+    });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    expect(await screen.findByRole("combobox", { name: "Follow up with" })).toHaveValue("p1");
+    fireEvent.click(screen.getByRole("button", { name: "Create Follow-up guide" }));
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")?.body).toEqual({
+        interview_type: "follow_up", role_id: "r2", stakeholder_group: "Ramp", referred_by_role: "",
+        previous_profile_id: "p1",
+      }),
+    );
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/interview-guide")?.body).toEqual({ profile_id: "p2" }),
+    );
+    expect(await screen.findByRole("tab", { name: "Guide", selected: true })).toBeInTheDocument();
+    const list = await screen.findByRole("list", { name: "Interviewees" });
+    expect(await within(list).findByText("Saving the guide…")).toBeInTheDocument();
   });
 });

@@ -2,21 +2,31 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../components/common";
 import {
   AiFlagList,
+  BoundaryList,
   CauseList,
   ConstraintGroups,
   ExternalPracticeList,
   KRiskList,
+  ThemeList,
 } from "../../components/registers";
 import { useToast } from "../../components/shell";
 import { QuestionsTab, RejectedClaimsTab } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useCauseLibrary, useRegisters, useValidateCause, useVersions } from "../../hooks/useVersions";
+import {
+  useCauseLibrary,
+  useDecideTheme,
+  useLaneBoundaries,
+  useRegisters,
+  useThemes,
+  useValidateCause,
+  useVersions,
+} from "../../hooks/useVersions";
 import { currentMap, stepPath } from "../../lib/currentMap";
 import { saveText } from "../../lib/download";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { questionsFileName, questionsMarkdown } from "../../lib/questions";
-import { REGISTERS, registerKey, type CauseEntry, type ValidationResult } from "../../lib/registers";
+import { REGISTERS, registerKey, type CauseEntry, type ThemeStatus, type ValidationResult } from "../../lib/registers";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 
 const DONE: Readonly<Record<ValidationResult, string>> = {
@@ -30,6 +40,12 @@ const DONE: Readonly<Record<ValidationResult, string>> = {
  * the latest published version), plus the engagement's cause library. Every entry links to its
  * step; nothing here changes the map.
  */
+const THEME_DONE: Record<ThemeStatus, string> = {
+  accepted: "Theme accepted.",
+  dismissed: "Theme dismissed.",
+  proposed: "Theme reopened.",
+};
+
 export function RegistersScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
@@ -41,6 +57,9 @@ export function RegistersScreen() {
   const registers = useRegisters(map?.id ?? null);
   const causes = useCauseLibrary(engagementId);
   const validate = useValidateCause(engagementId);
+  const themes = useThemes(engagementId);
+  const decide = useDecideTheme(engagementId);
+  const boundaries = useLaneBoundaries(map?.id ?? null);
   const chosen = registerKey(params.get("register"));
 
   if (engagement.isError) {
@@ -75,7 +94,8 @@ export function RegistersScreen() {
         <h1 id="registers-title">Registers</h1>
         <p className="screen__intro">
           The lists behind the map{title ? ` (${title})` : ""}: knowledge risks, AI flags, constraints, recommended
-          practice, questions for your SME and rejected claims, and the cause library for this engagement.
+          practice, questions for your SME, rejected claims and lane boundaries, and the cause library and emerging themes for
+          this engagement.
         </p>
       </div>
       {(versions.isPending || (map !== null && registers.isPending)) && <Skeleton height="200px" />}
@@ -149,6 +169,59 @@ export function RegistersScreen() {
                     {messageOf(validate.error)}
                   </p>
                 )}
+              </>
+            )}
+            {chosen === "themes" && (
+              <>
+                <p className="tab-intro">
+                  Patterns across two or more stories that fit no existing category, proposed by Claude and checked by the
+                  app. Accept, rename or dismiss them; they never change the map.
+                </p>
+                {themes.isPending && <Skeleton height="120px" />}
+                {themes.isError && (
+                  <ErrorState
+                    title="The emerging themes couldn't be loaded"
+                    message={messageOf(themes.error)}
+                    details={copyDetailsOf(themes.error)}
+                    onRetry={() => void themes.refetch()}
+                  />
+                )}
+                {themes.data && (
+                  <ThemeList
+                    themes={themes.data}
+                    busyId={decide.isPending ? (decide.variables?.themeId ?? null) : null}
+                    error={
+                      decide.isError && decide.variables
+                        ? { themeId: decide.variables.themeId, message: messageOf(decide.error) }
+                        : null
+                    }
+                    onDecide={(theme, status, name) =>
+                      decide.mutate(
+                        name === undefined ? { themeId: theme.id, status } : { themeId: theme.id, status, theme: name },
+                        { onSuccess: () => toast(THEME_DONE[status]) },
+                      )
+                    }
+                  />
+                )}
+              </>
+            )}
+            {chosen === "boundaries" && (
+              <>
+                <p className="tab-intro">
+                  Where the interviews say teams share a step or that it falls between them. The map keeps one Responsible
+                  (the step&apos;s lane) and lists the others as Consulted; settle each with the teams. Nothing here changes
+                  the map.
+                </p>
+                {boundaries.isPending && <Skeleton height="120px" />}
+                {boundaries.isError && (
+                  <ErrorState
+                    title="The lane boundaries couldn't be loaded"
+                    message={messageOf(boundaries.error)}
+                    details={copyDetailsOf(boundaries.error)}
+                    onRetry={() => void boundaries.refetch()}
+                  />
+                )}
+                {boundaries.data && <BoundaryList items={boundaries.data} onGoTo={goTo} />}
               </>
             )}
           </section>

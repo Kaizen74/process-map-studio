@@ -22,11 +22,16 @@ from pydantic import ValidationError
 
 from app.domain.enums import InterviewType
 from app.domain.interview import (
+    BankQuestion,
     DocumentRow,
     DocumentTable,
+    FollowUp,
     GuideContext,
+    GuideEdit,
     InterviewDocument,
     QuestionBank,
+    RoleModuleCheck,
+    RoleQuestion,
     TemplatePlanRow,
     TemplateSection,
     TemplateSummary,
@@ -92,7 +97,21 @@ def _row(
         probes=[f"Built from: {q.built_from}"] if q.built_from else list(q.probes),
         minutes=minutes,
         signifier=signifier,
+        movement=q.movement,
+        targets=purpose(q),
+        priority=q.priority,
     )
+
+
+def purpose(q: BankQuestion) -> list[str]:
+    """What a question is for: its targets, or for the F-series and the framing line (which the
+    bank gives none) its translation, as in the F.6 table."""
+    return list(q.targets) or ([q.translation] if q.translation else [])
+
+
+def printed_probes(row: DocumentRow) -> list[str]:
+    """The probes as printed: the bank's, then any held back for M6 (F.8 rule 5)."""
+    return [*row.probes, *row.held_back]
 
 
 def _table(bank: QuestionBank, section: TemplateSection) -> DocumentTable:
@@ -193,7 +212,8 @@ def render_markdown(doc: InterviewDocument) -> str:
             question = question_text(row)
             if row.signifier:
                 question = f"↳ {question}"
-            probes = " · ".join(row.probes) if row.probes else ("—" if row.id else "")
+            shown = printed_probes(row)
+            probes = " · ".join(shown) if shown else ("—" if row.id else "")
             lines.append(f"| {row.id} | {_cell(question)} | {_cell(probes)} | {row.minutes} |  |")
     lines += ["", "## Coverage checklist", ""]
     lines += [f"- [ ] {item}" for item in doc.coverage_checklist]
@@ -241,7 +261,7 @@ def _question_table(doc: WordDocument, table: DocumentTable) -> None:
         if row.note:
             question = f"{question} ({row.note})"
         _cell_text(cells[1], question, italic_prefix=row.lead_in)
-        probes = row.probes or (["—"] if row.id else [])
+        probes = printed_probes(row) or (["—"] if row.id else [])
         cells[2].text = "\n".join(probes)
         cells[3].text = row.minutes
         grid.rows[-1].height = Cm(NOTES_ROW_CM)
@@ -346,23 +366,40 @@ def tailor(bank: QuestionBank, ctx: GuideContext) -> InterviewDocument:
         text = _fill(text, "[referrer role]", ctx.referrer_role, hidden)
         text = _fill(text, "[topics]", ctx.topics, hidden)
         opener.append(text)
-    tables = [_tailored_table(t, ctx, hidden) for t in doc.tables]
+    tables = [_tailored_table(bank, t, ctx, hidden) for t in doc.tables]
     spec = bank.templates[ctx.interview_type]
     title = f"{spec.title} interview guide" + (f": {ctx.who}" if _safe(ctx.who, hidden) else "")
     return doc.model_copy(update={"title": title, "header_values": header, "opener": opener,
                                   "tables": tables})  # fmt: skip
 
 
-def _tailored_table(table: DocumentTable, ctx: GuideContext, hidden: list[str]) -> DocumentTable:
+def _tailored_table(
+    bank: QuestionBank, table: DocumentTable, ctx: GuideContext, hidden: list[str]
+) -> DocumentTable:
     rows = []
     sop = [SOP_PROBE.format(step=s) for s in ctx.sop_steps if _safe(s, hidden)][:MAX_SOP_PROBES]
-    follow_ups = [(qid, text) for qid, text in ctx.follow_ups if _safe(text, hidden)]
+    follow_ups = [
+        f
+        for f in ctx.follow_ups
+        if _safe(f.wording, hidden) and (not f.about or _safe(f.about, hidden))
+    ]
     for row in table.rows:
         if row.id == "M6.5" and sop:  # rule 5: only in M6, where the documents come in
-            row = row.model_copy(update={"probes": [*row.probes, *sop]})
+            row = row.model_copy(update={"held_back": sop})
         elif not row.id and ctx.interview_type == InterviewType.FOLLOW_UP and follow_ups:
-            qid, text = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
-            row = row.model_copy(update={"id": qid, "wording": text})
+            follow_up = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
+            qid, text = follow_up.question_id, follow_up.wording
+            q = bank.question(qid)
+            row = row.model_copy(
+                update={
+                    "id": qid,
+                    "wording": text,
+                    "movement": q.movement,
+                    "note": f"about {follow_up.about}" if follow_up.about else "",
+                    "targets": purpose(q),
+                    "priority": q.priority,
+                }
+            )
         rows.append(row)
     return table.model_copy(update={"rows": rows})
 
@@ -370,3 +407,176 @@ def _tailored_table(table: DocumentTable, ctx: GuideContext, hidden: list[str]) 
 def guide_filename(kind: InterviewType, who: str, fmt: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", who.lower()).strip("-") or "interviewee"
     return f"interview-guide-{kind.value.replace('_', '-')}-{slug}.{fmt}"
+
+
+# --- Role modules (F.4, F.8 rule 3; IG_generate, C5b): Claude's questions, checked here ---------
+
+ROLE_MODULE = "Role module"  # the Landscape table whose blank rows the module fills
+ROLE_BASES = ("L3", "L4", "L5")
+MAX_ROLE_QUESTIONS = 5
+MAX_QUESTION = 300
+MAX_PROBE = 200
+
+
+def _key(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _role_problem(q: RoleQuestion, hidden: list[str], seen: set[str]) -> str:
+    """Why a proposed role-module question can't be used (plain words), or "" if it can."""
+    if q.based_on not in ROLE_BASES:
+        return "It isn't based on L3, L4 or L5."
+    text = q.wording.strip()
+    if not text or "\n" in text or len(text) > MAX_QUESTION or not text.endswith("?"):
+        return "It isn't one plain question ending with a question mark."
+    probes = [p.strip() for p in q.probes]
+    if not 1 <= len(probes) <= 3 or any(not p or "\n" in p or len(p) > MAX_PROBE for p in probes):
+        return "It needs one to three short probes."
+    every = " ".join([text, *probes])
+    if wording.banned_words(every):
+        return "It uses a blaming word."
+    if wording.sop_claims(every):
+        return "It says what the documents say (that waits for M6)."
+    if grounding.scan_redaction_terms(every, hidden):
+        return "It contains a name from the hidden-names list."
+    if _key(text) in seen:
+        return "It repeats another question."
+    return ""
+
+
+def check_role_questions(
+    bank: QuestionBank, proposed: list[RoleQuestion], hidden: list[str]
+) -> RoleModuleCheck:
+    """The proposed questions that pass every check, as guide rows `RM1`… (at most five, in the
+    order proposed), each with the targets of the L-question it is based on; and the others with
+    the reason they were left out."""
+    kept: list[DocumentRow] = []
+    left_out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for q in proposed:
+        reason = _role_problem(q, hidden, seen)
+        if not reason and len(kept) == MAX_ROLE_QUESTIONS:
+            reason = "The module already has five questions."
+        if reason:
+            left_out.append((q.wording, reason))
+            continue
+        seen.add(_key(q.wording))
+        base = bank.question(q.based_on)
+        kept.append(DocumentRow(
+            id=f"RM{len(kept) + 1}", wording=q.wording.strip(),
+            probes=[p.strip() for p in q.probes], minutes="", movement=base.movement,
+            targets=purpose(base), priority="standard",
+        ))  # fmt: skip
+    return RoleModuleCheck(kept=kept, left_out=left_out)
+
+
+def with_role_module(
+    doc: InterviewDocument, rows: list[DocumentRow], note: str = ""
+) -> InterviewDocument:
+    """The role-module table with these questions first, then blank rows up to the template's
+    count; the module's minutes shared among its rows (the plan still adds up)."""
+    tables = []
+    for table in doc.tables:
+        if table.label.startswith(ROLE_MODULE):
+            blanks = max(0, len(table.rows) - len(rows))
+            every = [*rows, *(DocumentRow(minutes="") for _ in range(blanks))]
+            parts = [minutes_label(p) for p in share(table.minutes, [1] * len(every))]
+            every = [r.model_copy(update={"minutes": m}) for r, m in zip(every, parts, strict=True)]
+            table = table.model_copy(update={"rows": every})
+        tables.append(table)
+    return doc.model_copy(update={"tables": tables, "generation_note": note})
+
+
+# --- Editing a guide (C5c; PRD §5.4 Guide tab, F.8 rules 6 and 8) -----------------------------
+
+CONTRAST = "M6 "  # the Practice movement where the documents come in
+MAX_PROBES = 5
+OWN = re.compile(r"E\d+")  # questions Eric writes into blank rows: E1, E2, …
+
+
+def _sop_allowed(doc: InterviewDocument, table_index: int) -> bool:
+    """Claims about what the documents say: from M6 on in a Practice guide, never in a Landscape
+    guide; a Follow-up builds on them (F.8 rules 5, 7 and 8)."""
+    if doc.kind == InterviewType.FOLLOW_UP:
+        return True
+    first = next((i for i, t in enumerate(doc.tables) if t.label.startswith(CONTRAST)), None)
+    return first is not None and table_index >= first
+
+
+def _text_problem(text: str, limit: int, hidden: list[str], sop_ok: bool) -> str:
+    if "\n" in text or len(text) > limit:
+        return f"Keep it to one line of up to {limit} characters."
+    if found := wording.banned_words(text):
+        return (f"Avoid “{found[0]}”: describe what happens instead (for example an adaptation, "
+                "a workaround or a rule that no longer fits).")  # fmt: skip
+    if not sop_ok and wording.sop_claims(text):
+        return ("Keep what the documents say for M6, after the interviewee has described the work "
+                "in their own words.")  # fmt: skip
+    if grounding.scan_redaction_terms(text, hidden):
+        return "This contains a name from your list of names to hide. Use the role instead."
+    return ""
+
+
+def apply_edits(
+    doc: InterviewDocument, edit: GuideEdit, hidden: list[str]
+) -> Result[tuple[InterviewDocument, list[str]]]:
+    """The guide with Eric's wording and probes, and the IDs of the questions he changed; or the
+    first problem, naming its field. Sections, rows, IDs and minutes stay as they are."""
+
+    def invalid(field: str, message: str) -> Err:
+        return Err(ErrorKind.VALIDATION, message, {"field": field})
+
+    if [t.label for t in edit.tables] != [t.label for t in doc.tables] or any(
+        len(e.rows) != len(t.rows) for e, t in zip(edit.tables, doc.tables, strict=True)
+    ):
+        return invalid("tables", "The guide's sections and rows can't be added, moved or removed.")
+    own = max((int(r.id[1:]) for t in doc.tables for r in t.rows if OWN.fullmatch(r.id)), default=0)
+    changed: list[str] = []
+    tables = []
+    for ti, (table, edited) in enumerate(zip(doc.tables, edit.tables, strict=True)):
+        sop_ok = _sop_allowed(doc, ti)
+        rows = []
+        for ri, (row, new) in enumerate(zip(table.rows, edited.rows, strict=True)):
+            at = f"tables[{ti}].rows[{ri}]"
+            if new.id != row.id:
+                return invalid(f"{at}.id", "Questions keep their IDs.")
+            text = new.wording.strip()
+            probes = [p.strip() for p in new.probes if p.strip()]
+            held = [p.strip() for p in new.held_back if p.strip()]
+            if row.id and not OWN.fullmatch(row.id) and not text:
+                return invalid(f"{at}.wording", "A question can't be empty. Leave it in and skip "
+                               "it in the interview if it doesn't fit.")  # fmt: skip
+            if held and not row.held_back:
+                return invalid(f"{at}.held_back", "Only the probes held back for M6 go here.")
+            if len(probes) > MAX_PROBES:
+                return invalid(f"{at}.probes", f"Up to {MAX_PROBES} probes per question.")
+            if problem := _text_problem(text, MAX_QUESTION, hidden, sop_ok):
+                return invalid(f"{at}.wording", problem)
+            for pi, probe in enumerate(probes):
+                if problem := _text_problem(probe, MAX_PROBE, hidden, sop_ok):
+                    return invalid(f"{at}.probes[{pi}]", problem)
+            for probe in held:  # held back for M6, where the documents come in
+                if problem := _text_problem(probe, MAX_PROBE, hidden, True):
+                    return invalid(f"{at}.held_back", problem)
+            if (text, probes, held) == (row.wording, row.probes, row.held_back):
+                rows.append(row)
+                continue
+            update: dict[str, object] = {"wording": text, "probes": probes, "held_back": held}
+            if not text:  # an own question emptied: a blank row again
+                update |= {"id": "", "probes": [], "movement": "", "targets": [], "priority": ""}
+            elif not row.id:  # Eric's own question in a blank row
+                own += 1
+                update |= {"id": f"E{own}", "movement": "", "targets": [], "priority": "standard"}
+            changed.append(str(update.get("id") or row.id))
+            rows.append(row.model_copy(update=update))
+        tables.append(table.model_copy(update={"rows": rows}))
+    return Ok((doc.model_copy(update={"tables": tables}), changed))
+
+
+def interleave(*lists: list[FollowUp]) -> list[FollowUp]:
+    """One from each list in turn (F.8 rule 7: every kind of follow-up gets its share of the few
+    blank rows), each list in its own order; empty lists are skipped."""
+    out: list[FollowUp] = []
+    for n in range(max((len(x) for x in lists), default=0)):
+        out += [x[n] for x in lists if n < len(x)]
+    return out

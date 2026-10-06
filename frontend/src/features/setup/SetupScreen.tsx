@@ -5,10 +5,11 @@ import { useRoles } from "../../hooks/useRoles";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { RolesCard } from "./RolesCard";
+import { ConventionsCard } from "./ConventionsCard";
 import { ScopeCard } from "./ScopeCard";
 import "./setup.css";
 
-/** Setup (PRD §5.4): process scope and roles and lanes, side by side. */
+/** Setup (PRD §5.4): mapping conventions, process scope, and roles and lanes. */
 export function SetupScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
@@ -24,6 +25,7 @@ export function SetupScreen() {
         <p className="screen__intro">Describe the process and the roles involved. You can change these at any time.</p>
       </div>
       <div className="setup-grid">
+        {engagement.data && <ConventionsCard key={`conventions-${engagement.data.id}`} engagement={engagement.data} />}
         {engagement.data ? (
           <ScopeCard key={engagement.data.id} engagement={engagement.data} />
         ) : (

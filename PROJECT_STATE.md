@@ -1,11 +1,11 @@
 # Project State
-*Last updated: 2026-10-06 (session 19) — update after EVERY increment*
+*Last updated: 2026-10-06 (session 20, P4c closed) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.11, adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
 
 ## Current status
-PRD v1.11 adopted 2026-10-05 (session 18). Phases P0a–P12 were built against v1.5, with v1.10's templates, P4b, most of P4c and the P5 views added in sessions 16–17; the audit and plan below list what v1.11 still needs, core gaps first. Work is on branch `claude/charming-davinci-sck1cq` (pull requests #1–#20 merged into `main`).
+PRD v1.11 adopted 2026-10-05 (session 18); the core gaps were closed in session 19 and P4c in session 20 (tag `phase-p4c`). Phases P0a–P12 were built against v1.5, with v1.10's templates, P4b, most of P4c and the P5 views added in sessions 16–17; the audit and plan below list what v1.11 still needs, core gaps first. Work is on branch `claude/charming-davinci-sck1cq` (pull requests #1–#20 merged into `main`).
 
 ## Phases (PRD v1.11 "Build map")
 **Core** (a usable, publishable, evidence-traced map from interviews and documents): P0a · P0b · P1 · P2 · P3 · P4 · **P4b** · P5 · P6 · P7.
@@ -25,7 +25,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 | P3 AI service, grounded extraction | Done | `services/ai_service.py`, `grounding.py`, `pipeline/s1_extract.py`; `test_grounding*.py`, G6 (A.6 traps T1–T8) | 5, 6 met |
 | P4 Canonicalise, calibrate, verify, assemble | Partly | `s2_canonicalise.py`, `s3_calibrate.py`, `s3b_verify.py`, `s4_assemble.py`, `s5_questions.py`, `services/lint.py`; G1, G6 | 7–12 met; L12 warnings "work type not confirmed" and "fewer than three stories" missing |
 | P4b Translation core | Partly | `services/question_matching.py`, `prompts/codebook.md`, `marker_lexicon.json`, `pipeline/s4b_translate.py`, `services/translation.py`, `services/views.py`; `test_translation.py`, `test_acceptance_v110.py` (A.5, A.9), G2a, G2b | 51, 57, 62–67 met; rule 9 (element levels and parents) not built |
-| P4c Sensemaking and interview tools | Partly | `pipeline/s3c_sensemaking.py`, `actions/lenses.py`, `actions/coverage.py`, `pipeline/ga_internal.py` (reality gaps); `test_coverage_report.py`, `test_interview_coverage_api.py`, G8, `test_acceptance_v110.py` (A.8, A.10) | 50, 52, 53, 55, 56, 71, 72 met; 54 partly (confirm/change missing), 73 partly (not in registers/leadership/Master Map); 49, 58, 61, 68, 69, 70, 74 (in guides), 75, 76, 80 not met |
+| P4c Sensemaking and interview tools | Done (closed 2026-10-06, tag `phase-p4c`) | `pipeline/s3c_sensemaking.py`, `pipeline/ig_generate.py`, `actions/interview.py`, `actions/coverage.py`, `actions/themes.py`, `actions/validation_pack.py`, `actions/boundaries.py`, `services/interview_templates.py`, `services/boundaries.py`; Interview screen (Templates · Guide · Coverage), Setup conventions, Registers themes and lane boundaries; `test_interview_guides*.py`, `test_lane_boundaries_api.py`, `test_themes_api.py`, `test_acceptance_v110.py` (A.8, A.10), G1, G8 | 49–58, 60–72, 74–76 met (and 80); 59 and 73 partly: their remaining parts are P9 registers (Stories, Glossary, Preserve / Improve) and P11 leadership (work-type mix, Imagined vs done, Recommendation panel), planned as P9u and L1 |
 | P5 Layout and map view | Done (one approval pending) | `services/layout.py` per view, `components/map/*`, `lib/views.ts`, panel 4a–4d; G2, G2a, G2b; `views.test.tsx`, `sensemaking.test.tsx` | 13, 15–20 met; 14 waits for Eric's approval of the v4 Review candidates |
 | P6 Review workbench | Partly | `actions/review.py`, `map_edits.py`, `refresh.py`, `features/review/*`; browser smoke path | 24, 25 met; "confirm or change work type" (V3b) missing |
 | P7 Quality card, publish, exports | Partly | `services/quality.py` (Q1–Q10), `actions/publish.py`, `services/exports.py`, `export_html.py`; G3, G5 | 26, 27, 30, 32 met; 29 partly (§7.3 v1.10/v1.11 sections, View column and both views missing); Q11 (and Q12) missing |
@@ -47,12 +47,12 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] C5a — interviewee profiles (`/engagements/{id}/profiles`, `PATCH /profiles/{pid}`, contract first; roles or groups only, hidden names refused; audited) and the Interview screen **Interviewees** section (add, list, edit); screen, browser (axe) and latency checks
 - [x] G1 — tailored guides, deterministic part (criterion 80; 13 of 13 checks, pushed): `POST·GET /engagements/{id}/interview-guide`, `GET …/interview-guide/export` (Word, Markdown); F.8 rules 1, 2, 5, 7, 8 filled from the profile, scope card and latest map; `tests/services/test_interview_guides.py`, `tests/unit/test_interview_guides_api.py`, latency; two sample guides in `docs/samples/`
 - [x] G2 — Interview screen: **Make guide** per interviewee, then **Download Word** / **Download Markdown**; `GET /engagements/{id}/interview-guides`; screen tests (`interview.test.tsx` "Tailored guides"), browser check with axe and the real download (`accessibility.spec.ts`), latency; README (Everyday use) and GUIDE
-- [ ] C5b — `IG_generate` (AI, mocked): tailored Landscape / Practice / Follow-up guides with the F.3 opener, role modules and F.8 tailoring rules; checks (IDs, probes, targets, SOP claims only in M6–M7, time budget, no names, no banned words)
-- [ ] C5c — guide editor and Word / Markdown export in the F.9 layout (criteria 49, 61, 69, 80)
-- [ ] C5d — Interview screen Coverage tab and the Follow-up guide from coverage, open questions and "not described" connectors (50 UI, 68, 74)
-- [ ] C6 — validation pack (Markdown from Review; criterion 75)
-- [ ] C7 — codebook tier 2 conventions on Setup and tier 3 emerging themes (accept, rename, dismiss; criterion 58)
-- [ ] C8 — lane-boundary findings from L5, F1, F4 answers (criterion 76); landscape-level answers into rule 9 (criterion 70)
+- [x] C5b — `IG_generate` (AI, mocked): tailored Landscape / Practice / Follow-up guides with the F.3 opener, role modules and F.8 tailoring rules; checks (IDs, probes, targets, SOP claims only in M6–M7, time budget, no names, no banned words)
+- [x] C5c — guide editor and Word / Markdown export in the F.9 layout (criteria 49, 61, 69, 80)
+- [x] C5d — Interview screen Coverage tab and the Follow-up guide from coverage, open questions and "not described" connectors (50 UI, 68, 74)
+- [x] C6 — validation pack (Markdown from Review; criterion 75)
+- [x] C7 — codebook tier 2 conventions on Setup and tier 3 emerging themes (accept, rename, dismiss; criterion 58)
+- [x] C8 — lane-boundary findings from L5, F1, F4 answers (criterion 76); landscape-level answers into rule 9 (criterion 70)
 (c) Optional phases, in order
 - [ ] P9u — matrix layers SME official / SME lived; registers Stories, Glossary, Emerging themes, Preserve / Improve (59, 73)
 - [ ] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82)
@@ -77,6 +77,40 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 **Session 19 (2026-10-06).** Eric approved the v4 Review screenshots (K4), chose options A–C, and approved the K2/K3 candidates: K2 and K3 are committed with the new goldens G1, G3 and G5. Every core gap from the v1.11 audit is now closed. Next: P4c (C5b tailored guides onward), then P9 updates and P10b.
 
 **Templates focus (session 19, Eric's request):** audit of the standard interview templates: question bank, generator (F.9 layout, minute plans 60 / 60 / 30), templates endpoint, home card and Interview screen, A.9 matching with template wording, G9 (approved 2026-09-30) and the three Word samples (unchanged, still identical to what the app makes) are all done; criteria 77, 78, 79, 81 met. Missing was criterion 80 (tailored guides exported to Word and Markdown): G1 added the backend, G2 the screen; criterion 80 is now met for the deterministic guide (the AI-worded role modules come with C5b). **Resume point:** C5b (`IG_generate`: AI role-module wording on top of the G1 guide, checked with a deterministic fallback), then C5c guide editor, C5d coverage tab.
+
+## This session (2026-10-06, session 20) — goal: finish phase P4c (sensemaking and interview tools) and tag it
+Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12 of 13; the backend suite failed only on the quality-card speed test (over 200 ms inside the full run, about 98 ms alone). Fixed first (S0 below) by removing repeated work rather than calling it a fluke.
+
+**Plan (P4c, PRD §6.3; one increment ≈ 30 min; each: contract first, tests, full checks, diff review, commit, push, this file)**
+- [x] S0 — quality card faster: every source of a version read in one batch (`sources.get_many`: three queries instead of two per source) for the graph, the quality card and the story check; the HTML export's embedded fonts encoded once per file; new test in `test_versions_graph.py`
+- [x] C5b-1 — guide rows carry movement, targets and priority (F.8 rule 9; criterion 61); SOP-derived probes kept apart and marked "held back to avoid anchoring the SME"; G9 and the template files unchanged
+- [x] C5b-2 — `IG_generate` (AI, mocked; `prompts/IG_generate.md`): role-module questions for the interviewee's stakeholder group (Landscape, F.4 rule) drawn from L3–L5, naming the group's interfaces from the scope card, roles and documents; checks: every question has an ID, probes and targets, no SOP claim before M6, no banned word, no hidden name, time budget kept; any failure falls back to the deterministic guide with a plain message; `POST …/interview-guide` becomes a job (criteria 49, 61, 69)
+- [x] C5b-3 — UI: Make guide shows the job's progress and the result; screen and browser checks (done together with C5b-2 so the browser checks stay green)
+- [x] C5c-1 — `PATCH /engagements/{id}/interview-guide?profile_id=` (edited wording, probes, own questions; same checks; `edited: true`; audit row)
+- [x] C5c-2 — Interview screen tabs (Templates · Guide · Coverage, PRD §5.4); Guide tab: the movements as editable cards (ID, question, probes, targets), SOP probes parked in M6 with the note, Save, downloads
+- [x] C5d — Coverage tab: one row per dimension (covered / thin / missing glyph and count), follow-up questions, **Create Follow-up guide**, **Copy**, **Download .md** (criteria 50 UI, 68, 74)
+- [x] C6 — validation pack: `GET /versions/{vid}/validation-pack` (F.7 pack plus open validation questions, Markdown) and a Review screen download (criterion 75)
+- [x] C7a — mapping conventions (codebook tier 2): `PATCH /engagements/{id}` `conventions` (granularity, label style, phase naming, with a reason when overriding), the Setup card, and the drafting stages given the settings (criterion 58)
+- [x] C7b — emerging themes (tier 3): proposed by S3c from story fragments (AI, mocked, checked), `GET /engagements/{id}/themes`, `PATCH /themes/{tid}` (accept, rename, dismiss), Registers "Emerging themes" (criterion 58)
+- [x] C8 — lane-boundary findings from L5, F1, F4 answers (one Responsible, shared delivery noted; criterion 76): `GET /versions/{vid}/lane-boundaries` (`services/boundaries.py`, `actions/boundaries.py`), Registers **Lane boundaries**, F4/F1 rows in the Follow-up guide (rule 7); criterion 70 checked on the A.10 fixture (`test_acceptance_v110.py`); Follow-up sample regenerated
+- [x] C9 — close P4c: acceptance check of criteria 49–76 (table below), G1 and G8 green in the full run, GUIDE.md, tag `phase-p4c`
+
+**P4c acceptance check (C9, 2026-10-06; full `./run_checks.sh` 13 of 13 on 315da09, G1 and G8 unchanged and green)**
+| Criteria | Result | Evidence |
+|---|---|---|
+| 49, 61, 69, 80 | Met | Interview screen Guide tab (edit, SOP probes held back to M6 with the note, Word / Markdown); `IG_generate` checks RM1–RM5; profiles; `test_interview_guides.py`, `test_interview_guides_api.py`, `interview.test.tsx` |
+| 50, 68, 74 | Met | Coverage tab, Create Follow-up guide (rule 7: F2 quotes, gaps, F6, F5, lane boundaries); `test_interview_coverage_api.py`, `test_a_follow_up_guide_plays_back_the_sme_s_words` |
+| 51–53, 55–57, 62–67, 71, 72 | Met | P4b/C1–C4: `test_translation.py`, `test_acceptance_v110.py` (A.5, A.8, A.9, A.10), G2a, G2b, G8 |
+| 54 | Met | K1 `PUT /elements/{eid}/work-type`, panel 4a Confirm / Change |
+| 58 | Met | C7a Setup conventions, C7b emerging themes, codebook stamp (B1) |
+| 60 | Met | banned-words scan of UI strings, prompts and exports (D1) |
+| 70 | Met | crafted nesting case `test_levels.py` (Decision C) and the A.10 check `test_a10_landscape_answers_join_practice_steps_without_duplication` |
+| 75 | Met | C6 `GET /versions/{vid}/validation-pack`, Review download |
+| 76 | Met | C8 `GET /versions/{vid}/lane-boundaries`, Registers Lane boundaries |
+| 59 | Partly | Work type lens, panel sections and the Emerging themes register done; Stories and Glossary registers → P9u; leadership work-type mix and Imagined vs done → L1 |
+| 73 | Partly | capability notes captured by dimension and in the Master Process Map (K3); Preserve / Improve register → P9u; leadership Recommendation panel → L1 |
+
+**End of session 20 (2026-10-06).** Built and pushed: G1–G2 (tailored guides), S0, C5b–C5d, C6, C7a–b, C8, C9; every commit passed 13 of 13 checks before it was pushed. P4c is closed and tagged `phase-p4c`. No visual baseline changed. **Resume point:** the optional phases in order: P9u (matrix layers SME official / lived; registers Stories, Glossary, Preserve / Improve; finishes criteria 59 and 73 with L1), then P10b (R1 data request template onward), L1 (leadership update), P12 (live run with Eric's key, v1.0.0).
 
 **Mock regression pass (2026-10-06, Eric's request):** full `./run_checks.sh` on cfc68bc: 12 of 13 (1,321 backend tests incl. G1–G9 and the A.5/A.8/A.9/A.10 end-to-end proof, 480 screen tests, 15 browser tests with axe and the privacy scan); the only failure is the Review visual baseline awaiting Eric's approval (about 1% of pixels differ). A route probe found every API call the screens make has a backend route; backend routes with no screen yet: line editing (add/change/remove a line), `PUT …/raci` (the edit form sends RACI with the step), coverage, glossary and capability notes (planned Interview and Registers screens).
 

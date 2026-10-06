@@ -140,8 +140,11 @@ def blocks_for(
     steps: list[StepRef],
     refs: list[ClaimRef],
     linked: dict[str, list[str]],
+    conventions: str = "",
 ) -> list[dict[str, object]]:
-    return [{"type": "text", "text": render(trigger, end_point, roles, steps, refs, linked)}]
+    """The data sent; Eric's mapping conventions first when he changed them (C7a)."""
+    text = render(trigger, end_point, roles, steps, refs, linked)
+    return [{"type": "text", "text": f"{conventions}\n{text}" if conventions else text}]
 
 
 def _role_id(name: str, roles: list[RoleView]) -> str | None:
@@ -286,11 +289,12 @@ def assemble(
             pass
     trigger = redaction.hide(engagement.trigger, terms)
     end_point = redaction.hide(engagement.end_point, terms)
+    conventions = prompts.render_conventions(engagement.conventions.model_dump())
     call = ai_service.StageCall(
         stage_id=STAGE_ID,
         prompt_version=prompt.version,
         system=prompt.text,
-        blocks=blocks_for(trigger, end_point, roles, steps, refs, linked),
+        blocks=blocks_for(trigger, end_point, roles, steps, refs, linked, conventions),
         output_model=ai_schemas.S4Output,
         model=ctx.model,
         repair_prompt=repair.text,

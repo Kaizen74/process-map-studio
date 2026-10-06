@@ -53,7 +53,17 @@ export interface ModelUpdate {
   verifier_enabled: boolean;
 }
 
+/** Codebook tier 2 settings Eric chooses per engagement (PRD Appendix E, §5.4 Setup; C7a). */
+export interface MappingConventions {
+  granularity: "coarse" | "standard" | "fine";
+  label_style: "standard" | "sme";
+  phase_naming: "sme" | "standard";
+}
+
+export const DEFAULT_CONVENTIONS: MappingConventions = { granularity: "standard", label_style: "standard", phase_naming: "sme" };
+
 export interface ScopeFields {
+  conventions?: MappingConventions;
   name?: string;
   process_name?: string;
   trigger?: string;
@@ -78,6 +88,8 @@ export interface Engagement {
   industry: string;
   adjacent_industries: string[];
   confidential_terms: string[];
+  /** Absent from engagements saved before C7a: the defaults apply. */
+  conventions?: MappingConventions;
   status: string;
   created_at: string;
   updated_at: string;
@@ -231,7 +243,7 @@ export interface JobStage {
 export interface Job {
   id: string;
   engagement_id: string | null;
-  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external";
+  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external" | "interview_guide";
   target_id: string | null;
   status: JobStatus;
   stage: string;

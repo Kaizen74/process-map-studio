@@ -119,6 +119,7 @@ An engagement is one process being mapped. Deleting it removes all its rows **an
  "in_scope_roles": ["Load controller", "Ramp"], "out_of_scope": "Fuelling",
  "process_kpi": "Load sheet issued by T-10", "industry": "Aviation ground handling",
  "adjacent_industries": ["Air cargo"], "confidential_terms": ["Acme Ground Services"],
+ "conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"},
  "status": "active", "created_at": "2026-09-26T09:00:00+00:00", "updated_at": "…"}
 ```
 Rules: `name` 1–120 characters (required). Text fields up to 2,000 characters. List fields (`in_scope_roles`, `adjacent_industries`, `confidential_terms`): up to 50 items, each 1–120 characters, duplicates (ignoring case) removed, no line breaks. `confidential_terms` are company, client, site and system names that must never be sent to web research (PRD §3.11); they are **not** redacted from the app or internal exports.
@@ -135,6 +136,7 @@ Used by: Home engagement cards.
 
 ### GET /api/engagements/{id} · PATCH /api/engagements/{id} · DELETE /api/engagements/{id}
 GET → `200` engagement object. PATCH → any scope fields (same rules) → `200` engagement object. DELETE → `204`, removes rows and files.
+**Mapping conventions** (C7a, 2026-10-06; PRD Appendix E tier 2, §5.4 Setup, criterion 58): the engagement object also has `"conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"}` (these defaults until Eric sets them). `granularity`: `coarse` (8–12 steps) · `standard` (12–20) · `fine` (20–25); `label_style`: `standard` (verb + object, at most 5 words) · `sme` (the SME's own everyday name for the step, where there is one; added to the glossary with a plain meaning); `phase_naming`: `sme` · `standard`. PATCH sends the whole `conventions` object (`422` naming `conventions.<field>` for an unknown value); a change writes the "Edited process scope" audit row. They take effect at the next draft or refresh: S2 (canonicalise) and S4 (assemble) receive `<conventions granularity="…" label_style="…" phase_naming="…"/>` with their data when any setting differs from the defaults (with the defaults nothing extra is sent: the codebook already states them), and follow them, departing only with a stated reason.
 Errors: `404 NOT_FOUND` ("That engagement doesn't exist. It may have been deleted."); `422 VALIDATION`.
 Used by: Setup screen (scope card), Home (delete, from P1 UI), top bar (engagement name).
 
@@ -294,15 +296,17 @@ A guide for one interviewee profile, in the same F.9 layout as the standard temp
               "header_fields": ["Engagement / process", …], "header_values": {"Engagement / process": "Load control", …},
               "record": "…", "opener": ["…"], … the InterviewDocument of the templates …}}
 ```
+Each question row of `document.tables[].rows[]`: `{"id", "lead_in", "wording", "note", "probes", "minutes", "signifier", "movement", "targets", "priority", "held_back"}` (C5b-1, F.8 rule 9): `movement`, `targets` (what the question is for: the bank's targets, or its translation for the F-series and the framing line) and `priority` (`core` · `standard`) come from the bank and are not printed in the files; `held_back` holds the SOP-derived probes of M6.5 (rule 5), printed after the bank's probes and shown by the editor as "held back to avoid anchoring the SME". Rows the interviewer fills in have an empty `id`.
 
 ### POST /api/engagements/{id}/interview-guide
-Request: `{"profile_id": "…"}`. Makes a new version of that profile's guide (version 1, 2, …). Response `201`: the guide. What is filled in (F.8):
+Request: `{"profile_id": "…"}`. Since C5b (2026-10-06) a background job (was a synchronous `201` in G1): response `202` `{"job_id": "…", "profile_id": "…"}`; follow it with `GET /api/jobs/{job_id}` (type `interview_guide`, stages `gather` "Reading the scope, roles and map" · `generate` "Drafting role-module questions" · `check` "Checking every question" · `save` "Saving the guide"; `usage` like the gap-analysis jobs). When it is `done` the new version (1, 2, …) is what `GET …/interview-guide?profile_id=` returns and the job `message` says what was made. What is filled in (F.8):
 - **Rule 1** the interview type is the profile's; title "<Type> interview guide: <role · group>".
-- **Rule 2** header values: Engagement / process (process name), Interviewee role, Stakeholder group, Referred by (role); Date, Interviewer and Recording consent stay blank. Opener brackets: `[end-to-end scope …]` → "<process> process, from <trigger> to <end point>" (the opener already says "the") (what the scope card has), `[business]` → the engagement name, `[area]` → the stakeholder group (else the role), `[referrer role]` → Referred by; a bracket with nothing to fill stays as it is.
-- **Rule 5** (Practice): M6.5 gets one probe per step of the engagement's latest map that only the documents describe ("The procedure mentions “<step>”. Where does that happen in practice?"), at most five, in process order; none before a draft exists. They appear only in M6 (no SOP claims before M6).
-- **Rule 7** (Follow-up): the blank reflective-probe rows are filled, in order, with the latest map's F2 probes from the coverage report, then its open validation questions (F6), then its "not described" questions (F5), as many as there are blank rows; `[topics]` in the opener → the dimensions the latest map's coverage report shows as covered, when the profile names an earlier interview (profiles are not linked to sources, so the map's report stands for what earlier interviews covered).
+- **Rule 2** header values: Engagement / process (process name), Interviewee role, Stakeholder group, Referred by (role); Date, Interviewer and Recording consent stay blank. Opener brackets: `[end-to-end scope …]` → "<process> process, from <trigger> to <end point>" (the opener already says "the"), `[business]` → the engagement name, `[area]` → the stakeholder group (else the role), `[referrer role]` → Referred by; a bracket with nothing to fill stays as it is.
+- **Rule 3** (Landscape, AI, `IG_generate`): the role-module rows get 3–5 questions for the interviewee's stakeholder group (else role), each based on L3, L4 or L5 and naming that group's interfaces from the scope card, the roles and the latest map's handoffs (names hidden before sending). Each is checked by the app: based on L3–L5; one line ending with "?"; 1–3 one-line probes; no banned (blaming) word, no claim about what the documents say, no name on the hidden-names list (wording and probes); no repeats. Kept questions get IDs `RM1`… in order, the targets of the L-question they are based on, movement `L`, priority `standard`, and the module's 8 minutes shared among them (the plan still sums to 60). Fewer than four kept → the rest stay blank rows. No key, Anthropic unreachable, an answer in the wrong format twice, or no question passing → the rows stay blank and `document.generation_note` says why in plain words; the guide is still made (the job is `done`). Nothing else in the guide comes from the AI.
+- **Rule 5** (Practice): M6.5 gets one probe per step of the engagement's latest map that only the documents describe ("The procedure mentions “<step>”. Where does that happen in practice?"), at most five, in process order, in the row's `held_back` list; none before a draft exists. They appear only in M6 (no SOP claims before M6).
+- **Rule 7** (Follow-up; criterion 68, changed in C5d 2026-10-06): the blank reflective-probe rows are filled taking one question in turn from each of four lists, until the rows are full: the latest map's F2 probes (the SME's own words), its coverage report's follow-up questions for thin or missing dimensions (their bank ID and wording; the step they are about, if any, as the row's note "about <step>"), its open validation questions (F6), its "not described" questions (F5) and its lane-boundary findings (F4 or F1, C8), each list in its own order; an empty list is skipped; `[topics]` in the opener → the dimensions the latest map's coverage report shows as covered, when the profile names an earlier interview (profiles are not linked to sources, so the map's report stands for what earlier interviews covered).
 - **Rule 8**: nothing with a banned (blaming) word or a name on the hidden-names list is filled in (left as the bracket or the blank row). Minutes and question IDs are those of the standard template (rule 6, F.9 plan).
-Audit row "Made interview guide". Errors: `404` (engagement), `422` (`details.field: "profile_id"`, a profile of another engagement or none).
+Audit row "Made interview guide" (after: profile_id, version, interview_type, role_module: `drafted` · `left blank` · `not asked`). Errors on the POST: `404` (engagement), `422` (`details.field: "profile_id"`, a profile of another engagement or none). A failed job (`status: failed`, `error` in plain words) makes no version.
 
 ### GET /api/engagements/{id}/interview-guides
 Each interviewee's latest guide, without its content (the Interviewees list, G2): `[{"id", "profile_id", "interview_type", "version", "created_at"}]`, in the order the guides were first made. `404` (engagement).
@@ -310,8 +314,21 @@ Each interviewee's latest guide, without its content (the Interviewees list, G2)
 ### GET /api/engagements/{id}/interview-guide?profile_id=
 The latest version. `404` "No guide yet for this interviewee." when none.
 
+### PATCH /api/engagements/{id}/interview-guide?profile_id= (C5c, 2026-10-06)
+Eric's edits to the latest version, saved in place (`edited: true`; "Make new version" later starts again from the template and keeps this one as it is). Request: every section in order with every row in order, each row `{"id", "wording", "probes", "held_back"}`:
+```json
+{"tables": [{"label": "M0 — Framing", "rows": [{"id": "M0.1", "wording": "…", "probes": [], "held_back": []}, …]}, …]}
+```
+Rules (the first problem is refused with `422` naming the field, e.g. `details.field: "tables[3].rows[2].wording"`):
+- Sections and rows can't be added, moved or removed (`tables`); minutes are not editable, so the minute plan still sums to the type's total.
+- A question keeps its ID (`…id`) and can't be emptied (`…wording`), except Eric's own questions.
+- A blank row with wording becomes Eric's own question `E1`, `E2`, … (no targets); emptying an own question makes the row blank again.
+- One line each: wording up to 300 characters, at most 5 probes of up to 200; `held_back` only on rows that had held-back probes (M6.5).
+- No banned (blaming) word; no name on the hidden-names list; no claim about what the documents say before M6 in a Practice guide or anywhere in a Landscape guide (a Follow-up may).
+Response `200`: the guide. Audit row "Edited interview guide" (after: version, the IDs of the questions changed); nothing changed → no row. Errors `404` (engagement, or no guide yet).
+
 ### GET /api/engagements/{id}/interview-guide/export?profile_id=&format=docx|md
-The latest version as a file, in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
+The latest version as a file (`document.generation_note` is not printed), in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
 Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** / **Download Markdown** (G2).
 
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
@@ -877,6 +894,32 @@ What the interviews covered and what still needs asking (2026-10-01, C4, PRD §3
 - `follow_up_questions`: for each `thin` or `missing` dimension, the question bank's question for it, word for word, with its ID (trigger M2.1 · end point M2.5 · step spine M2.2 · hand-offs M3.3 · decisions M4.3 · approvals M7.2 · exceptions M2.6 · RACI M4.4 · time M2.4 · KPIs M7.1 · artefacts M7.4 · know-how M4.8 · official vs lived M6.2 · SME terms M0.2); for `know_how` one per decision without know-how and for `stories` one per kind not yet told (M5.1 went well · M5.2 went badly · M5.3 surprise). `about`: the step (or, for the step spine, the lines) it is about, or `""`. In dimension order. These feed the Follow-up guide (C5).
 - `probes` (2026-10-01, C4c, Appendix F F2, A.10): reflective probes that quote an SME back to themself, `[{"question_id": "F2", "question": "You mentioned previously that “The weakness is the paper loading report; it gets lost or arrives late”. How do you manage that today, and where do you see the biggest risk?", "quote", "source_id", "anchor", "speaker_role"}]`. One per distinct verified interview quote that carries a constraint, a weakness or a stated reason, word for word as S1 checked it (only a final full stop or semicolon is dropped where it meets the bank's wording), at most 20 words: a longer quote is left out, never cut, unless it carries a stated reason, which is then played back instead (S1 found it word for word), names hidden, in the order the interviews were read. `source_id` and `speaker_role` say whom to ask.
 Errors: `404` ("That version doesn't exist."). Used by: the Interview screen (coverage) and the Follow-up guide (C5).
+
+### GET /api/versions/{vid}/lane-boundaries (C8, 2026-10-06; PRD F.4 L5, F.6 F1 and F4, criterion 76)
+Where the interviews describe teams' activities overlapping or falling between them, per step of the map (deterministic, names hidden, never changes the map): `[{"element_id", "label", "kind": "shared_delivery" | "gap" | "boundary", "responsible", "consulted": [], "note", "question_ids": []}]`, in process order.
+- `responsible` is the step's lane role, the one Responsible the map keeps (constraint 5); `consulted` the other roles the step's checked claims name as doing the work (aliases resolved to the role).
+- `gap`: a claim answering L5 or F1 says the activity falls between teams ("nobody", "no one", "neither", "falls between", "not clear who", "no owner"); `shared_delivery`: the claims name more than one role doing the work; `boundary`: a claim answers L5, F1 or F4 without either.
+- `note`: plain words, e.g. "Shared delivery: Ramp also take part. One Responsible (Load controller), the others Consulted; confirm with the teams."
+These findings also feed the Follow-up guide (rule 7, one more list in the turn: F4 "On “<step>”, how does your team work with <role>? It sounds like both show up together." for shared delivery; F1 "Going back to where we left off, could you help me separate the activities managed by <role> versus <role>?" otherwise; "your team" is the interviewee's and the other role is the first of the step's Responsible and Consulted roles that isn't the interviewee's). Errors `404`. Used by: Registers, **Lane boundaries** (C8).
+
+### Emerging themes (C7b, 2026-10-06; PRD Appendix E tier 3, §3.12.9 rule 3, criterion 58)
+Patterns across the interviews' stories that fit no existing category, proposed by S3c (task 3 of `S3c_worktype` v2) and checked by the app before they are kept: a short plain name (one line, up to 80 characters), at least **two different stories** behind it, a one-sentence basis, no banned (blaming) word and no name on the hidden-names list; a theme with the same name as one already there is not proposed again. Proposed themes are replaced at each draft or refresh of that version; themes Eric accepted, renamed or dismissed are never touched by a re-run (constraint 8). They never change the map.
+
+#### GET /api/engagements/{id}/themes
+`[{"id", "version_id", "theme", "basis", "status": "proposed" | "accepted" | "dismissed", "note", "fragments": [{"claim_id", "text", "quote", "fragment_type", "source_id", "anchor"}], "created_at"}]`: the proposed themes of the current map (draft, else latest published) and every theme Eric has decided, oldest first; names hidden. `404` (engagement).
+
+#### PATCH /api/themes/{tid}
+`{"status": "accepted" | "dismissed" | "proposed", "theme"?: "new name", "note"?: "…"}`. Accept (optionally renamed), dismiss, or put back to proposed. A new name follows the same rules as a proposed one (`422`, `details.field: "theme"`); `note` up to 500 characters on one line. Response `200`: the theme; audit row "Accepted emerging theme" / "Dismissed emerging theme" / "Renamed emerging theme" / "Reopened emerging theme" with before and after. Errors `404`, `422` (`details.field`).
+Used by: Registers, **Emerging themes** (C7b).
+
+### GET /api/versions/{vid}/validation-pack (C6, 2026-10-06; PRD Appendix F.7, criterion 75)
+The validation session pack as a Markdown file (`text/markdown; charset=utf-8`, `Content-Disposition: attachment; filename="validation-pack-v0.1.md"`), for a session with the SME alongside the draft map. Deterministic; nothing is sent to Claude; names hidden; no banned words. In this order:
+1. **Walk the As done view**: "Is this how it actually happens?", then the As done view's steps in process order with their lane role, and its "not described" gaps ("Between "A" and "B": not described").
+2. **Dissent round, then assent round**: the two F.7 questions.
+3. **Contrast without evaluation**: up to three steps where the views differ — a step whose owner, threshold, time or trigger differs between the views first, then steps only the documents describe, then steps only the interviews describe — each with "As done: …" and "As documented: …" side by side and "What do you make of the difference?"; if none, the pack says so.
+4. **Preserve / improve check**: the interviews' strengths ("Of these strengths, which must we keep?") and weaknesses ("Of these weaknesses, which matter most?") from the capability notes; if none, the two open questions instead.
+5. **Open validation questions**: the version's open questions, each with the step it is about.
+A footer: "Process Map Studio · <process> <version label> · enter the outcomes as edits on the Review screen". Errors: `404` ("That version doesn't exist."). Used by: Review screen, **Download validation pack** (C6).
 
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).

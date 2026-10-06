@@ -494,6 +494,33 @@ class S3cLink(BaseModel):
     step_refs: list[str]
 
 
+class S3cTheme(BaseModel):
+    """An emerging theme (Appendix E tier 3): a pattern across stories that fits no category."""
+
+    theme: str = Field(description="A short plain name, at most 8 words")
+    item_refs: list[str] = Field(description="The story items it rests on: at least two")
+    basis: str = Field(description="What the stories have in common, in one sentence")
+
+
 class S3cOutput(BaseModel):
     work_types: list[S3cWorkType]
     links: list[S3cLink]
+    themes: list[S3cTheme] = []
+
+
+# --- IG_generate (PRD §3.12.8, Appendix F.4 role modules, F.8 rule 3; C5b) ----------------------
+
+
+class IGQuestion(BaseModel):
+    """One role-module question for the interviewee's stakeholder group."""
+
+    based_on: Literal["L3", "L4", "L5"] = Field(
+        description="The landscape question it adapts: L3 interfaces, L4 decision rights, "
+        "L5 boundaries"
+    )
+    wording: str = Field(description="What the interviewer says: one plain question ending in ?")
+    probes: list[str] = Field(description="One to three short follow-up probes")
+
+
+class IGOutput(BaseModel):
+    questions: list[IGQuestion] = Field(description="Three to five questions")

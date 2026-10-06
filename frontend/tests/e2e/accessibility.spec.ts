@@ -57,7 +57,8 @@ test.describe("accessibility and offline assets", () => {
       await page.goto(`/engagements/${id}/interview`);
       await expect(page.getByRole("region", { name: "Practice (60 min)" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
-      // C5a: an interviewee is added by stakeholder group (roles only, never a name).
+      // C5a: an interviewee is added by stakeholder group (roles only, never a name), on the Guide tab.
+      await page.getByRole("tab", { name: "Guide" }).click();
       const interviewees = page.getByRole("region", { name: "Interviewees" });
       await interviewees.getByRole("button", { name: "Add interviewee" }).click();
       const profileForm = interviewees.getByRole("form", { name: "Add interviewee" });
@@ -73,6 +74,17 @@ test.describe("accessibility and offline assets", () => {
       const file = await request.get((await word.getAttribute("href")) ?? "");
       expect(file.status()).toBe(200);
       expect(file.headers()["content-disposition"]).toContain("interview-guide-");
+      expect(await seriousViolations(page)).toEqual([]);
+      // C5c: the guide opens as editable cards and saves.
+      await interviewees.getByRole("button", { name: "Edit guide for Ramp" }).click();
+      const editor = page.getByRole("form", { name: /^Edit .*interview guide/ });
+      await editor.getByRole("textbox", { name: "Question M2.2" }).fill("Walk me through the last case you handled, step by step.");
+      expect(await seriousViolations(page)).toEqual([]);
+      await editor.getByRole("button", { name: "Save guide" }).click();
+      await expect(editor.getByRole("status")).toHaveText("Saved.");
+      // C5d: the Coverage tab (no draft yet: it says when the report appears).
+      await page.getByRole("tab", { name: "Coverage" }).click();
+      await expect(page.getByText(/The coverage report appears after the first draft/)).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
 
       const upload = await request.post(`/api/engagements/${id}/sources`, {

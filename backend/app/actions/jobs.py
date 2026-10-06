@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import draft, gap, sources
+from app.actions import draft, gap, interview, sources
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
@@ -37,7 +37,7 @@ def get_job(sessions: Sessions, job_id: str) -> Result[JobView]:
         job = repo.get(session, job_id)
         if job is None:
             return Err(ErrorKind.NOT_FOUND, JOB_MISSING)
-        if job.type in gap.GAP_JOBS:
+        if job.type in (*gap.GAP_JOBS, interview.GUIDE_JOB):
             return Ok(job.model_copy(update={"usage": ai_calls.usage_for_job(session, job.id)}))
         return Ok(draft.with_progress(session, job))
 
@@ -97,6 +97,15 @@ def _run_gap(config: AppConfig, sessions: Sessions, job: JobView) -> None:
                 repo.update(session, job.id, status="failed", error=message)
 
 
+def _run_guide(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = interview.run_guide(config, sessions, job.id)
+    except Exception as exc:  # nothing is saved before the guide is complete
+        log.exception("Interview guide job %s failed", job.id)
+        result = Err(ErrorKind.IO, interview.GUIDE_FAILED, {"type": type(exc).__name__})
+    _finish(sessions, job.id, result)
+
+
 def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
     """Run one job and record how it went. Jobs already finished are left alone."""
     with session_scope(sessions) as session:
@@ -111,6 +120,8 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         _run_draft(config, sessions, job)
     elif job.type in gap.GAP_JOBS:
         _run_gap(config, sessions, job)
+    elif job.type == interview.GUIDE_JOB:
+        _run_guide(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
 

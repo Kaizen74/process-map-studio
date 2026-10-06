@@ -144,3 +144,118 @@ class CoverageReport(BaseModel):
     dimensions: dict[str, CoverageDimension]
     follow_up_questions: list[FollowUpQuestion]
     probes: list[ReflectiveProbe] = []
+
+
+# --- Validation session pack (Appendix F.7, criterion 75; C6) ----------------------------------
+
+
+class PackStep(BaseModel):
+    label: str
+    role: str = ""
+
+
+class PackContrast(BaseModel):
+    """One step whose As done and As documented accounts differ, side by side, unjudged."""
+
+    step: str
+    done: str
+    documented: str
+
+
+class ValidationPackInput(BaseModel):
+    """What the pack is made of, names already hidden by the caller."""
+
+    process: str
+    version_label: str
+    steps: list[PackStep] = []  # the As done view, in process order
+    gaps: list[tuple[str, str]] = []  # "not described" between these two steps
+    contrasts: list[PackContrast] = []
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+    questions: list[tuple[str, str]] = []  # (the step it is about, or "", the question)
+    stamp: str = ""
+
+
+# --- Emerging themes (Appendix E tier 3, criterion 58; C7b) ----------------------------------
+
+
+class ThemeFragment(BaseModel):
+    claim_id: str
+    text: str
+    quote: str
+    fragment_type: str
+    source_id: str
+    anchor: str
+
+
+class ThemeView(BaseModel):
+    id: str
+    version_id: str | None
+    theme: str
+    basis: str
+    status: str  # proposed · accepted · dismissed
+    note: str
+    fragments: list[ThemeFragment]
+    created_at: str
+
+
+class ThemeRecord(BaseModel):
+    """A stored emerging theme (what the repository returns)."""
+
+    model_config = {"from_attributes": True}
+
+    id: str
+    engagement_id: str
+    version_id: str | None
+    theme: str
+    fragment_ids: list[str]
+    basis: str
+    status: str
+    note: str
+    created_at: str
+
+
+class ThemeProposal(BaseModel):
+    """A theme as S3c proposed it, before the app's checks: its name, the story claims behind
+    it and the basis."""
+
+    theme: str
+    claim_ids: list[str]
+    basis: str
+
+
+class ThemePatch(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    status: str
+    theme: str | None = None
+    note: str | None = None
+
+
+class BoundaryClaim(BaseModel):
+    """One checked claim behind a step, as the lane-boundary check reads it (C8): the guide
+    question its passage answers, the role it names as doing the work, its words (names hidden)."""
+
+    question_id: str = ""
+    responsible: str = ""
+    text: str = ""
+
+
+class BoundaryStep(BaseModel):
+    element_id: str
+    label: str
+    lane_role: str
+    claims: list[BoundaryClaim]
+
+
+class LaneBoundaryFinding(BaseModel):
+    """Where the interviews describe teams' activities overlapping or falling between them
+    (PRD F.4 L5, F.6 F1 and F4, criterion 76). Advisory: never changes the map."""
+
+    element_id: str
+    label: str
+    kind: Literal["shared_delivery", "gap", "boundary"]
+    responsible: str
+    consulted: list[str]
+    note: str
+    question_ids: list[str]

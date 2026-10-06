@@ -140,7 +140,8 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     guide = client.post(
         f"/api/engagements/{built.engagement_id}/interview-guide", json={"profile_id": interviewee}
     )
-    assert guide.status_code == 201, guide.text
+    assert guide.status_code == 202, guide.text
+    wait_for_jobs(client)
     return client, ids | {
         "sample_eid": built.engagement_id,
         "interviewee": interviewee,
@@ -218,7 +219,10 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/glossary", None),
     ("GET", "/api/versions/{map}/capability-notes", None),
     ("GET", "/api/versions/{map}/coverage", None),
+    ("GET", "/api/versions/{map}/validation-pack", None),
+    ("GET", "/api/versions/{map}/lane-boundaries", None),
     ("GET", "/api/engagements/{eid}/cause-library", None),
+    ("GET", "/api/engagements/{sample_eid}/themes", None),
     ("GET", "/api/versions/{map}/gap-analyses", None),
     ("GET", "/api/gap-analyses/{gap}", None),
     ("GET", "/api/versions/{published}/leadership", None),
@@ -258,8 +262,7 @@ def test_endpoint_p95_under_budget(loaded: Loaded, method: str, path: str, body:
 
 @pytest.mark.parametrize("interview_type", ["practice", "follow_up"])
 def test_making_a_guide_p95_under_budget(loaded: Loaded, interview_type: str) -> None:
-    """Making a tailored guide reads the profile, the scope card and the map (G1); each call is a
-    new version, so this answers 201."""
+    """Asking for a tailored guide queues a job (C5b); the job itself runs in the background."""
     client, ids = loaded
     url = f"/api/engagements/{ids['sample_eid']}"
     body = {"stakeholder_group": "Ramp", "interview_type": interview_type}
@@ -267,11 +270,31 @@ def test_making_a_guide_p95_under_budget(loaded: Loaded, interview_type: str) ->
 
     def call() -> None:
         response = client.post(f"{url}/interview-guide", json={"profile_id": pid})
-        assert response.status_code == 201, response.text
+        assert response.status_code == 202, response.text
 
     p95 = p95_ms(call)
     print(f"\nPOST interview-guide ({interview_type}): p95 {p95:.1f} ms")  # shown with pytest -s
+    wait_for_jobs(client)
     assert p95 < BUDGET_MS, f"POST interview-guide: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
+def test_editing_a_guide_p95_under_budget(loaded: Loaded) -> None:
+    """Saving Eric's edits checks every question of the guide (C5c)."""
+    client, ids = loaded
+    url = f"/api/engagements/{ids['sample_eid']}/interview-guide?profile_id={ids['interviewee']}"
+    doc = client.get(url).json()["document"]
+    body = {"tables": [{"label": t["label"], "rows": [
+        {k: r[k] for k in ("id", "wording", "probes", "held_back")} for r in t["rows"]]}
+        for t in doc["tables"]]}  # fmt: skip
+    body["tables"][2]["rows"][0]["wording"] += " (edited)"
+
+    def call() -> None:
+        response = client.patch(url, json=body)
+        assert response.status_code == 200, response.text
+
+    p95 = p95_ms(call)
+    print(f"\nPATCH interview-guide: p95 {p95:.1f} ms")  # shown with pytest -s
+    assert p95 < BUDGET_MS, f"PATCH interview-guide: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
 
 
 @pytest.mark.parametrize("name", ["sop_LC-07.docx", "manual_extract.pdf"])
