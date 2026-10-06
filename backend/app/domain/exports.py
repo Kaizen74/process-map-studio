@@ -45,6 +45,47 @@ class ExportGapReport(BaseModel):
     accepted: list[str]  # titles of findings added as a question, cause or step
 
 
+class ExportStory(BaseModel):
+    """A story fragment as the SME labelled it (§7.3 section 1): never the verbatim quote."""
+
+    label: str
+    fragment_type: str  # B.31
+    steps: list[str]
+    where: str  # "<source name> <anchor>"
+
+
+class ExportCapability(BaseModel):
+    """A strength to preserve or a weakness to improve, by capability dimension (B.36)."""
+
+    kind: str  # strength · weakness
+    dimension: str
+    text: str
+    steps: list[str]
+
+
+class ExportTerm(BaseModel):
+    term: str
+    plain_meaning: str
+    steps: list[str]
+
+
+class ExportKnowHow(BaseModel):
+    """One line per decision point (§7.3 section 2): knowledge risk and the dominant ASHEN
+    category (the one with most items; "none described" when every category is empty)."""
+
+    element_id: str
+    knowledge_risk: str
+    dominant: str
+
+
+class ExportRealityGap(BaseModel):
+    """A reality-gap finding of a finalised documents-vs-practice analysis (§3.12.7)."""
+
+    gap_class: str  # B.32 (unexplained when no reason was stated)
+    title: str
+    stated_reason: str
+
+
 class ExportInput(BaseModel):
     graph: Graph
     sources: list[SourceEntry]
@@ -59,3 +100,15 @@ class ExportInput(BaseModel):
     #: Pending cause-library entries for the map's steps, and finalised gap reports (phase P10).
     causes: list[ExportCause] = []
     gap_reports: list[ExportGapReport] = []
+    # PRD v1.10-1.11 §7.3 (K3, 2026-10-06): the sensemaking content, both views and the optional
+    # modules. Graphs per view ("done", "documented") carry their own lines and "not described"
+    # connectors; empty for maps drafted before v1.10.
+    view_graphs: dict[str, Graph] = {}
+    stories: list[ExportStory] = []
+    capabilities: list[ExportCapability] = []
+    glossary: list[ExportTerm] = []
+    know_how: list[ExportKnowHow] = []
+    reality_gaps: list[ExportRealityGap] = []
+    #: Optional modules in use (§3.13-3.15; decision A: off until Eric turns them on in P10b).
+    value_calculator_on: bool = False
+    system_records_on: bool = False

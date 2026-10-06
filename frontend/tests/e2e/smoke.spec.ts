@@ -513,8 +513,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     });
     offline.on("pageerror", (e) => errors.push(String(e)));
     await offline.setContent(files.html ?? "", { waitUntil: "load" });
-    await expect(offline.getByRole("group", { name: "Swimlane map" })).toBeVisible();
-    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).click();
+    // K3 (2026-10-06): both views are published together, so the file draws two maps.
+    await expect(offline.getByRole("group", { name: "Swimlane map" })).toHaveCount(2);
+    await expect(offline.getByRole("heading", { name: "Map as done: the work as actually performed" })).toBeVisible();
+    await expect(offline.getByRole("heading", { name: "Map as documented: the documents' version" })).toBeVisible();
+    await offline.getByRole("link", { name: /^Activity, Draft load plan/ }).first().click();
     await expect(offline.locator(".step:target")).toContainText("Draft load plan");
     expect(requests, "the HTML map asked for something outside itself").toEqual([]);
     expect(errors, "the HTML map logged errors").toEqual([]);

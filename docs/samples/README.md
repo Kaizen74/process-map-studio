@@ -12,3 +12,17 @@ In the app they download from the home screen (**Interview templates**) and from
 **Interview** screen, in Word or Markdown. They are made from
 `backend/app/prompts/question_bank.json` (question bank v1.0) with no AI and no engagement data,
 so every copy is the same.
+
+## Sample tailored guides
+
+Two guides made by the app for interviewees of the illustrative load-control engagement (PRD
+Appendix A), saved so the filled-in version can be checked in Word too:
+
+- `interview-guide-practice-sample.docx` — Practice guide for the Ramp role (group "Ramp agents",
+  referred by the Load controller): the header and opener are filled in, and M6.5 asks about the
+  one step only the documents describe ("Approve load plan").
+- `interview-guide-follow-up-sample.docx` — Follow-up guide for the Load controller: the opener
+  says what earlier interviews covered, and the five blank rows hold the SME's own words to play
+  back (F2).
+
+The question IDs, wording and minutes are the same as in the standard templates.

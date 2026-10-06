@@ -302,6 +302,10 @@ class GraphElement(Out):
     constraint_type: str | None = None
     work_type_basis: list[dict[str, Any]] = []
     work_type_status: str | None = None
+    # §3.12.10 rule 9 (B.39; K2): landscape · practice, and the landscape activity a practice step
+    # belongs to; both null on a map with one level (and before v1.10).
+    level: str | None = None
+    parent_element_id: str | None = None
 
 
 class GraphEdge(Out):
@@ -503,6 +507,8 @@ class ElementDetail(Out):
     constraint_type: str | None = None
     work_type_basis: list[dict[str, Any]] = []
     work_type_status: str | None = None
+    level: str | None = None  # B.39 (K2)
+    parent_element_id: str | None = None
     # §5.7.7 4a (V3): the work type's quoted cues with their anchors (names hidden).
     work_type_cues: list[WorkTypeCue] = []
     # v1.10 (§3.12.10 rule 6, §5.7.7 4d; acceptance criterion 66): the interview answers the step

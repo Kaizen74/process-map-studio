@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
 from pydantic import ValidationError
 
-from app.domain.graph import Graph
+from app.domain.graph import Graph, GraphElement
 from app.domain.models import ClaimRecord, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import (
@@ -108,6 +109,23 @@ CONSTRAINT_FOR: dict[str, str | None] = {
     "confused": None,
 }
 NEVER_AUTOMATED = frozenset({"complex", "chaotic"})
+
+
+def awaiting_work_type(elements: Sequence[GraphElement]) -> list[GraphElement]:
+    """Decisions, approvals and judgment steps whose work type Eric hasn't confirmed yet (lint L12
+    and quality check Q11, PRD §7.2). Nothing on a map drafted before v1.10 (no work types)."""
+    if all(e.work_type is None for e in elements):
+        return []
+    return [
+        e
+        for e in elements
+        if (
+            e.kind in ("decision", "approval")
+            or e.decision.mechanism == "judgment"
+            or e.work_type in NEVER_AUTOMATED
+        )
+        and e.work_type_status != CONFIRMED
+    ]
 
 
 @dataclass(frozen=True, slots=True)

@@ -76,9 +76,11 @@ def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
             if not seqs:
                 continue
             if SourceKind.INTERVIEW_TRANSCRIPT.value in kinds:
+                questions = [rows[s][0].question_id for s in claim.segment_ids if s in rows]
                 interview.append(StepPosition(
                     source_id=claim.source_id, seq=min(seqs),
                     lived=claim.account_type == "lived", explicit=_explicit(claim),
+                    question_ids=[q for q in questions if q],
                 ))  # fmt: skip
             elif kinds & DOCUMENTS:
                 documents.append(StepPosition(source_id=claim.source_id, seq=min(seqs)))
@@ -87,14 +89,15 @@ def steps_for(session: Session, version_id: str) -> list[TranslationStep]:
             provenance=e.provenance, interview=interview, documents=documents,
             handoff_in=e.handoff_in, handoff_out=e.handoff_out,
             added_by_owner=e.review_status == ReviewStatus.ADDED.value,
-            lane=e.lane_role_id or "", gives=gives.get(e.stable_key, []),
+            lane=e.lane_role_id or "", phase=e.phase_id or "", gives=gives.get(e.stable_key, []),
             takes=takes.get(e.stable_key, []),
         ))  # fmt: skip
     return steps
 
 
-def _translation(session: Session, version_id: str) -> Translation | None:
-    steps = steps_for(session, version_id)
+def _translation(
+    session: Session, version_id: str, steps: list[TranslationStep]
+) -> Translation | None:
     if not steps:
         return None
     return translation.translate(steps, [
@@ -112,7 +115,12 @@ def update_views(session: Session, version_id: str) -> Tally:
     for stored in map_repo.edges(session, version_id):
         if added_by_translation(stored.provenance, stored.view_membership):
             map_repo.delete_edge(session, stored.id)
-    result = _translation(session, version_id)
+    steps = steps_for(session, version_id)
+    # Rule 9 (K2): levels and parents, worked out again like the views; both None on a map with
+    # one level.
+    for element_id, (level, parent) in translation.levels(steps).items():
+        map_repo.update_element(session, element_id, {"level": level, "parent_element_id": parent})
+    result = _translation(session, version_id, steps)
     if result is None:
         return tally
     for element_id, view in result.element_views.items():
@@ -140,7 +148,7 @@ def update_views(session: Session, version_id: str) -> Tally:
 def add_questions(session: Session, version_id: str) -> int:
     """The translation's validation questions (order not stated; not described), never twice
     (a question already asked, open or answered, is not asked again)."""
-    result = _translation(session, version_id)
+    result = _translation(session, version_id, steps_for(session, version_id))
     if result is None:
         return 0
     phases = {e.id: e.phase_id for e in map_repo.elements(session, version_id)}

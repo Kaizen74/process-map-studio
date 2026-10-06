@@ -41,7 +41,17 @@ def test_confirming_every_step_turns_it_green(drafted: Drafted) -> None:
             assert response.status_code == 200, response.text
     body = card(drafted)
     assert body["all_green"] is True
-    assert [c["status"] for c in body["checks"]] == ["pass"] * 10
+    # Requirement change 2026-10-06 (K3, PRD §7.2): Q11 warns until Eric confirms the work types
+    # of the decisions, approvals and judgment steps; a warning never blocks publishing.
+    assert [c["status"] for c in body["checks"]] == ["pass"] * 10 + ["warning"]
+    graph = drafted.client.get(f"/api/versions/{drafted.version_id}/graph").json()
+    for e in graph["elements"]:
+        if e["kind"] in ("decision", "approval") or e["work_type"] in ("complex", "chaotic"):
+            chosen = e["work_type"] if e["work_type"] != "not_classified" else "complicated"
+            response = drafted.client.put(f"/api/elements/{e['id']}/work-type",
+                                          json={"work_type": chosen, "confirm": True})  # fmt: skip
+            assert response.status_code == 200, response.text
+    assert [c["status"] for c in card(drafted)["checks"]] == ["pass"] * 11
     ready = readiness(drafted)
     assert ready["blockers_count"] == 0 and ready["nav"]["review"] == "done"
 

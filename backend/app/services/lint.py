@@ -13,6 +13,7 @@ layout (`services/layout.py`), so that warning is checked only when a layout is 
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Collection
 
 from app.domain.enums import (
     AiBasis,
@@ -27,7 +28,7 @@ from app.domain.enums import (
 from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
 from app.domain.layout import Layout
 from app.services.layout import count_crossings
-from app.services.sensemaking import NEVER_AUTOMATED
+from app.services.sensemaking import NEVER_AUTOMATED, awaiting_work_type
 from app.services.views import NAMES, VIEWS, view_graph
 
 MAX_STEPS = 25
@@ -259,3 +260,42 @@ def run_view_checks(graph: Graph) -> LintReport:
                 f'"{labels.get(edge.to, "")}" rests only on the order the sources mention them.',
             ))  # fmt: skip
     return LintReport(failures=failures, warnings=warnings)
+
+
+# The three kinds of story every Practice interview asks for (M5.1-M5.3; §3.7 L12 warning).
+STORIES_WANTED = (
+    ("went_well", "a time it went well (M5.1)"),
+    ("went_badly", "a time it went badly (M5.2)"),
+    ("surprise", "a time something surprised (M5.3)"),
+)
+
+
+def run_sensemaking_warnings(graph: Graph, story_types: Collection[str] | None) -> LintReport:
+    """L12 warnings of PRD v1.10 (K3): decisions, approvals and judgment steps without a confirmed
+    work type, and fewer than the three kinds of story (one good, one bad, one surprising).
+    `story_types` are the fragment types (B.31) the version's interviews told; None when the
+    version has no interview (stories come only from interviews)."""
+    kept = [e for e in graph.elements if e.review_status != ReviewStatus.REJECTED.value]
+    warnings = []
+    awaiting = awaiting_work_type([e for e in kept if e.kind in STEP_KINDS])
+    if awaiting:
+        shown = ", ".join(f'"{e.label}"' for e in awaiting[:3])
+        more = f" and {len(awaiting) - 3} more" if len(awaiting) > 3 else ""
+        many = (
+            "decision, approval or judgment step"
+            if len(awaiting) == 1
+            else ("decisions, approvals or judgment steps")
+        )
+        warnings.append(LintIssue(
+            rule="L12", element_id=awaiting[0].id,
+            message=f"{len(awaiting)} {many} without a confirmed work type: {shown}{more}.",
+        ))  # fmt: skip
+    if story_types is not None:
+        missing = [words for kind, words in STORIES_WANTED if kind not in story_types]
+        if missing:
+            warnings.append(LintIssue(
+                rule="L12", element_id=None,
+                message="Fewer than three kinds of story: none yet about " + "; ".join(missing)
+                + ".",
+            ))  # fmt: skip
+    return LintReport(failures=[], warnings=warnings)

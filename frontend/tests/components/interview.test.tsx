@@ -23,6 +23,8 @@ function interviewApi(extra: Parameters<typeof fakeApi>[0] = {}) {
     // C5a: the Interviewees section reads the profiles and the roles.
     "GET /api/engagements/e1/profiles": () => ({ body: [] }),
     "GET /api/engagements/e1/roles": () => ({ body: ROLES }),
+    // G2: each interviewee's latest tailored guide.
+    "GET /api/engagements/e1/interview-guides": () => ({ body: [] }),
     ...extra,
   });
 }
@@ -74,7 +76,7 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
     const followUp = screen.getByRole("region", { name: "Follow-up (30 min)" });
     expect(within(followUp).getAllByRole("row").at(-1)).toHaveTextContent("Total30");
     expect(screen.getByText(/Say or note the question ID \(for example \[M2\.2\]\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Tailored interview guides and the coverage report are not available yet/)).toBeInTheDocument();
+    expect(screen.getByText(/The coverage report is not available on this screen yet; the standard templates and tailored guides work/)).toBeInTheDocument();
     expect(await seriousViolations(container)).toEqual([]);
   });
 
@@ -199,5 +201,63 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
     const editForm = within(section).getByRole("form", { name: "Edit interviewee" });
     expect(within(editForm).getByRole("textbox", { name: "Stakeholder group" })).toHaveValue("Ramp");
     expect(within(editForm).getByRole("radio", { name: "Landscape" })).toHaveAttribute("aria-checked", "true");
+  });
+});
+
+describe("Tailored guides (G2; PRD Appendix F.8, F.9, criterion 80)", () => {
+  const GUIDE = { id: "g1", profile_id: "p1", interview_type: "landscape", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+
+  it("makes a guide for an interviewee, then offers Word and Markdown downloads and a new version", async () => {
+    let guides: unknown[] = [];
+    const api = interviewApi({
+      "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
+      "GET /api/engagements/e1/interview-guides": () => ({ body: guides }),
+      "POST /api/engagements/e1/interview-guide": () => {
+        guides = [GUIDE];
+        return { status: 201, body: { ...GUIDE, engagement_id: "e1", edited: false, document: {} } };
+      },
+    });
+    const { container } = renderApp(PATH);
+    const section = await screen.findByRole("region", { name: "Interviewees" });
+    const list = await within(section).findByRole("list", { name: "Interviewees" });
+    expect(await within(list).findByText("No guide yet")).toBeInTheDocument();
+    expect(within(list).queryByRole("link", { name: /Download Word/ })).toBeNull();
+    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/interview-guide")?.body).toEqual({
+        profile_id: "p1",
+      }),
+    );
+    expect(await within(list).findByText("Guide version 1 (Landscape)")).toBeInTheDocument();
+    expect(within(list).getByRole("link", { name: "Download Word guide for Ramp agent · Ramp" })).toHaveAttribute(
+      "href",
+      "/api/engagements/e1/interview-guide/export?profile_id=p1&format=docx",
+    );
+    expect(within(list).getByRole("link", { name: "Download Markdown guide for Ramp agent · Ramp" })).toHaveAttribute(
+      "href",
+      "/api/engagements/e1/interview-guide/export?profile_id=p1&format=md",
+    );
+    expect(within(list).getByRole("button", { name: "Make new version for Ramp agent · Ramp" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("shows a refusal under the interviewee and a plain error when the guides can't be loaded", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
+      "GET /api/engagements/e1/interview-guides": () => ({
+        status: 500,
+        body: { error: { code: "INTERNAL", message: "Something went wrong on our side.", details: {} } },
+      }),
+      "POST /api/engagements/e1/interview-guide": () => ({
+        status: 422,
+        body: { error: { code: "VALIDATION", message: "Choose one of this engagement's interviewees.", details: { field: "profile_id" } } },
+      }),
+    });
+    renderApp(PATH);
+    const section = await screen.findByRole("region", { name: "Interviewees" });
+    expect(await within(section).findByText("The tailored guides couldn't be loaded")).toBeInTheDocument();
+    const list = within(section).getByRole("list", { name: "Interviewees" });
+    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
+    expect(await within(list).findByRole("alert")).toHaveTextContent("Choose one of this engagement's interviewees.");
   });
 });

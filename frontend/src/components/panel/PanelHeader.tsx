@@ -31,10 +31,12 @@ export interface PanelHeaderProps {
   element: GraphElement;
   laneName: string;
   phaseName: string;
+  /** The landscape activity a practice step is part of (K2), or "". */
+  partOf?: string | undefined;
 }
 
 /** Overline "Kind · Phase", the title, "Lane · role" and the chips in PRD §5.7.5 order. */
-export function PanelHeader({ element, laneName, phaseName }: PanelHeaderProps) {
+export function PanelHeader({ element, laneName, phaseName, partOf }: PanelHeaderProps) {
   const kind = KINDS[element.kind] ?? element.kind;
   const step = STEPS.has(element.kind);
   const contested = element.source_state === "contested" || element.source_state === "trace_contradicted";
@@ -45,6 +47,7 @@ export function PanelHeader({ element, laneName, phaseName }: PanelHeaderProps) 
         {element.label}
       </h2>
       {laneName && <p className="panel-header__lane">Lane · {laneName}</p>}
+      {partOf && <p className="panel-header__lane">Part of: {partOf}</p>}
       {step && (
         <div className="panel-header__chips">
           <Chip>{kind}</Chip>

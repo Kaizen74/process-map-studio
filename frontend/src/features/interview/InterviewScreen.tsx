@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { Button, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { ProfileForm, ProfileList, TemplateCard } from "../../components/interview";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useAddProfile, useEditProfile, useProfiles } from "../../hooks/useInterview";
+import { useAddProfile, useEditProfile, useGuides, useMakeGuide, useProfiles } from "../../hooks/useInterview";
 import { useRoles } from "../../hooks/useRoles";
 import type { Profile } from "../../lib/interview";
 import { useTemplatePlans } from "../../hooks/useTemplates";
@@ -25,6 +25,8 @@ function Interviewees({ engagementId }: { engagementId: string }) {
   const roles = useRoles(engagementId);
   const add = useAddProfile(engagementId);
   const edit = useEditProfile(engagementId);
+  const guides = useGuides(engagementId);
+  const make = useMakeGuide(engagementId);
   const [editing, setEditing] = useState<Profile | "new" | null>(null);
   const close = () => {
     setEditing(null);
@@ -32,13 +34,17 @@ function Interviewees({ engagementId }: { engagementId: string }) {
     edit.reset();
   };
   const list = profiles.data ?? [];
+  const latest = new Map((guides.data ?? []).flatMap((g) => (g.profile_id ? [[g.profile_id, g] as const] : [])));
+  const making = make.isPending ? (make.variables ?? null) : null;
+  const makeError = make.isError && make.variables ? { profileId: make.variables, message: messageOf(make.error) } : null;
   return (
     <section className="interview-templates" aria-labelledby="interviewees-title">
       <h2 id="interviewees-title" className="interview-templates__title">
         Interviewees
       </h2>
       <p className="interview-tip">
-        Who each interview is with, by role or stakeholder group (never a name). A tailored guide is made for one of these.
+        Who each interview is with, by role or stakeholder group (never a name). Make a tailored guide for each: the standard
+        template of their interview type with the header, the opener and extra probes filled in from this engagement.
       </p>
       {profiles.isPending && <Skeleton height="96px" />}
       {profiles.isError && (
@@ -55,7 +61,24 @@ function Interviewees({ engagementId }: { engagementId: string }) {
           action={<Button variant="primary" onClick={() => setEditing("new")}>Add interviewee</Button>}
         />
       )}
-      {list.length > 0 && <ProfileList profiles={list} onEdit={(p) => setEditing(p)} />}
+      {guides.isError && (
+        <ErrorState
+          title="The tailored guides couldn't be loaded"
+          message={messageOf(guides.error)}
+          details={copyDetailsOf(guides.error)}
+          onRetry={() => void guides.refetch()}
+        />
+      )}
+      {list.length > 0 && (
+        <ProfileList
+          profiles={list}
+          onEdit={(p) => setEditing(p)}
+          guides={latest}
+          onMakeGuide={(p) => make.mutate(p.id)}
+          making={making}
+          makeError={makeError}
+        />
+      )}
       {list.length > 0 && editing === null && (
         <div>
           <Button onClick={() => setEditing("new")}>Add interviewee</Button>
@@ -81,8 +104,8 @@ function Interviewees({ engagementId }: { engagementId: string }) {
 }
 
 /**
- * Interview (PRD §5.4): the standard templates, always available, and the interviewees the
- * tailored guides are for (C5a). Tailored guides and the coverage report follow (C5b-C5d).
+ * Interview (PRD §5.4): the standard templates, always available, and the interviewees with their
+ * tailored guides (C5a, G2). The coverage report follows (C5d).
  */
 export function InterviewScreen() {
   const { engagementId = "" } = useParams();
@@ -131,7 +154,7 @@ export function InterviewScreen() {
           </div>
         )}
         <p className="interview-note">
-          Tailored interview guides and the coverage report are not available yet; the standard templates work for every
+          The coverage report is not available on this screen yet; the standard templates and tailored guides work for every
           interview in the meantime.
         </p>
       </section>

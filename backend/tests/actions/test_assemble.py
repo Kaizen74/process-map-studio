@@ -99,6 +99,10 @@ def test_the_sample_assembles_into_a_map_that_passes_lint(sample: Verified) -> N
         "the sources mention them.",
         'The line from "Load and return LIR" to "Deviation in limits?" rests only on the order the '
         "sources mention them.",
+        # Requirement change 2026-10-06 (K3, PRD v1.10 L12): the sample interview tells one story,
+        # about a time it went badly.
+        "Fewer than three kinds of story: none yet about a time it went well (M5.1); a time "
+        "something surprised (M5.3).",
     ]
 
 

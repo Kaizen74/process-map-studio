@@ -66,6 +66,14 @@ test.describe("accessibility and offline assets", () => {
       await profileForm.getByRole("button", { name: "Add interviewee" }).click();
       await expect(interviewees.getByRole("list", { name: "Interviewees" })).toContainText("Ramp");
       expect(await seriousViolations(page)).toEqual([]);
+      // G2: a tailored guide for that interviewee, downloadable as Word or Markdown.
+      await interviewees.getByRole("button", { name: "Make guide for Ramp" }).click();
+      const word = interviewees.getByRole("link", { name: "Download Word guide for Ramp" });
+      await expect(word).toBeVisible();
+      const file = await request.get((await word.getAttribute("href")) ?? "");
+      expect(file.status()).toBe(200);
+      expect(file.headers()["content-disposition"]).toContain("interview-guide-");
+      expect(await seriousViolations(page)).toEqual([]);
 
       const upload = await request.post(`/api/engagements/${id}/sources`, {
         multipart: { file: { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("[00:05] Interviewer: Hello") } },

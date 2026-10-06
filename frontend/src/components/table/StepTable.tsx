@@ -88,6 +88,7 @@ export function StepTable({
                     >
                       {row.label}
                     </button>
+                    {row.partOf && <span className="step-table__part-of">{row.partOf}</span>}
                   </th>
                   <td>{row.kind}</td>
                   <td>{row.lane}</td>

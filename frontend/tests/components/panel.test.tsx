@@ -132,6 +132,12 @@ describe("panel sections", () => {
     expect(screen.getByText("Contested")).toHaveClass("chip--danger");
     expect(screen.getByText("Divergence · ownership")).toHaveClass("chip--danger");
     expect(screen.getByText("Unreviewed")).toHaveClass("chip--dashed");
+    expect(screen.queryByText(/^Part of:/)).toBeNull();
+  });
+
+  it("a practice step says which landscape activity it is part of (K2)", () => {
+    render(<PanelHeader element={elementByLabel("Draft load plan")} laneName="Load controller" phaseName="Plan" partOf="Manage loading" />);
+    expect(screen.getByText("Part of: Manage loading")).toBeInTheDocument();
   });
 
   it("has no serious accessibility problems", async () => {

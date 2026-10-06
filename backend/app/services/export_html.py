@@ -4,7 +4,8 @@ Drawn from the backend layout of the published map (rejected steps left out), st
 shared design tokens (`shared/design_tokens.json`, passed in) and the self-hosted IBM Plex fonts
 embedded as data (passed in as bytes). A Content-Security-Policy forbids every outside request;
 there is no script: each step on the map links to its details further down the page.
-Sections as the Master Process Map: 1 Facts, 2 Interpretation, 3 Recommendation. Role names
+Sections as the Master Process Map: 1 Facts, 2 Interpretation, 3 Recommendation. Both views are
+drawn (As done, then As documented; §3.12.11), with "not described" connectors dashed. Role names
 only; no verbatim quotes; no images.
 """
 
@@ -15,7 +16,7 @@ from html import escape
 from itertools import pairwise
 from pathlib import Path
 
-from app.domain.enums import ElementKind, Provenance
+from app.domain.enums import EdgeKind, ElementKind, Provenance
 from app.domain.exports import ExportInput
 from app.domain.graph import Graph, GraphElement
 from app.domain.layout import Layout, TextPos
@@ -130,7 +131,8 @@ def _map(graph: Graph, layout: Layout) -> str:
         for p in layout.phases[1:]
     ]
     for edge in layout.edges:
-        parts = [f'<div class="{"back" if edge.is_back_edge else "edge"}" aria-hidden="true">']
+        kind = "gap" if edge.kind == EdgeKind.GAP.value else "back" if edge.is_back_edge else "edge"
+        parts = [f'<div class="{kind}" aria-hidden="true">']
         points = edge.points
         for (x1, y1), (x2, y2) in pairwise(points):
             if y1 == y2 and x1 != x2:
@@ -185,7 +187,8 @@ def _map(graph: Graph, layout: Layout) -> str:
     out.append(
         '<p class="legend">Rounded box: activity · Diamond: decision · Pill: approval · '
         "Dot: start · Double ring: end · Orange dot: key constraint · Dashed line: a loop back "
-        "(rework or re-plan) · Under each step: its time</p>"
+        "(rework or re-plan), or a step the interview doesn't describe · Under each step: its "
+        "time</p>"
     )
     return "\n".join(out)
 
@@ -252,6 +255,13 @@ def _facts(data: ExportInput, graph: Graph) -> str:
             ],
         )
     )
+    parts.append("<h3>Stories</h3>")
+    stories = [f"<li>{e(md.story_line(x))}</li>" for x in data.stories]
+    parts.append(f"<ul>{''.join(stories)}</ul>" if stories else "<p>No stories recorded.</p>")
+    parts.append("<h3>Strengths as stated (preserve)</h3>")
+    strengths = [f"<li>{e(md.capability_line(c))}</li>" for c in data.capabilities
+                 if c.kind == "strength"]  # fmt: skip
+    parts.append(f"<ul>{''.join(strengths)}</ul>" if strengths else "<p>No strengths stated.</p>")
     parts.append("</section>")
     return "\n".join(parts)
 
@@ -270,6 +280,10 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
         ("Time", f"work {md.minutes(el.time.work_min)}, wait {md.minutes(el.time.wait_min)}"
                  + (f" ({el.time.text})" if el.time.text else "")),
     ]  # fmt: skip
+    if el.view_membership:
+        rows.append(("View", md.view_word(el)))
+    if el.work_type:
+        rows.append(("Work type", md.work_type_text(el)))
     if el.complexity:
         rows.append(("Complexity", el.complexity))
     if el.kpi:
@@ -325,7 +339,7 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
         '<section aria-labelledby="interpretation">',
         f'<h2 id="interpretation">{e(md.INTERPRETATION[3:])}</h2>',
         '<p class="note">Select a step to read its details below.</p>',
-        _map(graph, layout),
+        *_maps(data, graph, layout),
         "<h3>Steps</h3>",
     ]
     parts += [_details(data, graph, el) for el in md.steps(graph)]
@@ -341,14 +355,72 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
         )
     )
     parts.append('<p class="note">A? means the sources disagree about who is accountable.</p>')
+    parts.append("<h3>Two views: as done and as documented</h3>")
+    parts.append(_list(md.two_views_lines(data)))
+    know_how = {k.element_id: k for k in data.know_how}
+    parts.append("<h3>Work type and know-how</h3>")
+    parts.append(
+        _table(
+            ["Step", "Work type", "Know-how (knowledge risk · dominant ASHEN)"],
+            [
+                [
+                    f"[{e(el.provenance)}] {e(el.label)}",
+                    e(md.work_type_text(el)),
+                    e(f"{kh.knowledge_risk} · {md.ASHEN_WORDS.get(kh.dominant, kh.dominant)}")
+                    if (kh := know_how.get(el.id))
+                    else "—",
+                ]
+                for el in md.steps(graph)
+            ],
+        )
+    )
+    parts.append("<h3>Official vs lived</h3>")
+    parts.append(_list(md.official_lived_lines(graph)))
+    parts.append("<h3>Glossary of SME terms</h3>")
+    terms = [
+        f"<li><b>{e(t.term)}</b>: {e(t.plain_meaning or 'meaning not stated')}"
+        + (f" (step: {e(', '.join(t.steps))})" if t.steps else "")
+        + "</li>"
+        for t in data.glossary
+    ]
+    parts.append(f"<ul>{''.join(terms)}</ul>" if terms else "<p>No SME terms recorded.</p>")
     parts.append("</section>")
     return "\n".join(parts)
+
+
+def _list(lines: list[str]) -> str:
+    """Markdown-style lines ("- …") as a list; a lone sentence as a paragraph."""
+    items = [x.removeprefix("- ") for x in lines if x.startswith("- ")]
+    if not items:
+        return "".join(f"<p>{e(x)}</p>" for x in lines)
+    return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in items) + "</ul>"
+
+
+VIEW_TITLES = {
+    "done": "Map as done: the work as actually performed",
+    "documented": "Map as documented: the documents' version",
+}
+
+
+def _maps(data: ExportInput, graph: Graph, layout: Layout) -> list[str]:
+    """Both views, each drawn from its own backend layout (§3.12.11); the one map before v1.10."""
+    if not data.view_graphs:
+        return [_map(graph, layout)]
+    parts = []
+    for view, title in VIEW_TITLES.items():
+        drawn = md.on_the_map(data.view_graphs[view])
+        parts += [f"<h3>{e(title)}</h3>", _map(drawn, compute_layout(drawn))]
+    return parts
 
 
 def _recommendation(data: ExportInput, graph: Graph) -> str:
     parts = [
         '<section aria-labelledby="recommendation">',
         f'<h2 id="recommendation">{e(md.RECOMMENDATION[3:])}</h2>',
+        "<h3>Preserve / Improve</h3>",
+        _list(md.preserve_improve_lines(data)),
+        "<h3>Reality gaps by gap class</h3>",
+        _list(md.reality_gap_lines(data)),
         "<h3>AI flags</h3>",
     ]
     flagged = [el for el in md.steps(graph) if el.ai_flag is not None]
@@ -402,6 +474,8 @@ def _recommendation(data: ExportInput, graph: Graph) -> str:
     parts.append("<h3>Gap analyses</h3>")
     reports = [f"<li>{e(md.gap_report_line(r).removeprefix('- '))}</li>" for r in data.gap_reports]
     parts.append(f"<ul>{''.join(reports)}</ul>" if reports else "<p>No finalised gap analyses.</p>")
+    parts += ["<h3>Disposition and value</h3>", f"<p>{md.NOT_USED}</p>"]
+    parts += ["<h3>System records</h3>", f"<p>{md.NOT_USED}</p>"]
     parts.append("</section>")
     return "\n".join(parts)
 

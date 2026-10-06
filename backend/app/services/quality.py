@@ -1,6 +1,7 @@
-"""The publish quality card (PRD §7.2): ten checks over the map, its lint report and its rendered
+"""The publish quality card (PRD §7.2): checks over the map, its lint report and its rendered
 exports. Pure: `build_quality_card(QualityInput) -> QualityCard`. Q1-Q9 are hard (all must pass to
-publish); Q10 is a warning. Rejected steps are not on the map and count for nothing. Details say
+publish); Q10 and Q11 are warnings, and Q12 (a warning) is on the card only when the engagement
+uses system records. Rejected steps are not on the map and count for nothing. Details say
 what to fix in plain words and never repeat a hidden name.
 """
 
@@ -12,7 +13,7 @@ from app.domain.enums import Provenance, ReviewStatus
 from app.domain.graph import GraphElement
 from app.domain.quality import CheckStatus, QualityCard, QualityCheck, QualityInput
 from app.services import exports as md
-from app.services import signal
+from app.services import sensemaking, signal
 from app.services.grounding import scan_redaction_terms
 from app.services.lint import MAX_LANES, MAX_STEPS
 
@@ -21,6 +22,8 @@ SIGNAL_WARNING = signal.QUALITY_WARNING
 EVIDENCED = {Provenance.OBSERVED.value, Provenance.INFERRED.value}
 PROVENANCES = {p.value for p in Provenance}
 STEP_KINDS = md.STEP_KINDS
+DECIDING_ONE = "decision, approval or judgment step"
+DECIDING_MANY = "decisions, approvals or judgment steps"
 
 # Recommendation-type content: it may appear only in section 3 of an export (Q7).
 RECOMMENDATION_MARKERS = [
@@ -32,6 +35,12 @@ RECOMMENDATION_MARKERS = [
     "<h3>Knowledge-risk register</h3>",
     "<h3>External-practice register</h3>",
     "<h3>Open validation questions</h3>",
+    "### Preserve / Improve",
+    "### Reality gaps by gap class",
+    "### Disposition and value",
+    "<h3>Preserve / Improve</h3>",
+    "<h3>Reality gaps by gap class</h3>",
+    "<h3>Disposition and value</h3>",
 ]
 HTML_SECTIONS = [
     'aria-labelledby="facts"',
@@ -47,7 +56,7 @@ IMAGE_PATTERN = re.compile(
 def _names(elements: list[GraphElement], limit: int = 3) -> str:
     shown = ", ".join(f"“{e.label}”" for e in elements[:limit])
     more = len(elements) - limit
-    return shown + (f" and {md.plural(more, 'more')}" if more > 0 else "")
+    return shown + (f" and {more} more" if more > 0 else "")
 
 
 def _check(cid: str, name: str, failed: bool, ok: str, bad: str, hard: bool = True) -> QualityCheck:
@@ -234,6 +243,34 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
             hard=False,
         )
     )
+
+    # Q11 work types confirmed (warning, PRD v1.10 §7.2).
+    awaiting = sensemaking.awaiting_work_type(steps)
+    checks.append(
+        _check(
+            "Q11",
+            "Work types confirmed",
+            bool(awaiting),
+            "Every decision, approval and judgment step has a confirmed work type.",
+            f"{md.plural(len(awaiting), DECIDING_ONE, DECIDING_MANY)} without a confirmed work "
+            f"type: {_names(awaiting)}.",
+            hard=False,
+        )
+    )
+
+    # Q12 system alignment complete (warning, PRD v1.11; only when system records are used).
+    if inp.unaligned_activities is not None:
+        checks.append(
+            _check(
+                "Q12",
+                "System alignment complete",
+                inp.unaligned_activities > 0,
+                "Every imported system activity is aligned to a step or marked hidden work.",
+                f"{md.plural(inp.unaligned_activities, 'system activity', 'system activities')} "
+                "not yet aligned to a step or marked hidden work.",
+                hard=False,
+            )
+        )
 
     warnings = [w.message for w in inp.lint.warnings]
     strength = signal.signal_strength(inp.source_kinds)
