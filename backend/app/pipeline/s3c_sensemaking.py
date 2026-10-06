@@ -24,13 +24,14 @@ from app.domain.enums import ElementKind, ReviewStatus
 from app.domain.graph import ConstraintRecord, QuestionRecord
 from app.domain.models import AiCallRecord, ClaimRecord, NameReplacement, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok, Result
-from app.domain.sensemaking import SENSE_CLAIM_TYPES
+from app.domain.sensemaking import SENSE_CLAIM_TYPES, ThemeProposal
 from app.pipeline import s1_extract
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls
 from app.pipeline.s3_calibrate import StepRef, render_steps, step_refs
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import sources as sources_repo
+from app.repositories import themes as themes_repo
 from app.repositories import versions as versions_repo
 from app.services import ai_service, prompts, sensemaking
 
@@ -62,6 +63,7 @@ class S3cTally:
     links: int = 0
     dropped_links: int = 0
     constraints: int = 0
+    themes: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,6 +227,18 @@ def sense(
                     if by_ref[r].element.review_status not in REVIEWED
                 ])  # fmt: skip
                 tally.constraints += len(refs)
+        # Tier 3 (C7b): emerging themes across stories, kept only if they pass the checks.
+        stories = {i.ref: i.claim_id for i in items if i.record.claim_type == "story"}
+        decided = [t.theme for t in themes_repo.for_engagement(session, version.engagement_id)
+                   if t.status != themes_repo.PROPOSED]  # fmt: skip
+        kept = sensemaking.check_themes(
+            [ThemeProposal(theme=t.theme, basis=t.basis,
+                           claim_ids=[stories[r] for r in t.item_refs if r in stories])
+             for t in output.themes],
+            set(stories.values()), set(decided), [t.term for t in terms],
+        )  # fmt: skip
+        themes_repo.replace_proposed(session, version.engagement_id, version_id, kept)
+        tally.themes = len(kept)
     return Ok(tally)
 
 

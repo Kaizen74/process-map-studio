@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query, Request, Response
 
-from app.actions import interview
+from app.actions import interview, themes
 from app.domain.interview import (
     GuideEdit,
     GuideInput,
@@ -16,6 +16,7 @@ from app.domain.interview import (
     ProfilePatch,
     ProfileView,
 )
+from app.domain.sensemaking import ThemePatch, ThemeView
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["interview"])
@@ -75,3 +76,14 @@ def export_guide(
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/engagements/{engagement_id}/themes")
+def list_themes(request: Request, engagement_id: str) -> list[ThemeView]:
+    return unwrap(themes.list_themes(request.app.state.sessions, engagement_id))
+
+
+@router.patch("/themes/{theme_id}")
+def update_theme(request: Request, theme_id: str, body: ThemePatch) -> ThemeView:
+    state = request.app.state
+    return unwrap(themes.update_theme(state.config, state.sessions, theme_id, body))

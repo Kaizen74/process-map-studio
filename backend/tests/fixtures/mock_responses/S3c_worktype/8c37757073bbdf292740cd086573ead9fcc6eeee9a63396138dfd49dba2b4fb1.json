@@ -151,5 +151,14 @@
         "e5"
       ]
     }
+  ],
+  "themes": [
+    {
+      "theme": "Night shifts stretch the load plan",
+      "item_refs": [
+        "i3"
+      ],
+      "basis": "Only one story: kept out by the app (a theme needs two stories)."
+    }
   ]
 }

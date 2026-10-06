@@ -6,3 +6,4 @@ export {
   KRiskList,
   type CauseListProps,
 } from "./RegisterLists";
+export { ThemeList, type ThemeListProps } from "./ThemeList";

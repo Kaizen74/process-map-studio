@@ -65,7 +65,38 @@ export interface CauseEntry {
   created_at: string;
 }
 
-export type RegisterKey = "k_risk" | "ai_flags" | "constraints" | "external" | "questions" | "rejected" | "causes";
+export type RegisterKey =
+  | "k_risk"
+  | "ai_flags"
+  | "constraints"
+  | "external"
+  | "questions"
+  | "rejected"
+  | "causes"
+  | "themes";
+
+/** GET /engagements/{id}/themes (C7b): a pattern across two or more stories. */
+export type ThemeStatus = "proposed" | "accepted" | "dismissed";
+
+export interface ThemeFragment {
+  claim_id: string;
+  text: string;
+  quote: string;
+  fragment_type: string;
+  source_id: string;
+  anchor: string;
+}
+
+export interface Theme {
+  id: string;
+  version_id: string | null;
+  theme: string;
+  basis: string;
+  status: ThemeStatus | string;
+  note: string;
+  fragments: ThemeFragment[];
+  created_at: string;
+}
 
 export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "k_risk", label: "K-RISK" },
@@ -75,6 +106,7 @@ export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "questions", label: "Validation questions" },
   { value: "rejected", label: "Rejected claims" },
   { value: "causes", label: "Cause library" },
+  { value: "themes", label: "Emerging themes" },
 ];
 
 export function registerKey(value: string | null): RegisterKey {

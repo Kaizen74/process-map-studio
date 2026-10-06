@@ -6,17 +6,25 @@ import {
   ConstraintGroups,
   ExternalPracticeList,
   KRiskList,
+  ThemeList,
 } from "../../components/registers";
 import { useToast } from "../../components/shell";
 import { QuestionsTab, RejectedClaimsTab } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useCauseLibrary, useRegisters, useValidateCause, useVersions } from "../../hooks/useVersions";
+import {
+  useCauseLibrary,
+  useDecideTheme,
+  useRegisters,
+  useThemes,
+  useValidateCause,
+  useVersions,
+} from "../../hooks/useVersions";
 import { currentMap, stepPath } from "../../lib/currentMap";
 import { saveText } from "../../lib/download";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { questionsFileName, questionsMarkdown } from "../../lib/questions";
-import { REGISTERS, registerKey, type CauseEntry, type ValidationResult } from "../../lib/registers";
+import { REGISTERS, registerKey, type CauseEntry, type ThemeStatus, type ValidationResult } from "../../lib/registers";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 
 const DONE: Readonly<Record<ValidationResult, string>> = {
@@ -30,6 +38,12 @@ const DONE: Readonly<Record<ValidationResult, string>> = {
  * the latest published version), plus the engagement's cause library. Every entry links to its
  * step; nothing here changes the map.
  */
+const THEME_DONE: Record<ThemeStatus, string> = {
+  accepted: "Theme accepted.",
+  dismissed: "Theme dismissed.",
+  proposed: "Theme reopened.",
+};
+
 export function RegistersScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
@@ -41,6 +55,8 @@ export function RegistersScreen() {
   const registers = useRegisters(map?.id ?? null);
   const causes = useCauseLibrary(engagementId);
   const validate = useValidateCause(engagementId);
+  const themes = useThemes(engagementId);
+  const decide = useDecideTheme(engagementId);
   const chosen = registerKey(params.get("register"));
 
   if (engagement.isError) {
@@ -148,6 +164,40 @@ export function RegistersScreen() {
                   <p className="panel-danger" role="alert">
                     {messageOf(validate.error)}
                   </p>
+                )}
+              </>
+            )}
+            {chosen === "themes" && (
+              <>
+                <p className="tab-intro">
+                  Patterns across two or more stories that fit no existing category, proposed by Claude and checked by the
+                  app. Accept, rename or dismiss them; they never change the map.
+                </p>
+                {themes.isPending && <Skeleton height="120px" />}
+                {themes.isError && (
+                  <ErrorState
+                    title="The emerging themes couldn't be loaded"
+                    message={messageOf(themes.error)}
+                    details={copyDetailsOf(themes.error)}
+                    onRetry={() => void themes.refetch()}
+                  />
+                )}
+                {themes.data && (
+                  <ThemeList
+                    themes={themes.data}
+                    busyId={decide.isPending ? (decide.variables?.themeId ?? null) : null}
+                    error={
+                      decide.isError && decide.variables
+                        ? { themeId: decide.variables.themeId, message: messageOf(decide.error) }
+                        : null
+                    }
+                    onDecide={(theme, status, name) =>
+                      decide.mutate(
+                        name === undefined ? { themeId: theme.id, status } : { themeId: theme.id, status, theme: name },
+                        { onSuccess: () => toast(THEME_DONE[status]) },
+                      )
+                    }
+                  />
                 )}
               </>
             )}

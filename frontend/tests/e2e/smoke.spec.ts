@@ -440,7 +440,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const registerChoice = page.getByRole("radiogroup", { name: "Register" });
     await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims"]) {
+    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims", "Emerging themes"]) {
       await registerChoice.getByRole("radio", { name }).click();
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);

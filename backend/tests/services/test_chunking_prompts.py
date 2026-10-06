@@ -105,6 +105,7 @@ VERSIONS = {
     "S2_canonicalise": "3",  # C7a: the mapping conventions
     "S4_assemble": "3",  # C7a: the mapping conventions
     "GA_internal": "2",  # C4b: reality gaps, accounts and work types
+    "S3c_worktype": "2",  # C7b: emerging themes
     "GA_verify": "2",  # C4b: the stated reason
 }
 
@@ -292,7 +293,7 @@ def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -
     """What a run record stamps: each instruction file's version by name."""
     versions = prompts.instruction_versions()
     assert versions["S1_extract_interview"] == "4"
-    assert versions["S3c_worktype"] == "1"
+    assert versions["S3c_worktype"] == "2"
     assert versions["question_bank"] == "1.0"
     (tmp_path / "A.md").write_text("<!-- prompt: A · version 3 -->\nDo the task.\n", "utf-8")
     (tmp_path / "no_line.md").write_text("Do the task.\n", encoding="utf-8")

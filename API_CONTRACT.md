@@ -895,6 +895,16 @@ What the interviews covered and what still needs asking (2026-10-01, C4, PRD §3
 - `probes` (2026-10-01, C4c, Appendix F F2, A.10): reflective probes that quote an SME back to themself, `[{"question_id": "F2", "question": "You mentioned previously that “The weakness is the paper loading report; it gets lost or arrives late”. How do you manage that today, and where do you see the biggest risk?", "quote", "source_id", "anchor", "speaker_role"}]`. One per distinct verified interview quote that carries a constraint, a weakness or a stated reason, word for word as S1 checked it (only a final full stop or semicolon is dropped where it meets the bank's wording), at most 20 words: a longer quote is left out, never cut, unless it carries a stated reason, which is then played back instead (S1 found it word for word), names hidden, in the order the interviews were read. `source_id` and `speaker_role` say whom to ask.
 Errors: `404` ("That version doesn't exist."). Used by: the Interview screen (coverage) and the Follow-up guide (C5).
 
+### Emerging themes (C7b, 2026-10-06; PRD Appendix E tier 3, §3.12.9 rule 3, criterion 58)
+Patterns across the interviews' stories that fit no existing category, proposed by S3c (task 3 of `S3c_worktype` v2) and checked by the app before they are kept: a short plain name (one line, up to 80 characters), at least **two different stories** behind it, a one-sentence basis, no banned (blaming) word and no name on the hidden-names list; a theme with the same name as one already there is not proposed again. Proposed themes are replaced at each draft or refresh of that version; themes Eric accepted, renamed or dismissed are never touched by a re-run (constraint 8). They never change the map.
+
+#### GET /api/engagements/{id}/themes
+`[{"id", "version_id", "theme", "basis", "status": "proposed" | "accepted" | "dismissed", "note", "fragments": [{"claim_id", "text", "quote", "fragment_type", "source_id", "anchor"}], "created_at"}]`: the proposed themes of the current map (draft, else latest published) and every theme Eric has decided, oldest first; names hidden. `404` (engagement).
+
+#### PATCH /api/themes/{tid}
+`{"status": "accepted" | "dismissed" | "proposed", "theme"?: "new name", "note"?: "…"}`. Accept (optionally renamed), dismiss, or put back to proposed. A new name follows the same rules as a proposed one (`422`, `details.field: "theme"`); `note` up to 500 characters on one line. Response `200`: the theme; audit row "Accepted emerging theme" / "Dismissed emerging theme" / "Renamed emerging theme" / "Reopened emerging theme" with before and after. Errors `404`, `422` (`details.field`).
+Used by: Registers, **Emerging themes** (C7b).
+
 ### GET /api/versions/{vid}/validation-pack (C6, 2026-10-06; PRD Appendix F.7, criterion 75)
 The validation session pack as a Markdown file (`text/markdown; charset=utf-8`, `Content-Disposition: attachment; filename="validation-pack-v0.1.md"`), for a session with the SME alongside the draft map. Deterministic; nothing is sent to Claude; names hidden; no banned words. In this order:
 1. **Walk the As done view**: "Is this how it actually happens?", then the As done view's steps in process order with their lane role, and its "not described" gaps ("Between "A" and "B": not described").

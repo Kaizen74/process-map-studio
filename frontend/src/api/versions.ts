@@ -1,7 +1,7 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
 import type { AlignmentRow } from "../lib/matrix";
-import type { CauseEntry, Registers, ValidationResult } from "../lib/registers";
+import type { CauseEntry, Registers, Theme, ThemeStatus, ValidationResult } from "../lib/registers";
 
 const enc = encodeURIComponent;
 
@@ -30,3 +30,10 @@ export const listCauses = (engagementId: string) =>
 
 export const validateCause = (causeId: string, result: ValidationResult) =>
   request<CauseEntry>(`/cause-library/${enc(causeId)}`, { method: "PATCH", body: { validation_result: result } });
+
+// API_CONTRACT.md → Emerging themes (C7b).
+export const listThemes = (engagementId: string) => request<Theme[]>(`/engagements/${enc(engagementId)}/themes`);
+
+export const decideTheme = (themeId: string, body: { status: ThemeStatus; theme?: string; note?: string }) =>
+  request<Theme>(`/themes/${enc(themeId)}`, { method: "PATCH", body });
+

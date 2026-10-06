@@ -1,16 +1,18 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
+  decideTheme,
   getAlignmentMatrix,
   getQualityCard,
   getRegisters,
   getVersion,
   listCauses,
+  listThemes,
   listVersions,
   publishVersion,
   reopenVersion,
   validateCause,
 } from "../api/versions";
-import type { ValidationResult } from "../lib/registers";
+import type { ThemeStatus, ValidationResult } from "../lib/registers";
 import { refreshReview } from "./useReview";
 
 export function useQualityCard(versionId: string | null) {
@@ -95,3 +97,19 @@ export function useValidateCause(engagementId: string) {
     },
   });
 }
+
+/** The engagement's emerging themes (C7b). */
+export function useThemes(engagementId: string) {
+  return useQuery({ queryKey: ["engagements", engagementId, "themes"], queryFn: () => listThemes(engagementId) });
+}
+
+/** Accept (optionally renamed), dismiss or reopen a theme; the audit log changes too. */
+export function useDecideTheme(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ themeId, status, theme }: { themeId: string; status: ThemeStatus; theme?: string }) =>
+      decideTheme(themeId, theme === undefined ? { status } : { status, theme }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["engagements", engagementId, "themes"] }),
+  });
+}
+

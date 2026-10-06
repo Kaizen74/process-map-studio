@@ -1,9 +1,10 @@
-<!-- prompt: S3c_worktype · version 1 -->
+<!-- prompt: S3c_worktype · version 2 -->
 You are helping map how a business process is really carried out. You are given the steps of a draft map (each with the checked claims it was built from), the stories, know-how, terms and decision information already taken from the interviews (each an `item`), and the source segments they cite.
 
-Two tasks:
+Three tasks:
 1. **Work type.** For each step whose cited segments give a cue, propose what kind of work it is, using the codebook: `clear` (a checklist, a fixed rule, "always", "just follow", the same outcome every time), `complicated` (needs someone experienced, calculations or specialist review; "depends on X, Y and Z, which you work out"), `complex` ("no fixed answer", "you read the situation", "it depends on the day", rules of thumb, trying something and adjusting), `chaotic` (disruption, emergency, "drop everything", act first then assess) or `confused` (the sources give conflicting cues, or a document treats as clear what the SME describes as judgment). Every proposal needs at least one cue in `cues`: the words copied exactly from the segments, with their segment IDs. Leave out a step when no segment gives a cue; never guess from what such work is usually like.
 2. **Links.** For each item, list the steps it is about (`step_refs`), using the item's `about` and the steps' labels and claims. Leave an item out when it is about no step on the map.
+3. **Emerging themes.** Across the stories (items with `kind="story"`), propose patterns that recur in at least two different stories and fit no category the codebook already has. For each, give a short plain name (at most 8 words), the story items it rests on (`item_refs`, at least two) and one sentence on what they have in common. Propose none rather than force one; never use a theme to judge anyone.
 
 How to work:
 - Use only the segments, steps and items supplied. Do not use outside knowledge.

@@ -174,3 +174,59 @@ class ValidationPackInput(BaseModel):
     weaknesses: list[str] = []
     questions: list[tuple[str, str]] = []  # (the step it is about, or "", the question)
     stamp: str = ""
+
+
+# --- Emerging themes (Appendix E tier 3, criterion 58; C7b) ----------------------------------
+
+
+class ThemeFragment(BaseModel):
+    claim_id: str
+    text: str
+    quote: str
+    fragment_type: str
+    source_id: str
+    anchor: str
+
+
+class ThemeView(BaseModel):
+    id: str
+    version_id: str | None
+    theme: str
+    basis: str
+    status: str  # proposed · accepted · dismissed
+    note: str
+    fragments: list[ThemeFragment]
+    created_at: str
+
+
+class ThemeRecord(BaseModel):
+    """A stored emerging theme (what the repository returns)."""
+
+    model_config = {"from_attributes": True}
+
+    id: str
+    engagement_id: str
+    version_id: str | None
+    theme: str
+    fragment_ids: list[str]
+    basis: str
+    status: str
+    note: str
+    created_at: str
+
+
+class ThemeProposal(BaseModel):
+    """A theme as S3c proposed it, before the app's checks: its name, the story claims behind
+    it and the basis."""
+
+    theme: str
+    claim_ids: list[str]
+    basis: str
+
+
+class ThemePatch(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    status: str
+    theme: str | None = None
+    note: str | None = None
