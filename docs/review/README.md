@@ -18,4 +18,4 @@ These files show what the app's saved reference outputs ("golden baselines") wil
 
 To approve, reply "approved" (or say what to change). After approval these become the baselines and the work is committed and pushed.
 
-For the builder: `K2-K3-pending.patch` holds the code, tests and new baselines of K2 and K3 (not yet committed), so the work survives if the build machine is restarted before approval. On approval it is already applied in the working copy; otherwise apply it with `git apply docs/review/K2-K3-pending.patch`. The frontend test sample (`frontend/tests/fixtures/sample_map.json`) gains the same two empty fields per step as G1.
+For the builder: `K2-K3-pending.patch` holds the code, tests and new baselines of K2 and K3 (not yet committed), so the work survives if the build machine is restarted before approval. On approval, apply it with `git apply docs/review/K2-K3-pending.patch`, run the checks, commit and push. The frontend test sample (`frontend/tests/fixtures/sample_map.json`) gains the same two empty fields per step as G1.
