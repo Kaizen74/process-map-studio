@@ -12,7 +12,7 @@ import pytest
 from docx.document import Document as DocxDocument
 
 from app.domain.enums import InterviewType
-from app.domain.interview import GuideContext, InterviewDocument
+from app.domain.interview import DocumentRow, GuideContext, InterviewDocument
 from app.services import interview_templates as templates
 from app.services import wording
 from tests.services.test_interview_templates import LAYOUT, TOTALS, rows_before_contrast, units
@@ -52,9 +52,14 @@ def rows(doc: InterviewDocument) -> list[tuple[str, str, str]]:
     return [(r.id, r.wording, r.minutes) for t in doc.tables for r in t.rows]
 
 
-def m6(doc: InterviewDocument) -> list[str]:
+def m6_row(doc: InterviewDocument) -> DocumentRow:
     contrast = next(t for t in doc.tables if t.label.startswith("M6 "))
-    return next(r for r in contrast.rows if r.id == "M6.5").probes
+    return next(r for r in contrast.rows if r.id == "M6.5")
+
+
+def m6(doc: InterviewDocument) -> list[str]:
+    """M6.5's probes as printed (the bank's, then those held back for M6)."""
+    return templates.printed_probes(m6_row(doc))
 
 
 def test_rule_1_and_2_the_title_header_and_opener_are_filled_in() -> None:
@@ -93,6 +98,10 @@ def test_rule_5_sop_probes_only_in_m6_and_at_most_five() -> None:
     standard = m6(templates.build(bank(), InterviewType.PRACTICE))
     added = m6(doc)[len(standard) :]
     assert added == [templates.SOP_PROBE.format(step=s) for s in PRACTICE.sop_steps[:5]]
+    # Kept apart from the bank's probes, so the editor can show them as held back (§5.4).
+    assert m6_row(doc).held_back == added
+    assert m6_row(doc).probes == m6_row(templates.build(bank(), InterviewType.PRACTICE)).probes
+    assert all(not r.held_back for t in doc.tables for r in t.rows if r.id != "M6.5")
     assert "Archive the sheet" not in templates.render_markdown(doc)  # the sixth is left out
     assert wording.sop_claims(rows_before_contrast(doc) + " " + " ".join(doc.opener)) == []
     assert m6(templates.tailor(bank(), PRACTICE.model_copy(update={"sop_steps": []}))) == standard
@@ -166,3 +175,25 @@ def test_guide_file_names() -> None:
         "interview-guide-practice-ramp-agent.docx")  # fmt: skip
     assert templates.guide_filename(InterviewType.FOLLOW_UP, "", "md") == (
         "interview-guide-follow-up-interviewee.md")  # fmt: skip
+
+
+@pytest.mark.parametrize("ctx", [PRACTICE, FOLLOW_UP, PRACTICE.model_copy(update={
+    "interview_type": InterviewType.LANDSCAPE})])  # fmt: skip
+def test_every_guide_question_stores_its_movement_targets_and_priority(ctx: GuideContext) -> None:
+    """F.8 rule 9 and criterion 61: what each question is for travels with it in the guide (the
+    editor shows it). Probes are the bank's own: where Appendix F gives none (the framing line,
+    the story prompts, M6 and M7) none are invented; generated questions must carry probes."""
+    doc = templates.tailor(bank(), ctx)
+    asked = [r for t in doc.tables for r in t.rows if r.id]
+    assert asked
+    for row in asked:
+        q = bank().question(row.id)
+        assert row.movement == q.movement and row.priority == q.priority, row.id
+        assert row.targets and row.targets == (q.targets or [q.translation]), row.id
+        bank_probes = [f"Built from: {q.built_from}"] if q.built_from else q.probes
+        if row.wording == q.wording:  # a bank question (a filled-in F-series row is reworded)
+            assert row.probes == bank_probes, row.id
+    files = templates.render_markdown(doc)
+    assert (
+        "Flow (roles, lanes)" not in files and "Stated reasons; risks" not in files
+    )  # not printed

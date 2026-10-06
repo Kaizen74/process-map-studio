@@ -65,7 +65,9 @@ def test_a_practice_guide_is_filled_in_from_the_profile_and_the_map(drafted: Dra
     # Rule 5: the one step only the documents describe becomes an M6.5 probe, and only there.
     m6 = next(t for t in doc["tables"] if t["label"].startswith("M6 "))
     probe = templates.SOP_PROBE.format(step="Approve load plan")
-    assert next(r for r in m6["rows"] if r["id"] == "M6.5")["probes"][-1] == probe
+    m6_5 = next(r for r in m6["rows"] if r["id"] == "M6.5")
+    assert m6_5["held_back"] == [probe]  # parked in M6, apart from the bank's probes
+    assert probe not in m6_5["probes"]
     md = drafted.client.get(guide_url(drafted) + f"/export?profile_id={pid}&format=md").text
     assert md.count(probe) == 1 and wording.banned_words(md) == []
     # A second guide is a new version; the latest is what GET returns.

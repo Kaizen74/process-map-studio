@@ -123,6 +123,14 @@ class DocumentRow(BaseModel):
     probes: list[str] = []
     minutes: str  # "2", "1½", "½", or "in story" for a signifier asked within a story
     signifier: bool = False
+    # F.8 rule 9: what the guide stores for every question, for the editor and the matcher. Not
+    # printed in the files (the F.9 layout has no column for them).
+    movement: str = ""
+    targets: list[str] = []
+    priority: str = ""
+    # SOP-derived probes (F.8 rule 5), only ever on M6.5: printed after the probes, shown in the
+    # editor as "held back to avoid anchoring the SME".
+    held_back: list[str] = []
 
 
 class DocumentTable(BaseModel):

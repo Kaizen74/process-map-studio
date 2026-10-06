@@ -294,6 +294,7 @@ A guide for one interviewee profile, in the same F.9 layout as the standard temp
               "header_fields": ["Engagement / process", …], "header_values": {"Engagement / process": "Load control", …},
               "record": "…", "opener": ["…"], … the InterviewDocument of the templates …}}
 ```
+Each question row of `document.tables[].rows[]`: `{"id", "lead_in", "wording", "note", "probes", "minutes", "signifier", "movement", "targets", "priority", "held_back"}` (C5b-1, F.8 rule 9): `movement`, `targets` (what the question is for: the bank's targets, or its translation for the F-series and the framing line) and `priority` (`core` · `standard`) come from the bank and are not printed in the files; `held_back` holds the SOP-derived probes of M6.5 (rule 5), printed after the bank's probes and shown by the editor as "held back to avoid anchoring the SME". Rows the interviewer fills in have an empty `id`.
 
 ### POST /api/engagements/{id}/interview-guide
 Request: `{"profile_id": "…"}`. Makes a new version of that profile's guide (version 1, 2, …). Response `201`: the guide. What is filled in (F.8):

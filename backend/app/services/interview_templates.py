@@ -22,6 +22,7 @@ from pydantic import ValidationError
 
 from app.domain.enums import InterviewType
 from app.domain.interview import (
+    BankQuestion,
     DocumentRow,
     DocumentTable,
     GuideContext,
@@ -92,7 +93,21 @@ def _row(
         probes=[f"Built from: {q.built_from}"] if q.built_from else list(q.probes),
         minutes=minutes,
         signifier=signifier,
+        movement=q.movement,
+        targets=purpose(q),
+        priority=q.priority,
     )
+
+
+def purpose(q: BankQuestion) -> list[str]:
+    """What a question is for: its targets, or for the F-series and the framing line (which the
+    bank gives none) its translation, as in the F.6 table."""
+    return list(q.targets) or ([q.translation] if q.translation else [])
+
+
+def printed_probes(row: DocumentRow) -> list[str]:
+    """The probes as printed: the bank's, then any held back for M6 (F.8 rule 5)."""
+    return [*row.probes, *row.held_back]
 
 
 def _table(bank: QuestionBank, section: TemplateSection) -> DocumentTable:
@@ -193,7 +208,8 @@ def render_markdown(doc: InterviewDocument) -> str:
             question = question_text(row)
             if row.signifier:
                 question = f"↳ {question}"
-            probes = " · ".join(row.probes) if row.probes else ("—" if row.id else "")
+            shown = printed_probes(row)
+            probes = " · ".join(shown) if shown else ("—" if row.id else "")
             lines.append(f"| {row.id} | {_cell(question)} | {_cell(probes)} | {row.minutes} |  |")
     lines += ["", "## Coverage checklist", ""]
     lines += [f"- [ ] {item}" for item in doc.coverage_checklist]
@@ -241,7 +257,7 @@ def _question_table(doc: WordDocument, table: DocumentTable) -> None:
         if row.note:
             question = f"{question} ({row.note})"
         _cell_text(cells[1], question, italic_prefix=row.lead_in)
-        probes = row.probes or (["—"] if row.id else [])
+        probes = printed_probes(row) or (["—"] if row.id else [])
         cells[2].text = "\n".join(probes)
         cells[3].text = row.minutes
         grid.rows[-1].height = Cm(NOTES_ROW_CM)
@@ -346,23 +362,34 @@ def tailor(bank: QuestionBank, ctx: GuideContext) -> InterviewDocument:
         text = _fill(text, "[referrer role]", ctx.referrer_role, hidden)
         text = _fill(text, "[topics]", ctx.topics, hidden)
         opener.append(text)
-    tables = [_tailored_table(t, ctx, hidden) for t in doc.tables]
+    tables = [_tailored_table(bank, t, ctx, hidden) for t in doc.tables]
     spec = bank.templates[ctx.interview_type]
     title = f"{spec.title} interview guide" + (f": {ctx.who}" if _safe(ctx.who, hidden) else "")
     return doc.model_copy(update={"title": title, "header_values": header, "opener": opener,
                                   "tables": tables})  # fmt: skip
 
 
-def _tailored_table(table: DocumentTable, ctx: GuideContext, hidden: list[str]) -> DocumentTable:
+def _tailored_table(
+    bank: QuestionBank, table: DocumentTable, ctx: GuideContext, hidden: list[str]
+) -> DocumentTable:
     rows = []
     sop = [SOP_PROBE.format(step=s) for s in ctx.sop_steps if _safe(s, hidden)][:MAX_SOP_PROBES]
     follow_ups = [(qid, text) for qid, text in ctx.follow_ups if _safe(text, hidden)]
     for row in table.rows:
         if row.id == "M6.5" and sop:  # rule 5: only in M6, where the documents come in
-            row = row.model_copy(update={"probes": [*row.probes, *sop]})
+            row = row.model_copy(update={"held_back": sop})
         elif not row.id and ctx.interview_type == InterviewType.FOLLOW_UP and follow_ups:
             qid, text = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
-            row = row.model_copy(update={"id": qid, "wording": text})
+            q = bank.question(qid)
+            row = row.model_copy(
+                update={
+                    "id": qid,
+                    "wording": text,
+                    "movement": q.movement,
+                    "targets": purpose(q),
+                    "priority": q.priority,
+                }
+            )
         rows.append(row)
     return table.model_copy(update={"rows": rows})
 
