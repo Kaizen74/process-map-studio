@@ -172,3 +172,17 @@ def test_errors(drafted: Drafted) -> None:
         {"action": "Made interview guide",
          "after": {"profile_id": pid, "version": 1, "interview_type": "landscape"}}
     ]  # fmt: skip
+
+
+def test_the_list_shows_each_interviewee_s_latest_guide(drafted: Drafted) -> None:
+    url = f"/api/engagements/{drafted.engagement_id}/interview-guides"
+    assert drafted.client.get(url).json() == []
+    ramp = profile(drafted, role_id=role(drafted, "Ramp"), interview_type="practice")
+    lead = profile(drafted, stakeholder_group="Load control", interview_type="landscape")
+    for pid in (ramp, lead, ramp):
+        drafted.client.post(guide_url(drafted), json={"profile_id": pid})
+    listed = drafted.client.get(url).json()
+    assert [(g["profile_id"], g["version"], g["interview_type"]) for g in listed] == [
+        (ramp, 2, "practice"), (lead, 1, "landscape")]  # fmt: skip
+    assert "document" not in listed[0]
+    assert drafted.client.get("/api/engagements/nope/interview-guides").status_code == 404

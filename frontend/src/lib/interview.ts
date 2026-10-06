@@ -33,3 +33,18 @@ export const INTERVIEW_TYPE_LABELS: Readonly<Record<InterviewType, string>> = {
 export function profileName(profile: Pick<Profile, "role_name" | "stakeholder_group">): string {
   return [profile.role_name, profile.stakeholder_group].filter(Boolean).join(" · ");
 }
+
+/** GET /engagements/{id}/interview-guides: an interviewee's latest tailored guide (G2). */
+export interface GuideSummary {
+  id: string;
+  profile_id: string | null;
+  interview_type: InterviewType;
+  version: number;
+  created_at: string;
+}
+
+/** The latest guide of one interviewee as a Word or Markdown file (the server names the file). */
+export function guideUrl(engagementId: string, profileId: string, format: "docx" | "md"): string {
+  const enc = encodeURIComponent;
+  return `/api/engagements/${enc(engagementId)}/interview-guide/export?profile_id=${enc(profileId)}&format=${format}`;
+}

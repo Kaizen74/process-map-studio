@@ -1,5 +1,5 @@
 # Process Map Studio — Owner's Guide
-*Updated: 2026-09-30 (version 1.0.0, with the standard interview templates)*
+*Updated: 2026-10-06 (version 1.0.0, with the standard interview templates and tailored interview guides)*
 
 This guide explains how to **use** the app. How to install, start, stop, update, move and back it up is in [README.md](README.md).
 
@@ -33,6 +33,16 @@ Every interviewer uses the same questions, the same question IDs and the same mi
 8. Tick the **coverage checklist** at the end and note the next steps: the three completed examples to send, who else to talk to and the follow-up date.
 9. Upload the recording's transcript on **Sources**; the **Interview** step in the top bar then shows as done.
 
+### Tailored interview guides, step by step
+A tailored guide is the standard template for one interviewee, with the parts you would otherwise fill in by hand already filled in. The question IDs, the questions and the minute plan are exactly those of the template, so you use the IDs in the same way.
+1. Open the engagement → **Interview**. Under **Interviewees**, click **Add interviewee** and choose the interview type, the role or the stakeholder group (never a person's name), who referred you (by role) and, for a follow-up, the earlier interview.
+2. Click **Make guide** next to the interviewee. When it says **Guide version 1**, click **Download Word** (or **Download Markdown**). If the map or the interviewee changes, click **Make new version**; the downloads always give the latest version.
+3. What is filled in for you: the title and header table (process, role, stakeholder group, referred by; you still add the date, your name and the consent tick), and the opener's [bracketed] parts (scope from Setup, the business, the area, who referred you).
+4. **Practice:** under **M6.5** (only there, after the person has described the work in their own words) the guide adds up to five questions about steps that only the documents describe, for example "The procedure mentions "Approve load plan". Where does that happen in practice?"
+5. **Follow-up:** the blank rows are filled with the person's own words from the map ("You mentioned previously that…", question **F2**), then open questions from the review (**F6**) and gaps the map marks "not described" (**F5**). When you chose an earlier interview, the opener says what earlier interviews covered.
+6. Anything that contains a name on your hidden-names list, or a blaming word, is never filled in: the [bracket] or the blank row stays for you.
+7. During the interview, say or note each question ID as you ask it, exactly as with the templates. Two example guides are in `docs/samples/` (`interview-guide-practice-sample.docx` and `interview-guide-follow-up-sample.docx`).
+
 ### Inside an engagement: the guided path
 When an engagement is open, the top bar shows its name and eleven steps: Setup · Interview · Sources · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Each has a small mark and a spoken label:
 - **filled circle:** done;
@@ -41,7 +51,7 @@ When an engagement is open, the top bar shows its name and eleven steps: Setup �
 
 The step to do next carries a **Next** tag. Gap analysis is marked **Optional** and is never suggested as next.
 
-**Interview** counts as done once an interview transcript has been uploaded; until then it is the next step after Setup, and its screen offers the three standard templates. Above them, **Interviewees** lists whose interviews you are preparing: click **Add interviewee**, choose the interview type (Landscape, Practice or Follow-up), the role or the stakeholder group (never a person's name; the app refuses names on your hidden-names list), who referred you (by role) and, for a follow-up, the earlier interview it builds on. Tailored guides for each interviewee and the coverage report will be added there next.
+**Interview** counts as done once an interview transcript has been uploaded; until then it is the next step after Setup, and its screen offers the three standard templates. Above them, **Interviewees** lists whose interviews you are preparing: click **Add interviewee**, choose the interview type (Landscape, Practice or Follow-up), the role or the stakeholder group (never a person's name; the app refuses names on your hidden-names list), who referred you (by role) and, for a follow-up, the earlier interview it builds on. Each interviewee then has **Make guide** and, once made, **Download Word** and **Download Markdown** (see "Tailored interview guides, step by step"). The coverage report will be added there next.
 
 ### Setup, step by step
 1. **Process scope** (left card): check the **Engagement name**, then fill in the **Trigger** (what starts the process) and **End point** (what marks it as finished). Setup counts as done once both are filled.
@@ -228,6 +238,7 @@ A typical engagement, start to finish (each step has its own section above):
 
 ## What changed recently
 - 2026-10-06: **Fuller exports and two levels of detail.** You approved the new Review screenshots. The Master Process Map and the HTML map now follow the full PRD template: stories, strengths, both views, work types and know-how, official versus lived accounts, the glossary, preserve and improve, and reality gaps. The HTML map draws both views. The quality card has a new warning, **Work types confirmed**. A step described only at team level in a landscape interview (for example "Manage loading") now has the detailed steps from practice interviews nested under it: the map draws the detailed steps, the step details say **Part of: …**, and the table lists them under it. You approved the new export reference files.
+- 2026-10-06: **Tailored interview guides.** On the **Interview** screen each interviewee now has **Make guide**, then **Download Word** and **Download Markdown**: the standard template of their interview type with the header, the opener, the procedure questions (Practice, M6.5 only) and the follow-up questions (Follow-up) filled in from the engagement. Question IDs, questions and minutes are unchanged.
 - 2026-10-05: **PRD v1.11 adopted.** On a draft you can now **confirm or change a step's work type** in its details (complex or chaotic work is never flagged for automation), and the **Interview** screen lists your **interviewees** by role or group, ready for tailored guides. New optional modules from v1.11 (system records, value calculator, step disposition) are planned after the remaining interview tools.
 - 2026-10-01: **Interviews mapped as the work is really done.** A second interview (the ramp duty manager's) joins the sample, and the app now joins steps across interviews where one person passes on what another receives (the preliminary load plan, the loading report). The Review map opens **As done** and switches to **As documented**, with **Show the other view**, a **Work type** lens, and "Not described" lines where an interview skips a step. Step details now show the work type, know-how, stories and the official and lived accounts side by side. Gap analysis also finds reality gaps (where "officially" and "what actually happens" differ) with a gap class only when the SME gave a reason. Behind the scenes the app works out what the interviews covered and what still needs asking, with ready-to-ask follow-up questions in the SME's own words; these will appear on the Interview screen with the follow-up guide. The new Review screenshots wait for your approval (see the report).
 - 2026-09-30: **Guardrails against drift between runs.** Claude's instructions can no longer change without a new version (the checks stop it). Every draft and refresh records how it was made, and the **Refresh draft from sources** dialog tells you when the model, effort, verifier or instructions differ from that record. After a refresh, the Draft screen says what changed among the steps you hadn't reviewed. The approved interview templates are now fixed (golden baseline G9), and the Review screenshots with Interview in the step bar are the approved ones.

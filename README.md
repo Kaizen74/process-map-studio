@@ -47,6 +47,7 @@ Your key is stored only on this computer, never in GitHub.
 - **Start:** double-click **Start.command** (Mac) or **start.bat** (Windows). Keep the small window it opens; it shows "Process Map Studio is running."
 - **Stop:** close that small window.
 - **Interview templates:** on the home screen, **Interview templates** → choose Landscape, Practice or Follow-up → **Download Word** (or **Download Markdown**). No engagement is needed. They are also on each engagement's **Interview** screen. How to use the question IDs during an interview is in [GUIDE.md](GUIDE.md).
+- **Tailored interview guides:** open the engagement → **Interview** → under **Interviewees**, **Add interviewee** (a role or group, never a name) → **Make guide** → **Download Word** (or **Download Markdown**). The guide is the standard template with the header, the opener and extra probes filled in from the engagement; the question IDs and minutes stay the same.
 - **Use:** see [GUIDE.md](GUIDE.md) for how to set up an engagement, upload sources, review and publish.
 
 ## Update to the latest version

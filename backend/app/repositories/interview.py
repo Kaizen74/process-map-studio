@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain.interview import GuideView, InterviewDocument, ProfileView
+from app.domain.interview import GuideSummary, GuideView, InterviewDocument, ProfileView
 from app.repositories.tables import IntervieweeProfile, InterviewGuide, Role
 
 
@@ -105,3 +105,21 @@ def add_guide(
     session.add(row)
     session.flush()
     return _guide(row)
+
+
+def latest_guides(session: Session, engagement_id: str) -> list[GuideSummary]:
+    """Each interviewee's latest guide, oldest interviewee's first; the content is not read."""
+    rows = session.execute(
+        select(InterviewGuide.id, InterviewGuide.profile_id, InterviewGuide.interview_type,
+               InterviewGuide.version, InterviewGuide.created_at)
+        .where(InterviewGuide.engagement_id == engagement_id)
+        .order_by(InterviewGuide.created_at, InterviewGuide.version)
+    )  # fmt: skip
+    latest: dict[str | None, GuideSummary] = {}
+    for row in rows:
+        summary = GuideSummary(id=row.id, profile_id=row.profile_id,
+                               interview_type=row.interview_type, version=row.version,
+                               created_at=row.created_at)  # fmt: skip
+        if row.profile_id not in latest or summary.version > latest[row.profile_id].version:
+            latest[row.profile_id] = summary
+    return list(latest.values())

@@ -304,12 +304,15 @@ Request: `{"profile_id": "…"}`. Makes a new version of that profile's guide (v
 - **Rule 8**: nothing with a banned (blaming) word or a name on the hidden-names list is filled in (left as the bracket or the blank row). Minutes and question IDs are those of the standard template (rule 6, F.9 plan).
 Audit row "Made interview guide". Errors: `404` (engagement), `422` (`details.field: "profile_id"`, a profile of another engagement or none).
 
+### GET /api/engagements/{id}/interview-guides
+Each interviewee's latest guide, without its content (the Interviewees list, G2): `[{"id", "profile_id", "interview_type", "version", "created_at"}]`, in the order the guides were first made. `404` (engagement).
+
 ### GET /api/engagements/{id}/interview-guide?profile_id=
 The latest version. `404` "No guide yet for this interviewee." when none.
 
 ### GET /api/engagements/{id}/interview-guide/export?profile_id=&format=docx|md
 The latest version as a file, in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
-Used by: Interview screen, Interviewees (G2).
+Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** / **Download Markdown** (G2).
 
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 

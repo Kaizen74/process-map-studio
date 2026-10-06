@@ -179,6 +179,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("PATCH", "/api/segments/{segment}", {"text": "Walk me through the last flight you planned."}),
     ("GET", "/api/engagements/{eid}/redaction-terms", None),
     ("GET", "/api/engagements/{eid}/profiles", None),
+    ("GET", "/api/engagements/{sample_eid}/interview-guides", None),
     ("GET", "/api/engagements/{sample_eid}/interview-guide?profile_id={interviewee}", None),
     (
         "GET",

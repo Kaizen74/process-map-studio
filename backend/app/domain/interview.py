@@ -255,6 +255,16 @@ class GuideInput(BaseModel):
     profile_id: str
 
 
+class GuideSummary(BaseModel):
+    """The latest guide of one interviewee, without its content (the Interviewees list)."""
+
+    id: str
+    profile_id: str | None
+    interview_type: str
+    version: int
+    created_at: str
+
+
 class GuideView(BaseModel):
     id: str
     engagement_id: str

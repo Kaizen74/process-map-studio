@@ -1,12 +1,15 @@
 import { useState } from "react";
 import {
   INTERVIEW_TYPE_LABELS,
+  guideUrl,
   profileName,
+  type GuideSummary,
   type InterviewType,
   type Profile,
   type ProfileInput,
 } from "../../lib/interview";
 import { Button, SegmentedControl, SelectField, TextField } from "../common";
+import { FORMATS } from "../../lib/templates";
 import "./interview.css";
 
 // Interviewee profile form (PRD Appendix F.8 rule 1; C5a): a role or stakeholder group, never a
@@ -121,10 +124,59 @@ export function ProfileForm({ roles, earlier, initial, busy, error, onSave, onCa
 export interface ProfileListProps {
   profiles: readonly Profile[];
   onEdit: (profile: Profile) => void;
+  /** Each interviewee's latest tailored guide (G2), by profile ID. */
+  guides?: ReadonlyMap<string, GuideSummary> | undefined;
+  /** Make a (new version of the) guide; without it the list shows no guide actions. */
+  onMakeGuide?: ((profile: Profile) => void) | undefined;
+  /** The interviewee whose guide is being made, and a refusal to show under it. */
+  making?: string | null | undefined;
+  makeError?: { profileId: string; message: string } | null | undefined;
+}
+
+/** Make guide, then Download Word · Download Markdown of the latest version. */
+function GuideActions({ profile, guide, onMake, making, error }: {
+  profile: Profile;
+  guide: GuideSummary | undefined;
+  onMake: (profile: Profile) => void;
+  making: boolean;
+  error: string | undefined;
+}) {
+  const name = profileName(profile);
+  return (
+    <div className="profile-list__guide">
+      <p className="profile-list__meta">
+        {guide
+          ? `Guide version ${guide.version} (${INTERVIEW_TYPE_LABELS[guide.interview_type]})`
+          : "No guide yet"}
+      </p>
+      <span className="template-downloads">
+        {guide &&
+          FORMATS.map(({ format, label }) => (
+            <a
+              key={format}
+              className="btn btn--secondary"
+              href={guideUrl(profile.engagement_id, profile.id, format)}
+              download
+            >
+              Download {label} <span className="visually-hidden">guide for {name}</span>
+            </a>
+          ))}
+        <Button onClick={() => { if (!making) onMake(profile); }} aria-busy={making}>
+          {making ? "Making guide…" : guide ? "Make new version" : "Make guide"}{" "}
+          <span className="visually-hidden">for {name}</span>
+        </Button>
+      </span>
+      {error && (
+        <p className="panel-danger" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** The engagement's interviewees, oldest first, each with its interview type and what it builds on. */
-export function ProfileList({ profiles, onEdit }: ProfileListProps) {
+export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, makeError }: ProfileListProps) {
   const byId = new Map(profiles.map((p) => [p.id, p]));
   return (
     <ul className="profile-list" aria-label="Interviewees">
@@ -132,13 +184,22 @@ export function ProfileList({ profiles, onEdit }: ProfileListProps) {
         const before = profile.previous_profile_id ? byId.get(profile.previous_profile_id) : undefined;
         return (
           <li key={profile.id} className="profile-list__item">
-            <div>
+            <div className="profile-list__body">
               <p className="profile-list__name">{profileName(profile)}</p>
               <p className="profile-list__meta">
                 {INTERVIEW_TYPE_LABELS[profile.interview_type]}
                 {profile.referred_by_role && ` · referred by ${profile.referred_by_role}`}
                 {before && ` · follows ${profileName(before)}`}
               </p>
+              {onMakeGuide && (
+                <GuideActions
+                  profile={profile}
+                  guide={guides?.get(profile.id)}
+                  onMake={onMakeGuide}
+                  making={making === profile.id}
+                  error={makeError?.profileId === profile.id ? makeError.message : undefined}
+                />
+              )}
             </div>
             <Button variant="link" onClick={() => onEdit(profile)}>
               Edit <span className="visually-hidden">{profileName(profile)}</span>

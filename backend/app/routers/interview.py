@@ -6,7 +6,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Query, Request, Response
 
 from app.actions import interview
-from app.domain.interview import GuideInput, GuideView, ProfileInput, ProfilePatch, ProfileView
+from app.domain.interview import (
+    GuideInput,
+    GuideSummary,
+    GuideView,
+    ProfileInput,
+    ProfilePatch,
+    ProfileView,
+)
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["interview"])
@@ -27,6 +34,11 @@ def add_profile(request: Request, engagement_id: str, body: ProfileInput) -> Pro
 def edit_profile(request: Request, profile_id: str, body: ProfilePatch) -> ProfileView:
     state = request.app.state
     return unwrap(interview.edit_profile(state.config, state.sessions, profile_id, body))
+
+
+@router.get("/engagements/{engagement_id}/interview-guides")
+def list_guides(request: Request, engagement_id: str) -> list[GuideSummary]:
+    return unwrap(interview.list_guides(request.app.state.sessions, engagement_id))
 
 
 @router.post("/engagements/{engagement_id}/interview-guide", status_code=201)

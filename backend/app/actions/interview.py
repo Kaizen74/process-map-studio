@@ -23,6 +23,7 @@ from app.domain.enums import InterviewType
 from app.domain.interview import (
     GuideContext,
     GuideInput,
+    GuideSummary,
     GuideView,
     InterviewDocument,
     ProfileInput,
@@ -215,6 +216,13 @@ def make_guide(
                      after={"profile_id": profile.id, "version": made.version,
                             "interview_type": made.interview_type})  # fmt: skip
         return Ok(made)
+
+
+def list_guides(sessions: Sessions, engagement_id: str) -> Result[list[GuideSummary]]:
+    with session_scope(sessions) as session:
+        if engagements_repo.get(session, engagement_id) is None:
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        return Ok(interview_repo.latest_guides(session, engagement_id))
 
 
 def get_guide(sessions: Sessions, engagement_id: str, profile_id: str) -> Result[GuideView]:
