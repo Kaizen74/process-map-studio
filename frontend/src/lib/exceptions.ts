@@ -102,7 +102,8 @@ export function summaryText(s: ExceptionSummary): string {
   if (s.steps === 0) return "No steps in this view yet.";
   const off = s.exception_steps + s.variation_steps;
   if (off === 0 && s.rework_loops === 0 && s.workarounds === 0) {
-    return `All ${plural(s.steps, "step", "steps")} are on the usual route; no exception routes, rework loops or workarounds.`;
+    const every = s.steps === 1 ? "The only step is" : `All ${s.steps} steps are`;
+    return `${every} on the usual route; no exception routes, rework loops or workarounds.`;
   }
   const parts = [
     `${off} of ${plural(s.steps, "step", "steps")} (${Math.round(s.off_usual_share * 100)}%) are off the usual route: ${s.exception_steps} on exception routes, ${plural(s.variation_steps, "variation", "variations")}.`,

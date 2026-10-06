@@ -151,6 +151,19 @@ A? means the sources disagree about who is accountable.
 - As done: 9 steps; only here: Resolve or offload, Busy wave?, Read report at aircraft, Approve deviation.
 - As documented: 6 steps; only here: Approve load plan.
 
+### Exceptions, rework and workarounds (as done)
+
+- 3 of 9 steps (33%) are off the usual route: 2 on exception routes, 1 variation. 2 rework loops; 1 workaround. The exception routes add 4 hand-overs.
+- Exception route: Special loads OK? → No: Resolve or offload (Airline ops); then it goes back to Draft load plan (Re-plan); 2 extra hand-overs; how often: not stated yet.
+- Variation: Busy wave? → on a busy wave: Read report at aircraft (Load controller); then it rejoins the usual route at Deviation in limits?; 0 extra hand-overs; how often: not stated yet; reason given: “otherwise we'd miss the slot”.
+- Exception route: Deviation in limits? → Outside limits: Approve deviation (Captain); then it rejoins the usual route at Issue load sheet (Accept), or goes back to Load and return LIR (Re-trim); 2 extra hand-overs; how often: not stated yet.
+- Rework loop: Resolve or offload goes back to Draft load plan (Re-plan).
+- Rework loop: Approve deviation goes back to Load and return LIR (Re-trim).
+- Workaround: Read report at aircraft (on a busy wave), Load controller; reason given: “otherwise we'd miss the slot”; how often: not stated yet.
+- Still to ask [M5.s2]: How often does something like that happen? (about Special loads OK? → No: Resolve or offload)
+- Still to ask [M5.s2]: How often does something like that happen? (about Busy wave? → on a busy wave: Read report at aircraft)
+- Still to ask [M5.s2]: How often does something like that happen? (about Deviation in limits? → Outside limits: Approve deviation)
+
 ### Work type and know-how
 
 | Step | Work type | Know-how (knowledge risk · dominant ASHEN) |

@@ -54,7 +54,9 @@ describe("Review screen (PRD §5.6)", () => {
     expect(within(strip).getByText("Flight scheduled")).toBeInTheDocument();
     expect(within(strip).getByText("~75 min elapsed, ~60 min work")).toBeInTheDocument();
     // V2: the cycle time is the As done view's (Approve load plan is in the documents only).
-    expect(within(strip).getByText("Incomplete: 2 steps without time")).toBeInTheDocument();
+    // X5 (Eric's decision): along the usual route, so the busy-wave workaround (no time) is no
+    // longer counted; only Issue load sheet lacks a time.
+    expect(within(strip).getByText("Incomplete: 1 step without time")).toBeInTheDocument();
     expect(within(strip).getByText("Not stated")).toBeInTheDocument(); // no process KPI
     // V2: the map opens As done: nine of the ten steps, in four lanes (the Load control lead's
     // only step, Approve load plan, is in the documents only).

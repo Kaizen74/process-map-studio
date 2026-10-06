@@ -421,12 +421,17 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
     ]  # fmt: skip
     # + the two stitched lines in each view (A.10, C3)
     assert len(done["edges"]) == 16 and len(documented["edges"]) == 9
-    # Cycle time per view (§3.12.11): each view's main path has two steps without time; the map
-    # as one has three (Approve load plan is only in As documented).
-    assert done["process"]["cycle_time"] == documented["process"]["cycle_time"] == {
+    # Cycle time per view (§3.12.11) along the usual route (X5, 2026-10-06, Eric's decision):
+    # As done no longer runs through the busy-wave workaround (Read report at aircraft, no time),
+    # so only Issue load sheet lacks a time; As documented also has Approve load plan. The map as
+    # one takes the As done view's (it was 3 when it mixed both views' steps).
+    assert done["process"]["cycle_time"] == {
+        "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 1,
+    }  # fmt: skip
+    assert documented["process"]["cycle_time"] == {
         "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 2,
     }  # fmt: skip
-    assert drafted.client.get(url).json()["process"]["cycle_time"]["incomplete_steps"] == 3
+    assert drafted.client.get(url).json()["process"]["cycle_time"] == done["process"]["cycle_time"]
     bad = drafted.client.get(url, params={"view": "both"})
     assert bad.status_code == 422
     lint = drafted.client.get(f"/api/versions/{drafted.version_id}/lint").json()

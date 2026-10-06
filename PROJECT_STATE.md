@@ -116,7 +116,7 @@ Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12
 - [x] X3 — UI: **Exceptions** lens on Review (key 6) and Registers **Exceptions and workarounds**; screenshots `docs/screens/x3-*.png`
 - [x] X4 — full mock regression (`./run_checks.sh`) and a permanent backend/frontend field-alignment test
 - [x] X5–X6 built (Eric said yes): cycle time on the usual route; exceptions in the Master Process Map and HTML map
-- [ ] Waiting for Eric's approval of the candidates in `docs/review/` (G1, G3, G5); on "approve": `git apply docs/review/x5-x6-pending.patch`, copy the candidates over `backend/tests/golden/` (G1_graph.json, G3_master_map.md, G5_map.html), regenerate the frontend sample (PMS_UPDATE_GOLDEN=1 on `test_the_frontend_sample_matches_the_backend`), full checks, remove `docs/review/`, update GUIDE ("What changed"), commit, push
+- [x] Eric approved the X5–X6 candidates (2026-10-06): change applied, G1, G3 and G5 replaced, `docs/review/` removed
 
 **End of session 20 (2026-10-06).** Built and pushed: G1–G2 (tailored guides), S0, C5b–C5d, C6, C7a–b, C8, C9; every commit passed 13 of 13 checks before it was pushed. P4c is closed and tagged `phase-p4c`. No visual baseline changed. **Resume point:** the optional phases in order: P9u (matrix layers SME official / lived; registers Stories, Glossary, Preserve / Improve; finishes criteria 59 and 73 with L1), then P10b (R1 data request template onward), L1 (leadership update), P12 (live run with Eric's key, v1.0.0).
 

@@ -14,7 +14,7 @@
       "cycle_time": {
         "elapsed_min": 75.0,
         "work_min": 60.0,
-        "incomplete_steps": 3
+        "incomplete_steps": 1
       }
     },
     "roles": [
@@ -7428,7 +7428,7 @@
         "cycle_time": {
           "elapsed_min": 75.0,
           "work_min": 60.0,
-          "incomplete_steps": 2
+          "incomplete_steps": 1
         }
       },
       "roles": [

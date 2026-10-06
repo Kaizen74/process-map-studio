@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.domain.graph import Graph
 from app.domain.quality import QualityCard
+from app.domain.sensemaking import ExceptionReport
 
 
 class SourceEntry(BaseModel):
@@ -109,6 +110,8 @@ class ExportInput(BaseModel):
     glossary: list[ExportTerm] = []
     know_how: list[ExportKnowHow] = []
     reality_gaps: list[ExportRealityGap] = []
+    #: Exceptions, rework and workarounds of the As done view (X6, 2026-10-06, Eric's decision).
+    exceptions: ExceptionReport | None = None
     #: Optional modules in use (§3.13-3.15; decision A: off until Eric turns them on in P10b).
     value_calculator_on: bool = False
     system_records_on: bool = False

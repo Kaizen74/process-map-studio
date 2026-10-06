@@ -182,3 +182,32 @@ def test_lines_to_unknown_or_rejected_steps_are_ignored_and_cycles_end() -> None
     edges = [e("Start", "A"), e("A", "B"), e("B", "A"), e("B", "End"), e("A", "gone")]
     report = run(steps, edges)
     assert routes(report) == {"A": "usual", "B": "usual"}
+
+
+def test_the_usual_path_takes_the_long_way_through_the_usual_route_not_the_workaround() -> None:
+    """X5: the cycle time's route. The stitched hand-over line Plan → Load is stored first, but
+    the usual route goes through the special-loads check; the busy-wave workaround and the
+    exception routes are left out."""
+    minutes = {"Plan": 20, "Load": 55, "Read at aircraft": 10, "Resolve": 40}
+    path = exceptions.usual_path(SAMPLE_STEPS, SAMPLE_EDGES, minutes)
+    assert path == ["Start", "Plan", "Special OK?", "Load", "Busy?", "In limits?", "Issue", "End"]
+
+
+def test_the_usual_path_prefers_more_minutes_then_more_steps_and_reaches_the_end() -> None:
+    steps = [s("Start", "start"), s("A"), s("B"), s("C"), s("Dead end"), s("End", "end")]
+    edges = [e("Start", "A"), e("A", "B"), e("A", "C"), e("B", "End"), e("C", "End"),
+             e("Start", "Dead end")]  # fmt: skip
+    assert exceptions.usual_path(steps, edges, {"B": 5, "C": 30, "Dead end": 99}) == [
+        "Start",
+        "A",
+        "C",
+        "End",
+    ]  # parallel work: the longer branch; a dead end never wins
+    assert exceptions.usual_path(steps, edges, {}) == ["Start", "A", "B", "End"]  # a tie: first
+
+
+def test_the_usual_path_survives_cycles_and_needs_a_start() -> None:
+    steps = [s("Start", "start"), s("A"), s("B"), s("End", "end")]
+    edges = [e("Start", "A"), e("A", "B"), e("B", "A"), e("B", "End")]
+    assert exceptions.usual_path(steps, edges, {}) == ["Start", "A", "B", "End"]
+    assert exceptions.usual_path([s("A")], [], {}) == []

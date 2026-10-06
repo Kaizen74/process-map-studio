@@ -19,6 +19,8 @@ words from its verified lived claims, names already hidden), a report out. Never
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Literal
 
 from app.domain.sensemaking import (
@@ -72,13 +74,20 @@ def _first(values: list[str]) -> str:
     return next((v for v in values if v.strip()), "")
 
 
-def analyse(
-    steps: list[ExceptionStepInput],
-    edges: list[ExceptionEdgeInput],
-    view: View,
-    ask: str,
-) -> ExceptionReport:
-    """The report for one view; `ask` is the bank's wording of M5.s2."""
+@dataclass
+class _Routes:
+    """How the steps of a view are reached (see the module docstring)."""
+
+    by_id: dict[str, ExceptionStepInput]
+    loops: list[ExceptionEdgeInput]
+    forward: list[ExceptionEdgeInput]
+    out: dict[str, list[ExceptionEdgeInput]]
+    usual: set[str]
+    variation: set[str]
+    usual_edges: list[ExceptionEdgeInput]  # the lines the usual route takes
+
+
+def _classify(steps: list[ExceptionStepInput], edges: list[ExceptionEdgeInput]) -> _Routes:
     by_id = {s.element_id: s for s in steps}
     edges = [e for e in edges if e.from_id in by_id and e.to_id in by_id]
     loops = loop_edges(edges)
@@ -97,6 +106,15 @@ def analyse(
         and all(by_id[e.from_id].kind in deciding for e in into[s.element_id])
     }  # fmt: skip
 
+    def usual_line(e: ExceptionEdgeInput) -> bool:
+        """A line the usual route may take: no exception exit, except a "No" whose sibling
+        leads into a variation (the variation is the condition)."""
+        if e.to_id in seeds:
+            return False
+        if e.kind not in EXCEPTION_EXITS:
+            return True
+        return e.kind == "no" and any(x is not e and x.to_id in seeds for x in out[e.from_id])
+
     starts = [s.element_id for s in steps if s.kind == "start"] or [
         s.element_id for s in steps if not into[s.element_id]
     ]
@@ -105,17 +123,9 @@ def analyse(
     while queue:
         node = queue.popleft()
         for e in out[node]:
-            target = e.to_id
-            if target in usual or target in seeds:
-                continue
-            if e.kind in EXCEPTION_EXITS:
-                normal_no = e.kind == "no" and any(
-                    x is not e and x.to_id in seeds for x in out[node]
-                )
-                if not normal_no:
-                    continue
-            usual.add(target)
-            queue.append(target)
+            if e.to_id not in usual and usual_line(e):
+                usual.add(e.to_id)
+                queue.append(e.to_id)
 
     variation: set[str] = set()
     queue = deque(seeds)
@@ -125,6 +135,68 @@ def analyse(
             continue
         variation.add(node)
         queue.extend(e.to_id for e in out[node])
+    usual_edges = [e for e in forward if e.from_id in usual and e.to_id in usual and usual_line(e)]
+    return _Routes(by_id, loops, forward, out, usual, variation, usual_edges)
+
+
+def usual_path(steps: list[ExceptionStepInput], edges: list[ExceptionEdgeInput],
+               minutes: Mapping[str, float]) -> list[str]:  # fmt: skip
+    """The usual route from the start, step by step: where the usual route splits (work in
+    parallel, or lines that skip steps), the longest way through it in minutes, then in steps,
+    so the cycle time is the time a usual case takes (X5). Ends at the end where it can."""
+    found = _classify(steps, edges)
+    start = next((s.element_id for s in steps if s.kind == "start"), None)
+    if start is None:
+        return []
+    nexts: dict[str, list[str]] = defaultdict(list)
+    for e in found.usual_edges:
+        nexts[e.from_id].append(e.to_id)
+    # Lines that close a cycle (found by a walk from the start) are left out: a DAG remains.
+    stack: set[str] = set()
+    done: set[str] = set()
+    keep: dict[str, list[str]] = defaultdict(list)
+
+    def walk(node: str) -> None:
+        stack.add(node)
+        for target in nexts[node]:
+            if target in stack:
+                continue
+            keep[node].append(target)
+            if target not in done:
+                walk(target)
+        stack.discard(node)
+        done.add(node)
+
+    walk(start)
+    best: dict[str, tuple[tuple[bool, float, int], list[str]]] = {}
+
+    def longest(node: str) -> tuple[tuple[bool, float, int], list[str]]:
+        if node in best:
+            return best[node]
+        here = minutes.get(node, 0.0)
+        ending = found.by_id[node].kind == "end"
+        options = [longest(t) for t in keep[node]]
+        if options:
+            (reaches, mins, count), path = max(options, key=lambda o: o[0])
+            result = ((reaches, mins + here, count + 1), [node, *path])
+        else:
+            result = ((ending, here, 1), [node])
+        best[node] = result
+        return result
+
+    return longest(start)[1]
+
+
+def analyse(
+    steps: list[ExceptionStepInput],
+    edges: list[ExceptionEdgeInput],
+    view: View,
+    ask: str,
+) -> ExceptionReport:
+    """The report for one view; `ask` is the bank's wording of M5.s2."""
+    routed = _classify(steps, edges)
+    by_id, loops, forward, out = routed.by_id, routed.loops, routed.forward, routed.out
+    usual, variation = routed.usual, routed.variation
 
     def route_of(element_id: str) -> StepRoute:
         if element_id in usual:

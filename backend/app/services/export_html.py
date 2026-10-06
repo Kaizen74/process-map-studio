@@ -365,6 +365,8 @@ def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
     parts.append('<p class="note">A? means the sources disagree about who is accountable.</p>')
     parts.append("<h3>Two views: as done and as documented</h3>")
     parts.append(_list(md.two_views_lines(data)))
+    parts.append(f"<h3>{e(md.EXCEPTIONS_HEADING)}</h3>")
+    parts.append(_list(md.exception_lines(data)))
     know_how = {k.element_id: k for k in data.know_how}
     parts.append("<h3>Work type and know-how</h3>")
     parts.append(
