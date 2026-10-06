@@ -24,6 +24,7 @@ from app.db import session_scope
 from app.domain.enums import InterviewType
 from app.domain.interview import (
     DocumentRow,
+    FollowUp,
     GuideContext,
     GuideEdit,
     GuideInput,
@@ -178,8 +179,9 @@ def _context(session: Session, engagement_id: str, profile: ProfileView) -> Guid
 
 def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
                 has_earlier: bool) -> Result[GuideContext]:  # fmt: skip
-    """Rule 7: the latest map's F2 probes, open validation questions (F6), then its "not
-    described" questions (F5); `[topics]` from what the coverage report shows as covered."""
+    """Rule 7 (criterion 68): the latest map's F2 probes, its coverage report's questions for
+    thin or missing dimensions, its open validation questions (F6) and its "not described"
+    questions (F5), one of each in turn; `[topics]` from what the report shows as covered."""
     with session_scope(sessions) as session:
         map_id = versions_repo.current_map_id(session, engagement_id)
         open_questions = (
@@ -191,9 +193,15 @@ def _follow_ups(sessions: Sessions, engagement_id: str, ctx: GuideContext,
     report = coverage.get_coverage(sessions, map_id)
     if isinstance(report, Err):
         return report
-    rows = [(p.question_id, p.question) for p in report.value.probes]
-    rows += [("F6", q.question) for q in open_questions if q.reason != "not_described"]
-    rows += [("F5", q.question) for q in open_questions if q.reason == "not_described"]
+    rows = templates.interleave(
+        [FollowUp(question_id=p.question_id, wording=p.question) for p in report.value.probes],
+        [FollowUp(question_id=q.question_id, wording=q.question, about=q.about)
+         for q in report.value.follow_up_questions],
+        [FollowUp(question_id="F6", wording=q.question) for q in open_questions
+         if q.reason != "not_described"],
+        [FollowUp(question_id="F5", wording=q.question) for q in open_questions
+         if q.reason == "not_described"],
+    )  # fmt: skip
     covered = [name.replace("_", " ") for name, d in report.value.dimensions.items()
                if d.status == "covered"]  # fmt: skip
     topics = ", ".join(covered) if has_earlier else ""

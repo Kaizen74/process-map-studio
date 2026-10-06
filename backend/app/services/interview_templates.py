@@ -25,6 +25,7 @@ from app.domain.interview import (
     BankQuestion,
     DocumentRow,
     DocumentTable,
+    FollowUp,
     GuideContext,
     GuideEdit,
     InterviewDocument,
@@ -377,18 +378,24 @@ def _tailored_table(
 ) -> DocumentTable:
     rows = []
     sop = [SOP_PROBE.format(step=s) for s in ctx.sop_steps if _safe(s, hidden)][:MAX_SOP_PROBES]
-    follow_ups = [(qid, text) for qid, text in ctx.follow_ups if _safe(text, hidden)]
+    follow_ups = [
+        f
+        for f in ctx.follow_ups
+        if _safe(f.wording, hidden) and (not f.about or _safe(f.about, hidden))
+    ]
     for row in table.rows:
         if row.id == "M6.5" and sop:  # rule 5: only in M6, where the documents come in
             row = row.model_copy(update={"held_back": sop})
         elif not row.id and ctx.interview_type == InterviewType.FOLLOW_UP and follow_ups:
-            qid, text = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
+            follow_up = follow_ups.pop(0)  # rule 7: the blank reflective-probe rows, in order
+            qid, text = follow_up.question_id, follow_up.wording
             q = bank.question(qid)
             row = row.model_copy(
                 update={
                     "id": qid,
                     "wording": text,
                     "movement": q.movement,
+                    "note": f"about {follow_up.about}" if follow_up.about else "",
                     "targets": purpose(q),
                     "priority": q.priority,
                 }
@@ -564,3 +571,12 @@ def apply_edits(
             rows.append(row.model_copy(update=update))
         tables.append(table.model_copy(update={"rows": rows}))
     return Ok((doc.model_copy(update={"tables": tables}), changed))
+
+
+def interleave(*lists: list[FollowUp]) -> list[FollowUp]:
+    """One from each list in turn (F.8 rule 7: every kind of follow-up gets its share of the few
+    blank rows), each list in its own order; empty lists are skipped."""
+    out: list[FollowUp] = []
+    for n in range(max((len(x) for x in lists), default=0)):
+        out += [x[n] for x in lists if n < len(x)]
+    return out

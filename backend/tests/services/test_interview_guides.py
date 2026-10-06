@@ -14,6 +14,7 @@ from docx.document import Document as DocxDocument
 from app.domain.enums import InterviewType
 from app.domain.interview import (
     DocumentRow,
+    FollowUp,
     GuideContext,
     GuideEdit,
     InterviewDocument,
@@ -50,10 +51,14 @@ PRACTICE = GuideContext(
 FOLLOW_UP = PRACTICE.model_copy(update={
     "interview_type": InterviewType.FOLLOW_UP,
     "topics": "trigger, decisions",
-    "follow_ups": [("F2", "You mentioned previously that “we wait for the fuel figure”. How do "
-                          "you manage that today, and where do you see the biggest risk?"),
-                   ("F6", "Who signs the plan when the controller is away?"),
-                   ("F5", "What happens between weighing and signing?")],
+    "follow_ups": [
+        FollowUp(question_id="F2", wording="You mentioned previously that “we wait for the fuel "
+                 "figure”. How do you manage that today, and where do you see the biggest risk?"),
+        FollowUp(question_id="M4.8", wording="If a new colleague had to make this call tomorrow, "
+                 "what would they need to know?", about="Special loads OK?"),
+        FollowUp(question_id="F6", wording="Who signs the plan when the controller is away?"),
+        FollowUp(question_id="F5", wording="What happens between weighing and signing?"),
+    ],
 })  # fmt: skip
 
 
@@ -119,9 +124,15 @@ def test_rule_5_sop_probes_only_in_m6_and_at_most_five() -> None:
 def test_rule_7_follow_up_rows_and_topics() -> None:
     doc = templates.tailor(bank(), FOLLOW_UP)
     probes = next(t for t in doc.tables if t.label.startswith("F-series"))
-    assert [r.id for r in probes.rows] == ["F1", "F2", "F3", "F4", "F5", "F6", "F2", "F6", "F5",
-                                           "", ""]  # fmt: skip
-    assert probes.rows[8].wording == "What happens between weighing and signing?"
+    assert [r.id for r in probes.rows] == ["F1", "F2", "F3", "F4", "F5", "F6", "F2", "M4.8", "F6",
+                                           "F5", ""]  # fmt: skip
+    assert probes.rows[9].wording == "What happens between weighing and signing?"
+    thin = probes.rows[7]  # a coverage question keeps its bank ID, targets and what it is about
+    assert (thin.note, thin.movement) == ("about Special loads OK?", "M4")
+    assert thin.targets == bank().question("M4.8").targets
+    md = templates.render_markdown(doc)
+    assert "| M4.8 | If a new colleague had to make this call tomorrow, what would they need to " \
+        "know? (about Special loads OK?) |" in md  # fmt: skip
     assert doc.opener[1] == "Last time we covered trigger, decisions; today I'd like to pick up " \
         "where we left off."  # fmt: skip
     practice = templates.tailor(
@@ -133,8 +144,11 @@ def test_rule_7_follow_up_rows_and_topics() -> None:
 def test_rule_8_blaming_words_and_hidden_names_are_never_filled_in() -> None:
     ctx = FOLLOW_UP.model_copy(update={
         "who": "Priya's team", "referrer_role": "Priya", "area": "error by the ramp",
-        "follow_ups": [("F6", "Why did Priya sign it?"), ("F6", "Was it a violation?"),
-                       ("F5", "What happens next?")],
+        "follow_ups": [FollowUp(question_id="F6", wording="Why did Priya sign it?"),
+                       FollowUp(question_id="F6", wording="Was it a violation?"),
+                       FollowUp(question_id="M4.8", wording="What would they need to know?",
+                                about="Ask Priya"),
+                       FollowUp(question_id="F5", wording="What happens next?")],
         "sop_steps": ["Ask Priya"],
     })  # fmt: skip
     doc = templates.tailor(bank(), ctx)
@@ -395,3 +409,16 @@ def test_sections_and_rows_cant_be_added_moved_or_removed() -> None:
     for edit in (fewer, swapped):
         result = templates.apply_edits(doc, edit, [])
         assert isinstance(result, Err) and result.details["field"] == "tables"
+
+
+def test_follow_ups_take_one_of_each_kind_in_turn() -> None:
+    """F.8 rule 7 (criterion 68): the few blank rows go to every source, not the first only."""
+
+    def kind(qid: str, n: int) -> list[FollowUp]:
+        return [FollowUp(question_id=qid, wording=f"{qid} question {i}?") for i in range(n)]
+
+    mixed = templates.interleave(kind("F2", 3), kind("M2.1", 1), [], kind("F5", 2))
+    assert [f.wording for f in mixed] == [
+        "F2 question 0?", "M2.1 question 0?", "F5 question 0?", "F2 question 1?",
+        "F5 question 1?", "F2 question 2?"]  # fmt: skip
+    assert templates.interleave() == [] and templates.interleave([], []) == []

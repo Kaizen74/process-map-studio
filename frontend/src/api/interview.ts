@@ -1,3 +1,4 @@
+import type { CoverageReport } from "../lib/coverage";
 import type { GuideEdit, GuideStarted, GuideSummary, GuideView, Profile, ProfileInput } from "../lib/interview";
 import { request } from "./request";
 
@@ -33,4 +34,7 @@ export const editGuide = (engagementId: string, profileId: string, body: GuideEd
     method: "PATCH",
     body,
   });
+
+// API_CONTRACT.md → GET /versions/{vid}/coverage (C4; shown on the Coverage tab, C5d).
+export const getCoverage = (versionId: string) => request<CoverageReport>(`/versions/${enc(versionId)}/coverage`);
 

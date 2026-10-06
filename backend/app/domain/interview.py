@@ -241,6 +241,15 @@ class ProfileView(BaseModel):
 # --- Tailored guides (API_CONTRACT.md → Tailored interview guides; F.8; G1) --------------------
 
 
+class FollowUp(BaseModel):
+    """One question for a Follow-up guide's blank rows: a bank ID (F2, F5, F6 or the M-question
+    of a thin dimension), its wording, and the step it is about ("" if none)."""
+
+    question_id: str
+    wording: str
+    about: str = ""
+
+
 class GuideContext(BaseModel):
     """What a guide is tailored from (F.8 rules 1, 2, 5, 7), names already hidden by the caller.
     Every text is filled in only if it passes the wording and hidden-name checks."""
@@ -256,7 +265,7 @@ class GuideContext(BaseModel):
     stakeholder_group: str = ""
     topics: str = ""  # follow-up: what the earlier interview covered
     sop_steps: list[str] = []  # practice M6.5: steps only the documents describe, process order
-    follow_ups: list[tuple[str, str]] = []  # follow-up: (F-series ID, wording), in priority order
+    follow_ups: list[FollowUp] = []  # follow-up: the rows to fill, in order (rule 7)
     hidden_terms: list[str] = []
 
 

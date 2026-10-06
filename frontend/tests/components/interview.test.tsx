@@ -81,7 +81,10 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
     const followUp = screen.getByRole("region", { name: "Follow-up (30 min)" });
     expect(within(followUp).getAllByRole("row").at(-1)).toHaveTextContent("Total30");
     expect(screen.getByText(/Say or note the question ID \(for example \[M2\.2\]\)/)).toBeInTheDocument();
-    expect(screen.getByText(/The coverage report is not available on this screen yet; the standard templates and tailored guides work/)).toBeInTheDocument();
+    // PRD §5.4: three tabs, Templates first.
+    const tabs = within(screen.getByRole("tablist", { name: "Interview" })).getAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual(["Templates", "Guide", "Coverage"]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(await seriousViolations(container)).toEqual([]);
   });
 
@@ -385,5 +388,114 @@ describe("Guide editor (C5c; PRD §5.4 Guide tab, criterion 49)", () => {
     expect(question).toHaveValue("The SOP says to walk through it. Do you?");
     fireEvent.click(within(form).getByRole("button", { name: "Close editor" }));
     expect(screen.queryByRole("form", { name: /^Edit Practice interview guide/ })).toBeNull();
+  });
+});
+
+describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
+  const MAP = {
+    id: "v1", engagement_id: "e1", label: "v0.1", state: "draft", created_at: "2026-10-06T09:00:00+00:00",
+    published_at: null, published_by: null, parent_version_id: null, signal: null,
+  };
+  const dim = (status: string, evidence_count: number, note = "") => ({ status, evidence_count, note });
+  const REPORT = {
+    version_id: "v1",
+    dimensions: {
+      trigger: dim("missing", 0), end_point: dim("thin", 1), step_spine: dim("covered", 6),
+      handoffs: dim("covered", 3), decisions_and_criteria: dim("covered", 2), approvals: dim("thin", 1),
+      exceptions: dim("thin", 1), raci: dim("covered", 4), work_and_wait_time: dim("covered", 2),
+      kpis: dim("missing", 0), artefacts: dim("covered", 2), know_how: dim("thin", 1, "1 of 2 decisions"),
+      stories: dim("thin", 2), official_vs_lived: dim("covered", 1, "Both accounts on 1 step: Load and return LIR"),
+      sme_terms: dim("covered", 2),
+    },
+    follow_up_questions: [
+      { dimension: "trigger", question_id: "M2.1", question: "What sets it off?", about: "" },
+      { dimension: "know_how", question_id: "M4.8", question: "What would a new colleague need to know?", about: "Busy wave?" },
+    ],
+    probes: [
+      { question_id: "F2", question: "You mentioned previously that “at peak we're short of containers”. How do you manage that today?",
+        quote: "at peak we're short of containers", source_id: "s1", anchor: "05:52", speaker_role: "Ramp" },
+    ],
+  };
+
+  it("explains that coverage appears after the first draft", async () => {
+    interviewApi({ "GET /api/engagements/e1/versions": () => ({ body: [] }) });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    expect(await screen.findByText(/The coverage report appears after the first draft/)).toBeInTheDocument();
+  });
+
+  it("shows every dimension with shape and text, the follow-up questions, Copy and Download", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/versions": () => ({ body: [MAP] }),
+      "GET /api/versions/v1/coverage": () => ({ body: REPORT }),
+    });
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    const createObjectURL = vi.fn(() => "blob:follow-up");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const { container } = renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    const table = await screen.findByRole("table", { name: "What the interviews covered (v0.1)" });
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(15);
+    expect(rows[0]).toHaveTextContent("TriggerMissing0");
+    expect(rows[11]).toHaveTextContent("Know-how at each decisionThin11 of 2 decisions");
+    expect(rows[2]).toHaveTextContent("Step spineCovered6");
+    expect(within(table).getAllByText("Covered")[0]?.closest("[data-shape]")).toHaveAttribute("data-shape", "filled-circle");
+    const asks = screen.getByRole("list", { name: "Questions for thin or missing dimensions" });
+    expect(within(asks).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "[M2.1] What sets it off?",
+      "[M4.8] What would a new colleague need to know? (about Busy wave?)",
+    ]);
+    expect(screen.getByRole("list", { name: "In the interviewee's own words" })).toHaveTextContent("ask the Ramp");
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    const copied = String((writeText.mock.calls[0] as unknown[] | undefined)?.[0]);
+    expect(copied).toContain("# Follow-up questions (v0.1)");
+    expect(copied).toContain("- [M4.8] What would a new colleague need to know? (about Busy wave?) — Know-how at each decision: thin");
+    expect(copied).toContain("## In the interviewee's own words");
+    expect(await screen.findByText("Copied the follow-up questions.")).toHaveAttribute("role", "status");
+    fireEvent.click(screen.getByRole("button", { name: "Download .md" }));
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(click).toHaveBeenCalled();
+    click.mockRestore();
+  });
+
+  it("creates a Follow-up guide for an earlier interviewee and shows it on the Guide tab", async () => {
+    let profiles: unknown[] = [PROFILE];
+    const api = interviewApi({
+      "GET /api/engagements/e1/versions": () => ({ body: [MAP] }),
+      "GET /api/versions/v1/coverage": () => ({ body: REPORT }),
+      "GET /api/engagements/e1/profiles": () => ({ body: profiles }),
+      "POST /api/engagements/e1/profiles": (body) => {
+        const created = { ...PROFILE, id: "p2", ...(body as object) };
+        profiles = [PROFILE, created];
+        return { status: 201, body: created };
+      },
+      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j2", profile_id: "p2" } }),
+      "GET /api/jobs/j2": () => ({
+        body: { id: "j2", engagement_id: "e1", type: "interview_guide", target_id: "p2", status: "running", stage: "Saving the guide",
+                progress: 0.75, message: "", error: "", usage: null, claims: { verified: 0, rejected: 0 }, stages: [],
+                created_at: "2026-10-06T09:00:00+00:00" },
+      }),
+    });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
+    expect(await screen.findByRole("combobox", { name: "Follow up with" })).toHaveValue("p1");
+    fireEvent.click(screen.getByRole("button", { name: "Create Follow-up guide" }));
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")?.body).toEqual({
+        interview_type: "follow_up", role_id: "r2", stakeholder_group: "Ramp", referred_by_role: "",
+        previous_profile_id: "p1",
+      }),
+    );
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/interview-guide")?.body).toEqual({ profile_id: "p2" }),
+    );
+    expect(await screen.findByRole("tab", { name: "Guide", selected: true })).toBeInTheDocument();
+    const list = await screen.findByRole("list", { name: "Interviewees" });
+    expect(await within(list).findByText("Saving the guide…")).toBeInTheDocument();
   });
 });

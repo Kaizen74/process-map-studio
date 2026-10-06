@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getJob } from "../api/draft";
-import { addProfile, editGuide, editProfile, getGuide, listGuides, listProfiles, makeGuide } from "../api/interview";
+import {
+  addProfile,
+  editGuide,
+  editProfile,
+  getCoverage,
+  getGuide,
+  listGuides,
+  listProfiles,
+  makeGuide,
+} from "../api/interview";
 import type { GuideEdit, ProfileInput } from "../lib/interview";
 
 const profilesKey = (engagementId: string) => ["engagements", engagementId, "profiles"] as const;
@@ -111,6 +120,15 @@ export function useEditGuide(engagementId: string, profileId: string) {
       client.setQueryData(guideKey(engagementId, profileId), saved);
       void client.invalidateQueries({ queryKey: guidesKey(engagementId) });
     },
+  });
+}
+
+/** The coverage report of the map Eric is working on (C5d); none before the first draft. */
+export function useCoverage(versionId: string | null) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "coverage"],
+    queryFn: () => getCoverage(versionId ?? ""),
+    enabled: Boolean(versionId),
   });
 }
 

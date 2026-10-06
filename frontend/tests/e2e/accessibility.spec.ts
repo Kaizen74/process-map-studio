@@ -82,6 +82,10 @@ test.describe("accessibility and offline assets", () => {
       expect(await seriousViolations(page)).toEqual([]);
       await editor.getByRole("button", { name: "Save guide" }).click();
       await expect(editor.getByRole("status")).toHaveText("Saved.");
+      // C5d: the Coverage tab (no draft yet: it says when the report appears).
+      await page.getByRole("tab", { name: "Coverage" }).click();
+      await expect(page.getByText(/The coverage report appears after the first draft/)).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
 
       const upload = await request.post(`/api/engagements/${id}/sources`, {
         multipart: { file: { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("[00:05] Interviewer: Hello") } },

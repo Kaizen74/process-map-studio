@@ -156,3 +156,44 @@
   font-size: var(--text-label);
   color: var(--ink-3);
 }
+
+/* Coverage tab (C5d). */
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  max-width: 960px;
+}
+.coverage__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+.coverage__caption {
+  text-align: left;
+  font-weight: var(--weight-medium);
+  padding-bottom: var(--space-8);
+}
+.coverage__table th,
+.coverage__table td {
+  text-align: left;
+  padding: var(--space-4) var(--space-8);
+  border-top: var(--line-hairline) solid var(--border-soft);
+  vertical-align: top;
+}
+.coverage__table th[scope="row"] {
+  font-weight: var(--weight-medium);
+}
+.coverage__asks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.coverage__list {
+  margin: 0;
+  padding-left: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-size: var(--text-label);
+}

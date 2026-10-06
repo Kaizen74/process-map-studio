@@ -22,7 +22,11 @@ Appendix A), saved so the filled-in version can be checked in Word too:
   referred by the Load controller): the header and opener are filled in, and M6.5 asks about the
   one step only the documents describe ("Approve load plan").
 - `interview-guide-follow-up-sample.docx` — Follow-up guide for the Load controller: the opener
-  says what earlier interviews covered, and the five blank rows hold the SME's own words to play
-  back (F2).
+  says what earlier interviews covered, and the five blank rows take one question in turn from the
+  SME's own words to play back (F2), the coverage report's gaps (for example M2.1, what sets the
+  process off) and the open validation questions (F6).
+- `interview-guide-landscape-sample.docx` — Landscape guide for the Ramp group: the role module
+  holds four questions Claude drafted (RM1–RM4, illustrative offline answers) that passed the app's
+  checks; a fifth, which quoted the SOP, was left out.
 
 The question IDs, wording and minutes are the same as in the standard templates.

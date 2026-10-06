@@ -117,8 +117,20 @@ def test_a_follow_up_guide_plays_back_the_sme_s_words(drafted: Drafted) -> None:
         "pick up where we left off."  # fmt: skip
     f_series = next(t for t in doc["tables"] if t["label"].startswith("F-series"))
     filled = f_series["rows"][6:]  # after F1 to F6, the five blank reflective-probe rows
-    assert [r["id"] for r in filled] == ["F2"] * 5
-    assert [r["wording"] for r in filled] == [p["question"] for p in coverage["probes"][:5]]
+    # Rule 7 (criterion 68): the SME's own words, the coverage gaps, the open validation
+    # questions and the "not described" ones (none on this map), one of each in turn.
+    questions = drafted.client.get(f"/api/versions/{drafted.version_id}/questions").json()
+    open_ = [q["question"] for q in questions
+             if q["status"] == "open" and q["reason"] != "not_described"]  # fmt: skip
+    gaps = coverage["follow_up_questions"]
+    probes = coverage["probes"]
+    assert gaps and open_ and len(probes) >= 2
+    assert [(r["id"], r["wording"]) for r in filled] == [
+        ("F2", probes[0]["question"]), (gaps[0]["question_id"], gaps[0]["question"]),
+        ("F6", open_[0]), ("F2", probes[1]["question"]),
+        (gaps[1]["question_id"], gaps[1]["question"]),
+    ]  # fmt: skip
+    assert filled[1]["note"] == (f"about {gaps[0]['about']}" if gaps[0]["about"] else "")
     assert all(r["minutes"] for r in filled)
     # No earlier interview named: [topics] stays for the interviewer to fill.
     alone = profile(drafted, stakeholder_group="Airline ops", interview_type="follow_up")

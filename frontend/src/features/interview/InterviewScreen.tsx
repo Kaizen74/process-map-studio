@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 import { Button, EmptyState, ErrorState, Skeleton } from "../../components/common";
-import { GuideEditor, ProfileForm, ProfileList, TemplateCard } from "../../components/interview";
+import { CoverageView, GuideEditor, ProfileForm, ProfileList, TemplateCard } from "../../components/interview";
 import { TabBar } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
 import {
   useAddProfile,
+  useCoverage,
   useEditGuide,
   useEditProfile,
   useGuide,
@@ -14,6 +15,10 @@ import {
   useProfiles,
 } from "../../hooks/useInterview";
 import { useRoles } from "../../hooks/useRoles";
+import { useVersions } from "../../hooks/useVersions";
+import { followUpFileName, followUpMarkdown } from "../../lib/coverage";
+import { currentMap } from "../../lib/currentMap";
+import { saveText } from "../../lib/download";
 import { profileName, type Profile } from "../../lib/interview";
 import { useTemplatePlans } from "../../hooks/useTemplates";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
@@ -57,13 +62,14 @@ function GuidePanel({ engagementId, profileId, onClose }: { engagementId: string
 }
 
 /** Interviewees (C5a): whose interviews the tailored guides are for. */
-function Interviewees({ engagementId }: { engagementId: string }) {
+type GuideMaker = ReturnType<typeof useMakeGuide>;
+
+function Interviewees({ engagementId, make }: { engagementId: string; make: GuideMaker }) {
   const profiles = useProfiles(engagementId);
   const roles = useRoles(engagementId);
   const add = useAddProfile(engagementId);
   const edit = useEditProfile(engagementId);
   const guides = useGuides(engagementId);
-  const make = useMakeGuide(engagementId);
   const [editing, setEditing] = useState<Profile | "new" | null>(null);
   const [open, setOpen] = useState<Profile | null>(null);
   const close = () => {
@@ -154,11 +160,75 @@ function Interviewees({ engagementId }: { engagementId: string }) {
   );
 }
 
-type InterviewTab = "templates" | "guide";
+type InterviewTab = "templates" | "guide" | "coverage";
 const TABS: readonly { id: InterviewTab; label: string }[] = [
   { id: "templates", label: "Templates" },
   { id: "guide", label: "Guide" },
+  { id: "coverage", label: "Coverage" },
 ];
+
+/** The Coverage tab (C5d): what the interviews covered on the current map, and what to ask next. */
+function Coverage({ engagementId, make, onStarted }: { engagementId: string; make: GuideMaker; onStarted: () => void }) {
+  const versions = useVersions(engagementId);
+  const map = currentMap(versions.data ?? []);
+  const report = useCoverage(map?.id ?? null);
+  const profiles = useProfiles(engagementId);
+  const add = useAddProfile(engagementId);
+  const [notice, setNotice] = useState<{ message: string; failed: boolean } | null>(null);
+  if (versions.isPending || (map && report.isPending)) return <Skeleton height="240px" />;
+  const failed = versions.isError ? versions : report.isError ? report : null;
+  if (failed) {
+    return (
+      <ErrorState
+        title="The coverage report couldn't be loaded"
+        message={messageOf(failed.error)}
+        details={copyDetailsOf(failed.error)}
+        onRetry={() => void failed.refetch()}
+      />
+    );
+  }
+  if (!map || !report.data) {
+    return (
+      <EmptyState message="The coverage report appears after the first draft: upload an interview transcript on Sources, then create a draft map." />
+    );
+  }
+  const markdown = () => followUpMarkdown(report.data, map.label);
+  return (
+    <CoverageView
+      report={report.data}
+      mapLabel={map.label}
+      interviewees={profiles.data ?? []}
+      creating={add.isPending || make.making !== null}
+      notice={notice}
+      onCopy={() => {
+        void navigator.clipboard
+          .writeText(markdown())
+          .then(() => setNotice({ message: "Copied the follow-up questions.", failed: false }))
+          .catch(() => setNotice({ message: "Copying didn't work here; use Download .md instead.", failed: true }));
+      }}
+      onDownload={() => saveText(followUpFileName(map.label), markdown())}
+      onCreateFollowUp={(earlier) =>
+        add.mutate(
+          {
+            interview_type: "follow_up",
+            role_id: earlier.role_id,
+            stakeholder_group: earlier.stakeholder_group,
+            referred_by_role: "",
+            previous_profile_id: earlier.id,
+          },
+          {
+            onSuccess: (created) => {
+              setNotice(null);
+              make.make(created.id);
+              onStarted();
+            },
+            onError: (error) => setNotice({ message: messageOf(error), failed: true }),
+          },
+        )
+      }
+    />
+  );
+}
 
 /** The three standard templates (always available). */
 function Templates() {
@@ -191,22 +261,19 @@ function Templates() {
           ))}
         </div>
       )}
-      <p className="interview-note">
-        The coverage report is not available on this screen yet; the standard templates and tailored guides work for every
-        interview in the meantime.
-      </p>
     </section>
   );
 }
 
 /**
- * Interview (PRD §5.4): tabs for the standard templates (always available) and the Guide tab with
- * the interviewees and their tailored guides (C5a, G2, C5c). The Coverage tab follows (C5d).
+ * Interview (PRD §5.4): three tabs — the standard templates (always available), the Guide tab
+ * with the interviewees and their tailored guides (C5a, G2, C5c), and the Coverage tab (C5d).
  */
 export function InterviewScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
   const [tab, setTab] = useState<InterviewTab>("templates");
+  const make = useMakeGuide(engagementId);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -225,7 +292,10 @@ export function InterviewScreen() {
       <TabBar label="Interview" tabs={TABS} active={tab} onChange={setTab}>
         {tab === "templates" && <Templates />}
         {tab === "guide" &&
-          (engagement.data ? <Interviewees engagementId={engagementId} /> : <Skeleton height="96px" />)}
+          (engagement.data ? <Interviewees engagementId={engagementId} make={make} /> : <Skeleton height="96px" />)}
+        {tab === "coverage" && (
+          <Coverage engagementId={engagementId} make={make} onStarted={() => setTab("guide")} />
+        )}
       </TabBar>
     </main>
   );
