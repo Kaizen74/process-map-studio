@@ -174,11 +174,7 @@ def build_graph(
     passages = map_repo.evidence(session, version_id)
     claims_of = map_repo.element_claims(session, version_id)
     claim_records = claims_repo.by_ids(session, [c for ids in claims_of.values() for c in ids])
-    drafted_from = [
-        s
-        for sid in map_repo.version_source_ids(session, version_id)
-        if (s := sources_repo.get(session, sid)) is not None
-    ]
+    drafted_from = sources_repo.get_many(session, map_repo.version_source_ids(session, version_id))
 
     def evidence_for(element_id: str, kind: str) -> list[GraphEvidence]:
         if kind in STRUCTURAL:
@@ -368,8 +364,9 @@ def story_types(session: Session, version_id: str) -> set[str] | None:
     """The kinds of story (B.31) the version's interviews told; None without an interview."""
     kinds = {
         source.kind
-        for sid in map_repo.version_source_ids(session, version_id)
-        if (source := sources_repo.get(session, sid)) is not None
+        for source in sources_repo.get_many(
+            session, map_repo.version_source_ids(session, version_id)
+        )
     }
     if SourceKind.INTERVIEW_TRANSCRIPT.value not in kinds:
         return None

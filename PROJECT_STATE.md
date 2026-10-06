@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-06 (session 19) — update after EVERY increment*
+*Last updated: 2026-10-06 (session 20) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.11, adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -77,6 +77,23 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 **Session 19 (2026-10-06).** Eric approved the v4 Review screenshots (K4), chose options A–C, and approved the K2/K3 candidates: K2 and K3 are committed with the new goldens G1, G3 and G5. Every core gap from the v1.11 audit is now closed. Next: P4c (C5b tailored guides onward), then P9 updates and P10b.
 
 **Templates focus (session 19, Eric's request):** audit of the standard interview templates: question bank, generator (F.9 layout, minute plans 60 / 60 / 30), templates endpoint, home card and Interview screen, A.9 matching with template wording, G9 (approved 2026-09-30) and the three Word samples (unchanged, still identical to what the app makes) are all done; criteria 77, 78, 79, 81 met. Missing was criterion 80 (tailored guides exported to Word and Markdown): G1 added the backend, G2 the screen; criterion 80 is now met for the deterministic guide (the AI-worded role modules come with C5b). **Resume point:** C5b (`IG_generate`: AI role-module wording on top of the G1 guide, checked with a deterministic fallback), then C5c guide editor, C5d coverage tab.
+
+## This session (2026-10-06, session 20) — goal: finish phase P4c (sensemaking and interview tools) and tag it
+Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12 of 13; the backend suite failed only on the quality-card speed test (over 200 ms inside the full run, about 98 ms alone). Fixed first (S0 below) by removing repeated work rather than calling it a fluke.
+
+**Plan (P4c, PRD §6.3; one increment ≈ 30 min; each: contract first, tests, full checks, diff review, commit, push, this file)**
+- [x] S0 — quality card faster: every source of a version read in one batch (`sources.get_many`: three queries instead of two per source) for the graph, the quality card and the story check; the HTML export's embedded fonts encoded once per file; new test in `test_versions_graph.py`
+- [ ] C5b-1 — guide rows carry movement, targets and priority (F.8 rule 9; criterion 61); SOP-derived probes kept apart and marked "held back to avoid anchoring the SME"; G9 and the template files unchanged
+- [ ] C5b-2 — `IG_generate` (AI, mocked; `prompts/IG_generate.md`): role-module questions for the interviewee's stakeholder group (Landscape, F.4 rule) drawn from L3–L5, naming the group's interfaces from the scope card, roles and documents; checks: every question has an ID, probes and targets, no SOP claim before M6, no banned word, no hidden name, time budget kept; any failure falls back to the deterministic guide with a plain message; `POST …/interview-guide` becomes a job (criteria 49, 61, 69)
+- [ ] C5b-3 — UI: Make guide shows the job's progress and the result; screen and browser checks
+- [ ] C5c-1 — `PATCH /engagements/{id}/interview-guide?profile_id=` (edited wording, probes, own questions; same checks; `edited: true`; audit row)
+- [ ] C5c-2 — Interview screen tabs (Templates · Guide · Coverage, PRD §5.4); Guide tab: the movements as editable cards (ID, question, probes, targets), SOP probes parked in M6 with the note, Save, downloads
+- [ ] C5d — Coverage tab: one row per dimension (covered / thin / missing glyph and count), follow-up questions, **Create Follow-up guide**, **Copy**, **Download .md** (criteria 50 UI, 68, 74)
+- [ ] C6 — validation pack: `GET /versions/{vid}/validation-pack` (F.7 pack plus open validation questions, Markdown) and a Review screen download (criterion 75)
+- [ ] C7a — mapping conventions (codebook tier 2): `PATCH /engagements/{id}` `conventions` (granularity, label style, phase naming, with a reason when overriding), the Setup card, and the drafting stages given the settings (criterion 58)
+- [ ] C7b — emerging themes (tier 3): proposed by S3c from story fragments (AI, mocked, checked), `GET /engagements/{id}/themes`, `PATCH /themes/{tid}` (accept, rename, dismiss), Registers "Emerging themes" (criterion 58)
+- [ ] C8 — lane-boundary findings from L5, F1, F4 answers (one Responsible, shared delivery noted; criterion 76); check criterion 70 on the A.10 fixture
+- [ ] C9 — close P4c: acceptance check of criteria 49–76, G1/G8 still green, GUIDE.md, tag `phase-p4c`
 
 **Mock regression pass (2026-10-06, Eric's request):** full `./run_checks.sh` on cfc68bc: 12 of 13 (1,321 backend tests incl. G1–G9 and the A.5/A.8/A.9/A.10 end-to-end proof, 480 screen tests, 15 browser tests with axe and the privacy scan); the only failure is the Review visual baseline awaiting Eric's approval (about 1% of pixels differ). A route probe found every API call the screens make has a backend route; backend routes with no screen yet: line editing (add/change/remove a line), `PUT …/raci` (the edit form sends RACI with the step), coverage, glossary and capability notes (planned Interview and Registers screens).
 

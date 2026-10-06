@@ -335,3 +335,16 @@ def test_a_version_without_lint_has_no_report(built: Built) -> None:
     with session_scope(built.sessions) as session:
         assert versions.lint_report(session, built.version_id) is None
         assert versions.lint_report(session, "nope") is None
+
+
+def test_sources_are_read_in_one_batch_with_the_same_counts(built: Built) -> None:
+    """`get_many` (used by the graph and the quality card) gives exactly what `get` gives, in the
+    order asked, leaving out unknown IDs."""
+    ids = [built.sources["sop_LC-07.docx"], "nope", built.sources["interview_transcript.txt"]]
+    with session_scope(built.sessions) as session:
+        one_by_one = [s for sid in ids if (s := sources_repo.get(session, sid)) is not None]
+        batched = sources_repo.get_many(session, ids)
+        assert sources_repo.get_many(session, []) == []
+    assert batched == one_by_one
+    assert [s.filename for s in batched] == ["sop_LC-07.docx", "interview_transcript.txt"]
+    assert all(s.segment_count > 0 for s in batched)

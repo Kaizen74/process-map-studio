@@ -32,8 +32,8 @@ def _counts(session: Session, source_id: str) -> tuple[int, int]:
     return segments or 0, images or 0
 
 
-def _view(session: Session, row: Source) -> SourceView:
-    segment_count, suggested = _counts(session, row.id)
+def _view(session: Session, row: Source, counts: tuple[int, int] | None = None) -> SourceView:
+    segment_count, suggested = counts if counts is not None else _counts(session, row.id)
     return SourceView(
         id=row.id,
         engagement_id=row.engagement_id,
@@ -63,6 +63,35 @@ def create(session: Session, source_id: str, fields: dict[str, Any]) -> SourceVi
 def get(session: Session, source_id: str) -> SourceView | None:
     row = session.get(Source, source_id)
     return _view(session, row) if row else None
+
+
+def get_many(session: Session, source_ids: list[str]) -> list[SourceView]:
+    """The sources with these IDs, in the order given (missing ones left out); three queries in
+    all, however many sources (the quality card and graph read every source of a version)."""
+    if not source_ids:
+        return []
+    rows = {r.id: r for r in session.scalars(select(Source).where(Source.id.in_(source_ids)))}
+    segments: dict[str, int] = {
+        str(sid): n
+        for sid, n in session.execute(
+            select(SourceSegment.source_id, func.count())
+            .where(SourceSegment.source_id.in_(source_ids))
+            .group_by(SourceSegment.source_id)
+        )
+    }
+    images: dict[str, int] = {
+        str(sid): n
+        for sid, n in session.execute(
+            select(Image.source_id, func.count())
+            .where(Image.source_id.in_(source_ids), Image.status == "suggested")
+            .group_by(Image.source_id)
+        )
+    }
+    return [
+        _view(session, rows[sid], (segments.get(sid, 0), images.get(sid, 0)))
+        for sid in source_ids
+        if sid in rows
+    ]
 
 
 def stored_path(session: Session, source_id: str) -> str | None:

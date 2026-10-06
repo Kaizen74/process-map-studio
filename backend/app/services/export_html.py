@@ -12,6 +12,7 @@ only; no verbatim quotes; no images.
 from __future__ import annotations
 
 import base64
+from functools import lru_cache
 from html import escape
 from itertools import pairwise
 from pathlib import Path
@@ -69,6 +70,13 @@ def tokens_css(tokens: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+@lru_cache(maxsize=16)
+def _base64(data: bytes) -> str:
+    """A font file as base64 text, worked out once per file (the quality card renders the HTML
+    export on every look)."""
+    return base64.b64encode(data).decode("ascii")
+
+
 def fonts_css(fonts: dict[str, bytes]) -> str:
     """@font-face rules with each font file embedded as data (no outside request)."""
     rules = []
@@ -76,7 +84,7 @@ def fonts_css(fonts: dict[str, bytes]) -> str:
         data = fonts.get(file)
         if data is None:
             continue
-        encoded = base64.b64encode(data).decode("ascii")
+        encoded = _base64(data)
         rules.append(
             f"@font-face {{ font-family: '{family}'; font-style: normal; font-weight: {weight}; "
             f"font-display: swap; src: url(data:font/woff2;base64,{encoded}) format('woff2'); "

@@ -132,11 +132,7 @@ def export_input(
     if version is None:
         return None
     terms = redaction.name_replacements(session, version.engagement_id)
-    sources = [
-        s
-        for sid in map_repo.version_source_ids(session, version_id)
-        if (s := sources_repo.get(session, sid)) is not None
-    ]
+    sources = sources_repo.get_many(session, map_repo.version_source_ids(session, version_id))
     published_at, published_by = versions_repo.publication(session, version_id)
     open_questions = [
         ExportQuestion(
