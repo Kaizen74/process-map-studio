@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getJob } from "../api/draft";
-import { addProfile, editProfile, listGuides, listProfiles, makeGuide } from "../api/interview";
-import type { ProfileInput } from "../lib/interview";
+import { addProfile, editGuide, editProfile, getGuide, listGuides, listProfiles, makeGuide } from "../api/interview";
+import type { GuideEdit, ProfileInput } from "../lib/interview";
 
 const profilesKey = (engagementId: string) => ["engagements", engagementId, "profiles"] as const;
 
@@ -67,6 +67,7 @@ export function useMakeGuide(engagementId: string) {
   useEffect(() => {
     if (finished) {
       void client.invalidateQueries({ queryKey: guidesKey(engagementId) });
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "interview-guide"] });
       void client.invalidateQueries({ queryKey: ["settings", "usage"] });
     }
   }, [client, engagementId, finished]);
@@ -88,3 +89,28 @@ export function useMakeGuide(engagementId: string) {
     stage: !finished ? (job.data?.stage ?? "") : "",
   };
 }
+
+const guideKey = (engagementId: string, profileId: string) =>
+  ["engagements", engagementId, "interview-guide", profileId] as const;
+
+/** One interviewee's latest guide, in full, for the editor (C5c). */
+export function useGuide(engagementId: string, profileId: string | null) {
+  return useQuery({
+    queryKey: guideKey(engagementId, profileId ?? ""),
+    queryFn: () => getGuide(engagementId, profileId ?? ""),
+    enabled: Boolean(profileId),
+  });
+}
+
+/** Saves Eric's edits to that guide. */
+export function useEditGuide(engagementId: string, profileId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: GuideEdit) => editGuide(engagementId, profileId, body),
+    onSuccess: (saved) => {
+      client.setQueryData(guideKey(engagementId, profileId), saved);
+      void client.invalidateQueries({ queryKey: guidesKey(engagementId) });
+    },
+  });
+}
+

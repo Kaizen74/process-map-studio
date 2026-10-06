@@ -275,6 +275,25 @@ def test_making_a_guide_p95_under_budget(loaded: Loaded, interview_type: str) ->
     assert p95 < BUDGET_MS, f"POST interview-guide: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
 
 
+def test_editing_a_guide_p95_under_budget(loaded: Loaded) -> None:
+    """Saving Eric's edits checks every question of the guide (C5c)."""
+    client, ids = loaded
+    url = f"/api/engagements/{ids['sample_eid']}/interview-guide?profile_id={ids['interviewee']}"
+    doc = client.get(url).json()["document"]
+    body = {"tables": [{"label": t["label"], "rows": [
+        {k: r[k] for k in ("id", "wording", "probes", "held_back")} for r in t["rows"]]}
+        for t in doc["tables"]]}  # fmt: skip
+    body["tables"][2]["rows"][0]["wording"] += " (edited)"
+
+    def call() -> None:
+        response = client.patch(url, json=body)
+        assert response.status_code == 200, response.text
+
+    p95 = p95_ms(call)
+    print(f"\nPATCH interview-guide: p95 {p95:.1f} ms")  # shown with pytest -s
+    assert p95 < BUDGET_MS, f"PATCH interview-guide: p95 {p95:.1f} ms (budget {BUDGET_MS:.0f} ms)"
+
+
 @pytest.mark.parametrize("name", ["sop_LC-07.docx", "manual_extract.pdf"])
 def test_upload_p95_under_budget(loaded: Loaded, name: str) -> None:
     """Uploading stores the file and queues its reading job (the reading itself runs after)."""

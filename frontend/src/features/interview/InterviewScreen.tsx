@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 import { Button, EmptyState, ErrorState, Skeleton } from "../../components/common";
-import { ProfileForm, ProfileList, TemplateCard } from "../../components/interview";
+import { GuideEditor, ProfileForm, ProfileList, TemplateCard } from "../../components/interview";
+import { TabBar } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
-import { useAddProfile, useEditProfile, useGuides, useMakeGuide, useProfiles } from "../../hooks/useInterview";
+import {
+  useAddProfile,
+  useEditGuide,
+  useEditProfile,
+  useGuide,
+  useGuides,
+  useMakeGuide,
+  useProfiles,
+} from "../../hooks/useInterview";
 import { useRoles } from "../../hooks/useRoles";
-import type { Profile } from "../../lib/interview";
+import { profileName, type Profile } from "../../lib/interview";
 import { useTemplatePlans } from "../../hooks/useTemplates";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { QUESTION_ID_TIP } from "../../lib/templates";
@@ -19,6 +28,34 @@ function refusal(error: unknown) {
   return { message: messageOf(error), field: typeof field === "string" ? field : undefined };
 }
 
+/** The editor for one interviewee's latest guide (C5c). */
+function GuidePanel({ engagementId, profileId, onClose }: { engagementId: string; profileId: string; onClose: () => void }) {
+  const guide = useGuide(engagementId, profileId);
+  const save = useEditGuide(engagementId, profileId);
+  if (guide.isPending) return <Skeleton height="240px" />;
+  if (guide.isError) {
+    return (
+      <ErrorState
+        title="The guide couldn't be loaded"
+        message={messageOf(guide.error)}
+        details={copyDetailsOf(guide.error)}
+        onRetry={() => void guide.refetch()}
+      />
+    );
+  }
+  return (
+    <GuideEditor
+      key={`${guide.data.id}-${guide.data.version}`}
+      guide={guide.data}
+      busy={save.isPending}
+      error={refusal(save.error)}
+      saved={save.isSuccess}
+      onSave={(body) => save.mutate(body)}
+      onClose={onClose}
+    />
+  );
+}
+
 /** Interviewees (C5a): whose interviews the tailored guides are for. */
 function Interviewees({ engagementId }: { engagementId: string }) {
   const profiles = useProfiles(engagementId);
@@ -28,6 +65,7 @@ function Interviewees({ engagementId }: { engagementId: string }) {
   const guides = useGuides(engagementId);
   const make = useMakeGuide(engagementId);
   const [editing, setEditing] = useState<Profile | "new" | null>(null);
+  const [open, setOpen] = useState<Profile | null>(null);
   const close = () => {
     setEditing(null);
     add.reset();
@@ -78,6 +116,7 @@ function Interviewees({ engagementId }: { engagementId: string }) {
           onEdit={(p) => setEditing(p)}
           guides={latest}
           onMakeGuide={(p) => make.make(p.id)}
+          onEditGuide={(p) => setOpen(p)}
           making={make.making}
           stage={make.stage}
           outcome={outcome}
@@ -103,18 +142,71 @@ function Interviewees({ engagementId }: { engagementId: string }) {
           onCancel={close}
         />
       )}
+      {open && (
+        <section className="interview-templates" aria-labelledby="guide-editor-title">
+          <h2 id="guide-editor-title" className="interview-templates__title">
+            Guide for {profileName(open)}
+          </h2>
+          <GuidePanel key={open.id} engagementId={engagementId} profileId={open.id} onClose={() => setOpen(null)} />
+        </section>
+      )}
+    </section>
+  );
+}
+
+type InterviewTab = "templates" | "guide";
+const TABS: readonly { id: InterviewTab; label: string }[] = [
+  { id: "templates", label: "Templates" },
+  { id: "guide", label: "Guide" },
+];
+
+/** The three standard templates (always available). */
+function Templates() {
+  const plans = useTemplatePlans();
+  return (
+    <section className="interview-templates" aria-labelledby="templates-title">
+      <h2 id="templates-title" className="interview-templates__title">
+        Templates
+      </h2>
+      <p className="interview-tip">{QUESTION_ID_TIP}</p>
+      {plans.isPending && (
+        <div className="interview-templates__grid" aria-busy="true">
+          <Skeleton height="260px" />
+          <Skeleton height="260px" />
+          <Skeleton height="260px" />
+        </div>
+      )}
+      {plans.isError && (
+        <ErrorState
+          title="The interview templates couldn't be loaded"
+          message={messageOf(plans.error)}
+          details={copyDetailsOf(plans.error)}
+          onRetry={() => void plans.refetch()}
+        />
+      )}
+      {plans.data && (
+        <div className="interview-templates__grid">
+          {plans.data.map((template) => (
+            <TemplateCard key={template.type} template={template} />
+          ))}
+        </div>
+      )}
+      <p className="interview-note">
+        The coverage report is not available on this screen yet; the standard templates and tailored guides work for every
+        interview in the meantime.
+      </p>
     </section>
   );
 }
 
 /**
- * Interview (PRD §5.4): the standard templates, always available, and the interviewees with their
- * tailored guides (C5a, G2). The coverage report follows (C5d).
+ * Interview (PRD §5.4): tabs for the standard templates (always available) and the Guide tab with
+ * the interviewees and their tailored guides (C5a, G2, C5c). The Coverage tab follows (C5d).
  */
 export function InterviewScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
-  const plans = useTemplatePlans();
+  const [tab, setTab] = useState<InterviewTab>("templates");
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -126,42 +218,15 @@ export function InterviewScreen() {
         <h1 id="interview-title">Interview</h1>
         <p className="screen__intro">
           Standard interview templates give every interviewer the same questions, question IDs and minute plan. Download one,
-          fill in the header, and use it during the interview; then upload the transcript on Sources.
+          or make a guide tailored to an interviewee on the Guide tab, and use it during the interview; then upload the
+          transcript on Sources.
         </p>
       </div>
-      {engagement.data && <Interviewees engagementId={engagementId} />}
-      <section className="interview-templates" aria-labelledby="templates-title">
-        <h2 id="templates-title" className="interview-templates__title">
-          Templates
-        </h2>
-        <p className="interview-tip">{QUESTION_ID_TIP}</p>
-        {plans.isPending && (
-          <div className="interview-templates__grid" aria-busy="true">
-            <Skeleton height="260px" />
-            <Skeleton height="260px" />
-            <Skeleton height="260px" />
-          </div>
-        )}
-        {plans.isError && (
-          <ErrorState
-            title="The interview templates couldn't be loaded"
-            message={messageOf(plans.error)}
-            details={copyDetailsOf(plans.error)}
-            onRetry={() => void plans.refetch()}
-          />
-        )}
-        {plans.data && (
-          <div className="interview-templates__grid">
-            {plans.data.map((template) => (
-              <TemplateCard key={template.type} template={template} />
-            ))}
-          </div>
-        )}
-        <p className="interview-note">
-          The coverage report is not available on this screen yet; the standard templates and tailored guides work for every
-          interview in the meantime.
-        </p>
-      </section>
+      <TabBar label="Interview" tabs={TABS} active={tab} onChange={setTab}>
+        {tab === "templates" && <Templates />}
+        {tab === "guide" &&
+          (engagement.data ? <Interviewees engagementId={engagementId} /> : <Skeleton height="96px" />)}
+      </TabBar>
     </main>
   );
 }

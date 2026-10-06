@@ -128,6 +128,8 @@ export interface ProfileListProps {
   guides?: ReadonlyMap<string, GuideSummary> | undefined;
   /** Make a (new version of the) guide; without it the list shows no guide actions. */
   onMakeGuide?: ((profile: Profile) => void) | undefined;
+  /** Open the latest guide in the editor (C5c). */
+  onEditGuide?: ((profile: Profile) => void) | undefined;
   /** The interviewee whose guide is being made, and the stage it has reached. */
   making?: string | null | undefined;
   stage?: string | undefined;
@@ -136,10 +138,11 @@ export interface ProfileListProps {
 }
 
 /** Make guide, then Download Word · Download Markdown of the latest version. */
-function GuideActions({ profile, guide, onMake, making, stage, outcome }: {
+function GuideActions({ profile, guide, onMake, onEdit, making, stage, outcome }: {
   profile: Profile;
   guide: GuideSummary | undefined;
   onMake: (profile: Profile) => void;
+  onEdit: ((profile: Profile) => void) | undefined;
   making: boolean;
   stage: string;
   outcome: { message: string; failed: boolean } | undefined;
@@ -164,6 +167,11 @@ function GuideActions({ profile, guide, onMake, making, stage, outcome }: {
               Download {label} <span className="visually-hidden">guide for {name}</span>
             </a>
           ))}
+        {guide && onEdit && (
+          <Button onClick={() => onEdit(profile)}>
+            Edit guide <span className="visually-hidden">for {name}</span>
+          </Button>
+        )}
         <Button onClick={() => { if (!making) onMake(profile); }} aria-busy={making}>
           {making ? "Making guide…" : guide ? "Make new version" : "Make guide"}{" "}
           <span className="visually-hidden">for {name}</span>
@@ -189,7 +197,16 @@ function GuideActions({ profile, guide, onMake, making, stage, outcome }: {
 }
 
 /** The engagement's interviewees, oldest first, each with its interview type and what it builds on. */
-export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, stage, outcome }: ProfileListProps) {
+export function ProfileList({
+  profiles,
+  onEdit,
+  guides,
+  onMakeGuide,
+  onEditGuide,
+  making,
+  stage,
+  outcome,
+}: ProfileListProps) {
   const byId = new Map(profiles.map((p) => [p.id, p]));
   return (
     <ul className="profile-list" aria-label="Interviewees">
@@ -209,6 +226,7 @@ export function ProfileList({ profiles, onEdit, guides, onMakeGuide, making, sta
                   profile={profile}
                   guide={guides?.get(profile.id)}
                   onMake={onMakeGuide}
+                  onEdit={onEditGuide}
                   making={making === profile.id}
                   stage={stage ?? ""}
                   outcome={outcome?.profileId === profile.id ? outcome : undefined}

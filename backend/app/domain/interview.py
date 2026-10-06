@@ -275,6 +275,30 @@ class RoleModuleCheck(BaseModel):
     left_out: list[tuple[str, str]] = []  # (wording, reason in plain words)
 
 
+class RowEdit(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    id: str = ""
+    wording: str = ""
+    probes: list[str] = []
+    held_back: list[str] = []
+
+
+class TableEdit(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    label: str
+    rows: list[RowEdit]
+
+
+class GuideEdit(BaseModel):
+    """Eric's edits to a guide (C5c): every section and row, in order."""
+
+    model_config = {"extra": "forbid"}
+
+    tables: list[TableEdit]
+
+
 class GuideStarted(BaseModel):
     job_id: str
     profile_id: str

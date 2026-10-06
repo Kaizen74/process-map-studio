@@ -44,7 +44,9 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: `"${python}" -m uvicorn app.main:app --host 127.0.0.1 --port ${PORT} --log-level warning`,
+    // Keep idle connections open longer than any pause in a test: with uvicorn's 5-second default,
+    // the request client could reuse a connection just as the server closed it ("socket hang up").
+    command: `"${python}" -m uvicorn app.main:app --host 127.0.0.1 --port ${PORT} --log-level warning --timeout-keep-alive 75`,
     cwd: resolve(here, "../backend"),
     url: `http://127.0.0.1:${PORT}/api/health`,
     reuseExistingServer: false,

@@ -12,7 +12,16 @@ import pytest
 from docx.document import Document as DocxDocument
 
 from app.domain.enums import InterviewType
-from app.domain.interview import DocumentRow, GuideContext, InterviewDocument, RoleQuestion
+from app.domain.interview import (
+    DocumentRow,
+    GuideContext,
+    GuideEdit,
+    InterviewDocument,
+    RoleQuestion,
+    RowEdit,
+    TableEdit,
+)
+from app.domain.result import Err, Ok
 from app.services import interview_templates as templates
 from app.services import wording
 from tests.services.test_interview_templates import LAYOUT, TOTALS, rows_before_contrast, units
@@ -267,3 +276,122 @@ def test_the_role_module_keeps_its_eight_minutes_and_the_plan_adds_up(kept: int)
     md = templates.render_markdown(doc)
     assert all(f"| {r.id} | {r.wording} |" in md for r in rows)
     assert "left blank" not in md  # the note is for the screen, not the file
+
+
+# --- Editing a guide (C5c) -----------------------------------------------------------------
+
+
+def as_edit(doc: InterviewDocument) -> GuideEdit:
+    return GuideEdit(tables=[TableEdit(label=t.label, rows=[
+        RowEdit(id=r.id, wording=r.wording, probes=list(r.probes), held_back=list(r.held_back))
+        for r in t.rows]) for t in doc.tables])  # fmt: skip
+
+
+def place(doc: InterviewDocument, question_id: str) -> tuple[int, int]:
+    return next((ti, ri) for ti, t in enumerate(doc.tables) for ri, r in enumerate(t.rows)
+                if r.id == question_id)  # fmt: skip
+
+
+def edited(doc: InterviewDocument, ti: int, ri: int, **fields: object) -> GuideEdit:
+    edit = as_edit(doc)
+    row = edit.tables[ti].rows[ri]
+    edit.tables[ti].rows[ri] = row.model_copy(update=fields)
+    return edit
+
+
+def test_unchanged_edits_change_nothing() -> None:
+    doc = templates.tailor(bank(), PRACTICE)
+    result = templates.apply_edits(doc, as_edit(doc), [])
+    assert result == Ok((doc, []))
+
+
+def test_wording_and_probes_are_edited_ids_and_minutes_kept() -> None:
+    doc = templates.tailor(bank(), PRACTICE)
+    ti, ri = place(doc, "M2.2")
+    edit = edited(doc, ti, ri, wording="  Walk me through the last flight, step by step. ",
+                  probes=["And then?", " ", "Who did that?"])  # fmt: skip
+    result = templates.apply_edits(doc, edit, [])
+    assert isinstance(result, Ok)
+    new, changed = result.value
+    row = new.tables[ti].rows[ri]
+    assert (row.id, row.wording, row.probes) == (
+        "M2.2",
+        "Walk me through the last flight, step by step.",
+        ["And then?", "Who did that?"],
+    )
+    assert row.targets == doc.tables[ti].rows[ri].targets and row.minutes == "3½"
+    assert changed == ["M2.2"]
+    assert [[r.minutes for r in t.rows] for t in new.tables] == [
+        [r.minutes for r in t.rows] for t in doc.tables]  # fmt: skip
+
+
+def test_own_questions_fill_blank_rows_and_can_be_emptied_again() -> None:
+    doc = templates.tailor(bank(), FOLLOW_UP)
+    ti, ri = next((ti, ri) for ti, t in enumerate(doc.tables) for ri, r in enumerate(t.rows)
+                  if not r.id)  # fmt: skip
+    first = templates.apply_edits(doc, edited(doc, ti, ri, wording="How is the new crew doing?",
+                                              probes=["What helps?"]), [])  # fmt: skip
+    assert isinstance(first, Ok)
+    new, changed = first.value
+    assert changed == ["E1"]
+    row = new.tables[ti].rows[ri]
+    assert (row.id, row.targets, row.minutes) == ("E1", [], doc.tables[ti].rows[ri].minutes)
+    again = templates.apply_edits(new, edited(new, ti, ri, wording="", probes=[]), [])
+    assert isinstance(again, Ok)
+    assert again.value[0].tables[ti].rows[ri].id == "" and again.value[1] == ["E1"]
+
+
+@pytest.mark.parametrize(
+    ("ctx", "question_id", "fields", "field", "words"),
+    [
+        (PRACTICE, "M2.2", {"wording": ""}, "wording", "can't be empty"),
+        (PRACTICE, "M2.2", {"id": "M9"}, "id", "keep their IDs"),
+        (PRACTICE, "M2.2", {"wording": "Line one?\nLine two?"}, "wording", "one line"),
+        (PRACTICE, "M2.2", {"wording": "x" * 301}, "wording", "up to 300"),
+        (PRACTICE, "M2.2", {"probes": ["a", "b", "c", "d", "e", "f"]}, "probes", "Up to 5"),
+        (PRACTICE, "M2.2", {"probes": ["Was it a violation?"]}, "probes[0]", "Avoid “violation”"),
+        (PRACTICE, "M2.2", {"wording": "Was it non-compliance?"}, "wording", "Avoid"),
+        (PRACTICE, "M2.2", {"wording": "The SOP says ten minutes. Is that so?"}, "wording",
+         "Keep what the documents say for M6"),
+        (PRACTICE, "M2.2", {"wording": "How does Priya do it?"}, "wording", "names to hide"),
+        (PRACTICE, "M2.2", {"held_back": ["The procedure mentions it."]}, "held_back",
+         "Only the probes held back"),
+        (PRACTICE.model_copy(update={"interview_type": InterviewType.LANDSCAPE}), "L3",
+         {"wording": "What does the procedure say about handoffs?"}, "wording", "for M6"),
+    ],
+)  # fmt: skip
+def test_each_editing_rule_names_its_field(
+    ctx: GuideContext, question_id: str, fields: dict[str, object], field: str, words: str
+) -> None:
+    doc = templates.tailor(bank(), ctx)
+    ti, ri = place(doc, question_id)
+    result = templates.apply_edits(doc, edited(doc, ti, ri, **fields), ["Priya"])
+    assert isinstance(result, Err), result
+    assert result.details["field"] == f"tables[{ti}].rows[{ri}].{field}"
+    assert words in result.message
+
+
+def test_documents_may_be_named_from_m6_on_and_in_follow_ups() -> None:
+    sop = "The SOP says ten minutes. What happens in practice?"
+    practice = templates.tailor(bank(), PRACTICE)
+    ti, ri = place(practice, "M6.1")
+    assert isinstance(templates.apply_edits(practice, edited(practice, ti, ri, wording=sop), []),
+                      Ok)  # fmt: skip
+    ti, ri = place(practice, "M6.5")
+    held = edited(practice, ti, ri, held_back=["The procedure mentions “Weigh bags”. Where?"])
+    assert isinstance(templates.apply_edits(practice, held, []), Ok)
+    follow_up = templates.tailor(bank(), FOLLOW_UP)
+    ti, ri = place(follow_up, "F1")
+    assert isinstance(templates.apply_edits(follow_up, edited(follow_up, ti, ri, wording=sop),
+                                            []), Ok)  # fmt: skip
+
+
+def test_sections_and_rows_cant_be_added_moved_or_removed() -> None:
+    doc = templates.tailor(bank(), PRACTICE)
+    fewer = as_edit(doc)
+    fewer.tables[0].rows.pop()
+    swapped = as_edit(doc)
+    swapped.tables[0], swapped.tables[1] = swapped.tables[1], swapped.tables[0]
+    for edit in (fewer, swapped):
+        result = templates.apply_edits(doc, edit, [])
+        assert isinstance(result, Err) and result.details["field"] == "tables"

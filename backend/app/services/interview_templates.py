@@ -26,6 +26,7 @@ from app.domain.interview import (
     DocumentRow,
     DocumentTable,
     GuideContext,
+    GuideEdit,
     InterviewDocument,
     QuestionBank,
     RoleModuleCheck,
@@ -477,3 +478,89 @@ def with_role_module(
             table = table.model_copy(update={"rows": every})
         tables.append(table)
     return doc.model_copy(update={"tables": tables, "generation_note": note})
+
+
+# --- Editing a guide (C5c; PRD §5.4 Guide tab, F.8 rules 6 and 8) -----------------------------
+
+CONTRAST = "M6 "  # the Practice movement where the documents come in
+MAX_PROBES = 5
+OWN = re.compile(r"E\d+")  # questions Eric writes into blank rows: E1, E2, …
+
+
+def _sop_allowed(doc: InterviewDocument, table_index: int) -> bool:
+    """Claims about what the documents say: from M6 on in a Practice guide, never in a Landscape
+    guide; a Follow-up builds on them (F.8 rules 5, 7 and 8)."""
+    if doc.kind == InterviewType.FOLLOW_UP:
+        return True
+    first = next((i for i, t in enumerate(doc.tables) if t.label.startswith(CONTRAST)), None)
+    return first is not None and table_index >= first
+
+
+def _text_problem(text: str, limit: int, hidden: list[str], sop_ok: bool) -> str:
+    if "\n" in text or len(text) > limit:
+        return f"Keep it to one line of up to {limit} characters."
+    if found := wording.banned_words(text):
+        return (f"Avoid “{found[0]}”: describe what happens instead (for example an adaptation, "
+                "a workaround or a rule that no longer fits).")  # fmt: skip
+    if not sop_ok and wording.sop_claims(text):
+        return ("Keep what the documents say for M6, after the interviewee has described the work "
+                "in their own words.")  # fmt: skip
+    if grounding.scan_redaction_terms(text, hidden):
+        return "This contains a name from your list of names to hide. Use the role instead."
+    return ""
+
+
+def apply_edits(
+    doc: InterviewDocument, edit: GuideEdit, hidden: list[str]
+) -> Result[tuple[InterviewDocument, list[str]]]:
+    """The guide with Eric's wording and probes, and the IDs of the questions he changed; or the
+    first problem, naming its field. Sections, rows, IDs and minutes stay as they are."""
+
+    def invalid(field: str, message: str) -> Err:
+        return Err(ErrorKind.VALIDATION, message, {"field": field})
+
+    if [t.label for t in edit.tables] != [t.label for t in doc.tables] or any(
+        len(e.rows) != len(t.rows) for e, t in zip(edit.tables, doc.tables, strict=True)
+    ):
+        return invalid("tables", "The guide's sections and rows can't be added, moved or removed.")
+    own = max((int(r.id[1:]) for t in doc.tables for r in t.rows if OWN.fullmatch(r.id)), default=0)
+    changed: list[str] = []
+    tables = []
+    for ti, (table, edited) in enumerate(zip(doc.tables, edit.tables, strict=True)):
+        sop_ok = _sop_allowed(doc, ti)
+        rows = []
+        for ri, (row, new) in enumerate(zip(table.rows, edited.rows, strict=True)):
+            at = f"tables[{ti}].rows[{ri}]"
+            if new.id != row.id:
+                return invalid(f"{at}.id", "Questions keep their IDs.")
+            text = new.wording.strip()
+            probes = [p.strip() for p in new.probes if p.strip()]
+            held = [p.strip() for p in new.held_back if p.strip()]
+            if row.id and not OWN.fullmatch(row.id) and not text:
+                return invalid(f"{at}.wording", "A question can't be empty. Leave it in and skip "
+                               "it in the interview if it doesn't fit.")  # fmt: skip
+            if held and not row.held_back:
+                return invalid(f"{at}.held_back", "Only the probes held back for M6 go here.")
+            if len(probes) > MAX_PROBES:
+                return invalid(f"{at}.probes", f"Up to {MAX_PROBES} probes per question.")
+            if problem := _text_problem(text, MAX_QUESTION, hidden, sop_ok):
+                return invalid(f"{at}.wording", problem)
+            for pi, probe in enumerate(probes):
+                if problem := _text_problem(probe, MAX_PROBE, hidden, sop_ok):
+                    return invalid(f"{at}.probes[{pi}]", problem)
+            for probe in held:  # held back for M6, where the documents come in
+                if problem := _text_problem(probe, MAX_PROBE, hidden, True):
+                    return invalid(f"{at}.held_back", problem)
+            if (text, probes, held) == (row.wording, row.probes, row.held_back):
+                rows.append(row)
+                continue
+            update: dict[str, object] = {"wording": text, "probes": probes, "held_back": held}
+            if not text:  # an own question emptied: a blank row again
+                update |= {"id": "", "probes": [], "movement": "", "targets": [], "priority": ""}
+            elif not row.id:  # Eric's own question in a blank row
+                own += 1
+                update |= {"id": f"E{own}", "movement": "", "targets": [], "priority": "standard"}
+            changed.append(str(update.get("id") or row.id))
+            rows.append(row.model_copy(update=update))
+        tables.append(table.model_copy(update={"rows": rows}))
+    return Ok((doc.model_copy(update={"tables": tables}), changed))

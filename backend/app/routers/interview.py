@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query, Request, Response
 
 from app.actions import interview
 from app.domain.interview import (
+    GuideEdit,
     GuideInput,
     GuideStarted,
     GuideSummary,
@@ -51,6 +52,16 @@ def make_guide(request: Request, engagement_id: str, body: GuideInput) -> GuideS
 @router.get("/engagements/{engagement_id}/interview-guide")
 def get_guide(request: Request, engagement_id: str, profile_id: str = "") -> GuideView:
     return unwrap(interview.get_guide(request.app.state.sessions, engagement_id, profile_id))
+
+
+@router.patch("/engagements/{engagement_id}/interview-guide")
+def edit_guide(
+    request: Request, engagement_id: str, body: GuideEdit, profile_id: str = ""
+) -> GuideView:
+    state = request.app.state
+    return unwrap(
+        interview.edit_guide(state.config, state.sessions, engagement_id, profile_id, body)
+    )
 
 
 @router.get("/engagements/{engagement_id}/interview-guide/export")

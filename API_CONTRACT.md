@@ -312,6 +312,19 @@ Each interviewee's latest guide, without its content (the Interviewees list, G2)
 ### GET /api/engagements/{id}/interview-guide?profile_id=
 The latest version. `404` "No guide yet for this interviewee." when none.
 
+### PATCH /api/engagements/{id}/interview-guide?profile_id= (C5c, 2026-10-06)
+Eric's edits to the latest version, saved in place (`edited: true`; "Make new version" later starts again from the template and keeps this one as it is). Request: every section in order with every row in order, each row `{"id", "wording", "probes", "held_back"}`:
+```json
+{"tables": [{"label": "M0 — Framing", "rows": [{"id": "M0.1", "wording": "…", "probes": [], "held_back": []}, …]}, …]}
+```
+Rules (the first problem is refused with `422` naming the field, e.g. `details.field: "tables[3].rows[2].wording"`):
+- Sections and rows can't be added, moved or removed (`tables`); minutes are not editable, so the minute plan still sums to the type's total.
+- A question keeps its ID (`…id`) and can't be emptied (`…wording`), except Eric's own questions.
+- A blank row with wording becomes Eric's own question `E1`, `E2`, … (no targets); emptying an own question makes the row blank again.
+- One line each: wording up to 300 characters, at most 5 probes of up to 200; `held_back` only on rows that had held-back probes (M6.5).
+- No banned (blaming) word; no name on the hidden-names list; no claim about what the documents say before M6 in a Practice guide or anywhere in a Landscape guide (a Follow-up may).
+Response `200`: the guide. Audit row "Edited interview guide" (after: version, the IDs of the questions changed); nothing changed → no row. Errors `404` (engagement, or no guide yet).
+
 ### GET /api/engagements/{id}/interview-guide/export?profile_id=&format=docx|md
 The latest version as a file (`document.generation_note` is not printed), in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
 Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** / **Download Markdown** (G2).

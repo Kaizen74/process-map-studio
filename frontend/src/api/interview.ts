@@ -1,7 +1,7 @@
-import type { GuideStarted, GuideSummary, Profile, ProfileInput } from "../lib/interview";
+import type { GuideEdit, GuideStarted, GuideSummary, GuideView, Profile, ProfileInput } from "../lib/interview";
 import { request } from "./request";
 
-export type { GuideStarted, GuideSummary, Profile, ProfileInput };
+export type { GuideEdit, GuideStarted, GuideSummary, GuideView, Profile, ProfileInput };
 
 // API_CONTRACT.md → Interviewee profiles (phase P4c, C5a).
 const enc = encodeURIComponent;
@@ -24,3 +24,13 @@ export const makeGuide = (engagementId: string, profileId: string) =>
     method: "POST",
     body: { profile_id: profileId },
   });
+
+export const getGuide = (engagementId: string, profileId: string) =>
+  request<GuideView>(`/engagements/${enc(engagementId)}/interview-guide?profile_id=${enc(profileId)}`);
+
+export const editGuide = (engagementId: string, profileId: string, body: GuideEdit) =>
+  request<GuideView>(`/engagements/${enc(engagementId)}/interview-guide?profile_id=${enc(profileId)}`, {
+    method: "PATCH",
+    body,
+  });
+

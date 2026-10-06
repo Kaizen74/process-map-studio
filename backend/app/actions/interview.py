@@ -25,6 +25,7 @@ from app.domain.enums import InterviewType
 from app.domain.interview import (
     DocumentRow,
     GuideContext,
+    GuideEdit,
     GuideInput,
     GuideStarted,
     GuideSummary,
@@ -392,6 +393,31 @@ def get_guide(sessions: Sessions, engagement_id: str, profile_id: str) -> Result
         if guide is None or guide.engagement_id != engagement_id:
             return Err(ErrorKind.NOT_FOUND, NO_GUIDE)
         return Ok(guide)
+
+
+def edit_guide(
+    config: AppConfig, sessions: Sessions, engagement_id: str, profile_id: str, body: GuideEdit
+) -> Result[GuideView]:
+    """Eric's edits to the latest version of a guide (C5c), checked like everything in a guide."""
+    with session_scope(sessions) as session:
+        if engagements_repo.get(session, engagement_id) is None:
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        guide = interview_repo.latest_guide(session, profile_id)
+        if guide is None or guide.engagement_id != engagement_id:
+            return Err(ErrorKind.NOT_FOUND, NO_GUIDE)
+        hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
+        applied = templates.apply_edits(guide.document, body, hidden)
+        if isinstance(applied, Err):
+            return applied
+        document, changed = applied.value
+        if not changed:
+            return Ok(guide)
+        saved = interview_repo.save_edits(session, guide.id, document)
+        audit.record(session, actor=actor_name(config), action="Edited interview guide",
+                     target_type="interview_guide", target_id=guide.id,
+                     engagement_id=engagement_id,
+                     after={"version": guide.version, "questions": changed})  # fmt: skip
+        return Ok(saved)
 
 
 def export_guide(

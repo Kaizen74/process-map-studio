@@ -303,3 +303,55 @@ def test_only_landscape_guides_ask_claude(drafted: Drafted) -> None:
         pid = profile(drafted, stakeholder_group="Ramp", interview_type=kind)
         job = start(drafted, pid)
         assert job["usage"]["calls"] == 0 and job["message"] == "Guide version 1 made."
+
+
+def edit_body(doc: dict[str, Any]) -> dict[str, Any]:
+    return {"tables": [{"label": t["label"], "rows": [
+        {k: r[k] for k in ("id", "wording", "probes", "held_back")} for r in t["rows"]]}
+        for t in doc["tables"]]}  # fmt: skip
+
+
+def test_eric_edits_a_guide_and_the_files_follow(drafted: Drafted) -> None:
+    """C5c (criterion 49): edits are saved on the latest version, audited, and exported; a new
+    version starts again from the template and keeps the edited one."""
+    pid = profile(drafted, role_id=role(drafted, "Ramp"), interview_type="practice")
+    guide = make(drafted, pid)
+    body = edit_body(guide["document"])
+    m2 = next(t for t in body["tables"] if t["label"].startswith("M2 "))
+    row = next(r for r in m2["rows"] if r["id"] == "M2.2")
+    row["wording"] = "Walk me through the last flight you loaded, step by step."
+    row["probes"] = ["And then?"]
+    url = guide_url(drafted) + f"?profile_id={pid}"
+    saved = drafted.client.patch(url, json=body)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["edited"] is True and saved.json()["version"] == 1
+    md = drafted.client.get(guide_url(drafted) + "/export",
+                            params={"profile_id": pid, "format": "md"}).text  # fmt: skip
+    assert "| M2.2 | Walk me through the last flight you loaded, step by step. | And then? |" in md
+    assert guide_audit(drafted)[-1] == {
+        "action": "Edited interview guide",
+        "after": {"version": 1, "questions": ["M2.2"]},
+    }
+    # Saving the same again changes nothing and writes no row.
+    assert drafted.client.patch(url, json=body).status_code == 200
+    assert len(guide_audit(drafted)) == 2
+    again = make(drafted, pid)
+    assert (again["version"], again["edited"]) == (2, False)
+    assert "Walk me through the last flight you loaded" not in str(again["document"])
+
+
+def test_an_edit_breaking_a_rule_is_refused_and_nothing_saved(drafted: Drafted) -> None:
+    pid = profile(drafted, role_id=role(drafted, "Ramp"), interview_type="practice")
+    body = edit_body(make(drafted, pid)["document"])
+    body["tables"][1]["rows"][0]["wording"] = "Tell me about the violation on the last flight?"
+    refused = drafted.client.patch(guide_url(drafted) + f"?profile_id={pid}", json=body)
+    assert refused.status_code == 422, refused.text
+    assert refused.json()["error"]["details"]["field"] == "tables[1].rows[0].wording"
+    assert "violation" not in str(make(drafted, pid)["document"])
+    assert [r["action"] for r in guide_audit(drafted)] == ["Made interview guide"] * 2
+    extra = drafted.client.patch(guide_url(drafted) + f"?profile_id={pid}",
+                                 json={"tables": [], "title": "x"})  # fmt: skip
+    assert extra.status_code == 422
+    nobody = profile(drafted, stakeholder_group="Airline ops", interview_type="practice")
+    none_yet = drafted.client.patch(guide_url(drafted) + f"?profile_id={nobody}", json=body)
+    assert none_yet.status_code == 404

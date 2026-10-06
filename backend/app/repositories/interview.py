@@ -107,6 +107,16 @@ def add_guide(
     return _guide(row)
 
 
+def save_edits(session: Session, guide_id: str, document: InterviewDocument) -> GuideView:
+    """Eric's edits, saved in place on that version (marked edited)."""
+    row = session.get(InterviewGuide, guide_id)
+    assert row is not None
+    row.content = document.model_dump(mode="json")
+    row.edited = True
+    session.flush()
+    return _guide(row)
+
+
 def latest_guides(session: Session, engagement_id: str) -> list[GuideSummary]:
     """Each interviewee's latest guide, oldest interviewee's first; the content is not read."""
     rows = session.execute(
