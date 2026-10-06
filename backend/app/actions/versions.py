@@ -15,7 +15,14 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import lenses, redaction, view_translation
 from app.db import session_scope
-from app.domain.enums import EdgeKind, ElementKind, ReviewStatus, Stance, VersionState
+from app.domain.enums import (
+    EdgeKind,
+    ElementKind,
+    ReviewStatus,
+    SourceKind,
+    Stance,
+    VersionState,
+)
 from app.domain.graph import (
     AlignmentRow,
     AnswerQuote,
@@ -280,6 +287,8 @@ def build_graph(
                 constraint_type=e.constraint_type,
                 work_type_basis=list(e.work_type_basis or []),
                 work_type_status=e.work_type_status,
+                level=e.level,
+                parent_element_id=e.parent_element_id,
             )
         )
 
@@ -347,7 +356,7 @@ def get_layout(
     if graph is None:
         return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
     if view is None:
-        return Ok(layout.compute_layout(views.combined(graph)))
+        return Ok(layout.compute_layout(views.finest_level(views.combined(graph))))
     if not show_other:
         drawn = layout.compute_layout(views.view_graph(graph, view))
         return Ok(drawn.model_copy(update={"view": view}))
@@ -355,21 +364,39 @@ def get_layout(
     return Ok(views.mark_ghosts(drawn, graph, view))
 
 
-def lint_graph(every: Graph) -> LintReport:
+def story_types(session: Session, version_id: str) -> set[str] | None:
+    """The kinds of story (B.31) the version's interviews told; None without an interview."""
+    kinds = {
+        source.kind
+        for sid in map_repo.version_source_ids(session, version_id)
+        if (source := sources_repo.get(session, sid)) is not None
+    }
+    if SourceKind.INTERVIEW_TRANSCRIPT.value not in kinds:
+        return None
+    return {
+        str(r.payload.get("fragment_type", "other"))
+        for _, r in claims_repo.verified_rows(session, version_id)
+        if r.claim_type == "story"
+    }
+
+
+def lint_graph(every: Graph, stories: set[str] | None = None) -> LintReport:
     """The lint rules on the map as one (with its layout), then each view's flow checks
-    (§3.12.11), from the graph with every line. Used for the stored report, the quality card and
-    publishing alike."""
+    (§3.12.11), then the sensemaking warnings (work types, stories), from the graph with every
+    line. Used for the stored report, the quality card and publishing alike."""
     graph = views.combined(every)
     whole = lint.run_lint(graph, layout.compute_layout(graph))
     per_view = lint.run_view_checks(every)
+    sense = lint.run_sensemaking_warnings(graph, stories)
     return LintReport(
-        failures=whole.failures + per_view.failures, warnings=whole.warnings + per_view.warnings
+        failures=whole.failures + per_view.failures,
+        warnings=whole.warnings + per_view.warnings + sense.warnings,
     )
 
 
 def lint_for(session: Session, version_id: str) -> LintReport | None:
     every = build_graph(session, version_id, every_line=True)
-    return lint_graph(every) if every is not None else None
+    return lint_graph(every, story_types(session, version_id)) if every is not None else None
 
 
 def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:

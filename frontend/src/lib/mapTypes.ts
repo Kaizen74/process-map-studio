@@ -62,6 +62,10 @@ export interface GraphElement {
   constraint_type?: "rigid" | "governing" | "enabling" | "absent" | null;
   work_type_basis?: { segment_ids: string[]; quote: string }[];
   work_type_status?: "proposed" | "confirmed" | "not_classified" | null;
+  /** §3.12.10 rule 9 (K2): landscape · practice, and the landscape activity a practice step is
+   * part of; null on a map with one level. */
+  level?: "landscape" | "practice" | null;
+  parent_element_id?: string | null;
 }
 
 export type WorkType = "clear" | "complicated" | "complex" | "chaotic" | "confused" | "not_classified";

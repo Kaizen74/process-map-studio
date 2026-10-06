@@ -117,7 +117,9 @@
       "work_type": null,
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": null
+      "work_type_status": null,
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-11",
@@ -260,7 +262,9 @@
           "quote": "only me and one other controller really know the configurations"
         }
       ],
-      "work_type_status": "proposed"
+      "work_type_status": "proposed",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-22",
@@ -385,7 +389,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-25",
@@ -535,7 +541,9 @@
           "quote": "Special loads shall be checked against the acceptance checklist"
         }
       ],
-      "work_type_status": "proposed"
+      "work_type_status": "proposed",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-28",
@@ -660,7 +668,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-30",
@@ -827,7 +837,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-34",
@@ -952,7 +964,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-36",
@@ -1077,7 +1091,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-37",
@@ -1233,7 +1249,9 @@
           "quote": "You read the situation."
         }
       ],
-      "work_type_status": "proposed"
+      "work_type_status": "proposed",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-41",
@@ -1353,7 +1371,9 @@
       "work_type": "not_classified",
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": "not_classified"
+      "work_type_status": "not_classified",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-43",
@@ -1495,7 +1515,9 @@
           "quote": "The final load sheet shall be issued through the departure control system"
         }
       ],
-      "work_type_status": "proposed"
+      "work_type_status": "proposed",
+      "level": null,
+      "parent_element_id": null
     },
     {
       "id": "id-46",
@@ -1545,7 +1567,9 @@
       "work_type": null,
       "constraint_type": null,
       "work_type_basis": [],
-      "work_type_status": null
+      "work_type_status": null,
+      "level": null,
+      "parent_element_id": null
     }
   ],
   "edges": [

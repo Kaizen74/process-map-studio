@@ -14,18 +14,23 @@ from functools import cache
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import lenses, redaction
 from app.actions import questions as questions_action
-from app.actions import redaction
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import DESIGN_TOKENS_FILE, FONTS_DIR, AppConfig
 from app.db import session_scope
 from app.domain.enums import VerificationStatus, VersionState
 from app.domain.exports import (
+    ExportCapability,
     ExportCause,
     ExportGapReport,
     ExportInput,
+    ExportKnowHow,
     ExportQuestion,
+    ExportRealityGap,
+    ExportStory,
+    ExportTerm,
     SourceEntry,
 )
 from app.domain.graph import Graph
@@ -37,11 +42,73 @@ from app.repositories import elements as map_repo
 from app.repositories import gap as gap_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
-from app.services import export_html, exports, quality, views
+from app.services import export_html, exports, quality, sensemaking, views
 
 Sessions = sessionmaker[Session]
 
 FORMATS = ("md", "json", "csv", "html")
+# The reality-gap finding types of Analysis A (B.22, §3.12.7) shown in §7.3 section 3.
+REALITY_GAPS = {"known_adaptation", "unknown_rule", "disclosure_gap", "control_gap",
+                "constraint_mismatch"}  # fmt: skip
+
+
+def _dominant(counts: dict[str, int]) -> str:
+    """The ASHEN category with most items (the first in ASHEN order on a tie)."""
+    best = max(sensemaking.ASHEN, key=lambda k: counts.get(k, 0))
+    return best if counts.get(best, 0) else "none described"
+
+
+def sensemaking_content(
+    session: Session, version_id: str, engagement_id: str, graph: Graph, names: dict[str, str]
+) -> tuple[list[ExportStory], list[ExportCapability], list[ExportTerm], list[ExportKnowHow]]:
+    """Stories, strengths and weaknesses, the glossary and know-how per decision point, from the
+    version's checked interview items (names hidden, no verbatim quotes; §7.3)."""
+    lens = lenses.load(session, version_id, engagement_id)
+    on_map = [e for e in graph.elements if e.review_status != "rejected"]
+    labels = {e.stable_key: e.label for e in on_map}
+
+    def steps_of(about: object) -> list[str]:
+        return [labels[k] for k in about if k in labels] if isinstance(about, list) else []
+
+    def where(source_id: str, segment_ids: list[str]) -> str:
+        anchor = lens.anchors.get(segment_ids[0], "") if segment_ids else ""
+        return " ".join(x for x in (names.get(source_id, "Interview"), anchor) if x)
+
+    stories: list[ExportStory] = []
+    capabilities: list[ExportCapability] = []
+    glossary: list[ExportTerm] = []
+    seen: set[str] = set()
+    for r in lens.items:
+        about = r.payload.get("about_steps")
+        if r.claim_type == "story":
+            stories.append(ExportStory(
+                label=lens.hide(str(r.payload.get("text", ""))),
+                fragment_type=str(r.payload.get("fragment_type", "other")),
+                steps=steps_of(about), where=where(r.source_id, r.segment_ids),
+            ))  # fmt: skip
+        elif r.claim_type == "capability":
+            capabilities.append(ExportCapability(
+                kind=str(r.payload.get("kind", "")), dimension=str(r.payload.get("dimension", "")),
+                text=lens.hide(str(r.payload.get("text", ""))), steps=steps_of(about),
+            ))  # fmt: skip
+        elif r.claim_type == "sme_term":
+            term = str(r.payload.get("term", ""))
+            if term.lower() not in seen:
+                seen.add(term.lower())
+                glossary.append(ExportTerm(
+                    term=lens.hide(term),
+                    plain_meaning=lens.hide(str(r.payload.get("plain_meaning", ""))),
+                    steps=steps_of(about),
+                ))  # fmt: skip
+    know_how: list[ExportKnowHow] = []
+    for e in on_map:
+        kh = lenses.know_how(lens, e.stable_key, e.kind, e.work_type)
+        if kh is not None:
+            counts = {k: len(v) for k, v in kh.ashen.items()}
+            know_how.append(ExportKnowHow(
+                element_id=e.id, knowledge_risk=kh.knowledge_risk, dominant=_dominant(counts),
+            ))  # fmt: skip
+    return stories, capabilities, glossary, know_how
 
 
 @cache
@@ -53,8 +120,14 @@ def html_assets() -> tuple[dict[str, object], dict[str, bytes]]:
 
 
 def export_input(
-    config: AppConfig, session: Session, version_id: str, graph: Graph
+    config: AppConfig,
+    session: Session,
+    version_id: str,
+    graph: Graph,
+    every: Graph | None = None,
 ) -> ExportInput | None:
+    """`graph` is the map as one; `every` the graph with every line (built here when not given;
+    the quality card passes the one it already built)."""
     version = versions_repo.get(session, version_id)
     if version is None:
         return None
@@ -101,7 +174,36 @@ def export_input(
         for a in reversed(gap_repo.for_version(session, version_id))
         if a.status == "finalised"
     ]
+    names = {s.id: redaction.hide(s.filename, terms) for s in sources}
+    every = every or versions_action.build_graph(session, version_id, every_line=True)
+    view_graphs: dict[str, Graph] = (
+        {str(v): views.view_graph(every, v) for v in views.VIEWS}
+        if every is not None and any(e.view_membership for e in every.elements)
+        else {}
+    )
+    reality_gaps = [
+        ExportRealityGap(
+            gap_class=f.gap_class or "unexplained",
+            title=redaction.hide(f.title, terms),
+            stated_reason=redaction.hide(f.stated_reason, terms),
+        )
+        for a in reversed(gap_repo.for_version(session, version_id))
+        if a.status == "finalised" and a.mode == "internal"
+        for f in gap_repo.findings(session, a.id)
+        if f.finding_type in REALITY_GAPS
+        and f.verification_status == "verified"
+        and f.disposition != "dismissed"
+    ]
+    stories, capabilities, glossary, know_how = sensemaking_content(
+        session, version_id, version.engagement_id, graph, names
+    )
     return ExportInput(
+        stories=stories,
+        capabilities=capabilities,
+        glossary=glossary,
+        know_how=know_how,
+        view_graphs=view_graphs,
+        reality_gaps=reality_gaps,
         graph=graph,
         sources=[
             SourceEntry(
@@ -138,7 +240,7 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
     if every is None:
         return None
     graph = views.combined(every)  # the map as one, built once
-    data = export_input(config, session, version_id, graph)
+    data = export_input(config, session, version_id, graph, every)
     if data is None:
         return None
     version = versions_repo.get(session, version_id)
@@ -161,7 +263,9 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
     return quality.build_quality_card(
         QualityInput(
             graph=graph,
-            lint=versions_action.lint_graph(every),
+            lint=versions_action.lint_graph(
+                every, versions_action.story_types(session, version_id)
+            ),
             pending_merges=pending,
             open_image_suggestions=map_repo.suggested_image_count(session, version_id),
             unverified_claims=unverified,

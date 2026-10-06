@@ -1,5 +1,6 @@
 """The publish quality card (PRD §7.2): each check turns red on a crafted fixture and green on the
-fully reviewed sample; Q10 is only a warning; a failing detail never repeats a hidden name."""
+fully reviewed sample; Q10-Q12 are only warnings (Q12 only with system records); a failing detail
+never repeats a hidden name."""
 
 from __future__ import annotations
 
@@ -54,8 +55,11 @@ def statuses(inp: QualityInput) -> dict[str, str]:
 
 def test_the_reviewed_sample_is_green() -> None:
     card = quality.build_quality_card(card_input())
-    assert [c.id for c in card.checks] == [f"Q{n}" for n in range(1, 11)]
-    assert all(c.status == "pass" for c in card.checks), card.checks
+    # Requirement change 2026-10-06 (PRD v1.10-1.11 §7.2, K3): Q11 joins the card as a warning;
+    # Q12 only when system records are used. The sample's work types are still proposed.
+    assert [c.id for c in card.checks] == [f"Q{n}" for n in range(1, 12)]
+    assert all(c.status == "pass" for c in card.checks if c.id != "Q11"), card.checks
+    assert (card.checks[10].status, card.checks[10].hard) == ("warning", False)
     assert card.all_green and quality.hard_failures(card) == 0
     assert card.checks[0].detail == "All 10 steps are tagged O, I or R."  # v1.10 A.5
     assert card.checks[9].detail == "10 steps and 5 lanes: fits a one-hour session."
@@ -190,3 +194,39 @@ def test_an_interview_only_map_gets_a_warning_never_a_blocker() -> None:
     assert quality.SIGNAL_WARNING in limited.warnings and limited.all_green
     strong = quality.build_quality_card(card_input(source_kinds=["interview_transcript", "sop"]))
     assert quality.SIGNAL_WARNING not in strong.warnings
+
+
+def test_more_than_three_names_end_with_how_many_more() -> None:
+    """Bug found 2026-10-06 (Q11 on the sample): "and 2 mores" instead of "and 2 more"."""
+    graph = sample_graph()
+    steps = [e for e in graph.elements if e.kind in renderers.STEP_KINDS][:5]
+    text = quality._names(steps)
+    assert text.endswith(" and 2 more"), text
+
+
+def test_q11_warns_until_every_decision_point_has_a_confirmed_work_type() -> None:
+    graph = reviewed()
+    deciding = [e for e in graph.elements if e.kind in ("decision", "approval")]
+    assert deciding and any(e.work_type for e in graph.elements)  # a v1.10 sample
+    card = quality.build_quality_card(card_input(graph))
+    q11 = card.checks[10]
+    assert q11.detail.startswith(f"{len(deciding)} decisions, approvals or judgment steps "
+                                 "without a confirmed work type: ")  # fmt: skip
+    for e in deciding:
+        e.work_type_status = "confirmed"
+    assert statuses(card_input(graph))["Q11"] == "pass"
+    # A map drafted before v1.10 has no work types: nothing to confirm.
+    for e in graph.elements:
+        e.work_type, e.work_type_status = None, None
+    assert statuses(card_input(graph))["Q11"] == "pass"
+    assert card.all_green  # a warning never blocks publishing
+
+
+def test_q12_is_on_the_card_only_with_system_records() -> None:
+    assert "Q12" not in statuses(card_input())
+    assert statuses(card_input(unaligned_activities=0))["Q12"] == "pass"
+    card = quality.build_quality_card(card_input(unaligned_activities=2))
+    q12 = card.checks[-1]
+    assert (q12.id, q12.status, q12.hard) == ("Q12", "warning", False)
+    assert q12.detail == "2 system activities not yet aligned to a step or marked hidden work."
+    assert card.all_green

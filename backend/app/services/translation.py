@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 
 from app.domain.graph import AccountSummary
@@ -283,3 +284,51 @@ def translate(steps: list[TranslationStep], edges: list[TranslationEdge]) -> Tra
                 "later but don't say it comes next.",
             ))  # fmt: skip
     return Translation(element_views=views, edges=out, questions=questions)
+
+
+# --- Rule 9: landscape and practice levels (§3.12.10 rule 9, §3.9 rule 10, B.39; K2) -----------
+
+LANDSCAPE_QUESTION = re.compile(r"L[1-7]")
+STEP_KINDS = {"activity", "decision", "approval"}
+
+
+def is_landscape(step: TranslationStep) -> bool:
+    """Every verified interview claim answers a Landscape question, and no document describes it."""
+    ids = [q for p in step.interview for q in p.question_ids]
+    return (
+        bool(step.interview)
+        and not step.documents
+        and all(p.question_ids for p in step.interview)
+        and all(LANDSCAPE_QUESTION.fullmatch(q) for q in ids)
+    )
+
+
+def _words(label: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9]+", label.lower()) if len(w) > 2}
+
+
+def levels(steps: list[TranslationStep]) -> dict[str, tuple[str | None, str | None]]:
+    """Each step's level and the landscape activity it belongs to (same lane, same phase). Both
+    None on a map with no landscape step (one level); start and end never have a level."""
+    landscape = {s.id for s in steps if s.kind in STEP_KINDS and is_landscape(s)}
+    result: dict[str, tuple[str | None, str | None]] = {}
+    for s in steps:
+        if not landscape or s.kind not in STEP_KINDS:
+            result[s.id] = (None, None)
+            continue
+        if s.id in landscape:
+            result[s.id] = ("landscape", None)
+            continue
+        candidates = [
+            p for p in steps
+            if p.id in landscape and p.kind == "activity" and p.lane == s.lane
+            and p.phase == s.phase
+        ]  # fmt: skip
+        parent = candidates[0].id if len(candidates) == 1 else None
+        if len(candidates) > 1:
+            scored = sorted(((len(_words(p.label) & _words(s.label)), p.id) for p in candidates),
+                            reverse=True)  # fmt: skip
+            best, runner_up = scored[0][0], scored[1][0]
+            parent = scored[0][1] if best > runner_up else None
+        result[s.id] = ("practice", parent)
+    return result

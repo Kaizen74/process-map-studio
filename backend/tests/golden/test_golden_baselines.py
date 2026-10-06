@@ -20,7 +20,9 @@
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
 first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the
-diff of the baseline file, and log the reason in DECISIONS.md (PRD §6.2 rules).
+diff of the baseline file, and log the reason in DECISIONS.md (PRD §6.2 rules). To show Eric a
+change before it is accepted, run with PMS_GOLDEN_CANDIDATES=<folder>: each output is also written
+there under its baseline's name, and the baselines are left alone (2026-10-06).
 """
 
 from __future__ import annotations
@@ -59,8 +61,17 @@ def stable_ids(data: Any) -> Any:
     return json.loads(UUID.sub(token, text))
 
 
+def write_candidate(name: str, rendered: str) -> None:
+    """With PMS_GOLDEN_CANDIDATES set, the output also goes there for Eric to review."""
+    folder = os.environ.get("PMS_GOLDEN_CANDIDATES")
+    if folder:
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        (Path(folder) / name).write_text(rendered, encoding="utf-8")
+
+
 def matches_baseline(name: str, data: Any, folder: Path = HERE) -> None:
     rendered = json.dumps(stable_ids(data), indent=2, ensure_ascii=False) + "\n"
+    write_candidate(name, rendered)
     path = folder / name
     if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
         path.write_text(rendered, encoding="utf-8")
@@ -184,6 +195,7 @@ def matches_text_baseline(name: str, text: str) -> None:
     rendered = FONT_DATA.sub(
         lambda m: f"data:font/woff2;base64,<{len(m.group(1))} characters>", rendered
     )
+    write_candidate(name, rendered)
     path = HERE / name
     if os.environ.get("PMS_UPDATE_GOLDEN") == "1":
         path.write_text(rendered, encoding="utf-8")

@@ -26,7 +26,13 @@ from app.domain.enums import (
     SourceState,
     Stance,
 )
-from app.domain.exports import ExportCause, ExportGapReport, ExportInput
+from app.domain.exports import (
+    ExportCapability,
+    ExportCause,
+    ExportGapReport,
+    ExportInput,
+    ExportStory,
+)
 from app.domain.graph import Graph, GraphElement
 from app.domain.quality import QualityCard
 from app.services import signal
@@ -88,6 +94,23 @@ REASONS = {
 EXIT_WORDS = {kind.value: kind.value.capitalize() for kind in EdgeKind}
 STATUS_WORDS = {"pass": "Pass", "fail": "Fail", "warning": "Warning"}
 NO_PHASE = "Without a phase"
+NOT_USED = "Not used in this engagement."
+NOT_DESCRIBED = '"not described" connector'
+VIEW_WORDS = {"both": "both", "done_only": "as done", "documented_only": "as documented"}
+WORK_TYPES = {"clear": "Clear", "complicated": "Complicated", "complex": "Complex",
+              "chaotic": "Chaotic", "confused": "Confused",
+              "not_classified": "Not classified"}  # fmt: skip
+WORK_STATUS = {"proposed": "proposed", "confirmed": "confirmed"}
+STORY_TYPES = {"recent_case": "recent case", "went_well": "went well", "went_badly": "went badly",
+               "surprise": "surprise", "workaround": "workaround", "other": "other"}  # fmt: skip
+DIMENSIONS = {"skillset": "Skillset", "ways_of_working": "Ways of working", "systems": "Systems",
+              "process": "Process", "structure": "Structure"}  # fmt: skip
+GAP_CLASSES = {"effective_adaptation": "Effective adaptation", "risky_drift": "Risky drift",
+               "obsolete_rule": "Obsolete rule", "unexplained": "Unexplained"}  # fmt: skip
+ASHEN_WORDS = {"artefacts": "artefacts", "skills": "skills", "heuristics": "heuristics",
+               "experience": "experience", "natural_talent": "natural talent",
+               "none described": "none described"}  # fmt: skip
+VARIANT_FIELDS = ("owner", "threshold", "time", "trigger")
 
 # Headings of the fixed template, in order (the quality card's Q7 checks them).
 FACTS = "## 1. Facts: what the sources tell us"
@@ -192,6 +215,72 @@ def steps(graph: Graph) -> list[GraphElement]:
     return [e for e in graph.elements if e.kind in STEP_KINDS]
 
 
+def view_word(element: GraphElement) -> str:
+    """Which view draws the step: both · as done · as documented (both before v1.10)."""
+    return VIEW_WORDS.get(element.view_membership or "both", "both")
+
+
+def work_type_text(element: GraphElement) -> str:
+    """ "Complex (proposed)", "Clear (confirmed)", "Not classified" or "—" before v1.10."""
+    if element.work_type is None:
+        return "—"
+    words = WORK_TYPES.get(element.work_type, element.work_type)
+    status = WORK_STATUS.get(element.work_type_status or "")
+    return f"{words} ({status})" if status else words
+
+
+def story_line(story: ExportStory) -> str:
+    about = f"; step: {', '.join(story.steps)}" if story.steps else ""
+    kind = STORY_TYPES.get(story.fragment_type, story.fragment_type)
+    return f"[O] {story.label} ({kind} · {story.where}{about})"
+
+
+def capability_line(c: ExportCapability) -> str:
+    about = f" (step: {', '.join(c.steps)})" if c.steps else ""
+    return f"[O] {DIMENSIONS.get(c.dimension, c.dimension)}: {c.text}{about}"
+
+
+def two_views_lines(data: ExportInput) -> list[str]:
+    """What each view draws (§3.12.11; both views are published together)."""
+    done, documented = data.view_graphs.get("done"), data.view_graphs.get("documented")
+    if done is None or documented is None:
+        return ["This map was drafted before the two views; it has one view."]
+    lines = []
+    for name, graph, other in (("As done", done, documented), ("As documented", documented, done)):
+        own = [e.label for e in steps(on_the_map(graph))]
+        others = {e.label for e in steps(on_the_map(other))}
+        only = [label for label in own if label not in others]
+        gaps = sum(1 for edge in graph.edges if edge.kind == EdgeKind.GAP.value)
+        line = f"- {name}: {plural(len(own), 'step')}"
+        line += f"; only here: {', '.join(only)}" if only else "; no steps of its own"
+        if gaps:
+            line += f"; {plural(gaps, NOT_DESCRIBED)}"
+        lines.append(line + ".")
+    return lines
+
+
+def official_lived_lines(graph: Graph) -> list[str]:
+    """Per step where the interviews give both accounts (no verbatim quotes)."""
+    lines = []
+    for e in steps(graph):
+        if e.practice_described is False:
+            lines.append(f"- {tag(e)} {e.label}: official account only (practice not described).")
+            continue
+        if not (e.account_summary.official and e.account_summary.lived):
+            continue
+        done = (e.variants or {}).get("done", {})
+        documented = (e.variants or {}).get("documented", {})
+        differ = [
+            f"{f} (as done: {done.get(f) or 'not stated'}; as documented: "
+            f"{documented.get(f) or 'not stated'})"
+            for f in VARIANT_FIELDS
+            if done.get(f) != documented.get(f)
+        ]
+        detail = f"they differ on {'; '.join(differ)}" if differ else "no difference recorded"
+        lines.append(f"- {tag(e)} {e.label}: official and lived accounts both given; {detail}.")
+    return lines or ["No step has both an official and a lived account."]
+
+
 # --- Master Process Map (Markdown) -------------------------------------------------------------
 
 
@@ -240,6 +329,12 @@ def _facts(data: ExportInput, graph: Graph) -> list[str]:
     for state, words in STATES.items():
         count = sum(1 for e in steps(graph) if e.source_state == state)
         lines.append(f"| {words} | {count} |")
+
+    lines += ["", "### Stories", ""]
+    lines += [f"- {story_line(story)}" for story in data.stories] or ["No stories recorded."]
+    lines += ["", "### Strengths as stated (preserve)", ""]
+    strengths = [c for c in data.capabilities if c.kind == "strength"]
+    lines += [f"- {capability_line(c)}" for c in strengths] or ["No strengths stated."]
     return lines
 
 
@@ -256,7 +351,7 @@ def _phase_groups(graph: Graph) -> list[tuple[str, str, list[GraphElement]]]:
     return [g for g in groups if g[2]]
 
 
-def _interpretation(graph: Graph) -> list[str]:
+def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
     roles = {r.id: r.name for r in graph.roles}
     labels = {e.id: e.label for e in graph.elements}
     lines = [INTERPRETATION]
@@ -273,13 +368,13 @@ def _interpretation(graph: Graph) -> list[str]:
         if activities:
             lines += [
                 "",
-                "| Step | Lane | Prov | Source state | Time (work/wait) | Complexity "
+                "| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity "
                 "| Data in → out | Flags |",
-                "|---|---|---|---|---|---|---|---|",
+                "|---|---|---|---|---|---|---|---|---|",
             ]
             for e in activities:
                 time = f"{minutes(e.time.work_min)} / {minutes(e.time.wait_min)}"
-                data = (
+                flow = (
                     f"{e.handoff.in_ or '—'} → {e.handoff.out or '—'}"
                     if e.handoff.in_ or e.handoff.out
                     else "—"
@@ -294,9 +389,10 @@ def _interpretation(graph: Graph) -> list[str]:
                     if present
                 ]
                 lines.append(
-                    f"| {cell(e.label)} | {cell(roles.get(e.lane_role_id or '', ''))} | {tag(e)} "
+                    f"| {cell(e.label)} | {view_word(e)} "
+                    f"| {cell(roles.get(e.lane_role_id or '', ''))} | {tag(e)} "
                     f"| {STATES.get(e.source_state, e.source_state)} | {time} "
-                    f"| {e.complexity or '—'} | {cell(data)} | {', '.join(flags) or '—'} |"
+                    f"| {e.complexity or '—'} | {cell(flow)} | {', '.join(flags) or '—'} |"
                 )
         if deciding:
             lines += ["", "Decisions and approvals:", ""]
@@ -344,11 +440,55 @@ def _interpretation(graph: Graph) -> list[str]:
         lines += [f"| {words} | {cell(', '.join(members))} |" for words, members in found]
     else:
         lines.append("No divergences between the sources.")
+
+    lines += ["", "### Two views: as done and as documented", "", *two_views_lines(data)]
+    know_how = {k.element_id: k for k in data.know_how}
+    lines += [
+        "",
+        "### Work type and know-how",
+        "",
+        "| Step | Work type | Know-how (knowledge risk · dominant ASHEN) |",
+        "|---|---|---|",
+    ]
+    for e in steps(graph):
+        kh = know_how.get(e.id)
+        known = f"{kh.knowledge_risk} · {ASHEN_WORDS.get(kh.dominant, kh.dominant)}" if kh else "—"
+        lines.append(f"| {tag(e)} {cell(e.label)} | {work_type_text(e)} | {known} |")
+    lines += ["", "### Official vs lived", "", *official_lived_lines(graph)]
+    lines += ["", "### Glossary of SME terms", ""]
+    lines += [
+        f"- {t.term}: {t.plain_meaning or 'meaning not stated'}"
+        + (f" (step: {', '.join(t.steps)})" if t.steps else "")
+        for t in data.glossary
+    ] or ["No SME terms recorded."]
     return lines
 
 
+def preserve_improve_lines(data: ExportInput) -> list[str]:
+    lines = []
+    for key, words in DIMENSIONS.items():
+        keep = [c.text for c in data.capabilities if c.dimension == key and c.kind == "strength"]
+        fix = [c.text for c in data.capabilities if c.dimension == key and c.kind == "weakness"]
+        if keep or fix:
+            parts = [f"preserve: {'; '.join(keep)}" if keep else "",
+                     f"improve: {'; '.join(fix)}" if fix else ""]  # fmt: skip
+            lines.append(f"- {words}: {' · '.join(p for p in parts if p)}")
+    return lines or ["No strengths or weaknesses recorded."]
+
+
+def reality_gap_lines(data: ExportInput) -> list[str]:
+    lines = []
+    for key, words in GAP_CLASSES.items():
+        for g in (g for g in data.reality_gaps if g.gap_class == key):
+            reason = f"stated reason: {g.stated_reason}" if g.stated_reason else "no reason stated"
+            lines.append(f"- [I] {words}: {g.title} ({reason})")
+    return lines or ["No reality gaps from a finalised documents-vs-practice analysis."]
+
+
 def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
-    lines = [RECOMMENDATION, "", "### AI flags", ""]
+    lines = [RECOMMENDATION, "", "### Preserve / Improve", ""]
+    lines += [*preserve_improve_lines(data), "", "### Reality gaps by gap class", ""]
+    lines += [*reality_gap_lines(data), "", "### AI flags", ""]
     flagged = [e for e in steps(graph) if e.ai_flag is not None]
     for e in flagged:
         flag = e.ai_flag
@@ -392,6 +532,9 @@ def _recommendation(data: ExportInput, graph: Graph) -> list[str]:
     lines += [cause_line(c) for c in data.causes] or ["No cause library entries yet."]
     lines += ["", "### Gap analyses", ""]
     lines += [gap_report_line(r) for r in data.gap_reports] or ["No finalised gap analyses."]
+    # Optional modules (v1.11 §3.13-3.15); built with phase P10b, off until Eric turns them on.
+    lines += ["", "### Disposition and value", "", NOT_USED]
+    lines += ["", "### System records", "", NOT_USED]
     return lines
 
 
@@ -426,7 +569,7 @@ def render_master_map_md(data: ExportInput) -> str:
         + [""]
         + _facts(data, graph)
         + [""]
-        + _interpretation(graph)
+        + _interpretation(data, graph)
         + [""]
         + _recommendation(data, graph)
     )

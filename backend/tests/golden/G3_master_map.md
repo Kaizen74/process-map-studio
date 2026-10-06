@@ -18,6 +18,7 @@ Signal strength: Strong (3 of 3). Built from interviews and a written procedure 
 | Q8 Anonymised | Pass | No name from your list of names to hide appears in any export. |
 | Q9 Images contained | Pass | No image or image reference in any export. |
 | Q10 60-minute validatable | Pass | 10 steps and 5 lanes: fits a one-hour session. |
+| Q11 Work types confirmed | Warning | 5 decisions, approvals or judgment steps without a confirmed work type: “Approve load plan”, “Special loads OK?”, “Busy wave?” and 2 more. |
 
 All hard checks green: yes.
 
@@ -27,6 +28,8 @@ Warnings:
 - Activity "Issue load sheet" has no time stated.
 - The line from "Load and return LIR" to "Busy wave?" rests only on the order the sources mention them.
 - The line from "Read report at aircraft" to "Deviation in limits?" rests only on the order the sources mention them.
+- 5 decisions, approvals or judgment steps without a confirmed work type: "Approve load plan", "Special loads OK?", "Busy wave?" and 2 more.
+- Fewer than three kinds of story: none yet about a time it went well (M5.1); a time something surprised (M5.3).
 
 ## 1. Facts: what the sources tell us
 
@@ -60,6 +63,14 @@ Warnings:
 | Trace contradicted | 0 |
 | Not assessed | 0 |
 
+### Stories
+
+- [O] Had to re-trim three flights in one night (went badly · interview_transcript.txt 24:10; step: Draft load plan, Deviation in limits?)
+
+### Strengths as stated (preserve)
+
+- [O] Skillset: Ramp supervisors know the aircraft types inside out. (step: Load and return LIR)
+
 ## 2. Interpretation: how the process works
 
 ### Phase 1: Plan
@@ -67,9 +78,9 @@ Warnings:
 Time window: T-120 to T-90.
 Purpose: covers 2 steps, from “Draft load plan” to “Approve load plan”.
 
-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
-|---|---|---|---|---|---|---|---|
-| Draft load plan | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
+| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|---|
+| Draft load plan | both | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
 
 Decisions and approvals:
 
@@ -82,11 +93,11 @@ This phase has 1 activity and 1 decision or approval, involving Load controller,
 Time window: not stated.
 Purpose: covers 5 steps, from “Special loads OK?” to “Read report at aircraft”.
 
-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
-|---|---|---|---|---|---|---|---|
-| Resolve or offload | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
-| Load and return LIR | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
-| Read report at aircraft | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
+| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|---|
+| Resolve or offload | as done | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
+| Load and return LIR | both | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
+| Read report at aircraft | as done | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
 
 Decisions and approvals:
 
@@ -100,9 +111,9 @@ This phase has 3 activities and 2 decisions or approvals, involving Load control
 Time window: T-15 to T-10.
 Purpose: covers 3 steps, from “Deviation in limits?” to “Issue load sheet”.
 
-| Step | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
-|---|---|---|---|---|---|---|---|
-| Issue load sheet | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
+| Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
+|---|---|---|---|---|---|---|---|---|
+| Issue load sheet | both | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
 
 Decisions and approvals:
 
@@ -135,7 +146,46 @@ A? means the sources disagree about who is accountable.
 | Ownership | Deviation in limits? |
 | Threshold | Load and return LIR |
 
+### Two views: as done and as documented
+
+- As done: 9 steps; only here: Resolve or offload, Busy wave?, Read report at aircraft, Approve deviation.
+- As documented: 6 steps; only here: Approve load plan.
+
+### Work type and know-how
+
+| Step | Work type | Know-how (knowledge risk · dominant ASHEN) |
+|---|---|---|
+| [O] Draft load plan | Complicated (proposed) | — |
+| [O] Approve load plan | Not classified | unknown · none described |
+| [O] Special loads OK? | Clear (proposed) | low · artefacts |
+| [O] Resolve or offload | Not classified | — |
+| [O] Load and return LIR | Not classified | — |
+| [O] Busy wave? | Not classified | unknown · none described |
+| [O] Read report at aircraft | Not classified | — |
+| [O] Deviation in limits? | Complex (proposed) | high · artefacts |
+| [O] Approve deviation | Not classified | unknown · none described |
+| [O] Issue load sheet | Clear (proposed) | — |
+
+### Official vs lived
+
+- [O] Load and return LIR: official and lived accounts both given; they differ on time (as done: Up to fifteen minutes' wait for the report; as documented: Within 10 minutes of loading completion).
+
+### Glossary of SME terms
+
+- re-trim: Rebalance an aircraft's load after it has been planned. (step: Approve deviation)
+- wave: A busy period of departures. (step: Busy wave?)
+- forward hold: The cargo hold at the front of the aircraft. (step: Draft load plan)
+
 ## 3. Recommendation: enablement and gaps
+
+### Preserve / Improve
+
+- Skillset: preserve: Ramp supervisors know the aircraft types inside out.
+- Systems: improve: The paper loading report gets lost or arrives late.
+
+### Reality gaps by gap class
+
+No reality gaps from a finalised documents-vs-practice analysis.
 
 ### AI flags
 
@@ -192,3 +242,11 @@ No steps from external practice.
 ### Gap analyses
 
 No finalised gap analyses.
+
+### Disposition and value
+
+Not used in this engagement.
+
+### System records
+
+Not used in this engagement.

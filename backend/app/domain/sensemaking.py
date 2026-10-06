@@ -59,6 +59,8 @@ class StepPosition(BaseModel):
     seq: int
     lived: bool = False  # an interview claim giving the lived account
     explicit: bool = False  # it confirmed an explicit-order marker ("first", "then", "T-90")
+    # The guide questions its passages answer (Step A), e.g. ["L2"]; rule 9 (K2) reads them.
+    question_ids: list[str] = []
 
 
 class TranslationStep(BaseModel):
@@ -73,6 +75,7 @@ class TranslationStep(BaseModel):
     handoff_out: str = ""
     added_by_owner: bool = False  # Eric put the step in the flow himself: its order is stated
     lane: str = ""
+    phase: str = ""  # rule 9 (K2): a practice step nests under a landscape activity of its phase
     # Rule 8 (C3): the information the step passes on and the information it receives, in the
     # SME's terms, from the decision-information items linked to it (any interview).
     gives: list[str] = []

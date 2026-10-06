@@ -29,6 +29,8 @@ export interface DetailPanelProps {
   element: GraphElement;
   laneName: string;
   phaseName: string;
+  /** The landscape activity a practice step is part of (K2), or "". */
+  partOf?: string | undefined;
   /** Review actions; omitted where the version can't change. */
   review?:
     | {
@@ -57,6 +59,7 @@ export function DetailPanel({
   element,
   laneName,
   phaseName,
+  partOf,
   review,
   images,
   onOpenEvidence,
@@ -82,7 +85,7 @@ export function DetailPanel({
   };
   return (
     <div className="panel-stack">
-      <PanelHeader element={element} laneName={laneName} phaseName={phaseName} />
+      <PanelHeader element={element} laneName={laneName} phaseName={phaseName} partOf={partOf} />
       {!step && (
         <p className="inline-note">
           {element.kind === "start" ? "Where the process starts" : "Where the process ends"}, from the engagement's

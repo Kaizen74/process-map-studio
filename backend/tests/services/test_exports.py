@@ -265,3 +265,80 @@ def test_the_exports_state_the_signal_strength() -> None:
     limited = exports.render_master_map_md(data(sources=interview))
     assert "\nSignal strength: Limited (1 of 3). Built from interviews only." in limited
     assert "Signal strength" not in exports.render_master_map_md(data(sources=[]))
+
+
+# --- §7.3 v1.10-1.11 content (K3, 2026-10-06) ----------------------------------------------------
+
+
+def sensemaking_data() -> ExportInput:
+    from app.domain.exports import (
+        ExportCapability,
+        ExportKnowHow,
+        ExportRealityGap,
+        ExportStory,
+        ExportTerm,
+    )
+
+    every = Graph.model_validate(json.loads(G1.read_text(encoding="utf-8")))
+    graph = views.combined(every)
+    deviation = next(e for e in graph.elements if e.label == "Deviation in limits?")
+    return data(
+        graph,
+        view_graphs={v: views.view_graph(every, v) for v in views.VIEWS},
+        stories=[ExportStory(label="Had to re-trim three flights in one night",
+                             fragment_type="went_badly", steps=["Deviation in limits?"],
+                             where="interview_transcript.txt 24:10")],
+        capabilities=[
+            ExportCapability(kind="strength", dimension="skillset",
+                             text="Supervisors know the aircraft types.", steps=[]),
+            ExportCapability(kind="weakness", dimension="systems",
+                             text="The paper report gets lost.", steps=["Load and return LIR"]),
+        ],
+        glossary=[ExportTerm(term="wave", plain_meaning="A busy period.", steps=["Busy wave?"])],
+        know_how=[ExportKnowHow(element_id=deviation.id, knowledge_risk="high",
+                                dominant="heuristics")],
+        reality_gaps=[ExportRealityGap(gap_class="effective_adaptation",
+                                       title="The report is read at the aircraft",
+                                       stated_reason="the paper sheet arrives late")],
+    )  # fmt: skip
+
+
+def section(text: str, start: str, end: str) -> str:
+    return text.split(start, 1)[1].split(end, 1)[0]
+
+
+def test_the_master_map_carries_the_v1_11_template() -> None:
+    md = exports.render_master_map_md(sensemaking_data())
+    facts = section(md, exports.FACTS, exports.INTERPRETATION)
+    interpretation = section(md, exports.INTERPRETATION, exports.RECOMMENDATION)
+    recommendation = md.split(exports.RECOMMENDATION, 1)[1]
+    assert "- [O] Had to re-trim three flights in one night (went badly · " in facts
+    assert "### Strengths as stated (preserve)" in facts
+    assert "- [O] Skillset: Supervisors know the aircraft types." in facts
+    assert "| Step | View | Lane |" in interpretation
+    assert "| Read report at aircraft | as done |" in interpretation
+    assert "- As done: 9 steps; only here: " in interpretation
+    assert "- As documented: 6 steps; only here: Approve load plan." in interpretation
+    assert "| [O] Deviation in limits? | Complex (proposed) | high · heuristics |" in interpretation
+    assert (
+        "### Official vs lived" in interpretation and "### Glossary of SME terms" in interpretation
+    )
+    assert "- wave: A busy period. (step: Busy wave?)" in interpretation
+    assert recommendation.index("### Preserve / Improve") < recommendation.index("### AI flags")
+    assert "- Systems: improve: The paper report gets lost." in recommendation
+    assert ("- [I] Effective adaptation: The report is read at the aircraft "
+            "(stated reason: the paper sheet arrives late)") in recommendation  # fmt: skip
+    assert recommendation.count("Not used in this engagement.") == 2  # decision A: modules off
+    assert "Preserve / Improve" not in facts + interpretation  # recommendations stay in section 3
+
+
+def test_every_new_heading_is_printed_even_when_empty() -> None:
+    md = exports.render_master_map_md(data())
+    for heading in ("### Stories", "### Strengths as stated (preserve)",
+                    "### Two views: as done and as documented", "### Work type and know-how",
+                    "### Official vs lived", "### Glossary of SME terms", "### Preserve / Improve",
+                    "### Reality gaps by gap class", "### Disposition and value",
+                    "### System records"):  # fmt: skip
+        assert md.count(heading) == 1, heading
+    assert "No stories recorded." in md and "No SME terms recorded." in md
+    assert "This map was drafted before the two views; it has one view." in md

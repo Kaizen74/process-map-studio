@@ -3,6 +3,22 @@ import { filterOptions, tableRows } from "../../src/lib/table";
 import { SAMPLE } from "../sampleMap";
 
 describe("the table view's rows (PRD §5.7.4)", () => {
+  it("lists practice steps right after the landscape activity they are part of (K2)", () => {
+    const graph = structuredClone(SAMPLE.graph);
+    const steps = graph.elements.filter((e) => !["start", "end"].includes(e.kind));
+    const [parent, , , child] = steps;
+    if (!parent || !child) throw new Error("sample too small");
+    graph.elements = graph.elements.map((e) =>
+      e.id === parent.id ? { ...e, level: "landscape" } : e.id === child.id ? { ...e, level: "practice", parent_element_id: parent.id } : e,
+    );
+    const rows = tableRows(graph, "all");
+    const at = rows.findIndex((r) => r.id === parent.id);
+    expect(rows[at + 1]?.id).toBe(child.id);
+    expect(rows[at + 1]?.partOf).toBe(`Part of: ${parent.label}`);
+    expect(rows.filter((r) => r.partOf)).toHaveLength(1);
+    expect(rows).toHaveLength(steps.length); // grouped, never duplicated
+  });
+
   it("one row per step in process order, holding what the map shows", () => {
     const rows = tableRows(SAMPLE.graph, "all");
     expect(rows.map((r) => r.label)).toEqual(

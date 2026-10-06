@@ -99,3 +99,47 @@ def test_the_quality_card_heads_the_page() -> None:
     assert html.index("Quality card") < html.index('aria-labelledby="facts"')
     assert '<td class="warning">Warning</td>' in html
     assert "Quality card: not worked out yet." in render(quality_card=None)
+
+
+def test_both_views_are_drawn_with_not_described_lines_dashed() -> None:
+    """§3.12.11: both views are published together (K3, 2026-10-06)."""
+    from tests.services.test_exports import sensemaking_data
+
+    html = export_html.render_map_html(sensemaking_data(), TOKENS, FONTS)
+    done = html.index("<h3>Map as done: the work as actually performed</h3>")
+    documented = html.index("<h3>Map as documented: the documents&#x27; version</h3>")
+    assert done < documented < html.index("<h3>Steps</h3>")
+    assert html.count('role="group" aria-label="Swimlane map"') == 2
+    as_done = html[done:documented]
+    assert 'aria-label="Activity, Read report at aircraft' in as_done
+    assert 'aria-label="Approval, Approve load plan' not in as_done
+    assert 'aria-label="Approval, Approve load plan' in html[documented:]
+    assert ".back .seg, .gap .seg { border-style: dashed; }" in html
+    assert "<dt>View</dt><dd>as done</dd>" in html and "<dt>Work type</dt>" in html
+    for heading in ("Stories", "Strengths as stated (preserve)", "Work type and know-how",
+                    "Official vs lived", "Glossary of SME terms", "Preserve / Improve",
+                    "Reality gaps by gap class", "Disposition and value",
+                    "System records"):  # fmt: skip
+        assert html.count(f"<h3>{heading}</h3>") == 1, heading
+
+
+def test_a_not_described_connector_is_drawn_dashed() -> None:
+    from app.domain.graph import GraphEdge
+    from tests.services.test_exports import sensemaking_data
+
+    inp = sensemaking_data()
+    done = inp.view_graphs["done"]
+    on_map = md.steps(done)
+    first, last = on_map[0], on_map[-1]
+    gap = GraphEdge(id="gap-1", from_=first.id, to=last.id, kind="gap", label="Not described",
+                    view_membership="done_only", provenance="I")  # fmt: skip
+    done = done.model_copy(update={"edges": [*done.edges, gap]})
+    inp = inp.model_copy(update={"view_graphs": {**inp.view_graphs, "done": done}})
+    html = export_html.render_map_html(inp, TOKENS, FONTS)
+    assert html.count('<div class="gap" aria-hidden="true">') == 1
+    assert "a step the interview doesn't describe" in html  # the legend says what it means
+
+
+def test_a_map_from_before_the_views_is_drawn_once() -> None:
+    html = render()
+    assert html.count('role="group" aria-label="Swimlane map"') == 1

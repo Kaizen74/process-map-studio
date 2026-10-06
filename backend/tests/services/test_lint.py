@@ -410,3 +410,35 @@ def test_complex_or_chaotic_work_is_never_an_automation_candidate() -> None:
         'Decision "Check" is complex work, so it can\'t be flagged for automation.'
     )
     assert run_lint(replace(clean(), "check", work_type="clear")).failures == []
+
+
+# --- L12 sensemaking warnings (PRD v1.10 §3.7; K3, 2026-10-06) ----------------------------------
+
+
+def test_decision_points_without_a_confirmed_work_type_are_one_warning() -> None:
+    from app.services.lint import run_sensemaking_warnings
+
+    graph = clean()
+    assert run_sensemaking_warnings(graph, None).warnings == []  # no work types: drafted pre-v1.10
+    graph = replace(graph, "approve", work_type="complicated", work_type_status="proposed")
+    graph = replace(graph, "check", work_type="clear", work_type_status="confirmed")
+    graph = replace(graph, "plan", work_type="complex", work_type_status="proposed")
+    [warning] = run_sensemaking_warnings(graph, None).warnings
+    assert (warning.rule, warning.element_id) == ("L12", "plan")
+    assert warning.message == (
+        '2 decisions, approvals or judgment steps without a confirmed work type: "Plan", "Approve".'
+    )  # the complex activity counts as a judgment step; the confirmed decision doesn't
+    assert run_sensemaking_warnings(graph, None).failures == []  # a warning, never a failure
+
+
+def test_fewer_than_the_three_kinds_of_story_is_a_warning() -> None:
+    from app.services.lint import run_sensemaking_warnings
+
+    graph = clean()
+    assert run_sensemaking_warnings(graph, None).warnings == []  # no interview: no stories asked
+    [warning] = run_sensemaking_warnings(graph, {"went_badly", "other"}).warnings
+    assert warning.message == (
+        "Fewer than three kinds of story: none yet about a time it went well (M5.1); "
+        "a time something surprised (M5.3)."
+    )
+    assert run_sensemaking_warnings(graph, {"went_well", "went_badly", "surprise"}).warnings == []

@@ -68,3 +68,10 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--space-10);
 }
+/* A practice step under a landscape activity (K2, §3.9 rule 10). */
+.step-table__part-of {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}

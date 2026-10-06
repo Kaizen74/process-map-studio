@@ -18,6 +18,8 @@ export interface StepRow {
   review: string;
   needsCheck: boolean;
   rejected: boolean;
+  /** "Part of: <landscape activity>" for a practice step under one (K2), else "". */
+  partOf: string;
 }
 
 const STEPS = new Set(["activity", "decision", "approval"]);
@@ -54,8 +56,15 @@ export function filterOptions(graph: Graph): { value: TableFilter; label: string
 /** The steps in process order, as table rows, with only those the filter shows. */
 export function tableRows(graph: Graph, filter: TableFilter): StepRow[] {
   const roles = new Map(graph.roles.map((r) => [r.id, r.name]));
-  return graph.elements
-    .filter((e) => STEPS.has(e.kind) && MATCHES[filter](e))
+  const labels = new Map(graph.elements.map((e) => [e.id, e.label]));
+  // Practice steps are listed right after the landscape activity they are part of (§3.9 rule 10).
+  const shown = graph.elements.filter((e) => STEPS.has(e.kind) && MATCHES[filter](e));
+  const parentShown = (e: (typeof shown)[number]) =>
+    e.parent_element_id ? shown.some((p) => p.id === e.parent_element_id) : false;
+  const grouped = shown.flatMap((e) =>
+    parentShown(e) ? [] : [e, ...shown.filter((c) => c.parent_element_id === e.id)],
+  );
+  return grouped
     .map((e) => ({
       id: e.id,
       label: e.label,
@@ -68,5 +77,6 @@ export function tableRows(graph: Graph, filter: TableFilter): StepRow[] {
       review: e.needs_check && e.review_status === "draft" ? "Unreviewed · needs check" : (REVIEW[e.review_status] ?? e.review_status),
       needsCheck: e.needs_check && e.review_status === "draft",
       rejected: e.review_status === "rejected",
+      partOf: e.parent_element_id ? `Part of: ${labels.get(e.parent_element_id) ?? ""}` : "",
     }));
 }
