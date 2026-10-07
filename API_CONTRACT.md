@@ -334,6 +334,51 @@ Response `200`: the guide. Audit row "Edited interview guide" (after: version, t
 The latest version as a file (`document.generation_note` is not printed), in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
 Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** / **Download Markdown** (G2).
 
+## System records: event logs (PRD §4 System records, §3.13.3, criteria 83 and 84, constraint 24) — phase P10b (2026-10-07, R3)
+
+Importing a system's event-log extract, deterministic and without AI. The uploaded file is **held in memory only**, never written to disk or the database, until it is imported or deleted, because it may carry user IDs: the import turns them into roles and then forgets them (constraint 24). If the app restarts before the import, the file is gone and Eric uploads it again (`409 FILE_NOT_HELD`). CSV only for now (UTF-8; comma, semicolon, tab or bar); Excel comes with R11.
+
+### Log object
+```json
+{"id": "…", "engagement_id": "…", "name": "DCS extract", "system": "DCS",
+ "timezone": "Asia/Singapore", "window_start": "2026-03-02" | null, "window_end": "2026-04-26" | null,
+ "status": "uploaded" | "mapped" | "imported" | "failed",
+ "column_map": {"case_id": "case_id", "Region": "case_attribute", "Comment": null},
+ "timestamp_format": "%Y-%m-%d %H:%M:%S" | null, "file_held": true,
+ "resources": [{"value": "LC07", "events": 152, "suggested_role_id": "…" | null}],
+ "role_map": {"LC07": "…" | null},
+ "validation_report": {…} | null,
+ "approved_by_role": "", "approved_at": null, "created_at": "…"}
+```
+- `column_map`: every header of the file, in file order → a B.40 field or `null` (left out). Each field other than `case_attribute` at most once.
+- `timestamp_format`: Eric's correction, or `null` to use the detected format (named in the report).
+- `resources` and `role_map` come from memory and exist only while the file is held (empty otherwise, always empty once imported). `suggested_role_id`: the engagement role named most often for that user ID in the file's role column, else a role whose name is the value itself, else `null`. `role_map` values: a role ID or `null` (Unknown role).
+- `validation_report` (§3.13.3 step 4): `{rows_read, rows_kept, cases, activities, date_from, date_to (UTC), dropped: {unparseable_time, missing_case_or_activity, duplicate}, dropped_share, single_event_cases, outside_window, unknown_role_events, timestamp_format, missing_columns, refused, refusal}`. A preview while mapping, the final report after the import. Counts only: never a row, a case's events or a user ID. A role column value that is not an engagement role or alias (matched ignoring case) is passed over for the role Eric gave that user ID, if any; otherwise the event has an unknown role.
+- The upload is kept in memory by the web layer too (no temporary file, whatever its size).
+- `status`: `uploaded` (suggested column map) → `mapped` (Eric confirmed it) → `imported`; `failed` when the import job could not finish (the file is then gone; upload again).
+
+### POST /api/engagements/{id}/event-logs (multipart: file, name, system, timezone, window_start, window_end)
+`name` required, `system` optional (each one line, up to 120 characters); `timezone` an IANA name, default `Asia/Singapore` (the Settings Regional default comes with R10); window dates `YYYY-MM-DD` or empty, start not after end. Response `201`: log (`uploaded`) with the suggested column map, the user IDs with suggested roles, and the preview report. Audit row "Uploaded system log" (name and system only).
+Errors: `404` (engagement); `422` naming the field: "Give the log a name.", "The file is empty.", "The file is larger than 100 MB.", "The file has no header row.", "Two columns have the same name: Status. Rename one and upload again.", "Choose a time zone from the list, for example Asia/Singapore.", "Use a date like 2026-03-02.", "The window starts after it ends.".
+
+### GET /api/engagements/{id}/event-logs
+`200`: the engagement's logs, oldest first. Errors `404`.
+
+### GET /api/event-logs/{lid} · DELETE /api/event-logs/{lid}
+GET `200`: log. DELETE `204`: removes the log, its events (and, later, its metrics and alignment) and the held file; audit row "Deleted system log". Errors `404`.
+
+### PUT /api/event-logs/{lid}/column-map
+`{"columns": {header: field | null}, "timestamp_format": null | "%d/%m/%Y %H:%M"}`. Every header of the file exactly once; fields are B.40; a field other than `case_attribute` used twice is refused ("Each field can be used for one column only: timestamp."). Response `200`: log, status `mapped`, with a new preview report (which may say the import would be refused, and why). Audit row "Confirmed column map".
+Errors: `404`; `409 ALREADY_IMPORTED`; `409 FILE_NOT_HELD`; `409 IMPORT_RUNNING` while its import job runs; `422` naming `columns` or `timestamp_format` ("Choose a date format from the list.").
+
+### PUT /api/event-logs/{lid}/role-map
+`{"roles": {user ID: role_id | null}}`: the file's user IDs only (others refused), each to one of the engagement's roles or `null` (Unknown role). Held in memory with the file; never saved. Response `200`: log with a new preview report (`unknown_role_events`). Errors as for the column map (`422` names `roles`: "Choose one of this engagement's roles.", "That user ID isn't in the file.").
+
+### POST /api/event-logs/{lid}/import (job)
+`{"approved_by_role": "Head of ground operations", "confirm_approval": true}`. Response `202`: `{"job_id": "…", "log_id": "…"}`. The job (`event_log_import`) reads the held file with the confirmed maps, writes the events (case, activity, start, end, role, case attributes: never a user ID), stores the final report, sets the log `imported` with `approved_by_role` and `approved_at`, then forgets the file and the role map. Audit row "Imported system log" (counts and the approver's role). If the file has gone (restart) the job fails in plain words and the log becomes `failed`.
+Errors, checked in this order: `404`; `409 ALREADY_IMPORTED`; `409 FILE_NOT_HELD`; `409 IMPORT_RUNNING`; `409 APPROVAL_REQUIRED` without `confirm_approval: true` or without an approver's role ("Tick that the data owner approved this extract for this purpose, and give the approver's role."); `422` (field `approved_by_role`) when the role is longer than 120 characters or contains a name on the hidden-names list; `409 COLUMN_MAP_NOT_CONFIRMED` while the log is `uploaded`; `422` (field `roles`) when a user ID has neither a role nor Unknown role ("Choose a role or Unknown role for every user ID (3 left)."); `422 IMPORT_REFUSED` with the report's refusal when required columns are missing, there are no rows, or more than 20% of rows were dropped.
+Used by: System records screen (R7).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

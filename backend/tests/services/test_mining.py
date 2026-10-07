@@ -205,6 +205,12 @@ def test_a_role_column_is_preferred_and_an_unmapped_resource_is_an_unknown_role(
                   "team": "role"}  # fmt: skip
     parsed = mining.parse_log(rows, column_map, "UTC", {"U1": "Clerk", "U9": None})
     assert [e.role for e in parsed.events] == ["Buyer", "Clerk", None]
+    assert parsed.report.unknown_role_events == 1
+    known = mining.parse_log(rows, column_map, "UTC", {"U1": "Clerk", "U9": None},
+                             known_roles={"clerk": "Clerk", "accounts clerk": "Clerk"})  # fmt: skip
+    # Buyer isn't a role here, so U1's mapped role is used instead; U9 is an unknown role.
+    assert [e.role for e in known.events] == ["Clerk", "Clerk", None]
+    assert known.report.unknown_role_events == 1
 
 
 def test_dropped_rows_are_counted_by_reason_and_attributes_kept() -> None:

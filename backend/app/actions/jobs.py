@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import draft, gap, interview, sources
+from app.actions import draft, event_logs, gap, interview, sources
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
@@ -106,6 +106,21 @@ def _run_guide(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     _finish(sessions, job.id, result)
 
 
+def _run_import(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = event_logs.run_import(config, sessions, job.id)
+    except Exception as exc:  # nothing was saved: the events are written in one transaction
+        log.exception("System log import job %s failed", job.id)
+        event_logs.mark_failed(sessions, job.target_id or "")
+        result = Err(ErrorKind.IO, event_logs.UNEXPECTED, {"type": type(exc).__name__})
+    with session_scope(sessions) as session:
+        match result:
+            case Ok(value=message):
+                repo.update(session, job.id, status="done", progress=1.0, message=message)
+            case Err(message=message):
+                repo.update(session, job.id, status="failed", error=message)
+
+
 def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
     """Run one job and record how it went. Jobs already finished are left alone."""
     with session_scope(sessions) as session:
@@ -122,6 +137,8 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         _run_gap(config, sessions, job)
     elif job.type == interview.GUIDE_JOB:
         _run_guide(config, sessions, job)
+    elif job.type == event_logs.IMPORT_JOB:
+        _run_import(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
 

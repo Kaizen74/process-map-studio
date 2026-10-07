@@ -61,6 +61,7 @@ class ValidationReport(BaseModel):
     dropped: DroppedRows
     dropped_share: float
     single_event_cases: int
+    unknown_role_events: int = 0
     outside_window: int
     timestamp_format: str
     missing_columns: list[str]
@@ -71,3 +72,52 @@ class ValidationReport(BaseModel):
 class ParsedLog(BaseModel):
     events: list[LogEvent]
     report: ValidationReport
+
+
+class ResourceRow(BaseModel):
+    """A user ID from the held file, for the role-mapping step: memory only, never stored."""
+
+    value: str
+    events: int
+    suggested_role_id: str | None = None
+
+
+class EventLogView(BaseModel):
+    """A system log (API_CONTRACT.md → System records: event logs)."""
+
+    id: str
+    engagement_id: str
+    name: str
+    system: str
+    timezone: str
+    window_start: str | None
+    window_end: str | None
+    status: str
+    column_map: dict[str, str | None]
+    timestamp_format: str | None = None
+    file_held: bool = False
+    resources: list[ResourceRow] = []
+    role_map: dict[str, str | None] = {}
+    validation_report: ValidationReport | None = None
+    approved_by_role: str
+    approved_at: str | None
+    created_at: str
+
+
+class ColumnMapInput(BaseModel):
+    columns: dict[str, str | None]
+    timestamp_format: str | None = None
+
+
+class RoleMapInput(BaseModel):
+    roles: dict[str, str | None]
+
+
+class ImportInput(BaseModel):
+    approved_by_role: str = ""
+    confirm_approval: bool = False
+
+
+class ImportStarted(BaseModel):
+    job_id: str
+    log_id: str

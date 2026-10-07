@@ -156,11 +156,15 @@ def parse_log(
     role_of: Mapping[str, str | None],
     window: tuple[str, str] | None = None,
     timestamp_format: str | None = None,
+    known_roles: Mapping[str, str] | None = None,
 ) -> ParsedLog:
     """Rows → events, and the validation report. `role_of` maps each resource value to a role
-    name (or None: unknown role); a role column, where there is one, is preferred. `window` is
-    the requested date range in the log's own dates; `timestamp_format` is Eric's correction
-    when the detected format is wrong (for example a file whose dates are all ambiguous)."""
+    name (or None: unknown role); a role column's value, where it names a role, is preferred.
+    `window` is the requested date range in the log's own dates; `timestamp_format` is Eric's
+    correction when the detected format is wrong (for example a file whose dates are all
+    ambiguous).
+    `known_roles` (lower-cased name or alias → role name), when given, keeps only roles the
+    engagement has: any other value is an unknown role."""
     columns: dict[str, str] = {}
     attributes: list[str] = []
     for header, field in column_map.items():
@@ -202,7 +206,9 @@ def parse_log(
             day = moment.astimezone(zone).date().isoformat()
             if window and not window[0] <= day <= window[1]:
                 outside += 1
-            role = cell(row, Field.ROLE.value) or role_of.get(cell(row, Field.RESOURCE.value))
+            role = _known(cell(row, Field.ROLE.value), known_roles) or _known(
+                role_of.get(cell(row, Field.RESOURCE.value)), known_roles
+            )
             events.append(LogEvent(
                 case_id=case, activity=activity, start=start,
                 end=to_utc(cell(row, Field.END_TIMESTAMP.value), end_fmt, zone),
@@ -211,6 +217,14 @@ def parse_log(
             ))  # fmt: skip
     events.sort(key=lambda e: (e.case_id, e.start))
     return ParsedLog(events=events, report=_report(rows, events, dropped, missing, fmt, outside))
+
+
+def _known(role: str | None, known_roles: Mapping[str, str] | None) -> str | None:
+    """The role as the engagement names it, or None (unknown) when the engagement has no such
+    role; without `known_roles`, any non-empty value."""
+    if not role or known_roles is None:
+        return role or None
+    return known_roles.get(role.lower())
 
 
 def _report(
@@ -247,6 +261,7 @@ def _report(
         dropped=dropped,
         dropped_share=share,
         single_event_cases=sum(1 for n in per_case.values() if n == 1),
+        unknown_role_events=sum(1 for e in events if e.role is None),
         outside_window=outside,
         timestamp_format=fmt or "",
         missing_columns=missing,
