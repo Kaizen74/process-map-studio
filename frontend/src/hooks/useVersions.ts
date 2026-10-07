@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 import {
   decideTheme,
   getAlignmentMatrix,
+  getExceptions,
   getQualityCard,
   getRegisters,
   getVersion,
@@ -121,5 +122,14 @@ export function useLaneBoundaries(versionId: string | null) {
     queryKey: ["versions", versionId ?? "", "lane-boundaries"],
     queryFn: () => listLaneBoundaries(versionId ?? ""),
     enabled: Boolean(versionId),
+  });
+}
+
+/** How much of a view is exception handling, rework and workarounds (X2); read-only. */
+export function useExceptions(versionId: string | null, view: "done" | "documented" = "done", enabled = true) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "exceptions", view],
+    queryFn: () => getExceptions(versionId ?? "", view),
+    enabled: Boolean(versionId) && enabled,
   });
 }

@@ -54,7 +54,7 @@ from app.domain.interview import QuestionBank
 from app.domain.layout import Layout
 from app.domain.models import ClaimRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
-from app.domain.sensemaking import View
+from app.domain.sensemaking import ExceptionEdgeInput, ExceptionStepInput, View
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
@@ -63,6 +63,7 @@ from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import (
     alignment,
+    exceptions,
     interview_templates,
     layout,
     lint,
@@ -87,38 +88,54 @@ TIMED_KINDS = {ElementKind.ACTIVITY.value, ElementKind.APPROVAL.value}
 STRUCTURAL = {ElementKind.START.value, ElementKind.END.value}
 
 
-def main_path(elements: list[ElementRecord], edges: list[EdgeRecord]) -> list[ElementRecord]:
-    """The route from start to end that follows no exception or loop-back edge.
-
-    At each step the first main-path edge (in stored order) is taken; a step already visited
-    ends the walk, so a cycle can never loop forever.
-    """
+def main_path(
+    elements: list[ElementRecord],
+    edges: list[EdgeRecord],
+    conditions: dict[str, str] | None = None,
+) -> list[ElementRecord]:
+    """The usual route from start to end (X5, 2026-10-06, Eric's decision): no exception exit,
+    loop back or variation step (`conditions`: a step's lived variation condition, by element
+    ID); where the usual route splits, the longest way through it (`exceptions.usual_path`). A
+    cycle never loops forever."""
     by_id = {e.id: e for e in elements if e.review_status != ReviewStatus.REJECTED.value}
-    start = next((e for e in by_id.values() if e.kind == ElementKind.START.value), None)
-    path: list[ElementRecord] = []
-    seen: set[str] = set()
-    current = start
-    while current is not None and current.id not in seen:
-        path.append(current)
-        seen.add(current.id)
-        nxt = next(
-            (
-                by_id[edge.to_element_id]
-                for edge in edges
-                if edge.from_element_id == current.id
-                and edge.kind not in OFF_MAIN_PATH
-                and edge.to_element_id in by_id
-            ),
-            None,
-        )
-        current = nxt
-    return path
+    found = conditions or {}
+    steps = [
+        ExceptionStepInput(element_id=e.id, label=e.label, kind=e.kind,
+                           condition=found.get(e.id, ""))
+        for e in by_id.values()
+    ]  # fmt: skip
+    lines = [
+        ExceptionEdgeInput(from_id=e.from_element_id, to_id=e.to_element_id, kind=e.kind,
+                           label=e.label)
+        for e in edges
+    ]  # fmt: skip
+    minutes = {e.id: float((e.work_min or 0) + (e.wait_min or 0)) for e in by_id.values()}
+    return [by_id[i] for i in exceptions.usual_path(steps, lines, minutes)]
 
 
-def cycle_time(elements: list[ElementRecord], edges: list[EdgeRecord]) -> CycleTime:
-    """Work and elapsed minutes along the main path; activities and approvals without any time
+def lived_conditions(
+    claims_of: dict[str, list[str]], records: dict[str, ClaimRecord]
+) -> dict[str, str]:
+    """Each step's variation condition from its verified lived claims ("on a busy wave")."""
+    out: dict[str, str] = {}
+    for element_id, ids in claims_of.items():
+        for c in ids:
+            r = records.get(c)
+            text = str(r.payload.get("variation_condition") or "").strip() if r else ""
+            if r and r.verification_status == "verified" and r.account_type == "lived" and text:
+                out[element_id] = text
+                break
+    return out
+
+
+def cycle_time(
+    elements: list[ElementRecord],
+    edges: list[EdgeRecord],
+    conditions: dict[str, str] | None = None,
+) -> CycleTime:
+    """Work and elapsed minutes along the usual route; activities and approvals without any time
     are counted as incomplete (decisions carry no time of their own)."""
-    path = main_path(elements, edges)
+    path = main_path(elements, edges, conditions)
     work = sum(e.work_min or 0 for e in path)
     wait = sum(e.wait_min or 0 for e in path)
     incomplete = sum(
@@ -156,6 +173,15 @@ def build_graph(
     phases = map_repo.phases(session, version_id)
     elements = map_repo.elements(session, version_id)
     edges = map_repo.edges(session, version_id)
+    # The combined map's cycle time is the As done view's: the time the work takes as done (X5).
+    timed_view: View = view or "done"
+    timed_elements = [e for e in elements if views.in_view(e.view_membership, timed_view)]
+    timed_ids = {e.id for e in timed_elements}
+    timed_edges = [
+        e for e in edges
+        if views.in_view(e.view_membership, timed_view)
+        and e.from_element_id in timed_ids and e.to_element_id in timed_ids
+    ]  # fmt: skip
     if view is not None:
         elements = [e for e in elements if views.in_view(e.view_membership, view)]
         shown = {e.id for e in elements}
@@ -295,7 +321,9 @@ def build_graph(
             trigger=hide(engagement.trigger),
             end_point=hide(engagement.end_point),
             kpi=hide(engagement.process_kpi),
-            cycle_time=cycle_time(elements, edges if view else combined_lines(edges)),
+            cycle_time=cycle_time(
+                timed_elements, timed_edges, lived_conditions(claims_of, claim_records)
+            ),
         ),
         roles=[
             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
@@ -442,6 +470,7 @@ def _answer(
         account_cue=hide(str(record.payload.get("account_cue", ""))),
         stated_reason=hide(str(record.payload.get("stated_reason", ""))),
         variation_condition=hide(str(record.payload.get("variation_condition", ""))),
+        frequency=hide(str(record.payload.get("frequency", ""))),
         source_id=record.source_id,
         segment_id=first,
         anchor=anchor,

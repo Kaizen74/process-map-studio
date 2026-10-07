@@ -3,11 +3,12 @@
 // most three per node: key constraint, has images and the unreviewed outline. Pure functions;
 // components/map draws what they return.
 
+import { routeLine, type ExceptionStep } from "./exceptions";
 import type { GraphElement, WorkType } from "./mapTypes";
 import type { StanceOrState } from "./stateGlyph";
 import { variantFor, type AsView } from "./views";
 
-export type Lens = "plain" | "source_state" | "confidence" | "time" | "work_type";
+export type Lens = "plain" | "source_state" | "confidence" | "time" | "work_type" | "exceptions";
 
 export const LENSES: readonly { value: Lens; label: string }[] = [
   { value: "plain", label: "Plain" },
@@ -15,6 +16,7 @@ export const LENSES: readonly { value: Lens; label: string }[] = [
   { value: "confidence", label: "Confidence" },
   { value: "time", label: "Time" },
   { value: "work_type", label: "Work type" },
+  { value: "exceptions", label: "Exceptions" },
 ];
 
 /** PRD §5.5 Work type lens: a glyph shape and a word for each kind of work (never colour alone). */
@@ -70,9 +72,16 @@ const NO_TIME: LensLine = { kind: "text", text: "No time stated", danger: true }
 /**
  * The line under a node for a lens. `longest` is the most minutes (work + wait) of any step.
  * Where the views differ on the step (§3.12.11 variants), the Plain lens shows the active view's
- * time, else its owner.
+ * time, else its owner. The Exceptions lens (X3) shows the route the backend found for the step
+ * in this view (`routes`, by element ID); nothing until that report has arrived.
  */
-export function lensLine(element: GraphElement, lens: Lens, longest = 0, view: AsView = "done"): LensLine {
+export function lensLine(
+  element: GraphElement,
+  lens: Lens,
+  longest = 0,
+  view: AsView = "done",
+  routes?: ReadonlyMap<string, ExceptionStep>,
+): LensLine {
   if (!STEPS.has(element.kind)) return { kind: "none" };
   const { work_min: work, wait_min: wait } = element.time;
   const timed = TIMED.has(element.kind);
@@ -109,6 +118,10 @@ export function lensLine(element: GraphElement, lens: Lens, longest = 0, view: A
         work: Math.round((work ?? 0) * scale),
         wait: Math.round((wait ?? 0) * scale),
       };
+    }
+    case "exceptions": {
+      const step = routes?.get(element.id);
+      return step ? { kind: "text", text: routeLine(step), danger: false } : { kind: "none" };
     }
     case "work_type": {
       const type = element.work_type ?? "not_classified";

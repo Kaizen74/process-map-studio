@@ -14,7 +14,7 @@
       "cycle_time": {
         "elapsed_min": 75.0,
         "work_min": 60.0,
-        "incomplete_steps": 3
+        "incomplete_steps": 1
       }
     },
     "roles": [
@@ -2834,6 +2834,7 @@
           "account_cue": "I build the preliminary load plan",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-12",
           "anchor": "06:40",
@@ -2846,6 +2847,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-21",
           "anchor": "07:55",
@@ -3231,6 +3233,7 @@
           "account_cue": "Then I check special loads",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-26",
           "anchor": "14:05",
@@ -3243,6 +3246,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-26",
           "anchor": "14:05",
@@ -3434,6 +3438,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-29",
           "anchor": "16:22",
@@ -3642,6 +3647,7 @@
           "account_cue": "It's still on paper and I re-key it",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-31",
           "anchor": "21:50",
@@ -3654,6 +3660,7 @@
           "account_cue": "I re-key it",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-31",
           "anchor": "21:50",
@@ -3666,6 +3673,7 @@
           "account_cue": "We sometimes wait fifteen minutes for it",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-31",
           "anchor": "21:50",
@@ -3678,6 +3686,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-31",
           "anchor": "21:50",
@@ -3690,6 +3699,7 @@
           "account_cue": "Officially",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-35",
           "anchor": "22:30",
@@ -3702,6 +3712,7 @@
           "account_cue": "We get the preliminary load plan",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-20",
           "segment_id": "id-33",
           "anchor": "02:18",
@@ -3714,6 +3725,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-20",
           "segment_id": "id-67",
           "anchor": "05:52",
@@ -3726,6 +3738,7 @@
           "account_cue": "we send them the loading report",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-20",
           "segment_id": "id-33",
           "anchor": "02:18",
@@ -3892,6 +3905,7 @@
           "account_cue": "What actually happens",
           "stated_reason": "otherwise we'd miss the slot",
           "variation_condition": "on a busy wave",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-35",
           "anchor": "22:30",
@@ -4074,6 +4088,7 @@
           "account_cue": "What actually happens",
           "stated_reason": "otherwise we'd miss the slot",
           "variation_condition": "on a busy wave",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-35",
           "anchor": "22:30",
@@ -4303,6 +4318,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-38",
           "anchor": "27:15",
@@ -4315,6 +4331,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-38",
           "anchor": "27:15",
@@ -4537,6 +4554,7 @@
           "account_cue": "",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-42",
           "anchor": "29:02",
@@ -4743,6 +4761,7 @@
           "account_cue": "Then I issue the final load sheet",
           "stated_reason": "",
           "variation_condition": "",
+          "frequency": "",
           "source_id": "id-13",
           "segment_id": "id-44",
           "anchor": "31:10",
@@ -7409,7 +7428,7 @@
         "cycle_time": {
           "elapsed_min": 75.0,
           "work_min": 60.0,
-          "incomplete_steps": 2
+          "incomplete_steps": 1
         }
       },
       "roles": [
@@ -10217,6 +10236,292 @@
           "provenance": "I"
         }
       ]
+    }
+  },
+  "exceptions": {
+    "done": {
+      "view": "done",
+      "summary": {
+        "steps": 9,
+        "usual_steps": 6,
+        "exception_steps": 2,
+        "variation_steps": 1,
+        "off_usual_share": 0.33,
+        "routes": 3,
+        "rework_loops": 2,
+        "workarounds": 1,
+        "extra_handoffs": 4,
+        "frequency_stated": 0
+      },
+      "steps": [
+        {
+          "element_id": "id-11",
+          "label": "Draft load plan",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-25",
+          "label": "Special loads OK?",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-28",
+          "label": "Resolve or offload",
+          "route": "exception",
+          "workaround": false,
+          "condition": "No"
+        },
+        {
+          "element_id": "id-30",
+          "label": "Load and return LIR",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-34",
+          "label": "Busy wave?",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-36",
+          "label": "Read report at aircraft",
+          "route": "variation",
+          "workaround": true,
+          "condition": "on a busy wave"
+        },
+        {
+          "element_id": "id-37",
+          "label": "Deviation in limits?",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-41",
+          "label": "Approve deviation",
+          "route": "exception",
+          "workaround": false,
+          "condition": "Outside limits"
+        },
+        {
+          "element_id": "id-43",
+          "label": "Issue load sheet",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        }
+      ],
+      "routes": [
+        {
+          "id": "id-25>id-28",
+          "kind": "exception",
+          "from_element_id": "id-25",
+          "from_label": "Special loads OK?",
+          "condition": "No",
+          "element_ids": [
+            "id-28"
+          ],
+          "labels": [
+            "Resolve or offload"
+          ],
+          "lanes": [
+            "Airline ops"
+          ],
+          "exits": [
+            {
+              "kind": "loops_back",
+              "element_id": "id-11",
+              "label": "Draft load plan",
+              "edge_label": "Re-plan"
+            }
+          ],
+          "handoffs": 2,
+          "frequency": "",
+          "stated_reason": ""
+        },
+        {
+          "id": "id-34>id-36",
+          "kind": "variation",
+          "from_element_id": "id-34",
+          "from_label": "Busy wave?",
+          "condition": "on a busy wave",
+          "element_ids": [
+            "id-36"
+          ],
+          "labels": [
+            "Read report at aircraft"
+          ],
+          "lanes": [
+            "Load controller"
+          ],
+          "exits": [
+            {
+              "kind": "rejoins",
+              "element_id": "id-37",
+              "label": "Deviation in limits?",
+              "edge_label": ""
+            }
+          ],
+          "handoffs": 0,
+          "frequency": "",
+          "stated_reason": "otherwise we'd miss the slot"
+        },
+        {
+          "id": "id-37>id-41",
+          "kind": "exception",
+          "from_element_id": "id-37",
+          "from_label": "Deviation in limits?",
+          "condition": "Outside limits",
+          "element_ids": [
+            "id-41"
+          ],
+          "labels": [
+            "Approve deviation"
+          ],
+          "lanes": [
+            "Captain"
+          ],
+          "exits": [
+            {
+              "kind": "rejoins",
+              "element_id": "id-43",
+              "label": "Issue load sheet",
+              "edge_label": "Accept"
+            },
+            {
+              "kind": "loops_back",
+              "element_id": "id-30",
+              "label": "Load and return LIR",
+              "edge_label": "Re-trim"
+            }
+          ],
+          "handoffs": 2,
+          "frequency": "",
+          "stated_reason": ""
+        }
+      ],
+      "loops": [
+        {
+          "from_element_id": "id-28",
+          "from_label": "Resolve or offload",
+          "to_element_id": "id-11",
+          "to_label": "Draft load plan",
+          "label": "Re-plan"
+        },
+        {
+          "from_element_id": "id-41",
+          "from_label": "Approve deviation",
+          "to_element_id": "id-30",
+          "to_label": "Load and return LIR",
+          "label": "Re-trim"
+        }
+      ],
+      "workarounds": [
+        {
+          "element_id": "id-36",
+          "label": "Read report at aircraft",
+          "lane": "Load controller",
+          "condition": "on a busy wave",
+          "stated_reason": "otherwise we'd miss the slot",
+          "frequency": "",
+          "basis": "stated_reason"
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "M5.s2",
+          "wording": "How often does something like that happen?",
+          "about": "Special loads OK? → No: Resolve or offload"
+        },
+        {
+          "question_id": "M5.s2",
+          "wording": "How often does something like that happen?",
+          "about": "Busy wave? → on a busy wave: Read report at aircraft"
+        },
+        {
+          "question_id": "M5.s2",
+          "wording": "How often does something like that happen?",
+          "about": "Deviation in limits? → Outside limits: Approve deviation"
+        }
+      ]
+    },
+    "documented": {
+      "view": "documented",
+      "summary": {
+        "steps": 6,
+        "usual_steps": 6,
+        "exception_steps": 0,
+        "variation_steps": 0,
+        "off_usual_share": 0.0,
+        "routes": 0,
+        "rework_loops": 1,
+        "workarounds": 0,
+        "extra_handoffs": 0,
+        "frequency_stated": 0
+      },
+      "steps": [
+        {
+          "element_id": "id-11",
+          "label": "Draft load plan",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-22",
+          "label": "Approve load plan",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-25",
+          "label": "Special loads OK?",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-30",
+          "label": "Load and return LIR",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-37",
+          "label": "Deviation in limits?",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        },
+        {
+          "element_id": "id-43",
+          "label": "Issue load sheet",
+          "route": "usual",
+          "workaround": false,
+          "condition": ""
+        }
+      ],
+      "routes": [],
+      "loops": [
+        {
+          "from_element_id": "id-22",
+          "from_label": "Approve load plan",
+          "to_element_id": "id-11",
+          "to_label": "Draft load plan",
+          "label": "Rework"
+        }
+      ],
+      "workarounds": [],
+      "questions": []
     }
   }
 }

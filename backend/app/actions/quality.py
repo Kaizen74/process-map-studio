@@ -14,6 +14,7 @@ from functools import cache
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import exceptions as exceptions_action
 from app.actions import lenses, redaction
 from app.actions import questions as questions_action
 from app.actions import versions as versions_action
@@ -193,7 +194,9 @@ def export_input(
     stories, capabilities, glossary, know_how = sensemaking_content(
         session, version_id, version.engagement_id, graph, names
     )
+    exceptions = exceptions_action.report_for(session, version_id, "done") if view_graphs else None
     return ExportInput(
+        exceptions=exceptions,
         stories=stories,
         capabilities=capabilities,
         glossary=glossary,

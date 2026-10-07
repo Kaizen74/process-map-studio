@@ -1,5 +1,6 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
+import type { ExceptionReport } from "../lib/exceptions";
 import type { AlignmentRow } from "../lib/matrix";
 import type { CauseEntry, LaneBoundary, Registers, Theme, ThemeStatus, ValidationResult } from "../lib/registers";
 
@@ -41,3 +42,7 @@ export const decideTheme = (themeId: string, body: { status: ThemeStatus; theme?
 // API_CONTRACT.md → GET /api/versions/{vid}/lane-boundaries (C8).
 export const listLaneBoundaries = (versionId: string) =>
   request<LaneBoundary[]>(`/versions/${enc(versionId)}/lane-boundaries`);
+
+// API_CONTRACT.md → GET /api/versions/{vid}/exceptions (X2).
+export const getExceptions = (versionId: string, view: "done" | "documented" = "done") =>
+  request<ExceptionReport>(`/versions/${enc(versionId)}/exceptions?view=${view}`);

@@ -75,6 +75,9 @@ def _about(record: ClaimRecord, stable_key: str) -> bool:
     return isinstance(about, list) and stable_key in about
 
 
+is_about = _about  # S3c's link from a story or know-how item to a step (also read by X2)
+
+
 def know_how(lens: Lenses, stable_key: str, kind: str, work_type: str | None) -> KnowHow | None:
     """The ASHEN profile of a knowledge disclosure point (decisions, approvals and complex
     steps); None for other steps."""

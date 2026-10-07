@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { SegmentPage } from "../src/api/types";
+import type { ExceptionReport } from "../src/lib/exceptions";
 import type { ElementDetail, Graph, Layout } from "../src/lib/mapTypes";
 
 export interface SampleMap {
@@ -14,6 +15,8 @@ export interface SampleMap {
   /** V2 (§3.12.11): each view's layout, and As done with the documented-only steps ghosted. */
   views: { done: Layout; documented: Layout; done_with_other: Layout };
   view_graphs: { done: Graph; documented: Graph };
+  /** X2: each view's exceptions report (the Exceptions lens and register). */
+  exceptions: { done: ExceptionReport; documented: ExceptionReport };
 }
 
 export const SAMPLE: SampleMap = JSON.parse(
@@ -39,4 +42,10 @@ export function layoutFor(url: string): Layout {
 export function graphFor(url: string): Graph {
   const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
   return view === "done" || view === "documented" ? SAMPLE.view_graphs[view] : SAMPLE.graph;
+}
+
+/** The exceptions report the backend serves for a request URL (`?view=…`; none: As done). */
+export function exceptionsFor(url: string): ExceptionReport {
+  const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
+  return SAMPLE.exceptions[view === "documented" ? "documented" : "done"];
 }

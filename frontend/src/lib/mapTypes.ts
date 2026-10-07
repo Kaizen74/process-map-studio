@@ -259,6 +259,8 @@ export interface AnswerQuote {
   account_cue: string;
   stated_reason: string;
   variation_condition: string;
+  /** How often, in the SME's words (X1); "" when not stated. */
+  frequency: string;
   source_id: string;
   segment_id: string | null;
   anchor: string;

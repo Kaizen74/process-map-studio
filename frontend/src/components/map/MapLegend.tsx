@@ -88,6 +88,23 @@ export function MapLegend({ lens, view = "done", showOther = false }: MapLegendP
                 <WorkTypeGlyph type={type} />
               </li>
             ))}
+          {lens === "exceptions" && (
+            <>
+              <li>
+                <span className="mono">Usual route</span>&nbsp;what happens in most cases
+              </li>
+              <li>
+                <span className="mono">Exception</span>&nbsp;on the route taken when a check fails (the line into it says when)
+              </li>
+              <li>
+                <span className="mono">Variation</span>&nbsp;another way of working, under a condition the SME gave
+              </li>
+              <li>
+                <span className="mono">Workaround</span>&nbsp;work done another way, with the SME&apos;s reason (details in Registers,
+                Exceptions and workarounds)
+              </li>
+            </>
+          )}
           {lens === "time" && (
             <>
               <li>

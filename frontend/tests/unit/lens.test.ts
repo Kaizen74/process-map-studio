@@ -9,6 +9,7 @@ import {
   nodeName,
   type Lens,
 } from "../../src/lib/lens";
+import { routeLine } from "../../src/lib/exceptions";
 import type { GraphElement } from "../../src/lib/mapTypes";
 import { SAMPLE, elementByLabel } from "../sampleMap";
 
@@ -73,9 +74,38 @@ describe("lens lines (PRD §5.5)", () => {
   });
 
   it("knows its lenses", () => {
-    expect(LENS_VALUES).toEqual(["plain", "source_state", "confidence", "time", "work_type"]); // V2: + Work type
+    // V2: + Work type; X3 (2026-10-06, Eric's request): + Exceptions.
+    expect(LENS_VALUES).toEqual(["plain", "source_state", "confidence", "time", "work_type", "exceptions"]);
     expect(isLens("time")).toBe(true);
     expect(isLens("colour")).toBe(false);
+  });
+});
+
+describe("Exceptions lens (X3)", () => {
+  const routes = new Map(SAMPLE.exceptions.done.steps.map((s) => [s.element_id, s]));
+  const line = (label: string) => lensLine(elementByLabel(label), "exceptions", 0, "done", routes);
+
+  it("says, from the backend's report, which route each step of the sample is on (As done)", () => {
+    expect(line("Draft load plan")).toEqual({ kind: "text", text: "Usual route", danger: false });
+    expect(line("Resolve or offload")).toEqual({ kind: "text", text: "Exception", danger: false });
+    expect(line("Approve deviation")).toEqual({ kind: "text", text: "Exception", danger: false });
+    expect(line("Read report at aircraft")).toEqual({ kind: "text", text: "Workaround", danger: false });
+    expect(line("Busy wave?")).toEqual({ kind: "text", text: "Usual route", danger: false });
+  });
+
+  it("shows nothing until the report has arrived, and nothing for start and end", () => {
+    expect(lensLine(elementByLabel("Draft load plan"), "exceptions")).toEqual({ kind: "none" });
+    const start = SAMPLE.graph.elements.find((e) => e.kind === "start") as GraphElement;
+    expect(lensLine(start, "exceptions", 0, "done", routes)).toEqual({ kind: "none" });
+  });
+
+  it("names every kind of route in one short word that fits under a node", () => {
+    const base = { element_id: "x", label: "X", workaround: false, condition: "on a busy wave" };
+    expect(routeLine({ ...base, route: "variation" })).toBe("Variation");
+    expect(routeLine({ ...base, route: "exception" })).toBe("Exception");
+    expect(routeLine({ ...base, route: "usual" })).toBe("Usual route");
+    expect(routeLine({ ...base, route: "usual", workaround: true })).toBe("Workaround");
+    expect(routeLine({ ...base, route: "exception", workaround: true })).toBe("Workaround");
   });
 });
 

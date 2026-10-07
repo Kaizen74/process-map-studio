@@ -147,6 +147,7 @@ def test_each_step_shows_its_accounts_and_the_questions_behind_its_answers(
         "account_cue": "Officially",
         "stated_reason": "",
         "variation_condition": "",
+        "frequency": "",
         "source_id": transcript_id(drafted),
         "segment_id": official["segment_id"],
         "anchor": "22:30",
@@ -189,6 +190,7 @@ def test_ungrounded_cues_reasons_conditions_and_marker_quotes_are_dropped() -> N
         account_cue="What actually happens",  # not in the cited passage
         stated_reason="because the SOP is old",  # invented
         variation_condition="officially",  # in the passage: kept
+        frequency="twice a week",  # not in the passage: dropped (X1)
         markers=[
             ai_schemas.S1MarkerReview(
                 marker="account_official: Officially", confirmed=True, quote="Officially"
@@ -200,10 +202,29 @@ def test_ungrounded_cues_reasons_conditions_and_marker_quotes_are_dropped() -> N
     assert account == "unclear"
     assert fields["account_cue"] == "" and fields["account_cue_dropped"] is True
     assert fields["stated_reason"] == "" and fields["variation_condition"] == "officially"
+    assert fields["frequency"] == ""
     assert fields["markers"] == [
         {"marker": "account_official: Officially", "confirmed": True, "quote": "Officially"}
     ]
     assert fields["markers_dropped"] == 1
+
+
+def test_how_often_is_kept_only_in_the_sme_s_own_words() -> None:
+    """X1 (2026-10-06): an exception's frequency, copied from the passage, is kept; never
+    estimated."""
+    cited = "Load controller: Firefighting. It happens maybe once a month."
+    base = dict(
+        claim_type="exception", text="Re-trims happen.", responsible_role="", accountable_role="",
+        decider_role="", mechanism="none", duration_text="", threshold="", segment_ids=["p9"],
+        quote="It happens maybe once a month.", provenance="O", basis="", account_type="lived",
+        account_cue="It happens", stated_reason="", variation_condition="", markers=[],
+    )  # fmt: skip
+    kept = ai_schemas.S1InterviewClaim(**base, frequency="maybe once a month")  # type: ignore[arg-type]
+    assert s1_extract.check_interview_fields(kept, cited)[1]["frequency"] == "maybe once a month"
+    guessed = ai_schemas.S1InterviewClaim(**base, frequency="weekly")  # type: ignore[arg-type]
+    assert s1_extract.check_interview_fields(guessed, cited)[1]["frequency"] == ""
+    # An answer written before X1 has no frequency at all: it still validates.
+    assert ai_schemas.S1InterviewClaim(**base).frequency == ""  # type: ignore[arg-type]
 
 
 # --- Views and sequence basis (§3.12.10 rules 1-7, §3.12.11; A.9; acceptance criteria 63-65) ---
@@ -400,12 +421,17 @@ def test_each_view_of_the_sample_passes_its_flow_checks(drafted: Drafted) -> Non
     ]  # fmt: skip
     # + the two stitched lines in each view (A.10, C3)
     assert len(done["edges"]) == 16 and len(documented["edges"]) == 9
-    # Cycle time per view (§3.12.11): each view's main path has two steps without time; the map
-    # as one has three (Approve load plan is only in As documented).
-    assert done["process"]["cycle_time"] == documented["process"]["cycle_time"] == {
+    # Cycle time per view (§3.12.11) along the usual route (X5, 2026-10-06, Eric's decision):
+    # As done no longer runs through the busy-wave workaround (Read report at aircraft, no time),
+    # so only Issue load sheet lacks a time; As documented also has Approve load plan. The map as
+    # one takes the As done view's (it was 3 when it mixed both views' steps).
+    assert done["process"]["cycle_time"] == {
+        "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 1,
+    }  # fmt: skip
+    assert documented["process"]["cycle_time"] == {
         "elapsed_min": 75.0, "work_min": 60.0, "incomplete_steps": 2,
     }  # fmt: skip
-    assert drafted.client.get(url).json()["process"]["cycle_time"]["incomplete_steps"] == 3
+    assert drafted.client.get(url).json()["process"]["cycle_time"] == done["process"]["cycle_time"]
     bad = drafted.client.get(url, params={"view": "both"})
     assert bad.status_code == 422
     lint = drafted.client.get(f"/api/versions/{drafted.version_id}/lint").json()

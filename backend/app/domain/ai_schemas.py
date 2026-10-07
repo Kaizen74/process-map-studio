@@ -73,6 +73,11 @@ class S1InterviewClaim(S1Claim):
         description="For a variation: the condition it depends on, copied exactly (for example "
         "'on a busy wave'), or empty"
     )
+    frequency: str = Field(
+        default="",
+        description="For an exception, variation or workaround: how often it happens, copied "
+        "exactly (for example 'maybe once a month'), or empty",
+    )
     markers: list[S1MarkerReview] = Field(
         description="The marker hints on the cited segments that bear on this claim, each "
         "confirmed or set aside with a quote"

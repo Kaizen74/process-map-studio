@@ -1,3 +1,4 @@
+import type { ExceptionStep } from "../../lib/exceptions";
 import type { Graph, Layout } from "../../lib/mapTypes";
 import { lensLine, longestStep, markersFor, nodeName, type Lens } from "../../lib/lens";
 import { ghostLabel, type AsView } from "../../lib/views";
@@ -17,6 +18,8 @@ export interface MapStageProps {
   onSelect: (elementId: string) => void;
   /** Steps with a picture that isn't discarded: the has-images marker (PRD §5.5). */
   withImages?: ReadonlySet<string>;
+  /** The Exceptions lens: each step's route in this view, from the backend (X2). */
+  routes?: ReadonlyMap<string, ExceptionStep>;
 }
 
 /**
@@ -24,7 +27,17 @@ export interface MapStageProps {
  * lanes, phase band, orthogonal lines and nodes as absolutely positioned HTML. The UI never
  * computes layout. Nodes are buttons in process order, so Tab follows the process.
  */
-export function MapStage({ graph, layout, lens, view = "done", scale, selectedId, onSelect, withImages }: MapStageProps) {
+export function MapStage({
+  graph,
+  layout,
+  lens,
+  view = "done",
+  scale,
+  selectedId,
+  onSelect,
+  withImages,
+  routes,
+}: MapStageProps) {
   const elements = new Map(graph.elements.map((e) => [e.id, e]));
   const roles = new Map(graph.roles.map((r) => [r.id, r.name]));
   const edgesById = new Map(graph.edges.map((e) => [e.id, e]));
@@ -97,7 +110,7 @@ export function MapStage({ graph, layout, lens, view = "done", scale, selectedId
               lens={
                 node.ghost
                   ? { kind: "text", text: ghostLabel(view), danger: false }
-                  : lensLine(element, lens, longest, view)
+                  : lensLine(element, lens, longest, view, routes)
               }
               selected={node.id === selectedId}
               onSelect={onSelect}

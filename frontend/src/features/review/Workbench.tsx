@@ -7,6 +7,7 @@ import { AllReviewed } from "../../components/panel";
 import { useGapAnalyses } from "../../hooks/useGap";
 import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
+import { useExceptions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
 import { stepsWithImages, walkthroughCards } from "../../lib/images";
@@ -86,6 +87,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const gapPath = engagementPath(engagementId, "gap_analysis");
   const selectedId = params.get("step");
   const [lens, setLens] = useLens();
+  // The Exceptions lens (X3): each step's route in this view, fetched only while it is on.
+  const unusual = useExceptions(versionId, shown, lens === "exceptions");
+  const routes = new Map((unusual.data?.steps ?? []).map((s) => [s.element_id, s]));
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [mapBox, fit] = useFitScale(layout.data?.canvas.w ?? 0);
   const reviewStep = useReviewStep(versionId ?? "", engagementId);
@@ -338,6 +342,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     selectedId={selected?.id ?? null}
                     onSelect={select}
                     withImages={stepsWithImages(pictures.data ?? [])}
+                    routes={routes}
                   />
                 </div>
                 <MapLegend lens={lens} view={shown} showOther={showOther} />

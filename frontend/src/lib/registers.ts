@@ -74,7 +74,8 @@ export type RegisterKey =
   | "rejected"
   | "causes"
   | "themes"
-  | "boundaries";
+  | "boundaries"
+  | "exceptions";
 
 /** GET /versions/{vid}/lane-boundaries (C8): teams' activities overlapping or falling between them. */
 export type BoundaryKind = "shared_delivery" | "gap" | "boundary";
@@ -132,6 +133,7 @@ export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "causes", label: "Cause library" },
   { value: "themes", label: "Emerging themes" },
   { value: "boundaries", label: "Lane boundaries" },
+  { value: "exceptions", label: "Exceptions and workarounds" },
 ];
 
 export function registerKey(value: string | null): RegisterKey {

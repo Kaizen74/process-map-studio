@@ -130,7 +130,7 @@ const DRAFT_SOURCES = [
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
   // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
-  test.setTimeout(90_000);
+  test.setTimeout(120_000); // the whole journey: about 85 s measured with X3 (2026-10-06); was 90 s
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });
@@ -244,6 +244,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.locator(".map-lens", { hasText: /^Complexproposed$/ })).toBeVisible(); // A.8
     expect(await seriousViolations(page)).toEqual([]);
     if (shots) await page.screenshot({ path: join(shots, "v4-as-done-work-type-1440x900.png"), ...still });
+    // X3: the Exceptions lens, from the backend's report of this view (real backend, Claude mocked).
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Exceptions" }).click();
+    await expect(page.locator(".map-lens", { hasText: /^Workaround$/ })).toBeVisible(); // Read report at aircraft
+    await expect(page.locator(".map-lens", { hasText: /^Exception$/ })).toHaveCount(2);
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "x3-as-done-exceptions-1440x900.png"), ...still });
     await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
     await expect(approvePlan).toHaveCount(0);
     // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
@@ -445,8 +451,19 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);
     }
+    // X3: how much of the process is exception handling, rework and workarounds.
+    await registerChoice.getByRole("radio", { name: "Exceptions and workarounds" }).click();
+    await expect(registerChoice.getByRole("radio", { name: "Exceptions and workarounds" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(page.getByText(/^3 of 9 steps \(33%\) are off the usual route/)).toBeVisible();
+    await expect(page.getByRole("list", { name: "Workarounds" })).toContainText("otherwise we'd miss the slot");
+    expect(await seriousViolations(page)).toEqual([]);
+    if (shots) await page.screenshot({ path: join(shots, "x3-registers-exceptions-1440x900.png"), fullPage: true });
     // C8: the sample's shared loading step, one Responsible and the load controller Consulted.
     await registerChoice.getByRole("radio", { name: "Lane boundaries" }).click();
+    await expect(registerChoice.getByRole("radio", { name: "Lane boundaries" })).toHaveAttribute("aria-checked", "true");
     await expect(page.getByRole("listitem").filter({ hasText: "Load and return LIR" })).toContainText(
       "One Responsible (Ramp), the others Consulted",
     );

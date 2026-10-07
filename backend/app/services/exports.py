@@ -35,6 +35,7 @@ from app.domain.exports import (
 )
 from app.domain.graph import Graph, GraphElement
 from app.domain.quality import QualityCard
+from app.domain.sensemaking import ExceptionSummary, RouteExit
 from app.services import signal
 
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
@@ -259,6 +260,66 @@ def two_views_lines(data: ExportInput) -> list[str]:
     return lines
 
 
+EXCEPTIONS_HEADING = "Exceptions, rework and workarounds (as done)"
+EXIT_WORDS = {"loops_back": "goes back to", "rejoins": "rejoins the usual route at"}
+
+
+def exception_summary(s: ExceptionSummary) -> str:
+    """One line of facts (the same words as the Registers screen)."""
+    if s.steps == 0:
+        return "No steps in this view yet."
+    off = s.exception_steps + s.variation_steps
+    if off == 0 and s.rework_loops == 0 and s.workarounds == 0:
+        every = "The only step is" if s.steps == 1 else f"All {s.steps} steps are"
+        return f"{every} on the usual route; no exception routes, rework loops or workarounds."
+    variations = plural(s.variation_steps, "variation")
+    text = (f"{off} of {plural(s.steps, 'step')} ({round(s.off_usual_share * 100)}%) are off "
+            f"the usual route: {s.exception_steps} on exception routes, {variations}. "
+            f"{plural(s.rework_loops, 'rework loop')}; "
+            f"{plural(s.workarounds, 'workaround')}.")  # fmt: skip
+    if s.extra_handoffs:
+        text += f" The exception routes add {plural(s.extra_handoffs, 'hand-over')}."
+    return text
+
+
+def _exit(x: RouteExit) -> str:
+    why = f" ({x.edge_label})" if x.edge_label else ""
+    return "ends the process" if x.kind == "ends" else f"{EXIT_WORDS[x.kind]} {x.label}{why}"
+
+
+def exception_lines(data: ExportInput) -> list[str]:
+    """How much of the process, as done, is exception handling (X6): facts from the map's
+    structure and the SME's own words (reasons and frequencies), then what is still to ask."""
+    report = data.exceptions
+    if report is None:
+        return ["This map was drafted before the two views; exceptions are not worked out."]
+    lines = [f"- {exception_summary(report.summary)}"]
+    for r in report.routes:
+        kind = "Exception route" if r.kind == "exception" else "Variation"
+        lanes = f" ({', '.join(r.lanes)})" if r.lanes else ""
+        line = f"- {kind}: {r.from_label} → {r.condition}: {' → '.join(r.labels)}{lanes}"
+        line += f"; then it {', or '.join(_exit(x) for x in r.exits) or 'stops'}"
+        line += f"; {plural(r.handoffs, 'extra hand-over')}"
+        line += f"; how often: {r.frequency or 'not stated yet'}"
+        if r.stated_reason:
+            line += f"; reason given: “{r.stated_reason}”"
+        lines.append(line + ".")
+    lines += [f"- Rework loop: {x.from_label} goes back to {x.to_label}"
+              + (f" ({x.label})." if x.label else ".") for x in report.loops]  # fmt: skip
+    for w in report.workarounds:
+        why = (
+            f"reason given: “{w.stated_reason}”"
+            if w.stated_reason
+            else "told as a workaround story"
+        )
+        when = f" ({w.condition})" if w.condition else ""
+        lines.append(f"- Workaround: {w.label}{when}, {w.lane}; {why}; "
+                     f"how often: {w.frequency or 'not stated yet'}.")  # fmt: skip
+    lines += [f"- Still to ask [{q.question_id}]: {q.wording} (about {q.about})"
+              for q in report.questions]  # fmt: skip
+    return lines
+
+
 def official_lived_lines(graph: Graph) -> list[str]:
     """Per step where the interviews give both accounts (no verbatim quotes)."""
     lines = []
@@ -442,6 +503,7 @@ def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
         lines.append("No divergences between the sources.")
 
     lines += ["", "### Two views: as done and as documented", "", *two_views_lines(data)]
+    lines += ["", f"### {EXCEPTIONS_HEADING}", "", *exception_lines(data)]
     know_how = {k.element_id: k for k in data.know_how}
     lines += [
         "",

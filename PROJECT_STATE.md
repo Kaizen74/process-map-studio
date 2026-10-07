@@ -110,6 +110,14 @@ Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12
 | 59 | Partly | Work type lens, panel sections and the Emerging themes register done; Stories and Glossary registers → P9u; leadership work-type mix and Imagined vs done → L1 |
 | 73 | Partly | capability notes captured by dimension and in the Master Process Map (K3); Preserve / Improve register → P9u; leadership Recommendation panel → L1 |
 
+**Exceptions and workarounds (session 20, Eric's request; X1–X4)**
+- [x] X1 — capture: interview claims record how often an exception, variation or workaround happens (the SME's words only; `S1_extract_interview` v5); shown in the panel
+- [x] X2 — `GET /versions/{vid}/exceptions?view=` (`services/exceptions.py`, `actions/exceptions.py`): usual route, exception routes, variations, rework loops, workarounds, extra hand-overs, M5.s2 "how often?" questions; also in Follow-up guides (rule 7)
+- [x] X3 — UI: **Exceptions** lens on Review (key 6) and Registers **Exceptions and workarounds**; screenshots `docs/screens/x3-*.png`
+- [x] X4 — full mock regression (`./run_checks.sh`) and a permanent backend/frontend field-alignment test
+- [x] X5–X6 built (Eric said yes): cycle time on the usual route; exceptions in the Master Process Map and HTML map
+- [x] Eric approved the X5–X6 candidates (2026-10-06): change applied, G1, G3 and G5 replaced, `docs/review/` removed
+
 **End of session 20 (2026-10-06).** Built and pushed: G1–G2 (tailored guides), S0, C5b–C5d, C6, C7a–b, C8, C9; every commit passed 13 of 13 checks before it was pushed. P4c is closed and tagged `phase-p4c`. No visual baseline changed. **Resume point:** the optional phases in order: P9u (matrix layers SME official / lived; registers Stories, Glossary, Preserve / Improve; finishes criteria 59 and 73 with L1), then P10b (R1 data request template onward), L1 (leadership update), P12 (live run with Eric's key, v1.0.0).
 
 **Mock regression pass (2026-10-06, Eric's request):** full `./run_checks.sh` on cfc68bc: 12 of 13 (1,321 backend tests incl. G1–G9 and the A.5/A.8/A.9/A.10 end-to-end proof, 480 screen tests, 15 browser tests with axe and the privacy scan); the only failure is the Review visual baseline awaiting Eric's approval (about 1% of pixels differ). A route probe found every API call the screens make has a backend route; backend routes with no screen yet: line editing (add/change/remove a line), `PUT …/raci` (the edit form sends RACI with the step), coverage, glossary and capability notes (planned Interview and Registers screens).

@@ -259,3 +259,107 @@ class LaneBoundaryFinding(BaseModel):
     consulted: list[str]
     note: str
     question_ids: list[str]
+
+
+# --- Exceptions, rework and workarounds (X2, 2026-10-06; API_CONTRACT.md → exceptions) ---
+
+StepRoute = Literal["usual", "exception", "variation"]
+
+
+class ExceptionStepInput(BaseModel):
+    """One step of a view as the exceptions check reads it: its place on the map and the SME's
+    own words from its verified lived claims (names already hidden by the caller)."""
+
+    element_id: str
+    label: str
+    kind: str
+    lane: str = ""
+    condition: str = ""  # a variation condition ("on a busy wave")
+    stated_reason: str = ""
+    frequency: str = ""
+    practiced_only: bool = False
+    workaround_story: bool = False
+
+
+class ExceptionEdgeInput(BaseModel):
+    from_id: str
+    to_id: str
+    kind: str
+    label: str = ""
+
+
+class ExceptionStep(BaseModel):
+    element_id: str
+    label: str
+    route: StepRoute
+    workaround: bool
+    condition: str
+
+
+class RouteExit(BaseModel):
+    kind: Literal["rejoins", "loops_back", "ends"]
+    element_id: str
+    label: str
+    edge_label: str
+
+
+class ExceptionRoute(BaseModel):
+    id: str
+    kind: Literal["exception", "variation"]
+    from_element_id: str
+    from_label: str
+    condition: str
+    element_ids: list[str]
+    labels: list[str]
+    lanes: list[str]
+    exits: list[RouteExit]
+    handoffs: int
+    frequency: str
+    stated_reason: str
+
+
+class ReworkLoop(BaseModel):
+    from_element_id: str
+    from_label: str
+    to_element_id: str
+    to_label: str
+    label: str
+
+
+class Workaround(BaseModel):
+    element_id: str
+    label: str
+    lane: str
+    condition: str
+    stated_reason: str
+    frequency: str
+    basis: Literal["stated_reason", "story"]
+
+
+class ExceptionQuestion(BaseModel):
+    question_id: str
+    wording: str
+    about: str
+
+
+class ExceptionSummary(BaseModel):
+    steps: int
+    usual_steps: int
+    exception_steps: int
+    variation_steps: int
+    off_usual_share: float
+    routes: int
+    rework_loops: int
+    workarounds: int
+    extra_handoffs: int
+    frequency_stated: int
+
+
+class ExceptionReport(BaseModel):
+    view: View
+    summary: ExceptionSummary
+    steps: list[ExceptionStep]
+    routes: list[ExceptionRoute]
+    loops: list[ReworkLoop]
+    workarounds: list[Workaround]
+    questions: list[ExceptionQuestion]
