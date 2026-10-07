@@ -537,6 +537,8 @@ class AlignmentRow(Out):
     kind: str
     sop: str
     interview: str
+    sme_official: str  # P9u-2: the interview column by the account it gives (§3.12.3)
+    sme_lived: str
     jd: str
     artefact: str
     state: str

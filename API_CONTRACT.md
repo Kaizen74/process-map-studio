@@ -511,7 +511,8 @@ Errors: `404` ("That version doesn't exist."). Used by: Review banner and qualit
 
 ### GET /api/versions/{vid}/alignment-matrix
 How each kind of source stands on each step (PRD §3.7 Stage 3: classified, never reconciled). One row per step (activity, decision, approval; not start, end or rejected steps), in process order:
-`{"element_id", "label", "kind", "sop", "interview", "jd", "artefact", "state", "divergence_types": [...]}`.
+`{"element_id", "label", "kind", "sop", "interview", "sme_official", "sme_lived", "jd", "artefact", "state", "divergence_types": [...]}`.
+- **SME official · SME lived** (P9u-2, 2026-10-07; PRD §6.3 P9 "four layers", §3.12.3): the interview column split by the account the interview gives of the step. A layer takes the `interview` cell when the step's verified interview claims include that account (official: how it is meant to work; lived: what the SME does or did); it is `silent` when the interview speaks of the step but only with the other account; `account_unclear` when the interview speaks of it only with claims whose account is unclear (neither layer can claim it; never guessed); and the `interview` cell itself when that is `silent` or `not_applicable`.
 - Columns: `sop` = SOPs, manuals and other documents · `interview` = interview transcripts · `jd` = job descriptions · `artefact` = executed artefacts.
 - Each cell is `supports` · `contradicts` · `silent` · `not_applicable`: `contradicts` if any source of that kind contradicts the step, else `supports` if any supports it, else `silent` if the draft was made from a source of that kind (silence is never contradiction), else `not_applicable` (no source of that kind). A recommended (`R`) step is not assessed: every cell is `not_applicable`. Cells count the same stances as the step's source state.
 - `state` and `divergence_types` are the step's own (B.4, B.5). Labels have names hidden. Works for drafts and published versions.

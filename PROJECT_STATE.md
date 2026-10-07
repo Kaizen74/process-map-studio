@@ -30,7 +30,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 | P6 Review workbench | Partly | `actions/review.py`, `map_edits.py`, `refresh.py`, `features/review/*`; browser smoke path | 24, 25 met; "confirm or change work type" (V3b) missing |
 | P7 Quality card, publish, exports | Partly | `services/quality.py` (Q1–Q10), `actions/publish.py`, `services/exports.py`, `export_html.py`; G3, G5 | 26, 27, 30, 32 met; 29 partly (§7.3 v1.10/v1.11 sections, View column and both views missing); Q11 (and Q12) missing |
 | P8 Images | Done | `services/images.py`, `actions/images.py`, ImagesSection, walkthrough strip | 28 met |
-| P9 Matrix, registers, cause library | Partly | `services/alignment.py`, `actions/registers.py`, `actions/causes.py`; G4 | 31 met (v1.5 level); matrix SME official/lived layers and registers Stories, Glossary, Emerging themes, Preserve / Improve missing (59 partly) |
+| P9 Matrix, registers, cause library | Done (P9u closed 2026-10-07) | `services/alignment.py` (SME official · SME lived layers), `actions/registers.py`, `actions/causes.py`, `actions/lenses.py` (stories, glossary, capability notes), Registers screen; G4 | 31 met; 59 and 73 met for P9 (their Leadership parts → L1) |
 | P10 Gap analysis | Done | `pipeline/ga_internal.py`, `gb_external.py`, `services/gap.py`; G7; traps TE1–TE9 | 41–48, 56 met |
 | P10b System records, value, disposition | Not started | — | 82–94 not met |
 | P11 Leadership | Partly | `services/leadership.py`, LeadershipScreen | 31 met (v1.5 level); work-type mix, Imagined vs done, Preserve / Improve, quantified bottlenecks, disposition and value missing |
@@ -55,7 +55,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] C8 — lane-boundary findings from L5, F1, F4 answers (criterion 76); landscape-level answers into rule 9 (criterion 70)
 (c) Optional phases, in order
 - [x] P9u-1 — Registers Stories (`GET /versions/{vid}/stories`), Glossary and Preserve / Improve (by capability dimension), each linking to its steps (59, 73; Emerging themes done in C7b)
-- [ ] P9u-2 — Matrix: the Interview column split into SME official and SME lived: built; waiting for Eric's approval of `docs/review/` (G4 candidate, screenshot). On "approve": `git apply docs/review/p9u-2-pending.patch`, copy the candidate over `backend/tests/golden/G4_alignment_matrix.json`, full checks, GUIDE (Matrix columns, What changed), remove `docs/review/`, close P9u (criteria 59, 73: their L1 parts remain), commit, push
+- [x] P9u-2 — Matrix: the Interview column split into SME official and SME lived (`account_unclear` where the account is unclear); Eric approved the G4 candidate (2026-10-07). P9u closed
 - [ ] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82)
 - [ ] R2 — P10b: migration 0012 (event_logs, events without any user column, case_key_maps, activity_alignment, mining_metrics, role_costs, value_assumptions; element disposition columns); `services/mining.py` parsing and column suggestion; A.11 fixture generator (fixed seed)
 - [ ] R3 — P10b: import job (column map, time zone, in-memory resource → role map, validation report, approval gate, > 20% dropped refused); resource-value scan test (83, 84)
@@ -108,8 +108,8 @@ Start: working tree clean at 705cb46, in sync with GitHub. `./run_checks.sh`: 12
 | 70 | Met | crafted nesting case `test_levels.py` (Decision C) and the A.10 check `test_a10_landscape_answers_join_practice_steps_without_duplication` |
 | 75 | Met | C6 `GET /versions/{vid}/validation-pack`, Review download |
 | 76 | Met | C8 `GET /versions/{vid}/lane-boundaries`, Registers Lane boundaries |
-| 59 | Partly | Work type lens, panel sections and the Emerging themes register done; Stories and Glossary registers → P9u; leadership work-type mix and Imagined vs done → L1 |
-| 73 | Partly | capability notes captured by dimension and in the Master Process Map (K3); Preserve / Improve register → P9u; leadership Recommendation panel → L1 |
+| 59 | Partly | Work type lens, panel sections, the Stories, Glossary and Emerging themes registers done (P9u, 2026-10-07); leadership work-type mix and Imagined vs done → L1 |
+| 73 | Partly | capability notes captured by dimension, in the Master Process Map (K3) and the Preserve / Improve register (P9u, 2026-10-07); leadership Recommendation panel → L1 |
 
 **Exceptions and workarounds (session 20, Eric's request; X1–X4)**
 - [x] X1 — capture: interview claims record how often an exception, variation or workaround happens (the SME's words only; `S1_extract_interview` v5); shown in the panel

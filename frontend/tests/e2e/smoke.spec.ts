@@ -429,6 +429,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(lirRow).toContainText("Contested");
     await expect(lirRow).toContainText("Threshold");
     await expect(matrixTable.getByRole("row", { name: /Approve load plan/ })).toContainText("Silent");
+    // P9u-2: the interview split by account (G4): the deviation check is told only in unclear terms.
+    await expect(matrixTable.getByRole("columnheader", { name: "SME lived" })).toBeVisible();
+    await expect(matrixTable.getByRole("row", { name: /Deviation in limits\?/ })).toContainText("Account unclear");
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Matrix").toBe(false);
     if (process.env.PMS_SCREENSHOT_DIR) {

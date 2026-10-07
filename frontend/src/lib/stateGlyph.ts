@@ -12,6 +12,8 @@ export type StanceOrState =
   | "trace_contradicted"
   | "not_assessed"
   | "not_applicable"
+  // Alignment matrix SME layers (P9u-2): the interview speaks of the step, account unclear.
+  | "account_unclear"
   // Coverage report (§3.12.8): how well the interviews covered a dimension.
   | "covered"
   | "thin"
@@ -54,6 +56,12 @@ export const STATE_GLYPHS: Readonly<Record<StanceOrState, GlyphSpec>> = {
   not_assessed: { shape: "outlined-square", tone: "neutral", label: "Not assessed", dangerText: false },
   // Alignment matrix (P9): the engagement has no source of that kind.
   not_applicable: { shape: "dash", tone: "neutral", label: "No source of this kind", dangerText: false },
+  account_unclear: {
+    shape: "outlined-square",
+    tone: "neutral",
+    label: "Account unclear",
+    dangerText: false,
+  },
   covered: { shape: "filled-circle", tone: "good", label: "Covered", dangerText: false },
   thin: { shape: "left-half", tone: "neutral", label: "Thin", dangerText: false },
   missing: { shape: "dashed-ring", tone: "neutral", label: "Missing", dangerText: false },
