@@ -32,3 +32,13 @@ Appendix A), saved so the filled-in version can be checked in Word too:
   checks; a fifth, which quoted the SOP, was left out.
 
 The question IDs, wording and minutes are the same as in the standard templates.
+
+## Data request template (system records)
+
+What you send to a system owner (IT) to ask for an event-log extract (PRD §3.13.2), made by the
+app with no engagement data, so every copy is the same:
+
+- `data-request-template.docx` and `data-request-template.md`: purpose, process scope, date
+  window, the columns (required ones marked, with a sample row), privacy requirements, format, and
+  the data owner's approval with the retention promise. Fill in the [bracketed] parts.
+- `data-request-header.csv`: the header row only, ready for the system owner to fill.

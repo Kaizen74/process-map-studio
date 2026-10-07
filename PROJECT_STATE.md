@@ -56,7 +56,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 (c) Optional phases, in order
 - [x] P9u-1 — Registers Stories (`GET /versions/{vid}/stories`), Glossary and Preserve / Improve (by capability dimension), each linking to its steps (59, 73; Emerging themes done in C7b)
 - [x] P9u-2 — Matrix: the Interview column split into SME official and SME lived (`account_unclear` where the account is unclear); Eric approved the G4 candidate (2026-10-07). P9u closed
-- [ ] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82)
+- [x] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82; screen links come with R7)
 - [ ] R2 — P10b: migration 0012 (event_logs, events without any user column, case_key_maps, activity_alignment, mining_metrics, role_costs, value_assumptions; element disposition columns); `services/mining.py` parsing and column suggestion; A.11 fixture generator (fixed seed)
 - [ ] R3 — P10b: import job (column map, time zone, in-memory resource → role map, validation report, approval gate, > 20% dropped refused); resource-value scan test (83, 84)
 - [ ] R4 — P10b: metrics (volume, transitions, work and wait, cycle time, variants, rework, handoffs, exception share; ≥ 5 cases) precomputed; metrics endpoint (85, 94)
