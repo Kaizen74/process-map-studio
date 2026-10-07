@@ -140,6 +140,7 @@ class MapVersion(Row):
     quality_card: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     codebook_version: Mapped[str | None] = mapped_column(String(32), nullable=True)  # 0009
     run_record: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)  # 0010
+    system_traces: Mapped[list[Any] | None] = mapped_column(JSON, nullable=True)  # 0013
 
 
 class Claim(Row):

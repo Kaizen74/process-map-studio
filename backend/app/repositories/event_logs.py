@@ -172,3 +172,35 @@ def replace_alignment(session: Session, log_id: str, activities: set[str], step_
     for row in rows:
         session.add(ActivityAlignment(log_id=log_id, **row))
     session.flush()
+
+
+def confirmed_matches(
+    session: Session, engagement_id: str
+) -> list[tuple[EventLogView, dict[str, str]]]:
+    """Each imported log of the engagement with Eric's confirmed matches (activity → stable key);
+    logs without any are left out."""
+    out = []
+    for log in list_for(session, engagement_id):
+        if log.status != "imported":
+            continue
+        rows = session.execute(
+            select(ActivityAlignment.activity, Element.stable_key)
+            .join(Element, Element.id == ActivityAlignment.element_id)
+            .where(ActivityAlignment.log_id == log.id, ActivityAlignment.status == "confirmed",
+                   ActivityAlignment.confirmed_at.is_not(None))
+        )  # fmt: skip
+        matched = {activity: key for activity, key in rows if activity}
+        if matched:
+            out.append((log, matched))
+    return out
+
+
+def step_figures(session: Session, log_id: str, activities: set[str]) -> dict[str, int]:
+    """Cases and events of a step's activities, and the cases where they occur more than once."""
+    where = (Event.log_id == log_id, Event.activity.in_(activities))
+    cases, events = session.execute(
+        select(func.count(func.distinct(Event.case_id)), func.count()).where(*where)
+    ).one()
+    repeated = select(Event.case_id).where(*where).group_by(Event.case_id).having(func.count() > 1)
+    rework = session.scalar(select(func.count()).select_from(repeated.subquery()))
+    return {"cases": int(cases), "events": int(events), "rework_cases": int(rework or 0)}

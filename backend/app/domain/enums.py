@@ -346,8 +346,9 @@ class AshenCategory(StrEnum):
 
 
 class SequenceBasis(StrEnum):
-    """B.34 sequence basis."""
+    """B.34 sequence basis, strongest first (system_trace since R5b, Appendix E tier 2)."""
 
+    SYSTEM_TRACE = "system_trace"
     EXPLICIT_ORDER = "explicit_order"
     DOCUMENT_ORDER = "document_order"
     DEPENDENCY = "dependency"

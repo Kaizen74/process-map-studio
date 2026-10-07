@@ -197,3 +197,32 @@ class AlignmentStored(BaseModel):
 class SuggestStarted(BaseModel):
     job_id: str
     log_id: str
+
+
+class TraceActivity(BaseModel):
+    activity: str
+    cases: int
+    events: int
+    work: dict[str, Any] | None
+    wait_before: dict[str, Any] | None
+    basis: str
+
+
+class SystemTraceItem(BaseModel):
+    """One step's system-trace evidence from one log (API_CONTRACT → system-traces)."""
+
+    element_id: str
+    label: str
+    stance: str  # supports · contradicts
+    log_id: str
+    log_name: str
+    system: str
+    window_start: str | None
+    window_end: str | None
+    cases: int
+    events: int
+    cases_per_week: float
+    rework_cases: int
+    rework_share: float
+    activities: list[TraceActivity]
+    note: str

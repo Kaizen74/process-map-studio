@@ -12,6 +12,7 @@ from app.actions import (
     lenses,
     quality,
     registers,
+    system_trace,
     validation_pack,
     versions,
 )
@@ -28,6 +29,7 @@ from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
 from app.domain.sensemaking import CoverageReport, ExceptionReport, LaneBoundaryFinding, View
+from app.domain.system_records import SystemTraceItem
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
@@ -83,6 +85,11 @@ def get_validation_pack(request: Request, version_id: str) -> Response:
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/versions/{version_id}/system-traces")
+def get_system_traces(request: Request, version_id: str) -> list[SystemTraceItem]:
+    return unwrap(system_trace.get_system_traces(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/stories")

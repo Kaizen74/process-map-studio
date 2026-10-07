@@ -286,6 +286,7 @@ def test_downgrade_of_0010_removes_only_the_run_record(migrated: Path) -> None:
         engine.dispose()
         return columns
 
+    db.downgrade(migrated, "0010")  # later migrations add their own columns (0013)
     before = version_columns()
     db.downgrade(migrated, "0009")
     assert before - version_columns() == {"run_record"}
@@ -363,8 +364,7 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 PENDING_VALUES: dict[str, set[str]] = {
     "B.1": {"group_notes", "working_spreadsheet", "email_thread"},
     "B.22": {"hidden_work", "offline_work", "sequence_drift", "estimate_gap", "measured_rework"},
-    "B.34": {"system_trace"},
-}
+}  # B.34 system_trace was added with P10b R5b (2026-10-07)
 
 
 def test_enums_match_appendix_b() -> None:
@@ -430,3 +430,18 @@ def test_events_table_has_no_user_column(migrated: Path) -> None:
     columns = {c["name"] for c in inspect(engine).get_columns("events")}
     engine.dispose()
     assert {"resource", "user", "user_id", "resource_id"}.isdisjoint(columns)
+
+
+def test_downgrade_of_0013_removes_only_the_frozen_system_traces(migrated: Path) -> None:
+    def version_columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        columns = {c["name"] for c in inspect(engine).get_columns("map_versions")}
+        engine.dispose()
+        return columns
+
+    before = version_columns()
+    db.downgrade(migrated, "0012")
+    assert before - version_columns() == {"system_traces"}
+    assert "run_record" in version_columns()
+    db.upgrade(migrated)
+    assert "system_traces" in version_columns()

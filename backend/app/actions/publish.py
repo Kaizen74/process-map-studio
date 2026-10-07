@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import quality as quality_action
-from app.actions import redaction
+from app.actions import redaction, system_trace
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
@@ -203,6 +203,7 @@ def publish(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ve
                 {"blockers": [b.model_dump() for b in found]},
             )
         label = next_published_label(versions_repo.published_labels(session, version.engagement_id))
+        system_trace.freeze(session, version_id)  # a published version never changes after this
         versions_repo.publish(
             session,
             version_id,

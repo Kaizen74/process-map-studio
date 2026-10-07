@@ -433,3 +433,16 @@ def set_run_record(
 def run_record(session: Session, version_id: str) -> dict[str, Any] | None:
     row = session.get(MapVersion, version_id)
     return dict(row.run_record) if row is not None and row.run_record else None
+
+
+def set_system_traces(session: Session, version_id: str, traces: list[Any]) -> None:
+    """Freeze a version's system-trace evidence (at publishing; migration 0013)."""
+    row = session.get(MapVersion, version_id)
+    if row is not None:
+        row.system_traces = traces
+        session.flush()
+
+
+def system_traces(session: Session, version_id: str) -> list[Any] | None:
+    row = session.get(MapVersion, version_id)
+    return list(row.system_traces) if row is not None and row.system_traces is not None else None

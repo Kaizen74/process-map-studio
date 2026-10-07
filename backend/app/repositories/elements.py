@@ -88,6 +88,14 @@ def update_element(
     return ElementRecord.model_validate(row)
 
 
+def set_edge_basis(session: Session, edge_id: str, basis: str) -> None:
+    """Record why a line's order is known (B.34), e.g. when a system trace is frozen."""
+    row = session.get(Edge, edge_id)
+    if row is not None:
+        row.sequence_basis = basis
+        session.flush()
+
+
 def delete_elements(session: Session, element_ids: Sequence[str]) -> None:
     if element_ids:
         session.execute(delete(Element).where(Element.id.in_(element_ids)))

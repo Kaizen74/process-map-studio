@@ -159,6 +159,12 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     imported = client.post(f"/api/event-logs/{log_ids[0]}/import", json=approval)
     assert imported.status_code == 202, imported.text
     wait_for_jobs(client)
+    # Eric confirms the app's proposals, so the graph endpoints include the system trace (R5b).
+    proposals = client.get(f"/api/event-logs/{log_ids[0]}/alignment").json()["rows"]
+    confirmed = [{"activity": r["activity"], "element_id": r["element_id"], "status": "confirmed"}
+                 for r in proposals if r["activity"] and r["element_id"]]  # fmt: skip
+    assert client.put(f"/api/event-logs/{log_ids[0]}/alignment",
+                      json={"rows": confirmed}).status_code == 200  # fmt: skip
     return client, ids | {
         "imported_log": log_ids[0],
         "held_log": log_ids[1],
@@ -189,6 +195,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/event-logs/{imported_log}/metrics?scope=variant", None),
     ("GET", "/api/event-logs/{imported_log}/metrics?scope=role", None),
     ("GET", "/api/event-logs/{imported_log}/alignment", None),
+    ("GET", "/api/versions/{map}/system-traces", None),
     ("GET", "/api/templates/interview?type=practice&format=docx", None),
     ("GET", "/api/templates/interview?type=landscape&format=md", None),
     ("GET", "/api/settings", None),

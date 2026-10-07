@@ -13,7 +13,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import lenses, redaction, view_translation
+from app.actions import lenses, redaction, system_trace, view_translation
 from app.db import session_scope
 from app.domain.enums import (
     EdgeKind,
@@ -171,8 +171,13 @@ def build_graph(
 
     roles = engagements_repo.list_roles(session, engagement.id)
     phases = map_repo.phases(session, version_id)
-    elements = map_repo.elements(session, version_id)
-    edges = map_repo.edges(session, version_id)
+    # A draft shows Eric's confirmed system trace (R5b); a published version has it frozen in.
+    elements, edges = system_trace.applied(
+        session,
+        version,
+        map_repo.elements(session, version_id),
+        map_repo.edges(session, version_id),
+    )
     # The combined map's cycle time is the As done view's: the time the work takes as done (X5).
     timed_view: View = view or "done"
     timed_elements = [e for e in elements if views.in_view(e.view_membership, timed_view)]

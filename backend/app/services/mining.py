@@ -334,7 +334,9 @@ def metrics(events: list[LogEvent], timezone: str) -> list[MetricRow]:
     rows = _activity_rows(by_case, zone, timed, basis, _weeks(events, zone))
     rows += _transition_rows(by_case, timed, basis)
     variant_rows, exception_share = _variant_rows(by_case)
-    rows.append(_case_row(events, by_case, timed, basis, exception_share, len(variant_rows)))
+    case_row = _case_row(events, by_case, timed, basis, exception_share, len(variant_rows))
+    case_row.metrics["weeks"] = _weeks(events, zone)
+    rows.append(case_row)
     rows += variant_rows[:TOP_VARIANTS]
     rows += _role_rows(by_case, timed)
     return rows

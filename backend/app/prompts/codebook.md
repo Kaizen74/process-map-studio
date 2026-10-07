@@ -1,4 +1,4 @@
-<!-- prompt: codebook · version 1 -->
+<!-- prompt: codebook · version 2 -->
 How a process map is built from the sources. Tier 1 rules never change. Tier 2 rules are the defaults: you may depart from one only when the passages give a reason, and you say so in the answer. Tier 3 is open: keep the SME's own words and groupings.
 
 Tier 1 — invariants (never overridden)
@@ -13,7 +13,7 @@ Tier 2 — conventions (defaults)
 - Unit of work: one activity is one Responsible role producing one outcome or handoff. Split when the role changes or something is handed over. Merge consecutive small actions by the same role with no handoff or decision between them.
 - Element type: choosing between paths is a decision, phrased as a question with its criterion. Sign-off by someone other than the doer is an approval. Waiting or queueing is wait time on a step, not a step. Checking without branching is an activity with a control note. Complex judgment is a judgment step (one decision whose exits are typical responses). Anything else is an activity.
 - Naming: verb and object, at most five words, sentence case, no role or person names. The SME's own term may be the label when it is the everyday name for the step.
-- Sequence evidence, strongest to weakest: explicit order words or times ("first", "then", "after that", "around T-90"); the document's step order; dependency (something must exist before it is used); the order in which things were mentioned. Order resting only on the order of mentioning is weak and becomes a question.
+- Sequence evidence, strongest to weakest: the order a business system records (the app applies this from a system log Eric has matched to the map; it never comes from the passages); explicit order words or times ("first", "then", "after that", "around T-90"); the document's step order; dependency (something must exist before it is used); the order in which things were mentioned. Order resting only on the order of mentioning is weak and becomes a question.
 - Phases: boundaries at handoffs between functions, stated milestones or stated time windows; the SME's phase names are preferred.
 - RACI: R does the work; one A owns the outcome or signs off; C gives two-way input; I is told. If unclear, ask rather than guess.
 - Time: work and wait are kept separate; ranges stay ranges; nothing is converted unless the passage states it.
