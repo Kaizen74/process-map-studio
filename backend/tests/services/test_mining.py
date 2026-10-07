@@ -5,10 +5,12 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
 
+from app.domain.system_records import LogEvent, MetricRow
 from app.services import mining
 
 SYSTEM = Path(__file__).resolve().parents[1] / "fixtures" / "system"
@@ -272,3 +274,140 @@ def test_an_empty_file_is_refused() -> None:
     report = mining.parse_log([], CORE, "UTC", {}).report
     assert report.refused and report.refusal == "The file has no rows."
     assert report.date_from is None and report.dropped_share == 0.0
+
+
+# --- metrics (§3.13.5, criterion 85) -----------------------------------------------------------
+
+
+def _event(case: str, activity: str, start: str, end: str | None = None,
+           role: str | None = None) -> LogEvent:  # fmt: skip
+    return LogEvent(case_id=case, activity=activity, start=f"2026-03-02T{start}:00Z",
+                    end=f"2026-03-02T{end}:00Z" if end else None, role=role)  # fmt: skip
+
+
+def _scope(rows: list[MetricRow], scope: str) -> dict[str, dict[str, Any]]:
+    return {r.key: r.metrics for r in rows if r.scope == scope}
+
+
+def _fixture_metrics() -> list[MetricRow]:
+    headers, rows = _fixture()
+    parsed = mining.parse_log(rows, mining.suggest_column_map(headers), SINGAPORE, ROLE_MAP)
+    return mining.metrics(parsed.events, SINGAPORE)
+
+
+def test_spread_gives_the_median_and_an_interpolated_90th_percentile() -> None:
+    assert mining.spread([]) is None
+    assert mining.spread([7.0]) == {"median_min": 7.0, "p90_min": 7.0, "n": 1}
+    assert mining.spread([float(n) for n in range(1, 11)]) == {
+        "median_min": 5.5, "p90_min": 9.1, "n": 10,
+    }  # fmt: skip
+
+
+def test_with_end_times_work_and_wait_are_told_apart() -> None:
+    events = [
+        _event("C1", "Open", "09:00", "09:10", "Clerk"),
+        _event("C1", "Check", "09:30", "09:35", "Clerk"),
+        _event("C1", "Pay", "10:00", "10:20", "Accounts"),
+        _event("C2", "Open", "09:00", "09:20", "Clerk"),
+        _event("C2", "Pay", "09:50", "10:00", "Accounts"),
+    ]
+    rows = mining.metrics(events, "UTC")
+    activity, transition = _scope(rows, "activity"), _scope(rows, "transition")
+    assert activity["Open"]["work"] == {"median_min": 15.0, "p90_min": 19.0, "n": 2}
+    assert activity["Open"]["wait_before"] is None  # nothing comes before the first event
+    assert activity["Pay"]["wait_before"] == {"median_min": 27.5, "p90_min": 29.5, "n": 2}
+    assert activity["Pay"]["basis"] == mining.WAIT
+    assert transition["Open → Check"]["elapsed"]["median_min"] == 20.0  # 09:10 → 09:30
+    assert transition["Check → Pay"]["handoffs"] == 1
+    case = _scope(rows, "case")["all"]
+    assert case["cycle_time"] == {"median_min": 70.0, "p90_min": 78.0, "n": 2}  # 60 and 80
+    assert (case["handoffs"], case["handoffs_per_case"]) == (2, 1.0)
+    roles = _scope(rows, "role")
+    assert roles["Clerk"]["work"]["n"] == 3 and roles["Accounts"]["activities"] == ["Pay"]
+
+
+def test_without_end_times_the_time_between_events_is_not_separable() -> None:
+    events = [_event("C1", "Open", "09:00"), _event("C1", "Pay", "09:45"),
+              _event("C2", "Open", "09:00"), _event("C2", "Pay", "10:15")]  # fmt: skip
+    rows = mining.metrics(events, "UTC")
+    pay = _scope(rows, "activity")["Pay"]
+    assert (pay["work"], pay["basis"]) == (None, mining.NOT_SEPARABLE)
+    assert pay["wait_before"]["median_min"] == 60.0
+    assert _scope(rows, "transition")["Open → Pay"]["basis"] == mining.NOT_SEPARABLE
+    assert _scope(rows, "case")["all"]["cycle_time"]["median_min"] == 60.0  # first to last start
+
+
+def test_rework_variants_and_exception_share() -> None:
+    events = []
+    for n in range(7):  # 7 cases straight through
+        events += [_event(f"A{n}", "Open", "09:00"), _event(f"A{n}", "Close", "09:30")]
+    for n in range(3):  # 3 cases open twice
+        events += [_event(f"B{n}", "Open", "09:00"), _event(f"B{n}", "Open", "09:10"),
+                   _event(f"B{n}", "Close", "09:30")]  # fmt: skip
+    rows = mining.metrics(events, "UTC")
+    variants = [r for r in rows if r.scope == "variant"]
+    assert [(r.key, r.case_count, r.metrics["share"], r.metrics["cumulative_share"])
+            for r in variants] == [("1", 7, 0.7, 0.7), ("2", 3, 0.3, 1.0)]  # fmt: skip
+    assert variants[1].metrics["activities"] == ["Open", "Open", "Close"]
+    case = _scope(rows, "case")["all"]
+    assert (case["rework_cases"], case["rework_share"], case["exception_share"]) == (3, 0.3, 0.3)
+    assert _scope(rows, "activity")["Open"]["rework_share"] == 0.3
+    assert _scope(rows, "transition")["Open → Open"]["count"] == 3
+
+
+def test_only_the_ten_most_common_variants_are_kept() -> None:
+    events = [_event(f"C{n}", f"Step {n}", "09:00") for n in range(12)]
+    variants = [r for r in mining.metrics(events, "UTC") if r.scope == "variant"]
+    assert len(variants) == 10
+    assert _scope(mining.metrics(events, "UTC"), "case")["all"]["variants"] == 12
+
+
+def test_groups_and_months_under_five_cases_are_not_shown() -> None:
+    events = [_event(f"C{n}", "Open", "09:00") for n in range(5)]
+    events.append(LogEvent(case_id="D1", activity="Open", start="2026-04-01T09:00:00Z"))
+    events.append(LogEvent(case_id="D1", activity="Rare", start="2026-04-01T10:00:00Z"))
+    rows = mining.metrics(events, "UTC")
+    shown, too_few = mining.visible(rows)
+    assert {(r.scope, r.key) for r in shown} >= {("activity", "Open"), ("case", "all")}
+    assert ("activity", "Rare") not in {(r.scope, r.key) for r in shown}
+    assert too_few == sum(1 for r in rows if r.case_count < 5) > 0
+    opened = _scope(rows, "activity")["Open"]
+    assert opened["months"] == [{"month": "2026-03", "events": 5, "cases": 5}]
+    assert opened["months_too_few"] == 1  # April had one case
+
+
+def test_months_are_the_logs_own_calendar_months() -> None:
+    late = LogEvent(case_id="C1", activity="Open", start="2026-03-31T20:00:00Z")  # 1 April SGT
+    rows = mining.metrics([late], SINGAPORE)
+    assert _scope(rows, "activity")["Open"]["months_too_few"] == 1
+    assert mining.metrics([], "UTC")[0].metrics["cases"] == 0  # an empty log still has its case row
+
+
+def test_fixture_a11_metrics_match_appendix_a11() -> None:
+    rows = _fixture_metrics()
+    activity = _scope(rows, "activity")
+    assert set(activity) == DCS_ACTIVITIES and "Plan approved" not in activity
+    for name in ("Plan created", "Special load checked", "Loading report received",
+                 "Weight deviation checked", "Load sheet issued"):  # fmt: skip
+        assert activity[name]["cases"] == 200
+        assert activity[name]["cases_per_week"] == 25.0  # about 25 a week, 8 weeks
+    report = activity["Loading report received"]["work"]
+    assert 11 <= report["median_min"] <= 17 and 20 <= report["p90_min"] <= 31
+    assert activity["Plan revised"]["cases"] == 40  # 20%: rework into Draft load plan (R5)
+    assert activity["Manual weight override"]["cases"] == 23
+    case = _scope(rows, "case")["all"]
+    assert (case["cases"], case["events"], case["activities"], case["variants"]) == (
+        200,
+        1063,
+        7,
+        4,
+    )
+    assert case["basis"] == mining.WAIT and case["rework_share"] == 0.0
+    assert case["exception_share"] == 0.295
+    assert case["handoffs"] == 400  # Load controller → Ramp → Load controller in every case
+    variants = [r for r in rows if r.scope == "variant"]
+    assert [r.case_count for r in variants] == [141, 36, 19, 4]
+    shown, too_few = mining.visible(rows)
+    assert too_few == 1 and all(r.case_count >= 5 for r in shown)  # variant 4: 4 cases
+    assert set(_scope(rows, "role")) == {"Load controller", "Ramp"}
+    assert not any(code in json.dumps([r.model_dump() for r in rows]) for code in ROLE_MAP)

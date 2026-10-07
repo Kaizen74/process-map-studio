@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -121,3 +123,23 @@ class ImportInput(BaseModel):
 class ImportStarted(BaseModel):
     job_id: str
     log_id: str
+
+
+class MetricRow(BaseModel):
+    """One stored group of metrics (PRD §3.5 `mining_metrics`; §3.13.5)."""
+
+    scope: str  # activity · transition · case · variant · role
+    key: str
+    label: str
+    case_count: int
+    metrics: dict[str, Any]
+
+
+class MetricsView(BaseModel):
+    """GET /event-logs/{lid}/metrics: only groups of at least `minimum_cases` cases."""
+
+    log_id: str
+    scope: str
+    minimum_cases: int
+    groups: list[MetricRow]
+    too_few: int

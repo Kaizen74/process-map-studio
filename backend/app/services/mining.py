@@ -6,20 +6,33 @@ process-mining library (PM4Py is AGPL, constraint 19).
 - `distinct_resources`: the resource values, for the role-mapping step; held in memory only.
 - `parse_log`: rows → events and the plain-language validation report. A resource becomes a role
   here and is then gone: no event carries it (constraint 24).
+- `metrics`: the §3.13.5 figures per activity, transition, case, variant and role (R4);
+  `visible` keeps only groups of at least 5 cases.
 """
 
 from __future__ import annotations
 
 import csv
 import io
+import math
 import re
+import statistics
+from collections import Counter
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from difflib import SequenceMatcher
+from itertools import pairwise
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from app.domain.enums import SystemLogColumn as Field
-from app.domain.system_records import DroppedRows, LogEvent, ParsedLog, ValidationReport
+from app.domain.system_records import (
+    DroppedRows,
+    LogEvent,
+    MetricRow,
+    ParsedLog,
+    ValidationReport,
+)
 
 REQUIRED = (Field.CASE_ID.value, Field.ACTIVITY.value, Field.TIMESTAMP.value)
 FIELD_WORDS = {
@@ -268,3 +281,210 @@ def _report(
         refused=bool(refusal),
         refusal=refusal,
     )
+
+
+# --- metrics (§3.13.5; R4) ----------------------------------------------------------------------
+
+MINIMUM_CASES = 5  # §3.13.5: a metric is shown only when it rests on at least this many cases
+TOP_VARIANTS = 10
+UNKNOWN_ROLE = "Unknown role"
+WAIT, NOT_SEPARABLE = "wait", "not_separable"
+SCOPES = ("activity", "transition", "case", "variant", "role")
+
+
+def _moment(stamp: str) -> datetime:
+    return datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+
+
+def _minutes(earlier: str, later: str) -> float:
+    return (_moment(later) - _moment(earlier)).total_seconds() / 60
+
+
+def spread(values: list[float]) -> dict[str, float | int] | None:
+    """Median and 90th percentile in minutes (one decimal), or None without values. The 90th
+    percentile interpolates linearly between the closest ranks."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    position = 0.9 * (len(ordered) - 1)
+    low = int(position)
+    high = min(low + 1, len(ordered) - 1)
+    p90 = ordered[low] + (ordered[high] - ordered[low]) * (position - low)
+    return {"median_min": round(statistics.median(ordered), 1), "p90_min": round(p90, 1),
+            "n": len(ordered)}  # fmt: skip
+
+
+def _share(part: int, whole: int) -> float:
+    return round(part / whole, 3) if whole else 0.0
+
+
+def _row(scope: str, key: str, label: str, cases: int, metrics: dict[str, Any]) -> MetricRow:
+    return MetricRow(scope=scope, key=key, label=label, case_count=cases, metrics=metrics)
+
+
+def metrics(events: list[LogEvent], timezone: str) -> list[MetricRow]:
+    """Every metric group of a log (§3.13.5), whatever its size; showing only groups of at least
+    MINIMUM_CASES cases is the reader's job. `events` are sorted by case, then start."""
+    zone = ZoneInfo(timezone)
+    timed = bool(events) and all(e.end for e in events)
+    basis = WAIT if timed else NOT_SEPARABLE
+    by_case: dict[str, list[LogEvent]] = {}
+    for e in events:
+        by_case.setdefault(e.case_id, []).append(e)
+    rows = _activity_rows(by_case, zone, timed, basis, _weeks(events, zone))
+    rows += _transition_rows(by_case, timed, basis)
+    variant_rows, exception_share = _variant_rows(by_case)
+    rows.append(_case_row(events, by_case, timed, basis, exception_share, len(variant_rows)))
+    rows += variant_rows[:TOP_VARIANTS]
+    rows += _role_rows(by_case, timed)
+    return rows
+
+
+def _weeks(events: list[LogEvent], zone: ZoneInfo) -> int:
+    """How many weeks the log covers: its first to last day, in whole weeks (at least 1)."""
+    if not events:
+        return 1
+    days = {_moment(e.start).astimezone(zone).date() for e in events}
+    return max(1, math.ceil(((max(days) - min(days)).days + 1) / 7))
+
+
+def _activity_rows(by_case: dict[str, list[LogEvent]], zone: ZoneInfo, timed: bool,
+                   basis: str, weeks: int) -> list[MetricRow]:  # fmt: skip
+    events: Counter[str] = Counter()
+    cases: dict[str, set[str]] = {}
+    months: dict[str, dict[str, list[str]]] = {}  # activity → month → case IDs (one per event)
+    work: dict[str, list[float]] = {}
+    wait: dict[str, list[float]] = {}
+    repeated: Counter[str] = Counter()
+    for case, trail in by_case.items():
+        seen: Counter[str] = Counter(e.activity for e in trail)
+        repeated.update(a for a, n in seen.items() if n > 1)
+        for i, e in enumerate(trail):
+            events[e.activity] += 1
+            cases.setdefault(e.activity, set()).add(case)
+            month = _moment(e.start).astimezone(zone).strftime("%Y-%m")
+            months.setdefault(e.activity, {}).setdefault(month, []).append(case)
+            if timed and e.end:
+                work.setdefault(e.activity, []).append(_minutes(e.start, e.end))
+            if i:
+                before = trail[i - 1]
+                wait.setdefault(e.activity, []).append(
+                    _minutes(before.end if timed and before.end else before.start, e.start)
+                )
+    rows = []
+    for activity in sorted(events, key=lambda a: (-events[a], a)):
+        n = len(cases[activity])
+        shown, hidden = [], 0
+        for month, ids in sorted(months[activity].items()):
+            if len(set(ids)) >= MINIMUM_CASES:
+                shown.append({"month": month, "events": len(ids), "cases": len(set(ids))})
+            else:
+                hidden += 1
+        rows.append(_row("activity", activity, activity, n, {
+            "activity": activity, "events": events[activity], "cases": n,
+            "cases_per_week": round(n / weeks, 1),
+            "cases_per_month": round(n / weeks * 52 / 12, 1), "months": shown,
+            "months_too_few": hidden, "work": spread(work.get(activity, [])),
+            "wait_before": spread(wait.get(activity, [])), "basis": basis,
+            "rework_cases": repeated[activity], "rework_share": _share(repeated[activity], n),
+        }))  # fmt: skip
+    return rows
+
+
+def _transition_rows(by_case: dict[str, list[LogEvent]], timed: bool,
+                     basis: str) -> list[MetricRow]:  # fmt: skip
+    elapsed: dict[tuple[str, str], list[float]] = {}
+    cases: dict[tuple[str, str], set[str]] = {}
+    handoffs: Counter[tuple[str, str]] = Counter()
+    for case, trail in by_case.items():
+        for a, b in pairwise(trail):
+            pair = (a.activity, b.activity)
+            start = a.end if timed and a.end else a.start
+            elapsed.setdefault(pair, []).append(_minutes(start, b.start))
+            cases.setdefault(pair, set()).add(case)
+            if a.role and b.role and a.role != b.role:
+                handoffs[pair] += 1
+    rows = []
+    for pair in sorted(elapsed, key=lambda p: (-len(elapsed[p]), p)):
+        label = f"{pair[0]} → {pair[1]}"
+        rows.append(_row("transition", label, label, len(cases[pair]), {
+            "from_activity": pair[0], "to_activity": pair[1], "count": len(elapsed[pair]),
+            "cases": len(cases[pair]), "elapsed": spread(elapsed[pair]), "basis": basis,
+            "handoffs": handoffs[pair],
+        }))  # fmt: skip
+    return rows
+
+
+def _variant_rows(by_case: dict[str, list[LogEvent]]) -> tuple[list[MetricRow], float]:
+    """Every variant, most common first (ties by sequence), and the exception share."""
+    sequences = Counter(tuple(e.activity for e in trail) for trail in by_case.values())
+    total = len(by_case)
+    ordered = sorted(sequences, key=lambda s: (-sequences[s], s))
+    rows, covered = [], 0
+    for rank, sequence in enumerate(ordered, start=1):
+        covered += sequences[sequence]
+        rows.append(_row("variant", str(rank), f"Variant {rank}", sequences[sequence], {
+            "rank": rank, "activities": list(sequence), "cases": sequences[sequence],
+            "share": _share(sequences[sequence], total), "cumulative_share": _share(covered, total),
+        }))  # fmt: skip
+    usual = sequences[ordered[0]] if ordered else 0
+    return rows, _share(total - usual, total)
+
+
+def _case_row(events: list[LogEvent], by_case: dict[str, list[LogEvent]], timed: bool,
+              basis: str, exception_share: float, variants: int) -> MetricRow:  # fmt: skip
+    cycle, rework, handoffs = [], 0, 0
+    for trail in by_case.values():
+        last = trail[-1].end if timed and trail[-1].end else max(e.start for e in trail)
+        cycle.append(_minutes(trail[0].start, last))
+        activities = [e.activity for e in trail]
+        rework += len(set(activities)) < len(activities)
+        handoffs += sum(1 for a, b in pairwise(trail)
+                        if a.role and b.role and a.role != b.role)  # fmt: skip
+    total = len(by_case)
+    starts = [e.start for e in events]
+    return _row("case", "all", "All cases", total, {
+        "cases": total, "events": len(events), "activities": len({e.activity for e in events}),
+        "date_from": min(starts) if starts else None, "date_to": max(starts) if starts else None,
+        "cycle_time": spread(cycle), "basis": basis, "rework_cases": rework,
+        "rework_share": _share(rework, total), "handoffs": handoffs,
+        "handoffs_per_case": round(handoffs / total, 2) if total else 0.0,
+        "variants": variants, "exception_share": exception_share,
+    })  # fmt: skip
+
+
+def _role_rows(by_case: dict[str, list[LogEvent]], timed: bool) -> list[MetricRow]:
+    events: Counter[str] = Counter()
+    cases: dict[str, set[str]] = {}
+    activities: dict[str, set[str]] = {}
+    work: dict[str, list[float]] = {}
+    for case, trail in by_case.items():
+        for e in trail:
+            role = e.role or UNKNOWN_ROLE
+            events[role] += 1
+            cases.setdefault(role, set()).add(case)
+            activities.setdefault(role, set()).add(e.activity)
+            if timed and e.end:
+                work.setdefault(role, []).append(_minutes(e.start, e.end))
+    return [
+        _row(
+            "role",
+            role,
+            role,
+            len(cases[role]),
+            {
+                "role": role,
+                "events": events[role],
+                "cases": len(cases[role]),
+                "activities": sorted(activities[role]),
+                "work": spread(work.get(role, [])),
+            },
+        )
+        for role in sorted(events, key=lambda r: (-events[r], r))
+    ]
+
+
+def visible(rows: list[MetricRow]) -> tuple[list[MetricRow], int]:
+    """The groups that may be shown (at least MINIMUM_CASES cases) and how many may not."""
+    shown = [r for r in rows if r.case_count >= MINIMUM_CASES]
+    return shown, len(rows) - len(shown)

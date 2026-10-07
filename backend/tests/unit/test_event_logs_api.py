@@ -421,3 +421,63 @@ def test_unknown_engagements_and_logs_are_not_found(engagement: Engagement) -> N
     assert engagement.put("nope", "column-map", {"columns": {}}).status_code == 404
     assert engagement.put("nope", "role-map", {"roles": {}}).status_code == 404
     assert engagement.start("nope").status_code == 404
+
+
+# --- metrics (R4; §3.13.5; criteria 85 and 94) -------------------------------------------------
+
+
+def _imported(engagement: Engagement) -> str:
+    lid = engagement.ready()
+    assert engagement.start(lid).status_code == 202
+    wait_for_jobs(engagement.client)
+    return lid
+
+
+def _metrics(engagement: Engagement, lid: str, scope: str) -> Any:
+    return engagement.client.get(f"/api/event-logs/{lid}/metrics", params={"scope": scope})
+
+
+def test_the_import_works_out_every_scope_and_hides_groups_under_five_cases(
+    engagement: Engagement,
+) -> None:
+    lid = _imported(engagement)
+    answers = {}
+    for scope in ("activity", "transition", "case", "variant", "role"):
+        response = _metrics(engagement, lid, scope)
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert (body["log_id"], body["scope"], body["minimum_cases"]) == (lid, scope, 5)
+        assert all(g["case_count"] >= 5 for g in body["groups"])
+        answers[scope] = body
+    activity = answers["activity"]["groups"]
+    assert [g["key"] for g in activity][:5] == sorted(
+        ["Plan created", "Special load checked", "Loading report received",
+         "Weight deviation checked", "Load sheet issued"]
+    )  # most events first, then by name  # fmt: skip
+    assert activity[0]["metrics"]["cases_per_week"] == 25.0
+    [case] = answers["case"]["groups"]
+    assert (case["key"], case["label"], case["metrics"]["cases"]) == ("all", "All cases", 200)
+    variants = answers["variant"]["groups"]
+    assert [g["case_count"] for g in variants] == [141, 36, 19]
+    assert answers["variant"]["too_few"] == 1  # the fourth variant has 4 cases
+    assert [g["label"] for g in answers["role"]["groups"]] == ["Load controller", "Ramp"]
+    transitions = answers["transition"]["groups"]
+    assert transitions[0]["metrics"]["count"] == 200
+    assert not any(code in json.dumps(answers) for code in CODES)
+
+
+def test_metrics_need_an_imported_log_and_a_known_scope(engagement: Engagement) -> None:
+    lid = engagement.ready()
+    assert _error(_metrics(engagement, lid, "case")) == (409, "NOT_IMPORTED", actions.NOT_IMPORTED)
+    assert _error(_metrics(engagement, lid, "people")) == (422, "VALIDATION", actions.BAD_SCOPE)
+    assert _error(_metrics(engagement, lid, ""))[0] == 422
+    assert _metrics(engagement, "nope", "case").status_code == 404
+
+
+def test_deleting_a_log_removes_its_metrics(engagement: Engagement) -> None:
+    lid = _imported(engagement)
+    with session_scope(engagement.client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        assert repo.metrics(session, lid, "activity")
+    assert engagement.client.delete(f"/api/event-logs/{lid}").status_code == 204
+    with session_scope(engagement.client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        assert repo.metrics(session, lid, "activity") == []

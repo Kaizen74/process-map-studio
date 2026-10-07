@@ -32,6 +32,7 @@ from app.domain.system_records import (
     EventLogView,
     ImportInput,
     ImportStarted,
+    MetricsView,
     ParsedLog,
     ResourceRow,
     RoleMapInput,
@@ -82,6 +83,8 @@ APPROVAL = (
 NOT_CONFIRMED = "Confirm the column map first."
 UNMAPPED = "Choose a role or Unknown role for every user ID ({n} left)."
 FILE_GONE = "The import stopped: the file is no longer held (the app restarted). Upload it again."
+NOT_IMPORTED = "Import the log first: its figures are worked out during the import."
+BAD_SCOPE = "Choose activity, transition, case, variant or role."
 UNEXPECTED = (
     "Something went wrong while importing this log. No events were saved. Upload the file "
     "again, or use Copy details to report it."
@@ -465,6 +468,7 @@ def run_import(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str
              "role_id": by_name.get(e.role) if e.role else None, "case_attributes": e.attributes}
             for e in parsed.events
         ])  # fmt: skip
+        repo.add_metrics(session, log.id, mining.metrics(parsed.events, log.timezone))
         report = parsed.report
         repo.update(session, log.id, {"status": "imported", "approved_at": _now(),
                                       "validation_report": report.model_dump()})  # fmt: skip
@@ -484,3 +488,18 @@ def mark_failed(sessions: Sessions, log_id: str) -> None:
         if repo.get(session, log_id) is not None:
             repo.update(session, log_id, {"status": "failed"})
     _forget(log_id)
+
+
+def get_metrics(sessions: Sessions, log_id: str, scope: str) -> Result[MetricsView]:
+    """The stored metrics of one scope; groups under 5 cases are only counted (§3.13.5)."""
+    if scope not in mining.SCOPES:
+        return _invalid("scope", BAD_SCOPE)
+    with session_scope(sessions) as session:
+        log = repo.get(session, log_id)
+        if log is None:
+            return Err(ErrorKind.NOT_FOUND, LOG_MISSING)
+        if log.status != "imported":
+            return _conflict("NOT_IMPORTED", NOT_IMPORTED)
+        shown, too_few = mining.visible(repo.metrics(session, log_id, scope))
+    return Ok(MetricsView(log_id=log_id, scope=scope, minimum_cases=mining.MINIMUM_CASES,
+                          groups=shown, too_few=too_few))  # fmt: skip

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, Request, Response, UploadFile
+from fastapi import APIRouter, File, Form, Query, Request, Response, UploadFile
 
 from app.actions import event_logs
 from app.domain.system_records import (
@@ -12,6 +12,7 @@ from app.domain.system_records import (
     EventLogView,
     ImportInput,
     ImportStarted,
+    MetricsView,
     RoleMapInput,
 )
 from app.routers.http import unwrap
@@ -71,3 +72,8 @@ def set_role_map(request: Request, log_id: str, body: RoleMapInput) -> EventLogV
 def start_import(request: Request, log_id: str, body: ImportInput) -> ImportStarted:
     state = request.app.state
     return unwrap(event_logs.start_import(state.sessions, log_id, body, state.worker.submit))
+
+
+@router.get("/event-logs/{log_id}/metrics")
+def get_metrics(request: Request, log_id: str, scope: str = Query("")) -> MetricsView:
+    return unwrap(event_logs.get_metrics(request.app.state.sessions, log_id, scope))

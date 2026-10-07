@@ -8,8 +8,8 @@ from typing import Any
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
-from app.domain.system_records import EventLogView, ValidationReport
-from app.repositories.tables import Event, EventLog
+from app.domain.system_records import EventLogView, MetricRow, ValidationReport
+from app.repositories.tables import Event, EventLog, MiningMetric
 
 
 def _view(row: EventLog) -> EventLogView:
@@ -91,4 +91,26 @@ def events(session: Session, log_id: str) -> list[dict[str, Any]]:
         {"case_id": r.case_id, "activity": r.activity, "ts_start": r.ts_start,
          "ts_end": r.ts_end, "role_id": r.role_id, "case_attributes": r.case_attributes}
         for r in rows
+    ]  # fmt: skip
+
+
+def add_metrics(session: Session, log_id: str, rows: list[MetricRow]) -> None:
+    """Store the log's metric groups; the order within a scope is kept as `order`."""
+    if rows:
+        session.execute(insert(MiningMetric), [
+            {"log_id": log_id, "scope": r.scope, "key": r.key, "case_count": r.case_count,
+             "metrics": {"label": r.label, "order": n, "values": r.metrics}}
+            for n, r in enumerate(rows)
+        ])  # fmt: skip
+
+
+def metrics(session: Session, log_id: str, scope: str) -> list[MetricRow]:
+    rows = session.scalars(
+        select(MiningMetric).where(MiningMetric.log_id == log_id, MiningMetric.scope == scope)
+    )
+    ordered = sorted(rows, key=lambda r: int(r.metrics.get("order", 0)))
+    return [
+        MetricRow(scope=r.scope, key=r.key, label=str(r.metrics.get("label", r.key)),
+                  case_count=r.case_count, metrics=dict(r.metrics.get("values", {})))
+        for r in ordered
     ]  # fmt: skip
