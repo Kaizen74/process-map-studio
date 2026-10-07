@@ -5,11 +5,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from sqlalchemy import delete as delete_rows
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
-from app.domain.system_records import EventLogView, MetricRow, ValidationReport
-from app.repositories.tables import Event, EventLog, MiningMetric
+from app.domain.system_records import AlignmentStored, EventLogView, MetricRow, ValidationReport
+from app.repositories.tables import ActivityAlignment, Element, Event, EventLog, MiningMetric
 
 
 def _view(row: EventLog) -> EventLogView:
@@ -114,3 +115,60 @@ def metrics(session: Session, log_id: str, scope: str) -> list[MetricRow]:
                   case_count=r.case_count, metrics=dict(r.metrics.get("values", {})))
         for r in ordered
     ]  # fmt: skip
+
+
+def activity_roles(session: Session, log_id: str) -> list[tuple[str, str | None, int, int]]:
+    """(activity, role_id, events, cases) per activity and role: role-level counts only."""
+    rows = session.execute(
+        select(
+            Event.activity, Event.role_id, func.count(), func.count(func.distinct(Event.case_id))
+        )
+        .where(Event.log_id == log_id)
+        .group_by(Event.activity, Event.role_id)
+    )
+    return [(a, r, int(n), int(c)) for a, r, n, c in rows]
+
+
+def activity_cases(session: Session, log_id: str) -> dict[str, int]:
+    """Distinct cases per activity."""
+    rows = session.execute(
+        select(Event.activity, func.count(func.distinct(Event.case_id)))
+        .where(Event.log_id == log_id)
+        .group_by(Event.activity)
+    )
+    return {a: int(c) for a, c in rows}
+
+
+def alignment(session: Session, log_id: str) -> list[AlignmentStored]:
+    """Stored decisions and suggestions, each step given by its stable key."""
+    rows = session.execute(
+        select(ActivityAlignment, Element.stable_key)
+        .outerjoin(Element, Element.id == ActivityAlignment.element_id)
+        .where(ActivityAlignment.log_id == log_id)
+        .order_by(ActivityAlignment.created_at, ActivityAlignment.id)
+    )
+    return [
+        AlignmentStored(activity=r.activity, step_key=key, status=r.status, reason=r.reason,
+                        confirmed=r.confirmed_at is not None)
+        for r, key in rows
+    ]  # fmt: skip
+
+
+def replace_alignment(session: Session, log_id: str, activities: set[str], step_ids: set[str],
+                      rows: list[dict[str, Any]]) -> None:  # fmt: skip
+    """Remove the stored rows of these activities and the no-record rows of these steps (any
+    version: matched by stable key), then add `rows`."""
+    if activities:
+        session.execute(delete_rows(ActivityAlignment).where(
+            ActivityAlignment.log_id == log_id, ActivityAlignment.activity.in_(activities)
+        ))  # fmt: skip
+    if step_ids:
+        keys = select(Element.stable_key).where(Element.id.in_(step_ids))
+        same = select(Element.id).where(Element.stable_key.in_(keys))
+        session.execute(delete_rows(ActivityAlignment).where(
+            ActivityAlignment.log_id == log_id, ActivityAlignment.activity == "",
+            ActivityAlignment.element_id.in_(same),
+        ))  # fmt: skip
+    for row in rows:
+        session.add(ActivityAlignment(log_id=log_id, **row))
+    session.flush()

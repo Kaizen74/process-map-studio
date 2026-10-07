@@ -390,6 +390,35 @@ Response `200`: `{"log_id", "scope", "minimum_cases": 5, "groups": [{"key", "lab
 - `spread`: `{median_min, p90_min, n}`.
 Errors: `404` (log); `409 NOT_IMPORTED` ("Import the log first: its figures are worked out during the import."); `422` ("Choose activity, transition, case, variant or role.").
 
+### Alignment of log activities to map steps (R5a, 2026-10-07; PRD §3.13.4, criterion 86)
+Matches the activities an imported log records to the steps of the engagement's current map (the draft, or else the latest published version). Nothing is applied until Eric confirms: the app's own matches and Claude's are only proposals, and only confirmed rows are used by the map (R5b).
+
+#### Alignment object
+```json
+{"log_id": "…", "version_id": "…",
+ "rows": [{"activity": "Plan created", "element_id": "…", "element_label": "Draft load plan",
+           "status": "proposed", "confirmed": false, "proposed_by": "app",
+           "reason": "Same words: plan. Same role: Load controller.", "events": 200, "cases": 200}],
+ "summary": {"activities": 7, "matched": 6, "hidden_work": 1, "no_system_record": 5, "waiting": 12}}
+```
+- One row per log activity (in the log's order of volume), then one row per step that no activity is matched to, in map order (`activity: ""`, `events` and `cases` 0).
+- `status` (B.43): `proposed` or `confirmed` (activity → step); `hidden_work` (an activity with no step: a *hidden work* candidate); `no_system_record` (a step with no activity: *offline / not recorded*). `confirmed` tells a decision from a proposal.
+- `proposed_by`: `app` (the deterministic pass, worked out on every read and never stored), `claude` (a stored suggestion from the AI pass) or `eric` (confirmed). Several activities may be matched to one step (for example a revision activity as rework into the step it repeats); an activity is matched to at most one step.
+- The deterministic pass compares words (lower case, simple word endings removed, small words ignored) between the activity name and each step's label and the SME terms linked to that step in the glossary, and adds weight when the activity's most frequent role is the step's lane role. The best step is proposed when the match is strong enough (shared words over the shorter name, plus 0.25 for the same role, more than 0.5); otherwise the activity is proposed as hidden work. `reason` says which words and role matched.
+- `summary.waiting`: rows still waiting for Eric's decision.
+- Confirmed rows survive a new map version: they are matched to the new version's steps by the step's stable key; a confirmed row whose step no longer exists drops back to a proposal.
+
+#### GET /api/event-logs/{lid}/alignment
+`200`: alignment. Errors: `404` (log); `409 NOT_IMPORTED`; `409 NO_MAP` ("Draft the map first: the log's activities are matched to its steps.").
+
+#### PUT /api/event-logs/{lid}/alignment
+`{"rows": [{"activity": "Plan created", "element_id": "…", "status": "confirmed"}, {"activity": "Manual weight override", "element_id": null, "status": "hidden_work"}, {"activity": "", "element_id": "…", "status": "no_system_record"}]}`: Eric's decisions, each replacing any earlier decision or suggestion for that activity (or, for `no_system_record`, that step). `confirmed` needs an activity of the log and a step of the current map; `hidden_work` an activity and no step; `no_system_record` a step and no activity. A step can't be both matched and marked as having no system record ("Issue load sheet has a system record: Load sheet issued is matched to it."). Response `200`: alignment. Audit row "Confirmed system alignment" (the decisions as activity → step label). Errors: as GET, plus `422` naming `rows` ("That activity isn't in the log.", "Choose a step of the current map.", "Choose confirmed, hidden_work or no_system_record.").
+
+#### POST /api/event-logs/{lid}/alignment/suggest (AI job)
+Claude's pass (`SR_align`) for the activities the deterministic pass could not match and Eric hasn't decided. Claude sees only those activity names (with volumes and their most frequent role), the current map's steps (stable key, label, kind, lane role) and the glossary terms, names on the hidden-names list replaced; no events, no case IDs, no figures per person. Each suggestion must name an activity that was sent and a step that exists, with a reason; any other is left out (counted in the job message, never shown). Kept suggestions are stored as `proposed_by: "claude"` proposals, replacing earlier ones for those activities; confirmed rows are never touched. Response `202`: `{"job_id", "log_id"}`; the job (`event_log_alignment`) ends with a message such as "Claude suggested 1 match. 1 suggestion was left out: it named an activity or step that isn't in the log or on the map.". AI usage is shown on the job like the gap analyses.
+Errors: `404`; `409 NOT_IMPORTED`; `409 NO_MAP`; `409 NOTHING_TO_SUGGEST` ("Every activity already has a match or a decision."); the job fails in plain words without a key, when Anthropic is busy or after a format failure (nothing saved).
+Used by: System records screen (R7).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

@@ -6,14 +6,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, Request, Response, UploadFile
 
-from app.actions import event_logs
+from app.actions import event_logs, log_alignment
 from app.domain.system_records import (
+    AlignmentInput,
+    AlignmentView,
     ColumnMapInput,
     EventLogView,
     ImportInput,
     ImportStarted,
     MetricsView,
     RoleMapInput,
+    SuggestStarted,
 )
 from app.routers.http import unwrap
 
@@ -77,3 +80,20 @@ def start_import(request: Request, log_id: str, body: ImportInput) -> ImportStar
 @router.get("/event-logs/{log_id}/metrics")
 def get_metrics(request: Request, log_id: str, scope: str = Query("")) -> MetricsView:
     return unwrap(event_logs.get_metrics(request.app.state.sessions, log_id, scope))
+
+
+@router.get("/event-logs/{log_id}/alignment")
+def get_alignment(request: Request, log_id: str) -> AlignmentView:
+    return unwrap(log_alignment.get_alignment(request.app.state.sessions, log_id))
+
+
+@router.put("/event-logs/{log_id}/alignment")
+def set_alignment(request: Request, log_id: str, body: AlignmentInput) -> AlignmentView:
+    state = request.app.state
+    return unwrap(log_alignment.set_alignment(state.config, state.sessions, log_id, body))
+
+
+@router.post("/event-logs/{log_id}/alignment/suggest", status_code=202)
+def suggest_alignment(request: Request, log_id: str) -> SuggestStarted:
+    state = request.app.state
+    return unwrap(log_alignment.start_suggest(state.sessions, log_id, state.worker.submit))

@@ -143,3 +143,57 @@ class MetricsView(BaseModel):
     minimum_cases: int
     groups: list[MetricRow]
     too_few: int
+
+
+class AlignmentRow(BaseModel):
+    """One row of the alignment table (API_CONTRACT → Alignment of log activities to map steps)."""
+
+    activity: str
+    element_id: str | None
+    element_label: str
+    status: str  # B.43
+    confirmed: bool
+    proposed_by: str  # app · claude · eric
+    reason: str
+    events: int
+    cases: int
+
+
+class AlignmentSummary(BaseModel):
+    activities: int
+    matched: int
+    hidden_work: int
+    no_system_record: int
+    waiting: int
+
+
+class AlignmentView(BaseModel):
+    log_id: str
+    version_id: str
+    rows: list[AlignmentRow]
+    summary: AlignmentSummary
+
+
+class AlignmentChoice(BaseModel):
+    activity: str = ""
+    element_id: str | None = None
+    status: str
+
+
+class AlignmentInput(BaseModel):
+    rows: list[AlignmentChoice]
+
+
+class AlignmentStored(BaseModel):
+    """A stored decision or Claude suggestion, its step given by stable key (versions change)."""
+
+    activity: str
+    step_key: str | None
+    status: str
+    reason: str
+    confirmed: bool
+
+
+class SuggestStarted(BaseModel):
+    job_id: str
+    log_id: str

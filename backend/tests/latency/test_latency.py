@@ -188,6 +188,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/event-logs/{imported_log}/metrics?scope=case", None),
     ("GET", "/api/event-logs/{imported_log}/metrics?scope=variant", None),
     ("GET", "/api/event-logs/{imported_log}/metrics?scope=role", None),
+    ("GET", "/api/event-logs/{imported_log}/alignment", None),
     ("GET", "/api/templates/interview?type=practice&format=docx", None),
     ("GET", "/api/templates/interview?type=landscape&format=md", None),
     ("GET", "/api/settings", None),

@@ -529,3 +529,20 @@ class IGQuestion(BaseModel):
 
 class IGOutput(BaseModel):
     questions: list[IGQuestion] = Field(description="Three to five questions")
+
+
+# --- SR_align (PRD §3.13.4; R5a) ---------------------------------------------------------------
+
+
+class SRMatch(BaseModel):
+    """One suggested match between a log activity and a map step."""
+
+    activity: str = Field(description="The activity name exactly as supplied in <activities>")
+    step_key: str = Field(description="The step's key exactly as supplied in <steps>")
+    reason: str = Field(description="One plain sentence: what links the activity and the step")
+
+
+class SROutput(BaseModel):
+    matches: list[SRMatch] = Field(
+        description="Only the activities a step clearly fits; may be empty"
+    )
