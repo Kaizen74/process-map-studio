@@ -181,9 +181,12 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
             v: client.get(f"{url}/exceptions", params={"view": v}).json()
             for v in ("done", "documented")
         }
+        # P9u: the Registers lists made from the interviews.
+        lists = {name: client.get(f"{url}/{name}").json()
+                 for name in ("stories", "glossary", "capability-notes")}  # fmt: skip
         bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
                   "views": views, "view_graphs": view_graphs,
-                  "exceptions": exceptions}  # fmt: skip
+                  "exceptions": exceptions, "lists": lists}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 

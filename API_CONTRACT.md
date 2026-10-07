@@ -932,6 +932,9 @@ The validation session pack as a Markdown file (`text/markdown; charset=utf-8`, 
 5. **Open validation questions**: the version's open questions, each with the step it is about.
 A footer: "Process Map Studio · <process> <version label> · enter the outcomes as edits on the Review screen". Errors: `404` ("That version doesn't exist."). Used by: Review screen, **Download validation pack** (C6).
 
+### GET /api/versions/{vid}/stories (P9u, 2026-10-07; PRD §3.12.2, §5.4 Registers "Stories", criterion 59)
+Every story fragment the interviews told on this map, in the order told, for the Registers **Stories** list: `[{"label", "fragment_type": B.31, "signifiers": [], "frequency", "single_account": true, "quote", "source_id", "segment_id", "anchor", "steps": [labels]}]` (the same fields as a step's stories in `GET /api/elements/{eid}`, plus the labels of the steps S3c linked it to; a story linked to no step is listed with `steps: []`). Kept when told once (§3.12.9 rule 2). Names hidden; quotes stay in the app (never exported verbatim). Read-only. Errors: `404`.
+
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).
 

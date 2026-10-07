@@ -1,6 +1,7 @@
 import { request } from "./request";
 import type { QualityCard, VersionDetail, VersionSummary } from "./types";
 import type { ExceptionReport } from "../lib/exceptions";
+import type { CapabilityNote, GlossaryEntry, StoryEntry } from "../lib/mapTypes";
 import type { AlignmentRow } from "../lib/matrix";
 import type { CauseEntry, LaneBoundary, Registers, Theme, ThemeStatus, ValidationResult } from "../lib/registers";
 
@@ -46,3 +47,11 @@ export const listLaneBoundaries = (versionId: string) =>
 // API_CONTRACT.md → GET /api/versions/{vid}/exceptions (X2).
 export const getExceptions = (versionId: string, view: "done" | "documented" = "done") =>
   request<ExceptionReport>(`/versions/${enc(versionId)}/exceptions?view=${view}`);
+
+// API_CONTRACT.md → stories (P9u), glossary and capability notes: the Registers lists.
+export const listStories = (versionId: string) => request<StoryEntry[]>(`/versions/${enc(versionId)}/stories`);
+
+export const listGlossary = (versionId: string) => request<GlossaryEntry[]>(`/versions/${enc(versionId)}/glossary`);
+
+export const listCapabilityNotes = (versionId: string) =>
+  request<CapabilityNote[]>(`/versions/${enc(versionId)}/capability-notes`);

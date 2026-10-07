@@ -229,6 +229,11 @@ export interface StoryCard {
   anchor: string;
 }
 
+/** API_CONTRACT.md → GET /api/versions/{vid}/stories (P9u): a story with the steps it is about. */
+export interface StoryEntry extends StoryCard {
+  steps: string[];
+}
+
 /** API_CONTRACT.md → GET /api/versions/{vid}/capability-notes (Preserve · Improve). */
 export interface CapabilityNote {
   kind: "strength" | "weakness";

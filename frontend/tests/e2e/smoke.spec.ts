@@ -446,11 +446,29 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const registerChoice = page.getByRole("radiogroup", { name: "Register" });
     await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims", "Emerging themes"]) {
+    for (const name of [
+      "AI flags",
+      "Constraints by cause",
+      "External practice (R)",
+      "Validation questions",
+      "Rejected claims",
+      "Stories",
+      "Glossary",
+      "Emerging themes",
+      "Preserve / Improve",
+    ]) {
       await registerChoice.getByRole("radio", { name }).click();
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);
     }
+    // P9u: the interview lists from the real backend (the sample's story, terms and capability notes).
+    await registerChoice.getByRole("radio", { name: "Stories" }).click();
+    await expect(page.getByRole("list", { name: "Stories" })).toContainText("Had to re-trim three flights in one night");
+    await registerChoice.getByRole("radio", { name: "Preserve / Improve" }).click();
+    await expect(page.getByRole("list", { name: "Improve: what gets in the way, Systems" })).toContainText(
+      "The paper loading report gets lost or arrives late",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
     // X3: how much of the process is exception handling, rework and workarounds.
     await registerChoice.getByRole("radio", { name: "Exceptions and workarounds" }).click();
     await expect(registerChoice.getByRole("radio", { name: "Exceptions and workarounds" })).toHaveAttribute(

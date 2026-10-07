@@ -12,7 +12,7 @@ import {
   type RouteExit,
   type Workaround,
 } from "../../src/lib/exceptions";
-import type { AnswerQuote } from "../../src/lib/mapTypes";
+import type { AnswerQuote, CapabilityNote, GlossaryEntry, StoryEntry } from "../../src/lib/mapTypes";
 import { SAMPLE } from "../sampleMap";
 
 // Every field of each type, exactly (`satisfies` refuses a missing or an extra one), so the
@@ -26,6 +26,10 @@ const LOOP = { from_element_id: 1, from_label: 1, to_element_id: 1, to_label: 1,
 const WORKAROUND = { element_id: 1, label: 1, lane: 1, condition: 1, stated_reason: 1, frequency: 1, basis: 1 } satisfies Record<keyof Workaround, 1>; // prettier-ignore
 const QUESTION = { question_id: 1, wording: 1, about: 1 } satisfies Record<keyof ExceptionQuestion, 1>; // prettier-ignore
 const ANSWER = { quote: 1, account_type: 1, account_cue: 1, stated_reason: 1, variation_condition: 1, frequency: 1, source_id: 1, segment_id: 1, anchor: 1, question_id: 1, question: 1 } satisfies Record<keyof AnswerQuote, 1>; // prettier-ignore
+
+const STORY = { label: 1, fragment_type: 1, signifiers: 1, frequency: 1, single_account: 1, quote: 1, source_id: 1, segment_id: 1, anchor: 1, steps: 1 } satisfies Record<keyof StoryEntry, 1>; // prettier-ignore
+const TERM = { term: 1, plain_meaning: 1, steps: 1, source_id: 1, segment_id: 1, anchor: 1 } satisfies Record<keyof GlossaryEntry, 1>; // prettier-ignore
+const NOTE = { kind: 1, dimension: 1, text: 1, cause_type: 1, steps: 1, quote: 1, source_id: 1, segment_id: 1, anchor: 1 } satisfies Record<keyof CapabilityNote, 1>; // prettier-ignore
 
 const keys = (o: object) => Object.keys(o).sort();
 
@@ -44,6 +48,15 @@ describe("the frontend's types match what the backend sends (X4 alignment)", () 
       report.questions.forEach((q) => expect(keys(q)).toEqual(keys(QUESTION)));
     }
     expect(SAMPLE.exceptions.done.routes.length).toBeGreaterThan(0); // so the loops above ran
+  });
+
+  it("every field of the Registers lists made from the interviews (P9u)", () => {
+    const { stories, glossary } = SAMPLE.lists;
+    const notes = SAMPLE.lists["capability-notes"];
+    expect(stories.length * glossary.length * notes.length).toBeGreaterThan(0);
+    stories.forEach((s) => expect(keys(s)).toEqual(keys(STORY)));
+    glossary.forEach((g) => expect(keys(g)).toEqual(keys(TERM)));
+    notes.forEach((n) => expect(keys(n)).toEqual(keys(NOTE)));
   });
 
   it("every field of an interview answer, with how often (X1)", () => {

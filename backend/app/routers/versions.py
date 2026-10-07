@@ -22,6 +22,7 @@ from app.domain.graph import (
     GlossaryEntry,
     Graph,
     LintReport,
+    StoryEntry,
 )
 from app.domain.layout import Layout
 from app.domain.models import Registers
@@ -82,6 +83,11 @@ def get_validation_pack(request: Request, version_id: str) -> Response:
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/versions/{version_id}/stories")
+def get_stories(request: Request, version_id: str) -> list[StoryEntry]:
+    return unwrap(lenses.get_stories(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/glossary")

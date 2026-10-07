@@ -444,6 +444,12 @@ class StoryCard(Out):
     anchor: str
 
 
+class StoryEntry(StoryCard):
+    """A story in the Registers list (P9u): the card, plus the labels of the steps it is about."""
+
+    steps: list[str]
+
+
 class CapabilityNote(Out):
     """Rule 10 (C3): a strength to preserve or a weakness to improve, as the SME named it."""
 

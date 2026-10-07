@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../components/common";
 import {
   AiFlagList,
   BoundaryList,
   ExceptionList,
+  GlossaryList,
+  PreserveImproveList,
+  StoryList,
   CauseList,
   ConstraintGroups,
   ExternalPracticeList,
@@ -14,12 +17,16 @@ import {
 import { useToast } from "../../components/shell";
 import { QuestionsTab, RejectedClaimsTab } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
+import { useGraph } from "../../hooks/useReview";
 import {
   useCauseLibrary,
+  useCapabilityNotes,
   useDecideTheme,
   useExceptions,
+  useGlossary,
   useLaneBoundaries,
   useRegisters,
+  useStories,
   useThemes,
   useValidateCause,
   useVersions,
@@ -66,6 +73,13 @@ export function RegistersScreen() {
   const chosenRegister = registerKey(params.get("register"));
   const boundaries = useLaneBoundaries(map?.id ?? null);
   const [exceptionsView, setExceptionsView] = useState<AsView>("done");
+  // Stories, Glossary, Preserve / Improve (P9u): fetched when shown; their steps come by label,
+  // so the map's own graph says which are on it and where Go to leads.
+  const sense = ["stories", "glossary", "preserve"].includes(chosenRegister);
+  const stories = useStories(map?.id ?? null, chosenRegister === "stories");
+  const glossary = useGlossary(map?.id ?? null, chosenRegister === "glossary");
+  const notes = useCapabilityNotes(map?.id ?? null, chosenRegister === "preserve");
+  const mapGraph = useGraph(sense ? (map?.id ?? null) : null);
   const unusual = useExceptions(map?.id ?? null, exceptionsView, chosenRegister === "exceptions");
   const chosen = chosenRegister;
 
@@ -86,6 +100,14 @@ export function RegistersScreen() {
       },
       { replace: true },
     );
+  const stepIds = new Map((mapGraph.data?.elements ?? []).filter((e) => e.review_status !== "rejected").map((e) => [e.label, e.id]));
+  const links = {
+    onMap: new Set(stepIds.keys()),
+    onGoTo: (label: string) => {
+      const id = stepIds.get(label);
+      if (id) goTo(id);
+    },
+  };
   const onValidate = (entry: CauseEntry, result: ValidationResult) =>
     validate.mutate({ causeId: entry.id, result }, { onSuccess: () => toast(DONE[result]) });
 
@@ -101,8 +123,8 @@ export function RegistersScreen() {
         <h1 id="registers-title">Registers</h1>
         <p className="screen__intro">
           The lists behind the map{title ? ` (${title})` : ""}: knowledge risks, AI flags, constraints, recommended
-          practice, questions for your SME, rejected claims, lane boundaries and exceptions and workarounds, and the cause
-          library and emerging themes for this engagement.
+          practice, questions for your SME, rejected claims, stories, glossary, Preserve / Improve, lane boundaries and
+          exceptions and workarounds, and the cause library and emerging themes for this engagement.
         </p>
       </div>
       {(versions.isPending || (map !== null && registers.isPending)) && <Skeleton height="200px" />}
@@ -212,6 +234,30 @@ export function RegistersScreen() {
                 )}
               </>
             )}
+            {chosen === "stories" && (
+              <SenseRegister
+                intro="What happened in real cases, good and bad, in the interviewees' own words. A story told only once is kept and marked; nothing here changes the map."
+                query={stories}
+                what="stories"
+                render={(data) => <StoryList stories={data} links={links} />}
+              />
+            )}
+            {chosen === "glossary" && (
+              <SenseRegister
+                intro="The interviewees' own terms, in the order first heard, with what each means in plain words."
+                query={glossary}
+                what="glossary"
+                render={(data) => <GlossaryList entries={data} links={links} />}
+              />
+            )}
+            {chosen === "preserve" && (
+              <SenseRegister
+                intro="What interviewees say works well (to preserve) and what gets in the way (to improve), by capability dimension. Nothing here changes the map."
+                query={notes}
+                what="strengths and weaknesses"
+                render={(data) => <PreserveImproveList notes={data} links={links} />}
+              />
+            )}
             {chosen === "exceptions" && (
               <>
                 <p className="tab-intro">
@@ -254,5 +300,34 @@ export function RegistersScreen() {
         </>
       )}
     </main>
+  );
+}
+
+/** One of the interview lists (P9u): the intro, then loading, the error with Try again, or the list. */
+function SenseRegister<T>({
+  intro,
+  query,
+  what,
+  render,
+}: {
+  intro: string;
+  query: { isPending: boolean; isError: boolean; error: unknown; data: T | undefined; refetch: () => unknown };
+  what: string;
+  render: (data: T) => ReactNode;
+}) {
+  return (
+    <>
+      <p className="tab-intro">{intro}</p>
+      {query.isPending && <Skeleton height="120px" />}
+      {query.isError && (
+        <ErrorState
+          title={`The ${what} couldn't be loaded`}
+          message={messageOf(query.error)}
+          details={copyDetailsOf(query.error)}
+          onRetry={() => void query.refetch()}
+        />
+      )}
+      {query.data !== undefined && render(query.data)}
+    </>
   );
 }

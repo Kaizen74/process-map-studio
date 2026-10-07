@@ -217,6 +217,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/graph?view=done", None),
     ("GET", "/api/versions/{map}/layout?view=documented&show_other=1", None),
     ("GET", "/api/versions/{map}/glossary", None),
+    ("GET", "/api/versions/{map}/stories", None),
     ("GET", "/api/versions/{map}/capability-notes", None),
     ("GET", "/api/versions/{map}/coverage", None),
     ("GET", "/api/versions/{map}/validation-pack", None),

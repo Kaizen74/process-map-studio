@@ -54,7 +54,8 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] C7 — codebook tier 2 conventions on Setup and tier 3 emerging themes (accept, rename, dismiss; criterion 58)
 - [x] C8 — lane-boundary findings from L5, F1, F4 answers (criterion 76); landscape-level answers into rule 9 (criterion 70)
 (c) Optional phases, in order
-- [ ] P9u — matrix layers SME official / SME lived; registers Stories, Glossary, Emerging themes, Preserve / Improve (59, 73)
+- [x] P9u-1 — Registers Stories (`GET /versions/{vid}/stories`), Glossary and Preserve / Improve (by capability dimension), each linking to its steps (59, 73; Emerging themes done in C7b)
+- [ ] P9u-2 — Matrix: the Interview column split into SME official and SME lived (changes G4: candidate for Eric's approval), then close P9u
 - [ ] R1 — P10b: data request template (Word, Markdown, CSV header) and `GET /templates/data-request`; files in `docs/samples/` for Eric (criterion 82)
 - [ ] R2 — P10b: migration 0012 (event_logs, events without any user column, case_key_maps, activity_alignment, mining_metrics, role_costs, value_assumptions; element disposition columns); `services/mining.py` parsing and column suggestion; A.11 fixture generator (fixed seed)
 - [ ] R3 — P10b: import job (column map, time zone, in-memory resource → role map, validation report, approval gate, > 20% dropped refused); resource-value scan test (83, 84)

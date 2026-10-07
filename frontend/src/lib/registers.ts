@@ -75,7 +75,10 @@ export type RegisterKey =
   | "causes"
   | "themes"
   | "boundaries"
-  | "exceptions";
+  | "exceptions"
+  | "stories"
+  | "glossary"
+  | "preserve";
 
 /** GET /versions/{vid}/lane-boundaries (C8): teams' activities overlapping or falling between them. */
 export type BoundaryKind = "shared_delivery" | "gap" | "boundary";
@@ -130,8 +133,11 @@ export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "external", label: "External practice (R)" },
   { value: "questions", label: "Validation questions" },
   { value: "rejected", label: "Rejected claims" },
+  { value: "stories", label: "Stories" },
+  { value: "glossary", label: "Glossary" },
   { value: "causes", label: "Cause library" },
   { value: "themes", label: "Emerging themes" },
+  { value: "preserve", label: "Preserve / Improve" },
   { value: "boundaries", label: "Lane boundaries" },
   { value: "exceptions", label: "Exceptions and workarounds" },
 ];
@@ -179,3 +185,25 @@ export const VALIDATION_LABELS: Readonly<Record<string, string>> = {
   confirmed: "Confirmed",
   refuted: "Refuted",
 };
+
+/** B.36 capability dimensions, in the PRD's order, in plain words (Preserve / Improve, P9u). */
+export const CAPABILITY_DIMENSIONS: readonly { value: string; label: string }[] = [
+  { value: "skillset", label: "Skillset" },
+  { value: "ways_of_working", label: "Ways of working" },
+  { value: "systems", label: "Systems" },
+  { value: "process", label: "Process" },
+  { value: "structure", label: "Structure" },
+];
+
+export function dimensionLabel(value: string): string {
+  return CAPABILITY_DIMENSIONS.find((d) => d.value === value)?.label ?? value;
+}
+
+/** Notes grouped by dimension in the PRD's order; an unknown dimension goes last, as given. */
+export function byDimension<T extends { dimension: string }>(notes: readonly T[]): { dimension: string; label: string; notes: T[] }[] {
+  const known = CAPABILITY_DIMENSIONS.map((d) => d.value);
+  const order = [...known, ...notes.map((n) => n.dimension).filter((d) => !known.includes(d))];
+  return [...new Set(order)]
+    .map((dimension) => ({ dimension, label: dimensionLabel(dimension), notes: notes.filter((n) => n.dimension === dimension) }))
+    .filter((group) => group.notes.length > 0);
+}

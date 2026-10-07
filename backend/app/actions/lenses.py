@@ -14,7 +14,14 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.actions import redaction
 from app.db import session_scope
 from app.domain.enums import ElementKind
-from app.domain.graph import AshenItem, CapabilityNote, GlossaryEntry, KnowHow, StoryCard
+from app.domain.graph import (
+    AshenItem,
+    CapabilityNote,
+    GlossaryEntry,
+    KnowHow,
+    StoryCard,
+    StoryEntry,
+)
 from app.domain.models import ClaimRecord, NameReplacement
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import SENSE_CLAIM_TYPES
@@ -125,24 +132,45 @@ def know_how(lens: Lenses, stable_key: str, kind: str, work_type: str | None) ->
     )
 
 
+def _story(lens: Lenses, r: ClaimRecord) -> StoryCard:
+    segment, anchor = _where(lens, r)
+    signifiers = r.payload.get("signifiers")
+    return StoryCard(
+        label=lens.hide(str(r.payload.get("text", ""))),
+        fragment_type=str(r.payload.get("fragment_type", "other")),
+        signifiers=[lens.hide(str(s)) for s in signifiers]
+        if isinstance(signifiers, list) else [],
+        frequency=lens.hide(str(r.payload.get("frequency", ""))),
+        single_account=True,  # one source tells it; kept all the same (§3.12.9 rule 2)
+        quote=lens.hide(r.quote), source_id=r.source_id, segment_id=segment, anchor=anchor,
+    )  # fmt: skip
+
+
 def stories(lens: Lenses, stable_key: str) -> list[StoryCard]:
     """The fragments told about the step, in the order told, kept when told once."""
-    cards = []
+    return [_story(lens, r) for r in lens.items
+            if r.claim_type == "story" and _about(r, stable_key)]  # fmt: skip
+
+
+def get_stories(sessions: Sessions, version_id: str) -> Result[list[StoryEntry]]:
+    """Every story the interviews told on this map, in the order told, with the steps it is
+    about (P9u: the Registers Stories list)."""
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        lens = load(session, version_id, version.engagement_id)
+        labels = {e.stable_key: e.label for e in map_repo.elements(session, version_id)}
+    out = []
     for r in lens.items:
-        if r.claim_type != "story" or not _about(r, stable_key):
+        if r.claim_type != "story":
             continue
-        segment, anchor = _where(lens, r)
-        signifiers = r.payload.get("signifiers")
-        cards.append(StoryCard(
-            label=lens.hide(str(r.payload.get("text", ""))),
-            fragment_type=str(r.payload.get("fragment_type", "other")),
-            signifiers=[lens.hide(str(s)) for s in signifiers]
-            if isinstance(signifiers, list) else [],
-            frequency=lens.hide(str(r.payload.get("frequency", ""))),
-            single_account=True,  # one source tells it; kept all the same (§3.12.9 rule 2)
-            quote=lens.hide(r.quote), source_id=r.source_id, segment_id=segment, anchor=anchor,
-        ))  # fmt: skip
-    return cards
+        about = r.payload.get("about_steps")
+        steps = (
+            [lens.hide(labels[k]) for k in about if k in labels] if isinstance(about, list) else []
+        )
+        out.append(StoryEntry(**_story(lens, r).model_dump(), steps=steps))
+    return Ok(out)
 
 
 def get_capability_notes(sessions: Sessions, version_id: str) -> Result[list[CapabilityNote]]:

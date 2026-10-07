@@ -10523,5 +10523,86 @@
       "workarounds": [],
       "questions": []
     }
+  },
+  "lists": {
+    "stories": [
+      {
+        "label": "Had to re-trim three flights in one night",
+        "fragment_type": "went_badly",
+        "signifiers": [
+          "Firefighting"
+        ],
+        "frequency": "maybe once a month",
+        "single_account": true,
+        "quote": "I learned it after we had to re-trim three flights in one night.",
+        "source_id": "id-13",
+        "segment_id": "id-66",
+        "anchor": "24:10",
+        "steps": [
+          "Draft load plan",
+          "Deviation in limits?"
+        ]
+      }
+    ],
+    "glossary": [
+      {
+        "term": "re-trim",
+        "plain_meaning": "Rebalance an aircraft's load after it has been planned.",
+        "steps": [
+          "Approve deviation"
+        ],
+        "source_id": "id-13",
+        "segment_id": "id-66",
+        "anchor": "24:10"
+      },
+      {
+        "term": "wave",
+        "plain_meaning": "A busy period of departures.",
+        "steps": [
+          "Busy wave?"
+        ],
+        "source_id": "id-13",
+        "segment_id": "id-35",
+        "anchor": "22:30"
+      },
+      {
+        "term": "forward hold",
+        "plain_meaning": "The cargo hold at the front of the aircraft.",
+        "steps": [
+          "Draft load plan"
+        ],
+        "source_id": "id-13",
+        "segment_id": "id-66",
+        "anchor": "24:10"
+      }
+    ],
+    "capability-notes": [
+      {
+        "kind": "strength",
+        "dimension": "skillset",
+        "text": "Ramp supervisors know the aircraft types inside out.",
+        "cause_type": null,
+        "steps": [
+          "Load and return LIR"
+        ],
+        "quote": "The strength is the supervisors know the aircraft types inside out.",
+        "source_id": "id-20",
+        "segment_id": "id-67",
+        "anchor": "05:52"
+      },
+      {
+        "kind": "weakness",
+        "dimension": "systems",
+        "text": "The paper loading report gets lost or arrives late.",
+        "cause_type": "system_fragmentation",
+        "steps": [
+          "Load and return LIR"
+        ],
+        "quote": "The weakness is the paper loading report; it gets lost or arrives late.",
+        "source_id": "id-20",
+        "segment_id": "id-67",
+        "anchor": "05:52"
+      }
+    ]
   }
 }
