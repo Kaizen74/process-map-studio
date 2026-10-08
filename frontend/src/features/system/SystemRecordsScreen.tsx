@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { Button, Card, Chip, Dialog, EmptyState, ErrorState, Skeleton } from "../../components/common";
 import { useToast } from "../../components/shell";
 import { LogList, ValidationReportView } from "../../components/system";
+import { TabBar } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useSettings } from "../../hooks/useSettings";
 import { useDeleteEventLog, useEventLogs } from "../../hooks/useSystemRecords";
@@ -11,6 +12,8 @@ import { formatDateTime } from "../../lib/format";
 import { DATA_REQUEST_FILES, dataRequestUrl, type EventLog } from "../../lib/systemRecords";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { ImportWizard } from "./ImportWizard";
+import { LogFigures } from "./LogFigures";
+import { LogMatching } from "./LogMatching";
 import { UploadLogForm } from "./UploadLogForm";
 import "./system.css";
 
@@ -33,20 +36,32 @@ function TemplateCard() {
   );
 }
 
-/** An imported log: its final report. Matching to steps and the figures come with R7b. */
-function ImportedLog({ log }: { log: EventLog }) {
+type LogTab = "matching" | "figures" | "report";
+const LOG_TABS: readonly { id: LogTab; label: string }[] = [
+  { id: "matching", label: "Matching to map steps" },
+  { id: "figures", label: "Metrics" },
+  { id: "report", label: "Import report" },
+];
+
+/** An imported log: matching its activities to the map, its figures and its final report. */
+function ImportedLog({ engagementId, log }: { engagementId: string; log: EventLog }) {
+  const [tab, setTab] = useState<LogTab>("matching");
   return (
     <Card
       title={log.name}
       description={`Imported${log.approved_at ? ` ${formatDateTime(log.approved_at)}` : ""}, approved by ${log.approved_by_role}. Time zone ${log.timezone}.`}
     >
-      {log.validation_report && <ValidationReportView report={log.validation_report} final />}
+      <TabBar label={`${log.name} details`} tabs={LOG_TABS} active={tab} onChange={setTab}>
+        {tab === "matching" && <LogMatching engagementId={engagementId} log={log} />}
+        {tab === "figures" && <LogFigures log={log} />}
+        {tab === "report" && log.validation_report && <ValidationReportView report={log.validation_report} final />}
+      </TabBar>
     </Card>
   );
 }
 
 function OpenLog({ engagementId, log }: { engagementId: string; log: EventLog }) {
-  if (log.status === "imported") return <ImportedLog log={log} />;
+  if (log.status === "imported") return <ImportedLog key={log.id} engagementId={engagementId} log={log} />;
   if (!log.file_held || log.status === "failed") {
     return (
       <Card title={log.name}>

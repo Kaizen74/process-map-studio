@@ -1,6 +1,6 @@
 import type {
   Alignment,
-  AlignmentStatus,
+  AlignmentDecision,
   ColumnMapInput,
   EventLog,
   ImportInput,
@@ -47,10 +47,8 @@ export const getMetrics = <M>(logId: string, scope: MetricScope) =>
 
 export const getAlignment = (logId: string) => request<Alignment>(`/event-logs/${enc(logId)}/alignment`);
 
-export const saveAlignment = (
-  logId: string,
-  rows: { activity: string; element_id: string | null; status: Exclude<AlignmentStatus, "proposed"> }[],
-) => request<Alignment>(`/event-logs/${enc(logId)}/alignment`, { method: "PUT", body: { rows } });
+export const saveAlignment = (logId: string, rows: AlignmentDecision[]) =>
+  request<Alignment>(`/event-logs/${enc(logId)}/alignment`, { method: "PUT", body: { rows } });
 
 export const suggestAlignment = (logId: string) =>
   request<ImportStarted>(`/event-logs/${enc(logId)}/alignment/suggest`, { method: "POST" });

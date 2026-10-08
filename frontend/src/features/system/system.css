@@ -58,3 +58,24 @@
   display: flex;
   gap: var(--space-8);
 }
+.system-matching {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.system-matching__intro {
+  margin: 0;
+  color: var(--ink-2);
+}
+.system-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.system-ask p {
+  margin: 0;
+}
+.system-ask__note {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}

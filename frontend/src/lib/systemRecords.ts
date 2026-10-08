@@ -331,3 +331,26 @@ export const DATA_REQUEST_FILES: readonly { format: "docx" | "md" | "csv"; label
 ];
 
 export const dataRequestUrl = (format: "docx" | "md" | "csv") => `/api/templates/data-request?format=${format}`;
+
+// --- Matching and figures (R7b) -----------------------------------------------------------------
+
+/** One of Eric's decisions on the alignment table (PUT …/alignment). */
+export interface AlignmentDecision {
+  activity: string;
+  element_id: string | null;
+  status: Exclude<AlignmentStatus, "proposed">;
+}
+
+export const PROPOSED_BY_LABELS: Readonly<Record<AlignmentRow["proposed_by"], string>> = {
+  app: "Suggested by the app",
+  claude: "Suggested by Claude",
+  eric: "Your decision",
+};
+
+/** "20%" from a share of 0.2. */
+export const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+/** Groups the backend left out because they rest on fewer than 5 cases (constraint 24). */
+export function tooFewText(tooFew: number, one: string, many = `${one}s`): string {
+  return tooFew > 0 ? `${tooFew} ${tooFew === 1 ? one : many} not shown: fewer than 5 cases each.` : "";
+}

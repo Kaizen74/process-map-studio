@@ -148,6 +148,25 @@ test.describe("accessibility and offline assets", () => {
       await page.getByRole("button", { name: "Next: map users to roles" }).click();
       await expect(page.getByText("These are not stored.")).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
+      // R7b: an imported log (6 cases, through the API) opens on matching (no map yet) and Metrics.
+      const rows = ["case_id,activity,timestamp,role"];
+      for (let n = 0; n < 6; n++) rows.push(`C${n},Opened,2026-03-02 0${n}:00,Ops`, `C${n},Closed,2026-03-02 0${n}:30,Ops`);
+      const log = await request.post(`/api/engagements/${id}/event-logs`, {
+        multipart: { name: "Six cases", file: { name: "six.csv", mimeType: "text/csv", buffer: Buffer.from(rows.join("\n")) } },
+      });
+      const held = (await log.json()) as { id: string; column_map: Record<string, string | null> };
+      await request.put(`/api/event-logs/${held.id}/column-map`, { data: { columns: held.column_map } });
+      const approval = { approved_by_role: "Head of operations", confirm_approval: true };
+      expect((await request.post(`/api/event-logs/${held.id}/import`, { data: approval })).status()).toBe(202);
+      await expect
+        .poll(async () => ((await (await request.get(`/api/event-logs/${held.id}`)).json()) as { status: string }).status)
+        .toBe("imported");
+      await page.goto(`/engagements/${id}/system-records?log=${held.id}`);
+      await expect(page.getByText(/Draft the map first/)).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("tab", { name: "Metrics" }).click();
+      await expect(page.getByRole("region", { name: "Variants (top 10)" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
     } finally {
       await request.put("/api/settings/modules", { data: { system_records_enabled: false } });
       expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
