@@ -1265,9 +1265,551 @@
     ],
     "too_few_steps": []
   },
+  "dispositions": [
+    {
+      "element_id": "id-8",
+      "label": "Draft load plan",
+      "kind": "activity",
+      "suggested": "ai_assisted",
+      "reason": "Complicated work: an AI agent can prepare it with expert oversight. Needs a complete AI flag before you can choose it.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-11",
+      "label": "Approve load plan",
+      "kind": "approval",
+      "suggested": "delete",
+      "reason": "Gap finding: Plan approval by the Load control lead is documented but never mentioned in practice.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-9",
+      "label": "Special loads OK?",
+      "kind": "decision",
+      "suggested": "automate_rules",
+      "reason": "Clear, rule-based work.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "automate_rules",
+        "ai_assisted",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-12",
+      "label": "Resolve or offload",
+      "kind": "activity",
+      "suggested": "keep_human",
+      "reason": "Work type not confirmed yet: kept human until it is.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-7",
+      "label": "Load and return LIR",
+      "kind": "activity",
+      "suggested": "keep_human",
+      "reason": "Work type not confirmed yet: kept human until it is.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "automate_rules",
+        "ai_assisted",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-13",
+      "label": "Busy wave?",
+      "kind": "decision",
+      "suggested": "keep_human",
+      "reason": "Work type not confirmed yet: kept human until it is.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-14",
+      "label": "Read report at aircraft",
+      "kind": "activity",
+      "suggested": "keep_human",
+      "reason": "Work type not confirmed yet: kept human until it is.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-10",
+      "label": "Deviation in limits?",
+      "kind": "decision",
+      "suggested": "keep_human",
+      "reason": "Complex work: it needs human judgment.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-15",
+      "label": "Approve deviation",
+      "kind": "approval",
+      "suggested": "human_approves",
+      "reason": "An approval: a person authorises it.",
+      "disposition": null,
+      "note": "",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "human_approves",
+        "keep_human"
+      ]
+    },
+    {
+      "element_id": "id-6",
+      "label": "Issue load sheet",
+      "kind": "activity",
+      "suggested": "automate_rules",
+      "reason": "Clear, rule-based work.",
+      "disposition": "automate_rules",
+      "note": "Rules exist.",
+      "risk_flag": "none",
+      "allowed": [
+        "delete",
+        "automate_rules",
+        "ai_assisted",
+        "human_approves",
+        "keep_human"
+      ]
+    }
+  ],
+  "role_costs": {
+    "currency": "SGD",
+    "rows": [
+      {
+        "role_id": "id-3",
+        "role_name": "Load controller",
+        "hourly_cost": 48.0,
+        "note": "Loaded rate"
+      },
+      {
+        "role_id": "id-16",
+        "role_name": "Load control lead",
+        "hourly_cost": null,
+        "note": ""
+      },
+      {
+        "role_id": "id-17",
+        "role_name": "Ramp",
+        "hourly_cost": null,
+        "note": ""
+      },
+      {
+        "role_id": "id-18",
+        "role_name": "Airline ops",
+        "hourly_cost": null,
+        "note": ""
+      },
+      {
+        "role_id": "id-19",
+        "role_name": "Captain",
+        "hourly_cost": null,
+        "note": ""
+      }
+    ]
+  },
+  "value_assumptions": [
+    {
+      "disposition": "delete",
+      "reduction_pct": 100.0,
+      "note": "",
+      "default": true
+    },
+    {
+      "disposition": "automate_rules",
+      "reduction_pct": 80.0,
+      "note": "",
+      "default": true
+    },
+    {
+      "disposition": "ai_assisted",
+      "reduction_pct": 50.0,
+      "note": "",
+      "default": true
+    },
+    {
+      "disposition": "human_approves",
+      "reduction_pct": 30.0,
+      "note": "",
+      "default": true
+    },
+    {
+      "disposition": "keep_human",
+      "reduction_pct": 0.0,
+      "note": "",
+      "default": true
+    }
+  ],
+  "value": {
+    "currency": "SGD",
+    "view": "done",
+    "potential": "Potential, not committed",
+    "steps": [
+      {
+        "element_id": "id-8",
+        "label": "Draft load plan",
+        "phase_id": "id-20",
+        "phase_name": "Plan",
+        "role_name": "Load controller",
+        "time": {
+          "value": 19.9,
+          "label": "measured",
+          "source": "DCS extract: median work 19.9 min, 1.0 times per case"
+        },
+        "volume": {
+          "value": 108.3,
+          "label": "measured",
+          "source": "DCS extract: 25 cases a week"
+        },
+        "hours_per_month": 35.9,
+        "cost_per_month": 1723.2,
+        "evidence": "measured",
+        "missing": [],
+        "disposition": "ai_assisted",
+        "chosen": false,
+        "reduction_pct": 50.0,
+        "hours_released": 17.9,
+        "cost_released": 861.6
+      },
+      {
+        "element_id": "id-9",
+        "label": "Special loads OK?",
+        "phase_id": "id-21",
+        "phase_name": "Check and load",
+        "role_name": "Load controller",
+        "time": {
+          "value": 6.0,
+          "label": "measured",
+          "source": "DCS extract: median work 6 min, 1.0 times per case"
+        },
+        "volume": {
+          "value": 108.3,
+          "label": "measured",
+          "source": "DCS extract: 25 cases a week"
+        },
+        "hours_per_month": 10.8,
+        "cost_per_month": 518.4,
+        "evidence": "measured",
+        "missing": [],
+        "disposition": "automate_rules",
+        "chosen": false,
+        "reduction_pct": 80.0,
+        "hours_released": 8.6,
+        "cost_released": 414.72
+      },
+      {
+        "element_id": "id-12",
+        "label": "Resolve or offload",
+        "phase_id": "id-21",
+        "phase_name": "Check and load",
+        "role_name": "Airline ops",
+        "time": {
+          "value": 40.0,
+          "label": "estimated",
+          "source": "Stated: Fifteen to forty minutes"
+        },
+        "volume": {
+          "value": 30.0,
+          "label": "assumed",
+          "source": "Your figure: Shift log"
+        },
+        "hours_per_month": 20.0,
+        "cost_per_month": null,
+        "evidence": "mixed",
+        "missing": [
+          "No hourly cost for Airline ops."
+        ],
+        "disposition": "keep_human",
+        "chosen": false,
+        "reduction_pct": 0.0,
+        "hours_released": 0.0,
+        "cost_released": null
+      },
+      {
+        "element_id": "id-7",
+        "label": "Load and return LIR",
+        "phase_id": "id-21",
+        "phase_name": "Check and load",
+        "role_name": "Ramp",
+        "time": {
+          "value": 13.4,
+          "label": "measured",
+          "source": "DCS extract: median work 13.4 min, 1.0 times per case"
+        },
+        "volume": {
+          "value": 108.3,
+          "label": "measured",
+          "source": "DCS extract: 25 cases a week"
+        },
+        "hours_per_month": 24.2,
+        "cost_per_month": null,
+        "evidence": "measured",
+        "missing": [
+          "No hourly cost for Ramp."
+        ],
+        "disposition": "keep_human",
+        "chosen": false,
+        "reduction_pct": 0.0,
+        "hours_released": 0.0,
+        "cost_released": null
+      },
+      {
+        "element_id": "id-13",
+        "label": "Busy wave?",
+        "phase_id": "id-21",
+        "phase_name": "Check and load",
+        "role_name": "Load controller",
+        "time": null,
+        "volume": null,
+        "hours_per_month": null,
+        "cost_per_month": null,
+        "evidence": null,
+        "missing": [
+          "No time per case: none measured, none stated, no override.",
+          "No volume per month: none measured, no override."
+        ],
+        "disposition": "keep_human",
+        "chosen": false,
+        "reduction_pct": 0.0,
+        "hours_released": null,
+        "cost_released": null
+      },
+      {
+        "element_id": "id-14",
+        "label": "Read report at aircraft",
+        "phase_id": "id-21",
+        "phase_name": "Check and load",
+        "role_name": "Load controller",
+        "time": null,
+        "volume": null,
+        "hours_per_month": null,
+        "cost_per_month": null,
+        "evidence": null,
+        "missing": [
+          "No time per case: none measured, none stated, no override.",
+          "No volume per month: none measured, no override."
+        ],
+        "disposition": "keep_human",
+        "chosen": false,
+        "reduction_pct": 0.0,
+        "hours_released": null,
+        "cost_released": null
+      },
+      {
+        "element_id": "id-10",
+        "label": "Deviation in limits?",
+        "phase_id": "id-22",
+        "phase_name": "Close out",
+        "role_name": "Load controller",
+        "time": {
+          "value": 4.1,
+          "label": "measured",
+          "source": "DCS extract: median work 4.1 min, 1.0 times per case"
+        },
+        "volume": {
+          "value": 108.3,
+          "label": "measured",
+          "source": "DCS extract: 25 cases a week"
+        },
+        "hours_per_month": 7.4,
+        "cost_per_month": 355.2,
+        "evidence": "measured",
+        "missing": [],
+        "disposition": "keep_human",
+        "chosen": false,
+        "reduction_pct": 0.0,
+        "hours_released": 0.0,
+        "cost_released": 0.0
+      },
+      {
+        "element_id": "id-15",
+        "label": "Approve deviation",
+        "phase_id": "id-22",
+        "phase_name": "Close out",
+        "role_name": "Captain",
+        "time": {
+          "value": 15.0,
+          "label": "estimated",
+          "source": "Stated: Five to fifteen minutes"
+        },
+        "volume": null,
+        "hours_per_month": null,
+        "cost_per_month": null,
+        "evidence": null,
+        "missing": [
+          "No volume per month: none measured, no override."
+        ],
+        "disposition": "human_approves",
+        "chosen": false,
+        "reduction_pct": 30.0,
+        "hours_released": null,
+        "cost_released": null
+      },
+      {
+        "element_id": "id-6",
+        "label": "Issue load sheet",
+        "phase_id": "id-22",
+        "phase_name": "Close out",
+        "role_name": "Load controller",
+        "time": {
+          "value": 3.1,
+          "label": "measured",
+          "source": "DCS extract: median work 3.1 min, 1.0 times per case"
+        },
+        "volume": {
+          "value": 108.3,
+          "label": "measured",
+          "source": "DCS extract: 25 cases a week"
+        },
+        "hours_per_month": 5.6,
+        "cost_per_month": 268.8,
+        "evidence": "measured",
+        "missing": [],
+        "disposition": "automate_rules",
+        "chosen": true,
+        "reduction_pct": 80.0,
+        "hours_released": 4.5,
+        "cost_released": 215.04
+      }
+    ],
+    "phases": [
+      {
+        "phase_id": "id-20",
+        "name": "Plan",
+        "hours_per_month": 35.9,
+        "cost_per_month": 1723.2,
+        "evidence": "measured",
+        "steps_counted": 1,
+        "steps_missing": 0,
+        "steps_without_cost": 0
+      },
+      {
+        "phase_id": "id-21",
+        "name": "Check and load",
+        "hours_per_month": 55.0,
+        "cost_per_month": 518.4,
+        "evidence": "mixed",
+        "steps_counted": 3,
+        "steps_missing": 2,
+        "steps_without_cost": 2
+      },
+      {
+        "phase_id": "id-22",
+        "name": "Close out",
+        "hours_per_month": 13.0,
+        "cost_per_month": 624.0,
+        "evidence": "measured",
+        "steps_counted": 2,
+        "steps_missing": 1,
+        "steps_without_cost": 0
+      }
+    ],
+    "totals": {
+      "phase_id": null,
+      "name": "",
+      "hours_per_month": 103.9,
+      "cost_per_month": 2865.6,
+      "evidence": "mixed",
+      "steps_counted": 6,
+      "steps_missing": 3,
+      "steps_without_cost": 2
+    },
+    "scenarios": [
+      {
+        "disposition": "delete",
+        "reduction_pct": 100.0,
+        "steps": 0,
+        "hours_per_month": 0.0,
+        "hours_released": 0.0,
+        "cost_released": 0.0
+      },
+      {
+        "disposition": "automate_rules",
+        "reduction_pct": 80.0,
+        "steps": 2,
+        "hours_per_month": 16.4,
+        "hours_released": 13.1,
+        "cost_released": 629.76
+      },
+      {
+        "disposition": "ai_assisted",
+        "reduction_pct": 50.0,
+        "steps": 1,
+        "hours_per_month": 35.9,
+        "hours_released": 17.9,
+        "cost_released": 861.6
+      },
+      {
+        "disposition": "human_approves",
+        "reduction_pct": 30.0,
+        "steps": 1,
+        "hours_per_month": 0.0,
+        "hours_released": 0.0,
+        "cost_released": 0.0
+      },
+      {
+        "disposition": "keep_human",
+        "reduction_pct": 0.0,
+        "steps": 5,
+        "hours_per_month": 51.6,
+        "hours_released": 0.0,
+        "cost_released": 0.0
+      }
+    ]
+  },
   "system_findings": [
     {
-      "id": "id-16",
+      "id": "id-23",
       "section": "fact",
       "finding_type": "hidden_work",
       "title": "System records work the map doesn't show: Manual weight override",
@@ -1317,7 +1859,7 @@
       "cause_type": null
     },
     {
-      "id": "id-17",
+      "id": "id-24",
       "section": "fact",
       "finding_type": "offline_work",
       "title": "Work done outside the system: Read report at aircraft",

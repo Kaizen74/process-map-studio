@@ -1063,3 +1063,100 @@ class DispositionView(BaseModel):
     note: str
     risk_flag: str
     allowed: list[str]
+
+
+# --- Value calculator (R9b; API_CONTRACT.md → Value calculator) ---------------------------------
+
+
+class RoleCostRow(BaseModel):
+    role_id: str
+    role_name: str = ""
+    hourly_cost: float | None = None
+    note: str = ""
+
+
+class RoleCostsView(BaseModel):
+    currency: str
+    rows: list[RoleCostRow]
+
+
+class RoleCostsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[RoleCostRow]
+
+
+class AssumptionRow(BaseModel):
+    disposition: str
+    reduction_pct: float
+    note: str = ""
+    default: bool = False
+
+
+class AssumptionsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[AssumptionRow]
+
+
+class ValueOverrideInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    time_min: float | None = None
+    volume_month: float | None = None
+    note: str = ""
+
+
+class ValueFigure(BaseModel):
+    value: float
+    label: str  # B.42
+    source: str
+
+
+class StepValueView(BaseModel):
+    element_id: str
+    label: str
+    phase_id: str | None
+    phase_name: str
+    role_name: str
+    time: ValueFigure | None
+    volume: ValueFigure | None
+    hours_per_month: float | None
+    cost_per_month: float | None
+    evidence: str | None
+    missing: list[str]
+    disposition: str
+    chosen: bool
+    reduction_pct: float
+    hours_released: float | None
+    cost_released: float | None
+
+
+class ValueTotalView(BaseModel):
+    phase_id: str | None = None
+    name: str = ""
+    hours_per_month: float
+    cost_per_month: float
+    evidence: str | None
+    steps_counted: int
+    steps_missing: int
+    steps_without_cost: int
+
+
+class ScenarioView(BaseModel):
+    disposition: str
+    reduction_pct: float
+    steps: int
+    hours_per_month: float
+    hours_released: float
+    cost_released: float
+
+
+class ValueView(BaseModel):
+    currency: str
+    view: str
+    potential: str
+    steps: list[StepValueView]
+    phases: list[ValueTotalView]
+    totals: ValueTotalView
+    scenarios: list[ScenarioView]

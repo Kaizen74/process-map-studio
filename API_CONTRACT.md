@@ -487,6 +487,40 @@ For AI-assisted and Automate the reason adds " Needs a complete AI flag before y
 Response `200`: the step's row as in `GET …/dispositions`. Audit row "Chose disposition" (before and after: disposition, note, risk flag; and the suggestion at the time). The stored lint report is refreshed.
 **Lint L10** (hard failure) now also fails a step whose chosen disposition is `automate_rules` or `ai_assisted` without a complete AI flag, or on complex or chaotic work.
 
+## Value calculator (PRD §3.14, criterion 90, constraint 24) — phase P10b (2026-10-08, R9b)
+
+Indicative hours and cost per step and phase, and what each disposition could release. Deterministic, no AI. Every figure carries its evidence label (B.42: `measured` · `estimated` · `mixed` · `assumed`); scenarios are labelled "Potential, not committed"; money is per step, phase and disposition, never per person. The currency is the `CURRENCY` setting (default `SGD`; the Settings Regional card comes with R10).
+
+### GET · PUT /api/engagements/{id}/role-costs
+GET `200`: `{"currency": "SGD", "rows": [{"role_id", "role_name", "hourly_cost": 48.0 | null, "note"}]}`, one row per role of the engagement (not the system roles), in lane order. PUT `{"rows": [{"role_id", "hourly_cost": 48.0 | null, "note": ""}]}`: each row replaces that role's cost (`null` removes it); roles left out keep theirs. Rules (`422` naming the field): a role of this engagement ("Choose one of this engagement's roles."); a loaded hourly cost of 0 to 100,000 ("Give an hourly cost from 0 to 100,000."); `note` one line, up to 200 characters, no name on the hidden-names list. Response `200`: as GET. Audit row "Set role costs" (role names and costs). Errors `404`.
+
+### GET · PUT /api/engagements/{id}/value-assumptions
+GET `200`: the five dispositions in B.41 order: `[{"disposition": "automate_rules", "reduction_pct": 80.0, "note": "", "default": true}]` (defaults: Delete 100 · Automate (rules) 80 · AI-assisted 50 · Human approves 30 · Keep human 0). PUT `{"rows": [{"disposition", "reduction_pct", "note"}]}`: each row replaces that disposition's assumption; `reduction_pct` 0 to 100 ("Give a reduction from 0 to 100 percent."). Response `200`: as GET. Audit row "Set value assumptions". Errors `404`, `422`.
+
+### PUT /api/elements/{eid}/value-override
+`{"time_min": 12.0 | null, "volume_month": 400.0 | null, "note": "From the shift roster"}`: Eric's own time per case and volume per month for a step (provenance `R`, used only where nothing is measured or stated, §3.14's order). A step of a draft (`409` otherwise), not the start or end; `time_min` above 0 and at most 10,000 minutes, `volume_month` above 0 and at most 1,000,000; a note is required while either is set ("Say where the figure comes from."), one line up to 300 characters, no hidden name. `null` for both clears them. Response `200`: the step's value row as in `GET …/value`. Audit row "Set value override". Kept on refresh and reopen like the disposition.
+
+### GET /api/versions/{vid}/value?view=done|documented
+Default `done`. `200`:
+```json
+{"currency": "SGD", "view": "done", "potential": "Potential, not committed",
+ "steps": [{"element_id", "label", "phase_id", "phase_name", "role_name",
+            "time": {"value": 23.9, "label": "measured", "source": "DCS extract: median work 19.9 min, 1.2 times per case"} | null,
+            "volume": {"value": 108.3, "label": "measured", "source": "DCS extract: 25 cases a week"} | null,
+            "hours_per_month": 43.1 | null, "cost_per_month": 2068.8 | null, "evidence": "measured" | null,
+            "missing": ["No hourly cost for Load controller."],
+            "disposition": "ai_assisted", "chosen": false, "reduction_pct": 50.0,
+            "hours_released": 21.6 | null, "cost_released": 1034.4 | null}],
+ "phases": [{"phase_id", "name", "hours_per_month", "cost_per_month", "evidence", "steps_counted", "steps_missing", "steps_without_cost"}],
+ "totals": {"hours_per_month", "cost_per_month", "evidence", "steps_counted", "steps_missing", "steps_without_cost"},
+ "scenarios": [{"disposition", "reduction_pct", "steps", "hours_per_month", "hours_released", "cost_released"}]}
+```
+- **Time per case** (minutes of work): measured = the step's main activity's median work × how many of its activities a case has (events ÷ cases; rework counts), from the busiest log matched to it; else the SME's estimate = the step's stated work minutes (from its verified evidence) → `estimated`; else Eric's override → `assumed`.
+- **Volume per month**: measured = the step's cases per month from the system records; else Eric's override → `assumed` (no source states volumes).
+- **Hours per month** = time × volume ÷ 60 (one decimal); **cost per month** = hours × the lane role's hourly cost (none when the role has no cost: `missing` says so). The step's `evidence` is the inputs' label when they agree, else `mixed`; a phase's and the total's likewise over the steps counted. A step without both inputs has no figure and says what is missing; a phase's and the total's cost sum only the steps with a role cost, and `steps_without_cost` says how many counted steps have hours but no cost (so a partial cost is never shown as the whole).
+- **Scenarios**: each step's disposition (Eric's choice, else the suggestion; `chosen` says which) × that disposition's reduction gives the hours and cost it could release; per disposition, summed. Always labelled potential.
+- Steps of the view only (start, end and rejected steps left out). Errors `404`, `422` (`view`).
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

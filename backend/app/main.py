@@ -39,6 +39,7 @@ from app.routers import (
     sources,
     system,
     templates,
+    value,
     versions,
 )
 from app.routers.http import ApiError, err_response, error_response
@@ -94,6 +95,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(templates.router)
     app.include_router(interview.router)
     app.include_router(event_logs.router)
+    app.include_router(value.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

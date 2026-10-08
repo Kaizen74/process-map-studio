@@ -38,6 +38,7 @@ SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
         "WEB_SEARCH_TOOL_VERSION": "",
         "WEB_SEARCH_MAX_USES_CAP": "20",
         "OWNER_NAME": "Owner",
+        "CURRENCY": "SGD",  # §3.4: the value calculator's currency (R9b; Settings Regional, R10)
     }
 )
 

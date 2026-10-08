@@ -188,6 +188,15 @@ def test_the_frontend_system_records_sample_matches_the_backend(drafted: Drafted
     started = client.post(f"/api/versions/{d.version_id}/gap-analyses/internal").json()
     wait_for_jobs(client)
     report = client.get(f"/api/gap-analyses/{started['analysis_id']}").json()
+    # R9: one role cost and one choice, so every value and disposition field has a value.
+    lc = next(r["id"] for r in client.get(f"/api/engagements/{d.engagement_id}/roles").json()
+              if r["name"] == "Load controller")  # fmt: skip
+    cost = {"role_id": lc, "hourly_cost": 48, "note": "Loaded rate"}
+    client.put(f"/api/engagements/{d.engagement_id}/role-costs", json={"rows": [cost]})
+    client.put(f"/api/elements/{d.ids['Issue load sheet']}/disposition",
+               json={"disposition": "automate_rules", "note": "Rules exist."})  # fmt: skip
+    client.put(f"/api/elements/{d.ids['Resolve or offload']}/value-override",
+               json={"volume_month": 30, "note": "Shift log"})  # fmt: skip
     bundle = {
         "held_log": held,
         "imported_log": client.get(f"/api/event-logs/{lid}").json(),
@@ -196,6 +205,11 @@ def test_the_frontend_system_records_sample_matches_the_backend(drafted: Drafted
         "alignment": client.get(f"/api/event-logs/{lid}/alignment").json(),
         "system_traces": client.get(f"/api/versions/{d.version_id}/system-traces").json(),
         "system_variants": client.get(f"/api/versions/{d.version_id}/system-variants").json(),
+        "dispositions": client.get(f"/api/versions/{d.version_id}/dispositions").json(),
+        "role_costs": client.get(f"/api/engagements/{d.engagement_id}/role-costs").json(),
+        "value_assumptions":
+            client.get(f"/api/engagements/{d.engagement_id}/value-assumptions").json(),
+        "value": client.get(f"/api/versions/{d.version_id}/value").json(),
         "system_findings": [f for f in report["findings"]
                             if any(e["side"] == "system" for e in f["evidence"])],
     }  # fmt: skip
