@@ -12,6 +12,7 @@ import {
   type GapSource,
   type Severity,
   SEVERITY_LABELS,
+  SYSTEM_STANCE_LABELS,
   tierLabel,
   typeLabel,
 } from "../../lib/gap";
@@ -87,6 +88,19 @@ export function SourceCard({ evidence }: { evidence: GapEvidence }) {
         Open source
         <span className="visually-hidden"> (opens in a new tab)</span>
       </a>
+    </div>
+  );
+}
+
+/** A system log behind a finding: its name, window and what it records (R6). No quotes. */
+export function SystemRecordCard({ evidence }: { evidence: GapEvidence }) {
+  return (
+    <div className="source-card">
+      <p className="source-card__title">{evidence.source_name}</p>
+      <p className="source-card__meta">
+        System log{evidence.anchor && <> · {evidence.anchor}</>} ·{" "}
+        {SYSTEM_STANCE_LABELS[evidence.stance]}
+      </p>
     </div>
   );
 }
@@ -200,8 +214,11 @@ export function FindingCard({
   chosenClass,
   onChooseClass,
 }: FindingCardProps) {
-  const quoted = f.evidence.filter((e) => e.side !== "external");
+  const quoted = f.evidence.filter(
+    (e) => e.side !== "external" && e.side !== "system",
+  );
   const external = f.evidence.filter((e) => e.side === "external");
+  const system = f.evidence.filter((e) => e.side === "system");
   const isQuestion = Boolean(f.question);
   // While a decision saves, further clicks wait (buttons stay enabled: constraint on the UI).
   const decide = (action: DecisionAction) => {
@@ -261,6 +278,15 @@ export function FindingCard({
                 card={asEvidenceCard(e)}
                 onOpen={(card) => onOpenSource(card.source_id)}
               />
+            ))}
+          </div>
+        </Section>
+      )}
+      {system.length > 0 && (
+        <Section title="System records">
+          <div className="finding__evidence">
+            {system.map((e) => (
+              <SystemRecordCard key={`${e.source_id}-${e.stance}`} evidence={e} />
             ))}
           </div>
         </Section>

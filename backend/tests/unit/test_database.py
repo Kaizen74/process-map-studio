@@ -363,7 +363,7 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 # system-recorded sequence basis (P10b). The new vocabularies B.40-B.43 exist already (unused).
 PENDING_VALUES: dict[str, set[str]] = {
     "B.1": {"group_notes", "working_spreadsheet", "email_thread"},
-    "B.22": {"hidden_work", "offline_work", "sequence_drift", "estimate_gap", "measured_rework"},
+    # B.22 hidden_work … measured_rework were added with P10b R6 (2026-10-08).
 }  # B.34 system_trace was added with P10b R5b (2026-10-07)
 
 

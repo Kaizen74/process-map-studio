@@ -211,6 +211,12 @@ class GapMode(StrEnum):
 class InternalFindingType(StrEnum):
     """B.22 internal finding type."""
 
+    # v1.11 system-record findings (§3.13.6; R6): made by the app from system logs, never by AI.
+    HIDDEN_WORK = "hidden_work"
+    OFFLINE_WORK = "offline_work"
+    SEQUENCE_DRIFT = "sequence_drift"
+    ESTIMATE_GAP = "estimate_gap"
+    MEASURED_REWORK = "measured_rework"
     DEAD_CONTROL_CANDIDATE = "dead_control_candidate"
     UNDOCUMENTED_WORK = "undocumented_work"
     OWNERSHIP_MISMATCH = "ownership_mismatch"
