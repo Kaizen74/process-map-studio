@@ -105,6 +105,18 @@ export function MapLegend({ lens, view = "done", showOther = false }: MapLegendP
               </li>
             </>
           )}
+          {lens === "volume" && (
+            <>
+              <li>
+                <span className="mono">1,240 cases/mo · wait 4 h (median)</span>&nbsp;from the system records matched to
+                the step
+              </li>
+              <li>
+                <span className="mono map-lens__muted">No system data</span>&nbsp;no confirmed match;{" "}
+                <span className="mono map-lens__muted">too few cases</span>&nbsp;fewer than 5
+              </li>
+            </>
+          )}
           {lens === "time" && (
             <>
               <li>

@@ -4,6 +4,8 @@ import {
   deleteEventLog,
   getAlignment,
   getMetrics,
+  getSystemTraces,
+  getSystemVariants,
   listEventLogs,
   saveAlignment,
   saveColumnMap,
@@ -134,5 +136,26 @@ export function useMetrics<M>(logId: string, scope: MetricScope, enabled = true)
     queryKey: ["event-logs", logId, "metrics", scope],
     queryFn: () => getMetrics<M>(logId, scope),
     enabled,
+  });
+}
+
+// --- On the map (R8): panel 4e, the Volume and wait lens, the Variants tab ----------------------
+// Keys under the version, so refreshReview and the alignment saves reload them.
+
+/** The version's system-trace evidence per step; only fetched while System records is on. */
+export function useSystemTraces(versionId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "system-traces"],
+    queryFn: () => getSystemTraces(versionId ?? ""),
+    enabled: enabled && Boolean(versionId),
+  });
+}
+
+/** Each log's variants through the map and its hidden work; only while System records is on. */
+export function useSystemVariants(versionId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "system-variants"],
+    queryFn: () => getSystemVariants(versionId ?? ""),
+    enabled: enabled && Boolean(versionId),
   });
 }

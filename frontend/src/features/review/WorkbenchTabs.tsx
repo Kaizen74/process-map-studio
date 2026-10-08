@@ -9,6 +9,7 @@ import {
   RaciMatrix,
   RejectedClaimsTab,
   TabBar,
+  VariantsTab,
 } from "../../components/tabs";
 import { useRejectedClaims } from "../../hooks/useDraft";
 import {
@@ -24,8 +25,9 @@ import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { Graph } from "../../lib/mapTypes";
 import { questionsFileName, questionsMarkdown, validationPackUrl } from "../../lib/questions";
 import type { RejectedClaim } from "../../lib/reviewTypes";
+import type { HiddenWorkItem, LogVariants, SystemVariants } from "../../lib/systemRecords";
 
-type TabId = "raci" | "questions" | "rejected" | "audit" | "merges" | "lint";
+type TabId = "raci" | "questions" | "rejected" | "audit" | "merges" | "lint" | "variants";
 
 export interface WorkbenchTabsProps {
   graph: Graph;
@@ -37,6 +39,10 @@ export interface WorkbenchTabsProps {
   onSelect: (elementId: string) => void;
   onOpenPassage: (claim: RejectedClaim) => void;
   onAddFromPassage: (claim: RejectedClaim) => void;
+  /** System records (R8): the Variants tab, shown when a log is imported and the module is on. */
+  variants?: SystemVariants | undefined;
+  /** Add as step from hidden work; omitted where the version can't change. */
+  onAddHidden?: ((item: HiddenWorkItem, log: LogVariants) => void) | undefined;
 }
 
 /** Loading and error states shared by every tab (PRD §5.3). */
@@ -74,6 +80,8 @@ export function WorkbenchTabs({
   onSelect,
   onOpenPassage,
   onAddFromPassage,
+  variants,
+  onAddHidden,
 }: WorkbenchTabsProps) {
   const [tab, setTab] = useState<TabId>("raci");
   const toast = useToast();
@@ -102,6 +110,7 @@ export function WorkbenchTabs({
           { id: "lint" as const, label: count("Map checks", checks) },
         ]
       : []),
+    ...(variants && variants.logs.length > 0 ? [{ id: "variants" as const, label: "Variants" }] : []),
   ];
   const shown = tabs.some((t) => t.id === tab) ? tab : "raci";
 
@@ -181,6 +190,9 @@ export function WorkbenchTabs({
         </Loaded>
       )}
       {shown === "lint" && <Loaded query={lint} what="map checks">{(data) => <LintTab report={data} onGoTo={onSelect} />}</Loaded>}
+      {shown === "variants" && variants && (
+        <VariantsTab data={variants} onSelect={onSelect} onAddHidden={editable ? onAddHidden : undefined} />
+      )}
     </TabBar>
   );
 }

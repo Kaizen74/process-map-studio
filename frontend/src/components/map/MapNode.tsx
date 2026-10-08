@@ -10,7 +10,9 @@ export function LensLine({ line, pos }: { line: LensLineData; pos: TextPos }) {
   return (
     <div className="map-lens" style={placed(pos)} data-lens={line.kind}>
       {line.kind === "text" && (
-        <span className={line.danger ? "mono map-lens__danger" : "mono"}>{line.text}</span>
+        <span className={line.danger ? "mono map-lens__danger" : line.muted ? "mono map-lens__muted" : "mono"}>
+          {line.text}
+        </span>
       )}
       {line.kind === "state" && <StateGlyph state={line.state} />}
       {line.kind === "work_type" && <WorkTypeGlyph type={line.type} proposed={line.proposed} />}

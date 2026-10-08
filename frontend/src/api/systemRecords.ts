@@ -8,6 +8,8 @@ import type {
   LogUpload,
   MetricScope,
   MetricsResponse,
+  SystemTrace,
+  SystemVariants,
 } from "../lib/systemRecords";
 import { request } from "./request";
 
@@ -52,3 +54,9 @@ export const saveAlignment = (logId: string, rows: AlignmentDecision[]) =>
 
 export const suggestAlignment = (logId: string) =>
   request<ImportStarted>(`/event-logs/${enc(logId)}/alignment/suggest`, { method: "POST" });
+
+// Panel 4e, the Volume and wait lens and the Variants tab (R8).
+export const getSystemTraces = (versionId: string) => request<SystemTrace[]>(`/versions/${enc(versionId)}/system-traces`);
+
+export const getSystemVariants = (versionId: string) =>
+  request<SystemVariants>(`/versions/${enc(versionId)}/system-variants`);

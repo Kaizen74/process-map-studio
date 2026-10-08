@@ -1,6 +1,6 @@
 import type { ExceptionStep } from "../../lib/exceptions";
 import type { Graph, Layout } from "../../lib/mapTypes";
-import { lensLine, longestStep, markersFor, nodeName, type Lens } from "../../lib/lens";
+import { lensLine, longestStep, markersFor, nodeName, type Lens, type VolumeLine } from "../../lib/lens";
 import { ghostLabel, type AsView } from "../../lib/views";
 import { MapEdge } from "./MapEdge";
 import { MapNode } from "./MapNode";
@@ -20,6 +20,8 @@ export interface MapStageProps {
   withImages?: ReadonlySet<string>;
   /** The Exceptions lens: each step's route in this view, from the backend (X2). */
   routes?: ReadonlyMap<string, ExceptionStep>;
+  /** The Volume and wait lens (R8): each step's line from the system figures. */
+  volume?: ReadonlyMap<string, VolumeLine> | undefined;
 }
 
 /**
@@ -37,6 +39,7 @@ export function MapStage({
   onSelect,
   withImages,
   routes,
+  volume,
 }: MapStageProps) {
   const elements = new Map(graph.elements.map((e) => [e.id, e]));
   const roles = new Map(graph.roles.map((r) => [r.id, r.name]));
@@ -110,7 +113,7 @@ export function MapStage({
               lens={
                 node.ghost
                   ? { kind: "text", text: ghostLabel(view), danger: false }
-                  : lensLine(element, lens, longest, view, routes)
+                  : lensLine(element, lens, longest, view, routes, volume)
               }
               selected={node.id === selectedId}
               onSelect={onSelect}

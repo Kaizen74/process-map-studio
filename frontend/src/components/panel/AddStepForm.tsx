@@ -91,6 +91,20 @@ export function AddStepForm({
         />
         {form.provenance === "O" ? (
           <>
+            {form.system_activity && (
+              <div className="picked-passage" aria-label="System record">
+                <span className="mono picked-passage__anchor">
+                  System record · {form.system_activity.log_name}
+                </span>
+                <p className="picked-passage__text">
+                  {form.system_activity.activity}, recorded in {form.system_activity.cases} cases. The step&apos;s evidence
+                  is this record; you can add a passage too.
+                </p>
+                <button type="button" className="btn btn--link" onClick={() => set("system_activity", null)}>
+                  Remove the system record
+                </button>
+              </div>
+            )}
             {form.passages.length > 0 && (
               <ul className="picked-passages" aria-label="Picked passages">
                 {form.passages.map((p) => (

@@ -5,3 +5,4 @@ export { RejectedClaimsTab, type RejectedClaimsTabProps } from "./RejectedClaims
 export { AuditTab } from "./AuditTab";
 export { MergeTab, type MergeChoice, type MergeTabProps } from "./MergeTab";
 export { LintTab, type LintTabProps } from "./LintTab";
+export { VariantsTab, type VariantsTabProps } from "./VariantsTab";

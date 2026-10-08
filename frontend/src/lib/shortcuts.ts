@@ -23,17 +23,21 @@ export interface KeyPress {
   metaKey: boolean;
 }
 
-/** The shortcut list shown by "?". */
-export const SHORTCUTS: readonly { keys: string; action: string }[] = [
-  { keys: "J", action: "Next step in process order" },
-  { keys: "K", action: "Previous step in process order" },
-  { keys: "C", action: "Confirm the selected step as drafted" },
-  { keys: "E", action: "Edit the selected step" },
-  { keys: "R", action: "Reject the selected step" },
-  { keys: "Esc", action: "Close the source, the edit form or this list" },
-  { keys: "1 – 6", action: `Switch lens: ${LENSES.map((l) => l.label).join(", ")}` },
-  { keys: "?", action: "Show this list" },
-];
+/** The shortcut list shown by "?", for the lenses on offer (Volume and wait only with R8's module). */
+export function shortcutList(lenses: readonly { label: string }[] = LENSES): { keys: string; action: string }[] {
+  return [
+    { keys: "J", action: "Next step in process order" },
+    { keys: "K", action: "Previous step in process order" },
+    { keys: "C", action: "Confirm the selected step as drafted" },
+    { keys: "E", action: "Edit the selected step" },
+    { keys: "R", action: "Reject the selected step" },
+    { keys: "Esc", action: "Close the source, the edit form or this list" },
+    { keys: `1 – ${lenses.length}`, action: `Switch lens: ${lenses.map((l) => l.label).join(", ")}` },
+    { keys: "?", action: "Show this list" },
+  ];
+}
+
+export const SHORTCUTS: readonly { keys: string; action: string }[] = shortcutList();
 
 const LETTERS: Readonly<Record<string, Shortcut>> = {
   j: { kind: "next" },
@@ -45,11 +49,11 @@ const LETTERS: Readonly<Record<string, Shortcut>> = {
   Escape: { kind: "close" },
 };
 
-export function shortcutFor(press: KeyPress): Shortcut | null {
+export function shortcutFor(press: KeyPress, lenses: readonly { value: Lens }[] = LENSES): Shortcut | null {
   if (press.ctrlKey || press.altKey || press.metaKey || isTyping(press.target)) return null;
   const letter = LETTERS[press.key.length === 1 ? press.key.toLowerCase() : press.key];
   if (letter) return letter;
-  const lens = /^[1-6]$/.test(press.key) ? LENSES[Number(press.key) - 1] : undefined;
+  const lens = /^[1-9]$/.test(press.key) ? lenses[Number(press.key) - 1] : undefined;
   return lens ? { kind: "lens", lens: lens.value } : null;
 }
 

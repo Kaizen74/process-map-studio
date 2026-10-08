@@ -13,6 +13,14 @@ export interface PickedPassage {
 
 export type AddProvenance = "O" | "R";
 
+/** R8: an activity Eric confirmed as hidden work; its system record is the step's evidence. */
+export interface PickedActivity {
+  log_id: string;
+  activity: string;
+  log_name: string;
+  cases: number;
+}
+
 export interface AddStepForm {
   label: string;
   kind: string;
@@ -22,6 +30,7 @@ export interface AddStepForm {
   passages: PickedPassage[];
   r_reference: string;
   mechanism: string;
+  system_activity: PickedActivity | null;
 }
 
 export const PROVENANCES: readonly { value: AddProvenance; label: string }[] = [
@@ -49,6 +58,25 @@ export function newStepForm(graph: Graph, afterId: string, passage?: PickedPassa
     passages: passage ? [passage] : [],
     r_reference: "",
     mechanism: "judgment",
+    system_activity: null,
+  };
+}
+
+/** Add as step from hidden work (R8): named after the activity, in the lane of the role that
+ * records it most, after the step it most often follows; its evidence is the system record. */
+export function hiddenWorkStepForm(
+  graph: Graph,
+  item: { activity: string; cases: number; role_id: string | null; after_element_id: string | null },
+  log: { log_id: string; log_name: string },
+  fallbackAfterId: string,
+): AddStepForm {
+  const form = newStepForm(graph, item.after_element_id ?? fallbackAfterId);
+  const lane = item.role_id && graph.roles.some((r) => r.id === item.role_id) ? item.role_id : form.lane_role_id;
+  return {
+    ...form,
+    label: item.activity,
+    lane_role_id: lane,
+    system_activity: { log_id: log.log_id, activity: item.activity, log_name: log.log_name, cases: item.cases },
   };
 }
 
@@ -67,7 +95,7 @@ export function validateNewStep(form: AddStepForm): Record<string, string> {
   }
   if (!form.lane_role_id) errors.lane_role_id = "Choose the lane (role) this step sits in.";
   if (!form.after_element_id) errors.after_element_id = "Choose the step the new one comes after.";
-  if (form.provenance === "O" && form.passages.length === 0) errors.segment_ids = NEEDS_PASSAGE;
+  if (form.provenance === "O" && form.passages.length === 0 && !form.system_activity) errors.segment_ids = NEEDS_PASSAGE;
   const reference = form.r_reference.trim();
   if (form.provenance === "R" && (!reference || reference.length > 500)) errors.r_reference = NEEDS_REFERENCE;
   return errors;
@@ -85,6 +113,9 @@ export function newStepBody(form: AddStepForm) {
     segment_ids: form.provenance === "O" ? form.passages.map((p) => p.id) : [],
     r_reference: form.provenance === "R" ? form.r_reference.trim() : "",
     mechanism: deciding ? form.mechanism : "judgment",
+    ...(form.provenance === "O" && form.system_activity
+      ? { system_activity: { log_id: form.system_activity.log_id, activity: form.system_activity.activity } }
+      : {}),
   };
 }
 

@@ -406,6 +406,11 @@
   color: var(--danger-text);
 }
 
+/* Volume and wait (R8): "No system data" and "too few cases" read as absent, in words. */
+.map-lens__muted {
+  font-style: italic;
+}
+
 .map-bar {
   display: inline-block;
   position: relative;

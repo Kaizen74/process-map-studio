@@ -7,6 +7,8 @@ import { AllReviewed } from "../../components/panel";
 import { useGapAnalyses } from "../../hooks/useGap";
 import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
+import { useSettings } from "../../hooks/useSettings";
+import { useSystemTraces, useSystemVariants } from "../../hooks/useSystemRecords";
 import { useExceptions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
@@ -16,7 +18,9 @@ import type { ReviewAction } from "../../api/review";
 import type { GapAnalysis } from "../../lib/gap";
 import type { Graph } from "../../lib/mapTypes";
 import type { RejectedClaim } from "../../lib/reviewTypes";
-import { newStepForm, type AddStepForm } from "../../lib/addStep";
+import { hiddenWorkStepForm, newStepForm, type AddStepForm } from "../../lib/addStep";
+import { lensesFor, type Lens } from "../../lib/lens";
+import { volumeLines } from "../../lib/systemRecords";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { shortcutFor, stepAlong } from "../../lib/shortcuts";
 import { asView, inView, type AsView } from "../../lib/views";
@@ -86,7 +90,17 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const navigate = useNavigate();
   const gapPath = engagementPath(engagementId, "gap_analysis");
   const selectedId = params.get("step");
-  const [lens, setLens] = useLens();
+  const [chosenLens, setLens] = useLens();
+  // System records (R8, decision A): the Volume and wait lens, panel 4e and the Variants tab only
+  // while the module is on.
+  const settings = useSettings();
+  const systemOn = settings.data?.system_records_enabled === true;
+  const lenses = lensesFor(systemOn);
+  const lens: Lens = lenses.some((l) => l.value === chosenLens) ? chosenLens : "plain";
+  const traces = useSystemTraces(versionId, systemOn);
+  const variants = useSystemVariants(versionId, systemOn);
+  const volume =
+    lens === "volume" && traces.data && variants.data ? volumeLines(traces.data, variants.data.too_few_steps) : undefined;
   // The Exceptions lens (X3): each step's route in this view, fetched only while it is on.
   const unusual = useExceptions(versionId, shown, lens === "exceptions");
   const routes = new Map((unusual.data?.steps ?? []).map((s) => [s.element_id, s]));
@@ -228,7 +242,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
     if (helpOpen || refreshOpen || event.defaultPrevented) return;
     // Keys pressed inside a popover or dialog belong to it (the quality card, the More menu).
     if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return;
-    const shortcut = shortcutFor(event);
+    const shortcut = shortcutFor(event, lenses);
     if (!shortcut) return;
     const busy = adding !== null || editing; // a form is open: only lenses and help
     const step = selected && STEPS.has(selected.kind) ? selected : null;
@@ -279,7 +293,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   return (
     <div className="review">
       <KeyboardShortcuts onKey={onShortcut} />
-      <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} lenses={lenses} />
       <RefreshDialog
         open={refreshOpen}
         engagementId={engagementId}
@@ -301,6 +315,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               onView={setView}
               lens={lens}
               onLens={setLens}
+              lenses={lenses}
               asView={shown}
               onAsView={setShown}
               showOther={showOther}
@@ -343,6 +358,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     onSelect={select}
                     withImages={stepsWithImages(pictures.data ?? [])}
                     routes={routes}
+                    volume={volume}
                   />
                 </div>
                 <MapLegend lens={lens} view={shown} showOther={showOther} />
@@ -365,6 +381,8 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               onSelect={select}
               onOpenPassage={openClaim}
               onAddFromPassage={addFromClaim}
+              variants={systemOn ? variants.data : undefined}
+              onAddHidden={(item, log) => setAdding(hiddenWorkStepForm(g, item, log, addAfter()))}
             />
           </Card>
           {below}
@@ -413,6 +431,14 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
             <DetailPanel
               element={selected}
               typicalResponses={g.edges.filter((e) => e.from === selected.id && e.typical).map((e) => e.label)}
+              system={
+                systemOn
+                  ? {
+                      traces: (traces.data ?? []).filter((t) => t.element_id === selected.id),
+                      tooFew: variants.data?.too_few_steps.includes(selected.id) ?? false,
+                    }
+                  : undefined
+              }
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
               partOf={g.elements.find((e) => e.id === selected.parent_element_id)?.label}

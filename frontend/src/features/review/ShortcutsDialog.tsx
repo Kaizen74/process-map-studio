@@ -1,8 +1,18 @@
 import { Button, Dialog } from "../../components/common";
-import { SHORTCUTS } from "../../lib/shortcuts";
+import type { Lens } from "../../lib/lens";
+import { shortcutList } from "../../lib/shortcuts";
 
 /** The keyboard shortcut list, opened with "?" (PRD §5.8). */
-export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ShortcutsDialog({
+  open,
+  onClose,
+  lenses,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** The lenses on offer (Volume and wait while System records is on). */
+  lenses?: readonly { value: Lens; label: string }[];
+}) {
   return (
     <Dialog
       open={open}
@@ -16,7 +26,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
       onClose={onClose}
     >
       <dl className="shortcuts">
-        {SHORTCUTS.map((s) => (
+        {shortcutList(lenses).map((s) => (
           <div key={s.keys} className="shortcuts__row">
             <dt>
               <kbd className="mono">{s.keys}</kbd>

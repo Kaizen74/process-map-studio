@@ -130,7 +130,7 @@ const DRAFT_SOURCES = [
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
   // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
-  test.setTimeout(120_000); // the whole journey: about 85 s measured with X3 (2026-10-06); was 90 s
+  test.setTimeout(150_000); // the whole journey: about 85 s measured with X3 (2026-10-06), plus R8
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });
@@ -670,7 +670,49 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(research).toHaveCount(0, { timeout: 10_000 });
     expect(await seriousViolations(page)).toEqual([]);
     expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
+
+    // R8: System records on, a small log matched to the current map; the Volume and wait lens and
+    // the Variants tab in a real browser (contrast included). Switched back off at the end.
+    expect((await request.put("/api/settings/modules", { data: { system_records_enabled: true } })).status()).toBe(200);
+    const rows = ["case_id,activity,timestamp"];
+    for (let n = 0; n < 6; n++) {
+      rows.push(`C${n},Plan created,2026-03-02 0${n}:00`, `C${n},Special load checked,2026-03-02 0${n}:20`);
+      rows.push(`C${n},Manual weight override,2026-03-02 0${n}:40`);
+    }
+    const upload = await request.post(`/api/engagements/${id}/event-logs`, {
+      multipart: { name: "Six cases", file: { name: "six.csv", mimeType: "text/csv", buffer: Buffer.from(rows.join("\n")) } },
+    });
+    const log = (await upload.json()) as { id: string; column_map: Record<string, string | null> };
+    await request.put(`/api/event-logs/${log.id}/column-map`, { data: { columns: log.column_map } });
+    const approval = { approved_by_role: "Head of operations", confirm_approval: true };
+    expect((await request.post(`/api/event-logs/${log.id}/import`, { data: approval })).status()).toBe(202);
+    await expect
+      .poll(async () => ((await (await request.get(`/api/event-logs/${log.id}`)).json()) as { status: string }).status)
+      .toBe("imported");
+    const aligned = (await (await request.get(`/api/event-logs/${log.id}/alignment`)).json()) as { version_id: string };
+    const current = (await (await request.get(`/api/versions/${aligned.version_id}/graph`)).json()) as {
+      version: { state: string };
+      elements: { id: string; label: string }[];
+    };
+    const step = (label: string) => current.elements.find((e) => e.label === label)?.id ?? "";
+    const decided = await request.put(`/api/event-logs/${log.id}/alignment`, {
+      data: { rows: [
+        { activity: "Plan created", element_id: step("Draft load plan"), status: "confirmed" },
+        { activity: "Special load checked", element_id: step("Special loads OK?"), status: "confirmed" },
+        { activity: "Manual weight override", element_id: null, status: "hidden_work" },
+      ] }, // prettier-ignore
+    });
+    expect(decided.status()).toBe(200);
+    await page.goto(`/engagements/${id}/${current.version.state === "draft" ? "review" : "published"}`);
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Volume and wait" }).click();
+    await expect(page.locator(".map-lens", { hasText: /cases\/mo|No system data/ }).first()).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("tab", { name: "Variants" }).click();
+    await expect(page.getByRole("region", { name: "Hidden work in Six cases" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
   } finally {
+    await request.put("/api/settings/modules", { data: { system_records_enabled: false } });
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
 });

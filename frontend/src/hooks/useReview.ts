@@ -68,7 +68,7 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 /** Everything that shows a version's review state, refreshed after a change (PRD §5.8). */
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
   // "images": rejecting or restoring a step hides or shows its pictures (marker and strip).
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions"]) {
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });
@@ -145,9 +145,11 @@ export function useAddStep(versionId: string, engagementId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: NewStepBody) => addStep(versionId, body),
-    onSuccess: async (detail: ElementDetail) => {
+    onSuccess: async (detail: ElementDetail, body) => {
       client.setQueryData(["elements", detail.id], detail);
       refreshReview(client, versionId, engagementId);
+      // From hidden work (R8): the activity is now matched to the new step.
+      if (body.system_activity) void client.invalidateQueries({ queryKey: ["event-logs"] });
       await client.refetchQueries({ queryKey: ["versions", versionId, "graph"] });
       await client.refetchQueries({ queryKey: ["versions", versionId, "layout"] });
     },

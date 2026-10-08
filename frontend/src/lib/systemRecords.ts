@@ -413,3 +413,34 @@ export const percent = (share: number) => `${Math.round(share * 100)}%`;
 export function tooFewText(tooFew: number, one: string, many = `${one}s`): string {
   return tooFew > 0 ? `${tooFew} ${tooFew === 1 ? one : many} not shown: fewer than 5 cases each.` : "";
 }
+
+// --- The Volume and wait lens and panel 4e (R8) -------------------------------------------------
+
+/** "14 min", "4 h", "1.5 h": a duration in the lens's few characters. */
+export function shortDuration(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)} min`;
+  const hours = minutes / 60;
+  return `${hours >= 10 ? Math.round(hours) : Number(hours.toFixed(1))} h`;
+}
+
+/** "1,240 cases/mo · wait 4 h (median)" for a step's busiest trace. */
+export function volumeText(trace: SystemTrace): string {
+  const volume = `${Math.round(trace.cases_per_month).toLocaleString("en-GB")} cases/mo`;
+  return trace.wait_before ? `${volume} · wait ${shortDuration(trace.wait_before.median_min)} (median)` : volume;
+}
+
+/** Each step's Volume and wait line: its busiest log's figures, or "too few cases" (no figure). */
+export function volumeLines(
+  traces: readonly SystemTrace[],
+  tooFew: readonly string[] = [],
+): Map<string, { text: string; muted: boolean }> {
+  const lines = new Map<string, { text: string; muted: boolean }>();
+  for (const id of tooFew) lines.set(id, { text: "too few cases", muted: true });
+  const busiest = new Map<string, SystemTrace>();
+  for (const t of traces) {
+    const known = busiest.get(t.element_id);
+    if (!known || t.cases > known.cases) busiest.set(t.element_id, t);
+  }
+  for (const [id, t] of busiest) lines.set(id, { text: volumeText(t), muted: false });
+  return lines;
+}
