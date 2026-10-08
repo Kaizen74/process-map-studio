@@ -455,6 +455,38 @@ The system's variants of each imported log, read through Eric's **confirmed** ma
 - `too_few_steps`: steps with a confirmed match recorded in fewer than 5 cases in every log (the lens says "too few cases"; no figure is given).
 Errors `404`. Used by: the Variants tab and the Volume and wait lens (R8).
 
+## Step disposition (PRD §3.15, criterion 91, constraint 7) — phase P10b (2026-10-08, R9a)
+
+Every step gets a disposition (B.41): `delete` (Delete) · `automate_rules` (Automate (rules)) · `ai_assisted` (AI-assisted) · `human_approves` (Human approves) · `keep_human` (Keep human). The app **suggests** one deterministically, with its reason, every time it is read (no AI; nothing stored); Eric **chooses** (drafts only), and his choice is kept: it is copied when a version is reopened and carried to the redrafted step when a draft is refreshed (like a confirmed work type). Dispositions feed the value calculator (R9b), the AI-flag register, the leadership Recommendation panel and the Master Process Map (R10).
+
+**Suggestion rules**, the first that applies:
+1. **Delete** — a kept gap finding on the step (not dismissed) of type `dead_control_candidate` or with gap class `obsolete_rule` ("Gap finding: <title>."); or a documented-only decision or approval that Eric confirmed has no system record in an imported log and that has no KPI and no constraint (no stated purpose): "The documents describe it, no interview mentions it, the <log> log has no record of it and no purpose is stated."
+2. **Keep human** — work type complex or chaotic ("<Complex> work: it needs human judgment."); or knowledge risk High with heuristics or experience at least half of its know-how items ("High knowledge risk, mostly heuristics and experience.").
+3. **Human approves** — an approval ("An approval: a person authorises it."); or a step with a risk flag ("Carries a <financial> risk: a person authorises it.").
+4. **AI-assisted** — work type complicated ("Complicated work: an AI agent can prepare it with expert oversight."); or a clear activity whose AI flag reads its input (component `perception`: "Clear work that needs documents read: …").
+5. **Automate (rules)** — work type clear and, for a decision, rule-based ("Clear, rule-based work.").
+6. Otherwise **Keep human** ("Work type not confirmed yet: kept human until it is.").
+For AI-assisted and Automate the reason adds " Needs a complete AI flag before you can choose it." when the step has none (L10).
+
+### GET /api/versions/{vid}/dispositions
+`200`: one row per step (start and end left out; rejected steps too) in map order:
+```json
+[{"element_id": "…", "label": "Approve load plan", "kind": "approval", "suggested": "delete",
+  "reason": "The documents describe it, …", "disposition": null, "note": "", "risk_flag": "none",
+  "allowed": ["delete", "human_approves", "keep_human"]}]
+```
+`disposition` is Eric's choice (or `null`); `allowed` lists what he may choose for this step (the rules below). Errors `404`.
+
+### PUT /api/elements/{eid}/disposition
+`{"disposition": "human_approves" | null, "note": "…", "risk_flag": "none" | "financial" | "safety" | "regulatory"}` (`risk_flag` optional: left out, it keeps its value; `null` disposition clears Eric's choice). Rules (`422` naming the field):
+- a step of a **draft** (`409` otherwise), not the start or the end;
+- `disposition` one of B.41 ("Choose one of the five dispositions.");
+- `automate_rules` and `ai_assisted` are refused for complex or chaotic work ("<Complex> work can't be automated or AI-assisted.") and need a complete AI flag: component, input, output, handoff and basis ("Add a complete AI flag first: component, input, output, handoff and basis.");
+- `automate_rules` is refused on a judgment decision or approval ("A judgment step can't be automated by rules.", constraint 7);
+- `note` one line, up to 300 characters, no name on the hidden-names list.
+Response `200`: the step's row as in `GET …/dispositions`. Audit row "Chose disposition" (before and after: disposition, note, risk flag; and the suggestion at the time). The stored lint report is refreshed.
+**Lint L10** (hard failure) now also fails a step whose chosen disposition is `automate_rules` or `ai_assisted` without a complete AI flag, or on complex or chaotic work.
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

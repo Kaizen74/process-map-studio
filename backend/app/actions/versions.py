@@ -410,14 +410,14 @@ def story_types(session: Session, version_id: str) -> set[str] | None:
     }
 
 
-def lint_graph(every: Graph, stories: set[str] | None = None,
-               traced: set[str] | None = None) -> LintReport:  # fmt: skip
+def lint_graph(every: Graph, stories: set[str] | None = None, traced: set[str] | None = None,
+               chosen: dict[str, str] | None = None) -> LintReport:  # fmt: skip
     """The lint rules on the map as one (with its layout), then each view's flow checks
     (§3.12.11), then the sensemaking warnings (work types, stories), from the graph with every
     line. Used for the stored report, the quality card and publishing alike. `traced`: the steps
     the system trace records (R8: evidence for an observed step added from hidden work)."""
     graph = views.combined(every)
-    whole = lint.run_lint(graph, layout.compute_layout(graph), traced or set())
+    whole = lint.run_lint(graph, layout.compute_layout(graph), traced or set(), chosen)
     per_view = lint.run_view_checks(every)
     sense = lint.run_sensemaking_warnings(graph, stories)
     return LintReport(
@@ -431,7 +431,8 @@ def lint_for(session: Session, version_id: str) -> LintReport | None:
     if every is None:
         return None
     traced = system_trace.traced_steps(session, version_id)
-    return lint_graph(every, story_types(session, version_id), traced)
+    chosen = {r.id: r.disposition for r in map_repo.elements(session, version_id) if r.disposition}
+    return lint_graph(every, story_types(session, version_id), traced, chosen)
 
 
 def lint_version(sessions: Sessions, version_id: str, *, ask: bool = True) -> Result[LintReport]:

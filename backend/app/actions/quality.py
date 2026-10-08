@@ -260,11 +260,12 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
         1 for p in map_repo.merge_proposals(session, version_id) if p.decision == "pending"
     )
     traced = system_trace.traced_steps(session, version_id)
+    chosen = {r.id: r.disposition for r in map_repo.elements(session, version_id) if r.disposition}
     return quality.build_quality_card(
         QualityInput(
             graph=graph,
             lint=versions_action.lint_graph(
-                every, versions_action.story_types(session, version_id), traced
+                every, versions_action.story_types(session, version_id), traced, chosen
             ),
             traced=sorted(traced),
             pending_merges=pending,

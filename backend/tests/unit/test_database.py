@@ -411,6 +411,7 @@ def test_downgrade_of_0012_removes_only_the_v1_11_tables_and_columns(migrated: P
         engine.dispose()
         return columns
 
+    db.downgrade(migrated, "0012")  # later migrations add their own columns (0014)
     before = element_columns()
     db.downgrade(migrated, "0011")
     assert new_tables.isdisjoint(table_names(migrated))
@@ -445,3 +446,18 @@ def test_downgrade_of_0013_removes_only_the_frozen_system_traces(migrated: Path)
     assert "run_record" in version_columns()
     db.upgrade(migrated)
     assert "system_traces" in version_columns()
+
+
+def test_downgrade_of_0014_removes_only_the_two_notes(migrated: Path) -> None:
+    def element_columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        columns = {c["name"] for c in inspect(engine).get_columns("elements")}
+        engine.dispose()
+        return columns
+
+    before = element_columns()
+    db.downgrade(migrated, "0013")
+    assert before - element_columns() == {"disposition_note", "value_override_note"}
+    assert {"disposition", "risk_flag", "time_override_min"} <= element_columns()
+    db.upgrade(migrated)
+    assert {"disposition_note", "value_override_note"} <= element_columns()

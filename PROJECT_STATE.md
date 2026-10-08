@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-08 (P10b R8b) — update after EVERY increment*
+*Last updated: 2026-10-08 (P10b R9a) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.11, adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -68,7 +68,8 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] R7b — P10b UI: an imported log opens in tabs Matching to map steps · Metrics · Import report; the alignment table (Confirm · Choose another step · Hidden work; steps with no system record with Confirm no system record; Ask Claude as a job) and the Metrics tab (all cases, volume and waits per activity, handoffs between activities, variants top 10 with coverage, per role; groups under 5 cases counted, never shown); browser accessibility check on both tabs (85, 86)
 - [x] R8a — P10b: step summary on `system-traces` (cases per month, main activity's work and wait, variants through the step); `GET /versions/{vid}/system-variants` (top variants through Eric's confirmed matches, fit with As done and As documented in words, hidden work with where it happens, steps with too few cases); Add as step from hidden work (`system_activity`: an `O` step whose evidence is its system trace; L2 and Q2 accept it)
 - [x] R8b — P10b UI: Volume and wait lens (seventh, key 7, only while System records is on), panel 4e System data, Variants tab (fit with As done and As documented in words; matched steps open), Hidden work list with Add as step (form filled in, system record as evidence); smoke journey checks them in a real browser (89)
-- [ ] R9 — P10b: `value` and `disposition` services, role costs, assumptions, `PUT /elements/{eid}/disposition`, L10 rules, value endpoint (90, 91)
+- [x] R9a — P10b: `services/disposition.py` (suggestion with reason, choice rules), `GET /versions/{vid}/dispositions`, `PUT /elements/{eid}/disposition` (with risk flag and note; audited), L10 checks chosen dispositions, complex work undoes Automate/AI-assisted, choices kept on reopen and refresh; migration 0014 (notes); A.11 Delete for Approve load plan (91)
+- [ ] R9b — P10b: `services/value.py`, role costs, value assumptions, value overrides, `GET /versions/{vid}/value` (per step and phase, evidence labels, scenarios potential) (90)
 - [ ] R10 — P10b UI: disposition and value in the panel, registers, Settings Regional and Optional modules (decision A; 93)
 - [ ] R11 — P10b: wider intake .xlsx, .csv, .eml (openpyxl, standard `email`; header names → redaction terms; 92)
 - [ ] R12 — P10b: G10 baseline candidate (approval), 500k-event import timing, close P10b

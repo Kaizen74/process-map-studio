@@ -232,6 +232,9 @@ class Element(Row):
     risk_flag: Mapped[str | None] = mapped_column(String(16), nullable=True)
     time_override_min: Mapped[float | None] = mapped_column(Float, nullable=True)
     volume_override_month: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # R9 (0014): Eric's notes on his disposition and on his value overrides.
+    disposition_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    value_override_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class ElementClaim(Row):

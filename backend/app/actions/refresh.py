@@ -29,6 +29,10 @@ KEPT = {
 STEP_KINDS = {"activity", "decision", "approval"}
 
 
+OWN_VALUE_FIELDS = ("disposition", "disposition_note", "risk_flag", "time_override_min",
+                    "volume_override_month", "value_override_note")  # fmt: skip
+
+
 def changes(old: list[ElementRecord], fresh: list[ElementRecord], kept: int) -> RefreshChanges:
     """Among the steps Eric hadn't reviewed, what the fresh run drafted differently (by step key,
     labels in process order): drift between runs made at different times made visible."""
@@ -122,6 +126,13 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
             if before.kind in {"decision", "approval"}:
                 updates["decision_mechanism"] = DecisionMechanism.JUDGMENT.value
         map_repo.update_element(session, step_id, updates)
+    # So do Eric's disposition, risk flag and value overrides (R9; constraint 8): his choices.
+    for e in replaced:
+        if e.id not in successor:
+            continue
+        own = {k: getattr(e, k) for k in OWN_VALUE_FIELDS if getattr(e, k) is not None}
+        if own:
+            map_repo.update_element(session, successor[e.id], own)
 
     # Out with the draft's replaced content, in with the fresh.
     versions_repo.clear_for_refresh(session, draft_id, set(keep))

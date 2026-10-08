@@ -538,6 +538,10 @@ def set_work_type(
                 updates["decision_mechanism"] = JUDGMENT
                 before["decision_mechanism"] = element.decision_mechanism
                 after["decision_mechanism"] = JUDGMENT
+            # …and never Automate or AI-assisted (§3.15, R9a): that choice is undone.
+            if element.disposition in {"automate_rules", "ai_assisted"}:
+                updates["disposition"] = None
+                before["disposition"], after["disposition"] = element.disposition, None
         if before == after:
             return versions_action.get_element(sessions, element_id)
         map_repo.update_element(session, element_id, updates)

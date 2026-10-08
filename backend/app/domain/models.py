@@ -1036,3 +1036,30 @@ class ModuleSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     system_records_enabled: bool | None = None
+
+
+# --- Step disposition (R9a; API_CONTRACT.md → Step disposition) --------------------------------
+
+
+class DispositionInput(BaseModel):
+    """Eric's choice for a step (PUT /elements/{eid}/disposition)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    disposition: str | None
+    note: str = ""
+    risk_flag: str | None = None
+
+
+class DispositionView(BaseModel):
+    """A step's suggested disposition with its reason, and Eric's choice."""
+
+    element_id: str
+    label: str
+    kind: str
+    suggested: str  # B.41
+    reason: str
+    disposition: str | None  # Eric's choice, or None
+    note: str
+    risk_flag: str
+    allowed: list[str]
