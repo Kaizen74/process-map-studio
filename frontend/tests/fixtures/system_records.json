@@ -1,0 +1,1110 @@
+{
+  "held_log": {
+    "id": "id-1",
+    "engagement_id": "id-2",
+    "name": "Small extract",
+    "system": "DCS",
+    "timezone": "Asia/Singapore",
+    "window_start": "2026-03-02",
+    "window_end": "2026-03-31",
+    "status": "uploaded",
+    "column_map": {
+      "Case ID": "case_id",
+      "Event Name": "activity",
+      "Start Time": "timestamp",
+      "Performed by": "resource",
+      "Team": "role"
+    },
+    "timestamp_format": null,
+    "file_held": true,
+    "resources": [
+      {
+        "value": "U1",
+        "events": 1,
+        "suggested_role_id": "id-3"
+      },
+      {
+        "value": "U2",
+        "events": 1,
+        "suggested_role_id": null
+      }
+    ],
+    "role_map": {},
+    "validation_report": {
+      "rows_read": 2,
+      "rows_kept": 2,
+      "cases": 1,
+      "activities": 2,
+      "date_from": "2026-03-02T01:00:00Z",
+      "date_to": "2026-03-02T02:00:00Z",
+      "dropped": {
+        "unparseable_time": 0,
+        "missing_case_or_activity": 0,
+        "duplicate": 0
+      },
+      "dropped_share": 0.0,
+      "single_event_cases": 0,
+      "unknown_role_events": 1,
+      "outside_window": 0,
+      "timestamp_format": "%Y-%m-%d %H:%M",
+      "missing_columns": [],
+      "refused": false,
+      "refusal": ""
+    },
+    "approved_by_role": "",
+    "approved_at": null,
+    "created_at": "2026-10-08T00:00:00+00:00"
+  },
+  "imported_log": {
+    "id": "id-4",
+    "engagement_id": "id-2",
+    "name": "DCS extract",
+    "system": "DCS",
+    "timezone": "Asia/Singapore",
+    "window_start": null,
+    "window_end": null,
+    "status": "imported",
+    "column_map": {
+      "case_id": "case_id",
+      "activity": "activity",
+      "timestamp": "timestamp",
+      "end_timestamp": "end_timestamp",
+      "resource": "resource",
+      "system": "system"
+    },
+    "timestamp_format": null,
+    "file_held": false,
+    "resources": [],
+    "role_map": {},
+    "validation_report": {
+      "rows_read": 1063,
+      "rows_kept": 1063,
+      "cases": 200,
+      "activities": 7,
+      "date_from": "2026-03-01T22:49:00Z",
+      "date_to": "2026-04-24T08:34:53Z",
+      "dropped": {
+        "unparseable_time": 0,
+        "missing_case_or_activity": 0,
+        "duplicate": 0
+      },
+      "dropped_share": 0.0,
+      "single_event_cases": 0,
+      "unknown_role_events": 0,
+      "outside_window": 0,
+      "timestamp_format": "%Y-%m-%d %H:%M:%S",
+      "missing_columns": [],
+      "refused": false,
+      "refusal": ""
+    },
+    "approved_by_role": "Head of operations",
+    "approved_at": "2026-10-08T00:00:00+00:00",
+    "created_at": "2026-10-08T00:00:00+00:00"
+  },
+  "metrics": {
+    "activity": {
+      "log_id": "id-4",
+      "scope": "activity",
+      "minimum_cases": 5,
+      "groups": [
+        {
+          "scope": "activity",
+          "key": "Load sheet issued",
+          "label": "Load sheet issued",
+          "case_count": 200,
+          "metrics": {
+            "activity": "Load sheet issued",
+            "events": 200,
+            "cases": 200,
+            "cases_per_week": 25.0,
+            "cases_per_month": 108.3,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 110,
+                "cases": 110
+              },
+              {
+                "month": "2026-04",
+                "events": 90,
+                "cases": 90
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 3.1,
+              "p90_min": 5.3,
+              "n": 200
+            },
+            "wait_before": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 200
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Loading report received",
+          "label": "Loading report received",
+          "case_count": 200,
+          "metrics": {
+            "activity": "Loading report received",
+            "events": 200,
+            "cases": 200,
+            "cases_per_week": 25.0,
+            "cases_per_month": 108.3,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 110,
+                "cases": 110
+              },
+              {
+                "month": "2026-04",
+                "events": 90,
+                "cases": 90
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 13.4,
+              "p90_min": 26.6,
+              "n": 200
+            },
+            "wait_before": {
+              "median_min": 39.1,
+              "p90_min": 51.2,
+              "n": 200
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Plan created",
+          "label": "Plan created",
+          "case_count": 200,
+          "metrics": {
+            "activity": "Plan created",
+            "events": 200,
+            "cases": 200,
+            "cases_per_week": 25.0,
+            "cases_per_month": 108.3,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 110,
+                "cases": 110
+              },
+              {
+                "month": "2026-04",
+                "events": 90,
+                "cases": 90
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 19.9,
+              "p90_min": 28.0,
+              "n": 200
+            },
+            "wait_before": null,
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Special load checked",
+          "label": "Special load checked",
+          "case_count": 200,
+          "metrics": {
+            "activity": "Special load checked",
+            "events": 200,
+            "cases": 200,
+            "cases_per_week": 25.0,
+            "cases_per_month": 108.3,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 110,
+                "cases": 110
+              },
+              {
+                "month": "2026-04",
+                "events": 90,
+                "cases": 90
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 6.0,
+              "p90_min": 10.0,
+              "n": 200
+            },
+            "wait_before": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 200
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Weight deviation checked",
+          "label": "Weight deviation checked",
+          "case_count": 200,
+          "metrics": {
+            "activity": "Weight deviation checked",
+            "events": 200,
+            "cases": 200,
+            "cases_per_week": 25.0,
+            "cases_per_month": 108.3,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 110,
+                "cases": 110
+              },
+              {
+                "month": "2026-04",
+                "events": 90,
+                "cases": 90
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 4.1,
+              "p90_min": 7.4,
+              "n": 200
+            },
+            "wait_before": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 200
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Plan revised",
+          "label": "Plan revised",
+          "case_count": 40,
+          "metrics": {
+            "activity": "Plan revised",
+            "events": 40,
+            "cases": 40,
+            "cases_per_week": 5.0,
+            "cases_per_month": 21.7,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 18,
+                "cases": 18
+              },
+              {
+                "month": "2026-04",
+                "events": 22,
+                "cases": 22
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 15.4,
+              "p90_min": 33.8,
+              "n": 40
+            },
+            "wait_before": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 40
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        },
+        {
+          "scope": "activity",
+          "key": "Manual weight override",
+          "label": "Manual weight override",
+          "case_count": 23,
+          "metrics": {
+            "activity": "Manual weight override",
+            "events": 23,
+            "cases": 23,
+            "cases_per_week": 2.9,
+            "cases_per_month": 12.5,
+            "months": [
+              {
+                "month": "2026-03",
+                "events": 16,
+                "cases": 16
+              },
+              {
+                "month": "2026-04",
+                "events": 7,
+                "cases": 7
+              }
+            ],
+            "months_too_few": 0,
+            "work": {
+              "median_min": 4.6,
+              "p90_min": 8.7,
+              "n": 23
+            },
+            "wait_before": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 23
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0
+          }
+        }
+      ],
+      "too_few": 0
+    },
+    "transition": {
+      "log_id": "id-4",
+      "scope": "transition",
+      "minimum_cases": 5,
+      "groups": [
+        {
+          "scope": "transition",
+          "key": "Loading report received → Weight deviation checked",
+          "label": "Loading report received → Weight deviation checked",
+          "case_count": 200,
+          "metrics": {
+            "from_activity": "Loading report received",
+            "to_activity": "Weight deviation checked",
+            "count": 200,
+            "cases": 200,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 200
+            },
+            "basis": "wait",
+            "handoffs": 200
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Plan created → Special load checked",
+          "label": "Plan created → Special load checked",
+          "case_count": 200,
+          "metrics": {
+            "from_activity": "Plan created",
+            "to_activity": "Special load checked",
+            "count": 200,
+            "cases": 200,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 200
+            },
+            "basis": "wait",
+            "handoffs": 0
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Weight deviation checked → Load sheet issued",
+          "label": "Weight deviation checked → Load sheet issued",
+          "case_count": 177,
+          "metrics": {
+            "from_activity": "Weight deviation checked",
+            "to_activity": "Load sheet issued",
+            "count": 177,
+            "cases": 177,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 177
+            },
+            "basis": "wait",
+            "handoffs": 0
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Special load checked → Loading report received",
+          "label": "Special load checked → Loading report received",
+          "case_count": 160,
+          "metrics": {
+            "from_activity": "Special load checked",
+            "to_activity": "Loading report received",
+            "count": 160,
+            "cases": 160,
+            "elapsed": {
+              "median_min": 39.5,
+              "p90_min": 51.2,
+              "n": 160
+            },
+            "basis": "wait",
+            "handoffs": 160
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Plan revised → Loading report received",
+          "label": "Plan revised → Loading report received",
+          "case_count": 40,
+          "metrics": {
+            "from_activity": "Plan revised",
+            "to_activity": "Loading report received",
+            "count": 40,
+            "cases": 40,
+            "elapsed": {
+              "median_min": 38.0,
+              "p90_min": 51.7,
+              "n": 40
+            },
+            "basis": "wait",
+            "handoffs": 40
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Special load checked → Plan revised",
+          "label": "Special load checked → Plan revised",
+          "case_count": 40,
+          "metrics": {
+            "from_activity": "Special load checked",
+            "to_activity": "Plan revised",
+            "count": 40,
+            "cases": 40,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 40
+            },
+            "basis": "wait",
+            "handoffs": 0
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Manual weight override → Load sheet issued",
+          "label": "Manual weight override → Load sheet issued",
+          "case_count": 23,
+          "metrics": {
+            "from_activity": "Manual weight override",
+            "to_activity": "Load sheet issued",
+            "count": 23,
+            "cases": 23,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 23
+            },
+            "basis": "wait",
+            "handoffs": 0
+          }
+        },
+        {
+          "scope": "transition",
+          "key": "Weight deviation checked → Manual weight override",
+          "label": "Weight deviation checked → Manual weight override",
+          "case_count": 23,
+          "metrics": {
+            "from_activity": "Weight deviation checked",
+            "to_activity": "Manual weight override",
+            "count": 23,
+            "cases": 23,
+            "elapsed": {
+              "median_min": 3.0,
+              "p90_min": 3.0,
+              "n": 23
+            },
+            "basis": "wait",
+            "handoffs": 0
+          }
+        }
+      ],
+      "too_few": 0
+    },
+    "case": {
+      "log_id": "id-4",
+      "scope": "case",
+      "minimum_cases": 5,
+      "groups": [
+        {
+          "scope": "case",
+          "key": "all",
+          "label": "All cases",
+          "case_count": 200,
+          "metrics": {
+            "cases": 200,
+            "events": 1063,
+            "activities": 7,
+            "date_from": "2026-03-01T22:49:00Z",
+            "date_to": "2026-04-24T08:34:53Z",
+            "cycle_time": {
+              "median_min": 102.5,
+              "p90_min": 127.3,
+              "n": 200
+            },
+            "basis": "wait",
+            "rework_cases": 0,
+            "rework_share": 0.0,
+            "handoffs": 400,
+            "handoffs_per_case": 2.0,
+            "variants": 4,
+            "exception_share": 0.295,
+            "weeks": 8
+          }
+        }
+      ],
+      "too_few": 0
+    },
+    "variant": {
+      "log_id": "id-4",
+      "scope": "variant",
+      "minimum_cases": 5,
+      "groups": [
+        {
+          "scope": "variant",
+          "key": "1",
+          "label": "Variant 1",
+          "case_count": 141,
+          "metrics": {
+            "rank": 1,
+            "activities": [
+              "Plan created",
+              "Special load checked",
+              "Loading report received",
+              "Weight deviation checked",
+              "Load sheet issued"
+            ],
+            "cases": 141,
+            "share": 0.705,
+            "cumulative_share": 0.705
+          }
+        },
+        {
+          "scope": "variant",
+          "key": "2",
+          "label": "Variant 2",
+          "case_count": 36,
+          "metrics": {
+            "rank": 2,
+            "activities": [
+              "Plan created",
+              "Special load checked",
+              "Plan revised",
+              "Loading report received",
+              "Weight deviation checked",
+              "Load sheet issued"
+            ],
+            "cases": 36,
+            "share": 0.18,
+            "cumulative_share": 0.885
+          }
+        },
+        {
+          "scope": "variant",
+          "key": "3",
+          "label": "Variant 3",
+          "case_count": 19,
+          "metrics": {
+            "rank": 3,
+            "activities": [
+              "Plan created",
+              "Special load checked",
+              "Loading report received",
+              "Weight deviation checked",
+              "Manual weight override",
+              "Load sheet issued"
+            ],
+            "cases": 19,
+            "share": 0.095,
+            "cumulative_share": 0.98
+          }
+        }
+      ],
+      "too_few": 1
+    },
+    "role": {
+      "log_id": "id-4",
+      "scope": "role",
+      "minimum_cases": 5,
+      "groups": [
+        {
+          "scope": "role",
+          "key": "Load controller",
+          "label": "Load controller",
+          "case_count": 200,
+          "metrics": {
+            "role": "Load controller",
+            "events": 863,
+            "cases": 200,
+            "activities": [
+              "Load sheet issued",
+              "Manual weight override",
+              "Plan created",
+              "Plan revised",
+              "Special load checked",
+              "Weight deviation checked"
+            ],
+            "work": {
+              "median_min": 5.5,
+              "p90_min": 22.1,
+              "n": 863
+            }
+          }
+        },
+        {
+          "scope": "role",
+          "key": "Ramp",
+          "label": "Ramp",
+          "case_count": 200,
+          "metrics": {
+            "role": "Ramp",
+            "events": 200,
+            "cases": 200,
+            "activities": [
+              "Loading report received"
+            ],
+            "work": {
+              "median_min": 13.4,
+              "p90_min": 26.6,
+              "n": 200
+            }
+          }
+        }
+      ],
+      "too_few": 0
+    }
+  },
+  "alignment": {
+    "log_id": "id-4",
+    "version_id": "id-5",
+    "rows": [
+      {
+        "activity": "Load sheet issued",
+        "element_id": "id-6",
+        "element_label": "Issue load sheet",
+        "status": "confirmed",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "Same words: load, sheet, issued. Same role: Load controller.",
+        "events": 200,
+        "cases": 200
+      },
+      {
+        "activity": "Loading report received",
+        "element_id": "id-7",
+        "element_label": "Load and return LIR",
+        "status": "confirmed",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "Same words: loading. Same role: Ramp.",
+        "events": 200,
+        "cases": 200
+      },
+      {
+        "activity": "Plan created",
+        "element_id": "id-8",
+        "element_label": "Draft load plan",
+        "status": "confirmed",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "Same words: plan. Same role: Load controller.",
+        "events": 200,
+        "cases": 200
+      },
+      {
+        "activity": "Special load checked",
+        "element_id": "id-9",
+        "element_label": "Special loads OK?",
+        "status": "confirmed",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "Same words: special, load. Same role: Load controller.",
+        "events": 200,
+        "cases": 200
+      },
+      {
+        "activity": "Weight deviation checked",
+        "element_id": "id-10",
+        "element_label": "Deviation in limits?",
+        "status": "confirmed",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "Same words: deviation. Same role: Load controller.",
+        "events": 200,
+        "cases": 200
+      },
+      {
+        "activity": "Plan revised",
+        "element_id": "id-8",
+        "element_label": "Draft load plan",
+        "status": "proposed",
+        "confirmed": false,
+        "proposed_by": "app",
+        "reason": "Same words: plan. Same role: Load controller.",
+        "events": 40,
+        "cases": 40
+      },
+      {
+        "activity": "Manual weight override",
+        "element_id": null,
+        "element_label": "",
+        "status": "hidden_work",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "No step shares its words.",
+        "events": 23,
+        "cases": 23
+      },
+      {
+        "activity": "",
+        "element_id": "id-11",
+        "element_label": "Approve load plan",
+        "status": "no_system_record",
+        "confirmed": false,
+        "proposed_by": "app",
+        "reason": "No system activity is matched to it.",
+        "events": 0,
+        "cases": 0
+      },
+      {
+        "activity": "",
+        "element_id": "id-12",
+        "element_label": "Resolve or offload",
+        "status": "no_system_record",
+        "confirmed": false,
+        "proposed_by": "app",
+        "reason": "No system activity is matched to it.",
+        "events": 0,
+        "cases": 0
+      },
+      {
+        "activity": "",
+        "element_id": "id-13",
+        "element_label": "Busy wave?",
+        "status": "no_system_record",
+        "confirmed": false,
+        "proposed_by": "app",
+        "reason": "No system activity is matched to it.",
+        "events": 0,
+        "cases": 0
+      },
+      {
+        "activity": "",
+        "element_id": "id-14",
+        "element_label": "Read report at aircraft",
+        "status": "no_system_record",
+        "confirmed": true,
+        "proposed_by": "eric",
+        "reason": "",
+        "events": 0,
+        "cases": 0
+      },
+      {
+        "activity": "",
+        "element_id": "id-15",
+        "element_label": "Approve deviation",
+        "status": "no_system_record",
+        "confirmed": false,
+        "proposed_by": "app",
+        "reason": "No system activity is matched to it.",
+        "events": 0,
+        "cases": 0
+      }
+    ],
+    "summary": {
+      "activities": 7,
+      "matched": 6,
+      "hidden_work": 1,
+      "no_system_record": 5,
+      "waiting": 5
+    }
+  },
+  "system_traces": [
+    {
+      "element_id": "id-8",
+      "label": "Draft load plan",
+      "stance": "supports",
+      "log_id": "id-4",
+      "log_name": "DCS extract",
+      "system": "DCS",
+      "window_start": null,
+      "window_end": null,
+      "cases": 200,
+      "events": 200,
+      "cases_per_week": 25.0,
+      "rework_cases": 0,
+      "rework_share": 0.0,
+      "activities": [
+        {
+          "activity": "Plan created",
+          "cases": 200,
+          "events": 200,
+          "work": {
+            "median_min": 19.9,
+            "p90_min": 28.0,
+            "n": 200
+          },
+          "wait_before": null,
+          "basis": "wait"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "element_id": "id-9",
+      "label": "Special loads OK?",
+      "stance": "supports",
+      "log_id": "id-4",
+      "log_name": "DCS extract",
+      "system": "DCS",
+      "window_start": null,
+      "window_end": null,
+      "cases": 200,
+      "events": 200,
+      "cases_per_week": 25.0,
+      "rework_cases": 0,
+      "rework_share": 0.0,
+      "activities": [
+        {
+          "activity": "Special load checked",
+          "cases": 200,
+          "events": 200,
+          "work": {
+            "median_min": 6.0,
+            "p90_min": 10.0,
+            "n": 200
+          },
+          "wait_before": {
+            "median_min": 3.0,
+            "p90_min": 3.0,
+            "n": 200
+          },
+          "basis": "wait"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "element_id": "id-7",
+      "label": "Load and return LIR",
+      "stance": "supports",
+      "log_id": "id-4",
+      "log_name": "DCS extract",
+      "system": "DCS",
+      "window_start": null,
+      "window_end": null,
+      "cases": 200,
+      "events": 200,
+      "cases_per_week": 25.0,
+      "rework_cases": 0,
+      "rework_share": 0.0,
+      "activities": [
+        {
+          "activity": "Loading report received",
+          "cases": 200,
+          "events": 200,
+          "work": {
+            "median_min": 13.4,
+            "p90_min": 26.6,
+            "n": 200
+          },
+          "wait_before": {
+            "median_min": 39.1,
+            "p90_min": 51.2,
+            "n": 200
+          },
+          "basis": "wait"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "element_id": "id-10",
+      "label": "Deviation in limits?",
+      "stance": "supports",
+      "log_id": "id-4",
+      "log_name": "DCS extract",
+      "system": "DCS",
+      "window_start": null,
+      "window_end": null,
+      "cases": 200,
+      "events": 200,
+      "cases_per_week": 25.0,
+      "rework_cases": 0,
+      "rework_share": 0.0,
+      "activities": [
+        {
+          "activity": "Weight deviation checked",
+          "cases": 200,
+          "events": 200,
+          "work": {
+            "median_min": 4.1,
+            "p90_min": 7.4,
+            "n": 200
+          },
+          "wait_before": {
+            "median_min": 3.0,
+            "p90_min": 3.0,
+            "n": 200
+          },
+          "basis": "wait"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "element_id": "id-6",
+      "label": "Issue load sheet",
+      "stance": "supports",
+      "log_id": "id-4",
+      "log_name": "DCS extract",
+      "system": "DCS",
+      "window_start": null,
+      "window_end": null,
+      "cases": 200,
+      "events": 200,
+      "cases_per_week": 25.0,
+      "rework_cases": 0,
+      "rework_share": 0.0,
+      "activities": [
+        {
+          "activity": "Load sheet issued",
+          "cases": 200,
+          "events": 200,
+          "work": {
+            "median_min": 3.1,
+            "p90_min": 5.3,
+            "n": 200
+          },
+          "wait_before": {
+            "median_min": 3.0,
+            "p90_min": 3.0,
+            "n": 200
+          },
+          "basis": "wait"
+        }
+      ],
+      "note": ""
+    }
+  ],
+  "system_findings": [
+    {
+      "id": "id-16",
+      "section": "fact",
+      "finding_type": "hidden_work",
+      "title": "System records work the map doesn't show: Manual weight override",
+      "text": "The DCS extract log records “Manual weight override” in 23 of 200 cases (12%), mostly right after Deviation in limits?; no step on the map matches it.",
+      "element_ids": [
+        "id-10"
+      ],
+      "elements": [
+        {
+          "id": "id-10",
+          "label": "Deviation in limits?"
+        }
+      ],
+      "evidence": [
+        {
+          "side": "system",
+          "source_id": "id-4",
+          "source_kind": "system_log",
+          "source_name": "DCS extract",
+          "stance": "supports",
+          "segment_id": null,
+          "anchor": "",
+          "quote": "",
+          "url": "",
+          "tier": "",
+          "page_age": "",
+          "citation_id": ""
+        }
+      ],
+      "basis": "",
+      "provenance": "O",
+      "severity": "high",
+      "evidence_strength": "strong",
+      "comparison": null,
+      "verification_status": "verified",
+      "rejection_guardrail": "",
+      "rejection_reason": "",
+      "verifier_verdict": "not_run",
+      "needs_check": false,
+      "question": "",
+      "notes": [],
+      "disposition": "open",
+      "disposition_note": "",
+      "created_item_ref": "",
+      "gap_class": null,
+      "stated_reason": "",
+      "cause_type": null
+    },
+    {
+      "id": "id-17",
+      "section": "fact",
+      "finding_type": "offline_work",
+      "title": "Work done outside the system: Read report at aircraft",
+      "text": "Interviews describe Read report at aircraft, but the DCS extract log has no record of it in 200 cases: it is done offline or not recorded.",
+      "element_ids": [
+        "id-14"
+      ],
+      "elements": [
+        {
+          "id": "id-14",
+          "label": "Read report at aircraft"
+        }
+      ],
+      "evidence": [
+        {
+          "side": "system",
+          "source_id": "id-4",
+          "source_kind": "system_log",
+          "source_name": "DCS extract",
+          "stance": "silent",
+          "segment_id": null,
+          "anchor": "",
+          "quote": "",
+          "url": "",
+          "tier": "",
+          "page_age": "",
+          "citation_id": ""
+        }
+      ],
+      "basis": "",
+      "provenance": "O",
+      "severity": "low",
+      "evidence_strength": "strong",
+      "comparison": null,
+      "verification_status": "verified",
+      "rejection_guardrail": "",
+      "rejection_reason": "",
+      "verifier_verdict": "not_run",
+      "needs_check": false,
+      "question": "",
+      "notes": [],
+      "disposition": "open",
+      "disposition_note": "",
+      "created_item_ref": "",
+      "gap_class": null,
+      "stated_reason": "",
+      "cause_type": null
+    }
+  ]
+}
