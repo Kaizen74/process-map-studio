@@ -8,6 +8,8 @@ pipeline runs. Every change is audited and re-lints the version.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
@@ -51,6 +53,7 @@ from app.pipeline.s2_canonicalise import stable_key
 from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
+from app.repositories import event_logs as logs_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import grounding
@@ -66,6 +69,11 @@ NEEDS_PASSAGE = "Pick the passage this step comes from."
 NEEDS_REFERENCE = "Type the reference this recommended step comes from."
 O_OR_R = "Choose Observed (with a passage) or Recommended (with a reference)."
 HIDDEN_NAME = "{what} contains a name from your list of names to hide. Use the role instead."
+NOT_HIDDEN_WORK = (
+    "Choose an activity you confirmed as hidden work in one of this engagement's logs."
+)
+TOO_FEW_CASES = "That activity is recorded in fewer than 5 cases."
+MINIMUM_CASES = 5  # §3.13.5: nothing rests on fewer cases
 
 
 def _invalid(where: str, message: str) -> Err:
@@ -79,6 +87,22 @@ def _draft(session: Session, version_id: str) -> Result[VersionView]:
     if version.state != DRAFT_STATE:
         return Err(ErrorKind.CONFLICT, NOT_A_DRAFT)
     return Ok(version)
+
+
+def _hidden_work(session: Session, engagement_id: str, new: NewStep) -> Result[str]:
+    """R8: the log of an activity Eric confirmed as hidden work, recorded in at least 5 cases."""
+    ref = new.system_activity
+    assert ref is not None
+    log = logs_repo.get(session, ref.log_id)
+    if log is None or log.engagement_id != engagement_id or log.status != "imported":
+        return _invalid("system_activity", NOT_HIDDEN_WORK)
+    decided = [s for s in logs_repo.alignment(session, log.id)
+               if s.activity == ref.activity and s.confirmed]  # fmt: skip
+    if not any(s.status == "hidden_work" for s in decided):
+        return _invalid("system_activity", NOT_HIDDEN_WORK)
+    if logs_repo.activity_cases(session, log.id).get(ref.activity, 0) < MINIMUM_CASES:
+        return _invalid("system_activity", TOO_FEW_CASES)
+    return Ok(log.id)
 
 
 def add_step(
@@ -120,7 +144,10 @@ def add_step(
         match new.provenance:
             case Provenance.OBSERVED.value:
                 owners = sources_repo.segment_owners(session, new.segment_ids)
-                if not new.segment_ids:
+                if new.system_activity is not None:
+                    if isinstance(found := _hidden_work(session, version.engagement_id, new), Err):
+                        return found
+                elif not new.segment_ids:
                     return _invalid("segment_ids", NEEDS_PASSAGE)
                 for sid in new.segment_ids:
                     owner = owners.get(sid)
@@ -166,6 +193,14 @@ def add_step(
         map_repo.add_evidence(session, [ln.model_copy(update={"element_id": added.id})
                                          for ln in links])  # fmt: skip
         insert_after(session, version_id, after.id, added.id)
+        system = new.system_activity if new.provenance == Provenance.OBSERVED.value else None
+        if system is not None:
+            # The activity's hidden-work decision becomes a confirmed match to the new step.
+            logs_repo.replace_alignment(session, system.log_id, {system.activity}, set(), [
+                {"activity": system.activity, "element_id": added.id, "status": "confirmed",
+                 "reason": "Added as a step from hidden work.",
+                 "confirmed_at": datetime.now(UTC).isoformat(timespec="seconds")},
+            ])  # fmt: skip
         audit.record(
             session,
             actor=actor,
@@ -175,7 +210,9 @@ def add_step(
             engagement_id=version.engagement_id,
             version_id=version_id,
             after={"kind": new.kind, "label": added.label, "provenance": new.provenance,
-                   "after_element_id": after.id, "passages": len(links)},
+                   "after_element_id": after.id, "passages": len(links),
+                   **({"system_activity": system.activity, "log_id": system.log_id}
+                      if system else {})},
         )  # fmt: skip
     versions_action.lint_version(sessions, version_id)
     return versions_action.get_element(sessions, added.id)

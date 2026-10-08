@@ -33,7 +33,7 @@ VERSION_MISSING = "That version doesn't exist."
 NOT_STEPS = {ElementKind.START.value, ElementKind.END.value}
 
 
-def _moves(session: Session, log_id: str) -> list[tuple[str, str, int]]:
+def moves(session: Session, log_id: str) -> list[tuple[str, str, int]]:
     """(from activity, to activity, cases) for every recorded transition of the log."""
     rows = logs_repo.metrics(session, log_id, "transition")
     return [(str(r.metrics["from_activity"]), str(r.metrics["to_activity"]),
@@ -47,7 +47,7 @@ def _logs(session: Session, engagement_id: str) -> list[tuple[EventLogView, Trac
         out.append((log, TraceLog(
             log_id=log.id, matched=matched,
             activity_cases={r.key: r.case_count for r in activities},
-            transitions=_moves(session, log.id),
+            transitions=moves(session, log.id),
         )))  # fmt: skip
     return out
 
@@ -123,8 +123,10 @@ def _items(session: Session, version: VersionView, elements: Sequence[ElementRec
             step = TraceStep(element.stable_key, element.label, element.source_state)
             info = log.model_dump() | {"weeks": weeks}
             note = overlay.notes.get((log.id, element.stable_key), "")
+            variants = [r.metrics for r in logs_repo.metrics(session, log.id, "variant")
+                        if r.case_count >= tracing.MINIMUM_CASES]  # fmt: skip
             items.append(SystemTraceItem.model_validate(tracing.trace_item(
-                step, element.id, info, figures, activities, stance, note
+                step, element.id, info, figures, activities, stance, note, variants
             )))  # fmt: skip
     return items
 
@@ -140,6 +142,20 @@ def get_system_traces(sessions: Sessions, version_id: str) -> Result[list[System
         elements = map_repo.elements(session, version_id)
         edges = map_repo.edges(session, version_id)
         return Ok(_items(session, version, elements, edges))
+
+
+def traced_steps(session: Session, version_id: str) -> set[str]:
+    """The steps the system trace records (a confirmed match in at least 5 cases): for an `O`
+    step added from hidden work this is its evidence (R8; lint L2 and quality Q2)."""
+    version = versions_repo.get(session, version_id)
+    if version is None:
+        return set()
+    if version.state != VersionState.DRAFT.value:
+        frozen = versions_repo.system_traces(session, version_id) or []
+        return {str(i["element_id"]) for i in frozen}
+    elements = map_repo.elements(session, version_id)
+    items = _items(session, version, elements, map_repo.edges(session, version_id))
+    return {i.element_id for i in items}
 
 
 def freeze(session: Session, version_id: str) -> None:
@@ -190,7 +206,7 @@ def _log_facts(session: Session, log: EventLogView, keys: dict[str, str],
     activities = logs_repo.metrics(session, log.id, "activity")
     case = next(iter(logs_repo.metrics(session, log.id, "case")), None)
     work = {r.key: (r.metrics["work"] or {}).get("median_min") for r in activities}
-    moves = _moves(session, log.id)
+    recorded = moves(session, log.id)
     figures = {key: logs_repo.step_figures(session, log.id, {a for a, k in matched.items()
                                                              if k == key})
                for key in set(matched.values())}  # fmt: skip
@@ -203,7 +219,7 @@ def _log_facts(session: Session, log: EventLogView, keys: dict[str, str],
         log_id=log.id, name=log.name, window=window, cases=case.case_count if case else 0,
         matched=matched, hidden=hidden, no_record=no_record,
         activity_cases={r.key: r.case_count for r in activities}, work_median=work,
-        transitions=moves, step_figures=figures, contradictions=contradictions,
+        transitions=recorded, step_figures=figures, contradictions=contradictions,
     )  # fmt: skip
 
 

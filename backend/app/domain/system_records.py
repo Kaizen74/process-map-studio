@@ -227,3 +227,60 @@ class SystemTraceItem(BaseModel):
     rework_share: float
     activities: list[TraceActivity]
     note: str
+    # Step summary (R8; items frozen before R8 read these as empty).
+    cases_per_month: float = 0.0
+    main_activity: str = ""
+    work: dict[str, Any] | None = None
+    wait_before: dict[str, Any] | None = None
+    basis: str = ""
+    variants: int = 0
+    variant_share: float = 0.0
+
+
+# --- Variants through the map (R8; API_CONTRACT → system-variants) ------------------------------
+
+
+class VariantStep(BaseModel):
+    activity: str
+    element_id: str | None
+    label: str
+    status: str  # matched · hidden_work · not_matched
+
+
+class ViewFit(BaseModel):
+    fits: bool
+    notes: list[str]
+
+
+class VariantView(BaseModel):
+    rank: int
+    cases: int
+    share: float
+    cumulative_share: float
+    path: list[VariantStep]
+    views: dict[str, ViewFit]  # done · documented
+
+
+class HiddenWorkItem(BaseModel):
+    activity: str
+    cases: int
+    share: float
+    role_id: str | None
+    after_element_id: str | None
+    after_label: str
+    before_element_id: str | None
+    before_label: str
+
+
+class LogVariants(BaseModel):
+    log_id: str
+    log_name: str
+    cases: int
+    too_few: int
+    variants: list[VariantView]
+    hidden_work: list[HiddenWorkItem]
+
+
+class SystemVariants(BaseModel):
+    logs: list[LogVariants]
+    too_few_steps: list[str]

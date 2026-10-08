@@ -19,8 +19,14 @@ import {
   type ResourceRow,
   type RoleMetrics,
   type Spread,
+  type HiddenWorkItem,
+  type LogVariants,
   type SystemTrace,
+  type SystemVariants,
   type TraceActivity,
+  type VariantStep,
+  type VariantView,
+  type ViewFit,
   type TransitionMetrics,
   type ValidationReport,
   type VariantMetrics,
@@ -41,6 +47,7 @@ const SYSTEM = JSON.parse(
   };
   alignment: Alignment;
   system_traces: SystemTrace[];
+  system_variants: SystemVariants;
   system_findings: GapFinding[];
 };
 
@@ -61,7 +68,13 @@ const ROLE = { role: 1, events: 1, cases: 1, activities: 1, work: 1 } satisfies 
 const ALIGNMENT = { log_id: 1, version_id: 1, rows: 1, summary: 1 } satisfies Record<keyof Alignment, 1>; // prettier-ignore
 const ROW = { activity: 1, element_id: 1, element_label: 1, status: 1, confirmed: 1, proposed_by: 1, reason: 1, events: 1, cases: 1 } satisfies Record<keyof AlignmentRow, 1>; // prettier-ignore
 const SUMMARY = { activities: 1, matched: 1, hidden_work: 1, no_system_record: 1, waiting: 1 } satisfies Record<keyof AlignmentSummary, 1>; // prettier-ignore
-const TRACE = { element_id: 1, label: 1, stance: 1, log_id: 1, log_name: 1, system: 1, window_start: 1, window_end: 1, cases: 1, events: 1, cases_per_week: 1, rework_cases: 1, rework_share: 1, activities: 1, note: 1 } satisfies Record<keyof SystemTrace, 1>; // prettier-ignore
+const TRACE = { element_id: 1, label: 1, stance: 1, log_id: 1, log_name: 1, system: 1, window_start: 1, window_end: 1, cases: 1, events: 1, cases_per_week: 1, rework_cases: 1, rework_share: 1, activities: 1, note: 1, cases_per_month: 1, main_activity: 1, work: 1, wait_before: 1, basis: 1, variants: 1, variant_share: 1 } satisfies Record<keyof SystemTrace, 1>; // prettier-ignore
+const VARIANTS = { logs: 1, too_few_steps: 1 } satisfies Record<keyof SystemVariants, 1>; // prettier-ignore
+const LOG_VARIANTS = { log_id: 1, log_name: 1, cases: 1, too_few: 1, variants: 1, hidden_work: 1 } satisfies Record<keyof LogVariants, 1>; // prettier-ignore
+const VARIANT_VIEW = { rank: 1, cases: 1, share: 1, cumulative_share: 1, path: 1, views: 1 } satisfies Record<keyof VariantView, 1>; // prettier-ignore
+const VARIANT_STEP = { activity: 1, element_id: 1, label: 1, status: 1 } satisfies Record<keyof VariantStep, 1>; // prettier-ignore
+const VIEW_FIT = { fits: 1, notes: 1 } satisfies Record<keyof ViewFit, 1>; // prettier-ignore
+const HIDDEN = { activity: 1, cases: 1, share: 1, role_id: 1, after_element_id: 1, after_label: 1, before_element_id: 1, before_label: 1 } satisfies Record<keyof HiddenWorkItem, 1>; // prettier-ignore
 const TRACE_ACTIVITY = { activity: 1, cases: 1, events: 1, work: 1, wait_before: 1, basis: 1 } satisfies Record<keyof TraceActivity, 1>; // prettier-ignore
 const EVIDENCE = { side: 1, source_id: 1, source_kind: 1, source_name: 1, stance: 1, segment_id: 1, anchor: 1, quote: 1, url: 1, tier: 1, page_age: 1, citation_id: 1 } satisfies Record<keyof GapEvidence, 1>; // prettier-ignore
 
@@ -116,11 +129,32 @@ describe("the frontend's system-records types match what the backend sends (P10b
         spreads(a.work, a.wait_before);
       });
     }
+    SYSTEM.system_traces.forEach((t) => spreads(t.work, t.wait_before));
     expect(SYSTEM.system_findings.length).toBeGreaterThan(0);
     for (const f of SYSTEM.system_findings) {
       f.evidence.forEach((e) => expect(keys(e)).toEqual(keys(EVIDENCE)));
       expect(f.evidence.some((e) => e.side === "system" && e.quote === "")).toBe(true);
     }
+  });
+});
+
+describe("the variants through the map match what the backend sends (R8)", () => {
+  it("every field of the logs, variants, path steps, view fits and hidden work", () => {
+    const v = SYSTEM.system_variants;
+    expect(keys(v)).toEqual(keys(VARIANTS));
+    expect(v.logs.length).toBeGreaterThan(0);
+    for (const log of v.logs) {
+      expect(keys(log)).toEqual(keys(LOG_VARIANTS));
+      expect(log.variants.length).toBeGreaterThan(0);
+      for (const variant of log.variants) {
+        expect(keys(variant)).toEqual(keys(VARIANT_VIEW));
+        expect(Object.keys(variant.views).sort()).toEqual(["documented", "done"]);
+        Object.values(variant.views).forEach((f) => expect(keys(f)).toEqual(keys(VIEW_FIT)));
+        variant.path.forEach((p) => expect(keys(p)).toEqual(keys(VARIANT_STEP)));
+      }
+      log.hidden_work.forEach((h) => expect(keys(h)).toEqual(keys(HIDDEN)));
+    }
+    expect(v.logs[0]?.hidden_work.map((h) => h.activity)).toEqual(["Manual weight override"]);
   });
 });
 

@@ -714,6 +714,15 @@ class WorkTypeInput(BaseModel):
     confirm: bool = False
 
 
+class SystemActivityRef(BaseModel):
+    """A log's activity (R8: Add as step from hidden work)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    log_id: str
+    activity: str
+
+
 class NewStep(BaseModel):
     """Eric's own step (API_CONTRACT.md → Review: POST /versions/{vid}/elements)."""
 
@@ -727,6 +736,8 @@ class NewStep(BaseModel):
     segment_ids: list[str] = []
     r_reference: str = ""
     mechanism: str = "judgment"
+    #: R8: an activity Eric confirmed as hidden work; its system trace is the step's evidence.
+    system_activity: SystemActivityRef | None = None
 
 
 class EdgeInput(BaseModel):

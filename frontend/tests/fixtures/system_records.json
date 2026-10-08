@@ -866,7 +866,18 @@
           "basis": "wait"
         }
       ],
-      "note": ""
+      "note": "",
+      "cases_per_month": 108.3,
+      "main_activity": "Plan created",
+      "work": {
+        "median_min": 19.9,
+        "p90_min": 28.0,
+        "n": 200
+      },
+      "wait_before": null,
+      "basis": "wait",
+      "variants": 3,
+      "variant_share": 0.98
     },
     {
       "element_id": "id-9",
@@ -900,7 +911,22 @@
           "basis": "wait"
         }
       ],
-      "note": ""
+      "note": "",
+      "cases_per_month": 108.3,
+      "main_activity": "Special load checked",
+      "work": {
+        "median_min": 6.0,
+        "p90_min": 10.0,
+        "n": 200
+      },
+      "wait_before": {
+        "median_min": 3.0,
+        "p90_min": 3.0,
+        "n": 200
+      },
+      "basis": "wait",
+      "variants": 3,
+      "variant_share": 0.98
     },
     {
       "element_id": "id-7",
@@ -934,7 +960,22 @@
           "basis": "wait"
         }
       ],
-      "note": ""
+      "note": "",
+      "cases_per_month": 108.3,
+      "main_activity": "Loading report received",
+      "work": {
+        "median_min": 13.4,
+        "p90_min": 26.6,
+        "n": 200
+      },
+      "wait_before": {
+        "median_min": 39.1,
+        "p90_min": 51.2,
+        "n": 200
+      },
+      "basis": "wait",
+      "variants": 3,
+      "variant_share": 0.98
     },
     {
       "element_id": "id-10",
@@ -968,7 +1009,22 @@
           "basis": "wait"
         }
       ],
-      "note": ""
+      "note": "",
+      "cases_per_month": 108.3,
+      "main_activity": "Weight deviation checked",
+      "work": {
+        "median_min": 4.1,
+        "p90_min": 7.4,
+        "n": 200
+      },
+      "wait_before": {
+        "median_min": 3.0,
+        "p90_min": 3.0,
+        "n": 200
+      },
+      "basis": "wait",
+      "variants": 3,
+      "variant_share": 0.98
     },
     {
       "element_id": "id-6",
@@ -1002,9 +1058,213 @@
           "basis": "wait"
         }
       ],
-      "note": ""
+      "note": "",
+      "cases_per_month": 108.3,
+      "main_activity": "Load sheet issued",
+      "work": {
+        "median_min": 3.1,
+        "p90_min": 5.3,
+        "n": 200
+      },
+      "wait_before": {
+        "median_min": 3.0,
+        "p90_min": 3.0,
+        "n": 200
+      },
+      "basis": "wait",
+      "variants": 3,
+      "variant_share": 0.98
     }
   ],
+  "system_variants": {
+    "logs": [
+      {
+        "log_id": "id-4",
+        "log_name": "DCS extract",
+        "cases": 200,
+        "too_few": 1,
+        "variants": [
+          {
+            "rank": 1,
+            "cases": 141,
+            "share": 0.705,
+            "cumulative_share": 0.705,
+            "path": [
+              {
+                "activity": "Plan created",
+                "element_id": "id-8",
+                "label": "Draft load plan",
+                "status": "matched"
+              },
+              {
+                "activity": "Special load checked",
+                "element_id": "id-9",
+                "label": "Special loads OK?",
+                "status": "matched"
+              },
+              {
+                "activity": "Loading report received",
+                "element_id": "id-7",
+                "label": "Load and return LIR",
+                "status": "matched"
+              },
+              {
+                "activity": "Weight deviation checked",
+                "element_id": "id-10",
+                "label": "Deviation in limits?",
+                "status": "matched"
+              },
+              {
+                "activity": "Load sheet issued",
+                "element_id": "id-6",
+                "label": "Issue load sheet",
+                "status": "matched"
+              }
+            ],
+            "views": {
+              "done": {
+                "fits": true,
+                "notes": []
+              },
+              "documented": {
+                "fits": true,
+                "notes": []
+              }
+            }
+          },
+          {
+            "rank": 2,
+            "cases": 36,
+            "share": 0.18,
+            "cumulative_share": 0.885,
+            "path": [
+              {
+                "activity": "Plan created",
+                "element_id": "id-8",
+                "label": "Draft load plan",
+                "status": "matched"
+              },
+              {
+                "activity": "Special load checked",
+                "element_id": "id-9",
+                "label": "Special loads OK?",
+                "status": "matched"
+              },
+              {
+                "activity": "Plan revised",
+                "element_id": null,
+                "label": "",
+                "status": "not_matched"
+              },
+              {
+                "activity": "Loading report received",
+                "element_id": "id-7",
+                "label": "Load and return LIR",
+                "status": "matched"
+              },
+              {
+                "activity": "Weight deviation checked",
+                "element_id": "id-10",
+                "label": "Deviation in limits?",
+                "status": "matched"
+              },
+              {
+                "activity": "Load sheet issued",
+                "element_id": "id-6",
+                "label": "Issue load sheet",
+                "status": "matched"
+              }
+            ],
+            "views": {
+              "done": {
+                "fits": false,
+                "notes": [
+                  "Plan revised isn't matched to a step yet."
+                ]
+              },
+              "documented": {
+                "fits": false,
+                "notes": [
+                  "Plan revised isn't matched to a step yet."
+                ]
+              }
+            }
+          },
+          {
+            "rank": 3,
+            "cases": 19,
+            "share": 0.095,
+            "cumulative_share": 0.98,
+            "path": [
+              {
+                "activity": "Plan created",
+                "element_id": "id-8",
+                "label": "Draft load plan",
+                "status": "matched"
+              },
+              {
+                "activity": "Special load checked",
+                "element_id": "id-9",
+                "label": "Special loads OK?",
+                "status": "matched"
+              },
+              {
+                "activity": "Loading report received",
+                "element_id": "id-7",
+                "label": "Load and return LIR",
+                "status": "matched"
+              },
+              {
+                "activity": "Weight deviation checked",
+                "element_id": "id-10",
+                "label": "Deviation in limits?",
+                "status": "matched"
+              },
+              {
+                "activity": "Manual weight override",
+                "element_id": null,
+                "label": "",
+                "status": "hidden_work"
+              },
+              {
+                "activity": "Load sheet issued",
+                "element_id": "id-6",
+                "label": "Issue load sheet",
+                "status": "matched"
+              }
+            ],
+            "views": {
+              "done": {
+                "fits": false,
+                "notes": [
+                  "Manual weight override is hidden work: no step on the map."
+                ]
+              },
+              "documented": {
+                "fits": false,
+                "notes": [
+                  "Manual weight override is hidden work: no step on the map."
+                ]
+              }
+            }
+          }
+        ],
+        "hidden_work": [
+          {
+            "activity": "Manual weight override",
+            "cases": 23,
+            "share": 0.115,
+            "role_id": "id-3",
+            "after_element_id": "id-10",
+            "after_label": "Deviation in limits?",
+            "before_element_id": "id-6",
+            "before_label": "Issue load sheet"
+          }
+        ]
+      }
+    ],
+    "too_few_steps": []
+  },
   "system_findings": [
     {
       "id": "id-16",

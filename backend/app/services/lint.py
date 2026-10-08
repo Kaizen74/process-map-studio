@@ -62,7 +62,10 @@ def _reachable(start: str, edges: list[GraphEdge]) -> set[str]:
     return seen
 
 
-def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
+def run_lint(graph: Graph, layout: Layout | None = None,
+             traced: Collection[str] = ()) -> LintReport:  # fmt: skip
+    """`traced`: steps the system trace records; an observed step may rest on that instead of a
+    passage (R8: a step added from hidden work)."""
     elements = [e for e in graph.elements if e.review_status != ReviewStatus.REJECTED.value]
     ids = {e.id for e in elements}
     edges = [e for e in graph.edges if e.from_ in ids and e.to in ids]
@@ -91,6 +94,7 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
         if (
             step
             and e.provenance in EVIDENCED
+            and not (e.provenance == Provenance.OBSERVED.value and e.id in traced)
             and not any(
                 ev.verified and ev.segment_id and ev.stance != Stance.SILENT.value
                 for ev in e.evidence

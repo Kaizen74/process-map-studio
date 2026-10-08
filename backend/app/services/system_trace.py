@@ -123,17 +123,31 @@ def overlay(steps: Sequence[TraceStep], edges: Sequence[TraceEdge],
 
 def trace_item(step: TraceStep, element_id: str, log: Mapping[str, Any],
                figures: Mapping[str, Any], activities: list[dict[str, Any]],
-               stance: str, note: str) -> dict[str, Any]:  # fmt: skip
-    """One step's system-trace evidence from one log (API_CONTRACT → system-traces)."""
+               stance: str, note: str,
+               variants: Sequence[Mapping[str, Any]] = ()) -> dict[str, Any]:  # fmt: skip
+    """One step's system-trace evidence from one log (API_CONTRACT → system-traces), with its
+    summary (R8): volume per month, its main activity's work and wait, and the top variants
+    (`variants`: the log's stored variant metrics) passing through any of its activities."""
     weeks = max(int(log.get("weeks") or 1), 1)
     cases = int(figures.get("cases", 0))
     rework = int(figures.get("rework_cases", 0))
+    per_week = round(cases / weeks, 1)
+    main = max(activities, key=lambda a: (a["cases"], a["activity"]), default=None)
+    names = {a["activity"] for a in activities}
+    through = [v for v in variants if names & set(v.get("activities", []))]
     return {
         "element_id": element_id, "label": step.label, "stance": stance,
         "log_id": log["id"], "log_name": log["name"], "system": log.get("system", ""),
         "window_start": log.get("window_start"), "window_end": log.get("window_end"),
         "cases": cases, "events": int(figures.get("events", 0)),
-        "cases_per_week": round(cases / weeks, 1), "rework_cases": rework,
+        "cases_per_week": per_week, "rework_cases": rework,
         "rework_share": round(rework / cases, 3) if cases else 0.0,
         "activities": activities, "note": note,
+        "cases_per_month": round(cases / weeks * 52 / 12, 1),
+        "main_activity": main["activity"] if main else "",
+        "work": main["work"] if main else None,
+        "wait_before": main["wait_before"] if main else None,
+        "basis": main["basis"] if main else "",
+        "variants": len(through),
+        "variant_share": round(sum(float(v.get("share", 0.0)) for v in through), 3),
     }  # fmt: skip

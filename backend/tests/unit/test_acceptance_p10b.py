@@ -195,6 +195,7 @@ def test_the_frontend_system_records_sample_matches_the_backend(drafted: Drafted
                     for s in ("activity", "transition", "case", "variant", "role")},
         "alignment": client.get(f"/api/event-logs/{lid}/alignment").json(),
         "system_traces": client.get(f"/api/versions/{d.version_id}/system-traces").json(),
+        "system_variants": client.get(f"/api/versions/{d.version_id}/system-variants").json(),
         "system_findings": [f for f in report["findings"]
                             if any(e["side"] == "system" for e in f["evidence"])],
     }  # fmt: skip

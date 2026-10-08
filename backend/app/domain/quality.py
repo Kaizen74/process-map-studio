@@ -47,3 +47,5 @@ class QualityInput(BaseModel):
     #: Q12 (v1.11): imported system-log activities neither aligned nor marked hidden work; None
     #: when the engagement uses no system records (the check is then left off the card).
     unaligned_activities: int | None = None
+    #: R8: steps the system trace records; an observed step may rest on that instead of a passage.
+    traced: list[str] = []

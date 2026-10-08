@@ -111,11 +111,15 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
         )
     )
 
-    # Q2 evidence: every O/I step has a verified passage; no unverified claim behind a step.
+    # Q2 evidence: every O/I step has a verified passage (an O step may rest on its system
+    # trace, R8); no unverified claim behind a step.
+    traced = set(inp.traced)
     unevidenced = [
         e
         for e in steps
-        if e.provenance in EVIDENCED and not any(ev.verified and ev.segment_id for ev in e.evidence)
+        if e.provenance in EVIDENCED
+        and not any(ev.verified and ev.segment_id for ev in e.evidence)
+        and not (e.provenance == Provenance.OBSERVED.value and e.id in traced)
     ]
     q2 = []
     if unevidenced:

@@ -202,6 +202,65 @@ export interface SystemTrace {
   rework_share: number;
   activities: TraceActivity[];
   note: string;
+  /** Step summary (R8): volume, and its main activity's work and wait. */
+  cases_per_month: number;
+  main_activity: string;
+  work: Spread | null;
+  wait_before: Spread | null;
+  basis: TimeBasis | "";
+  /** How many top variants pass through the step, and their share of all cases. */
+  variants: number;
+  variant_share: number;
+}
+
+// --- Variants through the map (R8; API_CONTRACT.md → system-variants) --------------------------
+
+export type VariantStepStatus = "matched" | "hidden_work" | "not_matched";
+
+export interface VariantStep {
+  activity: string;
+  element_id: string | null;
+  label: string;
+  status: VariantStepStatus;
+}
+
+export interface ViewFit {
+  fits: boolean;
+  notes: string[];
+}
+
+export interface VariantView {
+  rank: number;
+  cases: number;
+  share: number;
+  cumulative_share: number;
+  path: VariantStep[];
+  views: { done: ViewFit; documented: ViewFit };
+}
+
+export interface HiddenWorkItem {
+  activity: string;
+  cases: number;
+  share: number;
+  role_id: string | null;
+  after_element_id: string | null;
+  after_label: string;
+  before_element_id: string | null;
+  before_label: string;
+}
+
+export interface LogVariants {
+  log_id: string;
+  log_name: string;
+  cases: number;
+  too_few: number;
+  variants: VariantView[];
+  hidden_work: HiddenWorkItem[];
+}
+
+export interface SystemVariants {
+  logs: LogVariants[];
+  too_few_steps: string[];
 }
 
 /** "median 13.4 min · 90th percentile 26.6 min", or that there is nothing to show. */
