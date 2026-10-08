@@ -374,7 +374,14 @@ def set_column_map(config: AppConfig, sessions: Sessions, log_id: str,
                 return err
             case Ok(value=columns):
                 pass
-        log = repo.update(session, log_id, {"column_map": columns, "status": "mapped"})
+        changes: dict[str, object] = {"column_map": columns, "status": "mapped"}
+        if body.timezone is not None:
+            match _zone(body.timezone):
+                case Err() as err:
+                    return err
+                case Ok(value=zone):
+                    changes["timezone"] = zone
+        log = repo.update(session, log_id, changes)
         held.timestamp_format = body.timestamp_format
         roles = engagements_repo.list_roles(session, log.engagement_id)
         values = {r.value for r in _resources(held, columns, roles)}
@@ -383,7 +390,8 @@ def set_column_map(config: AppConfig, sessions: Sessions, log_id: str,
         audit.record(
             session, actor=actor_name(config), action="Confirmed column map",
             target_type="event_log", target_id=log_id, engagement_id=log.engagement_id,
-            after={"columns": columns, "timestamp_format": body.timestamp_format},
+            after={"columns": columns, "timestamp_format": body.timestamp_format,
+                   "timezone": log.timezone},
         )  # fmt: skip
         return Ok(_full(session, log))
 

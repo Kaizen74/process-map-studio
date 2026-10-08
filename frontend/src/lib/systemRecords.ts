@@ -221,3 +221,113 @@ export const ALIGNMENT_STATUS_LABELS: Readonly<Record<AlignmentStatus, string>> 
   hidden_work: "Hidden work (no step)",
   no_system_record: "No system record (offline)",
 };
+
+// --- The import wizard (R7a; API_CONTRACT.md → System records: event logs) ----------------------
+
+export interface LogUpload {
+  file: File;
+  name: string;
+  system: string;
+  timezone: string;
+  window_start: string;
+  window_end: string;
+}
+
+export interface ColumnMapInput {
+  columns: Record<string, string | null>;
+  timestamp_format: string | null;
+  timezone?: string;
+}
+
+export interface ImportInput {
+  approved_by_role: string;
+  confirm_approval: boolean;
+}
+
+export interface ImportStarted {
+  job_id: string;
+  log_id: string;
+}
+
+/** B.40 log columns, in the order the wizard lists them. */
+export const LOG_FIELDS = [
+  "case_id",
+  "activity",
+  "timestamp",
+  "end_timestamp",
+  "resource",
+  "role",
+  "system",
+  "case_attribute",
+] as const;
+export type LogField = (typeof LOG_FIELDS)[number];
+
+export const LOG_FIELD_LABELS: Record<LogField, string> = {
+  case_id: "Case ID",
+  activity: "Activity",
+  timestamp: "Timestamp (start)",
+  end_timestamp: "End timestamp",
+  resource: "User ID (converted to a role, never stored)",
+  role: "Role",
+  system: "System",
+  case_attribute: "Case detail (for example region or priority)",
+};
+
+export const REQUIRED_FIELDS: readonly LogField[] = ["case_id", "activity", "timestamp"];
+
+/** The date formats the backend accepts as a correction (mining.FORMATS), with an example each. */
+export const TIMESTAMP_FORMATS: readonly { value: string; example: string }[] = [
+  { value: "%Y-%m-%dT%H:%M:%S", example: "2026-03-02T09:15:00" },
+  { value: "%Y-%m-%d %H:%M:%S", example: "2026-03-02 09:15:00" },
+  { value: "%Y-%m-%d %H:%M", example: "2026-03-02 09:15" },
+  { value: "%Y-%m-%dT%H:%M", example: "2026-03-02T09:15" },
+  { value: "%d/%m/%Y %H:%M:%S", example: "02/03/2026 09:15:00 (day first)" },
+  { value: "%d/%m/%Y %H:%M", example: "02/03/2026 09:15 (day first)" },
+  { value: "%m/%d/%Y %H:%M:%S", example: "03/02/2026 09:15:00 (month first)" },
+  { value: "%m/%d/%Y %H:%M", example: "03/02/2026 09:15 (month first)" },
+  { value: "%d.%m.%Y %H:%M:%S", example: "02.03.2026 09:15:00" },
+  { value: "%d.%m.%Y %H:%M", example: "02.03.2026 09:15" },
+  { value: "%d-%m-%Y %H:%M:%S", example: "02-03-2026 09:15:00" },
+  { value: "%d-%m-%Y %H:%M", example: "02-03-2026 09:15" },
+  { value: "ISO 8601 with offset", example: "2026-03-02T09:15:00+08:00" },
+];
+
+/** Time zones offered in the wizard; the backend accepts any IANA name. */
+export const TIME_ZONES: readonly string[] = [
+  "Asia/Singapore",
+  "Asia/Kuala_Lumpur",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Tokyo",
+  "Asia/Kolkata",
+  "Asia/Dubai",
+  "Australia/Sydney",
+  "Pacific/Auckland",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "America/New_York",
+  "America/Chicago",
+  "America/Los_Angeles",
+  "UTC",
+];
+
+export const LOG_STATUS_LABELS: Record<LogStatus, string> = {
+  uploaded: "Uploaded: map the columns",
+  mapped: "Columns mapped: ready to import",
+  imported: "Imported",
+  failed: "Import didn't finish: upload again",
+};
+
+/** The wizard's steps (PRD §5.4 System records). */
+export const WIZARD_STEPS = ["Map columns", "Time zone", "Map users to roles", "Validation report", "Approve and import"] as const;
+export type WizardStep = (typeof WIZARD_STEPS)[number];
+
+/** The data request template Eric sends to IT (criterion 82; no engagement needed). */
+export const DATA_REQUEST_FILES: readonly { format: "docx" | "md" | "csv"; label: string }[] = [
+  { format: "docx", label: "Word" },
+  { format: "md", label: "Markdown" },
+  { format: "csv", label: "CSV header" },
+];
+
+export const dataRequestUrl = (format: "docx" | "md" | "csv") => `/api/templates/data-request?format=${format}`;

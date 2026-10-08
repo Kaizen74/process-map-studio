@@ -34,6 +34,7 @@ SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
         "MOCK_CLAUDE": "0",
         "VERIFIER_ENABLED": "1",
         "WEB_RESEARCH_ENABLED": "0",
+        "SYSTEM_RECORDS_ENABLED": "0",  # decision A: optional modules start off (R7)
         "WEB_SEARCH_TOOL_VERSION": "",
         "WEB_SEARCH_MAX_USES_CAP": "20",
         "OWNER_NAME": "Owner",

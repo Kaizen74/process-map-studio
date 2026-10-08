@@ -129,7 +129,27 @@ test.describe("accessibility and offline assets", () => {
       await page.goto(`/engagements/${id}/leadership`);
       await expect(page.getByText(/Publish a version first/)).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
+
+      // R7a: System records, off by default (decision A), then on: the screen and the import wizard.
+      await page.goto(`/engagements/${id}/system-records`);
+      await expect(page.getByText(/System records is switched off/)).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      expect((await request.put("/api/settings/modules", { data: { system_records_enabled: true } })).status()).toBe(200);
+      await page.reload();
+      await expect(page.getByText(/No logs yet/)).toBeVisible();
+      await expect(page.getByRole("link", { name: /^System records/ })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      const csv = "Case ID,Event Name,Start Time,Performed by\nC1,Opened,2026-03-02 09:00,U1\nC1,Closed,2026-03-02 10:00,U2\n";
+      await page.getByTestId("log-file-input").setInputFiles({ name: "extract.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+      await page.getByRole("button", { name: "Upload" }).click();
+      await expect(page.getByText("Step 1 of 5: Map columns")).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("button", { name: "Next: time zone" }).click();
+      await page.getByRole("button", { name: "Next: map users to roles" }).click();
+      await expect(page.getByText("These are not stored.")).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
     } finally {
+      await request.put("/api/settings/modules", { data: { system_records_enabled: false } });
       expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
     }
   });

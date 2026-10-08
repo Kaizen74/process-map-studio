@@ -37,9 +37,10 @@ Settings are stored in the private `.env` file in the app folder (never in the d
 ```json
 {"owner_name": "Owner", "model": "claude-opus-5-5", "effort": "high",
  "verifier_enabled": true, "web_research_enabled": false,
+ "system_records_enabled": false,
  "key_set": true, "key_last4": "x9Q2"}
 ```
-`key_last4` is `""` when no key is set.
+`key_last4` is `""` when no key is set. `system_records_enabled` (R7, 2026-10-08; decision A): the optional System records module, **off** by default (`SYSTEM_RECORDS_ENABLED` in `.env`); while off its screen and nav item are hidden, and nothing is deleted.
 
 ### GET /api/settings
 Request: none. Response `200`: the settings object.
@@ -91,6 +92,9 @@ Used by: Settings screen, "Model" card.
 
 ### PUT /api/settings/research (phase P10)
 Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
+
+### PUT /api/settings/modules (R7, 2026-10-08; PRD §5.4 Settings "Optional modules", decision A)
+Switches optional modules on or off. Request `{"system_records_enabled": true}` (R10 adds the gap analysis and value calculator switches to the same body; a field left out keeps its value). Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
 
 ### POST /api/settings/test-web-search (phase P10)
 Checks that web search works for this key: one small search with a generic question ("published guidance on aircraft load control"), `max_uses` 1 (billed as one search by Anthropic). Mocked in tests. Response `200`: `{"available": true, "message": "Web search works for your Anthropic organisation."}`, or `available: false` with a plain message: no key saved; "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." (the organisation has web search switched off in the Claude Console: Anthropic answers 400 saying web search is not enabled); key rejected. Errors: `503 AI_RATE_LIMIT`; `500 IO` (Anthropic couldn't be reached).
@@ -368,7 +372,7 @@ Errors: `404` (engagement); `422` naming the field: "Give the log a name.", "The
 GET `200`: log. DELETE `204`: removes the log, its events (and, later, its metrics and alignment) and the held file; audit row "Deleted system log". Errors `404`.
 
 ### PUT /api/event-logs/{lid}/column-map
-`{"columns": {header: field | null}, "timestamp_format": null | "%d/%m/%Y %H:%M"}`. Every header of the file exactly once; fields are B.40; a field other than `case_attribute` used twice is refused ("Each field can be used for one column only: timestamp."). Response `200`: log, status `mapped`, with a new preview report (which may say the import would be refused, and why). Audit row "Confirmed column map".
+`{"columns": {header: field | null}, "timestamp_format": null | "%d/%m/%Y %H:%M", "timezone": "Asia/Singapore"}` (`timezone` optional since R7: the wizard's time-zone step; left out, the log keeps its own). Every header of the file exactly once; fields are B.40; a field other than `case_attribute` used twice is refused ("Each field can be used for one column only: timestamp."). Response `200`: log, status `mapped`, with a new preview report (which may say the import would be refused, and why). Audit row "Confirmed column map".
 Errors: `404`; `409 ALREADY_IMPORTED`; `409 FILE_NOT_HELD`; `409 IMPORT_RUNNING` while its import job runs; `422` naming `columns` or `timestamp_format` ("Choose a date format from the list.").
 
 ### PUT /api/event-logs/{lid}/role-map

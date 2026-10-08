@@ -11,6 +11,7 @@ from app.domain.models import (
     ConnectionTest,
     ModelChoices,
     ModelUpdate,
+    ModuleSettings,
     ProfileUpdate,
     ResearchSetting,
     SettingsView,
@@ -59,6 +60,11 @@ def update_model(request: Request, body: ModelUpdate) -> SettingsView:
             sessions=request.app.state.sessions,
         )
     )
+
+
+@router.put("/modules")
+def set_modules(request: Request, body: ModuleSettings) -> SettingsView:
+    return unwrap(settings.set_modules(request.app.state.config, body.system_records_enabled))
 
 
 @router.put("/research")

@@ -481,3 +481,16 @@ def test_deleting_a_log_removes_its_metrics(engagement: Engagement) -> None:
     assert engagement.client.delete(f"/api/event-logs/{lid}").status_code == 204
     with session_scope(engagement.client.app.state.sessions) as session:  # type: ignore[attr-defined]
         assert repo.metrics(session, lid, "activity") == []
+
+
+def test_the_time_zone_can_be_changed_in_the_column_step(engagement: Engagement) -> None:
+    """R7: the wizard's time-zone step sends the zone with the confirmed columns."""
+    log = engagement.upload().json()
+    assert log["validation_report"]["date_from"] == "2026-03-01T22:49:00Z"  # Singapore
+    body = {"columns": log["column_map"], "timezone": "Europe/London"}
+    changed = engagement.put(log["id"], "column-map", body)
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["timezone"] == "Europe/London"
+    assert changed.json()["validation_report"]["date_from"] == "2026-03-02T06:49:00Z"
+    bad = engagement.put(log["id"], "column-map", {**body, "timezone": "Mars/Olympus"})
+    assert _error(bad) == (422, "VALIDATION", actions.BAD_ZONE)

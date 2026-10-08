@@ -89,6 +89,7 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 | A person's name shows somewhere it shouldn't | On the Sources screen, add the name (and any nickname) under **Names to hide**. It is hidden everywhere except that list, the speaker mapping and the correction editor |
 | Drafting stops with an error | Click **Copy details** on the error, open Claude Code in the app folder, paste the Bug-fix prompt from the PRD and the copied details |
 | "Web search isn't enabled for your Anthropic organisation" (external best-practice analysis) | Sign in to platform.claude.com, open your organisation's settings and enable web search (or ask your organisation admin). Then in the app: Settings → **Test web search** |
+| A system log won't import | Open the validation report on the System records screen: it lists each problem (for example a missing column or unreadable dates) and how to fix it. Send the data request template to your IT contact and ask for a corrected extract |
 | A gap analysis report says "The search limit was reached" | The research used all the searches you allowed. Start a new external analysis, raise **Most searches** in the brief (up to 20; each search is billed by Anthropic) and run it again |
 | Anything else | Open Claude Code in the app folder and paste the Bug-fix prompt from section 8 of [PRD_ProcessMapStudio.md](PRD_ProcessMapStudio.md), describing what you clicked and what you saw |
 

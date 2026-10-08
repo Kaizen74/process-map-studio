@@ -24,3 +24,7 @@ export const saveResearch = (enabled: boolean) =>
   request<Settings>("/settings/research", { method: "PUT", body: { web_research_enabled: enabled } });
 
 export const testWebSearch = () => request<WebSearchTest>("/settings/test-web-search", { method: "POST" });
+
+// Optional modules (R7, decision A): a field left out keeps its value.
+export const saveModules = (modules: { system_records_enabled?: boolean }) =>
+  request<Settings>("/settings/modules", { method: "PUT", body: modules });

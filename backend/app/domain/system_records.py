@@ -109,6 +109,7 @@ class EventLogView(BaseModel):
 class ColumnMapInput(BaseModel):
     columns: dict[str, str | None]
     timestamp_format: str | None = None
+    timezone: str | None = None  # the wizard's time-zone step (R7); None keeps the log's
 
 
 class RoleMapInput(BaseModel):

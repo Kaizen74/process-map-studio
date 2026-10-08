@@ -6,6 +6,7 @@ import {
   saveApiKey,
   saveModel,
   saveProfile,
+  saveModules,
   saveResearch,
   testConnection,
   testWebSearch,
@@ -40,6 +41,9 @@ export const useSaveApiKey = () => useSettingsMutation(saveApiKey, true);
 export const useSaveModel = () => useSettingsMutation((update: ModelUpdate) => saveModel(update));
 
 export const useSaveResearch = () => useSettingsMutation((enabled: boolean) => saveResearch(enabled));
+
+export const useSaveModules = () =>
+  useSettingsMutation((modules: { system_records_enabled?: boolean }) => saveModules(modules));
 
 /** One small search (billed as one search); the AI usage list gains the call. */
 export function useTestWebSearch() {

@@ -71,3 +71,18 @@ def test_web_search_switched_off_says_where_to_look(
         "message": "Web search isn't enabled for your Anthropic organisation. "
         "See the README, 'If something goes wrong'.",
     }
+
+
+def test_the_system_records_module_is_off_by_default_and_switches(client: TestClient) -> None:
+    """R7, decision A: optional modules start off; switching off hides, never deletes."""
+    assert client.get("/api/settings").json()["system_records_enabled"] is False
+    on = client.put("/api/settings/modules", json={"system_records_enabled": True})
+    assert on.status_code == 200 and on.json()["system_records_enabled"] is True
+    assert client.get("/api/settings").json()["system_records_enabled"] is True
+    unchanged = client.put("/api/settings/modules", json={})
+    assert unchanged.json()["system_records_enabled"] is True  # a field left out keeps its value
+    off = client.put("/api/settings/modules", json={"system_records_enabled": False})
+    assert off.json()["system_records_enabled"] is False
+    maybe = client.put("/api/settings/modules", json={"system_records_enabled": "maybe"})
+    assert maybe.status_code == 422
+    assert client.put("/api/settings/modules", json={"gap": True}).status_code == 422

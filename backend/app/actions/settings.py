@@ -82,6 +82,7 @@ def _view(values: Mapping[str, str]) -> SettingsView:
         effort=values["ANTHROPIC_EFFORT"],
         verifier_enabled=_flag(values["VERIFIER_ENABLED"]),
         web_research_enabled=_flag(values["WEB_RESEARCH_ENABLED"]),
+        system_records_enabled=_flag(values["SYSTEM_RECORDS_ENABLED"]),
         key_set=bool(key),
         key_last4=settings_store.mask_key(key),
     )
@@ -293,6 +294,13 @@ def list_usage(sessions: sessionmaker[Session], limit: int) -> Result[AiUsage]:
 TEST_SEARCH_BRIEF = "Find one published source of guidance on aircraft load control."
 TEST_SEARCH_SYSTEM = "Answer in one sentence using only the search results, with a citation."
 SEARCH_WORKS = "Web search works for your Anthropic organisation."
+
+
+def set_modules(config: AppConfig, system_records: bool | None) -> Result[SettingsView]:
+    """Switch optional modules on or off (decision A); off hides screens, never deletes data."""
+    if system_records is None:
+        return get_settings(config)
+    return _save(config, "SYSTEM_RECORDS_ENABLED", "true" if system_records else "false")
 
 
 def set_research(config: AppConfig, enabled: bool) -> Result[SettingsView]:

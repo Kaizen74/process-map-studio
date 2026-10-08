@@ -14,6 +14,7 @@ import { ReviewScreen } from "./features/review/ReviewScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { SetupScreen } from "./features/setup/SetupScreen";
 import { SourcesScreen } from "./features/sources/SourcesScreen";
+import { SystemRecordsScreen } from "./features/system/SystemRecordsScreen";
 import { AppShell } from "./features/shell/AppShell";
 import { NotFoundScreen } from "./features/shell/NotFoundScreen";
 
@@ -27,6 +28,7 @@ export function App() {
         <Route path="engagements/:engagementId/setup" element={<SetupScreen />} />
         <Route path="engagements/:engagementId/interview" element={<InterviewScreen />} />
         <Route path="engagements/:engagementId/sources" element={<SourcesScreen />} />
+        <Route path="engagements/:engagementId/system-records" element={<SystemRecordsScreen />} />
         <Route path="engagements/:engagementId/draft" element={<DraftScreen />} />
         <Route path="engagements/:engagementId/review" element={<ReviewScreen />} />
         <Route path="engagements/:engagementId/published" element={<PublishedScreen />} />

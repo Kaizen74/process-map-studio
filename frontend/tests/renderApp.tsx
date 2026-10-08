@@ -119,6 +119,7 @@ export const SETTINGS = {
   effort: "high",
   verifier_enabled: true,
   web_research_enabled: false,
+  system_records_enabled: false,
   key_set: false,
   key_last4: "",
 };

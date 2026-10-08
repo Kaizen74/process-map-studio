@@ -28,6 +28,7 @@ def test_get_settings_defaults(client: TestClient) -> None:
         "effort": "high",
         "verifier_enabled": True,
         "web_research_enabled": False,
+        "system_records_enabled": False,  # R7: optional module, off by default (decision A)
         "key_set": False,
         "key_last4": "",
     }

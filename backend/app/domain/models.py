@@ -23,6 +23,7 @@ class SettingsView(BaseModel):
     effort: str
     verifier_enabled: bool
     web_research_enabled: bool
+    system_records_enabled: bool
     key_set: bool
     key_last4: str
 
@@ -1016,3 +1017,11 @@ class ResearchSetting(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     web_research_enabled: bool
+
+
+class ModuleSettings(BaseModel):
+    """PUT /settings/modules: a field left out keeps its value (R10 adds more modules)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    system_records_enabled: bool | None = None

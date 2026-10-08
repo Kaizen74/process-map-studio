@@ -17,6 +17,8 @@ export interface Settings {
   effort: EffortLevel | string;
   verifier_enabled: boolean;
   web_research_enabled: boolean;
+  /** Optional module (R7, decision A): off until Eric switches it on. */
+  system_records_enabled: boolean;
   key_set: boolean;
   key_last4: string;
 }
@@ -243,7 +245,15 @@ export interface JobStage {
 export interface Job {
   id: string;
   engagement_id: string | null;
-  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external" | "interview_guide";
+  type:
+    | "read_source"
+    | "draft"
+    | "refresh"
+    | "gap_internal"
+    | "gap_external"
+    | "interview_guide"
+    | "event_log_import"
+    | "event_log_alignment";
   target_id: string | null;
   status: JobStatus;
   stage: string;
