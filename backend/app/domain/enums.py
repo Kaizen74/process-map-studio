@@ -445,3 +445,81 @@ class AlignmentStatus(StrEnum):
     CONFIRMED = "confirmed"
     HIDDEN_WORK = "hidden_work"
     NO_SYSTEM_RECORD = "no_system_record"
+
+
+# PRD v1.12 (P13 Reality views: intent layer, discrepancy engine): vocabularies only until P13 uses
+# them.
+class IntentKind(StrEnum):
+    """B.44 intent kind."""
+
+    PROMISE = "promise"
+    TARGET = "target"
+    CONTROL_OBJECTIVE = "control_objective"
+    POLICY_RULE = "policy_rule"
+
+
+class IntentOrigin(StrEnum):
+    """B.45 intent origin."""
+
+    DOCUMENT = "document"
+    OWNER_STATED = "owner_stated"
+
+
+class ImpactClass(StrEnum):
+    """B.46 impact class (Reality views)."""
+
+    CONTROL_EXPOSURE = "control_exposure"
+    TIME_IMPACT = "time_impact"
+    CAPACITY_DRAIN = "capacity_drain"
+    WORKAROUND = "workaround"
+
+
+class Verdict(StrEnum):
+    """B.47 verdict (where the fix lies)."""
+
+    CODIFY = "codify"
+    CORRECT = "correct"
+    REWRITE = "rewrite"
+    ASK = "ask"
+    AS_DESIGNED = "as_designed"
+
+
+class DiscrepancyType(StrEnum):
+    """B.48 discrepancy type."""
+
+    SKIPPED_STEP = "D1"
+    ADDED_STEP = "D2"
+    REORDERED = "D3"
+    REWORK_LOOP = "D4"
+    CONTROL_BYPASSED = "D5"
+    OFF_SYSTEM = "D6"
+    TAKES_LONGER = "D7"
+    WAITING = "D8"
+    PARALLEL_ROUTES = "D9"
+    BELIEF_GAP = "D10"
+    NO_RECORD = "D11"
+    DIFFERENT_ROLE = "D12"
+    DESIGN_GAP = "D13"
+    PROMISE_MISSED = "D14"
+
+
+class IntentMetric(StrEnum):
+    """B.49 intent metric."""
+
+    CYCLE_TIME_MIN = "cycle_time_min"
+    STEP_TIME_MIN = "step_time_min"
+    WAIT_MIN = "wait_min"
+    LEAD_TIME_MIN = "lead_time_min"
+    STRAIGHT_THROUGH_PCT = "straight_through_pct"
+    RECORDED_PCT = "recorded_pct"
+    OTHER = "other"
+
+
+class FigureLabel(StrEnum):
+    """B.50 figure label (Reality views)."""
+
+    MEASURED = "measured"
+    STATED = "stated"
+    DOCUMENTED = "documented"
+    TARGET = "target"
+    MIXED = "mixed"

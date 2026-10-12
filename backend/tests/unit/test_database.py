@@ -53,6 +53,11 @@ def test_migration_creates_every_prd_table(migrated: Path) -> None:
     assert table_names(migrated) == PRD_TABLES | ADDED_TABLES
 
 
+# PRD v1.12 (2026-10-12): tables planned for P13a (migration 0015). The column test checks they are
+# still in the PRD and not yet in the database; P13a's migration removes them from this list.
+PENDING_TABLES = {"intent_statements", "intent_conflicts", "discrepancy_items", "reality_snapshots"}
+
+
 def test_prd_columns_are_all_present(migrated: Path) -> None:
     prd = (REPO_ROOT / "PRD_ProcessMapStudio.md").read_text(encoding="utf-8")
     section = prd.split("### 3.5 Data model", 1)[1].split("**Versions and locking:**", 1)[0]
@@ -60,11 +65,15 @@ def test_prd_columns_are_all_present(migrated: Path) -> None:
     inspector = inspect(engine)
     missing = []
     checked = 0
+    pending_seen: set[str] = set()
     for line in section.splitlines():
         match = re.match(r"^\| `(\w+)` \| (.+) \|$", line)
         if not match:
             continue
         table, spec = match.groups()
+        if table in PENDING_TABLES:
+            pending_seen.add(table)
+            continue
         # Words inside a column's description, e.g. "variants (json: … owner, threshold, time)",
         # are not column names (PRD v1.10 added such lists).
         spec = re.sub(r"\s*\([^()]*(?:\([^()]*\)[^()]*)*\)", "", spec)
@@ -74,9 +83,12 @@ def test_prd_columns_are_all_present(migrated: Path) -> None:
         for name in names:
             if name not in columns and name not in {"or"}:
                 missing.append(f"{table}.{name}")
+    live_tables = set(inspector.get_table_names())
     engine.dispose()
     assert missing == []
     assert checked >= 343  # every PRD v1.11 column is read (guards the parser against skipping)
+    assert pending_seen == PENDING_TABLES  # each planned table is still in the PRD
+    assert not PENDING_TABLES & live_tables  # removed from the list by the migration that adds it
 
 
 def test_every_table_has_id_and_created_at(migrated: Path) -> None:
@@ -361,8 +373,12 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 # added with the phase that uses them: the new source kinds (group notes with P4c's interview tools,
 # spreadsheets and email threads with P10b's wider intake), the system-record findings and the
 # system-recorded sequence basis (P10b). The new vocabularies B.40-B.43 exist already (unused).
+# PRD v1.12 (2026-10-12, DECISIONS.md impact table item 7): the intent source kind and the two
+# intent guardrails change what the app does, so they wait for P13a; the vocabularies B.44-B.50
+# exist already (unused).
 PENDING_VALUES: dict[str, set[str]] = {
-    "B.1": {"group_notes", "working_spreadsheet", "email_thread"},
+    "B.1": {"group_notes", "working_spreadsheet", "email_thread", "policy_or_charter"},
+    "B.20": {"IX1", "IXV"},
     # B.22 hidden_work … measured_rework were added with P10b R6 (2026-10-08).
 }  # B.34 system_trace was added with P10b R5b (2026-10-07)
 
@@ -375,7 +391,7 @@ def test_enums_match_appendix_b() -> None:
         for cls in vars(enums).values()
         if isinstance(cls, type) and issubclass(cls, enums.StrEnum) and cls is not enums.StrEnum
     }
-    assert len(rows) == 43 == len(by_id)
+    assert len(rows) == 50 == len(by_id)
     for bid, values in rows:
         expected = [re.sub(r"\s*\(.*?\)", "", v).strip().split()[0] for v in values.split("·")]
         pending = PENDING_VALUES.get(bid, set())
