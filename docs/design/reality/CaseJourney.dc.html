@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Study: a typical case</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E1D1A}a:hover{color:#55534D}
+</style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 1000px; background: #F4F3EF; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1E1D1A; overflow: hidden">
+
+<!-- lanes -->
+<div style="position: absolute; left: 64px; top: 250px; width: 1472px; height: 80px; background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px 10px 0 0; box-sizing: border-box"></div>
+<div style="position: absolute; left: 64px; top: 330px; width: 1472px; height: 110px; background: #FAFAF7; border: 1px solid #E4E2DB; box-sizing: border-box"></div>
+<div style="position: absolute; left: 64px; top: 440px; width: 1472px; height: 90px; background: #FFFFFF; border: 1px solid #E4E2DB; box-sizing: border-box"></div>
+<div style="position: absolute; left: 64px; top: 530px; width: 1472px; height: 90px; background: #FAFAF7; border: 1px solid #E4E2DB; border-radius: 0 0 10px 10px; box-sizing: border-box"></div>
+
+<div style="position: absolute; left: 64px; top: 40px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">A typical case on the approval-in-chat route: median timings of 412 cases, not one real case · Illustrative, synthetic data</div>
+<h1 style="position: absolute; left: 64px; top: 66px; margin: 0; font-size: 36px; line-height: 44px; font-weight: 500">What does the hidden work feel like for one customer?</h1>
+<p style="position: absolute; left: 64px; top: 118px; width: 1400px; margin: 0; font-size: 22px; line-height: 30px; color: #3F3D38">A typical case leaves the system twice, waits 53 minutes in chat and finishes three times later than designed.</p>
+
+<div style="position: absolute; left: 84px; top: 276px; width: 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Customer</span></div>
+<div style="position: absolute; left: 84px; top: 368px; width: 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Onboarding system</span><span style="font-size: 12px; color: #55534D">System of record</span></div>
+<div style="position: absolute; left: 84px; top: 468px; width: 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Team spreadsheet</span><span style="font-size: 12px; color: #55534D">Off-system</span></div>
+<div style="position: absolute; left: 84px; top: 558px; width: 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Team chat</span><span style="font-size: 12px; color: #55534D">Off-system</span></div>
+
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-label="The case path moves from the customer into the system, out to a spreadsheet and chat, and back; it finishes at 152 minutes against a designed 50" style="position: absolute; left: 0px; top: 0px; width: 1600px; height: 1000px">
+  <!-- reference lines -->
+  <line x1="650" y1="250" x2="650" y2="690" stroke="#8C897F" stroke-width="2" stroke-dasharray="6 5"></line>
+  <line x1="1140" y1="250" x2="1140" y2="690" stroke="#1E1D1A" stroke-width="1.5" stroke-dasharray="10 4 2 4"></line>
+  <line x1="1364" y1="250" x2="1364" y2="690" stroke="#1E1D1A" stroke-width="2.5"></line>
+  <!-- path: solid in the system of record, dotted off-system -->
+  <path d="M 300 295 L 300 390 L 664 390" fill="none" stroke="#1E1D1A" stroke-width="5" stroke-linecap="round"></path>
+  <path d="M 664 390 L 671 490 L 790 490 L 790 580 L 1161 580 L 1175 490 L 1245 490 L 1245 390" fill="none" stroke="#1E1D1A" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round" stroke-linejoin="round"></path>
+  <path d="M 1245 390 L 1364 390 L 1364 295" fill="none" stroke="#1E1D1A" stroke-width="5" stroke-linecap="round"></path>
+  <!-- events -->
+  <circle cx="300" cy="295" r="7" fill="#1E1D1A"></circle>
+  <circle cx="356" cy="390" r="6" fill="#1E1D1A"></circle>
+  <circle cx="468" cy="390" r="6" fill="#1E1D1A"></circle>
+  <circle cx="664" cy="390" r="6" fill="#1E1D1A"></circle>
+  <circle cx="671" cy="490" r="6" fill="#FFFFFF" stroke="#6D45B8" stroke-width="3"></circle>
+  <circle cx="790" cy="580" r="6" fill="#FFFFFF" stroke="#B42318" stroke-width="3"></circle>
+  <circle cx="1161" cy="580" r="6" fill="#FFFFFF" stroke="#B42318" stroke-width="3"></circle>
+  <circle cx="1175" cy="490" r="6" fill="#FFFFFF" stroke="#6D45B8" stroke-width="3"></circle>
+  <circle cx="1364" cy="295" r="7" fill="#1E1D1A"></circle>
+  <path d="M 1245 376 L 1258 400 L 1232 400 Z" fill="#B42318"></path>
+  <!-- step band -->
+  <rect x="300" y="640" width="56" height="24" fill="#ECEAE4" stroke="#8C897F"></rect>
+  <rect x="356" y="640" width="112" height="24" fill="#ECEAE4" stroke="#8C897F"></rect>
+  <rect x="468" y="640" width="196" height="24" fill="#ECEAE4" stroke="#8C897F"></rect>
+  <rect x="664" y="640" width="602" height="24" fill="#ECEAE4" stroke="#8C897F"></rect>
+  <rect x="1266" y="640" width="98" height="24" fill="#ECEAE4" stroke="#8C897F"></rect>
+  <!-- time axis -->
+  <line x1="300" y1="712" x2="1476" y2="712" stroke="#8C897F"></line>
+</svg>
+
+<!-- wait capsule on the chat segment -->
+<div style="position: absolute; left: 918px; top: 568px; padding: 2px 12px; background: #FFFFFF; border: 2px solid #9A5B00; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 13px">waiting 53 min for a reply</div>
+
+<!-- event labels -->
+<div style="position: absolute; left: 312px; top: 262px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">0 min</b> applies</div>
+<div style="position: absolute; left: 330px; top: 404px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">8</b> complete</div>
+<div style="position: absolute; left: 440px; top: 404px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">24</b> verified</div>
+<div style="position: absolute; left: 600px; top: 404px; font-size: 12px; line-height: 15px; text-align: right; width: 56px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">52</b> screened</div>
+<div style="position: absolute; left: 684px; top: 458px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">53</b> added to the queue</div>
+<div style="position: absolute; left: 802px; top: 594px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">70</b> approval asked in chat</div>
+<div style="position: absolute; left: 1050px; top: 594px; font-size: 12px; line-height: 15px; text-align: right; width: 100px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">123</b> approved</div>
+<div style="position: absolute; left: 1188px; top: 458px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">125</b> queue updated</div>
+<div style="position: absolute; left: 1150px; top: 346px; width: 140px; font-size: 12px; line-height: 15px; color: #B42318"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">135</b> approved in system, no approval record</div>
+<div style="position: absolute; left: 1376px; top: 262px; width: 150px; font-size: 12px; line-height: 15px"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">152</b> account open, customer told</div>
+
+<!-- reference labels -->
+<div style="position: absolute; left: 584px; top: 222px; width: 132px; text-align: center; font-size: 12px; color: #3F3D38">Designed finish 50 min</div>
+<div style="position: absolute; left: 1060px; top: 222px; width: 160px; text-align: center; font-size: 12px">Promise: decision in 2 h</div>
+<div style="position: absolute; left: 1298px; top: 222px; width: 132px; text-align: center; font-size: 12px; font-weight: 500">Actual finish 152 min</div>
+
+<!-- step band labels -->
+<div style="position: absolute; left: 356px; top: 643px; width: 112px; text-align: center; font-size: 12px; color: #3F3D38">Verify</div>
+<div style="position: absolute; left: 468px; top: 643px; width: 196px; text-align: center; font-size: 12px; color: #3F3D38">Screen risk</div>
+<div style="position: absolute; left: 664px; top: 643px; width: 602px; text-align: center; font-size: 12px; color: #3F3D38">Approve account</div>
+<div style="position: absolute; left: 1266px; top: 643px; width: 98px; text-align: center; font-size: 12px; color: #3F3D38">Open</div>
+<div style="position: absolute; left: 84px; top: 643px; font-size: 13px; color: #3F3D38">Steps</div>
+
+<!-- time axis labels -->
+<div style="position: absolute; left: 285px; top: 720px; width: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">0</div>
+<div style="position: absolute; left: 495px; top: 720px; width: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">30</div>
+<div style="position: absolute; left: 705px; top: 720px; width: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">60</div>
+<div style="position: absolute; left: 915px; top: 720px; width: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">90</div>
+<div style="position: absolute; left: 1125px; top: 720px; width: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">120</div>
+<div style="position: absolute; left: 1325px; top: 720px; width: 60px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55534D">150 min</div>
+
+<!-- three answers -->
+<div style="position: absolute; left: 64px; top: 760px; width: 1472px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px">
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><b style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3 tools</b><span style="font-size: 14px; color: #3F3D38">The system, a team spreadsheet and team chat. Two keep no official record.</span></div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><b style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500; color: #9A5B00">+102 min</b><span style="font-size: 14px; color: #3F3D38">later than the designed finish; the decision came 3 minutes after the 2-hour promise.</span></div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><b style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500; color: #B42318">No record</b><span style="font-size: 14px; color: #3F3D38">of who approved. A potential control exposure, for the control owner to confirm.</span></div>
+</div>
+
+<div style="position: absolute; left: 64px; top: 910px; width: 1472px; border-top: 1px solid #CFCCC2; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; font-size: 13px; color: #3F3D38">
+  <span style="display: flex; gap: 6px; align-items: center"><svg width="28" height="8" viewBox="0 0 28 8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="#1E1D1A" stroke-width="4"></line></svg>In the system of record</span>
+  <span style="display: flex; gap: 6px; align-items: center"><svg width="28" height="8" viewBox="0 0 28 8" aria-hidden="true"><line x1="1" y1="4" x2="27" y2="4" stroke="#1E1D1A" stroke-width="3" stroke-dasharray="1 5" stroke-linecap="round"></line></svg>Off-system</span>
+  <span style="display: flex; gap: 6px; align-items: center"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 L13 13 L1 13 Z" fill="#B42318"></path></svg>Control break: no record</span>
+  <span>Horizontal position = minutes since the application</span>
+  <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #55534D">Composite of 412 cases, roles only · illustrative, synthetic data</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
