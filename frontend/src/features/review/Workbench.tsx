@@ -9,6 +9,7 @@ import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
 import { useSettings } from "../../hooks/useSettings";
 import { useSystemTraces, useSystemVariants } from "../../hooks/useSystemRecords";
+import { useDispositions, useSetDisposition, useSetValueOverride, useValue } from "../../hooks/useValue";
 import { useExceptions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
@@ -18,6 +19,7 @@ import type { ReviewAction } from "../../api/review";
 import type { GapAnalysis } from "../../lib/gap";
 import type { Graph } from "../../lib/mapTypes";
 import type { RejectedClaim } from "../../lib/reviewTypes";
+import type { DispositionChoice, ValueOverride } from "../../lib/value";
 import { hiddenWorkStepForm, newStepForm, type AddStepForm } from "../../lib/addStep";
 import { lensesFor, type Lens } from "../../lib/lens";
 import { volumeLines } from "../../lib/systemRecords";
@@ -99,6 +101,12 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const lens: Lens = lenses.some((l) => l.value === chosenLens) ? chosenLens : "plain";
   const traces = useSystemTraces(versionId, systemOn);
   const variants = useSystemVariants(versionId, systemOn);
+  // The value calculator and step dispositions (R10b, decision A): the panel section only while on.
+  const valueOn = settings.data?.value_enabled === true;
+  const dispositions = useDispositions(versionId, valueOn);
+  const values = useValue(versionId, shown, valueOn);
+  const choose = useSetDisposition(versionId ?? "");
+  const override = useSetValueOverride(versionId ?? "");
   const volume =
     lens === "volume" && traces.data && variants.data ? volumeLines(traces.data, variants.data.too_few_steps) : undefined;
   // The Exceptions lens (X3): each step's route in this view, fetched only while it is on.
@@ -205,6 +213,31 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const viewSteps = steps.filter((e) => drawn.has(e.id)).length;
   const start = firstNeedingAttention(g);
   const editable = g.version.state === "draft";
+  function dispositionFor(id: string) {
+    const row = dispositions.data?.find((r) => r.element_id === id);
+    if (!valueOn || !row) return undefined;
+    return {
+      row,
+      value: values.data?.steps.find((s) => s.element_id === id),
+      currency: values.data?.currency ?? settings.data?.currency ?? "",
+      potential: values.data?.potential ?? "Potential, not committed",
+      edit: editable
+        ? {
+            busy: choose.isPending || override.isPending,
+            error: choose.isError ? messageOf(choose.error) : null,
+            onChoose: (choice: DispositionChoice) => {
+              override.reset();
+              choose.mutate({ elementId: id, choice });
+            },
+            overrideError: override.isError ? messageOf(override.error) : null,
+            onOverride: (figures: ValueOverride) => {
+              choose.reset();
+              override.mutate({ elementId: id, override: figures });
+            },
+          }
+        : undefined,
+    };
+  }
   const walkthrough = walkthroughCards(g.elements, pictures.data ?? []);
 
   function act(action: ReviewAction) {
@@ -439,6 +472,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                     }
                   : undefined
               }
+              disposition={dispositionFor(selected.id)}
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
               partOf={g.elements.find((e) => e.id === selected.parent_element_id)?.label}

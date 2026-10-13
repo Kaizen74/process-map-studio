@@ -1279,6 +1279,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1294,6 +1304,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "A judgment step can't be automated by rules."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1311,7 +1331,8 @@
         "ai_assisted",
         "human_approves",
         "keep_human"
-      ]
+      ],
+      "not_allowed": []
     },
     {
       "element_id": "id-12",
@@ -1326,6 +1347,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1343,7 +1374,8 @@
         "ai_assisted",
         "human_approves",
         "keep_human"
-      ]
+      ],
+      "not_allowed": []
     },
     {
       "element_id": "id-13",
@@ -1358,6 +1390,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1373,6 +1415,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1388,6 +1440,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "Complex work can't be automated or AI-assisted."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Complex work can't be automated or AI-assisted."
+        }
       ]
     },
     {
@@ -1403,6 +1465,16 @@
         "delete",
         "human_approves",
         "keep_human"
+      ],
+      "not_allowed": [
+        {
+          "disposition": "automate_rules",
+          "reason": "A judgment step can't be automated by rules."
+        },
+        {
+          "disposition": "ai_assisted",
+          "reason": "Add a complete AI flag first: component, input, output, handoff and basis."
+        }
       ]
     },
     {
@@ -1420,7 +1492,8 @@
         "ai_assisted",
         "human_approves",
         "keep_human"
-      ]
+      ],
+      "not_allowed": []
     }
   ],
   "role_costs": {

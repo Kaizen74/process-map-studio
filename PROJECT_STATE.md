@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-13 (P10b R10a: Settings Regional and Optional modules) — update after EVERY increment*
+*Last updated: 2026-10-13 (P10b R10b: disposition and value in the panel) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.12 drafted 2026-10-12 at Eric's request: Reality views P13 and a coherence review; v1.11 adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -71,7 +71,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] R9a — P10b: `services/disposition.py` (suggestion with reason, choice rules), `GET /versions/{vid}/dispositions`, `PUT /elements/{eid}/disposition` (with risk flag and note; audited), L10 checks chosen dispositions, complex work undoes Automate/AI-assisted, choices kept on reopen and refresh; migration 0014 (notes); A.11 Delete for Approve load plan (91)
 - [x] R9b — P10b: `services/value.py`; role costs and value assumptions (engagement, audited); value overrides with a note (draft, audited); `GET /versions/{vid}/value?view=` per step, phase and total with evidence labels, partial-cost counts and scenarios labelled potential; frontend types for dispositions and value checked against the backend sample (90)
 - [x] R10a — P10b: Settings Regional (currency, default time zone; `PUT /settings/regional`) and the full Optional modules card (gap analysis on, system records and value calculator off; audited); Gap analysis behind its switch; new logs start in the default zone
-- [ ] R10b — P10b UI: disposition and value section in the panel (behind the value switch)
+- [x] R10b — P10b: the panel's Disposition and value section (suggestion and reason, choose with refused reasons shown, risk flag, note, clear; figures with labels, missing reasons, potential release; own figures with a note); `not_allowed` on disposition rows; behind the value switch
 - [ ] R10c — P10b UI: Registers "Disposition and value" with totals, scenarios (potential), role costs and value assumptions
 - [ ] R11 — P10b: wider intake .xlsx, .csv, .eml (openpyxl, standard `email`; header names → redaction terms; 92)
 - [ ] R12 — P10b: G10 baseline candidate (approval), 500k-event import timing, close P10b

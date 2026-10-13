@@ -24,7 +24,7 @@ const SYSTEM = JSON.parse(readFileSync(join(__dirname, "..", "fixtures", "system
 };
 
 // Every field of each type, exactly (`satisfies` refuses a missing or an extra one).
-const ROW = { element_id: 1, label: 1, kind: 1, suggested: 1, reason: 1, disposition: 1, note: 1, risk_flag: 1, allowed: 1 } satisfies Record<keyof DispositionRow, 1>; // prettier-ignore
+const ROW = { element_id: 1, label: 1, kind: 1, suggested: 1, reason: 1, disposition: 1, note: 1, risk_flag: 1, allowed: 1, not_allowed: 1 } satisfies Record<keyof DispositionRow, 1>; // prettier-ignore
 const COSTS = { currency: 1, rows: 1 } satisfies Record<keyof RoleCosts, 1>; // prettier-ignore
 const COST = { role_id: 1, role_name: 1, hourly_cost: 1, note: 1 } satisfies Record<keyof RoleCostRow, 1>; // prettier-ignore
 const ASSUMPTION = { disposition: 1, reduction_pct: 1, note: 1, default: 1 } satisfies Record<keyof Assumption, 1>; // prettier-ignore

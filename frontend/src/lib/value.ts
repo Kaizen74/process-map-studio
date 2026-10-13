@@ -21,6 +21,21 @@ export const EVIDENCE_LABELS: Readonly<Record<Evidence, string>> = {
   assumed: "Assumed",
 };
 
+export const DISPOSITIONS = Object.keys(DISPOSITION_LABELS) as Disposition[];
+
+export const RISK_FLAG_LABELS: Readonly<Record<RiskFlag, string>> = {
+  none: "No particular risk",
+  financial: "Financial risk",
+  safety: "Safety risk",
+  regulatory: "Regulatory risk",
+};
+
+/** A disposition Eric can't choose for a step, with the backend's reason (R10b). */
+export interface RefusedDisposition {
+  disposition: Disposition;
+  reason: string;
+}
+
 /** A step's suggested disposition with its reason, and Eric's choice. */
 export interface DispositionRow {
   element_id: string;
@@ -32,6 +47,21 @@ export interface DispositionRow {
   note: string;
   risk_flag: RiskFlag;
   allowed: Disposition[];
+  not_allowed: RefusedDisposition[];
+}
+
+/** PUT /elements/{eid}/disposition: `null` clears Eric's choice; a risk flag left out keeps its value. */
+export interface DispositionChoice {
+  disposition: Disposition | null;
+  note: string;
+  risk_flag?: RiskFlag;
+}
+
+/** PUT /elements/{eid}/value-override: Eric's own figures, with where they come from. */
+export interface ValueOverride {
+  time_min: number | null;
+  volume_month: number | null;
+  note: string;
 }
 
 export interface RoleCostRow {
@@ -108,3 +138,20 @@ export interface ValueReport {
   totals: ValueTotal;
   scenarios: Scenario[];
 }
+
+/** Money with its currency code, never per person: "SGD 1,723.20". */
+export function money(value: number, currency: string): string {
+  return `${currency} ${value.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** Hours a month: "35.9 h a month". */
+export function hoursText(value: number): string {
+  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })} h a month`;
+}
+
+/** A figure with its unit and evidence label, as the panel words it. */
+export function figureText(figure: ValueFigure, unit: "min a case" | "cases a month"): string {
+  const value = figure.value.toLocaleString("en-GB", { maximumFractionDigits: 1 });
+  return `${value} ${unit} · ${EVIDENCE_LABELS[figure.label].toLowerCase()}`;
+}
+

@@ -1066,6 +1066,13 @@ class DispositionInput(BaseModel):
     risk_flag: str | None = None
 
 
+class RefusedDisposition(BaseModel):
+    """A disposition Eric can't choose for a step, and why (R10b)."""
+
+    disposition: str  # B.41
+    reason: str
+
+
 class DispositionView(BaseModel):
     """A step's suggested disposition with its reason, and Eric's choice."""
 
@@ -1078,6 +1085,7 @@ class DispositionView(BaseModel):
     note: str
     risk_flag: str
     allowed: list[str]
+    not_allowed: list[RefusedDisposition]
 
 
 # --- Value calculator (R9b; API_CONTRACT.md → Value calculator) ---------------------------------

@@ -17,7 +17,7 @@ from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import ElementKind, ReviewStatus, VersionState
 from app.domain.graph import GraphElement
-from app.domain.models import DispositionInput, DispositionView, VersionView
+from app.domain.models import DispositionInput, DispositionView, RefusedDisposition, VersionView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import elements as map_repo
@@ -106,6 +106,8 @@ def _view(element: GraphElement, step: StepFacts, chosen: str | None,
         element_id=element.id, label=element.label, kind=element.kind, suggested=suggested,
         reason=reason, disposition=chosen, note=note, risk_flag=step.risk_flag,
         allowed=rules.allowed(step),
+        not_allowed=[RefusedDisposition(disposition=d, reason=why)
+                     for d in rules.ALL if (why := rules.refusal(step, d))],
     )  # fmt: skip
 
 

@@ -3,6 +3,8 @@ import {
   ConfidenceBreakdown,
   ConstraintList,
   DecisionRights,
+  DispositionValueSection,
+  type DispositionValueSectionProps,
   EvidenceCard,
   HandoffTime,
   KnowHowSection,
@@ -53,6 +55,8 @@ export interface DetailPanelProps {
   typicalResponses?: readonly string[] | undefined;
   /** Section 4e (R8): the step's system-trace evidence; omitted while System records is off. */
   system?: { traces: readonly SystemTrace[]; tooFew: boolean } | undefined;
+  /** Disposition and value (R10b): omitted while the value module is off or the step has no row. */
+  disposition?: DispositionValueSectionProps | undefined;
   onClose: () => void;
 }
 
@@ -71,6 +75,7 @@ export function DetailPanel({
   onOpenGapReport,
   typicalResponses = [],
   system,
+  disposition,
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
@@ -168,6 +173,7 @@ export function DetailPanel({
           <StoriesSection stories={detail.data.stories} onOpen={openPassage} />
           <OfficialLivedSection element={detail.data} onOpen={openPassage} />
           {system && <SystemDataSection traces={system.traces} element={element} tooFew={system.tooFew} />}
+          {disposition && <DispositionValueSection key={element.id} {...disposition} />}
           <HandoffTime element={detail.data} />
           <Kpi element={detail.data} />
           <ConstraintList element={detail.data} />

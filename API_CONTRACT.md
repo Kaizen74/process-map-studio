@@ -477,9 +477,10 @@ For AI-assisted and Automate the reason adds " Needs a complete AI flag before y
 ```json
 [{"element_id": "…", "label": "Approve load plan", "kind": "approval", "suggested": "delete",
   "reason": "The documents describe it, …", "disposition": null, "note": "", "risk_flag": "none",
-  "allowed": ["delete", "human_approves", "keep_human"]}]
+  "allowed": ["delete", "human_approves", "keep_human"],
+  "not_allowed": [{"disposition": "automate_rules", "reason": "Complex work can't be automated or AI-assisted."}]}]
 ```
-`disposition` is Eric's choice (or `null`); `allowed` lists what he may choose for this step (the rules below). Errors `404`.
+`disposition` is Eric's choice (or `null`); `allowed` lists what he may choose for this step (the rules below); `not_allowed` (R10b, 2026-10-13) gives each other disposition with the reason it is refused, in B.41 order, so the panel explains instead of disabling a choice. Errors `404`.
 
 ### PUT /api/elements/{eid}/disposition
 `{"disposition": "human_approves" | null, "note": "…", "risk_flag": "none" | "financial" | "safety" | "regulatory"}` (`risk_flag` optional: left out, it keeps its value; `null` disposition clears Eric's choice). Rules (`422` naming the field):

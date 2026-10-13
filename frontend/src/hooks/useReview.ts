@@ -68,7 +68,8 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 /** Everything that shows a version's review state, refreshed after a change (PRD §5.8). */
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
   // "images": rejecting or restoring a step hides or shows its pictures (marker and strip).
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants"]) {
+  // "dispositions" and "value" (R10b): an edit or a work type changes a step's suggestion.
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants", "dispositions", "value"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });

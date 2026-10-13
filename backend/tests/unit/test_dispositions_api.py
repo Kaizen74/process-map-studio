@@ -44,6 +44,16 @@ def test_every_step_has_a_suggestion_with_its_reason(drafted: Drafted) -> None:
         "Needs a complete AI flag before you can choose it.")  # fmt: skip
     assert all(r["disposition"] is None and r["risk_flag"] == "none" for r in found.values())
     assert found["Deviation in limits?"]["allowed"] == ["delete", "human_approves", "keep_human"]
+    # R10b: every other disposition says why it is refused, so the panel can explain it.
+    complex_work = "Complex work can't be automated or AI-assisted."
+    assert found["Deviation in limits?"]["not_allowed"] == [
+        {"disposition": "automate_rules", "reason": complex_work},
+        {"disposition": "ai_assisted", "reason": complex_work},
+    ]
+    for row in found.values():
+        assert sorted(row["allowed"] + [n["disposition"] for n in row["not_allowed"]]) == sorted(
+            ["delete", "automate_rules", "ai_assisted", "human_approves", "keep_human"]
+        )
 
 
 def test_a11_suggests_deleting_the_documented_control_with_no_record(drafted: Drafted) -> None:
