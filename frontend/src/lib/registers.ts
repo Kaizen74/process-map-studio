@@ -78,7 +78,8 @@ export type RegisterKey =
   | "exceptions"
   | "stories"
   | "glossary"
-  | "preserve";
+  | "preserve"
+  | "value";
 
 /** GET /versions/{vid}/lane-boundaries (C8): teams' activities overlapping or falling between them. */
 export type BoundaryKind = "shared_delivery" | "gap" | "boundary";
@@ -142,8 +143,16 @@ export const REGISTERS: readonly { value: RegisterKey; label: string }[] = [
   { value: "exceptions", label: "Exceptions and workarounds" },
 ];
 
-export function registerKey(value: string | null): RegisterKey {
-  return REGISTERS.find((r) => r.value === value)?.value ?? "k_risk";
+/** Disposition and value (R10c): listed only while the value module is on (decision A). */
+export const VALUE_REGISTER: { value: RegisterKey; label: string } = { value: "value", label: "Disposition and value" };
+
+/** The registers to offer: the value register joins the list while its module is on. */
+export function registerOptions(valueOn: boolean): readonly { value: RegisterKey; label: string }[] {
+  return valueOn ? [...REGISTERS, VALUE_REGISTER] : REGISTERS;
+}
+
+export function registerKey(value: string | null, options = REGISTERS): RegisterKey {
+  return options.find((r) => r.value === value)?.value ?? "k_risk";
 }
 
 /** B.9 cause types, in plain words. */

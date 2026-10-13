@@ -68,7 +68,8 @@ function ChoiceForm({
           <label key={d} className="disposition-form__choice">
             <input type="radio" name="disposition" value={d} checked={choice === d} onChange={() => setChoice(d)} />
             {DISPOSITION_LABELS[d]}
-            {d === row.suggested && <span className="sense-note"> (suggested)</span>}
+            {d === row.suggested && " "}
+            {d === row.suggested && <span className="sense-note">(suggested)</span>}
           </label>
         ))}
       </fieldset>

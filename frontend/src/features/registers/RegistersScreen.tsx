@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, Skeleton } from "../../components/common";
 import {
   AiFlagList,
+  AssumptionsForm,
   BoundaryList,
   ExceptionList,
   GlossaryList,
@@ -12,12 +13,23 @@ import {
   ConstraintGroups,
   ExternalPracticeList,
   KRiskList,
+  RoleCostsForm,
   ThemeList,
+  ValueRegister,
 } from "../../components/registers";
 import { useToast } from "../../components/shell";
 import { QuestionsTab, RejectedClaimsTab } from "../../components/tabs";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGraph } from "../../hooks/useReview";
+import { useSettings } from "../../hooks/useSettings";
+import {
+  useAssumptions,
+  useDispositions,
+  useRoleCosts,
+  useSetAssumptions,
+  useSetRoleCosts,
+  useValue,
+} from "../../hooks/useValue";
 import {
   useCauseLibrary,
   useCapabilityNotes,
@@ -37,7 +49,7 @@ import { saveText } from "../../lib/download";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { questionsFileName, questionsMarkdown } from "../../lib/questions";
-import { REGISTERS, registerKey, type CauseEntry, type ThemeStatus, type ValidationResult } from "../../lib/registers";
+import { registerKey, registerOptions, type CauseEntry, type ThemeStatus, type ValidationResult } from "../../lib/registers";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 
 const DONE: Readonly<Record<ValidationResult, string>> = {
@@ -70,7 +82,11 @@ export function RegistersScreen() {
   const validate = useValidateCause(engagementId);
   const themes = useThemes(engagementId);
   const decide = useDecideTheme(engagementId);
-  const chosenRegister = registerKey(params.get("register"));
+  // Disposition and value (R10c) joins the list only while the value module is on (decision A).
+  const settings = useSettings();
+  const valueOn = settings.data?.value_enabled === true;
+  const options = registerOptions(valueOn);
+  const chosenRegister = registerKey(params.get("register"), options);
   const boundaries = useLaneBoundaries(map?.id ?? null);
   const [exceptionsView, setExceptionsView] = useState<AsView>("done");
   // Stories, Glossary, Preserve / Improve (P9u): fetched when shown; their steps come by label,
@@ -82,6 +98,14 @@ export function RegistersScreen() {
   const mapGraph = useGraph(sense ? (map?.id ?? null) : null);
   const unusual = useExceptions(map?.id ?? null, exceptionsView, chosenRegister === "exceptions");
   const chosen = chosenRegister;
+  const showValue = chosen === "value";
+  const [valueView, setValueView] = useState<AsView>("done");
+  const value = useValue(map?.id ?? null, valueView, showValue);
+  const dispositions = useDispositions(map?.id ?? null, showValue);
+  const roleCosts = useRoleCosts(engagementId, showValue);
+  const assumptions = useAssumptions(engagementId, showValue);
+  const saveCosts = useSetRoleCosts(engagementId);
+  const saveAssumptions = useSetAssumptions(engagementId);
 
   if (engagement.isError) {
     return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
@@ -124,7 +148,8 @@ export function RegistersScreen() {
         <p className="screen__intro">
           The lists behind the map{title ? ` (${title})` : ""}: knowledge risks, AI flags, constraints, recommended
           practice, questions for your SME, rejected claims, stories, glossary, Preserve / Improve, lane boundaries and
-          exceptions and workarounds, and the cause library and emerging themes for this engagement.
+          exceptions and workarounds, and the cause library and emerging themes for this engagement
+          {valueOn ? ", and disposition and value" : ""}.
         </p>
       </div>
       {(versions.isPending || (map !== null && registers.isPending)) && <Skeleton height="200px" />}
@@ -147,8 +172,8 @@ export function RegistersScreen() {
       )}
       {data && (
         <>
-          <SegmentedControl label="Register" options={REGISTERS} value={chosen} onChange={choose} />
-          <section aria-label={REGISTERS.find((r) => r.value === chosen)?.label} className="register-panel">
+          <SegmentedControl label="Register" options={options} value={chosen} onChange={choose} />
+          <section aria-label={options.find((r) => r.value === chosen)?.label} className="register-panel">
             {chosen === "k_risk" && <KRiskList items={data.k_risk} onGoTo={goTo} />}
             {chosen === "ai_flags" && <AiFlagList items={data.ai_flags} onGoTo={goTo} />}
             {chosen === "constraints" && <ConstraintGroups groups={data.constraints_by_cause} onGoTo={goTo} />}
@@ -294,6 +319,71 @@ export function RegistersScreen() {
                   />
                 )}
                 {boundaries.data && <BoundaryList items={boundaries.data} onGoTo={goTo} />}
+              </>
+            )}
+            {showValue && (
+              <>
+                <p className="tab-intro">
+                  Indicative hours and cost per step and phase, each with where it comes from, and what each disposition
+                  could release. Worked out by the app from measured figures, the SMEs&apos; estimates and your own
+                  figures; never per person. Nothing here changes the map.
+                </p>
+                <SegmentedControl label="View" options={AS_VIEWS} value={valueView} onChange={(v) => setValueView(v as AsView)} />
+                {(value.isPending || dispositions.isPending) && <Skeleton height="120px" />}
+                {(value.isError || dispositions.isError) && (
+                  <ErrorState
+                    title="The figures couldn't be loaded"
+                    message={messageOf(value.error ?? dispositions.error)}
+                    details={copyDetailsOf(value.error ?? dispositions.error)}
+                    onRetry={() => {
+                      void value.refetch();
+                      void dispositions.refetch();
+                    }}
+                  />
+                )}
+                {value.data && dispositions.data && (
+                  <ValueRegister report={value.data} dispositions={dispositions.data} onGoTo={goTo} />
+                )}
+                <h2 className="register-heading">Role costs</h2>
+                {roleCosts.isPending && <Skeleton height="80px" />}
+                {roleCosts.isError && (
+                  <ErrorState
+                    title="The role costs couldn't be loaded"
+                    message={messageOf(roleCosts.error)}
+                    details={copyDetailsOf(roleCosts.error)}
+                    onRetry={() => void roleCosts.refetch()}
+                  />
+                )}
+                {roleCosts.data && (
+                  <RoleCostsForm
+                    key={roleCosts.dataUpdatedAt}
+                    costs={roleCosts.data}
+                    busy={saveCosts.isPending}
+                    error={saveCosts.isError ? messageOf(saveCosts.error) : null}
+                    onSave={(rows) => saveCosts.mutate(rows, { onSuccess: () => toast("Role costs saved.") })}
+                  />
+                )}
+                <h2 className="register-heading">Assumptions</h2>
+                {assumptions.isPending && <Skeleton height="80px" />}
+                {assumptions.isError && (
+                  <ErrorState
+                    title="The assumptions couldn't be loaded"
+                    message={messageOf(assumptions.error)}
+                    details={copyDetailsOf(assumptions.error)}
+                    onRetry={() => void assumptions.refetch()}
+                  />
+                )}
+                {assumptions.data && (
+                  <AssumptionsForm
+                    key={assumptions.dataUpdatedAt}
+                    assumptions={assumptions.data}
+                    busy={saveAssumptions.isPending}
+                    error={saveAssumptions.isError ? messageOf(saveAssumptions.error) : null}
+                    onSave={(rows) =>
+                      saveAssumptions.mutate(rows, { onSuccess: () => toast("Assumptions saved.") })
+                    }
+                  />
+                )}
               </>
             )}
           </section>
