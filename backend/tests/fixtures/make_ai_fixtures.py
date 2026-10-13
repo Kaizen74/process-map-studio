@@ -1700,6 +1700,112 @@ def write_interview_only() -> None:
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), interview_only_s4(refs))
 
 
+# The Reality fixture (PRD Appendix A.12, P13a-2): S1 intent over the charter. ILLUSTRATIVE ONLY.
+# The charter's passages are sent as p1 (its title) and p2-p5 (§1-§4). Four statements pass every
+# check; two planted traps are turned down: RT1 (a quote that isn't in its passage, G4) and RT2
+# ("within 5 minutes" where the charter says 10, G5).
+CHARTER = "charter_load_control.docx"
+REALITY_DIR = HERE / "reality"
+
+
+def intent(kind: str, text: str, refs: list[str], quote: str, scope: str = "process",
+           **target: Any) -> dict[str, Any]:  # fmt: skip
+    return {
+        "kind": kind, "text": text, "scope": scope, "step_key": target.pop("step_key", ""),
+        "phase_name": target.pop("phase_name", ""), "metric": target.pop("metric", ""),
+        "comparator": target.pop("comparator", ""), "target_value": target.pop("value", None),
+        "unit": target.pop("unit", ""), "segment_ids": refs, "quote": quote,
+    }  # fmt: skip
+
+
+S1_INTENT_ANSWER: dict[str, Any] = {
+    "statements": [
+        intent("target", "Preliminary load plans are ready by T-120.", ["p2"],
+               "Preliminary load plans are ready by T-120 so that widebody configurations can be "
+               "checked.", "step", step_key="draft-load-plan", metric="lead_time_min",
+               comparator="at_least", value=120, unit="min"),
+        intent("control_objective", "Every load plan is approved before release to Ramp.", ["p3"],
+               "Every load plan is approved before release to Ramp.", "step",
+               step_key="approve-load-plan"),
+        intent("target", "The loading report reaches Load Control within 10 minutes of loading "
+               "completion.", ["p4"], "The loading report reaches Load Control within 10 minutes "
+               "of loading completion.", "step", step_key="load-and-return-lir",
+               metric="wait_min", comparator="at_most", value=10, unit="min"),
+        intent("promise", "Load sheets are issued without delaying the departure slot.", ["p5"],
+               "Load sheets are issued without delaying the departure slot."),
+        # RT1: the quote is not in the cited passage.
+        intent("promise", "Load sheets are issued at least 20 minutes before departure.", ["p5"],
+               "Load sheets are issued at least 20 minutes before departure."),
+        # RT2: the charter says 10 minutes, not 5.
+        intent("target", "The loading report reaches Load Control within 5 minutes of loading "
+               "completion.", ["p4"], "The loading report reaches Load Control within 10 minutes "
+               "of loading completion.", "step", step_key="load-and-return-lir",
+               metric="wait_min", comparator="at_most", value=5, unit="min"),
+    ]
+}  # fmt: skip
+S1_INTENT_KEPT = 4
+
+
+def intent_hashes(sessions: Any, engagement_id: str) -> tuple[str, str]:
+    """The input hashes of the charter's S1 intent call and, with its answer as filed, of the
+    IX_verify call over the statements that pass the checks."""
+    from app.actions import intent_ai as actions
+    from app.actions import redaction
+    from app.db import session_scope
+    from app.domain.ai_schemas import S1IntentOutput
+    from app.pipeline import intent_ai as ai
+    from app.pipeline.context import role_groups
+    from app.services import ai_service
+
+    with session_scope(sessions) as session:
+        sources = actions._intent_sources(session, engagement_id)
+        places = actions._places(session, engagement_id)
+        groups = role_groups(session, engagement_id)
+        terms = redaction.name_replacements(session, engagement_id)
+    assert [s.source_name for s in sources] == [CHARTER], sources
+    charter = sources[0]
+    output = S1IntentOutput.model_validate(S1_INTENT_ANSWER)
+    checked = [ai.check_statement(p, charter, places, groups, terms) for p in output.statements]
+    assert [c.guardrail for c in checked] == [None, None, None, None, "G4", "G5"], [
+        (c.guardrail, c.reason) for c in checked
+    ]
+    kinds = {s.segment_id: charter.kind for s in charter.segments}
+    kept = [c for c in checked if c.kept]
+    return (
+        ai_service.input_hash(ai.EXTRACT_STAGE, ai.extract_blocks(charter, places)),
+        ai_service.input_hash(ai.VERIFY_STAGE, ai.verify_blocks(kept, kinds)),
+    )
+
+
+def write_reality() -> None:
+    """The S1 intent and IX_verify answers for the drafted sample with the A.12 charter."""
+    for stage in ("S1_extract_intent", "IX_compare", "IX_verify"):
+        shutil.rmtree(MOCKS / stage, ignore_errors=True)
+    write(MOCKS, "S1_extract_intent", "default", {"statements": []})
+    write(MOCKS, "IX_compare", "default", {"conflicts": []})
+    write(MOCKS, "IX_verify", "default", {"verdicts": []})
+    with sample_app() as (app, client, built):
+        key = "sk-" + "ant-" + "Fixture" * 5
+        assert client.put("/api/settings/key", json={"anthropic_api_key": key}).status_code == 200
+        data = (REALITY_DIR / CHARTER).read_bytes()
+        uploaded = client.post(
+            f"/api/engagements/{built.engagement_id}/sources",
+            files={"file": (CHARTER, data, "application/octet-stream")},
+        )
+        assert uploaded.status_code == 201, uploaded.text
+        assert app.state.worker.drain(60)
+        job_id = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
+        assert app.state.worker.drain(60)
+        assert client.get(f"/api/jobs/{job_id}").json()["status"] == "done"
+        extract, verification = intent_hashes(app.state.sessions, built.engagement_id)
+    write(MOCKS, "S1_extract_intent", extract, S1_INTENT_ANSWER)
+    write(MOCKS, "IX_verify", verification, {
+        "verdicts": [{"item_ref": f"v{n}", "verdict": "supported",
+                      "reason": "The charter states it in these words."}
+                     for n in range(1, S1_INTENT_KEPT + 1)]
+    })  # fmt: skip
+
+
 def write(root: Path, stage: str, key: str, data: object) -> None:
     (root / stage).mkdir(parents=True, exist_ok=True)
     (root / stage / f"{key}.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -1781,6 +1887,7 @@ def main() -> None:
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
     write_interview_only()
     write_gap()
+    write_reality()
     print(
         f"Wrote {len(hashes)} chunk answers, the S2 answer and {len(TRAPS_ANSWERS)} trap answers."
     )
@@ -1791,5 +1898,7 @@ if __name__ == "__main__":
         write_gap()
     elif sys.argv[1:] == ["interview"]:  # only the interview-only sample's answers
         write_interview_only()
+    elif sys.argv[1:] == ["reality"]:  # only the Reality fixture's intent answers (A.12)
+        write_reality()
     else:
         main()

@@ -262,7 +262,9 @@ export interface Job {
     | "gap_external"
     | "interview_guide"
     | "event_log_import"
-    | "event_log_alignment";
+    | "event_log_alignment"
+    | "intent_extract"
+    | "intent_compare";
   target_id: string | null;
   status: JobStatus;
   stage: string;

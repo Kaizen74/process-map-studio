@@ -546,3 +546,55 @@ class SROutput(BaseModel):
     matches: list[SRMatch] = Field(
         description="Only the activities a step clearly fits; may be empty"
     )
+
+
+# --- S1 intent, IX_compare, IX_verify (PRD §3.16, G16; P13a) ----------------------------------
+
+IntentKindName = Literal["promise", "target", "control_objective", "policy_rule"]
+
+
+class IntentProposal(BaseModel):
+    """One statement of intent the document states explicitly."""
+
+    kind: IntentKindName
+    text: str = Field(description="The statement in one plain line, close to the document's words")
+    scope: Literal["process", "phase", "step"]
+    step_key: str = Field(description="The step's key from <steps> when scope is step, else empty")
+    phase_name: str = Field(description="The phase from <phases> when scope is phase, else empty")
+    metric: Literal[
+        "", "cycle_time_min", "step_time_min", "wait_min", "lead_time_min",
+        "straight_through_pct", "recorded_pct", "other",
+    ] = Field(description="Empty unless the quote states a number and its unit")  # fmt: skip
+    comparator: Literal["", "at_most", "at_least", "equals"]
+    target_value: float | None = Field(description="The number in the quote, or null")
+    unit: Literal["", "min", "pct", "count"]
+    segment_ids: list[str] = Field(description="The IDs of the passages the quote comes from")
+    quote: str = Field(description="The document's exact words that state the intent")
+
+
+class S1IntentOutput(BaseModel):
+    statements: list[IntentProposal] = Field(description="Only stated intent; may be empty")
+
+
+class IXConflict(BaseModel):
+    """A rule conflict between a confirmed intent statement and the documented process."""
+
+    intent_ref: str = Field(description="The statement's ID from <intent>")
+    segment_ids: list[str] = Field(description="The IDs of the documented passages")
+    documented_quote: str = Field(description="The documented passages' exact words")
+    intent_quote: str = Field(description="The statement's exact words")
+    conflict: str = Field(description="What conflicts, in at most 25 plain words")
+
+
+class IXCompareOutput(BaseModel):
+    conflicts: list[IXConflict] = Field(description="Only clear conflicts; may be empty")
+
+
+class IXVerdict(BaseModel):
+    item_ref: str = Field(description="The item's ID from the <item> list")
+    verdict: Literal["supported", "partial", "not_supported"]
+    reason: str = Field(description="One sentence: what the passages do or do not say")
+
+
+class IXVerifyOutput(BaseModel):
+    verdicts: list[IXVerdict]

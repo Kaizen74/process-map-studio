@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import intent
-from app.domain.reality import IntentFields, IntentPatch, IntentView
+from app.actions import intent, intent_ai
+from app.domain.reality import (
+    ConflictPatch,
+    IntentConflictView,
+    IntentFields,
+    IntentJobStarted,
+    IntentPatch,
+    IntentView,
+)
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["intent and reality"])
@@ -33,3 +40,26 @@ def delete_intent(request: Request, intent_id: str) -> Response:
     state = request.app.state
     unwrap(intent.delete_intent(state.config, state.sessions, intent_id))
     return Response(status_code=204)
+
+
+@router.post("/engagements/{engagement_id}/intent/extract", status_code=202)
+def extract_intent(request: Request, engagement_id: str) -> IntentJobStarted:
+    state = request.app.state
+    return unwrap(intent_ai.start_extract(state.sessions, engagement_id, state.worker.submit))
+
+
+@router.post("/versions/{version_id}/intent/compare", status_code=202)
+def compare_intent(request: Request, version_id: str) -> IntentJobStarted:
+    state = request.app.state
+    return unwrap(intent_ai.start_compare(state.sessions, version_id, state.worker.submit))
+
+
+@router.get("/versions/{version_id}/intent/conflicts")
+def list_conflicts(request: Request, version_id: str) -> list[IntentConflictView]:
+    return unwrap(intent_ai.list_conflicts(request.app.state.sessions, version_id))
+
+
+@router.patch("/intent-conflicts/{conflict_id}")
+def update_conflict(request: Request, conflict_id: str, body: ConflictPatch) -> IntentConflictView:
+    state = request.app.state
+    return unwrap(intent_ai.update_conflict(state.config, state.sessions, conflict_id, body))

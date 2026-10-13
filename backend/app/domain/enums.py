@@ -202,8 +202,8 @@ class Guardrail(StrEnum):
     GX2 = "GX2"
     GX3 = "GX3"
     GAV = "GAV"
-    IX1 = "IX1"  # a design gap that doesn't quote both sides (P13a)
-    IXV = "IXV"  # the intent-compare verifier turned it down (P13a)
+    IX1 = "IX1"  # a design gap without both quotes, or over 25 words (P13a)
+    IXV = "IXV"  # the intent verifier (IX_verify) turned it down (P13a)
 
 
 class GapMode(StrEnum):

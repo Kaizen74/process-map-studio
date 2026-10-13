@@ -89,3 +89,60 @@ class IntentPatch(BaseModel):
     status: str | None = None
     note: str | None = None
     edits: IntentFields | None = None
+
+
+class IntentConflictRecord(BaseModel):
+    """An `intent_conflicts` row as stored (§3.5): a design gap proposed by `IX_compare`."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    version_id: str
+    intent_id: str
+    segment_ids: list[str]
+    quote: str
+    intent_quote: str
+    conflict_text: str
+    verifier_verdict: str
+    verification_status: str
+    rejection_guardrail: str | None
+    status: str
+    note: str
+    created_at: str
+
+
+class IntentConflictView(BaseModel):
+    """A design-gap proposal as the API returns it (API_CONTRACT.md → Intent): names hidden."""
+
+    id: str
+    version_id: str
+    intent_id: str
+    intent_text: str
+    intent_label: str
+    intent_quote: str
+    segment_ids: list[str]
+    source_name: str
+    anchor: str
+    quote: str
+    conflict_text: str
+    verifier_verdict: str
+    verification_status: str
+    rejection_guardrail: str | None
+    status: str
+    note: str
+    created_at: str
+
+
+class ConflictPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None = None
+    note: str | None = None
+
+
+class IntentJobStarted(BaseModel):
+    """`202` for the intent AI jobs: the job, and the engagement or version it works on."""
+
+    job_id: str
+    engagement_id: str | None = None
+    version_id: str | None = None

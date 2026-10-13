@@ -679,6 +679,8 @@ class IntentConflict(Row):
     verification_status: Mapped[str] = mapped_column(String(16), default="pending")  # B.18
     status: Mapped[str] = mapped_column(String(16), default="proposed")
     note: Mapped[str] = mapped_column(Text, default="")
+    # 0016: the check that turned the proposal down (B.20), e.g. IX1 or IXV.
+    rejection_guardrail: Mapped[str | None] = mapped_column(String(8), nullable=True)
 
 
 class DiscrepancyItem(Row):

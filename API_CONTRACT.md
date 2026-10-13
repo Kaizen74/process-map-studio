@@ -590,6 +590,36 @@ Sources of kind `policy_or_charter` (B.1; guessed from a file name containing "c
 ### DELETE /api/intent/{iid}
 `204` for an owner-stated statement. A statement quoted from a document is dismissed instead, so it stays on record (`409` "Dismiss a statement quoted from a document instead; it stays on record."). Audit row "Deleted intent statement". Errors `404`.
 
+### POST /api/engagements/{id}/intent/extract (AI, job; PRD §3.16, G16) — P13a-2
+Claude's pass (`S1_extract_intent`) over each ready `policy_or_charter` source, and over the purpose clauses of ready SOPs and manuals (passages containing "to ensure", "so that" or "in order to"); one call per source. Claude sees only those passages (names hidden), the current map's steps (stable key, label) and phase names; never an interview. Each proposal carries `kind`, `text`, a `scope` (with `element_stable_key` or `phase_name`), optionally `metric`, `comparator`, `target_value` and `unit`, the cited passage refs and a verbatim `quote`.
+- Checks (G16), in order: G3 the cited passages were sent with that source; G4 the quote is found in them; G5 every number in the text, and the target value, is found in the quote, and every role named is found in the passages; a target is all four fields or none, its unit fits the metric, the text is one line of up to 200 characters. A proposal failing a check is **rejected** with that guardrail. A scope naming a step or phase not on the current map covers the process instead.
+- Then `IX_verify` (when the verifier is on in Settings): `not_supported` → rejected `IXV`.
+- Stored as document statements: kept ones `status: "proposed"`, `verification_status: "verified"`; rejected ones `verification_status: "rejected"` with `rejection_guardrail`, listed so Eric sees what was turned down (they can't be confirmed). A rerun replaces earlier document statements that are still proposed; confirmed and dismissed ones are never touched, and a proposal repeating one of them (same source and text) is not added again.
+- Response `202`: `{"job_id", "engagement_id"}`; the job (`intent_extract`) ends with a message such as "Claude proposed 6 intent statements: 4 passed the checks; 2 were turned down and are listed as rejected.". AI usage is shown on the job.
+- Errors: `404`; `409` "Add a policy or charter and wait for it to be read first." when no ready source has anything to read.
+
+### POST /api/versions/{vid}/intent/compare (AI, job; PRD §3.16 design gaps, G16) — P13a-2
+Claude's pass (`IX_compare`) pairing **confirmed** intent statements with the documented process: the statements (text, and quote or owner label) and the passages of the engagement's ready SOPs and manuals, names hidden. Each proposal names one statement, the documented passages, a quote from each side and the conflict in at most 25 words.
+- Checks (G16): `IX1` both quotes are given and the conflict is 1 to 25 words; G3 the statement was sent and is confirmed, and the documented passages were sent; G4 the intent quote is found in the statement's quote (its text for an owner-stated statement) and the documented quote in the cited passages; G5 every number and role in the conflict is found on one of the two sides. Then `IX_verify` (verifier switch): `not_supported` → rejected `IXV`.
+- Stored on the version as proposals (rejected ones too, with the guardrail); a rerun replaces this version's proposals that are still proposed; confirmed and dismissed ones are kept, and a proposal for the same statement and passages is not added again. A proposal counts (D13) only after Eric confirms it.
+- Response `202`: `{"job_id", "version_id"}`; the job (`intent_compare`) ends with a message such as "Claude proposed 1 design gap: it passed the checks." or "… 1 was turned down and is listed as rejected.".
+- Errors: `404` ("That version doesn't exist."); `409` "This version is published and can't be changed. Reopen it as a new draft." · "Confirm at least one intent statement first." · "Add an SOP or manual and wait for it to be read first.".
+
+### GET /api/versions/{vid}/intent/conflicts — P13a-2
+`200`: the version's design-gap proposals, oldest first, every status:
+```json
+{"id": "…", "version_id": "…", "intent_id": "…", "intent_text": "Screening is proportionate to the client's risk tier.",
+ "intent_label": "Quoted from policy_screening.docx §2", "intent_quote": "Screening is proportionate to the client's risk tier.",
+ "segment_ids": ["…"], "source_name": "sop_KYC-01.docx", "anchor": "§3.1", "quote": "Every case is screened in full.",
+ "conflict_text": "The policy screens by risk tier; the SOP screens every case in full.",
+ "verifier_verdict": "supported", "verification_status": "verified", "rejection_guardrail": null,
+ "status": "proposed", "note": "", "created_at": "…"}
+```
+`source_name` and `anchor` are the first documented passage's. Text fields are shown with names hidden (G10). Errors `404`.
+
+### PATCH /api/intent-conflicts/{cid} — P13a-2
+`{"status"?: "confirmed" | "dismissed" | "proposed", "note"?: "…"}`. A proposal the checks turned down can't be confirmed (`409` "This design gap failed the checks, so it can't be used."). `note` one line, up to 300 characters ("A note is one line of up to 300 characters."). Response `200`: the conflict. Audit row "Confirmed design gap" · "Dismissed design gap" · "Reopened design gap" · "Noted design gap". Errors `404` ("That design gap doesn't exist."), `409`, `422`.
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness
@@ -638,7 +668,7 @@ Response `200`:
              "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis) · `interview_guide` (P4c) · `event_log_import` and `event_log_alignment` (P10b) · `intent_extract` (P13a; `target_id` the engagement) and `intent_compare` (P13a; `target_id` the version), each with `usage`. `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
 - `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.

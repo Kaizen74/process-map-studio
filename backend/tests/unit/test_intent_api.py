@@ -66,9 +66,9 @@ class Engagement:
             return repo.add(session, row).id
 
 
-@pytest.fixture()
-def engagement(settings_config: AppConfig) -> Iterator[Engagement]:
-    for client in make_client(settings_config):
+def build(config: AppConfig) -> Iterator[Engagement]:
+    """The drafted Appendix A engagement with the A.12 charter read (and never drafted from)."""
+    for client in make_client(config):
         built = fixture_engagement.build(with_key(client))
         data = (REALITY / CHARTER).read_bytes()
         uploaded = client.post(
@@ -81,6 +81,11 @@ def engagement(settings_config: AppConfig) -> Iterator[Engagement]:
         assert job["status"] == "done", job
         graph = client.get(f"/api/versions/{job['target_id']}/graph").json()
         yield Engagement(client, built.engagement_id, built.roles, uploaded.json()["id"], graph)
+
+
+@pytest.fixture()
+def engagement(settings_config: AppConfig) -> Iterator[Engagement]:
+    yield from build(settings_config)
 
 
 def audit_actions(engagement: Engagement) -> list[str]:

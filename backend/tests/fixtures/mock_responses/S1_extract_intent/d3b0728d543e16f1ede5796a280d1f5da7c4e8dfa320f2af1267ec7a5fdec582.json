@@ -1,0 +1,94 @@
+{
+  "statements": [
+    {
+      "kind": "target",
+      "text": "Preliminary load plans are ready by T-120.",
+      "scope": "step",
+      "step_key": "draft-load-plan",
+      "phase_name": "",
+      "metric": "lead_time_min",
+      "comparator": "at_least",
+      "target_value": 120,
+      "unit": "min",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "Preliminary load plans are ready by T-120 so that widebody configurations can be checked."
+    },
+    {
+      "kind": "control_objective",
+      "text": "Every load plan is approved before release to Ramp.",
+      "scope": "step",
+      "step_key": "approve-load-plan",
+      "phase_name": "",
+      "metric": "",
+      "comparator": "",
+      "target_value": null,
+      "unit": "",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "Every load plan is approved before release to Ramp."
+    },
+    {
+      "kind": "target",
+      "text": "The loading report reaches Load Control within 10 minutes of loading completion.",
+      "scope": "step",
+      "step_key": "load-and-return-lir",
+      "phase_name": "",
+      "metric": "wait_min",
+      "comparator": "at_most",
+      "target_value": 10,
+      "unit": "min",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The loading report reaches Load Control within 10 minutes of loading completion."
+    },
+    {
+      "kind": "promise",
+      "text": "Load sheets are issued without delaying the departure slot.",
+      "scope": "process",
+      "step_key": "",
+      "phase_name": "",
+      "metric": "",
+      "comparator": "",
+      "target_value": null,
+      "unit": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Load sheets are issued without delaying the departure slot."
+    },
+    {
+      "kind": "promise",
+      "text": "Load sheets are issued at least 20 minutes before departure.",
+      "scope": "process",
+      "step_key": "",
+      "phase_name": "",
+      "metric": "",
+      "comparator": "",
+      "target_value": null,
+      "unit": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Load sheets are issued at least 20 minutes before departure."
+    },
+    {
+      "kind": "target",
+      "text": "The loading report reaches Load Control within 5 minutes of loading completion.",
+      "scope": "step",
+      "step_key": "load-and-return-lir",
+      "phase_name": "",
+      "metric": "wait_min",
+      "comparator": "at_most",
+      "target_value": 5,
+      "unit": "min",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The loading report reaches Load Control within 10 minutes of loading completion."
+    }
+  ]
+}

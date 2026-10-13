@@ -83,7 +83,7 @@ def _map_places(session: Session, engagement_id: str) -> tuple[dict[str, str], s
     return steps, {p.name for p in elements_repo.phases(session, version_id)}
 
 
-def _views(session: Session, engagement_id: str, rows: list[IntentRecord]) -> list[IntentView]:
+def views(session: Session, engagement_id: str, rows: list[IntentRecord]) -> list[IntentView]:
     terms = redaction.name_replacements(session, engagement_id)
     steps, _ = _map_places(session, engagement_id)
     roles = {r.id: r.name for r in engagements_repo.list_roles(session, engagement_id)}
@@ -200,7 +200,7 @@ def list_intent(sessions: Sessions, engagement_id: str) -> Result[list[IntentVie
     with session_scope(sessions) as session:
         if engagements_repo.get(session, engagement_id) is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
-        return Ok(_views(session, engagement_id, repo.for_engagement(session, engagement_id)))
+        return Ok(views(session, engagement_id, repo.for_engagement(session, engagement_id)))
 
 
 def add_owner_stated(
@@ -222,7 +222,7 @@ def add_owner_stated(
             "verification_status": VerificationStatus.VERIFIED.value, "status": "confirmed",
             "segment_ids": [], "quote": "", "note": "",
         })  # fmt: skip
-        view = _views(session, engagement_id, [row])[0]
+        view = views(session, engagement_id, [row])[0]
         audit.record(session, actor=actor_name(config), action="Added intent statement",
                      target_type="intent", target_id=row.id, engagement_id=engagement_id,
                      after={"kind": view.kind, "text": view.text, "label": view.label})  # fmt: skip
@@ -265,7 +265,7 @@ def update_intent(
             if patch.status != row.status:
                 changes["status"] = patch.status
         if not changes:
-            return Ok(_views(session, row.engagement_id, [row])[0])
+            return Ok(views(session, row.engagement_id, [row])[0])
         before = {k: getattr(row, k) for k in changes}
         updated = repo.update(session, intent_id, changes)
         action = (STATUS_ACTIONS[patch.status] if "status" in changes and patch.status
@@ -273,7 +273,7 @@ def update_intent(
         audit.record(session, actor=actor_name(config), action=action, target_type="intent",
                      target_id=intent_id, engagement_id=row.engagement_id, before=before,
                      after=changes)  # fmt: skip
-        return Ok(_views(session, row.engagement_id, [updated])[0])
+        return Ok(views(session, row.engagement_id, [updated])[0])
 
 
 def delete_intent(config: AppConfig, sessions: Sessions, intent_id: str) -> Result[None]:
