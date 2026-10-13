@@ -146,3 +146,46 @@ class IntentJobStarted(BaseModel):
     job_id: str
     engagement_id: str | None = None
     version_id: str | None = None
+
+
+class IntentEvaluationView(BaseModel):
+    """A confirmed statement's evaluation on the done view (§3.16 "Evaluation")."""
+
+    intent_id: str
+    result: str  # met · not_met · unknown
+    actual: float | None
+    label: str | None  # B.50
+    met_share: float | None
+    cases: int | None
+    documented: float | None
+    documented_meets: bool | None
+
+
+class DeltaView(BaseModel):
+    value: float | None
+    unit: str
+    label: str  # B.50
+    text: str
+
+
+class DiscrepancyFound(BaseModel):
+    """One detected discrepancy of one type at one location (§3.17.2), before codes and verdicts."""
+
+    type: str  # B.48
+    keys: list[str]
+    element_ids: list[str]
+    delta: DeltaView
+    incidence: float | None
+    cases: int | None
+    control: bool
+    shown: bool
+    intent_ids: list[str]
+    detail: dict[str, str]
+
+
+class Detection(BaseModel):
+    """Everything the engine found on a version, with the rule set that found it (G15)."""
+
+    rules_version: str
+    discrepancies: list[DiscrepancyFound]
+    intents: list[IntentEvaluationView]

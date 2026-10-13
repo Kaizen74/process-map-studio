@@ -9,12 +9,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import lenses, redaction, versions
 from app.db import session_scope
+from app.domain.graph import Graph
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import ExceptionEdgeInput, ExceptionReport, ExceptionStepInput, View
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import versions as versions_repo
-from app.services import exceptions
+from app.services import exceptions, views
 from app.services import interview_templates as templates
 
 Sessions = sessionmaker[Session]
@@ -30,9 +31,25 @@ def frequency_question() -> str:
     return bank.value.question(exceptions.FREQUENCY_QUESTION).wording
 
 
-def report_for(session: Session, version_id: str, view: View) -> ExceptionReport | None:
+def _in_view(every: Graph, view: View) -> Graph:
+    """The view's steps and lines, filtered exactly as `build_graph(view=…)` filters them."""
+    elements = [e for e in every.elements if views.in_view(e.view_membership, view)]
+    shown = {e.id for e in elements}
+    edges = [e for e in every.edges if views.in_view(e.view_membership, view)
+             and e.from_ in shown and e.to in shown]  # fmt: skip
+    return every.model_copy(update={"elements": elements, "edges": edges})
+
+
+def report_for(
+    session: Session, version_id: str, view: View, every: Graph | None = None
+) -> ExceptionReport | None:
+    """`every`: the version's graph with every line, when the caller has already built it."""
     version = versions_repo.get(session, version_id)
-    graph = versions.build_graph(session, version_id, every_line=True, view=view)
+    graph = (
+        _in_view(every, view)
+        if every is not None
+        else versions.build_graph(session, version_id, every_line=True, view=view)
+    )
     if version is None or graph is None:
         return None
     terms = redaction.name_replacements(session, version.engagement_id)

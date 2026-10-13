@@ -496,3 +496,13 @@ def coverage_counts(
         hit, total = counts[source_id]
         counts[source_id] = (hit + (segment_id in cited), total + 1)
     return counts
+
+
+def question_ids(session: Session, source_id: str) -> set[str]:
+    """The guide questions (Appendix F IDs) the source's passages answer."""
+    rows = session.scalars(
+        select(SourceSegment.question_id).where(
+            SourceSegment.source_id == source_id, SourceSegment.question_id.is_not(None)
+        )
+    )
+    return {q for q in rows if q}

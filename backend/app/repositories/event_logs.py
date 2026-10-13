@@ -232,3 +232,16 @@ def step_figures(session: Session, log_id: str, activities: set[str]) -> dict[st
     repeated = select(Event.case_id).where(*where).group_by(Event.case_id).having(func.count() > 1)
     rework = session.scalar(select(func.count()).select_from(repeated.subquery()))
     return {"cases": int(cases), "events": int(events), "rework_cases": int(rework or 0)}
+
+
+def activity_spans(session: Session, log_id: str, activity: str) -> list[tuple[str, str]]:
+    """(start, end) of each case's first event of the activity, for cases with an end time."""
+    rows = session.execute(
+        select(Event.case_id, Event.ts_start, Event.ts_end)
+        .where(Event.log_id == log_id, Event.activity == activity, Event.ts_end.is_not(None))
+        .order_by(Event.case_id, Event.ts_start)
+    )
+    first: dict[str, tuple[str, str]] = {}
+    for case_id, start, end in rows:
+        first.setdefault(case_id, (start, end or start))
+    return list(first.values())

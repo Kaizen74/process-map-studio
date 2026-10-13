@@ -220,19 +220,25 @@ def _log_facts(session: Session, log: EventLogView, keys: dict[str, str],
     )  # fmt: skip
 
 
-def system_findings(session: Session, version: VersionView, graph: Graph,
-                    ai_dead: set[str]) -> SystemFindings:  # fmt: skip
-    """The version's system-record findings from Eric's confirmed alignment (§3.13.6)."""
+def log_facts_for(session: Session, version: VersionView) -> list[LogFacts]:
+    """Each imported log's confirmed decisions and stored figures, for the version's steps (the
+    system findings, §3.13.6, and the discrepancy engine, §3.17, read the same facts)."""
     elements = map_repo.elements(session, version.id)
     keys = {e.id: e.stable_key for e in elements}
-    steps = [FindingStep(keys[g.id], g.id, g.label, g.kind, g.source_state, _times(g))
-             for g in graph.elements if g.kind not in NOT_STEPS and g.id in keys]  # fmt: skip
     if version.state == VersionState.DRAFT.value:
         items = _items(session, version, elements, map_repo.edges(session, version.id))
     else:
         frozen = versions_repo.system_traces(session, version.id) or []
         items = [SystemTraceItem.model_validate(i) for i in frozen]
-    logs = [facts for log in logs_repo.list_for(session, version.engagement_id)
+    return [facts for log in logs_repo.list_for(session, version.engagement_id)
             if log.status == "imported"
             and (facts := _log_facts(session, log, keys, items)) is not None]  # fmt: skip
-    return finding_rules.findings(steps, logs, ai_dead)
+
+
+def system_findings(session: Session, version: VersionView, graph: Graph,
+                    ai_dead: set[str]) -> SystemFindings:  # fmt: skip
+    """The version's system-record findings from Eric's confirmed alignment (§3.13.6)."""
+    keys = {e.id: e.stable_key for e in map_repo.elements(session, version.id)}
+    steps = [FindingStep(keys[g.id], g.id, g.label, g.kind, g.source_state, _times(g))
+             for g in graph.elements if g.kind not in NOT_STEPS and g.id in keys]  # fmt: skip
+    return finding_rules.findings(steps, log_facts_for(session, version), ai_dead)

@@ -194,7 +194,9 @@ def export_input(
     stories, capabilities, glossary, know_how = sensemaking_content(
         session, version_id, version.engagement_id, graph, names
     )
-    exceptions = exceptions_action.report_for(session, version_id, "done") if view_graphs else None
+    exceptions = (
+        exceptions_action.report_for(session, version_id, "done", every) if view_graphs else None
+    )
     return ExportInput(
         exceptions=exceptions,
         stories=stories,
