@@ -20,6 +20,7 @@ from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.actions.readiness import get_readiness
 from app.config import AppConfig
 from app.db import session_scope
+from app.domain.enums import SourceKind
 from app.domain.models import (
     DraftStarted,
     DraftState,
@@ -301,10 +302,12 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         )
         if not refreshing:
             jobs_repo.update(session, job_id, target_id=version.id)
+        # A policy or charter states what the organisation intends, not how the process runs: it
+        # feeds intent statements only (§3.16, constraint 25), never the steps (P13a).
         ready = [
             s
             for s in sources_repo.list_for_engagement(session, engagement_id)
-            if s.text_status == "ready"
+            if s.text_status == "ready" and s.kind != SourceKind.POLICY_OR_CHARTER.value
         ]
         map_repo.add_version_sources(session, version.id, [s.id for s in ready])
 

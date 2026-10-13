@@ -31,6 +31,7 @@ def test_get_settings_defaults(client: TestClient) -> None:
         "system_records_enabled": False,  # R7: optional module, off by default (decision A)
         "gap_analysis_enabled": True,  # R10: on by default, as before (decision A)
         "value_enabled": False,  # R10: off by default (decision A)
+        "reality_views_enabled": False,  # P13a: off by default (decision A)
         "currency": "SGD",  # R10: Settings → Regional
         "default_timezone": "Asia/Singapore",
         "key_set": False,

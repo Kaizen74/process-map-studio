@@ -415,3 +415,15 @@ Compared with `git diff PRD_ProcessMapStudio.md` (v1.10 → v1.11, +228 / −35 
 | 7 | Intent layer, discrepancy engine, snapshot, Reality screen and pack, RQ1–RQ10, A.12, G11, migration 0015 | P13a–P13d | New services, actions, repositories, routers, prompts (under the instruction lock), `features/reality`, `components/reality`, tests | New work, after P10b (R10–R12) and P12 close |
 | 8 | P10b scope unchanged (R10–R12 remain) | P10b | — | Continue as planned |
 
+## P13a decisions (2026-10-13)
+| # | Decision | Why | Where |
+|---|---|---|---|
+| 1 | Eric approved starting P13a now, before the P12 live run (which still waits for his key). | His instruction "Approved, proceed with P13a". The live run doesn't depend on P13. | PROJECT_STATE.md resume point |
+| 2 | P13a is built in four increments: P13a-1 foundation (migration 0015, enums, the Reality views switch, intent statements, the A.12 charter); P13a-2 the intent AI steps (S1 intent, IX compare, IX verify, mocked and locked); P13a-3 the discrepancy engine, impact, verdicts and X codes; P13a-4 close. | About 30 minutes each, contract first. | PRD §6.3 P13a row |
+| 3 | Sources of the new kind `policy_or_charter` are read like any document but never drafted from: draft and refresh leave them out, so they never add evidence, a source state, readiness or signal strength. A file name containing "charter" or "policy" is guessed as this kind. | Constraint 25: a charter says what is intended, not how the process runs; drafting from it would present intent as practice. | `actions/draft.py`, `actions/sources.py`, API_CONTRACT.md → Intent |
+| 4 | In the alignment matrix, `policy_or_charter` sits in the documents column. | Every source kind must sit in exactly one column (existing test); since a charter never carries evidence it never changes a cell. | `services/alignment.py` |
+| 5 | The `reality_views_enabled` switch (off by default, decision A) is in Settings' API now; its switch on the Optional modules card arrives with the Reality screen in P13b. The intent endpoints work whatever it says, like the other modules' endpoints. | Nothing to show yet; the switch would hide an empty screen. | `config.py`, `actions/settings.py`, `ModulesCard.tsx` |
+| 6 | Intent evaluation (met · not met · unknown) is built in P13a-3 with the discrepancy engine, not in P13a-1. | Both read the same facts (system metrics, stated times, the map); building them together keeps one set of rules. | PROJECT_STATE.md |
+| 7 | Guardrail enum B.20 gains `IX1` (an intent conflict must quote both sides) and `IXV` (the intent verifier turned it down). | Needed for the rejected-claims register of P13a-2 (trap RT8). | `domain/enums.py` |
+| 8 | PRD §4: the intent object field is `element_stable_key` (one step), not `element_stable_keys`. | A statement with step scope names one step (§3.5 `intent_statements`); a typo in §4. | PRD §4, API_CONTRACT.md |
+

@@ -86,6 +86,7 @@ def _view(values: Mapping[str, str]) -> SettingsView:
         system_records_enabled=_flag(values["SYSTEM_RECORDS_ENABLED"]),
         gap_analysis_enabled=_flag(values["GAP_ANALYSIS_ENABLED"]),
         value_enabled=_flag(values["VALUE_ENABLED"]),
+        reality_views_enabled=_flag(values["REALITY_VIEWS_ENABLED"]),
         currency=values["CURRENCY"].strip().upper() or SETTING_DEFAULTS["CURRENCY"],
         default_timezone=values["DEFAULT_TIMEZONE"].strip() or SETTING_DEFAULTS["DEFAULT_TIMEZONE"],
         key_set=bool(key),
@@ -305,6 +306,7 @@ MODULE_SETTINGS: Mapping[str, str] = {
     "system_records_enabled": "SYSTEM_RECORDS_ENABLED",
     "gap_analysis_enabled": "GAP_ANALYSIS_ENABLED",
     "value_enabled": "VALUE_ENABLED",
+    "reality_views_enabled": "REALITY_VIEWS_ENABLED",
 }
 BAD_CURRENCY = "Enter a three-letter currency code, for example SGD."
 BAD_ZONE = "Choose a time zone from the list, for example Asia/Singapore."

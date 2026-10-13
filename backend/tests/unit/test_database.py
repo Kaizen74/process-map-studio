@@ -28,6 +28,8 @@ PRD_TABLES = {
     # PRD v1.11 §3.13-3.14 (migration 0012), filled from phase P10b.
     "event_logs", "events", "case_key_maps", "activity_alignment", "mining_metrics",
     "role_costs", "value_assumptions",
+    # PRD v1.12 §3.16-3.18 (migration 0015), filled from phase P13a.
+    "intent_statements", "intent_conflicts", "discrepancy_items", "reality_snapshots",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -55,7 +57,7 @@ def test_migration_creates_every_prd_table(migrated: Path) -> None:
 
 # PRD v1.12 (2026-10-12): tables planned for P13a (migration 0015). The column test checks they are
 # still in the PRD and not yet in the database; P13a's migration removes them from this list.
-PENDING_TABLES = {"intent_statements", "intent_conflicts", "discrepancy_items", "reality_snapshots"}
+PENDING_TABLES: set[str] = set()  # the four Reality tables arrived with migration 0015 (P13a)
 
 
 def test_prd_columns_are_all_present(migrated: Path) -> None:
@@ -377,8 +379,7 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 # intent guardrails change what the app does, so they wait for P13a; the vocabularies B.44-B.50
 # exist already (unused).
 PENDING_VALUES: dict[str, set[str]] = {
-    "B.1": {"group_notes", "policy_or_charter"},  # working_spreadsheet, email_thread: R11
-    "B.20": {"IX1", "IXV"},
+    "B.1": {"group_notes"},  # working_spreadsheet, email_thread: R11; policy_or_charter: P13a
     # B.22 hidden_work … measured_rework were added with P10b R6 (2026-10-08).
 }  # B.34 system_trace was added with P10b R5b (2026-10-07)
 

@@ -12,15 +12,17 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from app.domain.enums import ElementKind, Provenance, ReviewStatus, Stance
+from app.domain.enums import ElementKind, Provenance, ReviewStatus, SourceKind, Stance
 from app.domain.graph import AccountSummary, AlignmentRow, Graph, GraphEvidence
 from app.services.calibration import ARTEFACTS, DOCUMENTS, INTERVIEW, JOB_DESCRIPTIONS
 
 NOT_APPLICABLE = "not_applicable"
 ACCOUNT_UNCLEAR = "account_unclear"
 STEPS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+# A policy or charter (P13a) is never drafted from, so it never adds a stance; it sits with the
+# documents so every kind has exactly one column.
 COLUMNS: dict[str, set[str]] = {
-    "sop": DOCUMENTS,
+    "sop": DOCUMENTS | {SourceKind.POLICY_OR_CHARTER.value},
     "interview": INTERVIEW,
     "jd": JOB_DESCRIPTIONS,
     "artefact": ARTEFACTS,

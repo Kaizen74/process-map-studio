@@ -26,6 +26,7 @@ class SettingsView(BaseModel):
     system_records_enabled: bool
     gap_analysis_enabled: bool
     value_enabled: bool
+    reality_views_enabled: bool
     currency: str
     default_timezone: str
     key_set: bool
@@ -1044,6 +1045,7 @@ class ModuleSettings(BaseModel):
     system_records_enabled: bool | None = None
     gap_analysis_enabled: bool | None = None
     value_enabled: bool | None = None
+    reality_views_enabled: bool | None = None
 
 
 class RegionalSettings(BaseModel):

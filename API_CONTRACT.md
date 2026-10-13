@@ -38,10 +38,11 @@ Settings are stored in the private `.env` file in the app folder (never in the d
 {"owner_name": "Owner", "model": "claude-opus-5-5", "effort": "high",
  "verifier_enabled": true, "web_research_enabled": false,
  "system_records_enabled": false, "gap_analysis_enabled": true, "value_enabled": false,
+ "reality_views_enabled": false,
  "currency": "SGD", "default_timezone": "Asia/Singapore",
  "key_set": true, "key_last4": "x9Q2"}
 ```
-`key_last4` is `""` when no key is set. Optional modules (decision A; a module switched off hides its screens and never deletes data): `system_records_enabled` (R7, 2026-10-08), the System records module, **off** by default (`SYSTEM_RECORDS_ENABLED`); `gap_analysis_enabled` (R10, 2026-10-13), the Gap analysis screen, **on** by default as before (`GAP_ANALYSIS_ENABLED`); `value_enabled` (R10), the value calculator with step dispositions (the panel's "Disposition and value" section and the Registers' "Disposition and value" list), **off** by default (`VALUE_ENABLED`). Regional (R10): `currency`, an ISO 4217 code for the value calculator (`CURRENCY`, default `SGD`); `default_timezone`, the time zone a new system log starts with (`DEFAULT_TIMEZONE`, default `Asia/Singapore`).
+`key_last4` is `""` when no key is set. Optional modules (decision A; a module switched off hides its screens and never deletes data): `system_records_enabled` (R7, 2026-10-08), the System records module, **off** by default (`SYSTEM_RECORDS_ENABLED`); `gap_analysis_enabled` (R10, 2026-10-13), the Gap analysis screen, **on** by default as before (`GAP_ANALYSIS_ENABLED`); `value_enabled` (R10), the value calculator with step dispositions (the panel's "Disposition and value" section and the Registers' "Disposition and value" list), **off** by default (`VALUE_ENABLED`); `reality_views_enabled` (P13a, 2026-10-13), the Reality views (P13), **off** by default (`REALITY_VIEWS_ENABLED`; its Settings switch arrives with the Reality screen in P13b). Regional (R10): `currency`, an ISO 4217 code for the value calculator (`CURRENCY`, default `SGD`); `default_timezone`, the time zone a new system log starts with (`DEFAULT_TIMEZONE`, default `Asia/Singapore`).
 
 ### GET /api/settings
 Request: none. Response `200`: the settings object.
@@ -95,7 +96,7 @@ Used by: Settings screen, "Model" card.
 Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
 
 ### PUT /api/settings/modules (R7, 2026-10-08; PRD §5.4 Settings "Optional modules", decision A)
-Switches optional modules on or off. Request any of `{"system_records_enabled": true, "gap_analysis_enabled": true, "value_enabled": true}` (a field left out keeps its value; R10 added the last two, 2026-10-13). Each change is written to the audit log. Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
+Switches optional modules on or off. Request any of `{"system_records_enabled": true, "gap_analysis_enabled": true, "value_enabled": true, "reality_views_enabled": true}` (a field left out keeps its value; R10 added the middle two, P13a the last, 2026-10-13). Each change is written to the audit log. Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
 
 ### PUT /api/settings/regional (R10, 2026-10-13; PRD §3.4 Settings item 9, §5.4 Settings "Regional")
 Request any of `{"currency": "SGD", "default_timezone": "Asia/Singapore"}` (a field left out keeps its value). `currency`: three letters A–Z after trimming, upper-cased (an ISO 4217 code; the app does not convert amounts, it only labels them). `default_timezone`: an IANA time zone the computer knows (Python `zoneinfo.available_timezones()`). Response `200`: the settings object. Errors: `422 VALIDATION` with the field named ("Enter a three-letter currency code, for example SGD." · "Choose a time zone from the list, for example Asia/Singapore."); `500 IO`. Used by: Settings screen, "Regional" card. The System records upload form starts with `default_timezone`; a log's own time zone can still be changed.
@@ -555,6 +556,39 @@ Default `done`. `200`:
 - **Scenarios**: each step's disposition (Eric's choice, else the suggestion; `chosen` says which) × that disposition's reduction gives the hours and cost it could release; per disposition, summed. Always labelled potential.
 - Steps of the view only (start, end and rejected steps left out). Errors `404`, `422` (`view`).
 - Used by: the step panel's "Disposition and value" section (R10b) and the Registers' "Disposition and value" list (R10c; As done / As documented switch), only while `value_enabled`.
+
+## Intent (PRD §3.16, §4 Intent and Reality, constraint 25, G16) — phase P13a (2026-10-13)
+
+What the organisation intends: quoted from a `policy_or_charter` source (proposed by S1 intent, P13a-2) or stated by an owner and typed in by Eric. Intent is evidence: it is never drawn from interviews, never inferred from what the process does, and never invented. Nothing proposed counts until Eric confirms it. The Reality views module switch (`reality_views_enabled`, `REALITY_VIEWS_ENABLED`, off by default, decision A) hides the screens; these endpoints work whatever it says, like the other modules' endpoints.
+
+Sources of kind `policy_or_charter` (B.1; guessed from a file name containing "charter" or "policy") are read like any document but are **never drafted from**: the draft and refresh leave them out (they state intent, not how the process runs), so they don't count for source state, readiness or signal strength.
+
+### Intent statement object
+```json
+{"id": "…", "engagement_id": "…", "scope": "step", "element_stable_key": "…", "element_label": "Approve load plan",
+ "phase_name": null, "kind": "control_objective", "origin": "document",
+ "text": "Every load plan is approved before release to Ramp.",
+ "metric": null, "comparator": null, "target_value": null, "unit": null,
+ "source_id": "…", "source_name": "charter_load_control.docx", "anchor": "§2", "quote": "Every load plan is approved before release to Ramp.",
+ "owner_role_id": null, "owner_role_name": "", "stated_on": null,
+ "label": "Quoted from charter_load_control.docx §2",
+ "verification_status": "verified", "rejection_guardrail": null, "status": "confirmed", "note": "", "created_at": "…"}
+```
+- `scope` `process` · `phase` (with `phase_name`) · `step` (with `element_stable_key`; `element_label` from the current map, `""` when the step isn't on it any more). `kind` B.44; `origin` B.45; `metric` B.49 or `null`, then `comparator` `at_most` · `at_least` · `equals`, `target_value` (a number) and `unit` `min` · `pct` · `count` (all four set or all `null`).
+- `label`: "Quoted from <file> <anchor>" for a document, "Target set by <role>, <d Mon yyyy>" for an owner-stated statement (never presented as a quote).
+- `text`, `quote`, `label` and `source_name` are shown with names hidden (G10). `verification_status` B.18 (owner-stated: `verified`); `rejection_guardrail` B.20 for a proposal the checks turned down (it can't be confirmed). `status` `proposed` · `confirmed` · `dismissed` (owner-stated statements start `confirmed`: Eric typed them).
+
+### GET /api/engagements/{id}/intent
+`200`: the engagement's statements, oldest first, every status. Errors `404`.
+
+### POST /api/engagements/{id}/intent (owner-stated)
+`{"scope": "step", "element_stable_key": "…", "phase_name": null, "kind": "policy_rule", "text": "Weight deviations outside tolerance are decided by the Load control lead.", "metric": null, "comparator": null, "target_value": null, "unit": null, "owner_role_id": "…", "stated_on": "2026-10-01"}`. Rules (`422` naming the field): `kind` B.44 ("Choose promise, target, control objective or policy rule."); `scope` ("Choose process, phase or step."); a step scope needs a step of the current map ("Choose a step of the current map."), a phase scope a phase of it ("Choose a phase of the current map."); `text` 1 to 200 characters on one line ("Describe the intent in one line of up to 200 characters.") with no name on the hidden-names list ("Use role names, not people's names."); `metric` B.49; with a metric, `comparator`, `target_value` (0 or more) and `unit` are all required and the unit fits the metric (`*_min` → `min`, `*_pct` → `pct`) ("Give the comparison, the target value and its unit."); without one, all three are left out ("A target value needs a metric."); `owner_role_id` a role of this engagement ("Choose the owner's role."); `stated_on` a date `YYYY-MM-DD`, not in the future ("Give the date the target was set, for example 2026-10-01."). Response `201`: the statement (`origin: "owner_stated"`, `status: "confirmed"`, `verification_status: "verified"`). Audit row "Added intent statement".
+
+### PATCH /api/intent/{iid}
+`{"status": "confirmed" | "dismissed" | "proposed", "note": "…", "edits": {"text"?, "scope"?, "element_stable_key"?, "phase_name"?, "kind"?, "metric"?, "comparator"?, "target_value"?, "unit"?, "owner_role_id"?, "stated_on"?}}` (each part optional). Edits follow the POST rules; for a document statement a target value must appear in its quote ("The target value must be in the quoted text.", G5) and the owner and date can't be set. A statement turned down by the checks can't be confirmed (`409` "This statement failed the checks, so it can't be used. Add it yourself as an owner-stated target if it holds."). `note` one line, up to 300 characters. Response `200`: the statement. Audit row "Confirmed intent statement" · "Dismissed intent statement" · "Edited intent statement" (before and after). Errors `404` ("That intent statement doesn't exist."), `409`, `422`.
+
+### DELETE /api/intent/{iid}
+`204` for an owner-stated statement. A statement quoted from a document is dismissed instead, so it stays on record (`409` "Dismiss a statement quoted from a document instead; it stays on record."). Audit row "Deleted intent statement". Errors `404`.
 
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 

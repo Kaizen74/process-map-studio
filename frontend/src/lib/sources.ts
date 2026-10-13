@@ -9,6 +9,7 @@ export const KIND_OPTIONS = [
   { value: "executed_artefact", label: "Executed artefact" },
   { value: "working_spreadsheet", label: "Working spreadsheet" },
   { value: "email_thread", label: "Email thread" },
+  { value: "policy_or_charter", label: "Policy or charter" },
   { value: "other", label: "Other document" },
 ] as const;
 

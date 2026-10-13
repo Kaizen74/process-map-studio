@@ -6,7 +6,8 @@ import { useToast } from "../../components/shell";
 import { useSaveModules } from "../../hooks/useSettings";
 import { messageOf } from "../../lib/errors";
 
-type ModuleKey = keyof Required<ModuleSwitches>;
+// Reality views (P13) gets its switch here once its screen exists (P13b); the setting is stored now.
+type ModuleKey = Exclude<keyof Required<ModuleSwitches>, "reality_views_enabled">;
 
 const MODULES: readonly { key: ModuleKey; label: string; help: string }[] = [
   {

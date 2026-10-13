@@ -69,6 +69,8 @@ def guess_kind(filename: str) -> SourceKind:
         return SourceKind.WORKING_SPREADSHEET
     if name.endswith(".eml"):
         return SourceKind.EMAIL_THREAD
+    if "charter" in name or "policy" in name:  # intent sources (§3.16, P13a)
+        return SourceKind.POLICY_OR_CHARTER
     if name.endswith((".vtt", ".srt")) or "transcript" in name or "interview" in name:
         return SourceKind.INTERVIEW_TRANSCRIPT
     if (

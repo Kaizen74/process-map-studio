@@ -23,6 +23,7 @@ export interface Settings {
   gap_analysis_enabled: boolean;
   /** Optional module (R10, decision A): the value calculator and step dispositions; off by default. */
   value_enabled: boolean;
+  reality_views_enabled: boolean;
   /** Settings → Regional (R10): an ISO 4217 code for the value calculator. */
   currency: string;
   /** Settings → Regional (R10): the time zone a new system log starts with. */

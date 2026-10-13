@@ -1022,7 +1022,7 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | | GET `/engagements/{id}/themes`; PATCH `/themes/{tid}` | `{status, theme?, note?}` | theme |
 | | PUT `/elements/{eid}/work-type` | `{work_type, constraint_type, confirm: true}` | element + audit row |
 | | PATCH `/engagements/{id}` | `conventions` | engagement (codebook tier 2 settings) |
-| Intent and Reality (P13, module "Reality views") | GET · POST `/engagements/{id}/intent`; PATCH · DELETE `/intent/{iid}` | owner-stated: `{scope, element_stable_keys?, phase_name?, kind, text, metric?, comparator?, target_value?, unit?, owner_role_id, stated_on}`; review: `{status, edits?}` | intent statements with origin, quote (redacted) or owner and date, verification and status |
+| Intent and Reality (P13, module "Reality views") | GET · POST `/engagements/{id}/intent`; PATCH · DELETE `/intent/{iid}` | owner-stated: `{scope, element_stable_key?, phase_name?, kind, text, metric?, comparator?, target_value?, unit?, owner_role_id, stated_on}`; review: `{status, edits?}` | intent statements with origin, quote (redacted) or owner and date, verification and status |
 | | **AI** POST `/engagements/{id}/intent/extract` | — | job: S1 intent over `policy_or_charter` sources (and SOP purpose clauses) → proposals |
 | | **AI** POST `/versions/{vid}/intent/compare` | — | job: `IX_compare` + `IX_verify` → design-gap proposals quoting both sides |
 | | PATCH `/intent-conflicts/{cid}` | `{status: confirmed\|dismissed, note}` | conflict + audit row |

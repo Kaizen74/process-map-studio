@@ -122,6 +122,7 @@ export const SETTINGS = {
   system_records_enabled: false,
   gap_analysis_enabled: true,
   value_enabled: false,
+  reality_views_enabled: false,
   currency: "SGD",
   default_timezone: "Asia/Singapore",
   key_set: false,

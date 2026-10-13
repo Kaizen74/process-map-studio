@@ -634,3 +634,76 @@ class ValueAssumption(Row):
     disposition: Mapped[str] = mapped_column(String(16))  # B.41
     reduction_pct: Mapped[float] = mapped_column(Float)
     note: Mapped[str] = mapped_column(Text, default="")
+
+
+# --- Reality views (PRD §3.16-3.18; P13a, migration 0015) ------------------------------------
+
+
+class IntentStatement(Row):
+    """What the organisation intends (§3.16): quoted from a policy or charter, or owner-stated."""
+
+    __tablename__ = "intent_statements"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    scope: Mapped[str] = mapped_column(String(16), default="process")  # process/phase/step
+    element_stable_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phase_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kind: Mapped[str] = mapped_column(String(24))  # B.44
+    origin: Mapped[str] = mapped_column(String(16))  # B.45
+    text: Mapped[str] = mapped_column(Text)
+    metric: Mapped[str | None] = mapped_column(String(24), nullable=True)  # B.49
+    comparator: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    target_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    source_id: Mapped[str | None] = fk("sources.id", nullable=True)
+    segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    quote: Mapped[str] = mapped_column(Text, default="")
+    owner_role_id: Mapped[str | None] = opt_fk("roles.id")
+    stated_on: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    verification_status: Mapped[str] = mapped_column(String(16), default="pending")  # B.18
+    rejection_guardrail: Mapped[str | None] = mapped_column(String(8), nullable=True)  # B.20
+    status: Mapped[str] = mapped_column(String(16), default="proposed")
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class IntentConflict(Row):
+    """A textual design gap (D13) proposed by `IX_compare`, quoting both sides (§3.16)."""
+
+    __tablename__ = "intent_conflicts"
+    version_id: Mapped[str] = fk("map_versions.id")
+    intent_id: Mapped[str] = fk("intent_statements.id")
+    segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    quote: Mapped[str] = mapped_column(Text, default="")
+    intent_quote: Mapped[str] = mapped_column(Text, default="")
+    conflict_text: Mapped[str] = mapped_column(Text, default="")
+    verifier_verdict: Mapped[str] = mapped_column(String(16), default="not_run")  # B.19
+    verification_status: Mapped[str] = mapped_column(String(16), default="pending")  # B.18
+    status: Mapped[str] = mapped_column(String(16), default="proposed")
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class DiscrepancyItem(Row):
+    """One discrepancy's persistent code (§3.17.6): kept for its location in every version."""
+
+    __tablename__ = "discrepancy_items"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    code: Mapped[str] = mapped_column(String(8))
+    location_key: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text, default="")
+    first_version_id: Mapped[str | None] = opt_fk("map_versions.id")
+    verdict_decided: Mapped[str | None] = mapped_column(String(16), nullable=True)  # B.47
+    verdict_note: Mapped[str] = mapped_column(Text, default="")
+    decision_owner_role_id: Mapped[str | None] = opt_fk("roles.id")
+    retired: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class RealitySnapshot(Row):
+    """A version's Reality views, computed once and frozen on publish (§3.18.1)."""
+
+    __tablename__ = "reality_snapshots"
+    version_id: Mapped[str] = fk("map_versions.id")
+    view: Mapped[str] = mapped_column(String(16), default="done")
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    inputs_hash: Mapped[str] = mapped_column(String(64))
+    rules_version: Mapped[str] = mapped_column(String(16))
+    app_version: Mapped[str] = mapped_column(String(32))
+    frozen: Mapped[bool] = mapped_column(Boolean, default=False)

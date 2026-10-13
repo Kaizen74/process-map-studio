@@ -17,6 +17,7 @@ class SourceKind(StrEnum):
     EXECUTED_ARTEFACT = "executed_artefact"
     WORKING_SPREADSHEET = "working_spreadsheet"
     EMAIL_THREAD = "email_thread"
+    POLICY_OR_CHARTER = "policy_or_charter"  # intent sources (§3.16, P13a): never drafted from
     OTHER = "other"
 
 
@@ -201,6 +202,8 @@ class Guardrail(StrEnum):
     GX2 = "GX2"
     GX3 = "GX3"
     GAV = "GAV"
+    IX1 = "IX1"  # a design gap that doesn't quote both sides (P13a)
+    IXV = "IXV"  # the intent-compare verifier turned it down (P13a)
 
 
 class GapMode(StrEnum):

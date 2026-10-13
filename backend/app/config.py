@@ -37,6 +37,7 @@ SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
         "SYSTEM_RECORDS_ENABLED": "0",  # decision A: optional modules start off (R7)
         "GAP_ANALYSIS_ENABLED": "1",  # decision A: gap analysis starts on, as before (R10)
         "VALUE_ENABLED": "0",  # decision A: value calculator and dispositions start off (R10)
+        "REALITY_VIEWS_ENABLED": "0",  # decision A: Reality views start off (P13a)
         "DEFAULT_TIMEZONE": "Asia/Singapore",  # §3.4: a new system log's time zone (R10)
         "WEB_SEARCH_TOOL_VERSION": "",
         "WEB_SEARCH_MAX_USES_CAP": "20",

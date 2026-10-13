@@ -33,6 +33,7 @@ from app.routers import (
     leadership,
     publish,
     readiness,
+    reality,
     redaction,
     review,
     settings,
@@ -96,6 +97,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(interview.router)
     app.include_router(event_logs.router)
     app.include_router(value.router)
+    app.include_router(reality.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
