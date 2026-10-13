@@ -1,6 +1,7 @@
 import type {
   Alignment,
   AlignmentDecision,
+  CaseKeyMap,
   ColumnMapInput,
   EventLog,
   ImportInput,
@@ -60,3 +61,22 @@ export const getSystemTraces = (versionId: string) => request<SystemTrace[]>(`/v
 
 export const getSystemVariants = (versionId: string) =>
   request<SystemVariants>(`/versions/${enc(versionId)}/system-variants`);
+
+// Case-key maps (R11c): linking two imported logs whose systems give a case different IDs.
+
+export const listCaseKeyMaps = (engagementId: string) =>
+  request<CaseKeyMap[]>(`/engagements/${enc(engagementId)}/case-key-maps`);
+
+export function uploadCaseKeyMap(engagementId: string, link: { file: File; fromLogId: string; toLogId: string }) {
+  const form = new FormData();
+  form.append("file", link.file, link.file.name);
+  form.append("from_log_id", link.fromLogId);
+  form.append("to_log_id", link.toLogId);
+  return request<CaseKeyMap>(`/engagements/${enc(engagementId)}/case-key-maps`, { method: "POST", body: form });
+}
+
+export const deleteCaseKeyMap = (engagementId: string, fromLogId: string, toLogId: string) =>
+  request<null>(
+    `/engagements/${enc(engagementId)}/case-key-maps?from_log_id=${enc(fromLogId)}&to_log_id=${enc(toLogId)}`,
+    { method: "DELETE" },
+  );

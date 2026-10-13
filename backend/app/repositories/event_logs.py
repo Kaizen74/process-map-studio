@@ -84,6 +84,27 @@ def event_count(session: Session, log_id: str) -> int:
     return int(session.scalar(select(func.count()).where(Event.log_id == log_id)) or 0)
 
 
+def case_bounds(session: Session, log_id: str) -> dict[str, tuple[str, str]]:
+    """Per case: its first event start and its last event end (or start), UTC stamps (R11c)."""
+    rows = session.execute(
+        select(
+            Event.case_id,
+            func.min(Event.ts_start),
+            func.max(func.coalesce(Event.ts_end, Event.ts_start)),
+        )
+        .where(Event.log_id == log_id)
+        .group_by(Event.case_id)
+    )
+    return {case: (str(start), str(end)) for case, start, end in rows}
+
+
+def has_end_times(session: Session, log_id: str) -> bool:
+    found = session.scalar(
+        select(Event.id).where(Event.log_id == log_id, Event.ts_end.is_not(None)).limit(1)
+    )
+    return found is not None
+
+
 def events(session: Session, log_id: str) -> list[dict[str, Any]]:
     rows = session.scalars(
         select(Event).where(Event.log_id == log_id).order_by(Event.case_id, Event.ts_start)

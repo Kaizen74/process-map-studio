@@ -263,6 +263,25 @@ export interface SystemVariants {
   too_few_steps: string[];
 }
 
+/**
+ * Two imported logs linked by their case IDs (API_CONTRACT.md → Case-key maps; R11c), with the
+ * end-to-end time across both: `null` under 5 linked cases. Counts only, never a case ID.
+ */
+export interface CaseKeyMap {
+  from_log_id: string;
+  from_log_name: string;
+  to_log_id: string;
+  to_log_name: string;
+  pairs: number;
+  from_found: number;
+  to_found: number;
+  linked_cases: number;
+  end_to_end: Spread | null;
+  basis: TimeBasis;
+  minimum_cases: number;
+  created_at: string;
+}
+
 /** "median 13.4 min · 90th percentile 26.6 min", or that there is nothing to show. */
 export function spreadText(spread: Spread | null): string {
   if (!spread) return "No times recorded";

@@ -234,7 +234,8 @@ def _zone(value: str, default: str) -> Result[str]:
     return Ok(text)
 
 
-def _read(stream: BinaryIO) -> Result[bytes]:
+def read_upload(stream: BinaryIO) -> Result[bytes]:
+    """An uploaded extract, held in memory only (empty or over 100 MB refused)."""
     content = stream.read(MAX_BYTES + 1)
     if not content:
         return _invalid("file", EMPTY)
@@ -269,7 +270,7 @@ def upload_log(
         start, end = checked["window_start"], checked["window_end"]
         if start and end and start > end:
             return _invalid("window_end", BACKWARDS)
-        match _read(stream):
+        match read_upload(stream):
             case Err() as err:
                 return err
             case Ok(value=content):

@@ -1,17 +1,20 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { getJob } from "../api/draft";
 import {
+  deleteCaseKeyMap,
   deleteEventLog,
   getAlignment,
   getMetrics,
   getSystemTraces,
   getSystemVariants,
+  listCaseKeyMaps,
   listEventLogs,
   saveAlignment,
   saveColumnMap,
   saveRoleMap,
   startImport,
   suggestAlignment,
+  uploadCaseKeyMap,
   uploadEventLog,
 } from "../api/systemRecords";
 import type {
@@ -30,6 +33,7 @@ import type {
 export const IMPORT_POLL_MS = 1000;
 
 const logsKey = (engagementId: string) => ["engagements", engagementId, "event-logs"] as const;
+const mapsKey = (engagementId: string) => ["engagements", engagementId, "case-key-maps"] as const;
 
 /** The engagement's logs, oldest first; `enabled` is false while the module is off. */
 export function useEventLogs(engagementId: string, enabled = true) {
@@ -65,6 +69,7 @@ export function useDeleteEventLog(engagementId: string) {
     mutationFn: (logId: string) => deleteEventLog(logId),
     onSuccess: (_, logId) => {
       client.setQueryData<EventLog[]>(logsKey(engagementId), (logs) => logs?.filter((l) => l.id !== logId));
+      void client.invalidateQueries({ queryKey: mapsKey(engagementId) }); // its links go with it
     },
   });
 }
@@ -157,5 +162,27 @@ export function useSystemVariants(versionId: string | null, enabled: boolean) {
     queryKey: ["versions", versionId ?? "", "system-variants"],
     queryFn: () => getSystemVariants(versionId ?? ""),
     enabled: enabled && Boolean(versionId),
+  });
+}
+
+/** Linked logs (R11c): the engagement's case-key maps, each with its end-to-end time. */
+export function useCaseKeyMaps(engagementId: string, enabled: boolean) {
+  return useQuery({ queryKey: mapsKey(engagementId), queryFn: () => listCaseKeyMaps(engagementId), enabled });
+}
+
+export function useUploadCaseKeyMap(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (link: { file: File; fromLogId: string; toLogId: string }) => uploadCaseKeyMap(engagementId, link),
+    onSuccess: () => void client.invalidateQueries({ queryKey: mapsKey(engagementId) }),
+  });
+}
+
+export function useDeleteCaseKeyMap(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fromLogId, toLogId }: { fromLogId: string; toLogId: string }) =>
+      deleteCaseKeyMap(engagementId, fromLogId, toLogId),
+    onSuccess: () => void client.invalidateQueries({ queryKey: mapsKey(engagementId) }),
   });
 }

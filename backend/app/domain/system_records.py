@@ -284,3 +284,21 @@ class LogVariants(BaseModel):
 class SystemVariants(BaseModel):
     logs: list[LogVariants]
     too_few_steps: list[str]
+
+
+class CaseKeyMapView(BaseModel):
+    """Two imported logs linked by their case IDs, with the end-to-end time across both
+    (API_CONTRACT.md → Case-key maps; R11c). Counts only: no case ID is returned."""
+
+    from_log_id: str
+    from_log_name: str
+    to_log_id: str
+    to_log_name: str
+    pairs: int
+    from_found: int
+    to_found: int
+    linked_cases: int
+    end_to_end: dict[str, float | int] | None
+    basis: str
+    minimum_cases: int = 5
+    created_at: str

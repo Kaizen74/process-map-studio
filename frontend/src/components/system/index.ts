@@ -5,3 +5,4 @@ export { ValidationReportView, type ValidationReportViewProps } from "./Validati
 export { WizardProgress } from "./WizardProgress";
 export { LogAlignmentTable, type LogAlignmentTableProps } from "./LogAlignmentTable";
 export { ActivityTable, CaseSummary, RoleTable, TransitionTable, VariantTable } from "./MetricsTables";
+export { CaseKeyMapList, type CaseKeyMapListProps } from "./CaseKeyMapList";

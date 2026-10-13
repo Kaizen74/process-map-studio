@@ -6,10 +6,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, Request, Response, UploadFile
 
-from app.actions import event_logs, log_alignment
+from app.actions import case_key_maps, event_logs, log_alignment
 from app.domain.system_records import (
     AlignmentInput,
     AlignmentView,
+    CaseKeyMapView,
     ColumnMapInput,
     EventLogView,
     ImportInput,
@@ -97,3 +98,44 @@ def set_alignment(request: Request, log_id: str, body: AlignmentInput) -> Alignm
 def suggest_alignment(request: Request, log_id: str) -> SuggestStarted:
     state = request.app.state
     return unwrap(log_alignment.start_suggest(state.sessions, log_id, state.worker.submit))
+
+
+# --- case-key maps (R11c) ---------------------------------------------------------------------
+
+
+@router.post("/engagements/{engagement_id}/case-key-maps", status_code=201)
+def upload_case_key_map(
+    request: Request,
+    engagement_id: str,
+    file: Annotated[UploadFile, File()],
+    from_log_id: Annotated[str, Form()] = "",
+    to_log_id: Annotated[str, Form()] = "",
+) -> CaseKeyMapView:
+    state = request.app.state
+    return unwrap(
+        case_key_maps.upload_map(
+            state.config, state.sessions, engagement_id, stream=file.file,
+            from_log_id=from_log_id, to_log_id=to_log_id,
+        )
+    )  # fmt: skip
+
+
+@router.get("/engagements/{engagement_id}/case-key-maps")
+def list_case_key_maps(request: Request, engagement_id: str) -> list[CaseKeyMapView]:
+    return unwrap(case_key_maps.list_maps(request.app.state.sessions, engagement_id))
+
+
+@router.delete("/engagements/{engagement_id}/case-key-maps", status_code=204)
+def delete_case_key_map(
+    request: Request,
+    engagement_id: str,
+    from_log_id: Annotated[str, Query()] = "",
+    to_log_id: Annotated[str, Query()] = "",
+) -> Response:
+    state = request.app.state
+    unwrap(
+        case_key_maps.delete_map(
+            state.config, state.sessions, engagement_id, from_log_id, to_log_id
+        )
+    )
+    return Response(status_code=204)

@@ -376,6 +376,45 @@ def spread(values: list[float]) -> dict[str, float | int] | None:
             "n": len(ordered)}  # fmt: skip
 
 
+# --- case-key maps (R11c) -------------------------------------------------------------------
+
+NEED_TWO = "The file needs two columns: the first log's case IDs, then the second log's."
+SAME_NAMES = "Give the two columns different names, for example DCS case and Ramp case."
+NO_PAIRS = "The file has no pairs of case IDs."
+Bounds = Mapping[str, tuple[str, str]]  # case → (first start, last end or start), UTC stamps
+
+
+def case_key_pairs(headers: list[str], rows: list[dict[str, str]]) -> Result[list[tuple[str, str]]]:
+    """The distinct (first log's case ID, second log's) pairs of a case-key file, in file order;
+    every other column is ignored."""
+    if len(headers) < 2 or not headers[0] or not headers[1]:
+        return Err(ErrorKind.VALIDATION, NEED_TWO, {"field": "file"})
+    if headers[0] == headers[1]:
+        return Err(ErrorKind.VALIDATION, SAME_NAMES, {"field": "file"})
+    first, second = headers[0], headers[1]
+    pairs = dict.fromkeys((row.get(first, "").strip(), row.get(second, "").strip()) for row in rows)
+    found = [p for p in pairs if p[0] and p[1]]
+    if not found:
+        return Err(ErrorKind.VALIDATION, NO_PAIRS, {"field": "file"})
+    return Ok(found)
+
+
+def linked_cases(
+    pairs: list[tuple[str, str]], first: Bounds, second: Bounds
+) -> tuple[int, int, list[float]]:
+    """How many pairs each log knows, and per case known to both the minutes from the earliest
+    start in either log to the latest end (or start) in either: the end-to-end time."""
+    first_found = sum(1 for a, _ in pairs if a in first)
+    second_found = sum(1 for _, b in pairs if b in second)
+    spans = []
+    for a, b in pairs:
+        if a in first and b in second:
+            start = min(first[a][0], second[b][0])
+            end = max(first[a][1], second[b][1])
+            spans.append(_minutes(start, end))
+    return first_found, second_found, spans
+
+
 def _share(part: int, whole: int) -> float:
     return round(part / whole, 3) if whole else 0.0
 

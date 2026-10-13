@@ -12,6 +12,7 @@ import { formatDateTime } from "../../lib/format";
 import { DATA_REQUEST_FILES, dataRequestUrl, type EventLog } from "../../lib/systemRecords";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { ImportWizard } from "./ImportWizard";
+import { LinkLogsCard } from "./LinkLogsCard";
 import { LogFigures } from "./LogFigures";
 import { LogMatching } from "./LogMatching";
 import { UploadLogForm } from "./UploadLogForm";
@@ -96,6 +97,7 @@ export function SystemRecordsScreen() {
 
   const openId = params.get("log");
   const open = (logs.data ?? []).find((l) => l.id === openId) ?? null;
+  const imported = (logs.data ?? []).filter((l) => l.status === "imported");
   const setOpen = (id: string | null) => setParams(id ? { log: id } : {}, { replace: true });
 
   function confirmDelete() {
@@ -161,6 +163,7 @@ export function SystemRecordsScreen() {
             )}
           </section>
           {open && <OpenLog engagementId={engagementId} log={open} />}
+          {imported.length >= 2 && <LinkLogsCard engagementId={engagementId} logs={imported} />}
         </>
       )}
       <Dialog

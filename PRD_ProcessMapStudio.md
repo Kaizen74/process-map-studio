@@ -746,7 +746,7 @@ The map can be drawn two ways from the same graph. **As done** (default) shows t
 | `role` | No | Preferred over `resource` when the extract can provide it |
 | `system` | No | Source system name (for multi-system logs) |
 | `case_attributes` | No | Any extra columns (e.g. region, product, amount band) kept as filters |
-- Several logs per engagement are allowed (one per system). A **case-key mapping** links logs where the same case has different IDs; without it, each log is analysed separately and stitching across systems relies on alignment to the map (§3.13.4).
+- Several logs per engagement are allowed (one per system). A **case-key mapping** links logs where the same case has different IDs; without it, each log is analysed separately and stitching across systems relies on alignment to the map (§3.13.4). With it, the System records screen also shows the **end-to-end time across both systems** for the linked cases (earliest start in either log to latest end in either; median and 90th percentile, measured; at least 5 linked cases).
 - Recommended window: 3–6 months; minimum 4 weeks. Size target: up to 1 million events per engagement.
 
 #### 3.13.2 Data request template (downloadable, like the interview templates)
@@ -993,7 +993,7 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | | GET `/engagements/{id}/event-logs`; GET `/event-logs/{lid}`; DELETE `/event-logs/{lid}` | | logs / log with validation report / removes events and metrics |
 | | GET `/event-logs/{lid}/metrics?scope=activity\|transition\|case\|variant\|role` | | precomputed metrics (only groups with ≥ 5 cases) |
 | | GET · PUT `/event-logs/{lid}/alignment`; **AI** POST `/event-logs/{lid}/alignment/suggest` | `[{activity, element_id\|null, status}]` | alignment table |
-| | POST `/engagements/{id}/case-key-maps` (multipart CSV) | | mapping count (not built yet; P10b R11) |
+| | POST `/engagements/{id}/case-key-maps` (multipart CSV or .xlsx: first column the first log's case IDs, second column the second log's; `from_log_id`, `to_log_id`) · GET · DELETE `?from_log_id=&to_log_id=` | | `{from_log_id, to_log_id, pairs, from_found, to_found, linked_cases, end_to_end: spread or null (≥ 5 linked cases), basis}` (R11c) |
 | | GET `/versions/{vid}/system-traces` · `/system-variants` | | per-step volume, wait, work and variants (panel 4e, Volume and wait lens) / variants with their fit to each view and hidden work (Variants tab) |
 | | GET `/templates/data-request?format=docx\|md\|csv` | — | data request template (§3.13.2; no engagement needed) |
 | Value and disposition | GET · PUT `/engagements/{id}/role-costs`; GET · PUT `/engagements/{id}/value-assumptions` | | rows |

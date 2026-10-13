@@ -401,6 +401,31 @@ Response `200`: `{"log_id", "scope", "minimum_cases": 5, "groups": [{"key", "lab
 - `spread`: `{median_min, p90_min, n}`.
 Errors: `404` (log); `409 NOT_IMPORTED` ("Import the log first: its figures are worked out during the import."); `422` ("Choose activity, transition, case, variant or role.").
 
+### Case-key maps: linking two logs (R11c, 2026-10-13; PRD §3.13.1, §4)
+When two systems give the same case different IDs (a flight number in one, a turnaround reference in the other), a case-key map links their imported logs. Without one, each log is analysed on its own; with one, the app also works out the **end-to-end time across both systems** for the linked cases. Deterministic, no AI. Case IDs identify work items, not people; the map stores only the two IDs per pair.
+
+A map object (one per linked pair of logs):
+```json
+{"from_log_id": "…", "from_log_name": "DCS extract", "to_log_id": "…", "to_log_name": "Ramp log",
+ "pairs": 200, "from_found": 200, "to_found": 198, "linked_cases": 198,
+ "end_to_end": {"median_min": 104.2, "p90_min": 131.0, "n": 198} | null,
+ "basis": "wait" | "not_separable", "minimum_cases": 5, "created_at": "…"}
+```
+- `pairs`: distinct pairs in the file; `from_found` / `to_found`: pairs whose ID is a case of that log; `linked_cases`: pairs found in both.
+- `end_to_end` (measured): per linked case, from the earliest event start in either log to the latest event end (or start) in either log, in minutes; median and 90th percentile as for the metrics. `null` when fewer than 5 cases are linked (never shown for fewer, constraint 24). `basis`: `"wait"` when both logs have end times, else `"not_separable"`.
+
+#### POST /api/engagements/{id}/case-key-maps (multipart: file, from_log_id, to_log_id)
+The file: CSV or .xlsx (first sheet), read in memory like a log extract. Its first row is the header (any names); the **first column** holds the first log's case IDs and the **second column** the second log's. Other columns are ignored and never stored; rows with either ID empty are left out, and repeated pairs count once. Both logs must be **imported** logs of this engagement and different. A new file for the same two logs (in either order) replaces the earlier map. Response `201`: the map object. Audit row "Linked system logs" (the two log names and the counts; no case ID).
+Errors: `404` (engagement); `422` naming the field: (`from_log_id`/`to_log_id`) "Choose two different imported logs of this engagement."; (`file`) "The file is empty.", "The file is larger than 100 MB.", "The Excel file could not be opened. Save it again as .xlsx, or as CSV, and upload it again.", "The file needs two columns: the first log's case IDs, then the second log's.", "Give the two columns different names, for example DCS case and Ramp case.", "The file has no pairs of case IDs.".
+
+#### GET /api/engagements/{id}/case-key-maps
+`200`: the engagement's maps, oldest first. Errors `404`.
+
+#### DELETE /api/engagements/{id}/case-key-maps?from_log_id=…&to_log_id=…
+`204`: removes the map between the two logs (in either order). Audit row "Removed case-key map". Errors `404` ("Those two logs aren't linked."). Deleting a log removes its maps.
+
+Used by: System records screen, **Linked logs** card (shown once two logs are imported).
+
 ### Alignment of log activities to map steps (R5a, 2026-10-07; PRD §3.13.4, criterion 86)
 Matches the activities an imported log records to the steps of the engagement's current map (the draft, or else the latest published version). Nothing is applied until Eric confirms: the app's own matches and Claude's are only proposals, and only confirmed rows are used by the map (R5b).
 
