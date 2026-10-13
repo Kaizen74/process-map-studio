@@ -190,8 +190,28 @@ def _times(element: GraphElement) -> dict[str, str]:
     return {"Stated": element.time.text} if element.time.text else {}
 
 
+def _contradictions(session: Session, version: VersionView, elements: Sequence[ElementRecord],
+                    edges: Sequence[EdgeRecord]) -> list[tuple[str, str, str]]:  # fmt: skip
+    """(log ID, element ID, note) of each step a draft's log contradicts, from at least
+    MINIMUM_CASES cases: what `_items` would give with stance "contradicts", without working out
+    every other step's figures."""
+    overlay, logs = _overlay(session, version, elements, edges)
+    out = []
+    for element in elements:
+        if element.kind in NOT_STEPS:
+            continue
+        for log, trace in logs:
+            if overlay.stances.get((log.id, element.stable_key)) != "contradicts":
+                continue
+            names = {a for a, k in trace.matched.items() if k == element.stable_key}
+            if logs_repo.step_figures(session, log.id, names)["cases"] < tracing.MINIMUM_CASES:
+                continue
+            out.append((log.id, element.id, overlay.notes.get((log.id, element.stable_key), "")))
+    return out
+
+
 def _log_facts(session: Session, log: EventLogView, keys: dict[str, str],
-               items: list[SystemTraceItem]) -> LogFacts | None:  # fmt: skip
+               contradicted: list[tuple[str, str, str]]) -> LogFacts | None:  # fmt: skip
     decided = [s for s in logs_repo.alignment(session, log.id) if s.confirmed]
     matched = {s.activity: s.step_key for s in decided
                if s.status == "confirmed" and s.activity and s.step_key}  # fmt: skip
@@ -210,8 +230,8 @@ def _log_facts(session: Session, log: EventLogView, keys: dict[str, str],
     window = (
         f"{log.window_start} to {log.window_end}" if log.window_start and log.window_end else ""
     )
-    contradictions = {keys[i.element_id]: i.note for i in items if i.log_id == log.id
-                      and i.stance == "contradicts" and i.element_id in keys}  # fmt: skip
+    contradictions = {keys[element_id]: note for log_id, element_id, note in contradicted
+                      if log_id == log.id and element_id in keys}  # fmt: skip
     return LogFacts(
         log_id=log.id, name=log.name, window=window, cases=case.case_count if case else 0,
         matched=matched, hidden=hidden, no_record=no_record,
@@ -226,13 +246,16 @@ def log_facts_for(session: Session, version: VersionView) -> list[LogFacts]:
     elements = map_repo.elements(session, version.id)
     keys = {e.id: e.stable_key for e in elements}
     if version.state == VersionState.DRAFT.value:
-        items = _items(session, version, elements, map_repo.edges(session, version.id))
+        contradicted = _contradictions(session, version, elements,
+                                       map_repo.edges(session, version.id))  # fmt: skip
     else:
         frozen = versions_repo.system_traces(session, version.id) or []
         items = [SystemTraceItem.model_validate(i) for i in frozen]
+        contradicted = [(i.log_id, i.element_id, i.note) for i in items
+                        if i.stance == "contradicts"]  # fmt: skip
     return [facts for log in logs_repo.list_for(session, version.engagement_id)
             if log.status == "imported"
-            and (facts := _log_facts(session, log, keys, items)) is not None]  # fmt: skip
+            and (facts := _log_facts(session, log, keys, contradicted)) is not None]  # fmt: skip
 
 
 def system_findings(session: Session, version: VersionView, graph: Graph,

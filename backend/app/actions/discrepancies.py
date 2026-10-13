@@ -86,12 +86,12 @@ def _offset(text: str) -> float | None:
 def _practice_interviews(session: Session, engagement_id: str) -> set[str]:
     """Ready interview transcripts that aren't wholly Landscape interviews (Appendix F)."""
     out = set()
-    for s in sources_repo.list_for_engagement(session, engagement_id):
-        if s.kind != INTERVIEW or s.text_status != "ready":
+    for source_id, kind, status in sources_repo.kinds(session, engagement_id):
+        if kind != INTERVIEW or status != "ready":
             continue
-        asked = sources_repo.question_ids(session, s.id)
+        asked = sources_repo.question_ids(session, source_id)
         if not asked or not all(LANDSCAPE.fullmatch(q) for q in asked):
-            out.add(s.id)
+            out.add(source_id)
     return out
 
 
@@ -189,9 +189,12 @@ def _conditions(claims: Mapping[str, list[ClaimRecord]]) -> dict[str, str]:
     return out  # fmt: skip
 
 
+Systems = dict[str, dict[str, object]]  # step key → what the log says of it
+
+
 def _steps(session: Session, version: VersionView, done: Graph, documented: Graph,
-           logs: list[LogFacts]) -> tuple[list[rules.StepFacts], dict[str, dict[str, object]],
-                                          dict[str, Offsets]]:  # fmt: skip
+           logs: list[LogFacts], practice: set[str],
+           ) -> tuple[list[rules.StepFacts], Systems, dict[str, Offsets]]:  # fmt: skip
     """Each step's facts, what the log says of it, and its (lived, documented) time offsets."""
     records = [
         e
@@ -202,8 +205,7 @@ def _steps(session: Session, version: VersionView, done: Graph, documented: Grap
     in_documented = {e.id for e in documented.elements}
     graph: dict[str, GraphElement] = {e.id: e for e in [*documented.elements, *done.elements]}
     claims = _claims(session, version.id)
-    kinds = {s.id: s.kind for s in sources_repo.list_for_engagement(session, version.engagement_id)}
-    practice = _practice_interviews(session, version.engagement_id)
+    kinds = {i: k for i, k, _ in sources_repo.kinds(session, version.engagement_id)}
     usual = _usual_route(done, _conditions(claims))
     rows = {f"{log.log_id}/{r.key}": r.metrics for log in logs
             for r in logs_repo.metrics(session, log.log_id, "activity")}  # fmt: skip
@@ -336,7 +338,8 @@ def gather(session: Session, version: VersionView) -> tuple[rules.Facts, list[In
                                              view="documented")  # fmt: skip
     assert done is not None and documented is not None
     logs = system_trace.log_facts_for(session, version)
-    steps, systems, offsets = _steps(session, version, done, documented, logs)
+    practice = _practice_interviews(session, version.engagement_id)
+    steps, systems, offsets = _steps(session, version, done, documented, logs, practice)
     keys = {s.element_id: s.key for s in steps}
     done_lines, documented_lines = _lines(done, keys), _lines(documented, keys)
     steps = _with_skips(steps, documented_lines)
@@ -374,7 +377,7 @@ def gather(session: Session, version: VersionView) -> tuple[rules.Facts, list[In
         steps=steps, done_lines=done_lines, documented_lines=documented_lines,
         hidden=[_hidden(session, log, a) for log in logs for a in log.hidden],
         variants=variants, total_cases=max((log.cases for log in logs), default=0),
-        interviews=len(_practice_interviews(session, version.engagement_id)),
+        interviews=len(practice),
         intents=intents, conflicts=conflicts,
         contradictions={k: v for log in logs for k, v in log.contradictions.items()},
     )  # fmt: skip

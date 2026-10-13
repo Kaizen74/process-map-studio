@@ -237,6 +237,10 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/lint", None),
     ("GET", "/api/versions/{map}/refresh-check", None),
     ("GET", "/api/versions/{map}/quality-card", None),
+    # P13a: intent statements, design gaps and the discrepancy engine (no AI call).
+    ("GET", "/api/engagements/{sample_eid}/intent", None),
+    ("GET", "/api/versions/{map}/intent/conflicts", None),
+    ("GET", "/api/versions/{map}/discrepancies", None),
     ("GET", "/api/versions/{map}", None),
     ("GET", "/api/engagements/{eid}/versions", None),
     ("GET", "/api/elements/{element}", None),

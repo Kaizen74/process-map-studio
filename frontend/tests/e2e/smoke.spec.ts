@@ -250,6 +250,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.locator(".map-lens", { hasText: /^Exception$/ })).toHaveCount(2);
     expect(await seriousViolations(page)).toEqual([]);
     if (shots) await page.screenshot({ path: join(shots, "x3-as-done-exceptions-1440x900.png"), ...still });
+    if (shots) {
+      // P13a (PRD §5.2): the Time lens's wait hatch, for Eric to compare coral with the time colour.
+      await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Time" }).click();
+      await expect(page.locator(".map-bar__wait").first()).toBeVisible();
+      await page.screenshot({ path: join(shots, "p13a-time-lens-1440x900.png"), ...still });
+    }
     await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
     await expect(approvePlan).toHaveCount(0);
     // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
