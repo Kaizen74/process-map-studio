@@ -29,7 +29,7 @@ export function UploadLogForm({ engagementId, onUploaded }: { engagementId: stri
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!file) return setMissing("Choose the CSV file from IT first.");
+    if (!file) return setMissing("Choose the file from IT first.");
     if (!name.trim()) return setMissing("Give the log a name, for example DCS extract.");
     setMissing(null);
     upload.mutate(
@@ -50,7 +50,7 @@ export function UploadLogForm({ engagementId, onUploaded }: { engagementId: stri
   return (
     <Card
       title="Upload a log"
-      description="A CSV file (UTF-8) of up to 100 MB, one per system. The file stays in memory only until you import it."
+      description="A CSV file (UTF-8) or an Excel workbook (.xlsx; its first sheet is read) of up to 100 MB, one per system. The file stays in memory only until you import it."
     >
       <form className="system-upload" onSubmit={onSubmit} noValidate>
         <div className="system-upload__file">
@@ -61,7 +61,7 @@ export function UploadLogForm({ engagementId, onUploaded }: { engagementId: stri
           <input
             ref={input}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="visually-hidden"
             tabIndex={-1}
             aria-hidden="true"

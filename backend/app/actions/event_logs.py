@@ -274,7 +274,11 @@ def upload_log(
                 return err
             case Ok(value=content):
                 pass
-        headers, rows = mining.read_csv(content)
+        match mining.read_extract(content):
+            case Err() as err:
+                return err
+            case Ok(value=(headers, rows)):
+                pass
         if not any(headers):
             return _invalid("file", NO_HEADER)
         twice = sorted({h for h in headers if headers.count(h) > 1})

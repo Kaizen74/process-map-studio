@@ -347,7 +347,7 @@ Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** 
 
 ## System records: event logs (PRD §4 System records, §3.13.3, criteria 83 and 84, constraint 24) — phase P10b (2026-10-07, R3)
 
-Importing a system's event-log extract, deterministic and without AI. The uploaded file is **held in memory only**, never written to disk or the database, until it is imported or deleted, because it may carry user IDs: the import turns them into roles and then forgets them (constraint 24). If the app restarts before the import, the file is gone and Eric uploads it again (`409 FILE_NOT_HELD`). CSV only for now (UTF-8; comma, semicolon, tab or bar); Excel comes with R11.
+Importing a system's event-log extract, deterministic and without AI. The uploaded file is **held in memory only**, never written to disk or the database, until it is imported or deleted, because it may carry user IDs: the import turns them into roles and then forgets them (constraint 24). If the app restarts before the import, the file is gone and Eric uploads it again (`409 FILE_NOT_HELD`). A CSV file (UTF-8; comma, semicolon, tab or bar) or, since R11 (2026-10-13), an Excel workbook (.xlsx, recognised by its content, read in memory with openpyxl through defusedxml): its **first sheet**, the first filled row as the header (empty header cells at the end left out), each later filled row a record; date cells are written as `2026-03-02 09:14:00` (the log's time zone applies as for CSV), whole numbers without `.0`. Other sheets are not read.
 
 ### Log object
 ```json
@@ -370,7 +370,7 @@ Importing a system's event-log extract, deterministic and without AI. The upload
 
 ### POST /api/engagements/{id}/event-logs (multipart: file, name, system, timezone, window_start, window_end)
 `name` required, `system` optional (each one line, up to 120 characters); `timezone` an IANA name, default `Asia/Singapore` (the Settings Regional default comes with R10); window dates `YYYY-MM-DD` or empty, start not after end. Response `201`: log (`uploaded`) with the suggested column map, the user IDs with suggested roles, and the preview report. Audit row "Uploaded system log" (name and system only).
-Errors: `404` (engagement); `422` naming the field: "Give the log a name.", "The file is empty.", "The file is larger than 100 MB.", "The file has no header row.", "Two columns have the same name: Status. Rename one and upload again.", "Choose a time zone from the list, for example Asia/Singapore.", "Use a date like 2026-03-02.", "The window starts after it ends.".
+Errors: `404` (engagement); `422` naming the field: "Give the log a name.", "The file is empty.", "The file is larger than 100 MB.", "The file has no header row.", "The Excel file could not be opened. Save it again as .xlsx, or as CSV, and upload it again.", "Two columns have the same name: Status. Rename one and upload again.", "Choose a time zone from the list, for example Asia/Singapore.", "Use a date like 2026-03-02.", "The window starts after it ends.".
 
 ### GET /api/engagements/{id}/event-logs
 `200`: the engagement's logs, oldest first. Errors `404`.

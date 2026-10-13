@@ -2,6 +2,9 @@
 process-mining library (PM4Py is AGPL, constraint 19).
 
 - `read_csv`: the header and rows of a CSV extract (UTF-8; comma, semicolon, tab or bar).
+- `read_extract`: a CSV or, recognised by its content, an Excel workbook (R11: `read_xlsx`, the
+  first sheet, in memory; openpyxl 3.1.5 `load_workbook(BytesIO, read_only=True, data_only=True)`,
+  parsed through defusedxml).
 - `suggest_column_map`: each header → a B.40 field by name, for Eric to confirm or correct.
 - `distinct_resources`: the resource values, for the role-mapping step; held in memory only.
 - `parse_log`: rows → events and the plain-language validation report. A resource becomes a role
@@ -17,15 +20,19 @@ import io
 import math
 import re
 import statistics
+import warnings
 from collections import Counter
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from difflib import SequenceMatcher
 from itertools import pairwise
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from openpyxl import load_workbook
+
 from app.domain.enums import SystemLogColumn as Field
+from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.system_records import (
     DroppedRows,
     LogEvent,
@@ -74,6 +81,61 @@ def read_csv(content: bytes) -> tuple[list[str], list[dict[str, str]]]:
     rows = [{(k or "").strip(): (v or "").strip() for k, v in row.items() if k is not None}
             for row in reader]  # fmt: skip
     return headers, rows
+
+
+XLSX_START = b"PK\x03\x04"  # an .xlsx file is a zip archive
+BAD_XLSX = (
+    "The Excel file could not be opened. Save it again as .xlsx, or as CSV, and upload it again."
+)
+Table = tuple[list[str], list[dict[str, str]]]
+
+
+def _log_cell(value: object) -> str:
+    """A cell as the timestamp reader and the column map expect: dates with seconds, whole
+    numbers without `.0`."""
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "TRUE" if value else "FALSE"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, datetime):
+        return value.isoformat(sep=" ", timespec="microseconds" if value.microsecond else "seconds")
+    if isinstance(value, date | time):
+        return value.isoformat()
+    return str(value).strip()
+
+
+def read_xlsx(content: bytes) -> Result[Table]:
+    """The header and rows of an Excel extract's first sheet, read in memory (never on disk)."""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # openpyxl warns about features it doesn't read
+            book = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+            try:
+                sheet = book.worksheets[0]
+                rows = [[_log_cell(v) for v in row] for row in sheet.iter_rows(values_only=True)]
+            finally:
+                book.close()
+    except Exception as exc:  # openpyxl and zipfile raise many types for damaged files
+        return Err(ErrorKind.VALIDATION, BAD_XLSX, {"field": "file", "reason": type(exc).__name__})
+    filled = [r for r in rows if any(r)]
+    if not filled:
+        return Ok(([], []))
+    headers = filled[0]
+    while headers and not headers[-1]:
+        headers = headers[:-1]
+    records = [
+        {h: (row[i] if i < len(row) else "") for i, h in enumerate(headers)} for row in filled[1:]
+    ]
+    return Ok((headers, records))
+
+
+def read_extract(content: bytes) -> Result[Table]:
+    """A CSV extract, or an Excel workbook recognised by its first bytes (R11)."""
+    if content.startswith(XLSX_START):
+        return read_xlsx(content)
+    return Ok(read_csv(content))
 
 
 def _words(text: str) -> str:

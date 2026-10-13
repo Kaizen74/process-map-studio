@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-13 (P10b R11a: spreadsheets and emails as sources) — update after EVERY increment*
+*Last updated: 2026-10-13 (P10b R11b: Excel event logs) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.12 drafted 2026-10-12 at Eric's request: Reality views P13 and a coherence review; v1.11 adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -75,7 +75,7 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [x] R10c — P10b UI: Registers "Disposition and value" (behind the value switch): totals and phases, facts / interpretation / recommendation kept apart, scenarios labelled potential, disposition by step, As done / As documented, role costs and assumptions forms
 - [ ] R11 — P10b: wider intake .xlsx, .csv, .eml (openpyxl, standard `email`; header names → redaction terms; 92)
   - [x] R11a — spreadsheets (.xlsx, .csv: a passage per row, `Sheet!A5` / `row 5` anchors, header names kept) and emails (.eml: header passage, senders as speakers mapped on a Sender mapping card, quotes kept under "Earlier in the thread", signatures and attachments left out, addresses and people's names hidden as `email_header`); kinds `working_spreadsheet` and `email_thread` count as artefacts; README
-  - [ ] R11b — Excel event logs on System records
+  - [x] R11b — Excel event logs on System records (first sheet, in memory, recognised by content; A.11 as .xlsx gives identical figures)
   - [ ] R11c — case-key maps
 - [ ] R12 — P10b: G10 baseline candidate (approval), 500k-event import timing, close P10b
 - [ ] L1 — P11 update: work-type mix, Imagined vs done, Preserve / Improve, quantified bottlenecks, disposition and value summary

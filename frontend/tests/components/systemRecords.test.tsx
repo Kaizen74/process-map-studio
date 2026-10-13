@@ -157,7 +157,12 @@ describe("System records screen", () => {
     renderApp(PATH);
     await screen.findByText(/No logs yet/);
     fireEvent.click(screen.getByRole("button", { name: "Upload" }));
-    expect(await screen.findByText("Choose the CSV file from IT first.")).toBeInTheDocument();
+    expect(await screen.findByText("Choose the file from IT first.")).toBeInTheDocument();
+    // R11b: CSV or Excel.
+    expect(screen.getByTestId("log-file-input").getAttribute("accept")?.split(",")).toEqual(
+      expect.arrayContaining([".csv", ".xlsx"]),
+    );
+    expect(screen.getByText(/or an Excel workbook \(.xlsx; its first sheet is read\)/)).toBeInTheDocument();
     fireEvent.change(screen.getByTestId("log-file-input"), {
       target: { files: [new File(["Case ID,Event Name\n"], "dcs.csv", { type: "text/csv" })] },
     });
