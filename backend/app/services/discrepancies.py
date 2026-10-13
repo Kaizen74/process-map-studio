@@ -90,6 +90,9 @@ class StepFacts:
     time: Measure | None = None  # the main activity's duration
     wait_before: Measure | None = None
     artefact_support: bool = False  # an executed artefact records it
+    per_month: float | None = None  # cases a month passing the step (measured)
+    stated_reason: bool = False  # a lived account states why it is done this way
+    documents: int = 0  # documents whose verified claims describe it
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,6 +107,8 @@ class Line:
 class HiddenWork:
     activity: str
     cases: int
+    per_month: float | None = None
+    minutes: float | None = None  # its median duration
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,7 +313,7 @@ def _d5(step: StepFacts, control: bool) -> Found | None:
                  share, step.skipped, True)  # fmt: skip
 
 
-def _runs(facts: Facts, members: set[str]) -> list[list[str]]:
+def runs(facts: Facts, members: set[str]) -> list[list[str]]:
     """Contiguous runs of the given done-view steps (connected by lines), in process order."""
     adjacent: dict[str, set[str]] = {k: set() for k in members}
     for ln in facts.done_lines:
@@ -339,7 +344,7 @@ def _d6(facts: Facts, by_key: Mapping[str, StepFacts]) -> list[Found]:
     out: list[Found] = []
     unrecorded = {s.key for s in facts.steps if s.in_done and s.recorded is False}
     covered: set[str] = set()
-    for run in _runs(facts, unrecorded):
+    for run in runs(facts, unrecorded):
         inside = set(run)
         entered = [ln for ln in facts.done_lines if ln.target in inside and ln.source not in inside]
         left = [ln for ln in facts.done_lines if ln.source in inside and ln.target not in inside
@@ -353,7 +358,7 @@ def _d6(facts: Facts, by_key: Mapping[str, StepFacts]) -> list[Found]:
             out.append(_off_system(tuple(run), tools, by_key, facts))
             covered |= inside
     named = {s.key for s in facts.steps if s.in_done and s.tools and s.key not in covered}
-    for run in _runs(facts, named):
+    for run in runs(facts, named):
         out.append(_off_system(tuple(run), sorted({t for k in run for t in by_key[k].tools}),
                                by_key, facts))  # fmt: skip
     return out

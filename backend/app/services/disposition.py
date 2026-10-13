@@ -41,6 +41,7 @@ class StepFacts:
     risk_flag: str = "none"
     source_state: str = "not_assessed"
     has_purpose: bool = True  # a KPI or a constraint states why the step is there
+    intended: bool = False  # a confirmed intent statement covers the step (P13, §3.15)
     no_record_in: str = ""  # a log Eric confirmed has no record of the step ("" if none)
     knowledge_risk: str = "unknown"
     heuristics_share: float = 0.0  # heuristics and experience among its know-how items
@@ -57,11 +58,12 @@ def _work(step: StepFacts) -> str:
 
 def suggest(step: StepFacts) -> tuple[str, str]:
     """The suggested disposition and its reason (§3.15; the first rule that applies)."""
-    for finding_type, gap_class, title in step.findings:
+    # A control the organisation still intends is never suggested for deletion (§3.15).
+    for finding_type, gap_class, title in [] if step.intended else step.findings:
         if finding_type == "dead_control_candidate" or gap_class == "obsolete_rule":
             return DELETE, f"Gap finding: {title}."
     if (step.kind in CONTROLS and step.source_state == DOCUMENTED_ONLY and step.no_record_in
-            and not step.has_purpose):  # fmt: skip
+            and not step.has_purpose and not step.intended):  # fmt: skip
         return DELETE, (f"The documents describe it, no interview mentions it, the "
                         f"{step.no_record_in} log has no record of it and no purpose is "
                         "stated.")  # fmt: skip

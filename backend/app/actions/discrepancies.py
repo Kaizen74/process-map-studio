@@ -17,8 +17,11 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import intent as intent_actions
 from app.actions import system_trace
 from app.actions import versions as versions_action
+from app.actions.engagements import actor_name
+from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import ReviewStatus, SourceKind
 from app.domain.graph import Graph, GraphElement
@@ -26,14 +29,27 @@ from app.domain.models import ClaimRecord, VersionView
 from app.domain.reality import (
     DeltaView,
     Detection,
+    DiscrepanciesView,
     DiscrepancyFound,
+    DiscrepancyItemRecord,
+    DiscrepancyView,
+    EvidenceCounts,
+    FigureDelta,
     IntentEvaluationView,
     IntentRecord,
+    LocationView,
+    TypeDelta,
+    VerdictBody,
+    VerdictDecided,
+    VerdictView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import ExceptionEdgeInput, ExceptionStepInput
+from app.repositories import audit
 from app.repositories import claims as claims_repo
+from app.repositories import discrepancy_items as items_repo
 from app.repositories import elements as map_repo
+from app.repositories import engagements as engagements_repo
 from app.repositories import event_logs as logs_repo
 from app.repositories import intent as intent_repo
 from app.repositories import sources as sources_repo
@@ -41,6 +57,7 @@ from app.repositories import versions as versions_repo
 from app.services import discrepancies as rules
 from app.services import exceptions, grounding
 from app.services import intent as evaluation
+from app.services import verdicts as verdict_rules
 from app.services.system_findings import LogFacts, stated_minutes
 
 Sessions = sessionmaker[Session]
@@ -143,8 +160,13 @@ def _system(key: str, logs: list[LogFacts],
             "time": _measure(metrics.get("work"), cases),  # type: ignore[arg-type]
             "wait_before": _measure(metrics.get("wait_before"), cases),  # type: ignore[arg-type]
             "log_id": log.log_id, "activity": main,
+            "per_month": _number(metrics.get("cases_per_month")),
         }  # fmt: skip
     return {}
+
+
+def _number(value: object) -> float | None:
+    return float(str(value)) if isinstance(value, int | float) else None
 
 
 def _first(values: list[float | None]) -> float | None:
@@ -222,6 +244,9 @@ def _steps(session: Session, version: VersionView, done: Graph, documented: Grap
             time=system.get("time"),  # type: ignore[arg-type]
             wait_before=system.get("wait_before"),  # type: ignore[arg-type]
             artefact_support=any(kinds.get(c.source_id) == ARTEFACT for c in cs),
+            per_month=system.get("per_month"),  # type: ignore[arg-type]
+            stated_reason=any(c.payload.get("stated_reason") for c in lived),
+            documents=len({c.source_id for c in documents}),
         ))  # fmt: skip
     return steps, systems, offsets
 
@@ -294,6 +319,16 @@ def _values(session: Session, i: IntentRecord, target: evaluation.Target,
     return evaluation.Values()
 
 
+def _hidden(session: Session, log: LogFacts, activity: str) -> rules.HiddenWork:
+    row = next((r for r in logs_repo.metrics(session, log.log_id, "activity")
+                if r.key == activity), None)  # fmt: skip
+    metrics = row.metrics if row else {}
+    work = metrics.get("work") if isinstance(metrics.get("work"), dict) else {}
+    return rules.HiddenWork(activity, log.activity_cases.get(activity, 0),
+                            _number(metrics.get("cases_per_month")),
+                            _number((work or {}).get("median_min")))  # fmt: skip
+
+
 def gather(session: Session, version: VersionView) -> tuple[rules.Facts, list[IntentRecord]]:
     """The facts of one version for the discrepancy engine, and its confirmed statements."""
     done = versions_action.build_graph(session, version.id, every_line=True, view="done")
@@ -337,8 +372,7 @@ def gather(session: Session, version: VersionView) -> tuple[rules.Facts, list[In
                       reverse=True) if logs else []  # fmt: skip
     facts = rules.Facts(
         steps=steps, done_lines=done_lines, documented_lines=documented_lines,
-        hidden=[rules.HiddenWork(a, log.activity_cases.get(a, 0)) for log in logs
-                for a in log.hidden],
+        hidden=[_hidden(session, log, a) for log in logs for a in log.hidden],
         variants=variants, total_cases=max((log.cases for log in logs), default=0),
         interviews=len(_practice_interviews(session, version.engagement_id)),
         intents=intents, conflicts=conflicts,
@@ -361,6 +395,10 @@ def _view(found: rules.Found, ids: Mapping[str, str]) -> DiscrepancyFound:
 def detection(session: Session, version: VersionView) -> Detection:
     """Every discrepancy on the version and every confirmed statement's evaluation."""
     facts, _ = gather(session, version)
+    return _detection(facts)
+
+
+def _detection(facts: rules.Facts) -> Detection:
     found = rules.detect(facts)
     ids = {s.key: s.element_id for s in facts.steps}
     evaluations = []
@@ -399,3 +437,156 @@ def detect_for(sessions: Sessions, version_id: str) -> Result[Detection]:
         if version is None:
             return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
         return Ok(detection(session, version))
+
+
+# --- Discrepancies with codes, impact and verdicts (API_CONTRACT.md → Discrepancies) ------------
+
+ITEM_MISSING = "That discrepancy doesn't exist."
+BAD_VIEW = "Discrepancies are worked out on the As done view."
+BAD_VERDICT = "Choose codify, correct, rewrite or ask."
+BAD_OWNER = "Choose the decision owner's role."
+PROCESS_TITLES = {"D9": "Parallel routes", "D10": "Belief gap"}
+
+
+def _title(g: verdict_rules.Group, labels: Mapping[str, str]) -> str:
+    names = [labels.get(k, k) for k in g.keys]
+    if g.kind == "process":
+        return PROCESS_TITLES.get(g.types[0], g.types[0])
+    if g.kind == "design":
+        return f"{' and '.join(names) or 'The process'}: design gap"
+    if g.kind == "order":
+        return " / ".join(names)
+    return " → ".join(names)
+
+
+def _code_number(code: str) -> int:
+    return int(code[1:]) if code[1:].isdigit() else 0
+
+
+def _item_view(g: verdict_rules.Group, facts: rules.Facts, item: DiscrepancyItemRecord | None,
+               labels: Mapping[str, str], ids: Mapping[str, str]) -> DiscrepancyView:  # fmt: skip
+    steps = [s for s in facts.steps if s.key in g.keys]
+    first = g.found[0]
+    impact = verdict_rules.impact(g, facts)
+    suggested, reason = verdict_rules.verdict(g, facts)
+    deltas = [TypeDelta(type=f.type, value=f.delta.value, unit=f.delta.unit,
+                        kind=f.delta.label, label=f.delta.text) for f in g.found]  # fmt: skip
+    deltas.sort(key=lambda d: verdict_rules.TYPE_ORDER.index(d.type))
+    cases = [f.cases for f in g.found if f.cases is not None]
+    incidences = [f.incidence for f in g.found if f.incidence is not None]
+    return DiscrepancyView(
+        item_id=item.id if item else None, code=item.code if item else None, status="seen",
+        types=g.types, location=LocationView(kind=g.kind, keys=list(g.keys)),
+        title=_title(g, labels),
+        delta=FigureDelta(value=deltas[0].value, unit=deltas[0].unit, kind=deltas[0].kind,
+                          label=deltas[0].label),
+        deltas=deltas, incidence=max(incidences) if incidences else None,
+        cases=max(cases) if cases else first.cases,
+        hours_per_month=verdict_rules.hours(g, facts), shown=g.shown, impact_class=impact,
+        impact_note=verdict_rules.POTENTIAL if impact == verdict_rules.CONTROL else "",
+        verdict=None if g.kind == "process" else VerdictView(
+            suggested=suggested, reason=reason,
+            decided=item.verdict_decided if item else None,
+            note=item.verdict_note if item else "",
+            decision_owner_role_id=item.decision_owner_role_id if item else None),
+        evidence=EvidenceCounts(
+            documents=max((s.documents for s in steps), default=0),
+            interviews=max((s.described_in for s in steps), default=0),
+            system_cases=max(cases) if cases and any(
+                f.delta.label == "measured" for f in g.found) else None),
+        element_ids=[ids[k] for k in g.keys if k in ids], intent_ids=g.intent_ids,
+    )  # fmt: skip
+
+
+def _not_seen(item: DiscrepancyItemRecord) -> DiscrepancyView:
+    kind = item.location_key.split(":", 1)[0]
+    return DiscrepancyView(
+        item_id=item.id, code=item.code, status="not_seen", types=[],
+        location=LocationView(kind=kind, keys=[]), title=item.title, delta=None, deltas=[],
+        incidence=None, cases=None, hours_per_month=0.0, shown=False, impact_class=None,
+        impact_note="", verdict=VerdictView(suggested=None, reason="", decided=item.verdict_decided,
+                                            note=item.verdict_note,
+                                            decision_owner_role_id=item.decision_owner_role_id),
+        evidence=EvidenceCounts(documents=0, interviews=0, system_cases=None),
+        element_ids=[], intent_ids=[],
+    )  # fmt: skip
+
+
+def discrepancies_of(session: Session, version: VersionView) -> DiscrepanciesView:
+    """The version's discrepancies by location, with persistent codes (given here the first time
+    a drawn location is seen), impact classes and verdicts."""
+    facts, _ = gather(session, version)
+    detected = _detection(facts)
+    found = [f for f in rules.detect(facts) if f.shown]
+    groups = verdict_rules.group(found, facts)
+    labels = {s.key: s.label for s in facts.steps}
+    ids = {s.key: s.element_id for s in facts.steps}
+    items = items_repo.for_engagement(session, version.engagement_id)
+    by_key = {i.location_key: i for i in items}
+    coded = [g for g in groups if g.kind != "process"]
+    impacts = {g.location_key: verdict_rules.impact(g, facts) for g in coded}
+    number = max((_code_number(i.code) for i in items), default=0)
+    for g in verdict_rules.code_order([g for g in coded if g.location_key not in by_key], facts,
+                                      impacts):  # fmt: skip
+        number += 1
+        by_key[g.location_key] = items_repo.add(session, {
+            "engagement_id": version.engagement_id, "code": f"X{number}",
+            "location_key": g.location_key, "title": _title(g, labels),
+            "first_version_id": version.id,
+        })  # fmt: skip
+    seen = [_item_view(g, facts, by_key.get(g.location_key), labels, ids) for g in coded]
+    seen.sort(key=lambda v: _code_number(v.code or "X0"))
+    present = {g.location_key for g in coded}
+    gone = sorted((i for i in by_key.values() if i.location_key not in present),
+                  key=lambda i: _code_number(i.code))  # fmt: skip
+    process = [_item_view(g, facts, None, labels, ids) for g in groups if g.kind == "process"]
+    return DiscrepanciesView(rules_version=rules.REALITY_RULES_VERSION, view="done",
+                             items=[*seen, *(_not_seen(i) for i in gone), *process],
+                             intents=detected.intents)  # fmt: skip
+
+
+def get_discrepancies(sessions: Sessions, version_id: str,
+                      view: str = "done") -> Result[DiscrepanciesView]:  # fmt: skip
+    if view != "done":
+        return Err(ErrorKind.VALIDATION, BAD_VIEW, {"field": "view"})
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
+        return Ok(discrepancies_of(session, version))
+
+
+def decide_verdict(config: AppConfig, sessions: Sessions, item_id: str,
+                   body: VerdictBody) -> Result[VerdictDecided]:  # fmt: skip
+    """Eric's verdict on a discrepancy (it always wins over the suggestion), or clear it."""
+    with session_scope(sessions) as session:
+        item = items_repo.get(session, item_id)
+        if item is None:
+            return Err(ErrorKind.NOT_FOUND, ITEM_MISSING)
+        if body.verdict is not None and body.verdict not in verdict_rules.VERDICTS:
+            return Err(ErrorKind.VALIDATION, BAD_VERDICT, {"field": "verdict"})
+        note = body.note.strip()
+        if len(note) > intent_actions.MAX_NOTE or "\n" in note:
+            return Err(ErrorKind.VALIDATION, intent_actions.BAD_NOTE, {"field": "note"})
+        roles = {r.id for r in engagements_repo.list_roles(session, item.engagement_id)
+                 if not r.is_system}  # fmt: skip
+        if body.decision_owner_role_id is not None and body.decision_owner_role_id not in roles:
+            return Err(ErrorKind.VALIDATION, BAD_OWNER, {"field": "decision_owner_role_id"})
+        changes = {"verdict_decided": body.verdict, "verdict_note": note,
+                   "decision_owner_role_id": body.decision_owner_role_id}  # fmt: skip
+        before = {k: getattr(item, k) for k in changes}
+        updated = items_repo.update(session, item_id, changes)
+        if before != changes:
+            audit.record(session, actor=actor_name(config), action="Decided discrepancy verdict",
+                         target_type="discrepancy", target_id=item_id,
+                         engagement_id=item.engagement_id, before=before,
+                         after=changes)  # fmt: skip
+        return Ok(
+            VerdictDecided(
+                item_id=updated.id,
+                code=updated.code,
+                verdict_decided=updated.verdict_decided,
+                verdict_note=updated.verdict_note,
+                decision_owner_role_id=updated.decision_owner_role_id,
+            )
+        )

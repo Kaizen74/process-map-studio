@@ -16,13 +16,14 @@ from app.actions.engagements import actor_name
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import ElementKind, ReviewStatus, VersionState
-from app.domain.graph import GraphElement
+from app.domain.graph import Graph, GraphElement
 from app.domain.models import DispositionInput, DispositionView, RefusedDisposition, VersionView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import elements as map_repo
 from app.repositories import event_logs as logs_repo
 from app.repositories import gap as gap_repo
+from app.repositories import intent as intent_repo
 from app.repositories import versions as versions_repo
 from app.services import disposition as rules
 from app.services import grounding
@@ -65,6 +66,18 @@ def _flag(element: GraphElement) -> dict[str, str] | None:
             "handoff": f.handoff, "basis": f.basis}  # fmt: skip
 
 
+def _intended(session: Session, engagement_id: str, graph: Graph) -> set[str]:
+    """Steps a confirmed intent statement covers: its step, or a step of its phase (a statement
+    about the whole process doesn't single out a step)."""
+    phases = {p.id: p.name for p in graph.phases}
+    statements = [r for r in intent_repo.for_engagement(session, engagement_id)
+                  if r.status == "confirmed"]  # fmt: skip
+    keys = {r.element_stable_key for r in statements if r.scope == "step"}
+    named = {r.phase_name for r in statements if r.scope == "phase"}
+    return {e.id for e in graph.elements
+            if e.stable_key in keys or phases.get(e.phase_id or "") in named}  # fmt: skip
+
+
 def facts(session: Session, version: VersionView) -> dict[str, tuple[GraphElement, StepFacts]]:
     """Every step of the version (start, end and rejected steps left out) with its facts."""
     graph = versions_action.build_graph(session, version.id)
@@ -74,6 +87,7 @@ def facts(session: Session, version: VersionView) -> dict[str, tuple[GraphElemen
     unrecorded = _unrecorded(session, version.engagement_id)
     lens = lenses.load(session, version.id, version.engagement_id)
     terms = redaction.name_replacements(session, version.engagement_id)
+    intended = _intended(session, version.engagement_id, graph)
     out: dict[str, tuple[GraphElement, StepFacts]] = {}
     for e in graph.elements:
         record = records.get(e.id)
@@ -90,7 +104,7 @@ def facts(session: Session, version: VersionView) -> dict[str, tuple[GraphElemen
         out[e.id] = (e, StepFacts(
             label=e.label, kind=e.kind, work_type=e.work_type, mechanism=e.decision.mechanism,
             flag=_flag(e), risk_flag=record.risk_flag or "none", source_state=e.source_state,
-            has_purpose=bool(e.kpi.strip() or e.constraints),
+            has_purpose=bool(e.kpi.strip() or e.constraints), intended=e.id in intended,
             no_record_in=unrecorded.get(record.stable_key, ""),
             knowledge_risk=know.knowledge_risk if know else "unknown",
             heuristics_share=sum(items.get(k, 0) for k in HEURISTIC) / total if total else 0.0,

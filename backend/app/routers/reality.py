@@ -4,14 +4,17 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import intent, intent_ai
+from app.actions import discrepancies, intent, intent_ai
 from app.domain.reality import (
     ConflictPatch,
+    DiscrepanciesView,
     IntentConflictView,
     IntentFields,
     IntentJobStarted,
     IntentPatch,
     IntentView,
+    VerdictBody,
+    VerdictDecided,
 )
 from app.routers.http import unwrap
 
@@ -63,3 +66,14 @@ def list_conflicts(request: Request, version_id: str) -> list[IntentConflictView
 def update_conflict(request: Request, conflict_id: str, body: ConflictPatch) -> IntentConflictView:
     state = request.app.state
     return unwrap(intent_ai.update_conflict(state.config, state.sessions, conflict_id, body))
+
+
+@router.get("/versions/{version_id}/discrepancies")
+def list_discrepancies(request: Request, version_id: str, view: str = "done") -> DiscrepanciesView:
+    return unwrap(discrepancies.get_discrepancies(request.app.state.sessions, version_id, view))
+
+
+@router.put("/discrepancy-items/{item_id}/verdict")
+def decide_verdict(request: Request, item_id: str, body: VerdictBody) -> VerdictDecided:
+    state = request.app.state
+    return unwrap(discrepancies.decide_verdict(state.config, state.sessions, item_id, body))

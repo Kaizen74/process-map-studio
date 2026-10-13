@@ -620,6 +620,40 @@ Claude's pass (`IX_compare`) pairing **confirmed** intent statements with the do
 ### PATCH /api/intent-conflicts/{cid} — P13a-2
 `{"status"?: "confirmed" | "dismissed" | "proposed", "note"?: "…"}`. A proposal the checks turned down can't be confirmed (`409` "This design gap failed the checks, so it can't be used."). `note` one line, up to 300 characters ("A note is one line of up to 300 characters."). Response `200`: the conflict. Audit row "Confirmed design gap" · "Dismissed design gap" · "Reopened design gap" · "Noted design gap". Errors `404` ("That design gap doesn't exist."), `409`, `422`.
 
+## Discrepancies (PRD §3.17, §4 Intent and Reality, constraint 26) — phase P13a
+
+Every difference between intent, documents, belief and practice on a version, worked out by fixed rules from facts the app holds (`REALITY_RULES_VERSION`, G15); no AI call is made. Like the intent endpoints, these work whatever the Reality views switch says.
+
+### GET /api/versions/{vid}/discrepancies?view=done
+`200`:
+```json
+{"rules_version": "1", "view": "done",
+ "items": [
+  {"item_id": "…", "code": "X1", "status": "seen", "types": ["D1", "D11"],
+   "location": {"kind": "step", "keys": ["approve-load-plan"]}, "title": "Approve load plan",
+   "delta": {"value": 100.0, "unit": "pct", "kind": "measured", "label": "never recorded; 100% of cases"},
+   "deltas": [{"type": "D1", "value": 100.0, "unit": "pct", "kind": "measured", "label": "never recorded; 100% of cases"},
+              {"type": "D11", "value": 100.0, "unit": "pct", "kind": "measured", "label": "Approve load plan: 100% of cases without a record"}],
+   "incidence": 1.0, "cases": 200, "hours_per_month": 0.0, "shown": true,
+   "impact_class": "control_exposure", "impact_note": "potential control exposure, for the control owner to confirm",
+   "verdict": {"suggested": "correct", "reason": "The control objective is not met: restore the control or remove the cause.",
+               "decided": null, "note": "", "decision_owner_role_id": null},
+   "evidence": {"documents": 1, "interviews": 0, "system_cases": 200},
+   "element_ids": ["…"], "intent_ids": ["…"]}],
+ "intents": [{"intent_id": "…", "result": "not_met", "actual": null, "label": "measured", "met_share": 0.0, "cases": 200,
+              "documented": null, "documented_meets": null}]}
+```
+- `view`: `done` only (the As done view; a `documented` value is refused with `422` "Discrepancies are worked out on the As done view.").
+- `items`: one per location, in code order, then the process-level types (D9 parallel routes, D10 belief gap) with `code: null`, `impact_class: null` and no verdict. `location.kind`: `step` · `run` (a contiguous run of added steps) · `activity` (a hidden-work log activity; `keys` holds its name) · `order` (D3, two steps) · `design` (D13, always its own code) · `process`.
+- `code`: `X1`, `X2` … given the first time a location is seen in the engagement, in order of impact class, then hours a month, then process order; kept for that location in every later version and never reused. A location coded earlier but not found now is listed with `status: "not_seen"` (no figures). Locations not drawn (below 5% of cases and not a control exposure) get no code and are left out.
+- `delta`: the first type's figure; `deltas` every type's. `kind` is the figure label (B.50). `hours_per_month`: hours the discrepancy accounts for, from measured figures only (0 when none).
+- `impact_class` B.46; `impact_note` "potential control exposure, for the control owner to confirm" on control exposures. `verdict.suggested` B.47 with its reason; `verdict.decided` Eric's verdict, which always wins.
+- `intents`: each confirmed statement's evaluation (§3.16): `met` · `not_met` · `unknown`.
+- Errors: `404` ("That version doesn't exist.").
+
+### PUT /api/discrepancy-items/{item_id}/verdict
+`{"verdict": "codify" | "correct" | "rewrite" | "ask" | null, "note": "…", "decision_owner_role_id": "…" | null}`. `null` clears Eric's verdict (the suggestion shows again). Rules (`422` naming the field): `verdict` ("Choose codify, correct, rewrite or ask."); `note` one line, up to 300 characters ("A note is one line of up to 300 characters."); `decision_owner_role_id` a role of this engagement ("Choose the decision owner's role."). Response `200`: `{"item_id", "code", "verdict_decided", "verdict_note", "decision_owner_role_id"}`. Audit row "Decided discrepancy verdict" (before and after). Errors `404` ("That discrepancy doesn't exist."), `422`. The path uses the item's ID (`item_id` in the GET) because codes repeat across engagements.
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness

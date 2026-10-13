@@ -1028,7 +1028,7 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | | GET `/versions/{vid}/intent/conflicts` | — | the version's design-gap proposals with both quotes (redacted), verification and status |
 | | PATCH `/intent-conflicts/{cid}` | `{status: confirmed\|dismissed, note}` | conflict + audit row |
 | | GET `/versions/{vid}/discrepancies` | `?view=done` | `[{code, types[], location, title, delta:{value, unit, kind, label}, incidence, cases, impact_class, verdict:{suggested, reason, decided}, evidence:{documents, interviews, system}, element_ids, intent_ids}]` |
-| | PUT `/discrepancy-items/{code}/verdict` | `{verdict, note, decision_owner_role_id?}` | item + audit row |
+| | PUT `/discrepancy-items/{item_id}/verdict` | `{verdict, note, decision_owner_role_id?}` | item + audit row (the item's ID: codes repeat across engagements) |
 | | GET `/versions/{vid}/reality` | — | the snapshot: `{rules_version, frozen, data_label, tiles[], views:{rv1…rv7: {title, headline, callouts[], model, geometry, availability}}, legend}` |
 | | GET `/versions/{vid}/reality/export` | `?layout=a3\|slide` | single-file HTML Reality pack; 409 unless published with a green quality card |
 | Exports | GET `/versions/{vid}/export/{fmt}`, fmt = `md` · `json` · `csv` · `html` | | file; 409 unless published with a green quality card |

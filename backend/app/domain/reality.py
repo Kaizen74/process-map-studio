@@ -189,3 +189,96 @@ class Detection(BaseModel):
     rules_version: str
     discrepancies: list[DiscrepancyFound]
     intents: list[IntentEvaluationView]
+
+
+class DiscrepancyItemRecord(BaseModel):
+    """A `discrepancy_items` row: a location's persistent code and Eric's verdict (§3.17.6)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    engagement_id: str
+    code: str
+    location_key: str
+    title: str
+    first_version_id: str | None
+    verdict_decided: str | None
+    verdict_note: str
+    decision_owner_role_id: str | None
+    retired: bool
+
+
+class LocationView(BaseModel):
+    kind: str  # step · run · activity · order · design · process
+    keys: list[str]
+
+
+class FigureDelta(BaseModel):
+    value: float | None
+    unit: str
+    kind: str  # B.50
+    label: str
+
+
+class TypeDelta(FigureDelta):
+    type: str
+
+
+class VerdictView(BaseModel):
+    suggested: str | None
+    reason: str
+    decided: str | None
+    note: str
+    decision_owner_role_id: str | None
+
+
+class EvidenceCounts(BaseModel):
+    documents: int
+    interviews: int
+    system_cases: int | None
+
+
+class DiscrepancyView(BaseModel):
+    """One location's discrepancies (API_CONTRACT.md → Discrepancies)."""
+
+    item_id: str | None
+    code: str | None
+    status: str  # seen · not_seen
+    types: list[str]
+    location: LocationView
+    title: str
+    delta: FigureDelta | None
+    deltas: list[TypeDelta]
+    incidence: float | None
+    cases: int | None
+    hours_per_month: float
+    shown: bool
+    impact_class: str | None
+    impact_note: str
+    verdict: VerdictView | None
+    evidence: EvidenceCounts
+    element_ids: list[str]
+    intent_ids: list[str]
+
+
+class DiscrepanciesView(BaseModel):
+    rules_version: str
+    view: str
+    items: list[DiscrepancyView]
+    intents: list[IntentEvaluationView]
+
+
+class VerdictBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verdict: str | None = None
+    note: str = ""
+    decision_owner_role_id: str | None = None
+
+
+class VerdictDecided(BaseModel):
+    item_id: str
+    code: str
+    verdict_decided: str | None
+    verdict_note: str
+    decision_owner_role_id: str | None
