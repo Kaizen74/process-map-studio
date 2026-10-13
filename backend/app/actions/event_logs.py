@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
+from app.actions import settings as settings_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
 from app.db import session_scope
@@ -48,7 +49,6 @@ Enqueue = Callable[[str], None]
 
 IMPORT_JOB = "event_log_import"
 MAX_BYTES = 100 * 1024 * 1024
-DEFAULT_TIMEZONE = "Asia/Singapore"  # PRD §3.4 DEFAULT_TIMEZONE; the Settings card comes with R10
 MAX_TEXT = 120
 FIELDS = {f.value for f in SystemLogColumn}
 ONCE = FIELDS - {SystemLogColumn.CASE_ATTRIBUTE.value}
@@ -224,8 +224,9 @@ def _day(field_name: str, value: str) -> Result[str | None]:
         return _invalid(field_name, BAD_DATE)
 
 
-def _zone(value: str) -> Result[str]:
-    text = value.strip() or DEFAULT_TIMEZONE
+def _zone(value: str, default: str) -> Result[str]:
+    """The log's time zone; left empty, the one in Settings → Regional (R10)."""
+    text = value.strip() or default
     try:
         ZoneInfo(text)
     except (ZoneInfoNotFoundError, ValueError):
@@ -256,7 +257,7 @@ def upload_log(
         for result, key in (
             (_text(session, engagement_id, "name", name, "The name"), "name"),
             (_text(session, engagement_id, "system", system, "The system"), "system"),
-            (_zone(timezone), "timezone"),
+            (_zone(timezone, settings_action.default_timezone(config)), "timezone"),
             (_day("window_start", window_start), "window_start"),
             (_day("window_end", window_end), "window_end"),
         ):
@@ -376,7 +377,7 @@ def set_column_map(config: AppConfig, sessions: Sessions, log_id: str,
                 pass
         changes: dict[str, object] = {"column_map": columns, "status": "mapped"}
         if body.timezone is not None:
-            match _zone(body.timezone):
+            match _zone(body.timezone, settings_action.default_timezone(config)):
                 case Err() as err:
                     return err
                 case Ok(value=zone):

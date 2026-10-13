@@ -120,6 +120,10 @@ export const SETTINGS = {
   verifier_enabled: true,
   web_research_enabled: false,
   system_records_enabled: false,
+  gap_analysis_enabled: true,
+  value_enabled: false,
+  currency: "SGD",
+  default_timezone: "Asia/Singapore",
   key_set: false,
   key_last4: "",
 };

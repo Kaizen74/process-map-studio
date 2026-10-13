@@ -11,7 +11,7 @@ export interface EngagementStep {
   slug: string;
   optional?: boolean;
   /** The Settings switch an optional module's step needs (shown only while it is on). */
-  module?: keyof Pick<Settings, "system_records_enabled">;
+  module?: keyof Pick<Settings, "system_records_enabled" | "gap_analysis_enabled">;
   /** Build phase (PRD §6.3) in which the screen arrives; omitted once it is built. */
   arrives?: string;
 }
@@ -31,7 +31,13 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
   { key: "review", label: "Review", slug: "review" },
   { key: "published", label: "Published", slug: "published" },
   { key: "matrix", label: "Matrix", slug: "matrix" },
-  { key: "gap_analysis", label: "Gap analysis", slug: "gap-analysis", optional: true },
+  {
+    key: "gap_analysis",
+    label: "Gap analysis",
+    slug: "gap-analysis",
+    optional: true,
+    module: "gap_analysis_enabled",
+  },
   { key: "registers", label: "Registers", slug: "registers" },
   { key: "leadership", label: "Leadership", slug: "leadership" },
   { key: "exports", label: "Exports", slug: "exports" },

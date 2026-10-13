@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Mapping
+from zoneinfo import available_timezones
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -83,6 +84,10 @@ def _view(values: Mapping[str, str]) -> SettingsView:
         verifier_enabled=_flag(values["VERIFIER_ENABLED"]),
         web_research_enabled=_flag(values["WEB_RESEARCH_ENABLED"]),
         system_records_enabled=_flag(values["SYSTEM_RECORDS_ENABLED"]),
+        gap_analysis_enabled=_flag(values["GAP_ANALYSIS_ENABLED"]),
+        value_enabled=_flag(values["VALUE_ENABLED"]),
+        currency=values["CURRENCY"].strip().upper() or SETTING_DEFAULTS["CURRENCY"],
+        default_timezone=values["DEFAULT_TIMEZONE"].strip() or SETTING_DEFAULTS["DEFAULT_TIMEZONE"],
         key_set=bool(key),
         key_last4=settings_store.mask_key(key),
     )
@@ -296,11 +301,96 @@ TEST_SEARCH_SYSTEM = "Answer in one sentence using only the search results, with
 SEARCH_WORKS = "Web search works for your Anthropic organisation."
 
 
-def set_modules(config: AppConfig, system_records: bool | None) -> Result[SettingsView]:
-    """Switch optional modules on or off (decision A); off hides screens, never deletes data."""
-    if system_records is None:
-        return get_settings(config)
-    return _save(config, "SYSTEM_RECORDS_ENABLED", "true" if system_records else "false")
+MODULE_SETTINGS: Mapping[str, str] = {
+    "system_records_enabled": "SYSTEM_RECORDS_ENABLED",
+    "gap_analysis_enabled": "GAP_ANALYSIS_ENABLED",
+    "value_enabled": "VALUE_ENABLED",
+}
+BAD_CURRENCY = "Enter a three-letter currency code, for example SGD."
+BAD_ZONE = "Choose a time zone from the list, for example Asia/Singapore."
+_CURRENCY = re.compile(r"^[A-Z]{3}$")
+
+
+def _save_changes(
+    config: AppConfig,
+    changes: Mapping[str, str],
+    action: str,
+    target: str,
+    sessions: sessionmaker[Session] | None,
+) -> Result[SettingsView]:
+    """Write each changed setting, then one audit row naming what changed (before → after)."""
+    match effective_settings(config):
+        case Err() as err:
+            return err
+        case Ok(value=values):
+            pass
+    changed = {k: v for k, v in changes.items() if values[k] != v}
+    for name, value in changed.items():
+        match _save(config, name, value):
+            case Err() as err:
+                return err
+            case Ok():
+                pass
+    if changed and sessions is not None:
+        with session_scope(sessions) as session:
+            audit.record(
+                session, actor=values["OWNER_NAME"], action=action, target_type="settings",
+                target_id=target,
+                before={k: values[k] for k in changed}, after=dict(changed),
+            )  # fmt: skip
+    return get_settings(config)
+
+
+def set_modules(
+    config: AppConfig,
+    switches: Mapping[str, bool | None],
+    sessions: sessionmaker[Session] | None = None,
+) -> Result[SettingsView]:
+    """Switch optional modules on or off (decision A); off hides screens, never deletes data.
+    A switch left out (None) keeps its value."""
+    changes = {
+        MODULE_SETTINGS[field]: ("true" if on else "false")
+        for field, on in switches.items()
+        if on is not None
+    }
+    match effective_settings(config):
+        case Err() as err:
+            return err
+        case Ok(value=values):
+            pass
+    # Compare as on/off, so "1" and "true" count as the same value.
+    changes = {k: v for k, v in changes.items() if _flag(values[k]) != _flag(v)}
+    return _save_changes(config, changes, "Switched optional modules", "modules", sessions)
+
+
+def set_regional(
+    config: AppConfig,
+    currency: str | None,
+    default_timezone: str | None,
+    sessions: sessionmaker[Session] | None = None,
+) -> Result[SettingsView]:
+    """Currency for the value calculator and the time zone a new system log starts with."""
+    changes: dict[str, str] = {}
+    if currency is not None:
+        code = currency.strip().upper()
+        if not _CURRENCY.match(code):
+            return Err(ErrorKind.VALIDATION, BAD_CURRENCY, {"field": "currency"})
+        changes["CURRENCY"] = code
+    if default_timezone is not None:
+        zone = default_timezone.strip()
+        if zone not in available_timezones():
+            return Err(ErrorKind.VALIDATION, BAD_ZONE, {"field": "default_timezone"})
+        changes["DEFAULT_TIMEZONE"] = zone
+    return _save_changes(config, changes, "Changed regional settings", "regional", sessions)
+
+
+def default_timezone(config: AppConfig) -> str:
+    """The time zone a new system log starts with (Settings → Regional)."""
+    match effective_settings(config):
+        case Ok(value=values):
+            return values["DEFAULT_TIMEZONE"].strip() or SETTING_DEFAULTS["DEFAULT_TIMEZONE"]
+        case Err():
+            return SETTING_DEFAULTS["DEFAULT_TIMEZONE"]
 
 
 def set_research(config: AppConfig, enabled: bool) -> Result[SettingsView]:

@@ -19,6 +19,14 @@ export interface Settings {
   web_research_enabled: boolean;
   /** Optional module (R7, decision A): off until Eric switches it on. */
   system_records_enabled: boolean;
+  /** Optional module (R10, decision A): on by default, as before. */
+  gap_analysis_enabled: boolean;
+  /** Optional module (R10, decision A): the value calculator and step dispositions; off by default. */
+  value_enabled: boolean;
+  /** Settings → Regional (R10): an ISO 4217 code for the value calculator. */
+  currency: string;
+  /** Settings → Regional (R10): the time zone a new system log starts with. */
+  default_timezone: string;
   key_set: boolean;
   key_last4: string;
 }

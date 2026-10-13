@@ -37,10 +37,11 @@ Settings are stored in the private `.env` file in the app folder (never in the d
 ```json
 {"owner_name": "Owner", "model": "claude-opus-5-5", "effort": "high",
  "verifier_enabled": true, "web_research_enabled": false,
- "system_records_enabled": false,
+ "system_records_enabled": false, "gap_analysis_enabled": true, "value_enabled": false,
+ "currency": "SGD", "default_timezone": "Asia/Singapore",
  "key_set": true, "key_last4": "x9Q2"}
 ```
-`key_last4` is `""` when no key is set. `system_records_enabled` (R7, 2026-10-08; decision A): the optional System records module, **off** by default (`SYSTEM_RECORDS_ENABLED` in `.env`); while off its screen and nav item are hidden, and nothing is deleted.
+`key_last4` is `""` when no key is set. Optional modules (decision A; a module switched off hides its screens and never deletes data): `system_records_enabled` (R7, 2026-10-08), the System records module, **off** by default (`SYSTEM_RECORDS_ENABLED`); `gap_analysis_enabled` (R10, 2026-10-13), the Gap analysis screen, **on** by default as before (`GAP_ANALYSIS_ENABLED`); `value_enabled` (R10), the value calculator with step dispositions (the panel's "Disposition and value" section and the Registers' "Disposition and value" list), **off** by default (`VALUE_ENABLED`). Regional (R10): `currency`, an ISO 4217 code for the value calculator (`CURRENCY`, default `SGD`); `default_timezone`, the time zone a new system log starts with (`DEFAULT_TIMEZONE`, default `Asia/Singapore`).
 
 ### GET /api/settings
 Request: none. Response `200`: the settings object.
@@ -94,7 +95,10 @@ Used by: Settings screen, "Model" card.
 Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
 
 ### PUT /api/settings/modules (R7, 2026-10-08; PRD §5.4 Settings "Optional modules", decision A)
-Switches optional modules on or off. Request `{"system_records_enabled": true}` (R10 adds the gap analysis and value calculator switches to the same body; a field left out keeps its value). Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
+Switches optional modules on or off. Request any of `{"system_records_enabled": true, "gap_analysis_enabled": true, "value_enabled": true}` (a field left out keeps its value; R10 added the last two, 2026-10-13). Each change is written to the audit log. Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
+
+### PUT /api/settings/regional (R10, 2026-10-13; PRD §3.4 Settings item 9, §5.4 Settings "Regional")
+Request any of `{"currency": "SGD", "default_timezone": "Asia/Singapore"}` (a field left out keeps its value). `currency`: three letters A–Z after trimming, upper-cased (an ISO 4217 code; the app does not convert amounts, it only labels them). `default_timezone`: an IANA time zone the computer knows (Python `zoneinfo.available_timezones()`). Response `200`: the settings object. Errors: `422 VALIDATION` with the field named ("Enter a three-letter currency code, for example SGD." · "Choose a time zone from the list, for example Asia/Singapore."); `500 IO`. Used by: Settings screen, "Regional" card. The System records upload form starts with `default_timezone`; a log's own time zone can still be changed.
 
 ### POST /api/settings/test-web-search (phase P10)
 Checks that web search works for this key: one small search with a generic question ("published guidance on aircraft load control"), `max_uses` 1 (billed as one search by Anthropic). Mocked in tests. Response `200`: `{"available": true, "message": "Web search works for your Anthropic organisation."}`, or `available: false` with a plain message: no key saved; "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." (the organisation has web search switched off in the Claude Console: Anthropic answers 400 saying web search is not enabled); key rejected. Errors: `503 AI_RATE_LIMIT`; `500 IO` (Anthropic couldn't be reached).

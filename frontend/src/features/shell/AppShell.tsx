@@ -24,12 +24,14 @@ export function AppShell() {
       system_records: logs.data?.some((l) => l.status === "imported") ? "done" : "not_started",
     };
     const items: NavItem[] = visibleSteps(settings.data).map((step) => {
-      const count = step.module ? undefined : status.nav_counts[step.key as NavKey];
+      // Gap analysis has a switch (R10) and is also in the readiness nav; System records is not.
+      const inReadiness = step.key in status.nav;
+      const count = inReadiness ? status.nav_counts[step.key as NavKey] : undefined;
       return {
         key: step.key,
         label: step.label,
         to: engagementPath(id, step.key),
-        status: step.module ? (moduleStatus[step.key] ?? "not_started") : status.nav[step.key as NavKey],
+        status: inReadiness ? status.nav[step.key as NavKey] : (moduleStatus[step.key] ?? "not_started"),
         ...(count !== undefined ? { count } : {}),
         ...(step.optional ? { optional: true } : {}),
       };

@@ -13,6 +13,7 @@ from app.domain.models import (
     ModelUpdate,
     ModuleSettings,
     ProfileUpdate,
+    RegionalSettings,
     ResearchSetting,
     SettingsView,
     WebSearchTest,
@@ -64,7 +65,16 @@ def update_model(request: Request, body: ModelUpdate) -> SettingsView:
 
 @router.put("/modules")
 def set_modules(request: Request, body: ModuleSettings) -> SettingsView:
-    return unwrap(settings.set_modules(request.app.state.config, body.system_records_enabled))
+    state = request.app.state
+    return unwrap(settings.set_modules(state.config, body.model_dump(), state.sessions))
+
+
+@router.put("/regional")
+def set_regional(request: Request, body: RegionalSettings) -> SettingsView:
+    state = request.app.state
+    return unwrap(
+        settings.set_regional(state.config, body.currency, body.default_timezone, state.sessions)
+    )
 
 
 @router.put("/research")

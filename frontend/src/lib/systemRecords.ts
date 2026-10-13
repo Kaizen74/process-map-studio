@@ -371,6 +371,12 @@ export const TIME_ZONES: readonly string[] = [
   "UTC",
 ];
 
+/** The time-zone choices, with `current` added when it isn't in the short list (any IANA name works). */
+export function zoneOptions(current: string): { value: string; label: string }[] {
+  const zones = TIME_ZONES.includes(current) || !current ? TIME_ZONES : [current, ...TIME_ZONES];
+  return zones.map((z) => ({ value: z, label: z.replaceAll("_", " ") }));
+}
+
 export const LOG_STATUS_LABELS: Record<LogStatus, string> = {
   uploaded: "Uploaded: map the columns",
   mapped: "Columns mapped: ready to import",

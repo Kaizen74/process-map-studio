@@ -494,3 +494,12 @@ def test_the_time_zone_can_be_changed_in_the_column_step(engagement: Engagement)
     assert changed.json()["validation_report"]["date_from"] == "2026-03-02T06:49:00Z"
     bad = engagement.put(log["id"], "column-map", {**body, "timezone": "Mars/Olympus"})
     assert _error(bad) == (422, "VALIDATION", actions.BAD_ZONE)
+
+
+def test_a_new_log_starts_with_the_time_zone_in_settings(engagement: Engagement) -> None:
+    """R10: Settings → Regional sets the time zone a log gets when none is chosen."""
+    client = engagement.client
+    saved = client.put("/api/settings/regional", json={"default_timezone": "Europe/London"})
+    assert saved.status_code == 200, saved.text
+    assert engagement.upload().json()["timezone"] == "Europe/London"
+    assert engagement.upload(timezone="UTC").json()["timezone"] == "UTC"  # chosen wins

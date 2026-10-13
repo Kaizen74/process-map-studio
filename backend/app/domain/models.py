@@ -24,6 +24,10 @@ class SettingsView(BaseModel):
     verifier_enabled: bool
     web_research_enabled: bool
     system_records_enabled: bool
+    gap_analysis_enabled: bool
+    value_enabled: bool
+    currency: str
+    default_timezone: str
     key_set: bool
     key_last4: str
 
@@ -1036,6 +1040,17 @@ class ModuleSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     system_records_enabled: bool | None = None
+    gap_analysis_enabled: bool | None = None
+    value_enabled: bool | None = None
+
+
+class RegionalSettings(BaseModel):
+    """PUT /settings/regional (R10): a field left out keeps its value."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    currency: str | None = None
+    default_timezone: str | None = None
 
 
 # --- Step disposition (R9a; API_CONTRACT.md → Step disposition) --------------------------------

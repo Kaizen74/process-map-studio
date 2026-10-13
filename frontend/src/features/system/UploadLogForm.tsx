@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Button, Card, SelectField, TextField } from "../../components/common";
 import { fieldOf, messageOf } from "../../lib/errors";
-import { TIME_ZONES, type EventLog } from "../../lib/systemRecords";
+import { zoneOptions, type EventLog } from "../../lib/systemRecords";
+import { useSettings } from "../../hooks/useSettings";
 import { useUploadEventLog } from "../../hooks/useSystemRecords";
 
 /**
@@ -14,7 +15,10 @@ export function UploadLogForm({ engagementId, onUploaded }: { engagementId: stri
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [system, setSystem] = useState("");
-  const [zone, setZone] = useState("Asia/Singapore");
+  const settings = useSettings();
+  // Starts with Settings → Regional (R10) until Eric picks another zone for this log.
+  const [picked, setZone] = useState<string | null>(null);
+  const zone = picked ?? settings.data?.default_timezone ?? "Asia/Singapore";
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [missing, setMissing] = useState<string | null>(null);
@@ -87,7 +91,7 @@ export function UploadLogForm({ engagementId, onUploaded }: { engagementId: stri
           <SelectField
             label="Time zone"
             value={zone}
-            options={TIME_ZONES.map((z) => ({ value: z, label: z.replace("_", " ") }))}
+            options={zoneOptions(zone)}
             onChange={setZone}
             error={errorFor("timezone")}
           />

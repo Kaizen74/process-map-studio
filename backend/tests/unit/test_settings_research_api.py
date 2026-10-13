@@ -86,3 +86,41 @@ def test_the_system_records_module_is_off_by_default_and_switches(client: TestCl
     maybe = client.put("/api/settings/modules", json={"system_records_enabled": "maybe"})
     assert maybe.status_code == 422
     assert client.put("/api/settings/modules", json={"gap": True}).status_code == 422
+
+
+def test_gap_analysis_starts_on_value_starts_off_and_both_switch(client: TestClient) -> None:
+    """R10, decision A: gap analysis keeps its old default (on); the value calculator starts off."""
+    first = client.get("/api/settings").json()
+    assert (first["gap_analysis_enabled"], first["value_enabled"]) == (True, False)
+    both = client.put(
+        "/api/settings/modules", json={"gap_analysis_enabled": False, "value_enabled": True}
+    ).json()
+    assert (both["gap_analysis_enabled"], both["value_enabled"]) == (False, True)
+    assert both["system_records_enabled"] is False  # left out: unchanged
+    one = client.put("/api/settings/modules", json={"gap_analysis_enabled": True}).json()
+    assert (one["gap_analysis_enabled"], one["value_enabled"]) == (True, True)
+    bad = client.put("/api/settings/modules", json={"value_enabled": "maybe"})
+    assert bad.status_code == 422
+
+
+def test_regional_settings_validate_and_keep_what_is_left_out(client: TestClient) -> None:
+    """R10: Settings → Regional (PRD §3.4 item 9): an ISO 4217 code and an IANA time zone."""
+    saved = client.put("/api/settings/regional", json={"currency": " usd "})
+    assert saved.status_code == 200, saved.text
+    assert (saved.json()["currency"], saved.json()["default_timezone"]) == ("USD", "Asia/Singapore")
+    zone = client.put("/api/settings/regional", json={"default_timezone": "Europe/London"}).json()
+    assert (zone["currency"], zone["default_timezone"]) == ("USD", "Europe/London")
+    bad_code = "Enter a three-letter currency code, for example SGD."
+    bad_zone = "Choose a time zone from the list, for example Asia/Singapore."
+    for body, field, message in (
+        ({"currency": "dollars"}, "currency", bad_code),
+        ({"currency": "S1D"}, "currency", bad_code),
+        ({"default_timezone": "Mars/Olympus"}, "default_timezone", bad_zone),
+    ):
+        refused = client.put("/api/settings/regional", json=body)
+        assert refused.status_code == 422
+        error = refused.json()["error"]
+        assert (error["details"]["field"], error["message"]) == (field, message)
+    assert client.put("/api/settings/regional", json={"locale": "en"}).status_code == 422
+    after = client.get("/api/settings").json()
+    assert (after["currency"], after["default_timezone"]) == ("USD", "Europe/London")

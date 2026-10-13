@@ -66,6 +66,8 @@ export function GapScreen() {
       { replace: true },
     );
   const researchOn = settings.data?.web_research_enabled ?? false;
+  // R10 (decision A): on by default; switched off, the screen says so and keeps every analysis.
+  const gapOn = settings.data?.gap_analysis_enabled !== false;
   const settingsLink = <Link to="/settings">Turn it on in Settings</Link>;
 
   const runInternal = () =>
@@ -90,8 +92,14 @@ export function GapScreen() {
           unless you decide so.
         </p>
       </div>
-      {versions.isPending && <Skeleton height="160px" />}
-      {versions.isError && (
+      {settings.isSuccess && !settings.data.gap_analysis_enabled && (
+        <EmptyState
+          message="Gap analysis is switched off. Switch it on under Optional modules in Settings to compare this map with your sources or with published practice. Earlier analyses are kept."
+          action={<Link to="/settings">Go to Settings</Link>}
+        />
+      )}
+      {gapOn && versions.isPending && <Skeleton height="160px" />}
+      {gapOn && versions.isError && (
         <ErrorState
           title="The maps couldn't be loaded"
           message={messageOf(versions.error)}
@@ -99,13 +107,13 @@ export function GapScreen() {
           onRetry={() => void versions.refetch()}
         />
       )}
-      {versions.isSuccess && !map && (
+      {gapOn && versions.isSuccess && !map && (
         <EmptyState
           message="Make a draft map first. A gap analysis compares a map with your sources or with published practice."
           action={<Link to={engagementPath(engagementId, "draft")}>Go to Draft</Link>}
         />
       )}
-      {map && (
+      {gapOn && map && (
         <>
           {maps.length > 1 && (
             <div className="gap__version">

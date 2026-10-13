@@ -7,7 +7,10 @@ import {
   saveModel,
   saveProfile,
   saveModules,
+  saveRegional,
   saveResearch,
+  type ModuleSwitches,
+  type RegionalUpdate,
   testConnection,
   testWebSearch,
 } from "../api/settings";
@@ -42,8 +45,9 @@ export const useSaveModel = () => useSettingsMutation((update: ModelUpdate) => s
 
 export const useSaveResearch = () => useSettingsMutation((enabled: boolean) => saveResearch(enabled));
 
-export const useSaveModules = () =>
-  useSettingsMutation((modules: { system_records_enabled?: boolean }) => saveModules(modules));
+export const useSaveModules = () => useSettingsMutation((modules: ModuleSwitches) => saveModules(modules));
+
+export const useSaveRegional = () => useSettingsMutation((regional: RegionalUpdate) => saveRegional(regional));
 
 /** One small search (billed as one search); the AI usage list gains the call. */
 export function useTestWebSearch() {
