@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel
@@ -32,9 +33,11 @@ class DataRequestDocument(BaseModel):
     retention: str
 
 
-class LogEvent(BaseModel):
+@dataclass(slots=True)
+class LogEvent:
     """One event of an imported log (§3.13.1): never a user ID; the resource is already a role
-    (or none) by the time an event exists (constraint 24)."""
+    (or none) by the time an event exists (constraint 24). A plain dataclass, not a model: a
+    500,000-event log makes half a million of them (R12), and they never leave the backend."""
 
     case_id: str
     activity: str
@@ -42,7 +45,7 @@ class LogEvent(BaseModel):
     end: str | None = None
     role: str | None = None
     system: str = ""
-    attributes: dict[str, str] = {}
+    attributes: dict[str, str] = field(default_factory=dict)
 
 
 class DroppedRows(BaseModel):
@@ -71,7 +74,8 @@ class ValidationReport(BaseModel):
     refusal: str
 
 
-class ParsedLog(BaseModel):
+@dataclass(slots=True)
+class ParsedLog:
     events: list[LogEvent]
     report: ValidationReport
 

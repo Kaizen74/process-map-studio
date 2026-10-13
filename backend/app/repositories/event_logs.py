@@ -80,6 +80,13 @@ def add_events(session: Session, log_id: str, events: list[dict[str, Any]]) -> i
     return len(events)
 
 
+def delete_events(session: Session, log_id: str) -> None:
+    """The log's events and figures (an import that didn't finish, R12)."""
+    session.execute(delete_rows(Event).where(Event.log_id == log_id))
+    session.execute(delete_rows(MiningMetric).where(MiningMetric.log_id == log_id))
+    session.flush()
+
+
 def event_count(session: Session, log_id: str) -> int:
     return int(session.scalar(select(func.count()).where(Event.log_id == log_id)) or 0)
 

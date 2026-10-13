@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -193,7 +195,7 @@ def test_the_fixture_imports_cleanly_with_roles_and_no_resource_codes() -> None:
     assert not report.refused and report.refusal == ""
     assert {e.role for e in parsed.events} == {"Load controller", "Ramp"}
     assert {e.system for e in parsed.events} == {"DCS"}
-    stored = json.dumps([e.model_dump() for e in parsed.events])
+    stored = json.dumps([dataclasses.asdict(e) for e in parsed.events])
     assert not any(code in stored for code in ROLE_MAP)  # constraint 24
     assert all(e.end for e in parsed.events)
     by_case = [e.case_id for e in parsed.events]
@@ -411,3 +413,45 @@ def test_fixture_a11_metrics_match_appendix_a11() -> None:
     assert too_few == 1 and all(r.case_count >= 5 for r in shown)  # variant 4: 4 cases
     assert set(_scope(rows, "role")) == {"Load controller", "Ramp"}
     assert not any(code in json.dumps([r.model_dump() for r in rows]) for code in ROLE_MAP)
+
+
+# --- R12: the fast timestamp reader gives exactly what strptime gives ---------------------------
+
+
+def _strptime_or_none(value: str, fmt: str) -> datetime | None:
+    try:
+        return datetime.strptime(value, fmt)
+    except ValueError:
+        return None
+
+
+def test_the_fast_timestamp_reader_matches_strptime_exactly() -> None:
+    import random
+
+    rng = random.Random(12)
+    pieces = ["2026", "0999", "26", "1", "01", "12", "13", "0", "00", "9", "09", "23", "24", "29",
+              "30", "31", "59", "60", "61", "7", " 7", "x", ""]  # fmt: skip
+    seps = ["-", "/", ".", " ", "  ", "T", "t", ":", "\t", ""]
+    values = [
+        "2026-03-02 06:49:00", "2026-3-2 6:9:0", "2026-02-29 10:00", "2024-02-29 10:00",
+        "2026-04-31 10:00:00", "2026-03-02  06:49:00", "2026-03-02 06:49:00 ", " 2026-03-02 06:49",
+        "02/03/2026 06:49", "2/3/2026 6:49:05", "13/13/2026 06:49", "31.12.2026 23:59:59",
+        "2026-03-02T06:49:60", "2026-03-02t06:49:00", "02-03-2026 06:49", "2026-03-02",
+    ]  # fmt: skip
+    for _ in range(4000):
+        parts = [rng.choice(pieces) for _ in range(6)]
+        values.append("".join(p + rng.choice(seps) for p in parts).rstrip())
+    for fmt in mining.FORMATS:
+        for value in values:
+            assert mining._try(value, fmt) == _strptime_or_none(value, fmt), (fmt, value)
+
+
+def test_utc_stamps_are_written_and_read_back_exactly() -> None:
+    for moment in (datetime(2026, 3, 2, 6, 49, tzinfo=ZoneInfo("Asia/Singapore")),
+                   datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC),
+                   datetime(2026, 3, 29, 2, 30, tzinfo=ZoneInfo("Europe/London"))):  # fmt: skip
+        stamp = mining._utc(moment)
+        assert stamp == moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert mining._moment(stamp) == datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=UTC
+        )

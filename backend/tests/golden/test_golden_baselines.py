@@ -17,6 +17,7 @@
   any stated reason), its know-how and stories; the glossary, the capability notes and the
   coverage report with its follow-up questions and probes.
 - G9: the three standard interview templates (PRD Appendix F.9) in Markdown, as downloaded.
+- G10: the system-records outputs from fixture A.11 (P10b R12; `test_golden_g10.py`).
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
 first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the

@@ -109,7 +109,7 @@ def _run_guide(config: AppConfig, sessions: Sessions, job: JobView) -> None:
 def _run_import(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     try:
         result = event_logs.run_import(config, sessions, job.id)
-    except Exception as exc:  # nothing was saved: the events are written in one transaction
+    except Exception as exc:  # the events saved so far are removed by mark_failed (R12)
         log.exception("System log import job %s failed", job.id)
         event_logs.mark_failed(sessions, job.target_id or "")
         result = Err(ErrorKind.IO, event_logs.UNEXPECTED, {"type": type(exc).__name__})

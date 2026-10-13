@@ -37,6 +37,7 @@ from app.domain.system_records import (
     ParsedLog,
     ResourceRow,
     RoleMapInput,
+    ValidationReport,
 )
 from app.repositories import audit
 from app.repositories import engagements as engagements_repo
@@ -99,6 +100,10 @@ class _Held:
     rows: list[dict[str, str]]
     timestamp_format: str | None = None
     role_map: dict[str, str | None] = field(default_factory=dict)
+    # The last report and the settings it was worked out with (R12): Start doesn't read a
+    # 500,000-row file again when nothing changed since the last step.
+    report_key: tuple[object, ...] | None = None
+    report: ValidationReport | None = None
 
 
 _HELD: dict[str, _Held] = {}
@@ -179,10 +184,21 @@ def _parse(held: _Held, log: EventLogView, roles: list[RoleView]) -> ParsedLog:
     )  # fmt: skip
 
 
+def _report_of(held: _Held, log: EventLogView, roles: list[RoleView]) -> ValidationReport:
+    """The validation report for the file as it is mapped now, remembered with what it depends
+    on, so it is worked out once per change."""
+    key = (tuple(log.column_map.items()), log.timezone, log.window_start, log.window_end,
+           held.timestamp_format, tuple(sorted(held.role_map.items(), key=str)),
+           tuple((r.id, r.name, tuple(r.aliases)) for r in roles))  # fmt: skip
+    if held.report is None or held.report_key != key:
+        held.report, held.report_key = _parse(held, log, roles).report, key
+    return held.report
+
+
 def _refresh(session: Session, log: EventLogView, held: _Held) -> EventLogView:
     """Store the new preview report (counts only)."""
     roles = engagements_repo.list_roles(session, log.engagement_id)
-    report = _parse(held, log, roles).report
+    report = _report_of(held, log, roles)
     return repo.update(session, log.id, {"validation_report": report.model_dump()})
 
 
@@ -447,7 +463,7 @@ def start_import(sessions: Sessions, log_id: str, body: ImportInput,
         left = [r for r in _resources(held, log.column_map, roles) if r.value not in held.role_map]
         if left:
             return _invalid("roles", UNMAPPED.format(n=len(left)))
-        report = _parse(held, log, roles).report
+        report = _report_of(held, log, roles)
         if report.refused:
             return Err(ErrorKind.VALIDATION, report.refusal, api_code="IMPORT_REFUSED")
         repo.update(session, log_id, {"approved_by_role": approver})
@@ -458,8 +474,24 @@ def start_import(sessions: Sessions, log_id: str, body: ImportInput,
     return Ok(ImportStarted(job_id=job.id, log_id=log_id))
 
 
+BATCH = 25_000  # events saved per transaction: the screen can read the job's progress between
+
+
+def _progress(sessions: Sessions, job_id: str, stage: str, progress: float, message: str) -> None:
+    """The import job's stage, share done and message, saved on their own so the screen sees
+    them while the import runs (R12; criterion 94)."""
+    with session_scope(sessions) as session:
+        jobs_repo.update(session, job_id, stage=stage, progress=round(progress, 3),
+                         message=message)  # fmt: skip
+
+
 def run_import(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]:
-    """The import job: events with roles only, the final report, then the file is forgotten."""
+    """The import job: events with roles only, the final report, then the file is forgotten.
+
+    Reading and the figures are worked out first; the events are then saved in batches with
+    progress after each, and the log becomes `imported` only in the last step. If anything
+    fails part-way, `mark_failed` removes the events saved so far, so a failed import leaves
+    none (R12)."""
     with session_scope(sessions) as session:
         job = jobs_repo.get(session, job_id)
         log = repo.get(session, job.target_id or "") if job else None
@@ -467,23 +499,38 @@ def run_import(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str
             return Err(ErrorKind.NOT_FOUND, LOG_MISSING)
         held = _held(log.id)
         if held is None:
+            repo.delete_events(session, log.id)  # anything left by an import that was cut off
             repo.update(session, log.id, {"status": "failed"})
             return Err(ErrorKind.CONFLICT, FILE_GONE)
         roles = engagements_repo.list_roles(session, log.engagement_id)
-        parsed = _parse(held, log, roles)
-        if parsed.report.refused:
+    _progress(sessions, job_id, "reading", 0.05, "Reading the extract and turning user IDs "
+              "into roles.")  # fmt: skip
+    parsed = _parse(held, log, roles)
+    if parsed.report.refused:
+        with session_scope(sessions) as session:
             failed = {"status": "failed", "validation_report": parsed.report.model_dump()}
             repo.update(session, log.id, failed)
-            _forget(log.id)
-            return Err(ErrorKind.VALIDATION, parsed.report.refusal)
-        by_name = {r.name: r.id for r in roles}
-        count = repo.add_events(session, log.id, [
-            {"case_id": e.case_id, "activity": e.activity, "ts_start": e.start, "ts_end": e.end,
-             "role_id": by_name.get(e.role) if e.role else None, "case_attributes": e.attributes}
-            for e in parsed.events
-        ])  # fmt: skip
-        repo.add_metrics(session, log.id, mining.metrics(parsed.events, log.timezone))
-        report = parsed.report
+        _forget(log.id)
+        return Err(ErrorKind.VALIDATION, parsed.report.refusal)
+    total = len(parsed.events)
+    _progress(sessions, job_id, "figures", 0.25, f"Working out the figures from {total:,} events.")
+    figures = mining.metrics(parsed.events, log.timezone)
+    by_name = {r.name: r.id for r in roles}
+    count = 0
+    for first in range(0, total, BATCH):
+        batch = parsed.events[first : first + BATCH]
+        with session_scope(sessions) as session:
+            count += repo.add_events(session, log.id, [
+                {"case_id": e.case_id, "activity": e.activity, "ts_start": e.start,
+                 "ts_end": e.end, "role_id": by_name.get(e.role) if e.role else None,
+                 "case_attributes": e.attributes}
+                for e in batch
+            ])  # fmt: skip
+        _progress(sessions, job_id, "saving", 0.35 + 0.6 * count / total,
+                  f"Saving events: {count:,} of {total:,}.")  # fmt: skip
+    report = parsed.report
+    with session_scope(sessions) as session:
+        repo.add_metrics(session, log.id, figures)
         repo.update(session, log.id, {"status": "imported", "approved_at": _now(),
                                       "validation_report": report.model_dump()})  # fmt: skip
         audit.record(
@@ -497,9 +544,11 @@ def run_import(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str
 
 
 def mark_failed(sessions: Sessions, log_id: str) -> None:
-    """After an unexpected error in the import job: the log is failed and the file let go."""
+    """After an unexpected error in the import job: the log is failed, the events saved so far
+    are removed and the file is let go."""
     with session_scope(sessions) as session:
         if repo.get(session, log_id) is not None:
+            repo.delete_events(session, log_id)
             repo.update(session, log_id, {"status": "failed"})
     _forget(log_id)
 
