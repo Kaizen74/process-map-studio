@@ -22,9 +22,14 @@ from app.domain.models import (
 INTERVIEW = {SourceKind.INTERVIEW_TRANSCRIPT.value}
 # Written accounts of the process. Executed artefacts also count as documents for agreement and
 # have their own rule (trace_contradicted). Job descriptions count only for RACI and decision
-# rights (constraint 4).
+# rights (constraint 4). Working spreadsheets and email threads are artefacts too (criterion 92,
+# R11): traces of work as done.
 DOCUMENTS = {SourceKind.SOP.value, SourceKind.MANUAL.value, SourceKind.OTHER.value}
-ARTEFACTS = {SourceKind.EXECUTED_ARTEFACT.value}
+ARTEFACTS = {
+    SourceKind.EXECUTED_ARTEFACT.value,
+    SourceKind.WORKING_SPREADSHEET.value,
+    SourceKind.EMAIL_THREAD.value,
+}
 JOB_DESCRIPTIONS = {SourceKind.JOB_DESCRIPTION.value}
 COUNTED = INTERVIEW | DOCUMENTS | ARTEFACTS
 

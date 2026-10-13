@@ -46,6 +46,10 @@ STATES = [
     ("not_assessed: no counted source addresses it", [(I_, N), (SOP_, N)]),
     ("not_assessed: only a job description mentions it", [(JD, S)]),
     ("practiced_only: an 'other' document silent", [(I_, S), (OTHER, N)]),
+    # R11 (criterion 92): working spreadsheets and email threads are artefacts, traces of work.
+    ("trace_contradicted: a working spreadsheet", [(I_, S), (SOP_, S), ("working_spreadsheet", C)]),
+    ("trace_contradicted: an email thread", [(SOP_, S), ("email_thread", C)]),
+    ("corroborated: a supporting email thread", [(I_, S), ("email_thread", S)]),
 ]
 
 

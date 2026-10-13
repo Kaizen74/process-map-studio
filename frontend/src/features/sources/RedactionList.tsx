@@ -58,7 +58,7 @@ export function RedactionList({ engagementId }: { engagementId: string }) {
             />
           )}
           {terms.isSuccess && terms.data.length === 0 && (
-            <p className="inline-note">No names yet. Speaker names are added when a transcript is read.</p>
+            <p className="inline-note">No names yet. Speaker names are added when a transcript is read, and people named in an email when it is read.</p>
           )}
           {terms.isSuccess && terms.data.length > 0 && (
             <ul className="name-list" aria-label="Names hidden in this engagement">
@@ -68,6 +68,7 @@ export function RedactionList({ engagementId }: { engagementId: string }) {
                     {item.term} <span className="name-list__shown">→ shown as {item.replacement || "[name]"}</span>
                   </span>
                   {item.origin === "speaker_map" && <span className="name-list__tag">from speaker label</span>}
+                  {item.origin === "email_header" && <span className="name-list__tag">from an email</span>}
                   <button
                     type="button"
                     className="chip-field__remove"

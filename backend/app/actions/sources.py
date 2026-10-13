@@ -49,10 +49,10 @@ Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
 
 MAX_BYTES = 50 * 1024 * 1024
-FORMATS = {"docx", "pdf", "txt", "vtt", "srt"}
+FORMATS = {"docx", "pdf", "txt", "vtt", "srt", "xlsx", "csv", "eml"}
 READ_JOB = "read_source"
 SOURCE_MISSING = "That source doesn't exist. It may have been deleted."
-BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files."
+BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files."
 TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again."
 EMPTY = "The file is empty."
 BAD_KIND = "Please choose what kind of source this is."
@@ -65,6 +65,10 @@ _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 def guess_kind(filename: str) -> SourceKind:
     """A sensible default kind from the file name; Eric can change it in the registry."""
     name = filename.lower()
+    if name.endswith((".xlsx", ".csv")):
+        return SourceKind.WORKING_SPREADSHEET
+    if name.endswith(".eml"):
+        return SourceKind.EMAIL_THREAD
     if name.endswith((".vtt", ".srt")) or "transcript" in name or "interview" in name:
         return SourceKind.INTERVIEW_TRANSCRIPT
     if (
@@ -135,6 +139,12 @@ def _parse(info: SourceReadInfo) -> Result[ParsedDocument]:
         return parsing.parse_vtt(path)
     if info.format == "srt":
         return parsing.parse_srt(path)
+    if info.format == "xlsx":  # spreadsheets and emails (R11) are read the same whatever the kind
+        return parsing.parse_xlsx(path)
+    if info.format == "csv":
+        return parsing.parse_csv(path)
+    if info.format == "eml":
+        return parsing.parse_eml(path)
     if info.format == "txt":
         return (
             parsing.parse_transcript_text(path) if transcript else parsing.parse_text_document(path)
@@ -271,6 +281,15 @@ def read_source(config: AppConfig, sessions: Sessions, source_id: str) -> Result
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
         repo.replace_segments(session, source_id, segments)
         repo.set_read_result(session, source_id, status="ready", ocr_pages=document.ocr_pages)
+        for hidden in _people_to_hide(document.hidden_names, known_roles):  # email headers (R11)
+            if redaction_repo.find(session, info.engagement_id, hidden, NAME_ORIGINS) is None:
+                redaction_repo.add(
+                    session,
+                    engagement_id=info.engagement_id,
+                    term=hidden,
+                    replacement=DEFAULT_REPLACEMENT,
+                    origin="email_header",
+                )
         for name in names:
             if redaction_repo.find(session, info.engagement_id, name, NAME_ORIGINS) is None:
                 redaction_repo.add(
@@ -302,6 +321,14 @@ def read_source(config: AppConfig, sessions: Sessions, source_id: str) -> Result
                     caption=f"Image from {info.filename}, page {image.page}",
                 )
     return Ok(f"Read {len(segments)} passages.")
+
+
+def _people_to_hide(names: list[str], known_roles: frozenset[str]) -> list[str]:
+    """From an email's headers: every address, and each display name that looks like a person's
+    name ("Tan, Wei Ming"), not a team or one of the engagement's roles ("Load Control")."""
+    return [
+        n for n in names if "@" in n or parsing.looks_like_name(n.replace(",", " "), known_roles)
+    ]
 
 
 def mark_unreadable(sessions: Sessions, source_id: str, message: str) -> None:
@@ -559,7 +586,8 @@ def map_speakers(
             interviewer = target == "interviewer"
             role_id = None if target is None or interviewer else target
             repo.map_speaker(session, source_id, label, role_id=role_id, is_interviewer=interviewer)
-            if parsing.looks_like_name(label, known):
+            on_list = redaction_repo.find(session, source.engagement_id, label, NAME_ORIGINS)
+            if parsing.looks_like_name(label, known) or on_list is not None:
                 shown = (
                     "Interviewer" if interviewer else roles.get(role_id or "", DEFAULT_REPLACEMENT)
                 )

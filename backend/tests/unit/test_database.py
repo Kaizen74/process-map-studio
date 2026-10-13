@@ -377,7 +377,7 @@ def test_rows_get_uuid_ids_and_utc_timestamps(migrated: Path) -> None:
 # intent guardrails change what the app does, so they wait for P13a; the vocabularies B.44-B.50
 # exist already (unused).
 PENDING_VALUES: dict[str, set[str]] = {
-    "B.1": {"group_notes", "working_spreadsheet", "email_thread", "policy_or_charter"},
+    "B.1": {"group_notes", "policy_or_charter"},  # working_spreadsheet, email_thread: R11
     "B.20": {"IX1", "IXV"},
     # B.22 hidden_work … measured_rework were added with P10b R6 (2026-10-08).
 }  # B.34 system_trace was added with P10b R5b (2026-10-07)

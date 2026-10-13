@@ -15,6 +15,7 @@ from app.services.signal import signal_strength
         (["interview_transcript", "job_description"], "moderate", 2),
         (["interview_transcript", "executed_artefact"], "moderate", 2),
         (["interview_transcript", "other"], "moderate", 2),
+        (["interview_transcript", "working_spreadsheet", "email_thread"], "moderate", 2),
         (["interview_transcript"], "limited", 1),
         (["interview_transcript", "interview_transcript"], "limited", 1),
     ],

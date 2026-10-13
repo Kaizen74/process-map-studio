@@ -195,6 +195,8 @@ class ParsedDocument(BaseModel):
     # PDF pages with under 50 characters of text: sent to OCR (S0) from phase P3.
     ocr_pages: list[int] = []
     page_count: int | None = None
+    # Names and addresses from an email's headers (R11): added to the redaction terms on reading.
+    hidden_names: list[str] = []
 
 
 class ExtractedImage(BaseModel):

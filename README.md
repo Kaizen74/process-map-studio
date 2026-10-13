@@ -48,6 +48,7 @@ Your key is stored only on this computer, never in GitHub.
 - **Stop:** close that small window.
 - **Interview templates:** on the home screen, **Interview templates** → choose Landscape, Practice or Follow-up → **Download Word** (or **Download Markdown**). No engagement is needed. They are also on each engagement's **Interview** screen. How to use the question IDs during an interview is in [GUIDE.md](GUIDE.md).
 - **Tailored interview guides:** open the engagement → **Interview** → **Guide** tab → **Add interviewee** (a role or group, never a name) → **Make guide** → **Download Word** (or **Download Markdown**). The guide is the standard template with the header, the opener and extra probes filled in from the engagement; the question IDs and minutes stay the same. **Edit guide** lets you change the wording before you download it.
+- **Sources you can add:** Word (.docx), PDF, text (.txt), caption files (.vtt, .srt), spreadsheets (.xlsx, .csv) and saved emails (.eml), up to 50 MB each. To save an email: in Gmail open it → **More** (⋮) → **Download message**; in Outlook for Mac drag the email to your desktop. Classic Outlook for Windows saves emails only as .msg, which the app doesn't read: print the email to PDF and upload the PDF instead.
 - **Use:** see [GUIDE.md](GUIDE.md) for how to set up an engagement, upload sources, review and publish.
 
 ## Update to the latest version
@@ -84,7 +85,8 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 | The browser doesn't open after Start | Open your browser and go to http://127.0.0.1:8000 |
 | "Port already in use" | The app is already running. Look for its window, or restart your computer and start again |
 | "Your API key was rejected" | Copy a fresh key from platform.claude.com → paste it in Settings → Test connection |
-| A file won't upload ("reads .docx, .pdf, .txt, .vtt and .srt files" or "larger than 50 MB") | Save the file as Word (.docx) or PDF, or split a very large file into parts, then upload again |
+| A file won't upload ("reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files" or "larger than 50 MB") | Save the file as Word (.docx), PDF or Excel (.xlsx), or split a very large file into parts, then upload again. An Outlook .msg email: print it to PDF and upload the PDF |
+| A spreadsheet says "more than 5,000 filled rows" | If it is an export from a system, import it on the **System records** screen instead. Otherwise save a copy with only the rows that matter and upload that |
 | A file stays at "Reading…" for more than a minute | Close the app's window and start it again. It finishes any reading that was interrupted when it starts |
 | A person's name shows somewhere it shouldn't | On the Sources screen, add the name (and any nickname) under **Names to hide**. It is hidden everywhere except that list, the speaker mapping and the correction editor |
 | Drafting stops with an error | Click **Copy details** on the error, open Claude Code in the app folder, paste the Bug-fix prompt from the PRD and the copied details |

@@ -45,7 +45,12 @@ Sessions = sessionmaker[Session]
 STAGE_ID = "GA_internal"
 VERIFY_STAGE = "GA_verify"
 DIVERGENT_STATES = ("contested", "documented_only", "practiced_only", "trace_contradicted")
-PRACTICE_KINDS = ("interview_transcript", "executed_artefact")
+PRACTICE_KINDS = (
+    "interview_transcript",
+    "executed_artefact",
+    "working_spreadsheet",
+    "email_thread",
+)
 SIDES = ("documents", "practice")
 INTERVIEW = "interview_transcript"
 NO_VERDICT = "the verifier gave no verdict for this finding"
@@ -67,7 +72,8 @@ STAGE_NAMES = {STAGE_ID: "Explaining the differences", VERIFY_STAGE: "Independen
 
 
 def side_of(source_kind: str) -> str:
-    """Interviews and executed artefacts show practice; SOPs, manuals, JDs and others document."""
+    """Interviews and artefacts (executed artefacts, working spreadsheets, email threads) show
+    practice; SOPs, manuals, JDs and others document."""
     return "practice" if source_kind in PRACTICE_KINDS else "documents"
 
 

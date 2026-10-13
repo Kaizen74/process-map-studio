@@ -234,7 +234,7 @@ export interface RedactionTerm {
   engagement_id: string;
   term: string;
   replacement: string;
-  origin: "speaker_map" | "manual" | string;
+  origin: "speaker_map" | "email_header" | "manual" | string;
 }
 
 // --- Jobs and drafting (API_CONTRACT.md → Jobs, Draft) — phase P3 ---------------------------

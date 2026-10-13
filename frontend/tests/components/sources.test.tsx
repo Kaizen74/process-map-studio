@@ -91,7 +91,7 @@ describe("Sources: upload", () => {
     sourcesApi([]);
     renderApp(PATH);
     expect(await screen.findByRole("heading", { level: 1, name: "Sources" })).toBeInTheDocument();
-    expect(screen.getByText(".docx .pdf .txt .vtt .srt")).toBeInTheDocument();
+    expect(screen.getByText(".docx .pdf .txt .vtt .srt .xlsx .csv .eml")).toBeInTheDocument();
     expect(await screen.findByText(/Add the interview transcript and at least one SOP to start/)).toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe("Sources: upload", () => {
     await screen.findByText(/Add the interview transcript/);
     fireEvent.change(fileInput(), { target: { files: [new File(["x"], "photo.png")] } });
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Not uploaded. Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files.");
+    expect(alert).toHaveTextContent("Not uploaded. Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files.");
     expect(screen.getByText("photo.png")).toBeInTheDocument();
     expect(calls.some((c) => c.key.startsWith("POST"))).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Dismiss the message about photo.png" }));

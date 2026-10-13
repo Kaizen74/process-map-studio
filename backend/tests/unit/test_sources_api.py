@@ -177,7 +177,7 @@ def test_a_damaged_file_is_kept_and_marked_failed(client: TestClient, engagement
 @pytest.mark.parametrize(
     ("name", "content", "form", "message"),
     [
-        ("plan.xlsx", b"x", {}, source_actions.BAD_FORMAT),
+        ("plan.xls", b"x", {}, source_actions.BAD_FORMAT),
         ("sop.docx", b"", {}, source_actions.EMPTY),
         ("sop.docx", b"x", {"kind": "spreadsheet"}, source_actions.BAD_KIND),
         ("sop.docx", b"x", {"version_date": "1 March"}, source_actions.BAD_DATE),

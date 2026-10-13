@@ -15,6 +15,8 @@ class SourceKind(StrEnum):
     MANUAL = "manual"
     JOB_DESCRIPTION = "job_description"
     EXECUTED_ARTEFACT = "executed_artefact"
+    WORKING_SPREADSHEET = "working_spreadsheet"
+    EMAIL_THREAD = "email_thread"
     OTHER = "other"
 
 

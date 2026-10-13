@@ -48,6 +48,8 @@ SOURCE_KINDS = {
     "manual": "Manual",
     "job_description": "Job description",
     "executed_artefact": "Executed artefact",
+    "working_spreadsheet": "Working spreadsheet",
+    "email_thread": "Email thread",
     "other": "Document",
 }
 STATES = {
