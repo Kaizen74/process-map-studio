@@ -245,3 +245,14 @@ def activity_spans(session: Session, log_id: str, activity: str) -> list[tuple[s
     for case_id, start, end in rows:
         first.setdefault(case_id, (start, end or start))
     return list(first.values())
+
+
+def move_alignment(session: Session, successors: dict[str, str]) -> None:
+    """Point Eric's alignment decisions on each step at its successor (a refresh replacing an
+    unreviewed step with a fresh one of the same key)."""
+    rows = session.scalars(
+        select(ActivityAlignment).where(ActivityAlignment.element_id.in_(list(successors)))
+    )
+    for row in rows:
+        row.element_id = successors[row.element_id or ""]
+    session.flush()

@@ -263,3 +263,27 @@ def test_alignment_needs_an_imported_log_and_a_map(settings_config: AppConfig) -
             409, "NOT_IMPORTED",
         )  # fmt: skip
         assert client.get("/api/event-logs/nope/alignment").status_code == 404
+
+
+def test_erics_decisions_survive_a_refresh(aligned: tuple[Drafted, str]) -> None:
+    """A refresh gives the steps Eric hasn't reviewed fresh IDs; his confirmed alignment follows
+    each step to its fresh successor with the same key (constraint 8: his decisions are never
+    lost to a re-run)."""
+    d, lid = aligned
+    rows = [{"activity": a, "element_id": d.ids[s], "status": "confirmed"}
+            for a, s in EXPECTED.items()]  # fmt: skip
+    rows.append({"activity": "Manual weight override", "element_id": None, "status": "hidden_work"})
+    rows += [{"activity": "", "element_id": d.ids[s], "status": "no_system_record"}
+             for s in UNRECORDED]  # fmt: skip
+    assert put(d, lid, *rows).status_code == 200
+
+    def decisions() -> list[tuple[str, str | None, str, bool]]:
+        return sorted((r["activity"], r["element_label"], r["status"], r["confirmed"])
+                      for r in table(d, lid)["rows"])  # fmt: skip
+
+    before = decisions()
+    assert d.client.post(f"/api/versions/{d.version_id}/refresh").status_code == 202
+    wait_for_jobs(d.client)
+    after = decisions()
+    assert after == before
+    assert table(d, lid)["summary"]["waiting"] == 0

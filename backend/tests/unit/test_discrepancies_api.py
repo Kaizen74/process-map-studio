@@ -66,16 +66,17 @@ def test_a12_codes_impact_and_verdicts(reality: Reality, monkeypatch: pytest.Mon
 
 
 def test_codes_are_kept_across_a_refresh_and_a_reopen(reality: Reality) -> None:
-    """A code belongs to a location: the same location keeps its code in every later version.
-    (What is found there may change: a refresh gives unconfirmed steps new IDs, so Eric's system
-    alignment no longer applies to them; see PROJECT_STATE.md.)"""
+    """A code belongs to a location: the same location keeps its code in every later version, and
+    a refresh keeps what is found there (Eric's system alignment follows the refreshed steps)."""
     first = {c: i["title"] for c, i in by_code(reality).items()}
+    types = {c: i["types"] for c, i in by_code(reality).items()}
     assert {c: i["title"] for c, i in by_code(reality).items()} == first  # asked again
     client = reality.engagement.client
     assert client.post(f"/api/versions/{reality.version_id}/refresh").status_code == 202
     wait_for_jobs(client)
     refreshed = by_code(reality)
     assert {c: i["title"] for c, i in refreshed.items()} == first
+    assert {c: i["types"] for c, i in refreshed.items()} == types
     assert (refreshed["X3"]["status"], refreshed["X3"]["types"]) == ("seen", ["D13"])
     with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
         fresh = versions.create(session, engagement_id=reality.engagement.eid, label="v2",

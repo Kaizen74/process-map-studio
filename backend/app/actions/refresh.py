@@ -16,6 +16,7 @@ from app.domain.graph import ElementRecord
 from app.domain.models import RefreshChanges, StepRename
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
+from app.repositories import event_logs as logs_repo
 from app.repositories import images as images_repo
 from app.repositories import versions as versions_repo
 from app.services import sensemaking
@@ -106,6 +107,8 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
 
     # A replaced step's pictures (and Eric's keep or discard of them) go to its fresh successor.
     images_repo.move(session, successor)
+    # And Eric's system alignment: which log activities are this step, or that it has no record.
+    logs_repo.move_alignment(session, successor)
     # So does a work type Eric confirmed (with what it implies: never automated, a judgment step).
     confirmed_types = {
         successor[e.id]: e
