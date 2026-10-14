@@ -33,7 +33,8 @@ export function useValue(versionId: string | null, view: "done" | "documented", 
 
 function refreshValue(client: ReturnType<typeof useQueryClient>, versionId: string) {
   // A choice changes the step's scenario, and the backend refreshes the map checks (L10).
-  for (const part of ["dispositions", "value", "lint", "quality-card"]) {
+  // A risk flag changes an X code's impact class on the Reality views (P13b).
+  for (const part of ["dispositions", "value", "lint", "quality-card", "reality"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
 }

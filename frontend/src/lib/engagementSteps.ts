@@ -3,7 +3,7 @@
 import type { NavKey, Settings } from "../api/types";
 
 /** Steps of optional modules (decision A) are not in the readiness endpoint's nav. */
-export type StepKey = NavKey | "system_records";
+export type StepKey = NavKey | "system_records" | "reality";
 
 export interface EngagementStep {
   key: StepKey;
@@ -11,7 +11,7 @@ export interface EngagementStep {
   slug: string;
   optional?: boolean;
   /** The Settings switch an optional module's step needs (shown only while it is on). */
-  module?: keyof Pick<Settings, "system_records_enabled" | "gap_analysis_enabled">;
+  module?: keyof Pick<Settings, "system_records_enabled" | "gap_analysis_enabled" | "reality_views_enabled">;
   /** Build phase (PRD §6.3) in which the screen arrives; omitted once it is built. */
   arrives?: string;
 }
@@ -39,6 +39,7 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
     module: "gap_analysis_enabled",
   },
   { key: "registers", label: "Registers", slug: "registers" },
+  { key: "reality", label: "Reality", slug: "reality", optional: true, module: "reality_views_enabled" },
   { key: "leadership", label: "Leadership", slug: "leadership" },
   { key: "exports", label: "Exports", slug: "exports" },
 ];

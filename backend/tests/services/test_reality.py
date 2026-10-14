@@ -97,7 +97,7 @@ def test_the_same_inputs_give_a_byte_identical_snapshot() -> None:
     assert one.inputs_hash == reality.inputs_hash(inputs(RICH, intents=CONFIRMED))
     other = snap(dataclasses.replace(RICH, total_cases=120), intents=CONFIRMED)
     assert other.inputs_hash != one.inputs_hash
-    assert (one.rules_version, one.copy_version, one.layout_version) == ("1", "1", "1")
+    assert (one.rules_version, one.copy_version, one.layout_version) == ("1", "1", "2")
 
 
 def test_every_figure_has_one_value_everywhere() -> None:

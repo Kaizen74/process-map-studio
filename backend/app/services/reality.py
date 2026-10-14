@@ -1009,7 +1009,7 @@ def build(inputs: Inputs, app_version: str, frozen: bool) -> RealitySnapshot:
         evidence=EvidenceSummary(documents=inputs.documents, interviews=inputs.interviews,
                                  cases=cases, text=copy.evidence_text(inputs.documents,
                                                                       inputs.interviews, cases)),
-        figures=dict(sorted(figures.by_id.items())), tiles=tiles_,
+        figures=dict(figures.by_id), tiles=tiles_,
         columns=[*columns, Column(id=PROCESS, name="Whole process", kind=PROCESS, step_keys=[])],
         columns_note=note, codes=codes,
         intents=[SnapshotIntent(id=i.intent_id, kind=i.kind, text=i.text, scope=i.scope,

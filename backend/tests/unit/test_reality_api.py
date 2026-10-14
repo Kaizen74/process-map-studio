@@ -7,6 +7,7 @@ AI call is made (constraint 26)."""
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 import pytest
@@ -166,3 +167,47 @@ def test_leadership_reads_the_snapshot(reality: Reality) -> None:
     switch(client, False)
     view = client.get(f"/api/versions/{reality.version_id}/leadership").json()
     assert view["reality"] is None
+
+
+def _normalised(data: Any) -> Any:
+    """Run-to-run values made fixed: hashes, timestamps and publication dates."""
+    if isinstance(data, dict):
+        out = {}
+        for k, v in data.items():
+            if k == "inputs_hash":
+                out[k] = "0" * 64
+            elif k in ("created_at", "stated_on") and isinstance(v, str) and v:
+                out[k] = "2026-10-14T00:00:00+00:00" if k == "created_at" else "2026-10-14"
+            else:
+                out[k] = _normalised(v)
+        return out
+    if isinstance(data, list):
+        return [_normalised(v) for v in data]
+    if isinstance(data, str):
+        return re.sub(r"\bon \d{4}-\d{2}-\d{2}\b", "on 2026-10-14", data)
+    return data
+
+
+def test_the_frontend_reality_sample_matches_the_backend(reality: Reality) -> None:
+    """frontend/tests/fixtures/reality.json: the A.12 snapshot, intent statements and a verdict
+    as the backend sends them, and Leadership's Reality figures once published, for the
+    frontend's field-by-field type check. Rewritten with PMS_UPDATE_GOLDEN=1."""
+    from tests.golden.test_golden_baselines import FRONTEND_FIXTURES, matches_baseline
+
+    client = reality.engagement.client
+    eid, vid = reality.engagement.eid, reality.version_id
+    snap = snapshot(client, vid)
+    x7 = next(c for c in snap["codes"] if c["code"] == "X7")
+    verdict = client.put(f"/api/discrepancy-items/{x7['item_id']}/verdict",
+                         json={"verdict": "codify", "note": "Keeps the slot."}).json()  # fmt: skip
+    decided = snapshot(client, vid)
+    switch(client, True)
+    publish(client, vid)
+    bundle = {
+        "snapshot": snap,
+        "decided": decided,
+        "intent": client.get(f"/api/engagements/{eid}/intent").json(),
+        "verdict": verdict,
+        "leadership_reality": client.get(f"/api/versions/{vid}/leadership").json()["reality"],
+    }
+    matches_baseline("reality.json", _normalised(bundle), FRONTEND_FIXTURES)

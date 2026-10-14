@@ -9,6 +9,7 @@ import { useVersionImages } from "../../hooks/useImages";
 import { useGraph, useLayout, useReviewStep } from "../../hooks/useReview";
 import { useSettings } from "../../hooks/useSettings";
 import { useSystemTraces, useSystemVariants } from "../../hooks/useSystemRecords";
+import { useReality } from "../../hooks/useReality";
 import { useDispositions, useSetDisposition, useSetValueOverride, useValue } from "../../hooks/useValue";
 import { useExceptions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
@@ -22,6 +23,7 @@ import type { RejectedClaim } from "../../lib/reviewTypes";
 import type { DispositionChoice, ValueOverride } from "../../lib/value";
 import { hiddenWorkStepForm, newStepForm, type AddStepForm } from "../../lib/addStep";
 import { lensesFor, type Lens } from "../../lib/lens";
+import { codesAt, intentsAt } from "../../lib/reality";
 import { volumeLines } from "../../lib/systemRecords";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { shortcutFor, stepAlong } from "../../lib/shortcuts";
@@ -105,6 +107,10 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const valueOn = settings.data?.value_enabled === true;
   const dispositions = useDispositions(versionId, valueOn);
   const values = useValue(versionId, shown, valueOn);
+  // Reality views (P13b): panel section 12 reads the version's snapshot, shared with the Reality screen.
+  const realityOn = settings.data?.reality_views_enabled === true;
+  const reality = useReality(versionId, realityOn);
+  const realityPath = engagementPath(engagementId, "reality");
   const choose = useSetDisposition(versionId ?? "");
   const override = useSetValueOverride(versionId ?? "");
   const volume =
@@ -473,6 +479,16 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
                   : undefined
               }
               disposition={dispositionFor(selected.id)}
+              discrepancies={
+                realityOn && reality.data
+                  ? {
+                      codes: codesAt(reality.data, selected.id),
+                      intents: intentsAt(reality.data, selected.stable_key),
+                      linkFor: (code) =>
+                        `${realityPath}?version=${encodeURIComponent(versionId)}&code=${encodeURIComponent(code)}`,
+                    }
+                  : undefined
+              }
               laneName={roles.get(selected.lane_role_id ?? "") ?? ""}
               phaseName={phases.get(selected.phase_id ?? "") ?? ""}
               partOf={g.elements.find((e) => e.id === selected.parent_element_id)?.label}

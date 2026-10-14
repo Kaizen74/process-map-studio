@@ -27,6 +27,7 @@ import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
 import type { SystemTrace } from "../../lib/systemRecords";
 import { GapFindingsSection } from "../../components/gap";
+import { DiscrepanciesSection, type DiscrepanciesSectionProps } from "../../components/reality";
 import { ImagesSection } from "./ImagesSection";
 
 export interface DetailPanelProps {
@@ -57,6 +58,8 @@ export interface DetailPanelProps {
   system?: { traces: readonly SystemTrace[]; tooFew: boolean } | undefined;
   /** Disposition and value (R10b): omitted while the value module is off or the step has no row. */
   disposition?: DispositionValueSectionProps | undefined;
+  /** Section 12 (P13b): the step's X codes from the Reality snapshot; omitted while Reality is off. */
+  discrepancies?: DiscrepanciesSectionProps | undefined;
   onClose: () => void;
 }
 
@@ -76,6 +79,7 @@ export function DetailPanel({
   typicalResponses = [],
   system,
   disposition,
+  discrepancies,
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
@@ -180,6 +184,7 @@ export function DetailPanel({
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
           <GapFindingsSection items={detail.data.gap_findings} onOpen={onOpenGapReport} />
+          {discrepancies && <DiscrepanciesSection {...discrepancies} />}
         </>
       )}
       {step && (

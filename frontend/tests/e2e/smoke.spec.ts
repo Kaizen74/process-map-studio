@@ -717,8 +717,31 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("region", { name: "Hidden work in Six cases" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
+
+    // P13b: Reality views on. The screen opens on the current draft's snapshot: Glance, Reality
+    // stack and Fix or keep, each with its table, in a real browser (contrast included); Leadership
+    // shows the published version's frozen tiles. Switched back off at the end.
+    expect((await request.put("/api/settings/modules", { data: { reality_views_enabled: true } })).status()).toBe(200);
+    await page.goto(`/engagements/${id}/reality`);
+    await expect(page.getByRole("heading", { level: 1, name: "Reality" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /How different is real/ })).toBeVisible();
+    await expect(page.getByRole("note")).toContainText("Draft: figures may change");
+    await expect(page.getByRole("region", { name: "Intent" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    for (const view of ["Reality stack", "Fix or keep"]) {
+      await page.getByRole("radiogroup", { name: "Reality view" }).getByRole("radio", { name: view }).click();
+      await expect(page.locator(".reality-view__headline")).not.toBeEmpty();
+      expect(await seriousViolations(page)).toEqual([]);
+    }
+    await page.getByRole("button", { name: "Show as table" }).click();
+    await expect(page.getByRole("table")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Reality").toBe(false);
+    await page.goto(`/engagements/${id}/leadership`);
+    await expect(page.getByRole("heading", { level: 2, name: "Facts" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
   } finally {
-    await request.put("/api/settings/modules", { data: { system_records_enabled: false } });
+    await request.put("/api/settings/modules", { data: { system_records_enabled: false, reality_views_enabled: false } });
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
 });

@@ -69,7 +69,7 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
   // "images": rejecting or restoring a step hides or shows its pictures (marker and strip).
   // "dispositions" and "value" (R10b): an edit or a work type changes a step's suggestion.
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants", "dispositions", "value"]) {
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants", "dispositions", "value", "reality"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });

@@ -6,8 +6,7 @@ import { useToast } from "../../components/shell";
 import { useSaveModules } from "../../hooks/useSettings";
 import { messageOf } from "../../lib/errors";
 
-// Reality views (P13) gets its switch here once its screen exists (P13b); the setting is stored now.
-type ModuleKey = Exclude<keyof Required<ModuleSwitches>, "reality_views_enabled">;
+type ModuleKey = keyof Required<ModuleSwitches>;
 
 const MODULES: readonly { key: ModuleKey; label: string; help: string }[] = [
   {
@@ -24,6 +23,11 @@ const MODULES: readonly { key: ModuleKey; label: string; help: string }[] = [
     key: "value_enabled",
     label: "Value calculator and step dispositions",
     help: "Shows each step's suggested disposition (delete, automate, AI-assisted, human approves, keep human) and its indicative hours and cost a month, labelled measured, estimated or assumed. Off by default.",
+  },
+  {
+    key: "reality_views_enabled",
+    label: "Reality views",
+    help: "Adds a Reality step for executives: how far practice is from the manual and from what the organisation intends, where the gap concentrates and which gaps to fix or keep. Every figure is worked out from your sources; publishing a map freezes its figures. Off by default.",
   },
 ];
 

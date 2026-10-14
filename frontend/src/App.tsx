@@ -10,6 +10,7 @@ import { MatrixScreen } from "./features/matrix/MatrixScreen";
 import { RegistersScreen } from "./features/registers/RegistersScreen";
 import { EngagementsScreen } from "./features/home/EngagementsScreen";
 import { PublishedScreen } from "./features/published/PublishedScreen";
+import { RealityScreen } from "./features/reality/RealityScreen";
 import { ReviewScreen } from "./features/review/ReviewScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { SetupScreen } from "./features/setup/SetupScreen";
@@ -35,6 +36,7 @@ export function App() {
         <Route path="engagements/:engagementId/matrix" element={<MatrixScreen />} />
         <Route path="engagements/:engagementId/gap-analysis" element={<GapScreen />} />
         <Route path="engagements/:engagementId/registers" element={<RegistersScreen />} />
+        <Route path="engagements/:engagementId/reality" element={<RealityScreen />} />
         <Route path="engagements/:engagementId/leadership" element={<LeadershipScreen />} />
         <Route path="engagements/:engagementId/exports" element={<ExportsScreen />} />
         <Route path="engagements/:engagementId/:step" element={<StepPlaceholder />} />

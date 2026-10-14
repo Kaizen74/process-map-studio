@@ -1,5 +1,6 @@
 // The leadership view (PRD §4 Views, §5.4 Leadership; API_CONTRACT.md → Leadership view): shapes
 // and plain words. The server works out every figure; nothing is computed here but bar widths.
+import type { RealityFigures } from "./reality";
 import type { AiFlagItem } from "./registers";
 
 export interface PhaseLinks {
@@ -50,6 +51,8 @@ export interface LeadershipView {
     ai_flags: AiFlagItem[];
     decisions_needed: DecisionNeeded[];
   };
+  /** P13b (G17): the figures shared with the Reality views, from the frozen snapshot; null while off. */
+  reality: RealityFigures | null;
 }
 
 /** "20 min", "1.5 min", "0 min". */

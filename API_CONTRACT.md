@@ -661,7 +661,7 @@ Everything the Reality screen draws for one version, worked out by fixed rules (
 ### GET /api/versions/{vid}/reality
 `200`:
 ```json
-{"version_id": "…", "rules_version": "1", "copy_version": "1", "layout_version": "1", "app_version": "1.0.0",
+{"version_id": "…", "rules_version": "1", "copy_version": "1", "layout_version": "2", "app_version": "1.0.0",
  "inputs_hash": "<64 hex>", "frozen": false, "draft": true,
  "process_name": "Aircraft load control",
  "data_label": "Draft: figures may change",
@@ -712,14 +712,18 @@ Everything the Reality screen draws for one version, worked out by fixed rules (
                    "geometry": {"width": 1600, "height": 1000, "columns": [{"id", "x", "width"}],
                                 "bands": [{"id", "y", "height"}], "marks": [{"kind", "band_id", "column_id", "x", "y",
                                 "width", "height", "lines": ["…"], "code": null, "key": null, "impact_class": null,
-                                "style": "solid"}], "lens": {"x", "y", "width", "height", "label_x", "label_y"}}},
+                                "style": "solid"}], "lens": {"x", "y", "width", "height", "label_x", "label_y"},
+                                "column_labels": [{"id", "x", "y", "lines": ["Check and load"]}],
+                                "band_labels": [{"id": "promise", "x", "y", "lines": ["What we promise", "4 confirmed statements"]}]}},
            "rv3": {"…": "as rv1, with", "fix": {"quadrants": [{"id": "as_designed", "name": "Working as designed",
                      "meaning": "Follows the manual and delivers the promise."}],
                      "circles": [{"code": "X1", "zone": "correct"}], "ask": ["X5"],
                      "decide_first": ["X1", "X2"], "limit": 6,
                      "note": "Verdicts are recommendations; the process owner decides."},
                    "geometry": {"width": 1600, "height": 760, "zones": [{"id", "x", "y", "width", "height", "label_x", "label_y"}],
-                                "circles": [{"code", "cx", "cy", "r"}], "scale_note": "Circle area = hours a month"}}},
+                                "circles": [{"code", "cx", "cy", "r"}],
+                                "labels": [{"id": "zone:correct", "x", "y", "lines": ["Correct the practice", "Departs from the manual and falls short of the promise."]}],
+                                "scale_note": "Circle area = hours a month"}}},
  "legend": {"impacts": [{"impact_class": "control_exposure", "word": "Control exposure", "glyph": "triangle"}],
             "lines": [{"style": "solid", "meaning": "In the system of record, or as documented"}],
             "scales": ["Line width = share of cases"], "data_label": "Draft: figures may change"}}

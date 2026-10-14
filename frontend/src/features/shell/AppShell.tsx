@@ -22,6 +22,8 @@ export function AppShell() {
     // Optional modules aren't in the readiness nav: System records is done once a log is imported.
     const moduleStatus: Partial<Record<StepKey, NavItem["status"]>> = {
       system_records: logs.data?.some((l) => l.status === "imported") ? "done" : "not_started",
+      // Reality views (P13b): done once a version is published (its snapshot is then frozen).
+      reality: status.nav.published === "done" ? "done" : "not_started",
     };
     const items: NavItem[] = visibleSteps(settings.data).map((step) => {
       // Gap analysis has a switch (R10) and is also in the readiness nav; System records is not.

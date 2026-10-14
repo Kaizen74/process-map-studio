@@ -13,6 +13,7 @@ import {
 import { divergenceLabel } from "../../lib/matrix";
 import { causeTypeLabel } from "../../lib/registers";
 import { Button, Chip, TextAreaField } from "../common";
+import { MetricTiles } from "../reality";
 import { AiFlagList } from "../registers";
 import "./leadership.css";
 
@@ -107,6 +108,13 @@ export function FactsColumn({ view, labels, onOpen }: { view: LeadershipView; la
         <span className="phase-bar__work phase-legend__swatch" aria-hidden="true" /> Work
         <span className="phase-bar__wait phase-legend__swatch" aria-hidden="true" /> Wait
       </p>
+      {view.reality && view.reality.tiles.length > 0 && (
+        <section className="leadership-reality" aria-label="Shared with the Reality views">
+          <h3>Shared with the Reality views</h3>
+          <MetricTiles tiles={view.reality.tiles} />
+          <p className="leadership-column__intro">{view.reality.data_label}</p>
+        </section>
+      )}
       <ul className="leadership-list">
         {view.facts.phases.map((phase, n) => (
           <PhaseRow key={phase.phase_id ?? "none"} phase={phase} width={widths[n] ?? { work: 0, wait: 0 }} labels={labels} onOpen={onOpen} />

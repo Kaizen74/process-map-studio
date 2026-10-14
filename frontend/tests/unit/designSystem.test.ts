@@ -157,6 +157,17 @@ describe("contrast (WCAG 2.1 AA)", () => {
   });
 });
 
+describe("RQ3 channel discipline (PRD §5.12.8)", () => {
+  it("impact and Reality tokens are used only by the Reality components and the views they feed", () => {
+    const allowed = ["src/components/reality/", "src/styles/tokens.css"];
+    const users = filesUnder(join(root, "src"), [".ts", ".tsx", ".css"])
+      .filter((file) => /--(impact-|designed-work|baseline-)/.test(readFileSync(file, "utf8")))
+      .map((file) => relative(root, file).replaceAll("\\", "/"));
+    expect(users.filter((f) => !allowed.some((a) => f.startsWith(a)))).toEqual([]);
+    expect(users.some((f) => f.startsWith("src/components/reality/"))).toBe(true);
+  });
+});
+
 describe("self-hosted fonts", () => {
   const css = readFileSync(join(root, "src/styles/fonts.css"), "utf8");
   const urls = [...css.matchAll(/url\('([^']+)'\)/g)].map((m) => m[1] ?? "");

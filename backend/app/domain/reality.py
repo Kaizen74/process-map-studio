@@ -480,6 +480,15 @@ class Mark(BaseModel):
     style: str  # solid · dashed · dotted · double
 
 
+class Label(BaseModel):
+    """A text label placed by the backend (one or more lines)."""
+
+    id: str
+    x: float
+    y: float
+    lines: list[str]
+
+
 class LensBox(BaseModel):
     x: float
     y: float
@@ -496,6 +505,8 @@ class StackGeometry(BaseModel):
     bands: list[Box]
     marks: list[Mark]
     lens: LensBox | None
+    column_labels: list[Label]
+    band_labels: list[Label]
 
 
 class Quadrant(BaseModel):
@@ -540,6 +551,7 @@ class FixGeometry(BaseModel):
     height: float
     zones: list[Zone]
     circles: list[Circle]
+    labels: list[Label]
     scale_note: str
 
 

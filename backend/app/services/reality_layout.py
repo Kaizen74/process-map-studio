@@ -22,6 +22,7 @@ from app.domain.reality import (
     FixModel,
     GlanceGeometry,
     GlanceModel,
+    Label,
     LensBox,
     Mark,
     Ribbon,
@@ -31,7 +32,7 @@ from app.domain.reality import (
     Zone,
 )
 
-LAYOUT_VERSION = "1"
+LAYOUT_VERSION = "2"  # 2: column, band, zone and axis labels placed here (P13b-4)
 WIDTH = 1600.0
 CHAR_PX = 7.2  # an average 12.5 px IBM Plex Sans character
 LINE_PX = 16.0
@@ -46,7 +47,9 @@ GLANCE_MARGIN = 80.0
 GUTTER = 210.0  # band names on the left
 RIGHT = 16.0
 PROCESS_WIDTH = 190.0
-BAND_TOP = 24.0
+HEADER_Y = 20.0  # column names
+LENS_LABEL_Y = 40.0
+BAND_TOP = 52.0
 BAND_GAP = 12.0
 PAD = 8.0
 MIN_BAND = {"promise": 72.0, "belief": 64.0, "documented": 96.0, "done": 150.0,
@@ -55,7 +58,7 @@ MAX_LINES = 2
 
 # Fix or keep
 ZONE_X, ZONE_Y, ZONE_W, ZONE_H = 80.0, 40.0, 520.0, 300.0
-ASK_H = 120.0
+ASK_H = 150.0
 MAX_R, MIN_R = 44.0, 9.0
 
 
@@ -141,10 +144,11 @@ def _columns(columns: Sequence[Column]) -> list[Box]:
     return boxes
 
 
-def _item_lines(kind: str, label: str, figure: str, note: str, width: float) -> list[str]:
+def _item_lines(kind: str, label: str, figure: str, note: str, width: float,
+                code: str | None = None) -> list[str]:  # fmt: skip
     inner = width - 2 * PAD
     if kind == "branch":
-        return [*wrap(label, inner - 28, 1), *wrap(note, inner - 28, 1)]
+        return [*wrap(f"{code} {label}" if code else label, inner, 1), *wrap(note, inner, 1)]
     if kind in ("minutes", "hours"):
         return wrap(figure, inner, 1)
     lines = wrap(label, inner)
@@ -157,9 +161,14 @@ def stack(model: StackModel, columns: Sequence[Column]) -> StackGeometry:
     by_id = {b.id: b for b in boxes}
     marks: list[Mark] = []
     bands: list[Box] = []
+    band_labels: list[Label] = []
     y = BAND_TOP
     for band in model.bands:
-        needed = MIN_BAND.get(band.id, 64.0)
+        name = [*wrap(band.name, GUTTER - 24, 1), *wrap(band.evidence, GUTTER - 24, 2)]
+        if band.state == "missing" and band.message:
+            name += wrap(band.message, GUTTER - 24, 3)
+        band_labels.append(Label(id=band.id, x=12.0, y=round(y + 20, 1), lines=name))
+        needed = max(MIN_BAND.get(band.id, 64.0), len(name) * LINE_PX + 2 * PAD)
         placed: list[Mark] = []
         for cell in band.cells:
             box = by_id.get(cell.column_id)
@@ -168,7 +177,7 @@ def stack(model: StackModel, columns: Sequence[Column]) -> StackGeometry:
             cy = y + PAD
             for it in cell.items:
                 figure = it.figure.text if it.figure is not None else ""
-                lines = _item_lines(it.kind, it.label, figure, it.note, box.width)
+                lines = _item_lines(it.kind, it.label, figure, it.note, box.width, it.code)
                 h = len(lines) * LINE_PX + PAD
                 style = "dashed" if it.kind == "belief" else "solid"
                 placed.append(Mark(kind=it.kind, band_id=band.id, column_id=cell.column_id,
@@ -185,11 +194,17 @@ def stack(model: StackModel, columns: Sequence[Column]) -> StackGeometry:
     lens = None
     if model.lens is not None and model.lens.column_id in by_id:
         b = by_id[model.lens.column_id]
-        lens = LensBox(x=b.x, y=4.0, width=b.width, height=round(height - 8.0, 1),
-                       label_x=round(b.x + PAD, 1), label_y=16.0)  # fmt: skip
+        lens = LensBox(x=b.x, y=LENS_LABEL_Y - 14, width=b.width,
+                       height=round(height - LENS_LABEL_Y + 6, 1), label_x=round(b.x + PAD, 1),
+                       label_y=LENS_LABEL_Y)  # fmt: skip
+    names = {c.id: c.name for c in columns}
+    headers = [Label(id=b.id, x=round(b.x + PAD, 1), y=HEADER_Y,
+                     lines=wrap(names.get(b.id, ""), b.width - 2 * PAD, 1))
+               for b in boxes]  # fmt: skip
     return StackGeometry(width=WIDTH, height=height,
                          columns=[b.model_copy(update={"height": height}) for b in boxes],
-                         bands=bands, marks=marks, lens=lens)  # fmt: skip
+                         bands=bands, marks=marks, lens=lens, column_labels=headers,
+                         band_labels=band_labels)  # fmt: skip
 
 
 # --- Fix or keep --------------------------------------------------------------------------------
@@ -210,6 +225,7 @@ def radius(hours: float, most: float) -> float:
 
 
 def fix(model: FixModel, hours: Mapping[str, float]) -> FixGeometry:
+    names = {q.id: (q.name, q.meaning) for q in model.quadrants}
     zones = []
     for zid, (col, row) in ZONES.items():
         x, y = ZONE_X + col * ZONE_W, ZONE_Y + row * ZONE_H
@@ -228,10 +244,22 @@ def fix(model: FixModel, hours: Mapping[str, float]) -> FixGeometry:
         slots[p.zone] = n + 1
         per_row = 4 if p.zone != "ask" else 9
         cx = z.x + 70 + (n % per_row) * 110
-        cy = z.y + (90 if p.zone != "ask" else 70) + (n // per_row) * 100
+        cy = z.y + (96 if p.zone != "ask" else 84) + (n // per_row) * 100
         circles.append(Circle(code=p.code, cx=round(cx, 1), cy=round(cy, 1),
                               r=radius(hours.get(p.code, 0.0), most)))  # fmt: skip
+    labels = [Label(id=f"zone:{z.id}", x=z.label_x, y=z.label_y,
+                    lines=[names.get(z.id, (z.id, ""))[0],
+                           *wrap(names.get(z.id, ("", ""))[1], z.width - 24, 1)])
+              for z in zones]  # fmt: skip
+    labels += [
+        Label(id="axis:follows", x=ZONE_X + 12, y=ZONE_Y - 12, lines=["Follows the manual"]),
+        Label(id="axis:departs", x=ZONE_X + ZONE_W + 12, y=ZONE_Y - 12, lines=["Departs from it"]),
+        Label(id="axis:delivers", x=ZONE_X + 2 * ZONE_W + 16, y=ZONE_Y + ZONE_H / 2,
+              lines=["Delivers the", "promise"]),
+        Label(id="axis:short", x=ZONE_X + 2 * ZONE_W + 16, y=ZONE_Y + 1.5 * ZONE_H,
+              lines=["Falls short of", "the promise"]),
+    ]  # fmt: skip
     return FixGeometry(width=WIDTH, height=round(ask_y + ASK_H + 24, 1), zones=zones,
-                       circles=circles,
+                       circles=circles, labels=labels,
                        scale_note="Circle area = hours a month; small circles have no measured "
                        "hours")  # fmt: skip

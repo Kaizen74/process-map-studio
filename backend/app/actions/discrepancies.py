@@ -453,8 +453,12 @@ BAD_OWNER = "Choose the decision owner's role."
 PROCESS_TITLES = {"D9": "Parallel routes", "D10": "Belief gap"}
 
 
+WHOLE_PROCESS = "The whole process"
+
+
 def _title(g: verdict_rules.Group, labels: Mapping[str, str]) -> str:
-    names = [labels.get(k, k) for k in g.keys]
+    # A statement covering the whole process (no step) is found at the key "process".
+    names = [labels.get(k, WHOLE_PROCESS if k == "process" else k) for k in g.keys]
     if g.kind == "process":
         return PROCESS_TITLES.get(g.types[0], g.types[0])
     if g.kind == "design":
