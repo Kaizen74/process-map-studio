@@ -57,6 +57,11 @@ def e(text: object) -> str:
     return escape(str(text), quote=True)
 
 
+# PRD §5.2: the impact and Reality tokens belong to the Reality views, the Reality pack and their
+# legend only; the map export never uses them.
+REALITY_TOKENS = ("impact-", "designed-work", "baseline-")
+
+
 def tokens_css(tokens: dict[str, object]) -> str:
     """The tokens as CSS custom properties, named as the app's generated tokens.css."""
     lines = [":root {"]
@@ -64,6 +69,8 @@ def tokens_css(tokens: dict[str, object]) -> str:
         if group.startswith("$") or not isinstance(values, dict):
             continue
         for name, value in values.items():
+            if group == "color" and name.startswith(REALITY_TOKENS):
+                continue
             prop = f"--{name}" if group == "color" else f"--{group}-{name}"
             lines.append(f"  {prop}: {value};")
     lines.append("}")

@@ -39,7 +39,11 @@ def test_one_self_contained_file_with_no_outside_requests() -> None:
 def test_styles_come_only_from_the_shared_tokens() -> None:
     html = render()
     for name, value in TOKENS["color"].items():
-        assert f"--{name}: {value};" in html
+        if name.startswith(("impact-", "designed-work", "baseline-")):
+            # PRD §5.2: the Reality tokens are for the Reality views and pack only (P13b).
+            assert f"--{name}:" not in html
+        else:
+            assert f"--{name}: {value};" in html
     assert f"--space-16: {TOKENS['space']['16']};" in html
     css = CSS.read_text(encoding="utf-8")
     assert not re.search(r"#[0-9a-fA-F]{3,8}\b", css), "a raw colour in the export stylesheet"

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import reality
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import AppConfig
@@ -43,9 +44,20 @@ def _view(session: Session, version_id: str) -> Result[LeadershipView]:
     return Ok(leadership.leadership_view(graph, repo.decisions(session, version_id)))
 
 
-def get_view(sessions: Sessions, version_id: str) -> Result[LeadershipView]:
+def get_view(config: AppConfig, sessions: Sessions, version_id: str) -> Result[LeadershipView]:
+    """The view, with the figures it shares with the Reality views read from the version's
+    frozen Reality snapshot while that switch is on (G17)."""
     with session_scope(sessions) as session:
-        return _view(session, version_id)
+        match _view(session, version_id):
+            case Err() as err:
+                return err
+            case Ok(value=view):
+                pass
+        if reality.enabled(config):
+            version = versions_repo.get(session, version_id)
+            assert version is not None
+            view.reality = reality.leadership_figures(session, version)
+        return Ok(view)
 
 
 def save_decisions(

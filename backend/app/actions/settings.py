@@ -75,6 +75,12 @@ def _flag(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def switched_on(config: AppConfig, name: str) -> bool:
+    """Whether a switch setting (for example REALITY_VIEWS_ENABLED) is on."""
+    values = effective_settings(config)
+    return isinstance(values, Ok) and _flag(values.value.get(name, ""))
+
+
 def _view(values: Mapping[str, str]) -> SettingsView:
     key = values["ANTHROPIC_API_KEY"].strip()
     return SettingsView(

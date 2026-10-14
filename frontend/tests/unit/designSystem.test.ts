@@ -135,6 +135,26 @@ describe("contrast (WCAG 2.1 AA)", () => {
       expect(contrast(color("border-input"), color(bg))).toBeGreaterThanOrEqual(3);
     }
   });
+
+  // PRD §5.2 impact and Reality tokens (P13): each impact colour carries text on white, on the
+  // page background and on its own tint, and white text sits on it; the documented baseline's
+  // stroke still meets 3:1 so its meaning never rests on the quiet fill.
+  const impacts = ["impact-control", "impact-time", "impact-capacity", "impact-workaround"];
+
+  it.each(impacts)("%s is at least 4.5:1 on every background, on its tint and under white text", (name) => {
+    for (const bg of [...backgrounds, `${name}-bg`]) {
+      expect(contrast(color(name), color(bg))).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast(color("on-ink"), color(name))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("designed work is text-safe and the baseline stroke is at least 3:1", () => {
+    for (const bg of backgrounds) {
+      expect(contrast(color("designed-work"), color(bg))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(color("baseline-stroke"), color(bg))).toBeGreaterThanOrEqual(3);
+    }
+    expect(contrast(color("ink"), color("baseline-fill"))).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe("self-hosted fonts", () => {

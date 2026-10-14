@@ -241,6 +241,8 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/engagements/{sample_eid}/intent", None),
     ("GET", "/api/versions/{map}/intent/conflicts", None),
     ("GET", "/api/versions/{map}/discrepancies", None),
+    # P13b: the Reality snapshot (worked out when the inputs change, else kept).
+    ("GET", "/api/versions/{map}/reality", None),
     ("GET", "/api/versions/{map}", None),
     ("GET", "/api/engagements/{eid}/versions", None),
     ("GET", "/api/elements/{element}", None),

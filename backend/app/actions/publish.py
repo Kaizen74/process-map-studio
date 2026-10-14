@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import quality as quality_action
-from app.actions import redaction, system_trace
+from app.actions import reality, redaction, system_trace
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
@@ -213,6 +213,10 @@ def publish(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ve
             quality_card=card.model_dump(mode="json"),
             change_log=_change_log(session, version_id),
         )
+        if reality.enabled(config):  # the Reality snapshot is frozen with the version (§3.18.1)
+            published = versions_repo.get(session, version_id)
+            assert published is not None
+            reality.freeze(session, published)
         audit.record(
             session,
             actor=actor,

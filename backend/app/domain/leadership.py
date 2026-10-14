@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.reality import RealityFigures
+
 
 class PhaseLinks(BaseModel):
     """The steps behind each figure of a phase."""
@@ -104,3 +106,6 @@ class LeadershipView(BaseModel):
     facts: Facts
     interpretation: Interpretation
     recommendation: Recommendation
+    # P13b (G17): while the Reality views switch is on, the figures Leadership shares with them,
+    # read from the version's frozen Reality snapshot.
+    reality: RealityFigures | None = None

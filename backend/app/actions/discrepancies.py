@@ -239,6 +239,8 @@ def _steps(session: Session, version: VersionView, done: Graph, documented: Grap
             stated_wait=time.wait_min if time else None,
             official_min=tuple(v for c in interviews if c.account_type == "official"
                                and (v := stated_minutes(_words(c))) is not None),
+            official_sources=len({c.source_id for c in interviews if c.account_type == "official"
+                                  and stated_minutes(_words(c)) is not None}),
             tools=_tools(cs, kinds),
             recorded=system.get("recorded"),  # type: ignore[arg-type]
             cases=int(system.get("cases", 0)),  # type: ignore[call-overload]
@@ -515,10 +517,12 @@ def _not_seen(item: DiscrepancyItemRecord) -> DiscrepancyView:
     )  # fmt: skip
 
 
-def discrepancies_of(session: Session, version: VersionView) -> DiscrepanciesView:
+def discrepancies_of(session: Session, version: VersionView,
+                     facts: rules.Facts | None = None) -> DiscrepanciesView:  # fmt: skip
     """The version's discrepancies by location, with persistent codes (given here the first time
     a drawn location is seen), impact classes and verdicts."""
-    facts, _ = gather(session, version)
+    if facts is None:
+        facts, _ = gather(session, version)
     detected = _detection(facts)
     found = [f for f in rules.detect(facts) if f.shown]
     groups = verdict_rules.group(found, facts)

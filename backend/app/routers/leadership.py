@@ -13,7 +13,8 @@ router = APIRouter(prefix="/api", tags=["leadership"])
 
 @router.get("/versions/{version_id}/leadership")
 def get_view(request: Request, version_id: str) -> LeadershipView:
-    return unwrap(leadership.get_view(request.app.state.sessions, version_id))
+    state = request.app.state
+    return unwrap(leadership.get_view(state.config, state.sessions, version_id))
 
 
 @router.put("/versions/{version_id}/leadership/decisions")

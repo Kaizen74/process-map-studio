@@ -329,6 +329,22 @@ def test_every_figure_says_where_it_comes_from(scenario: Scenario) -> None:
                 problems.append(f"discrepancy {item['code']}: measured without a log")
         if item["code"] and item["verdict"] and not item["verdict"]["reason"]:
             problems.append(f"discrepancy {item['code']}: a verdict without a reason")
+    snapshot = client.get(f"/api/versions/{vid}/reality").json()  # P13b
+    stack = [snapshot]
+    while stack:  # every figure anywhere in the Reality snapshot
+        value = stack.pop()
+        if isinstance(value, dict):
+            if {"id", "value", "unit", "text", "label"} <= set(value):
+                if value["label"] not in FIGURE_LABELS | VALUE_LABELS:
+                    problems.append(f"reality {value['id']}: unlabelled")
+                if value["label"] == "measured" and not has_log:
+                    problems.append(f"reality {value['id']}: measured without a log")
+            stack += list(value.values())
+        elif isinstance(value, list):
+            stack += value
+    for view in snapshot["views"].values():
+        if not view["headline"]:
+            problems.append(f"reality {view['id']}: no headline")
     for evaluation in found["intents"]:
         if evaluation["result"] != "unknown" and evaluation["label"] not in FIGURE_LABELS:
             problems.append(f"intent {evaluation['intent_id']}: a result without a label")

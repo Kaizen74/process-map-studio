@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import discrepancies, intent, intent_ai
+from app.actions import discrepancies, intent, intent_ai, reality
 from app.domain.reality import (
     ConflictPatch,
     DiscrepanciesView,
@@ -13,6 +13,7 @@ from app.domain.reality import (
     IntentJobStarted,
     IntentPatch,
     IntentView,
+    RealitySnapshot,
     VerdictBody,
     VerdictDecided,
 )
@@ -77,3 +78,8 @@ def list_discrepancies(request: Request, version_id: str, view: str = "done") ->
 def decide_verdict(request: Request, item_id: str, body: VerdictBody) -> VerdictDecided:
     state = request.app.state
     return unwrap(discrepancies.decide_verdict(state.config, state.sessions, item_id, body))
+
+
+@router.get("/versions/{version_id}/reality")
+def get_reality(request: Request, version_id: str) -> RealitySnapshot:
+    return unwrap(reality.get_reality(request.app.state.sessions, version_id))

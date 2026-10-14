@@ -116,19 +116,27 @@ def _too_few_steps(session: Session, logs: list[EventLogView],
     return [e.id for k, e in steps.items() if k in some - enough]
 
 
+def variants_of(session: Session, version_id: str, engagement_id: str) -> SystemVariants:
+    """Every imported log's variants read through Eric's confirmed matches (also read by the
+    Reality snapshot's routes)."""
+    elements = map_repo.elements(session, version_id)
+    keys = {e.id: e.stable_key for e in elements}
+    steps = {e.stable_key: e for e in elements
+             if e.kind not in NOT_STEPS and e.review_status != "rejected"}  # fmt: skip
+    logs = [log for log in logs_repo.list_for(session, engagement_id)
+            if log.status == "imported"]  # fmt: skip
+    if not logs:
+        return SystemVariants(logs=[], too_few_steps=[])
+    views = [_view_map(session, version_id, view, keys) for view in VIEWS]
+    return SystemVariants(
+        logs=[_log(session, log, steps, views) for log in logs],
+        too_few_steps=_too_few_steps(session, logs, steps),
+    )
+
+
 def get_system_variants(sessions: Sessions, version_id: str) -> Result[SystemVariants]:
     with session_scope(sessions) as session:
         version = versions_repo.get(session, version_id)
         if version is None:
             return Err(ErrorKind.NOT_FOUND, versions.VERSION_MISSING)
-        elements = map_repo.elements(session, version_id)
-        keys = {e.id: e.stable_key for e in elements}
-        steps = {e.stable_key: e for e in elements
-                 if e.kind not in NOT_STEPS and e.review_status != "rejected"}  # fmt: skip
-        views = [_view_map(session, version_id, view, keys) for view in VIEWS]
-        logs = [log for log in logs_repo.list_for(session, version.engagement_id)
-                if log.status == "imported"]  # fmt: skip
-        return Ok(SystemVariants(
-            logs=[_log(session, log, steps, views) for log in logs],
-            too_few_steps=_too_few_steps(session, logs, steps),
-        ))  # fmt: skip
+        return Ok(variants_of(session, version_id, version.engagement_id))

@@ -1,5 +1,5 @@
 # Project State
-*Last updated: 2026-10-14 (F2: incomplete-data sweep) — update after EVERY increment*
+*Last updated: 2026-10-14 (P13b-1 to P13b-3: Reality snapshot backend) — update after EVERY increment*
 
 ## What this project is
 Process Map Studio is a local app for Eric (non-technical owner) that turns SME interview transcripts and process documents into an evidence-traceable current-state swimlane map. Claude drafts the map from the documents, every AI claim is checked against the sources before it can appear, and Eric reviews and publishes. The full specification is PRD_ProcessMapStudio.md (v1.12 drafted 2026-10-12 at Eric's request: Reality views P13 and a coherence review; v1.11 adopted 2026-10-05; built up to P12 against v1.5, with the v1.10 additions P4b, most of P4c and the P5 views; see DECISIONS.md and its v1.11 impact table).
@@ -89,7 +89,12 @@ Start: working tree clean at 959a7ab (no increment in progress); last clean-copy
 - [ ] P12 — live run on Eric's PC (criterion 34), tags and v1.0.0 release (36)
 - [x] V12 (2026-10-12) — PRD v1.12 drafted: assessed the Process Reality X-Ray visual PRD, reviewed the visuals on a Claude design canvas ("Reality views design review", 8 artboards; sources in `docs/design/reality/`), revised the PRD (Reality views P13, constraints 25–27, G13–G17, §4.1 alignment, coherence fixes) and wrote `docs/specs/SPEC_DELTA_reality-views_20261012.md`. Docs only; no code changed
 - [ ] P13a — intent layer and discrepancy engine (migration 0015, enums B.44–B.50 + enum sync, intent prompts mocked and locked, services, endpoints, A.12, Delete respects intent; coral clean-up candidate for Eric)
-- [ ] P13b — snapshot, geometry, copy templates; Reality screen: Glance, Reality stack, Fix or keep; Intent and Discrepancies cards
+- [ ] P13b — snapshot, geometry, copy templates; Reality screen: Glance, Reality stack, Fix or keep; Intent and Discrepancies cards (Eric's go-ahead 2026-10-14)
+  - [x] P13b-1 — contract (API_CONTRACT.md → Reality snapshot; Leadership `reality`; panel section 12 reads the snapshot), impact and Reality tokens in `shared/design_tokens.json` with contrast tests
+  - [x] P13b-2 — `services/reality` (figures register, tiles, codes, columns, RV1–RV3 models, tables), `reality_copy` (template catalogue v1), `reality_layout` (geometry v1), `repositories/reality_snapshots`, `actions/reality` (inputs, `inputs_hash` cache, freeze on publish or on first request), `GET /versions/{vid}/reality`; determinism, templates only, RQ1/RQ2/RQ4/RQ5/RQ6, availability without intent, documents or a log (`tests/services/test_reality.py`); A.12 end to end, codes match the engine, cache, freeze, no AI (`tests/unit/test_reality_api.py`); latency p95 119 ms on A.12; the incomplete-data sweep reads the snapshot too
+  - [x] P13b-3 — Leadership reads the frozen snapshot's tiles (`reality`, G17); the panel's section 12 reads the snapshot (DECISIONS 40)
+  - [ ] P13b-4 — Reality screen UI: Glance, Reality stack, Fix or keep, Show as table, Intent and Discrepancies cards, focus and context, Settings switch, nav, panel section 12; axe
+  - [ ] P13b-5 — comprehensive mock regression (module on and off), backend/frontend alignment (fixtures from backend output), docs, close P13b
 - [ ] P13c — Redline, Where the time goes, Belief vs evidence, Typical case
 - [ ] P13d — Reality pack (A3 and 16:9), RQ1–RQ10, G11, visual baselines after approval, README/GUIDE, comprehension test with Eric; tag `phase-p13`
 

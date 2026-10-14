@@ -80,6 +80,7 @@ class StepFacts:
     done_min: float | None = None  # stated lived duration
     stated_wait: float | None = None  # stated lived wait
     official_min: tuple[float, ...] = ()  # official accounts' stated times (belief)
+    official_sources: int = 0  # interviews whose official accounts state a time for it
     tools: tuple[str, ...] = ()  # unofficial tools named on it
     # System records (None: no imported log covers the step).
     recorded: bool | None = None  # True: matched to an activity; False: confirmed no record
