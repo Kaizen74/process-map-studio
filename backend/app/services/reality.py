@@ -18,8 +18,6 @@ Rules worth knowing (DECISIONS.md, P13b):
 
 from __future__ import annotations
 
-import dataclasses
-import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -27,7 +25,9 @@ from dataclasses import dataclass
 from app.domain.reality import (
     Availability,
     Band,
+    BeliefView,
     Callout,
+    CaseView,
     Chips,
     CodeEvidence,
     CodeVerdict,
@@ -48,6 +48,7 @@ from app.domain.reality import (
     Quadrant,
     RealitySnapshot,
     RealityViews,
+    RedlineView,
     Route,
     SnapshotIntent,
     StackCell,
@@ -55,13 +56,32 @@ from app.domain.reality import (
     StackModel,
     StackView,
     Tile,
+    TimeView,
     ViewTable,
 )
 from app.services import discrepancies as rules
 from app.services import reality_copy as copy
+from app.services import reality_detail as detail
 from app.services import reality_layout as layout
+from app.services import reality_shapes as shapes
 from app.services import verdicts as verdict_rules
 from app.services.discrepancies import Facts, StepFacts
+from app.services.reality_base import (
+    PROCESS,
+    Figures,
+    Inputs,
+    IntentIn,
+    ItemIn,
+    PhaseIn,
+    RouteIn,
+    blend,
+    inputs_hash,
+    step_minutes,
+    step_parts,
+)
+
+__all__ = ["Figures", "Inputs", "IntentIn", "ItemIn", "PhaseIn", "RouteIn", "build",
+           "inputs_hash", "serialise", "step_minutes", "step_parts"]  # fmt: skip
 
 MAX_COLUMNS = 7
 MAX_TILES = 5
@@ -75,124 +95,7 @@ ROUTE_SHARE = 0.05  # §3.17.3: a route below 5% of cases joins "Other" (unless 
 CODIFY_SHOWN = {"codify", "correct", "rewrite"}
 PRACTICE_TYPES = frozenset(f"D{n}" for n in range(1, 13))  # every type but the D13/D14 intent ones
 ROUTE_TYPES = frozenset({"D1", "D2", "D3", "D4", "D5", "D6"})
-PROCESS = "process"
 NO_HOURS = "Needs system records"
-
-
-# --- inputs (gathered by `actions/reality`) -----------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class PhaseIn:
-    id: str
-    name: str
-    order: int
-
-
-@dataclass(frozen=True, slots=True)
-class RouteIn:
-    """One log variant read through Eric's matches: its step keys ("" for an unmatched
-    activity) and hidden-work activities, and whether it fits the As documented view."""
-
-    rank: int
-    cases: int
-    share: float
-    fits_documented: bool
-    keys: tuple[str, ...]
-    hidden: tuple[str, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class IntentIn:
-    intent_id: str
-    kind: str
-    text: str
-    scope: str  # step · phase · process
-    step_keys: tuple[str, ...]
-    phase_id: str | None
-    metric: str | None
-    comparator: str | None
-    target: float | None
-    unit: str | None
-    result: str  # met · not_met · unknown
-
-
-@dataclass(frozen=True, slots=True)
-class ItemIn:
-    item_id: str
-    code: str
-    title: str
-    verdict_decided: str | None
-    verdict_note: str
-
-
-@dataclass(frozen=True, slots=True)
-class Inputs:
-    version_id: str
-    process_name: str
-    draft: bool
-    data_label: str
-    facts: Facts
-    phases: tuple[PhaseIn, ...]
-    step_phase: Mapping[str, str]  # step key → phase id ("" for none)
-    routes: tuple[RouteIn, ...]
-    routes_other: int  # variants too rare to show (under 5 cases)
-    intents: tuple[IntentIn, ...]  # confirmed statements, in the order they were added
-    items: Mapping[str, ItemIn]  # by location key
-    documents: int  # SOPs and manuals
-    interviews: int  # ready interview transcripts
-    official_sources: Mapping[str, int]  # step key → interviews whose official account times it
-    activity_after: Mapping[str, str]  # hidden-work activity → the step key it follows
-    volume: float | None  # the process's cases a month (measured)
-    cycle_min: float | None  # median case cycle time (measured)
-
-
-def inputs_hash(inputs: Inputs) -> str:
-    text = json.dumps(dataclasses.asdict(inputs), sort_keys=True, ensure_ascii=False, default=str)
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-# --- figures ------------------------------------------------------------------------------------
-
-
-class Figures:
-    """Every figure of the snapshot by its ID: one value and one text everywhere (RQ9)."""
-
-    def __init__(self) -> None:
-        self.by_id: dict[str, Figure] = {}
-
-    def add(self, fid: str, value: float | None, unit: str, text: str, label: str,
-            percent_type: str | None = None) -> Figure:  # fmt: skip
-        figure = Figure(id=fid, value=value, unit=unit, text=text, label=label,
-                        percent_type=percent_type)  # fmt: skip
-        known = self.by_id.get(fid)
-        assert known is None or known == figure, f"two values for {fid}"
-        self.by_id[fid] = figure
-        return figure
-
-
-def _blend(labels: Sequence[str]) -> str:
-    found = set(labels)
-    return found.pop() if len(found) == 1 else rules.MEASURED if not found else "mixed"
-
-
-def step_minutes(s: StepFacts) -> tuple[float | None, str]:
-    """A step's minutes a case (work and wait) and their label: measured where measured."""
-    parts: list[tuple[float, str]] = []
-    measured = s.time if s.time and s.time.cases >= rules.MINIMUM_CASES else None
-    before = s.wait_before if s.wait_before and s.wait_before.cases >= rules.MINIMUM_CASES else None
-    if s.stated_wait is not None and measured is not None:
-        work = (s.done_min, rules.STATED) if s.done_min is not None else None
-        wait: tuple[float, str] | None = (measured.median, rules.MEASURED)
-    else:
-        work = (measured.median, rules.MEASURED) if measured else (
-            (s.done_min, rules.STATED) if s.done_min is not None else None)  # fmt: skip
-        wait = (before.median, rules.MEASURED) if before else (
-            (s.stated_wait, rules.STATED) if s.stated_wait is not None else None)  # fmt: skip
-    parts = [p for p in (work, wait) if p is not None]
-    if not parts:
-        return None, ""
-    return round(sum(v for v, _ in parts), 1), _blend([lb for _, lb in parts])
 
 
 # --- codes --------------------------------------------------------------------------------------
@@ -371,7 +274,7 @@ def _done_total(inputs: Inputs) -> tuple[float | None, str]:
     known = [(v, lb) for v, lb in values if v is not None]
     if not known:
         return None, ""
-    return sum(v for v, _ in known), _blend([lb for _, lb in known])
+    return sum(v for v, _ in known), blend([lb for _, lb in known])
 
 
 def _beyond(s: StepFacts) -> tuple[float | None, str]:
@@ -400,7 +303,7 @@ def _hours_beyond(facts: Facts) -> tuple[float, str] | None:
         labels.append({"stated": "estimated"}.get(label, label))
     if not labels:
         return None
-    return round(total, 1), _blend(labels)
+    return round(total, 1), blend(labels)
 
 
 def tiles(inputs: Inputs, codes: Sequence[CodeView], process: Sequence[verdict_rules.Group],
@@ -692,7 +595,7 @@ def stack(inputs: Inputs, columns: Sequence[Column], place: Mapping[str, str],
                 total_min,
                 "min",
                 f"{copy.minutes(total_min)} a case",
-                _blend([m.label for m in minutes]),
+                blend([m.label for m in minutes]),
             )
             item("consequence", col, kind="minutes", label="Extra minutes a case", figure=f)
         if has_log:
@@ -994,6 +897,7 @@ def build(inputs: Inputs, app_version: str, frozen: bool) -> RealitySnapshot:
         geometry=layout.fix(model3, {k: _h(c) for k, c in by_code.items()}),
     )  # fmt: skip
 
+    rv4, rv5, rv6, rv7 = _detail_views(inputs, codes, groups, place, columns, figures)
     legend = Legend(
         impacts=[LegendImpact(impact_class=k, word=w, glyph=g)
                  for k, (w, g) in copy.IMPACT_WORDS.items()],
@@ -1015,8 +919,38 @@ def build(inputs: Inputs, app_version: str, frozen: bool) -> RealitySnapshot:
         intents=[SnapshotIntent(id=i.intent_id, kind=i.kind, text=i.text, scope=i.scope,
                                 step_keys=list(i.step_keys), result=i.result,
                                 target=_target_text(i)) for i in inputs.intents],
-        views=RealityViews(rv1=rv1, rv2=rv2, rv3=rv3), legend=legend,
+        views=RealityViews(rv1=rv1, rv2=rv2, rv3=rv3, rv4=rv4, rv5=rv5, rv6=rv6, rv7=rv7),
+        legend=legend,
     )  # fmt: skip
+
+
+Detail = tuple[RedlineView, TimeView, BeliefView, CaseView]
+
+
+def _detail_views(inputs: Inputs, codes: Sequence[CodeView],
+                  groups: Mapping[str, verdict_rules.Group], place: Mapping[str, str],
+                  columns: Sequence[Column], figures: Figures) -> Detail:  # fmt: skip
+    """RV4 to RV7 (P13c): the views that explain why the gaps happen."""
+    name = inputs.process_name
+    model4, p4 = detail.redline(inputs, codes, groups, place, columns, figures)
+    rv4 = RedlineView(id="rv4", title=copy.title("rv4", name), headline=p4.headline,
+                      callouts=_callouts(codes, p4.order), availability=p4.availability,
+                      table=p4.table, redline=model4, geometry=shapes.redline(model4))  # fmt: skip
+    model5, p5 = detail.time(inputs, codes, columns, place, figures)
+    impacts = {c.code: c.impact_class for c in codes}
+    rv5 = TimeView(id="rv5", title=copy.title("rv5", name), headline=p5.headline,
+                   callouts=_callouts(codes, p5.order), availability=p5.availability,
+                   table=p5.table, time=model5, geometry=shapes.time(model5, impacts))  # fmt: skip
+    model6, p6 = detail.belief(inputs, codes, figures)
+    rv6 = BeliefView(id="rv6", title=copy.title("rv6", name), headline=p6.headline,
+                     callouts=_callouts(codes, p6.order), availability=p6.availability,
+                     table=p6.table, belief=model6, geometry=shapes.belief(model6))  # fmt: skip
+    route = detail.typical_route(inputs)
+    model7, p7 = detail.case(inputs, codes, figures, _route_name(route, inputs) if route else "")
+    rv7 = CaseView(id="rv7", title=copy.title("rv7", name), headline=p7.headline,
+                   callouts=_callouts(codes, p7.order), availability=p7.availability,
+                   table=p7.table, case=model7, geometry=shapes.case(model7))  # fmt: skip
+    return rv4, rv5, rv6, rv7
 
 
 def serialise(snapshot: RealitySnapshot) -> str:

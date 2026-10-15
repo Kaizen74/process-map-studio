@@ -29,7 +29,7 @@ from app.repositories import reality_snapshots as snapshots_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import discrepancies as rules
-from app.services import reality
+from app.services import mining, reality
 from app.services import reality_copy as copy
 from app.services.reality_layout import LAYOUT_VERSION
 
@@ -50,14 +50,16 @@ def _data_label(session: Session, version: VersionView) -> str:
     return copy.data_label(draft, version.label, published_by, published_at[:10])
 
 
-Routes = tuple[tuple[reality.RouteIn, ...], int, dict[str, str]]
+Routes = tuple[tuple[reality.RouteIn, ...], int, dict[str, str], str]
 
 
 def _routes(session: Session, version: VersionView, keys: dict[str, str]) -> Routes:
     found = system_variants.variants_of(session, version.id, version.engagement_id)
     if not found.logs:
-        return (), 0, {}
+        return (), 0, {}, ""
     log = found.logs[0]  # the discrepancy engine reads the first log too
+    timings = mining.case_timings(logs_repo.trails(session, log.log_id))
+    stored = logs_repo.get(session, log.log_id)
     routes = tuple(
         reality.RouteIn(
             rank=v.rank, cases=v.cases, share=v.share,
@@ -65,11 +67,14 @@ def _routes(session: Session, version: VersionView, keys: dict[str, str]) -> Rou
             keys=tuple(keys.get(p.element_id or "", "") for p in v.path
                        if p.status != "hidden_work"),
             hidden=tuple(p.activity for p in v.path if p.status == "hidden_work"),
+            activities=tuple(p.activity for p in v.path),
+            positions=tuple(keys.get(p.element_id or "", "") for p in v.path),
+            timings=tuple(timings.get(tuple(p.activity for p in v.path), ())),
         )
         for v in log.variants
     )  # fmt: skip
     after = {w.activity: keys.get(w.after_element_id or "", "") for w in log.hidden_work}
-    return routes, log.too_few, after
+    return routes, log.too_few, after, stored.system if stored else ""
 
 
 def _cycle(session: Session, version: VersionView) -> float | None:
@@ -108,7 +113,7 @@ def gather(session: Session, version: VersionView) -> reality.Inputs:
         )
         for i in confirmed
     )  # fmt: skip
-    routes, too_few, after = _routes(session, version, keys)
+    routes, too_few, after, system_name = _routes(session, version, keys)
     kinds = [(k, status) for _, k, status in sources_repo.kinds(session, version.engagement_id)]
     engagement = engagements_repo.get(session, version.engagement_id)
     volumes = [s.per_month for s in facts.steps if s.per_month]
@@ -123,7 +128,7 @@ def gather(session: Session, version: VersionView) -> reality.Inputs:
         interviews=sum(1 for k, s in kinds if k == INTERVIEW and s == "ready"),
         official_sources={s.key: s.official_sources for s in facts.steps if s.official_sources},
         activity_after=after, volume=max(volumes) if volumes else None,
-        cycle_min=_cycle(session, version),
+        cycle_min=_cycle(session, version), system_name=system_name,
     )  # fmt: skip
 
 

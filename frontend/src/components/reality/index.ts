@@ -15,3 +15,5 @@ export { Glance, type GlanceProps } from "./Glance";
 export { RealityStack, type RealityStackProps } from "./RealityStack";
 export { FixOrKeep, type FixOrKeepProps } from "./FixOrKeep";
 export { DiscrepanciesSection, type DiscrepanciesSectionProps } from "./DiscrepanciesSection";
+export { ShapeCanvas, type ShapeCanvasProps } from "./ShapeCanvas";
+export { BeliefDumbbells, CaseJourney, Redline, TimeStretch } from "./DetailViews";

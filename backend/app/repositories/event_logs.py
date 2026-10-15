@@ -123,6 +123,17 @@ def events(session: Session, log_id: str) -> list[dict[str, Any]]:
     ]  # fmt: skip
 
 
+def trails(session: Session, log_id: str) -> list[tuple[str, str, str, str | None]]:
+    """The log's events as (case_id, activity, ts_start, ts_end), by case, then start: only
+    what the Typical case's timings need (P13c)."""
+    rows = session.execute(
+        select(Event.case_id, Event.activity, Event.ts_start, Event.ts_end)
+        .where(Event.log_id == log_id)
+        .order_by(Event.case_id, Event.ts_start)
+    )
+    return [(r[0], r[1], r[2], r[3]) for r in rows]
+
+
 def add_metrics(session: Session, log_id: str, rows: list[MetricRow]) -> None:
     """Store the log's metric groups; the order within a scope is kept as `order`."""
     if rows:

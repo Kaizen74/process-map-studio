@@ -163,6 +163,13 @@ describe("RQ3 channel discipline (PRD §5.12.8)", () => {
     const users = filesUnder(join(root, "src"), [".ts", ".tsx", ".css"])
       .filter((file) => /--(impact-|designed-work|baseline-)/.test(readFileSync(file, "utf8")))
       .map((file) => relative(root, file).replaceAll("\\", "/"));
+    // The one sanctioned use outside: the Time lens wait hatch in the time colour (PRD §5.2).
+    const map = readFileSync(join(root, "src/components/map/map.css"), "utf8");
+    const mapUses = [...map.matchAll(/^([^{}]+)\{[^}]*--(impact-|designed-work|baseline-)[^}]*\}/gm)].map((m) =>
+      (m[1] ?? "").trim().split("\n").pop(),
+    );
+    expect(mapUses).toEqual([".map-bar__wait"]);
+    allowed.push("src/components/map/map.css");
     expect(users.filter((f) => !allowed.some((a) => f.startsWith(a)))).toEqual([]);
     expect(users.some((f) => f.startsWith("src/components/reality/"))).toBe(true);
   });

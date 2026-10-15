@@ -32,7 +32,7 @@ from app.domain.reality import (
     Zone,
 )
 
-LAYOUT_VERSION = "2"  # 2: column, band, zone and axis labels placed here (P13b-4)
+LAYOUT_VERSION = "3"  # 2: column, band, zone and axis labels (P13b-4); 3: RV4-RV7 (P13c)
 WIDTH = 1600.0
 CHAR_PX = 7.2  # an average 12.5 px IBM Plex Sans character
 LINE_PX = 16.0

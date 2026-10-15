@@ -431,8 +431,17 @@ def _d9(facts: Facts) -> Found | None:
                  f"{len(big)} routes: {text}"), cases=total)  # fmt: skip
 
 
-def _d10(step: StepFacts) -> Found | None:
-    """Belief gap (process level): an official account's value against the measured value."""
+@dataclass(frozen=True, slots=True)
+class Belief:
+    believed: float  # the median of the official accounts' stated times
+    measured: float  # the measured median
+    cases: int
+    factor: float  # the larger over the smaller (at least 1)
+
+
+def belief(step: StepFacts) -> Belief | None:
+    """A step's believed and measured time, when both are known (at least 5 measured cases);
+    D10 and the Belief vs evidence view (RV6) read the same pair."""
     measured = measured_wait(step) if step.stated_wait is not None else step.time
     if not step.official_min or measured is None or measured.cases < MINIMUM_CASES:
         return None
@@ -440,11 +449,17 @@ def _d10(step: StepFacts) -> Found | None:
     if believed <= 0 or measured.median <= 0:
         return None
     factor = max(believed, measured.median) / min(believed, measured.median)
-    if factor < BELIEF_FACTOR:
+    return Belief(believed, measured.median, measured.cases, factor)
+
+
+def _d10(step: StepFacts) -> Found | None:
+    """Belief gap (process level): an official account's value against the measured value."""
+    b = belief(step)
+    if b is None or b.factor < BELIEF_FACTOR:
         return None
-    return Found("D10", (step.key,), Delta(round(factor, 1), "x", MEASURED,
-                 f"believed {believed:.0f} min, measured {measured.median:.0f} min "
-                 f"({TIMES}{factor:.1f})"), cases=measured.cases)  # fmt: skip
+    return Found("D10", (step.key,), Delta(round(b.factor, 1), "x", MEASURED,
+                 f"believed {b.believed:.0f} min, measured {b.measured:.0f} min "
+                 f"({TIMES}{b.factor:.1f})"), cases=b.cases)  # fmt: skip
 
 
 def _d11(step: StepFacts, facts: Facts, control: bool) -> Found | None:

@@ -455,3 +455,27 @@ def test_utc_stamps_are_written_and_read_back_exactly() -> None:
         assert mining._moment(stamp) == datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(
             tzinfo=UTC
         )
+
+
+# --- P13c Typical case: per-case timings --------------------------------------------------------
+
+
+def test_case_timings_per_variant_from_each_case_start() -> None:
+    trails = [
+        ("c1", "Plan", "2026-01-01T08:00:00Z", "2026-01-01T08:10:00Z"),
+        ("c1", "Load", "2026-01-01T08:30:00Z", "2026-01-01T08:45:00Z"),
+        ("c2", "Plan", "2026-01-01T09:00:00Z", "2026-01-01T09:05:00Z"),
+        ("c2", "Load", "2026-01-01T09:20:00Z", "2026-01-01T09:21:00Z"),
+        ("c3", "Load", "2026-01-01T10:00:00Z", "2026-01-01T10:02:00Z"),
+    ]
+    out = mining.case_timings(trails)
+    # Start of each activity, then the finish: the last end when every event has one.
+    assert out == {("Plan", "Load"): [(0.0, 30.0, 45.0), (0.0, 20.0, 21.0)],
+                   ("Load",): [(0.0, 2.0)]}  # fmt: skip
+
+
+def test_case_timings_finish_at_the_last_start_without_end_times() -> None:
+    trails = [("c1", "Plan", "2026-01-01T08:00:00Z", "2026-01-01T08:10:00Z"),
+              ("c1", "Load", "2026-01-01T08:30:00Z", None)]  # fmt: skip
+    assert mining.case_timings(trails) == {("Plan", "Load"): [(0.0, 30.0, 30.0)]}
+    assert mining.case_timings([]) == {}

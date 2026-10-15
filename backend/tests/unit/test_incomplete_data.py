@@ -20,6 +20,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import AppConfig
+from app.domain.reality import Shape
+from app.services.reality_shapes import collisions
 from tests import fixture_engagement
 from tests.unit.test_draft_api import make_client, run_draft, with_key
 from tests.unit.test_log_alignment_api import EXPECTED, UNRECORDED, import_log
@@ -345,6 +347,13 @@ def test_every_figure_says_where_it_comes_from(scenario: Scenario) -> None:
     for view in snapshot["views"].values():
         if not view["headline"]:
             problems.append(f"reality {view['id']}: no headline")
+        if view["availability"]["state"] != "ready" and not view["availability"]["message"]:
+            problems.append(f"reality {view['id']}: missing data without a message")  # P13c
+        shapes = view["geometry"].get("shapes")
+        if shapes is not None and collisions([Shape.model_validate(x) for x in shapes]):
+            problems.append(f"reality {view['id']}: labels collide (RQ7)")
+    if snapshot["views"]["rv7"]["case"]["events"] and not has_log:
+        problems.append("reality rv7: a typical case without system records")
     for evaluation in found["intents"]:
         if evaluation["result"] != "unknown" and evaluation["label"] not in FIGURE_LABELS:
             problems.append(f"intent {evaluation['intent_id']}: a result without a label")

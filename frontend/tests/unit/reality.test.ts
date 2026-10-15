@@ -5,8 +5,16 @@ import {
   codesAt,
   intentsAt,
   verdictText,
+  VIEW_LABELS,
+  VIEW_ORDER,
   type Availability,
   type Band,
+  type BeliefModel,
+  type BeliefRow,
+  type BeliefView,
+  type CaseEvent,
+  type CaseLane,
+  type CaseModel,
   type Callout,
   type Circle,
   type CodeEvidence,
@@ -23,16 +31,25 @@ import {
   type Legend,
   type LensBox,
   type Mark,
+  type Markup,
   type Placed,
   type RealityFigures,
   type RealitySnapshot,
+  type RedlineModel,
+  type RedlinePage,
+  type RedlineStep,
   type Ribbon,
   type Route,
+  type Shape,
+  type ShapeGeometry,
   type SnapshotIntent,
   type StackGeometry,
   type StackItem,
   type StackModel,
   type Tile,
+  type TimeCause,
+  type TimeColumn,
+  type TimeModel,
   type VerdictDecided,
   type Zone,
 } from "../../src/lib/reality";
@@ -44,6 +61,7 @@ const REALITY = JSON.parse(readFileSync(join(__dirname, "..", "fixtures", "reali
   intent: IntentStatement[];
   verdict: VerdictDecided;
   leadership_reality: RealityFigures;
+  belief_view: BeliefView;
 };
 
 // Every field of each type, exactly (`satisfies` refuses a missing or an extra one).
@@ -76,6 +94,20 @@ const ZONE = { id: 1, x: 1, y: 1, width: 1, height: 1, label_x: 1, label_y: 1 } 
 const CIRCLE = { code: 1, cx: 1, cy: 1, r: 1 } satisfies Record<keyof Circle, 1>; // prettier-ignore
 const LEGEND = { impacts: 1, lines: 1, scales: 1, data_label: 1 } satisfies Record<keyof Legend, 1>; // prettier-ignore
 const STATEMENT = { id: 1, engagement_id: 1, scope: 1, element_stable_key: 1, element_label: 1, phase_name: 1, kind: 1, origin: 1, text: 1, metric: 1, comparator: 1, target_value: 1, unit: 1, source_id: 1, source_name: 1, anchor: 1, quote: 1, owner_role_id: 1, owner_role_name: 1, stated_on: 1, label: 1, verification_status: 1, rejection_guardrail: 1, status: 1, note: 1, created_at: 1 } satisfies Record<keyof IntentStatement, 1>; // prettier-ignore
+const SHAPE = { kind: 1, role: 1, x: 1, y: 1, width: 1, height: 1, x2: 1, y2: 1, r: 1, path: 1, lines: 1, code: 1, key: 1, impact_class: 1, style: 1 } satisfies Record<keyof Shape, 1>; // prettier-ignore
+const SHAPES = { width: 1, height: 1, shapes: 1, scale_note: 1 } satisfies Record<keyof ShapeGeometry, 1>; // prettier-ignore
+const REDLINE = { pages: 1, steps: 1, markups: 1, pills: 1, listed: 1 } satisfies Record<keyof RedlineModel, 1>; // prettier-ignore
+const PAGE = { id: 1, name: 1, step_keys: 1 } satisfies Record<keyof RedlinePage, 1>; // prettier-ignore
+const REDLINE_STEP = { key: 1, label: 1, minutes: 1, ghost: 1, codes: 1 } satisfies Record<keyof RedlineStep, 1>; // prettier-ignore
+const MARKUP = { code: 1, type: 1, kind: 1, keys: 1, label: 1, share: 1, impact_class: 1, drawn: 1, tool: 1 } satisfies Record<keyof Markup, 1>; // prettier-ignore
+const TIME = { columns: 1, manual_total: 1, practice_total: 1, multiplier: 1, complete: 1, causes: 1 } satisfies Record<keyof TimeModel, 1>; // prettier-ignore
+const TIME_COLUMN = { column_id: 1, name: 1, manual: 1, work: 1, wait: 1, designed: 1, extra: 1, complete: 1 } satisfies Record<keyof TimeColumn, 1>; // prettier-ignore
+const CAUSE = { code: 1, title: 1, minutes: 1 } satisfies Record<keyof TimeCause, 1>; // prettier-ignore
+const BELIEF = { rows: 1, note: 1, method: 1 } satisfies Record<keyof BeliefModel, 1>; // prettier-ignore
+const BELIEF_ROW = { key: 1, label: 1, believed: 1, measured: 1, gap: 1, direction: 1, prevalence: 1, code: 1, impact_class: 1 } satisfies Record<keyof BeliefRow, 1>; // prettier-ignore
+const CASE = { route_name: 1, cases: 1, label: 1, lanes: 1, events: 1, designed_finish: 1, promise: 1, actual_finish: 1, tiles: 1 } satisfies Record<keyof CaseModel, 1>; // prettier-ignore
+const LANE = { id: 1, name: 1, kind: 1 } satisfies Record<keyof CaseLane, 1>; // prettier-ignore
+const EVENT = { key: 1, label: 1, lane_id: 1, minutes: 1, recorded: 1 } satisfies Record<keyof CaseEvent, 1>; // prettier-ignore
 const DECIDED = { item_id: 1, code: 1, verdict_decided: 1, verdict_note: 1, decision_owner_role_id: 1 } satisfies Record<keyof VerdictDecided, 1>; // prettier-ignore
 
 const keys = (o: object) => Object.keys(o).sort();
@@ -146,6 +178,54 @@ describe("the frontend's Reality types match what the backend sends (P13b)", () 
     rv3.geometry.zones.forEach((z) => expect(keys(z)).toEqual(keys(ZONE)));
     rv3.geometry.circles.forEach((c) => expect(keys(c)).toEqual(keys(CIRCLE)));
     rv3.geometry.labels.forEach((l) => expect(keys(l)).toEqual(keys(LABEL)));
+  });
+
+  it("every field of the four P13c views, their models and shapes", () => {
+    const { rv4, rv5, rv6, rv7 } = s.views;
+    const belief = REALITY.belief_view;
+    for (const v of [rv4, rv5, rv6, rv7, belief]) {
+      for (const k of keys(VIEW)) expect(v).toHaveProperty(k);
+      expect(keys(v.availability)).toEqual(keys(AVAILABILITY));
+      v.callouts.forEach((c) => expect(keys(c)).toEqual(keys(CALLOUT)));
+      expect(keys(v.geometry)).toEqual(keys(SHAPES));
+      v.geometry.shapes.forEach((sh) => expect(keys(sh)).toEqual(keys(SHAPE)));
+    }
+    expect(keys(rv4)).toEqual(keys({ ...VIEW, redline: 1, geometry: 1 }));
+    expect(keys(rv4.redline)).toEqual(keys(REDLINE));
+    rv4.redline.pages.forEach((p) => expect(keys(p)).toEqual(keys(PAGE)));
+    rv4.redline.steps.forEach((st) => expect(keys(st)).toEqual(keys(REDLINE_STEP)));
+    expect(rv4.redline.markups.length).toBeGreaterThan(0);
+    rv4.redline.markups.forEach((m) => expect(keys(m)).toEqual(keys(MARKUP)));
+    rv4.redline.pills.forEach(figure);
+
+    expect(keys(rv5)).toEqual(keys({ ...VIEW, time: 1, geometry: 1 }));
+    expect(keys(rv5.time)).toEqual(keys(TIME));
+    rv5.time.columns.forEach((c) => {
+      expect(keys(c)).toEqual(keys(TIME_COLUMN));
+      [c.manual, c.work, c.wait, c.designed, c.extra].forEach(figure);
+    });
+    rv5.time.causes.forEach((c) => expect(keys(c)).toEqual(keys(CAUSE)));
+
+    expect(keys(rv6)).toEqual(keys({ ...VIEW, belief: 1, geometry: 1 }));
+    expect(keys(belief.belief)).toEqual(keys(BELIEF));
+    expect(belief.belief.rows.length).toBeGreaterThan(0);
+    belief.belief.rows.forEach((r) => {
+      expect(keys(r)).toEqual(keys(BELIEF_ROW));
+      [r.believed, r.measured, r.gap].forEach(figure);
+    });
+
+    expect(keys(rv7)).toEqual(keys({ ...VIEW, case: 1, geometry: 1 }));
+    expect(keys(rv7.case)).toEqual(keys(CASE));
+    rv7.case.lanes.forEach((l) => expect(keys(l)).toEqual(keys(LANE)));
+    expect(rv7.case.events.length).toBeGreaterThan(0);
+    rv7.case.events.forEach((e) => expect(keys(e)).toEqual(keys(EVENT)));
+    rv7.case.tiles.forEach((t) => expect(keys(t)).toEqual(keys(TILE)));
+  });
+
+  it("the switcher lists the seven views in reading order, each with its label", () => {
+    expect(VIEW_ORDER).toEqual(["rv1", "rv2", "rv3", "rv4", "rv5", "rv6", "rv7"]);
+    expect(Object.keys(s.views).sort()).toEqual([...VIEW_ORDER].sort());
+    for (const v of VIEW_ORDER) expect(VIEW_LABELS[v]).toBeTruthy();
   });
 
   it("every field of an intent statement, a decided verdict and Leadership's Reality figures", () => {

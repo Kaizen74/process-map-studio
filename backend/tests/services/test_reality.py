@@ -97,7 +97,7 @@ def test_the_same_inputs_give_a_byte_identical_snapshot() -> None:
     assert one.inputs_hash == reality.inputs_hash(inputs(RICH, intents=CONFIRMED))
     other = snap(dataclasses.replace(RICH, total_cases=120), intents=CONFIRMED)
     assert other.inputs_hash != one.inputs_hash
-    assert (one.rules_version, one.copy_version, one.layout_version) == ("1", "1", "2")
+    assert (one.rules_version, one.copy_version, one.layout_version) == ("1", "2", "3")
 
 
 def test_every_figure_has_one_value_everywhere() -> None:
@@ -125,7 +125,8 @@ def test_every_figure_has_one_value_everywhere() -> None:
 ])  # fmt: skip
 def test_headlines_and_callouts_come_from_templates(fields: dict[str, Any]) -> None:
     s = snap(RICH, **fields)
-    for view in (s.views.rv1, s.views.rv2, s.views.rv3):
+    v = s.views
+    for view in (v.rv1, v.rv2, v.rv3, v.rv4, v.rv5, v.rv6, v.rv7):  # P13c: all seven
         assert view.headline and from_templates(view.headline), view.headline
         assert copy.words(view.headline) <= copy.MAX_HEADLINE_WORDS
         assert len(view.callouts) <= 3

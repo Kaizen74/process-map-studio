@@ -14,8 +14,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.db import session_scope
+from app.domain.reality import Shape
 from app.repositories import reality_snapshots
 from app.services import ai_service, wording
+from app.services.reality_shapes import collisions
 from tests.unit.test_discrepancies_a12 import Reality
 from tests.unit.test_discrepancies_a12 import reality as reality  # the shared fixture
 from tests.unit.test_intent_api import engagement as engagement  # the shared fixture
@@ -84,6 +86,34 @@ def test_a12_snapshot(reality: Reality, monkeypatch: pytest.MonkeyPatch) -> None
         ("X1", "correct"), ("X2", "correct"), ("X3", "rewrite")]  # fmt: skip
     text = json.dumps(s, ensure_ascii=False)
     assert wording.banned_words(text) == []
+
+
+def test_a12_redline_time_belief_and_typical_case(reality: Reality) -> None:
+    """P13c on fixture A.12: the four views that explain why the gaps happen (PRD Appendix A.12
+    expected views): RV6 shows no row (no belief gap passes the factor) and RV7 is a composite of
+    the most common route that differs from the documented one, never one case."""
+    client = reality.engagement.client
+    s = snapshot(client, reality.version_id)
+    rv4, rv5, rv6, rv7 = (s["views"][v] for v in ("rv4", "rv5", "rv6", "rv7"))
+    assert rv4["headline"] == "10 changes from the manual, 1 code on a control."
+    drawn = [m for m in rv4["redline"]["markups"] if m["drawn"]]
+    assert len(drawn) == 6 and {"X1"} <= {m["code"] for m in drawn}
+    assert rv4["redline"]["listed"] == ["X7", "X8", "X9"]
+    assert rv5["headline"] == (
+        "Check and load adds 92 minutes a case; 16 of it is waiting, not work.")  # fmt: skip
+    assert rv5["availability"]["state"] == "partial" and rv5["time"]["multiplier"] is None
+    assert rv6["belief"]["rows"] == [] and rv6["availability"]["state"] == "missing"
+    case = rv7["case"]
+    assert (case["route_name"], case["cases"]) == ("Repeats Draft load plan", 36)
+    assert case["label"] == "A typical case: median timings of 36 cases, not one real case."
+    assert case["lanes"][0] == {"id": "system", "name": "DCS", "kind": "system"}
+    assert len(case["lanes"]) <= 6 and len(case["events"]) <= 15
+    assert rv7["headline"] == (
+        "A typical case touches 1 tool and leaves 3 steps without a record.")  # fmt: skip
+    for view in (rv4, rv5, rv6, rv7):
+        assert len(view["callouts"]) <= 3
+        placed = [Shape.model_validate(x) for x in view["geometry"]["shapes"]]
+        assert collisions(placed) == [], view["id"]
 
 
 def test_codes_match_the_discrepancy_engine(reality: Reality) -> None:
@@ -188,10 +218,19 @@ def _normalised(data: Any) -> Any:
     return data
 
 
+def belief_sample() -> dict[str, Any]:
+    from tests.services.test_reality_detail import believed
+    from tests.services.test_reality_detail import snap as pure_snap
+
+    facts, fields = believed((15.0, 20.0, 70.0), 200.0)
+    return dict(pure_snap(facts, **fields, interviews=3).views.rv6.model_dump(mode="json"))
+
+
 def test_the_frontend_reality_sample_matches_the_backend(reality: Reality) -> None:
     """frontend/tests/fixtures/reality.json: the A.12 snapshot, intent statements and a verdict
-    as the backend sends them, and Leadership's Reality figures once published, for the
-    frontend's field-by-field type check. Rewritten with PMS_UPDATE_GOLDEN=1."""
+    as the backend sends them, Leadership's Reality figures once published and a Belief vs
+    evidence view with a row, for the frontend's field-by-field type check. Rewritten with
+    PMS_UPDATE_GOLDEN=1."""
     from tests.golden.test_golden_baselines import FRONTEND_FIXTURES, matches_baseline
 
     client = reality.engagement.client
@@ -209,5 +248,7 @@ def test_the_frontend_reality_sample_matches_the_backend(reality: Reality) -> No
         "intent": client.get(f"/api/engagements/{eid}/intent").json(),
         "verdict": verdict,
         "leadership_reality": client.get(f"/api/versions/{vid}/leadership").json()["reality"],
+        # P13c: A.12 has no belief gap, so a belief row comes from the service on its own.
+        "belief_view": belief_sample(),
     }
     matches_baseline("reality.json", _normalised(bundle), FRONTEND_FIXTURES)

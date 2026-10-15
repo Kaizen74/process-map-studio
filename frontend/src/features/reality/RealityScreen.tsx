@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SegmentedControl, SelectField, Skeleton } from "../../components/common";
 import {
+  BeliefDumbbells,
   Callouts,
+  CaseJourney,
   CodeBadges,
   FixOrKeep,
   Glance,
@@ -10,6 +12,8 @@ import {
   RealityLegend,
   RealityStack,
   RealityTable,
+  Redline,
+  TimeStretch,
 } from "../../components/reality";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useReality } from "../../hooks/useReality";
@@ -17,13 +21,12 @@ import { useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { formatDate } from "../../lib/format";
-import { VIEW_LABELS, type RealitySnapshot, type ViewId } from "../../lib/reality";
+import { VIEW_LABELS, VIEW_ORDER, type RealitySnapshot, type ViewId } from "../../lib/reality";
 import type { VersionSummary } from "../../lib/reviewTypes";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DiscrepancyCard } from "./DiscrepancyCard";
 import { IntentCard } from "./IntentCard";
 
-const VIEWS: readonly ViewId[] = ["rv1", "rv2", "rv3"];
 const ACTIONS: Readonly<Record<string, { label: string; step: "sources" | "draft" | "system_records" | null }>> = {
   upload_documents: { label: "Add an SOP or manual on Sources", step: "sources" },
   import_log: { label: "Import a system log on System records", step: "system_records" },
@@ -43,7 +46,7 @@ function chooseVersion(versions: readonly VersionSummary[], wanted: string | nul
 }
 
 /**
- * Reality (PRD §5.4, §5.12; P13b): how far reality is from the manual and the promise, for one
+ * Reality (PRD §5.4, §5.12; P13b, P13c): how far reality is from the manual and the promise, for one
  * version's snapshot. Read-only pictures; every number, word and position comes from the backend.
  */
 export function RealityScreen() {
@@ -53,7 +56,7 @@ export function RealityScreen() {
   const [params, setParams] = useSearchParams();
   const chosen = chooseVersion(versions.data ?? [], params.get("version"));
   const snapshot = useReality(chosen?.id ?? null);
-  const view: ViewId = VIEWS.find((v) => v === params.get("view")) ?? "rv1";
+  const view: ViewId = VIEW_ORDER.find((v) => v === params.get("view")) ?? "rv1";
   const selected = params.get("code");
   const [table, setTable] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -171,7 +174,7 @@ function RealityBody({ snapshot, engagementId, view, selected, table, showAll, o
         )}
         <SegmentedControl
           label="Reality view"
-          options={(["rv1", "rv2", "rv3"] as const).map((v) => ({ value: v, label: VIEW_LABELS[v] }))}
+          options={VIEW_ORDER.map((v) => ({ value: v, label: VIEW_LABELS[v] }))}
           value={view}
           onChange={onView}
         />
@@ -204,7 +207,13 @@ function RealityBody({ snapshot, engagementId, view, selected, table, showAll, o
               onShowAll={onShowAll}
             />
           )}
-          {view === "rv2" && snapshot.columns_note && <p className="inline-note">{snapshot.columns_note}</p>}
+          {view === "rv4" && <Redline view={snapshot.views.rv4} selected={selected} onSelect={onSelect} />}
+          {view === "rv5" && <TimeStretch view={snapshot.views.rv5} selected={selected} onSelect={onSelect} />}
+          {view === "rv6" && <BeliefDumbbells view={snapshot.views.rv6} selected={selected} onSelect={onSelect} />}
+          {view === "rv7" && <CaseJourney view={snapshot.views.rv7} selected={selected} onSelect={onSelect} />}
+          {(view === "rv2" || view === "rv5") && snapshot.columns_note && (
+            <p className="inline-note">{snapshot.columns_note}</p>
+          )}
           <CodeBadges
             codes={codes.filter((c) => viewCodes(snapshot, view).includes(c.code))}
             selected={selected}
@@ -226,9 +235,23 @@ function RealityBody({ snapshot, engagementId, view, selected, table, showAll, o
   );
 }
 
-/** The codes a view draws (its badges list). */
+/** The codes a view draws or lists (its badges list). */
 function viewCodes(snapshot: RealitySnapshot, view: ViewId): string[] {
-  if (view === "rv1") return snapshot.views.rv1.glance.routes.flatMap((r) => r.codes);
-  if (view === "rv2") return [...snapshot.views.rv2.stack.highlighted, ...snapshot.views.rv2.stack.listed];
-  return snapshot.views.rv3.fix.circles.map((c) => c.code);
+  const v = snapshot.views;
+  switch (view) {
+    case "rv1":
+      return v.rv1.glance.routes.flatMap((r) => r.codes);
+    case "rv2":
+      return [...v.rv2.stack.highlighted, ...v.rv2.stack.listed];
+    case "rv3":
+      return v.rv3.fix.circles.map((c) => c.code);
+    case "rv4":
+      return v.rv4.redline.markups.map((m) => m.code);
+    case "rv5":
+      return v.rv5.time.causes.map((c) => c.code);
+    case "rv6":
+      return v.rv6.belief.rows.flatMap((r) => (r.code ? [r.code] : []));
+    case "rv7":
+      return v.rv7.callouts.flatMap((c) => (c.code ? [c.code] : []));
+  }
 }

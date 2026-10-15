@@ -486,3 +486,154 @@
   stroke: var(--ink-2);
   stroke-width: 2;
 }
+
+/* P13c views: Redline, Where the time goes, Belief vs evidence, Typical case. The backend places
+   every shape; a shape's role gives its look. Impact colour appears only on shapes tied to an X
+   code, always beside its code and words. */
+.reality-main .segmented {
+  flex-wrap: wrap;
+}
+
+.reality-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.reality-figure__note {
+  margin: 0;
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+}
+
+.rs { fill: none; stroke: none; }
+:where(text).rs { fill: var(--ink-2); }
+.rs.line--dashed { stroke-dasharray: 8 5; }
+.rs.line--dotted { stroke-dasharray: 2 4; }
+.rs.line--double { stroke-width: 3; }
+
+/* text */
+.rs--markup-label,
+.rs--column-label,
+.rs--practice-label,
+.rs--cause-label,
+.rs--cause-figure,
+.rs--row-label,
+.rs--value-believed,
+.rs--value-measured,
+.rs--lane-name,
+.rs--event-label,
+.rs--legend,
+.rs--side-item,
+.rs--strip-name,
+.rs--finish-designed-label,
+.rs--promise-label,
+.rs--finish-actual-label { fill: var(--ink-2); }
+
+.rs--step-label { fill: var(--ink); }
+
+.rs--page-title,
+.rs--side-title,
+.rs--causes-title,
+.rs--total,
+.rs--multiplier,
+.rs--gap,
+.rs--note { fill: var(--ink); font-weight: var(--weight-medium); }
+
+.rs--pill,
+.rs--tick-label { fill: var(--ink-3); font-family: var(--font-mono); }
+.rs--method { fill: var(--ink-3); }
+.rs-glyph { fill: var(--ink); font-weight: var(--weight-medium); pointer-events: none; }
+
+/* the documented baseline is lighter than everything observed (ER-06) */
+.rs--step-documented,
+.rs--manual { fill: var(--baseline-fill); stroke: var(--baseline-stroke); stroke-width: 1.5; }
+.rs--step-ghost,
+.rs--no-time { fill: var(--surface); stroke: var(--baseline-stroke); stroke-width: 1.5; }
+.rs--strike,
+.rs--connector { stroke: var(--baseline-stroke); stroke-width: 1.5; }
+
+/* markups and their glyphs: neutral unless tied to a code's impact */
+.rs--markup-added,
+.rs--markup-off-system,
+.rs--markup-no-record,
+.rs--markup-owner,
+.rs--markup-longer,
+.rs--markup-wait,
+.rs--legend-added,
+.rs--legend-skipped,
+.rs--legend-reorder,
+.rs--legend-loop,
+.rs--legend-bypass,
+.rs--legend-off-system,
+.rs--legend-longer,
+.rs--legend-wait,
+.rs--legend-no-record,
+.rs--legend-owner { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2; }
+.rs--markup-off-system,
+.rs--legend-off-system { stroke-dasharray: 3 2; }
+.rs--markup-no-record,
+.rs--legend-no-record { stroke-dasharray: 1 2; }
+
+.rs--arc-skipped,
+.rs--arc-bypass,
+.rs--arc-reorder,
+.rs--arc-loop { stroke: var(--ink-2); stroke-width: 2; }
+.rs--leader,
+.rs--drop,
+.rs--guide,
+.rs--event-tick { stroke: var(--ink-4); stroke-width: 1; }
+
+/* time */
+/* designed work in the designed-work colour, extra work solid ink: each also named under the
+   strip ("Work", "Extra", "Waiting"), so the meaning never rests on colour alone */
+.rs--work-designed { fill: var(--designed-work); }
+.rs--work { fill: var(--ink-2); }
+.rs--work-extra { fill: var(--ink); }
+.rs--wait { stroke: var(--ink-3); stroke-width: 1; }
+.rs-hatch-ground { fill: var(--surface); }
+.rs-hatch-line { stroke: var(--ink-3); stroke-width: 2; }
+.rs--cause { fill: var(--ink-3); }
+
+/* belief */
+.rs--axis,
+.rs--tick { stroke: var(--border-strong); stroke-width: 1; }
+.rs--gap-bar { fill: var(--ink-3); }
+.rs--dot-believed { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.rs--dot-measured { fill: var(--ink); stroke: var(--ink); }
+
+/* typical case */
+.rs--lane-system { fill: var(--surface-2); stroke: var(--border); }
+.rs--lane-tool,
+.rs--lane-off_system,
+.rs--lane-outside { fill: var(--surface); stroke: var(--border-strong); stroke-dasharray: 4 3; }
+.rs--path { stroke: var(--ink); stroke-width: 2; }
+.rs--event-recorded { fill: var(--ink); }
+.rs--event-off-system { fill: var(--surface); stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 2; }
+.rs--finish-designed { stroke: var(--baseline-stroke); stroke-width: 2; }
+.rs--promise { stroke: var(--ink-2); }
+.rs--finish-actual { stroke: var(--ink); stroke-width: 2; }
+
+/* impact: the one meaning of colour (ER-01) */
+.rs-impact--control_exposure:is(rect, circle) { stroke: var(--impact-control); }
+.rs-impact--time_impact:is(rect, circle) { stroke: var(--impact-time); }
+.rs-impact--capacity_drain:is(rect, circle) { stroke: var(--impact-capacity); }
+.rs-impact--workaround:is(rect, circle) { stroke: var(--impact-workaround); }
+.rs-impact--control_exposure:is(path, line) { stroke: var(--impact-control); }
+.rs-impact--time_impact:is(path, line) { stroke: var(--impact-time); }
+.rs-impact--capacity_drain:is(path, line) { stroke: var(--impact-capacity); }
+.rs-impact--workaround:is(path, line) { stroke: var(--impact-workaround); }
+.rs--cause.rs-impact--control_exposure,
+.rs--gap-bar.rs-impact--control_exposure { fill: var(--impact-control); }
+.rs--cause.rs-impact--time_impact,
+.rs--gap-bar.rs-impact--time_impact { fill: var(--impact-time); }
+.rs--cause.rs-impact--capacity_drain,
+.rs--gap-bar.rs-impact--capacity_drain { fill: var(--impact-capacity); }
+.rs--cause.rs-impact--workaround,
+.rs--gap-bar.rs-impact--workaround { fill: var(--impact-workaround); }
+text.rs-impact--control_exposure,
+text.rs-impact--time_impact,
+text.rs-impact--capacity_drain,
+text.rs-impact--workaround { fill: var(--ink); }
+.rs--arc-bypass.rs-impact--control_exposure { stroke-width: 3; }

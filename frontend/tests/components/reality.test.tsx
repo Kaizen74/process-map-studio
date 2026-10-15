@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DiscrepanciesSection } from "../../src/components/reality";
-import type { IntentStatement, RealityFigures, RealitySnapshot } from "../../src/lib/reality";
+import type { BeliefView, IntentStatement, RealityFigures, RealitySnapshot } from "../../src/lib/reality";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp } from "../renderApp";
 
@@ -16,6 +16,7 @@ const REALITY = JSON.parse(readFileSync(join(__dirname, "..", "fixtures", "reali
   decided: RealitySnapshot;
   intent: IntentStatement[];
   leadership_reality: RealityFigures;
+  belief_view: BeliefView;
 };
 const SNAP = REALITY.snapshot;
 const VID = SNAP.version_id;
@@ -151,6 +152,122 @@ describe("Reality screen (PRD §5.12, P13b)", () => {
     expect(await screen.findByText(/There is no map yet/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Draft" })).toHaveAttribute("href", "/engagements/e1/draft");
     expect(await seriousViolations(container)).toEqual([]);
+  });
+});
+
+describe("Reality screen II: Redline, time, belief and typical case (PRD §5.12.3, P13c)", () => {
+  /** The words of every text shape a view's geometry holds, as the canvas draws them. */
+  const shapeText = (svg: Element) => [...svg.querySelectorAll("tspan")].map((t) => t.textContent ?? "");
+
+  it("the switcher offers all seven views in reading order", async () => {
+    backend();
+    renderApp(path());
+    await screen.findByText(SNAP.views.rv1.headline);
+    const switcher = screen.getByRole("radiogroup", { name: "Reality view" });
+    expect(within(switcher).getAllByRole("radio").map((r) => r.textContent)).toEqual([
+      "Glance",
+      "Reality stack",
+      "Fix or keep",
+      "Redline",
+      "Where the time goes",
+      "Belief vs evidence",
+      "Typical case",
+    ]);
+  });
+
+  it.each(["rv4", "rv5", "rv6", "rv7"] as const)(
+    "%s draws the backend's shapes with its question, headline and table, accessibly",
+    async (id) => {
+      backend();
+      const { container } = renderApp(path(`?view=${id}`));
+      const view = SNAP.views[id];
+      expect(await screen.findByRole("heading", { name: view.title })).toBeInTheDocument();
+      expect(screen.getByText(view.headline)).toBeInTheDocument();
+      const svg = container.querySelector("svg.reality-canvas");
+      if (!svg) throw new Error("the view's canvas");
+      expect(svg.getAttribute("viewBox")).toBe(`0 0 ${view.geometry.width} ${view.geometry.height}`);
+      expect(svg.querySelectorAll("[data-role]")).toHaveLength(view.geometry.shapes.length);
+      const words = view.geometry.shapes.filter((x) => x.kind === "text").flatMap((x) => x.lines);
+      expect(shapeText(svg)).toEqual(words); // every word on the canvas is the backend's
+      fireEvent.click(screen.getByRole("button", { name: "Show as table" }));
+      const table = screen.getByRole("table", { name: view.title });
+      expect(within(table).getAllByRole("row")).toHaveLength(view.table.rows.length + 1);
+      expect(await seriousViolations(container)).toEqual([]);
+    },
+  );
+
+  it("the Redline lists the markups not drawn and its codes as badges", async () => {
+    backend();
+    const { container } = renderApp(path("?view=rv4"));
+    await screen.findByText(SNAP.views.rv4.headline);
+    const svg = container.querySelector("svg.reality-canvas");
+    if (!svg) throw new Error("the Redline canvas");
+    for (const code of SNAP.views.rv4.redline.listed) {
+      expect(shapeText(svg).some((t) => t.startsWith(`${code} `))).toBe(true);
+    }
+    const ghosts = svg.querySelectorAll('[data-role="step-ghost"]');
+    expect(ghosts.length).toBe(SNAP.views.rv4.redline.steps.filter((x) => x.ghost).length);
+    const badges = screen.getByRole("list", { name: "Codes on this view" });
+    const codes = [...new Set(SNAP.views.rv4.redline.markups.map((m) => m.code))];
+    expect(within(badges).getAllByRole("listitem")).toHaveLength(codes.length);
+  });
+
+  it("selecting a code dims the other codes' shapes", async () => {
+    backend();
+    const { container } = renderApp(path("?view=rv4&code=X1"));
+    await screen.findByText(SNAP.views.rv4.headline);
+    const coded = [...container.querySelectorAll("svg.reality-canvas [data-role]")].filter((_, i) =>
+      Boolean(SNAP.views.rv4.geometry.shapes[i]?.code),
+    );
+    const others = SNAP.views.rv4.geometry.shapes.filter((x) => x.code && x.code !== "X1").length;
+    expect(coded.filter((g) => g.classList.contains("is-dimmed"))).toHaveLength(others);
+  });
+
+  it("Where the time goes says it is incomplete and why", async () => {
+    backend();
+    renderApp(path("?view=rv5"));
+    await screen.findByText(SNAP.views.rv5.headline);
+    expect(screen.getByText(SNAP.views.rv5.availability.message)).toBeInTheDocument();
+  });
+
+  it("Belief vs evidence without a gap says what it needs; with one it shows the neutral note", async () => {
+    backend();
+    renderApp(path("?view=rv6"));
+    await screen.findByText(SNAP.views.rv6.headline);
+    expect(screen.getByText(SNAP.views.rv6.availability.message)).toBeInTheDocument();
+    const belief = REALITY.belief_view;
+    backend({ ...SNAP, views: { ...SNAP.views, rv6: belief } });
+    const { container } = renderApp(path("?view=rv6"));
+    await screen.findAllByText(belief.headline);
+    const svg = container.querySelector("svg.reality-canvas");
+    if (!svg) throw new Error("the belief canvas");
+    const words = shapeText(svg);
+    expect(words).toContain("A visibility gap, not a competence gap.");
+    expect(words).toContain(belief.belief.rows[0]?.gap.text);
+    expect(words).toContain(belief.belief.rows[0]?.prevalence);
+  });
+
+  it("the Typical case is labelled a composite and shows its answer tiles", async () => {
+    backend();
+    renderApp(path("?view=rv7"));
+    const c = SNAP.views.rv7.case;
+    expect(await screen.findByText(c.label)).toBeInTheDocument();
+    for (const t of c.tiles) expect(screen.getByText(t.caption)).toBeInTheDocument();
+    expect(c.cases).toBeGreaterThanOrEqual(5);
+  });
+
+  it("without a route of 5 cases the Typical case draws nothing and links to System records", async () => {
+    const missing = {
+      ...SNAP.views.rv7,
+      case: { ...SNAP.views.rv7.case, events: [], lanes: [], tiles: [], cases: 0, label: "" },
+      geometry: { ...SNAP.views.rv7.geometry, shapes: [] },
+      availability: { state: "missing" as const, message: "A typical case needs a system log.", action: "import_log" as const },
+    };
+    backend({ ...SNAP, views: { ...SNAP.views, rv7: missing } });
+    const { container } = renderApp(path("?view=rv7"));
+    expect(await screen.findByText("A typical case needs a system log.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Import a system log on System records" })).toBeInTheDocument();
+    expect(container.querySelector("svg.reality-canvas")).toBeNull();
   });
 });
 

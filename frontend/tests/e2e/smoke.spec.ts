@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -728,10 +728,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("note")).toContainText("Draft: figures may change");
     await expect(page.getByRole("region", { name: "Intent" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    for (const view of ["Reality stack", "Fix or keep"]) {
+    for (const view of ["Reality stack", "Fix or keep", "Redline", "Where the time goes", "Belief vs evidence", "Typical case"]) {
       await page.getByRole("radiogroup", { name: "Reality view" }).getByRole("radio", { name: view }).click();
       await expect(page.locator(".reality-view__headline")).not.toBeEmpty();
       expect(await seriousViolations(page)).toEqual([]);
+      // P13c RQ7 in a real browser: no two drawn labels overlap on the P13c canvases.
+      expect(await overlappingLabels(page), `labels overlap on ${view}`).toEqual([]);
     }
     await page.getByRole("button", { name: "Show as table" }).click();
     await expect(page.getByRole("table")).toBeVisible();
@@ -845,3 +847,22 @@ test("interview templates: download Word and Markdown from the home screen", asy
   expect(text).toContain("| L3 |");
   expect(text).toContain("Use roles, not names.");
 });
+
+/** RQ7 (P13c): pairs of drawn text labels on the Reality canvas whose boxes overlap on screen. */
+async function overlappingLabels(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const boxes = [...document.querySelectorAll("svg.reality-canvas [data-role] > text")].map((t) => ({
+      text: t.textContent ?? "",
+      r: t.getBoundingClientRect(),
+    }));
+    const out: string[] = [];
+    boxes.forEach((a, i) =>
+      boxes.slice(i + 1).forEach((b) => {
+        const x = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
+        const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+        if (x > 1 && y > 1) out.push(`${a.text} | ${b.text}`);
+      }),
+    );
+    return out;
+  });
+}

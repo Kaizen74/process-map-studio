@@ -654,14 +654,14 @@ Every difference between intent, documents, belief and practice on a version, wo
 ### PUT /api/discrepancy-items/{item_id}/verdict
 `{"verdict": "codify" | "correct" | "rewrite" | "ask" | null, "note": "…", "decision_owner_role_id": "…" | null}`. `null` clears Eric's verdict (the suggestion shows again). Rules (`422` naming the field): `verdict` ("Choose codify, correct, rewrite or ask."); `note` one line, up to 300 characters ("A note is one line of up to 300 characters."); `decision_owner_role_id` a role of this engagement ("Choose the decision owner's role."). Response `200`: `{"item_id", "code", "verdict_decided", "verdict_note", "decision_owner_role_id"}`. Audit row "Decided discrepancy verdict" (before and after). Errors `404` ("That discrepancy doesn't exist."), `422`. The path uses the item's ID (`item_id` in the GET) because codes repeat across engagements.
 
-## Reality snapshot (PRD §3.18, §4 Intent and Reality, §5.12, constraint 26, G17) — phase P13b (2026-10-14)
+## Reality snapshot (PRD §3.18, §4 Intent and Reality, §5.12, constraint 26, G17) — phase P13b (2026-10-14); RV4–RV7 phase P13c (2026-10-15)
 
 Everything the Reality screen draws for one version, worked out by fixed rules (`services/reality`, `reality_copy`, `reality_layout`) from the discrepancy engine's facts, Eric's confirmed intent, his verdicts and the system records. No AI call is made and no AI-written text appears. One snapshot per version (the As done view): a **draft** is worked out when asked and kept while its inputs are unchanged (`inputs_hash`); **publishing freezes** it (when the Reality views switch is on; otherwise the first request for that published version works it out and freezes it). A frozen snapshot is never worked out again, also under newer rules or after a later verdict. The Reality screen, the panel's Discrepancies section and Leadership read only this snapshot, so a figure has one value everywhere (RQ9). Like the intent endpoints, it answers whatever the Reality views switch says; the switch hides the screen.
 
 ### GET /api/versions/{vid}/reality
 `200`:
 ```json
-{"version_id": "…", "rules_version": "1", "copy_version": "1", "layout_version": "2", "app_version": "1.0.0",
+{"version_id": "…", "rules_version": "1", "copy_version": "2", "layout_version": "3", "app_version": "1.0.0",
  "inputs_hash": "<64 hex>", "frozen": false, "draft": true,
  "process_name": "Aircraft load control",
  "data_label": "Draft: figures may change",
@@ -723,7 +723,39 @@ Everything the Reality screen draws for one version, worked out by fixed rules (
                    "geometry": {"width": 1600, "height": 760, "zones": [{"id", "x", "y", "width", "height", "label_x", "label_y"}],
                                 "circles": [{"code", "cx", "cy", "r"}],
                                 "labels": [{"id": "zone:correct", "x", "y", "lines": ["Correct the practice", "Departs from the manual and falls short of the promise."]}],
-                                "scale_note": "Circle area = hours a month"}}},
+                                "scale_note": "Circle area = hours a month"}},
+           "rv4": {"…": "as rv1, with", "redline": {
+                     "pages": [{"id": "all", "name": "Every documented step", "step_keys": ["draft-load-plan", "approve-load-plan"]}],
+                     "steps": [{"key": "approve-load-plan", "label": "Approve load plan", "minutes": null, "ghost": true, "codes": ["X1"]}],
+                     "markups": [{"code": "X1", "type": "D1", "kind": "skipped", "keys": ["approve-load-plan"],
+                                  "label": "Skipped: Approve load plan", "share": {"…": "a figure"},
+                                  "impact_class": "control_exposure", "drawn": true, "tool": ""}],
+                     "pills": [{"…": "a figure, id rv4.pill.<step key>"}], "listed": ["X7", "X8"]},
+                   "geometry": {"width": 1600, "height": 542, "shapes": [{"kind": "rect", "role": "step-ghost", "x": 129, "y": 172,
+                                "width": 130, "height": 72, "x2": 0, "y2": 0, "r": 0, "path": "", "lines": [], "code": null,
+                                "key": "approve-load-plan", "impact_class": null, "style": "dashed"}],
+                                "scale_note": "The documented steps once, in the manual's order; markups show practice"}},
+           "rv5": {"…": "as rv1, with", "time": {
+                     "columns": [{"column_id": "…", "name": "Check and load", "manual": {"…": "figure"}, "work": {"…": "figure"},
+                                  "wait": {"…": "figure"}, "designed": {"…": "figure"}, "extra": {"…": "figure"}, "complete": true}],
+                     "manual_total": {"…": "figure"}, "practice_total": {"…": "figure"}, "multiplier": null, "complete": false,
+                     "causes": [{"code": "X6", "title": "Resolve or offload", "minutes": {"…": "figure"}}]},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Both strips share one scale: width is minutes a case"}},
+           "rv6": {"…": "as rv1, with", "belief": {
+                     "rows": [{"key": "load", "label": "Load", "believed": {"…": "figure (stated)"}, "measured": {"…": "figure (measured)"},
+                               "gap": {"…": "figure: 10.0× longer"}, "direction": "longer",
+                               "prevalence": "stated in 2 of 3 interviews", "code": null, "impact_class": null}],
+                     "note": "A visibility gap, not a competence gap.", "method": "How belief is measured: …"},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Each row has its own scale, from 0 to a little past the larger value"}},
+           "rv7": {"…": "as rv1, with", "case": {
+                     "route_name": "Repeats Draft load plan", "cases": 36,
+                     "label": "A typical case: median timings of 36 cases, not one real case.",
+                     "lanes": [{"id": "system", "name": "DCS", "kind": "system"}, {"id": "tool:sheet", "name": "Sheet", "kind": "tool"}],
+                     "events": [{"key": "draft-load-plan", "label": "Draft load plan", "lane_id": "system",
+                                 "minutes": {"…": "figure, id rv7.event.<n>"}, "recorded": true}],
+                     "designed_finish": null, "promise": null, "actual_finish": {"…": "figure"},
+                     "tiles": [{"figure": {"…": "figure"}, "caption": "touched outside the system"}]},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Across: minutes since the case started (median timings, not one real case)"}}},
  "legend": {"impacts": [{"impact_class": "control_exposure", "word": "Control exposure", "glyph": "triangle"}],
             "lines": [{"style": "solid", "meaning": "In the system of record, or as documented"}],
             "scales": ["Line width = share of cases"], "data_label": "Draft: figures may change"}}
@@ -736,10 +768,15 @@ Everything the Reality screen draws for one version, worked out by fixed rules (
 - **`columns`** (§3.18.2): the shared axis of the hero views. The As done view's phases (at most 7, in process order; with more, the phases with a control exposure, then those losing most hours, are kept and `columns_note` says "n phases not shown, none with a control exposure"); a version with fewer than 2 phases uses up to 7 usual-route steps (`kind: "step"`). The last column is always the whole process.
 - **`codes`**: one entry per X code drawn on this version, in code order — its identity everywhere (RQ4): the same code, impact word, glyph, title and figures on every view, the panel, Leadership and the pack. `minutes`: extra minutes a case (from the measured hours over the process's cases a month, else the stated wait, extra time or added step's time; `null` when nothing states it). `hours`: hours a month from measured figures only (0 h when none is measured). `verdict.shown` is Eric's verdict when he decided one (`status: "confirmed"`), else the suggestion (`status: "suggested"`); `null` for process-level types. `evidence.chips` D · I · S are filled when that kind of evidence exists. `rank` is the Decide-first order: impact class, then hours, then code.
 - **`intents`**: each confirmed intent statement as the snapshot evaluated it (`result` `met` · `not_met` · `unknown`; `target` in words, for example "target at most 10 min"), with the step keys it covers (none for a process-wide statement).
-- **`views`**: `rv1` Glance, `rv2` Reality stack and `rv3` Fix or keep (P13b; `rv4`–`rv7` arrive in P13c). Each has its fixed `title` (the executive question), a `headline` (at most 20 words) and up to 3 `callouts` (each at most 2 lines), chosen and filled from the versioned template catalogue with computed values only; `availability` (`state`: `ready` · `partial` · `missing`, the §3.18.3 sentence and the one `action` that fixes it: `add_intent` · `upload_documents` · `import_log` · `draft`); `table`, the view as a table with the same figure texts (its accessible equivalent); its model; and `geometry` for a 1600-wide reference frame (the screen scales it; the UI draws it and never computes layout).
+- **`views`**: `rv1` Glance, `rv2` Reality stack and `rv3` Fix or keep (P13b); `rv4` Redline, `rv5` Where the time goes, `rv6` Belief vs evidence and `rv7` Typical case (P13c). Each has its fixed `title` (the executive question), a `headline` (at most 20 words) and up to 3 `callouts` (each at most 2 lines), chosen and filled from the versioned template catalogue with computed values only; `availability` (`state`: `ready` · `partial` · `missing`, the §3.18.3 sentence and the one `action` that fixes it: `add_intent` · `upload_documents` · `import_log` · `draft`); `table`, the view as a table with the same figure texts (its accessible equivalent); its model; and `geometry` for a 1600-wide reference frame (the screen scales it; the UI draws it and never computes layout).
 - **rv1 `glance.routes`**: with system records, the routes are the log's variants as read through Eric's confirmed matches: every variant that fits the As documented view joins one grey **As documented** ribbon; each other variant of at least 5% of cases is its own ribbon, named by what it does ("Repeats Draft load plan", "Adds Manual weight override"), with the codes found on it; rarer ones join "Other: n rarer routes" (a route carrying a control exposure always has its own ribbon). Shares are variant shares. Without system records (`basis: "steps"`): "n of N steps practised as documented" and one ribbon per coded deviation, as step counts labelled stated. At most 7 ribbons, ordered by share.
 - **rv2 `stack.bands`**: `promise` (confirmed intent on its steps or phase; process-wide statements in the whole-process column), `belief` (the median minutes official accounts state for a step, "stated in n of N interviews"), `documented` (the documented steps with their designed minutes), `done` (the As done steps with their minutes, and each code's branch with its badge and two short lines) and `consequence` (per column: extra minutes a case and hours a month, the sums of its codes' figures). A band without its evidence has `state: "missing"` and its §3.18.3 sentence. `lens`: the column losing most hours a month (else most extra minutes). `highlighted`: at most 5 codes drawn as branches (control exposures first, never hidden), `listed` the rest.
 - **rv3 `fix`**: the 2 × 2 of Follows the manual / Departs from it × Delivers the promise / Falls short; each code's circle sits in the zone of its shown verdict (`codify` · `correct` · `rewrite`; `ask` codes sit in the Ask strip below; `as_designed` is the documented route). Circle area is hours a month. `decide_first`: codes by `rank` (6 shown, the rest behind "Show all"). Without confirmed intent every code sits in Ask and `availability` explains how to add intent.
+- **P13c geometry (`rv4`–`rv7`)**: a list of `shapes`, each placed by the backend: `kind` `rect` (x, y, width, height) · `circle` (centre x, y and r) · `line` (x, y to x2, y2) · `path` (`path`, with its bounding box in x, y, width, height) · `text` (the box's top-left x, y, width and height; line i at y + 12 + 16 i). `role` says what a shape means (for example `step-documented`, `step-ghost`, `markup-added`, `markup-wait`, `arc-loop`, `manual`, `wait`, `work-extra`, `dot-believed`, `dot-measured`, `lane-system`, `event-off-system`, `promise`); `style` is `solid` · `dashed` · `dotted` · `double`; `code`, `key` and `impact_class` tie a shape to its X code, step and impact. RQ7: no text box overlaps another or a path's box.
+- **rv4 `redline`** (§5.12.3): the documented steps once, in one row of at most 12 (paged by phase beyond that). One markup per code and practice type (D1 skipped, D2 added, D3 another order, D4 loops back, D5 goes round, D6 off-system, D7 takes longer, D8 waits, D11 no record, D12 another role), each naming its share; at most 6 drawn, control exposures always; the rest `listed` at the side. `pills`: each step's extra minutes a case (the sum of its codes' minutes). A waiting capsule sits on the connector into its step. Without an SOP or manual: `availability` `missing` with `upload_documents`.
+- **rv5 `time`**: per column, the manual's minutes, practice's work and waiting (measured where the log measures them, else stated), the designed part (practice work up to the manual's minutes) and the extra work beyond it; waiting is drawn between steps, never inside one, and both strips share one scale. `causes`: the codes adding minutes, largest first. A column without a stated time shows "No time stated"; totals then say "incomplete" and `multiplier` is `null`.
+- **rv6 `belief`**: one row per belief gap (the D10 rule: a step whose official accounts state a time and whose time the system measures in at least 5 cases, differing by a factor of 1.5 or more), at most 6, largest gap first. `believed` is the median of the stated times, never one answer; `prevalence` "stated in n of N interviews". Without system records, or without a stated time on a measured step, `availability` says so.
+- **rv7 `case`**: a composite, never one case: the most common route that differs from the documented one with at least 5 cases (else the most common such route); each event's time is the median minutes from case start among that route's cases. Lanes: the log's system of record, each tool named on an off-system step after a route step (at most 4), and "Off-system work" when none is named (never counted as a tool); at most 6 lanes and 15 events. Off-system events have no time. `tiles`: tools touched, minutes late against the promise (a confirmed cycle-time target) or the designed time, steps without a record. Without a route of at least 5 cases: `availability` `missing` with `import_log`, no event drawn.
 - Errors: `404` ("That version doesn't exist.").
 
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1

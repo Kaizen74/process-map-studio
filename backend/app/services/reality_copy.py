@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-COPY_VERSION = "1"
+COPY_VERSION = "2"  # 2: the Redline, time, belief and typical-case views (P13c)
 TIMES = "\u00d7"  # the multiplication sign
 MAX_HEADLINE_WORDS = 20
 
@@ -20,6 +20,10 @@ TITLES = {
     "rv1": "How different is real {process} from the manual?",
     "rv2": "Where does reality break away from the manual, and what does it cost?",
     "rv3": "Which gaps should we fix, and which should we keep?",
+    "rv4": "What exactly changed versus the manual?",
+    "rv5": "Where does the extra time come from?",
+    "rv6": "How far is what we believe from what happens?",
+    "rv7": "What does the hidden work feel like for one customer?",
 }
 
 # Headline templates by slot, in the order they are considered (the first whose values exist).
@@ -46,6 +50,23 @@ TEMPLATES: Mapping[str, str] = {
     "rv3.ask": "{ask} {ask_verb} the process owner's view before {ask_pronoun} can be sorted.",
     "rv3.no_intent": "{ask} {ask_wait} in Ask until intent is confirmed.",
     "rv3.same": "No gap to sort yet.",
+    "rv4.changes": "{changes} from the manual, {controls} on a control.",
+    "rv4.changes_plain": "{changes} from the manual.",
+    "rv4.same": "Practice follows the manual as written in these sources.",
+    "rv4.none": "No SOP or manual is in the sources, so there is nothing to mark up yet.",
+    "rv5.added": "{phase} adds {added_min} minutes a case; {wait_min} of it is waiting, not work.",
+    "rv5.added_work": "{phase} adds {added_min} minutes a case of extra work.",
+    "rv5.none": "No added time can be worked out from the times your sources state.",
+    "rv6.gap": "{step} is the largest gap: measured {measured} against a believed {believed}.",
+    "rv6.none": "No step has both a believed and a measured time to compare.",
+    "rv6.close": "Belief and measurement are within {factor} on {steps} compared.",
+    "rv7.promise": "A typical case touches {tools} and finishes {late} after the promise.",
+    "rv7.designed": "A typical case touches {tools} and finishes {late} after the designed time.",
+    "rv7.records": "A typical case touches {tools} and leaves {missing} without a record.",
+    "rv7.label": "A typical case: median timings of {cases}, not one real case.",
+    "rv6.note": "A visibility gap, not a competence gap.",
+    "rv6.method": "How belief is measured: the median of the times official accounts state for a "
+    "step, never one person's answer, set against the system's median for the same step.",
     "callout.code": "{code} {title} ({delta}).",
     "callout.figures": "{figures}.",
     "callout.control": "Potential control exposure, for the control owner to confirm.",
@@ -71,6 +92,13 @@ AVAILABILITY: Mapping[str, str] = {
     "rv2.no_belief": "No official account states a time for a step.",
     "rv3.no_intent": "Without intent every deviation sits in Ask. Add intent statements (a target, "
     "a promise or a control objective) to sort the gaps into fix or keep.",
+    "rv4.no_documents": "The Redline marks changes on an SOP or manual: upload one to see it.",
+    "rv5.no_times": 'Steps without a time show "No time stated"; the totals are incomplete.',
+    "rv6.no_log": "Measured values come from system records: import a system log to compare "
+    "them with what experts believe.",
+    "rv6.no_belief": "No official account states a time for a step the system measures.",
+    "rv7.no_log": "A typical case needs a system log with at least 5 cases on one route; it is "
+    "never one real case.",
     "no_version": "Create a draft map first.",
 }
 

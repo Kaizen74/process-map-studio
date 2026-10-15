@@ -1,10 +1,10 @@
 // The Reality snapshot as the backend sends it (API_CONTRACT.md → Reality snapshot; PRD §3.18,
-// §5.12; P13b). Formatting only: every number, word, headline and position comes from the
+// §5.12; P13b, P13c). Formatting only: every number, word, headline and position comes from the
 // backend; nothing here computes a figure or a layout (constraints 20 and 26).
 
 export type ImpactClass = "control_exposure" | "time_impact" | "capacity_drain" | "workaround";
 export type ImpactGlyph = "triangle" | "clock" | "bars" | "dotted_square";
-export type ViewId = "rv1" | "rv2" | "rv3";
+export type ViewId = "rv1" | "rv2" | "rv3" | "rv4" | "rv5" | "rv6" | "rv7";
 
 export interface Figure {
   id: string;
@@ -307,10 +307,166 @@ export interface FixView extends ViewBase {
   geometry: FixGeometry;
 }
 
+// --- P13c: Redline, Where the time goes, Belief vs evidence, Typical case -------------------
+
+/** One shape placed by the backend; text boxes are top-left x, y with line i at y + 12 + 16 i. */
+export interface Shape {
+  kind: "rect" | "path" | "line" | "circle" | "text";
+  role: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  x2: number;
+  y2: number;
+  r: number;
+  path: string;
+  lines: string[];
+  code: string | null;
+  key: string | null;
+  impact_class: ImpactClass | null;
+  style: "solid" | "dashed" | "dotted" | "double";
+}
+
+export interface ShapeGeometry {
+  width: number;
+  height: number;
+  shapes: Shape[];
+  scale_note: string;
+}
+
+export interface RedlineStep {
+  key: string;
+  label: string;
+  minutes: Figure | null;
+  ghost: boolean;
+  codes: string[];
+}
+
+export interface Markup {
+  code: string;
+  type: string;
+  kind: string;
+  keys: string[];
+  label: string;
+  share: Figure;
+  impact_class: ImpactClass;
+  drawn: boolean;
+  tool: string;
+}
+
+export interface RedlinePage {
+  id: string;
+  name: string;
+  step_keys: string[];
+}
+
+export interface RedlineModel {
+  pages: RedlinePage[];
+  steps: RedlineStep[];
+  markups: Markup[];
+  pills: Figure[];
+  listed: string[];
+}
+
+export interface TimeColumn {
+  column_id: string;
+  name: string;
+  manual: Figure | null;
+  work: Figure | null;
+  wait: Figure | null;
+  designed: Figure | null;
+  extra: Figure | null;
+  complete: boolean;
+}
+
+export interface TimeCause {
+  code: string;
+  title: string;
+  minutes: Figure;
+}
+
+export interface TimeModel {
+  columns: TimeColumn[];
+  manual_total: Figure | null;
+  practice_total: Figure | null;
+  multiplier: Figure | null;
+  complete: boolean;
+  causes: TimeCause[];
+}
+
+export interface BeliefRow {
+  key: string;
+  label: string;
+  believed: Figure;
+  measured: Figure;
+  gap: Figure;
+  direction: "longer" | "shorter";
+  prevalence: string;
+  code: string | null;
+  impact_class: ImpactClass | null;
+}
+
+export interface BeliefModel {
+  rows: BeliefRow[];
+  note: string;
+  method: string;
+}
+
+export interface CaseLane {
+  id: string;
+  name: string;
+  kind: "system" | "tool" | "off_system" | "outside";
+}
+
+export interface CaseEvent {
+  key: string | null;
+  label: string;
+  lane_id: string;
+  minutes: Figure | null;
+  recorded: boolean;
+}
+
+export interface CaseModel {
+  route_name: string;
+  cases: number;
+  label: string;
+  lanes: CaseLane[];
+  events: CaseEvent[];
+  designed_finish: Figure | null;
+  promise: Figure | null;
+  actual_finish: Figure | null;
+  tiles: Tile[];
+}
+
+export interface RedlineView extends ViewBase {
+  redline: RedlineModel;
+  geometry: ShapeGeometry;
+}
+
+export interface TimeView extends ViewBase {
+  time: TimeModel;
+  geometry: ShapeGeometry;
+}
+
+export interface BeliefView extends ViewBase {
+  belief: BeliefModel;
+  geometry: ShapeGeometry;
+}
+
+export interface CaseView extends ViewBase {
+  case: CaseModel;
+  geometry: ShapeGeometry;
+}
+
 export interface RealityViews {
   rv1: GlanceView;
   rv2: StackView;
   rv3: FixView;
+  rv4: RedlineView;
+  rv5: TimeView;
+  rv6: BeliefView;
+  rv7: CaseView;
 }
 
 export interface LegendImpact {
@@ -420,7 +576,14 @@ export const VIEW_LABELS: Readonly<Record<ViewId, string>> = {
   rv1: "Glance",
   rv2: "Reality stack",
   rv3: "Fix or keep",
+  rv4: "Redline",
+  rv5: "Where the time goes",
+  rv6: "Belief vs evidence",
+  rv7: "Typical case",
 };
+
+/** The views in reading order (§5.4 view switcher). */
+export const VIEW_ORDER: readonly ViewId[] = ["rv1", "rv2", "rv3", "rv4", "rv5", "rv6", "rv7"];
 
 export const VERDICT_LABELS: Readonly<Record<string, string>> = {
   codify: "Codify",

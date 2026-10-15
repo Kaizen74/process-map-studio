@@ -579,10 +579,168 @@ class FixView(ViewBase):
     geometry: FixGeometry
 
 
+# --- P13c: Redline, Where the time goes, Belief vs evidence, Typical case -----------------------
+
+
+class Shape(BaseModel):
+    """One drawn shape of a P13c view, placed by the backend (the UI only draws it)."""
+
+    kind: str  # rect · path · line · circle · text
+    role: str  # what it means, for its style: step-documented, markup-added, arc-loop, …
+    x: float = 0.0
+    y: float = 0.0
+    width: float = 0.0
+    height: float = 0.0
+    x2: float = 0.0
+    y2: float = 0.0
+    r: float = 0.0
+    path: str = ""
+    lines: list[str] = []
+    code: str | None = None
+    key: str | None = None
+    impact_class: str | None = None
+    style: str = "solid"  # solid · dashed · dotted · double
+
+
+class ShapeGeometry(BaseModel):
+    width: float
+    height: float
+    shapes: list[Shape]
+    scale_note: str
+
+
+class RedlineStep(BaseModel):
+    key: str
+    label: str
+    minutes: Figure | None
+    ghost: bool  # skipped in practice (D1): drawn dashed and struck through
+    codes: list[str]
+
+
+class Markup(BaseModel):
+    code: str
+    type: str  # B.48
+    kind: str  # added · skipped · loop · bypass · off_system · wait · owner · reorder · longer
+    keys: list[str]  # the documented steps it sits on or after
+    label: str
+    share: Figure
+    impact_class: str
+    drawn: bool
+    tool: str
+
+
+class RedlinePage(BaseModel):
+    id: str
+    name: str
+    step_keys: list[str]
+
+
+class RedlineModel(BaseModel):
+    pages: list[RedlinePage]
+    steps: list[RedlineStep]
+    markups: list[Markup]
+    pills: list[Figure]
+    listed: list[str]
+
+
+class TimeColumn(BaseModel):
+    column_id: str
+    name: str
+    manual: Figure | None
+    work: Figure | None
+    wait: Figure | None
+    designed: Figure | None
+    extra: Figure | None
+    complete: bool
+
+
+class TimeCause(BaseModel):
+    code: str
+    title: str
+    minutes: Figure
+
+
+class TimeModel(BaseModel):
+    columns: list[TimeColumn]
+    manual_total: Figure | None
+    practice_total: Figure | None
+    multiplier: Figure | None
+    complete: bool
+    causes: list[TimeCause]
+
+
+class BeliefRow(BaseModel):
+    key: str
+    label: str
+    believed: Figure
+    measured: Figure
+    gap: Figure
+    direction: str  # longer · shorter
+    prevalence: str
+    code: str | None
+    impact_class: str | None
+
+
+class BeliefModel(BaseModel):
+    rows: list[BeliefRow]
+    note: str
+    method: str
+
+
+class CaseLane(BaseModel):
+    id: str
+    name: str
+    kind: str  # system · tool · outside
+
+
+class CaseEvent(BaseModel):
+    key: str | None
+    label: str
+    lane_id: str
+    minutes: Figure | None  # the median minutes since the case started; None off-system
+    recorded: bool
+
+
+class CaseModel(BaseModel):
+    route_name: str
+    cases: int
+    label: str
+    lanes: list[CaseLane]
+    events: list[CaseEvent]
+    designed_finish: Figure | None
+    promise: Figure | None
+    actual_finish: Figure | None
+    tiles: list[Tile]
+
+
+class RedlineView(ViewBase):
+    redline: RedlineModel
+    geometry: ShapeGeometry
+
+
+class TimeView(ViewBase):
+    time: TimeModel
+    geometry: ShapeGeometry
+
+
+class BeliefView(ViewBase):
+    belief: BeliefModel
+    geometry: ShapeGeometry
+
+
+class CaseView(ViewBase):
+    case: CaseModel
+    geometry: ShapeGeometry
+
+
 class RealityViews(BaseModel):
     rv1: GlanceView
     rv2: StackView
     rv3: FixView
+    rv4: RedlineView
+    rv5: TimeView
+    rv6: BeliefView
+    rv7: CaseView
 
 
 class LegendImpact(BaseModel):

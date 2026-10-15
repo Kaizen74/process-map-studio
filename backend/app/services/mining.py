@@ -22,7 +22,7 @@ import re
 import statistics
 import warnings
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, time
 from difflib import SequenceMatcher
 from itertools import pairwise
@@ -411,6 +411,28 @@ def _moment(stamp: str) -> datetime:
 
 def _minutes(earlier: str, later: str) -> float:
     return (_moment(later) - _moment(earlier)).total_seconds() / 60
+
+
+def case_timings(
+    trails: Sequence[tuple[str, str, str, str | None]],
+) -> dict[tuple[str, ...], list[tuple[float, ...]]]:
+    """Per variant (its activity sequence, as `metrics` counts it): every case's minutes from
+    its first start to each activity's start, then to its finish (the last end when every event
+    of the log has one, else the last start; as the cycle time). `trails` are (case_id,
+    activity, ts_start, ts_end), sorted by case, then start (P13c Typical case)."""
+    timed = bool(trails) and all(t[3] for t in trails)
+    by_case: dict[str, list[tuple[str, str, str, str | None]]] = {}
+    for t in trails:
+        by_case.setdefault(t[0], []).append(t)
+    out: dict[tuple[str, ...], list[tuple[float, ...]]] = {}
+    for trail in by_case.values():
+        first = trail[0][2]
+        last_end = trail[-1][3]
+        last = last_end if timed and last_end else max(t[2] for t in trail)
+        minutes = tuple(round(_minutes(first, t[2]), 1) for t in trail)
+        sequence = tuple(t[1] for t in trail)
+        out.setdefault(sequence, []).append((*minutes, round(_minutes(first, last), 1)))
+    return out
 
 
 def spread(values: list[float]) -> dict[str, float | int] | None:
