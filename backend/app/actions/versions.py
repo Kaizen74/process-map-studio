@@ -151,7 +151,38 @@ def combined_lines(edges: list[EdgeRecord]) -> list[EdgeRecord]:
     return [e for e in edges if not views.added_for_one_view(e.provenance, e.view_membership)]
 
 
+GRAPH_MEMO = "build_graph_memo"  # session.info key: one read-only request's graphs, built once
+
+
 def build_graph(
+    session: Session, version_id: str, *, every_line: bool = False, view: View | None = None
+) -> Graph | None:
+    """The version's graph, from the memo when a read-only caller set one on the session (the
+    Reality snapshot's gathering reads the same view's graph twice). With a view, `every_line`
+    changes nothing, so both forms share one entry."""
+    memo = session.info.get(GRAPH_MEMO)
+    key = (version_id, view, every_line or view is not None)
+    if memo is not None and key in memo:
+        return memo[key]  # type: ignore[no-any-return]
+    graph = _build_graph(session, version_id, every_line=every_line, view=view)
+    if memo is not None:
+        memo[key] = graph
+    return graph
+
+
+def _loaded[T](session: Session, name: str, version_id: str, load: Callable[[], T]) -> T:
+    """A read shared by every graph of one version within a memo'd request (the As done and As
+    documented graphs read the same rows, then keep their own view's)."""
+    memo = session.info.get(GRAPH_MEMO)
+    if memo is None:
+        return load()
+    key = ("load", name, version_id)
+    if key not in memo:
+        memo[key] = load()
+    return memo[key]  # type: ignore[no-any-return]
+
+
+def _build_graph(
     session: Session, version_id: str, *, every_line: bool = False, view: View | None = None
 ) -> Graph | None:
     """The version's graph. Without `every_line` the lines are the combined map's (what the
@@ -172,12 +203,12 @@ def build_graph(
     roles = engagements_repo.list_roles(session, engagement.id)
     phases = map_repo.phases(session, version_id)
     # A draft shows Eric's confirmed system trace (R5b); a published version has it frozen in.
-    elements, edges = system_trace.applied(
+    elements, edges = _loaded(session, "applied", version_id, lambda: system_trace.applied(
         session,
         version,
         map_repo.elements(session, version_id),
         map_repo.edges(session, version_id),
-    )
+    ))  # fmt: skip
     # The combined map's cycle time is the As done view's: the time the work takes as done (X5).
     timed_view: View = view or "done"
     timed_elements = [e for e in elements if views.in_view(e.view_membership, timed_view)]
@@ -199,13 +230,18 @@ def build_graph(
         ]
     elif not every_line:
         edges = combined_lines(edges)
-    raci = map_repo.raci(session, version_id)
-    constraints = map_repo.constraints(session, version_id)
-    flags = map_repo.ai_flags(session, version_id)
-    passages = map_repo.evidence(session, version_id)
-    claims_of = map_repo.element_claims(session, version_id)
-    claim_records = claims_repo.by_ids(session, [c for ids in claims_of.values() for c in ids])
-    drafted_from = sources_repo.get_many(session, map_repo.version_source_ids(session, version_id))
+    raci = _loaded(session, "raci", version_id, lambda: map_repo.raci(session, version_id))
+    constraints = _loaded(session, "constraints", version_id,
+                          lambda: map_repo.constraints(session, version_id))  # fmt: skip
+    flags = _loaded(session, "flags", version_id, lambda: map_repo.ai_flags(session, version_id))
+    passages = _loaded(session, "evidence", version_id,
+                       lambda: map_repo.evidence(session, version_id))  # fmt: skip
+    claims_of = _loaded(session, "element_claims", version_id,
+                        lambda: map_repo.element_claims(session, version_id))  # fmt: skip
+    claim_records = _loaded(session, "claims", version_id, lambda: claims_repo.by_ids(
+        session, [c for ids in claims_of.values() for c in ids]))  # fmt: skip
+    drafted_from = _loaded(session, "sources", version_id, lambda: sources_repo.get_many(
+        session, map_repo.version_source_ids(session, version_id)))  # fmt: skip
 
     def evidence_for(element_id: str, kind: str) -> list[GraphEvidence]:
         if kind in STRUCTURAL:

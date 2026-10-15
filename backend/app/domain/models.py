@@ -113,6 +113,8 @@ class ScopeFields(BaseModel):
     adjacent_industries: list[str] | None = None
     confidential_terms: list[str] | None = None
     conventions: dict[str, str] | None = None  # MappingConventions, checked by the action
+    trigger_external: bool | None = None  # E1: the process starts outside the organisation
+    end_point_external: bool | None = None  # E1: it ends outside the organisation
 
 
 class EngagementCreate(ScopeFields):
@@ -132,6 +134,8 @@ class EngagementView(BaseModel):
     adjacent_industries: list[str]
     confidential_terms: list[str]
     conventions: MappingConventions = MappingConventions()
+    trigger_external: bool = False
+    end_point_external: bool = False
     status: str
     created_at: str
     updated_at: str

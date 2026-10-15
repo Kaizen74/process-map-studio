@@ -85,6 +85,8 @@ export interface ScopeFields {
   industry?: string;
   adjacent_industries?: string[];
   confidential_terms?: string[];
+  trigger_external?: boolean;
+  end_point_external?: boolean;
 }
 
 export interface Engagement {
@@ -101,6 +103,9 @@ export interface Engagement {
   confidential_terms: string[];
   /** Absent from engagements saved before C7a: the defaults apply. */
   conventions?: MappingConventions;
+  /** E1: the process starts or ends outside the organisation (absent before E1: no). */
+  trigger_external?: boolean;
+  end_point_external?: boolean;
   status: string;
   created_at: string;
   updated_at: string;

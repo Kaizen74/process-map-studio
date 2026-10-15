@@ -56,6 +56,7 @@ MAX_TOOL_LANES = 4
 MAX_EVENTS = 15
 SYSTEM_LANE = "system"
 OFF_SYSTEM = "off-system"
+OUTSIDE_LANE = "outside"
 MARKUP_KINDS = {
     "D1": ("skipped", "Skipped"),
     "D2": ("added", "Added"),
@@ -424,7 +425,16 @@ def case(inputs: Inputs, codes: Sequence[CodeView], figures: Figures,
         else:
             lanes.append(CaseLane(id=f"tool:{tool}", name=tool.capitalize(), kind="tool"))
     kept = {lane.id for lane in lanes}
-    events = [e for e in events if e.lane_id in kept][:MAX_EVENTS]
+    events = [e for e in events if e.lane_id in kept]
+    # Outside the organisation (§3.18.3), only when Eric ticked it on the scope card: where the
+    # case starts or ends, never timed, never a step without a record.
+    first = [CaseEvent(key=None, label=copy.OUTSIDE_START, lane_id=OUTSIDE_LANE, minutes=None,
+                       recorded=False)] if inputs.starts_outside else []  # fmt: skip
+    last = [CaseEvent(key=None, label=copy.OUTSIDE_END, lane_id=OUTSIDE_LANE, minutes=None,
+                      recorded=False)] if inputs.ends_outside else []  # fmt: skip
+    events = [*first, *events[: MAX_EVENTS - len(first) - len(last)], *last]
+    if first or last:
+        lanes.append(CaseLane(id=OUTSIDE_LANE, name=copy.OUTSIDE_LANE, kind="outside"))
     lanes = lanes[:MAX_LANES]
     finish = _median([t[-1] for t in route.timings if t])
     actual = figures.add("rv7.actual_finish", finish, "min", copy.minutes(finish, signed=False),
@@ -438,7 +448,7 @@ def case(inputs: Inputs, codes: Sequence[CodeView], figures: Figures,
                           copy.minutes(target.target, signed=False),
                           rules.TARGET) if target and target.target else None  # fmt: skip
     tool_lanes = sum(1 for lane in lanes if lane.kind == "tool")
-    missing = sum(1 for e in events if not e.recorded)
+    missing = sum(1 for e in events if e.lane_id.startswith("tool:"))
     tiles = [Tile(figure=figures.add("rv7.tools", float(tool_lanes), "count",
                                      copy.count(tool_lanes, "tool"), rules.STATED),
                   caption="touched outside the system"),

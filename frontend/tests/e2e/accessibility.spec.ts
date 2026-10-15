@@ -39,6 +39,9 @@ test.describe("accessibility and offline assets", () => {
     page,
     request,
   }) => {
+    // About ten screens, each with an accessibility scan: 25 to 30 s measured (2026-10-15), so it
+    // gets its own limit; overrunning the default 30 s left its engagement behind for the next tests.
+    test.setTimeout(60_000);
     // Created through the API and removed afterwards, so the first-run smoke test still starts empty.
     const created = await request.post("/api/engagements", { data: { name: "Load control" } });
     expect(created.status()).toBe(201);

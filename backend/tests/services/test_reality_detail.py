@@ -285,6 +285,7 @@ WORLDS = {
     "case": (RICH, {"intents": CONFIRMED, "routes": (TYPICAL, DOCUMENTED)}),
     "belief": believed((15.0, 20.0, 70.0), 200.0),
     "empty": (world(PLAN, APPROVE, LOAD, total_cases=0), {}),
+    "outside": (RICH, {"routes": (TYPICAL,), "starts_outside": True, "ends_outside": True}),
 }
 
 
@@ -346,3 +347,29 @@ def test_rq7_markup_glyphs_at_one_step_sit_side_by_side() -> None:
     assert sum(1 for r in glyphs if r.role == "markup-added") >= 2
     assert [(a.code, b.code) for i, a in enumerate(glyphs) for b in glyphs[i + 1 :]
             if shapes.overlaps(a, b)] == []  # fmt: skip
+
+
+def test_the_typical_case_has_an_outside_lane_only_when_the_scope_card_says_so() -> None:
+    """E1 (DECISIONS 47, 51): the lane comes from Eric's yes/no on the scope card, never from the
+    scope card's words; its events are where the case starts and ends, never timed, never counted
+    as steps without a record."""
+    plain = snap(RICH, routes=(TYPICAL,)).views.rv7.case
+    assert "outside" not in {lane.kind for lane in plain.lanes}
+    s = snap(RICH, routes=(TYPICAL,), starts_outside=True, ends_outside=True)
+    case = s.views.rv7.case
+    assert case.lanes[-1].model_dump() == {"id": "outside", "name": "Outside the organisation",
+                                           "kind": "outside"}  # fmt: skip
+    assert (case.events[0].label, case.events[-1].label) == ("Starts outside", "Ends outside")
+    assert all(e.minutes is None for e in case.events if e.lane_id == "outside")
+    missing = next(t for t in case.tiles if t.caption == "without a system record")
+    assert missing.figure.text == next(
+        t for t in plain.tiles if t.caption == "without a system record").figure.text  # fmt: skip
+    assert len(case.lanes) <= detail.MAX_LANES and len(case.events) <= detail.MAX_EVENTS
+    xs = [r.x for r in s.views.rv7.geometry.shapes if r.kind == "circle"]
+    assert xs == sorted(xs)  # the case reads left to right: outside first, outside last
+    finish = next(r for r in s.views.rv7.geometry.shapes if r.role == "finish-actual")
+    assert xs[-1] == finish.x  # it ends outside at the actual finish
+    assert shapes.collisions(s.views.rv7.geometry.shapes) == []
+    only_end = snap(RICH, routes=(TYPICAL,), ends_outside=True).views.rv7.case
+    assert only_end.events[-1].label == "Ends outside"
+    assert only_end.events[0].label != "Starts outside"

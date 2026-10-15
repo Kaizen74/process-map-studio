@@ -501,12 +501,20 @@ def case(model: CaseModel) -> ShapeGeometry:
         j = i
         while j < len(events) and events[j].minutes is None:
             j += 1
-        start = xs[-1] if xs else C_X0
+        if not xs:  # untimed events before the first timed one (the case starting outside)
+            xs += [C_X0] * (j - i)
+            i = j
+            continue
+        start = xs[-1]
         nxt = events[j].minutes if j < len(events) else None
         end = C_X0 + (nxt.value or 0.0) * scale if nxt is not None else None
+        steps = j - i + 1
+        if nxt is None and model.actual_finish is not None:  # after the last timed event: the
+            end = C_X0 + (model.actual_finish.value or 0.0) * scale  # last sits at the finish
+            steps = j - i
         for k in range(i, j):
             n = k - i + 1
-            xs.append(start + (end - start) * n / (j - i + 1) if end is not None and end > start
+            xs.append(start + (end - start) * n / steps if end is not None and end > start
                       else min(C_X1, start + OFF_STEP * n))  # fmt: skip
         i = j
     # The finish lines' labels at the top, levelled.

@@ -83,6 +83,22 @@ describe("Setup: process scope", () => {
     });
   });
 
+  it("asks whether the process starts or ends outside the organisation, and saves the answer", async () => {
+    const { calls } = setupApi();
+    const { container } = renderApp(PATH);
+    await screen.findByLabelText("Engagement name");
+    const starts = within(scope()).getByRole("checkbox", { name: "Starts outside the organisation" });
+    const ends = within(scope()).getByRole("checkbox", { name: "Ends outside the organisation" });
+    expect(starts).not.toBeChecked();
+    expect(ends).not.toBeChecked();
+    fireEvent.click(starts);
+    fireEvent.click(within(scope()).getByRole("button", { name: "Save scope" }));
+    expect(await screen.findByText("Scope saved.")).toBeInTheDocument();
+    const body = calls.find((c) => c.key === "PATCH /api/engagements/e1")?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ trigger_external: true, end_point_external: false });
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("explains a missing name without saving", async () => {
     const { calls } = setupApi();
     renderApp(PATH);

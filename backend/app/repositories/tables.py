@@ -67,6 +67,9 @@ class Engagement(Row):
     updated_at: Mapped[str] = mapped_column(String(32), default=now_iso)
     # PRD v1.10 (0009): codebook tier 2 conventions (granularity, label style, phase naming).
     conventions: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    # E1 (0017): the process starts or ends outside the organisation (scope card, Eric ticks it).
+    trigger_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    end_point_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class Source(Row):

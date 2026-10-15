@@ -130,7 +130,9 @@ const DRAFT_SOURCES = [
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
   // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
-  test.setTimeout(150_000); // the whole journey: about 85 s measured with X3 (2026-10-06), plus R8
+  // The whole journey: about 85 s measured with X3 (2026-10-06), plus R8, and since P13c all
+  // seven Reality views with an accessibility scan each: 1.7 to 2.4 min measured (2026-10-15).
+  test.setTimeout(240_000);
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });

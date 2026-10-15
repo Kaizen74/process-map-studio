@@ -51,15 +51,33 @@ def _data_label(session: Session, version: VersionView) -> str:
 
 
 Routes = tuple[tuple[reality.RouteIn, ...], int, dict[str, str], str]
+Timings = dict[tuple[str, ...], list[tuple[float, ...]]]
+# A log's per-case timings, kept per import: an imported log's events never change (they are
+# only removed when an import fails, and a new import gets a new `approved_at`), so reading every
+# event again on each snapshot read is wasted work (DECISIONS 53).
+_TIMINGS: dict[tuple[str, str], Timings] = {}
+_TIMINGS_KEPT = 8
+
+
+def _timings(session: Session, log_id: str, imported_at: str | None) -> Timings:
+    if imported_at is None:
+        return mining.case_timings(logs_repo.trails(session, log_id))
+    key = (log_id, imported_at)
+    if key not in _TIMINGS:
+        if len(_TIMINGS) >= _TIMINGS_KEPT:
+            _TIMINGS.pop(next(iter(_TIMINGS)))
+        _TIMINGS[key] = mining.case_timings(logs_repo.trails(session, log_id))
+    return _TIMINGS[key]
 
 
 def _routes(session: Session, version: VersionView, keys: dict[str, str]) -> Routes:
-    found = system_variants.variants_of(session, version.id, version.engagement_id)
+    found = system_variants.variants_of(session, version.id, version.engagement_id,
+                                        views=("documented",), first_only=True)  # fmt: skip
     if not found.logs:
         return (), 0, {}, ""
     log = found.logs[0]  # the discrepancy engine reads the first log too
-    timings = mining.case_timings(logs_repo.trails(session, log.log_id))
     stored = logs_repo.get(session, log.log_id)
+    timings = _timings(session, log.log_id, stored.approved_at if stored else None)
     routes = tuple(
         reality.RouteIn(
             rank=v.rank, cases=v.cases, share=v.share,
@@ -89,7 +107,16 @@ def _cycle(session: Session, version: VersionView) -> float | None:
 
 
 def gather(session: Session, version: VersionView) -> reality.Inputs:
-    """Everything the snapshot is worked out from (and only that: `inputs_hash` names it)."""
+    """Everything the snapshot is worked out from (and only that: `inputs_hash` names it). The
+    map's graphs are built once for the whole gathering (DECISIONS 53)."""
+    session.info[versions_action.GRAPH_MEMO] = {}
+    try:
+        return _gather(session, version)
+    finally:
+        session.info.pop(versions_action.GRAPH_MEMO, None)
+
+
+def _gather(session: Session, version: VersionView) -> reality.Inputs:
     facts, confirmed = discrepancies_action.gather(session, version)
     view = discrepancies_action.discrepancies_of(session, version, facts)  # gives new codes
     evaluations = {e.intent_id: e.result for e in view.intents}
@@ -129,6 +156,8 @@ def gather(session: Session, version: VersionView) -> reality.Inputs:
         official_sources={s.key: s.official_sources for s in facts.steps if s.official_sources},
         activity_after=after, volume=max(volumes) if volumes else None,
         cycle_min=_cycle(session, version), system_name=system_name,
+        starts_outside=bool(engagement and engagement.trigger_external),
+        ends_outside=bool(engagement and engagement.end_point_external),
     )  # fmt: skip
 
 

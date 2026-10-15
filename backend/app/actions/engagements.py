@@ -51,8 +51,11 @@ _LABELS = {
     "in_scope_roles": "In-scope roles",
     "adjacent_industries": "Adjacent industries",
     "confidential_terms": "Confidential terms",
+    "trigger_external": "Starts outside the organisation",
+    "end_point_external": "Ends outside the organisation",
 }
 _LIST_FIELDS = {"in_scope_roles", "adjacent_industries", "confidential_terms"}
+_FLAG_FIELDS = {"trigger_external", "end_point_external"}
 
 
 def _invalid(field: str, message: str) -> Err:
@@ -111,6 +114,11 @@ def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, 
                     return err
                 case Ok(value=conventions):
                     cleaned[field] = conventions
+            continue
+        if field in _FLAG_FIELDS:
+            if not isinstance(value, bool):
+                return _invalid(field, f"{_LABELS[field]}: choose yes or no.")
+            cleaned[field] = value
             continue
         if field in _LIST_FIELDS:
             match _clean_list(field, value):

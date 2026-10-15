@@ -12,7 +12,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-COPY_VERSION = "2"  # 2: the Redline, time, belief and typical-case views (P13c)
+COPY_VERSION = "3"  # 2: Redline, time, belief and typical case (P13c); 3: outside lane (E1)
+OUTSIDE_LANE = "Outside the organisation"  # the Typical case's lane (E1)
+OUTSIDE_START = "Starts outside"
+OUTSIDE_END = "Ends outside"
 TIMES = "\u00d7"  # the multiplication sign
 MAX_HEADLINE_WORDS = 20
 
@@ -237,4 +240,7 @@ def every_template() -> list[str]:
         *(t for pair in QUADRANTS.values() for t in pair),
         *(w for w, _ in IMPACT_WORDS.values()),
         *(m for _, m in LINES),
+        OUTSIDE_LANE,
+        OUTSIDE_START,
+        OUTSIDE_END,
     ]

@@ -163,13 +163,15 @@ describe("RQ3 channel discipline (PRD §5.12.8)", () => {
     const users = filesUnder(join(root, "src"), [".ts", ".tsx", ".css"])
       .filter((file) => /--(impact-|designed-work|baseline-)/.test(readFileSync(file, "utf8")))
       .map((file) => relative(root, file).replaceAll("\\", "/"));
-    // The one sanctioned use outside: the Time lens wait hatch in the time colour (PRD §5.2).
-    const map = readFileSync(join(root, "src/components/map/map.css"), "utf8");
-    const mapUses = [...map.matchAll(/^([^{}]+)\{[^}]*--(impact-|designed-work|baseline-)[^}]*\}/gm)].map((m) =>
-      (m[1] ?? "").trim().split("\n").pop(),
-    );
-    expect(mapUses).toEqual([".map-bar__wait"]);
-    allowed.push("src/components/map/map.css");
+    // The sanctioned uses outside: the wait hatch in the time colour on the Time lens and on
+    // Leadership's phase bars (PRD §5.2; Eric approved both, 2026-10-15).
+    const usesIn = (path: string) =>
+      [...readFileSync(join(root, path), "utf8").matchAll(/^([^{}]+)\{[^}]*--(impact-|designed-work|baseline-)[^}]*\}/gm)].map(
+        (m) => (m[1] ?? "").trim().split("\n").pop(),
+      );
+    expect(usesIn("src/components/map/map.css")).toEqual([".map-bar__wait"]);
+    expect(usesIn("src/components/leadership/leadership.css")).toEqual([".phase-bar__wait"]);
+    allowed.push("src/components/map/map.css", "src/components/leadership/leadership.css");
     expect(users.filter((f) => !allowed.some((a) => f.startsWith(a)))).toEqual([]);
     expect(users.some((f) => f.startsWith("src/components/reality/"))).toBe(true);
   });

@@ -252,3 +252,36 @@ def test_the_frontend_reality_sample_matches_the_backend(reality: Reality) -> No
         "belief_view": belief_sample(),
     }
     matches_baseline("reality.json", _normalised(bundle), FRONTEND_FIXTURES)
+
+
+def test_the_snapshot_builds_each_map_graph_once(
+    reality: Reality, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """DECISIONS 53 (latency): with a view, `every_line` changes nothing, so the routes and the
+    discrepancy facts share one graph per view during one gathering; the memo never outlives it."""
+    from app.actions import reality as reality_action
+    from app.actions import versions as versions_action
+    from app.repositories import versions as versions_repo
+
+    client, vid = reality.engagement.client, reality.version_id
+    sessions = client.app.state.sessions  # type: ignore[attr-defined]
+    with session_scope(sessions) as session:
+        for view in ("done", "documented"):
+            plain = versions_action.build_graph(session, vid, view=view)
+            every = versions_action.build_graph(session, vid, every_line=True, view=view)
+            assert plain is not None and plain == every
+    built: list[tuple[str | None, bool]] = []
+    real = versions_action._build_graph
+
+    def counted(session: Any, version_id: str, *, every_line: bool = False,
+                view: Any = None) -> Any:  # fmt: skip
+        built.append((view, every_line))
+        return real(session, version_id, every_line=every_line, view=view)
+
+    monkeypatch.setattr(versions_action, "_build_graph", counted)
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, vid)
+        assert version is not None
+        reality_action.gather(session, version)
+        assert versions_action.GRAPH_MEMO not in session.info
+    assert sorted(v for v, _ in built) == ["documented", "done"]

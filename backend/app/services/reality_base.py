@@ -89,6 +89,9 @@ class Inputs:
     volume: float | None  # the process's cases a month (measured)
     cycle_min: float | None  # median case cycle time (measured)
     system_name: str = ""  # the first imported log's system of record
+    # E1: the scope card says the process starts or ends outside the organisation (ticked by Eric).
+    starts_outside: bool = False
+    ends_outside: bool = False
 
 
 def inputs_hash(inputs: Inputs) -> str:

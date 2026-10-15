@@ -116,9 +116,12 @@ def _too_few_steps(session: Session, logs: list[EventLogView],
     return [e.id for k, e in steps.items() if k in some - enough]
 
 
-def variants_of(session: Session, version_id: str, engagement_id: str) -> SystemVariants:
+def variants_of(session: Session, version_id: str, engagement_id: str,
+                views: tuple[View, ...] = VIEWS,
+                first_only: bool = False) -> SystemVariants:  # fmt: skip
     """Every imported log's variants read through Eric's confirmed matches (also read by the
-    Reality snapshot's routes)."""
+    Reality snapshot's routes, which ask only for the first log's fit with the As documented
+    view: each view costs a graph build)."""
     elements = map_repo.elements(session, version_id)
     keys = {e.id: e.stable_key for e in elements}
     steps = {e.stable_key: e for e in elements
@@ -127,9 +130,11 @@ def variants_of(session: Session, version_id: str, engagement_id: str) -> System
             if log.status == "imported"]  # fmt: skip
     if not logs:
         return SystemVariants(logs=[], too_few_steps=[])
-    views = [_view_map(session, version_id, view, keys) for view in VIEWS]
+    if first_only:
+        logs = logs[:1]
+    view_maps = [_view_map(session, version_id, view, keys) for view in views]
     return SystemVariants(
-        logs=[_log(session, log, steps, views) for log in logs],
+        logs=[_log(session, log, steps, view_maps) for log in logs],
         too_few_steps=_too_few_steps(session, logs, steps),
     )
 

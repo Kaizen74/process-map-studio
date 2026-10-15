@@ -2,8 +2,8 @@
   "snapshot": {
     "version_id": "id-1",
     "rules_version": "1",
-    "copy_version": "2",
-    "layout_version": "3",
+    "copy_version": "3",
+    "layout_version": "4",
     "app_version": "1.0.0",
     "inputs_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "frozen": false,
@@ -7097,8 +7097,8 @@
   "decided": {
     "version_id": "id-1",
     "rules_version": "1",
-    "copy_version": "2",
-    "layout_version": "3",
+    "copy_version": "3",
+    "layout_version": "4",
     "app_version": "1.0.0",
     "inputs_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "frozen": false,
