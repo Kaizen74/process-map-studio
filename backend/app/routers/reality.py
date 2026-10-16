@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import discrepancies, intent, intent_ai, reality
+from app.actions import discrepancies, intent, intent_ai, reality, reality_pack
 from app.domain.reality import (
     ConflictPatch,
     DiscrepanciesView,
@@ -83,3 +83,14 @@ def decide_verdict(request: Request, item_id: str, body: VerdictBody) -> Verdict
 @router.get("/versions/{version_id}/reality")
 def get_reality(request: Request, version_id: str) -> RealitySnapshot:
     return unwrap(reality.get_reality(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/reality/export")
+def export_reality_pack(request: Request, version_id: str, layout: str = "a3") -> Response:
+    state = request.app.state
+    file = unwrap(reality_pack.export_pack(state.config, state.sessions, version_id, layout))
+    return Response(
+        content=file.content.encode("utf-8"),
+        media_type=file.media_type,
+        headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
+    )

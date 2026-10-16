@@ -269,7 +269,7 @@ def reopen(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ver
     return Ok(detail)
 
 
-def _slug(text: str) -> str:
+def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "process"
 
 
@@ -293,7 +293,7 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str) -> 
         data = data.model_copy(update={"quality_card": card})
         content = quality_action.render_exports(data)[fmt]
         name, media = FILES[fmt]
-        filename = f"{_slug(graph.process.name)}-{_slug(version.label)}-{name}"
+        filename = f"{slug(graph.process.name)}-{slug(version.label)}-{name}"
         audit.record(
             session,
             actor=actor,

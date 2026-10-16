@@ -22,6 +22,8 @@ DEFAULT_ENV_FILE = REPO_ROOT / ".env"
 # The HTML export uses the same design tokens and self-hosted fonts as the app (PRD §3.10).
 DESIGN_TOKENS_FILE = REPO_ROOT / "shared" / "design_tokens.json"
 FONTS_DIR = REPO_ROOT / "frontend" / "public" / "fonts"
+# The Reality pack draws its views with the app's own Reality stylesheet (PRD §3.18.6, RQ4).
+REALITY_CSS_FILE = REPO_ROOT / "frontend" / "src" / "components" / "reality" / "reality.css"
 # Canned AI answers used when MOCK_CLAUDE=1 (PRD §3.7).
 MOCK_FIXTURES_DIR = REPO_ROOT / "backend" / "tests" / "fixtures" / "mock_responses"
 

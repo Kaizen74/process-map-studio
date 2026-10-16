@@ -177,6 +177,17 @@ describe("RQ3 channel discipline (PRD §5.12.8)", () => {
   });
 });
 
+describe("Reality legend lines (found by the P13d pack review, 2026-10-16)", () => {
+  it("draws each line style of the legend differently, so the legend explains the lines", () => {
+    const css = readFileSync(join(root, "src/components/reality/reality.css"), "utf8");
+    const rule = (name: string) => css.match(new RegExp(`\\.legend-line--${name}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+    expect(rule("dashed")).toMatch(/stroke-dasharray:\s*[\d.]+\s+[\d.]+/);
+    expect(rule("dotted")).toMatch(/stroke-dasharray:\s*[\d.]+\s+[\d.]+/);
+    expect(rule("dashed")).not.toEqual(rule("dotted"));
+    expect(rule("double")).toMatch(/stroke-width/);
+  });
+});
+
 describe("self-hosted fonts", () => {
   const css = readFileSync(join(root, "src/styles/fonts.css"), "utf8");
   const urls = [...css.matchAll(/url\('([^']+)'\)/g)].map((m) => m[1] ?? "");

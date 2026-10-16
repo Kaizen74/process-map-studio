@@ -637,3 +637,8 @@ text.rs-impact--time_impact,
 text.rs-impact--capacity_drain,
 text.rs-impact--workaround { fill: var(--ink); }
 .rs--arc-bypass.rs-impact--control_exposure { stroke-width: 3; }
+
+/* Each legend line drawn as its meaning is drawn on the views (found by the P13d pack review). */
+.legend-line--dashed { stroke-dasharray: 10 6; }
+.legend-line--dotted { stroke-dasharray: 2 5; }
+.legend-line--double { stroke-width: 5; }

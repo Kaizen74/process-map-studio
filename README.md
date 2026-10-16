@@ -51,6 +51,14 @@ Your key is stored only on this computer, never in GitHub.
 - **Sources you can add:** Word (.docx), PDF, text (.txt), caption files (.vtt, .srt), spreadsheets (.xlsx, .csv) and saved emails (.eml), up to 50 MB each. To save an email: in Gmail open it → **More** (⋮) → **Download message**; in Outlook for Mac drag the email to your desktop. Classic Outlook for Windows saves emails only as .msg, which the app doesn't read: print the email to PDF and upload the PDF instead.
 - **Use:** see [GUIDE.md](GUIDE.md) for how to set up an engagement, upload sources, review and publish.
 
+## Print the Reality pack
+When the optional **Reality views** are switched on (**Settings → Optional modules**), a published version can be printed as the **Reality pack**: all seven Reality views, one per page, with the legend and the version's data label on every page.
+1. Open **Reality** (or **Exports**), choose a published version and click **Download A3** (for a printed board pack) or **Download 16:9** (for slides). A draft can't be printed: publish it first.
+2. Open the downloaded file. It opens in any browser, even offline.
+3. Print it from the browser (**File → Print**, or Ctrl+P / Cmd+P). For A3, choose **A3** paper and **Landscape**; for 16:9, save as PDF. Leave the scale at **100%** and margins at **Default**; tick **Background graphics** so the colours print. To get a PDF, choose **Save as PDF** as the printer.
+
+Success looks like 11 pages, each with one view or section and nothing cut off. If a view is too large to print legibly, its figures are printed as a table and the page says so.
+
 ## Update to the latest version
 1. Stop the app (close its window).
 2. Open **GitHub Desktop**. Check the top-left says **Current repository: process-map-studio**.

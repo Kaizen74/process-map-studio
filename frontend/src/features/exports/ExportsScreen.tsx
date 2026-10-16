@@ -1,12 +1,14 @@
 import { Link, useParams, useSearchParams } from "react-router";
 import { Card, EmptyState, ErrorState, SelectField, SignalMeter, Skeleton } from "../../components/common";
 import { CheckGlyph } from "../../components/quality";
+import { PackDownloads } from "../../components/reality";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGapAnalyses } from "../../hooks/useGap";
+import { useSettings } from "../../hooks/useSettings";
 import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import { EXCLUDED, EXPORTS, exportUrl } from "../../lib/exports";
+import { EXCLUDED, EXPORTS, PACK_EXCLUDED, exportUrl } from "../../lib/exports";
 import { formatDate } from "../../lib/format";
 import { MODE_LABELS, exportUrl as gapExportUrl } from "../../lib/gap";
 import { greenCount } from "../../lib/quality";
@@ -57,14 +59,31 @@ function GapReportsCard({ versionId, versionLabel, engagementId }: { versionId: 
   );
 }
 
+/** The Reality pack (PRD §3.18.6, §7.4; P13d), offered while the Reality views are switched on. */
+function RealityPackCard({ versionId, versionLabel }: { versionId: string; versionLabel: string }) {
+  return (
+    <Card title="Reality pack (.html)" className="export-card">
+      <p>
+        The seven Reality views of this version, one per page, for printing or saving as PDF: A3 landscape or 16:9
+        slides. One file that opens in any browser, offline.
+      </p>
+      <p className="export-card__excluded">{PACK_EXCLUDED}</p>
+      <CardStatus versionId={versionId} />
+      <PackDownloads versionId={versionId} versionLabel={versionLabel} />
+    </Card>
+  );
+}
+
 /**
  * Exports (PRD §5.4): the four exports of a published version with a green quality card, what
- * each leaves out, and Download; and the version's finalised gap analysis reports.
+ * each leaves out, and Download; the version's finalised gap analysis reports; and, while the
+ * Reality views are switched on, the Reality pack.
  */
 export function ExportsScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
   const versions = useVersions(engagementId);
+  const settings = useSettings();
   const [params, setParams] = useSearchParams();
 
   if (engagement.isError) {
@@ -140,6 +159,9 @@ export function ExportsScreen() {
               </Card>
             ))}
             <GapReportsCard versionId={chosen.id} versionLabel={chosen.label} engagementId={engagementId} />
+            {settings.data?.reality_views_enabled === true && (
+              <RealityPackCard versionId={chosen.id} versionLabel={chosen.label} />
+            )}
           </div>
         </>
       )}

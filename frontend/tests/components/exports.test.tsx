@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { QualityCard, VersionDetail, VersionSummary } from "../../src/lib/reviewTypes";
 import { seriousViolations } from "../axe";
-import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
+import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp, type Handler } from "../renderApp";
 
 const PATH = "/engagements/e1/exports";
 
@@ -29,8 +29,9 @@ const version = (id: string, label: string, state: string, at: string): VersionS
   parent_version_id: null,
 });
 
-function backend(versions: VersionSummary[], analyses: Record<string, unknown[]> = {}) {
+function backend(versions: VersionSummary[], analyses: Record<string, unknown[]> = {}, realityOn = false) {
   const routes: Record<string, Handler> = {
+    "GET /api/settings": () => ({ body: { ...SETTINGS, reality_views_enabled: realityOn } }),
     "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
     "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
     "GET /api/engagements/e1/versions": () => ({ body: versions }),
@@ -118,5 +119,30 @@ describe("the Exports screen (PRD §5.4, §7.3)", () => {
       "href",
       "/api/versions/p1/export/csv",
     );
+  });
+
+  it("offers the Reality pack in A3 and 16:9 only while the Reality views are switched on (P13d)", async () => {
+    const versions = [version("p2", "v1.1", "published", "2026-09-28T10:00:00+00:00")];
+    backend(versions);
+    const off = renderApp(PATH);
+    await screen.findByRole("link", { name: "Download Master Process Map (.md) of v1.1" });
+    expect(screen.queryByRole("region", { name: "Reality pack (.html)" })).toBeNull();
+    off.unmount();
+    vi.unstubAllGlobals();
+
+    backend(versions, {}, true);
+    renderApp(PATH);
+    const card = await screen.findByRole("region", { name: "Reality pack (.html)" });
+    expect(card).toHaveTextContent("Role names only; no images, interview quotes or names.");
+    expect(await within(card).findByText(/Quality card: 9 of 9 green/)).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "Download A3 Reality pack of v1.1" })).toHaveAttribute(
+      "href",
+      "/api/versions/p2/reality/export?layout=a3",
+    );
+    expect(within(card).getByRole("link", { name: "Download 16:9 Reality pack of v1.1" })).toHaveAttribute(
+      "href",
+      "/api/versions/p2/reality/export?layout=slide",
+    );
+    expect(await seriousViolations(document.body)).toEqual([]);
   });
 });

@@ -62,14 +62,15 @@ def e(text: object) -> str:
 REALITY_TOKENS = ("impact-", "designed-work", "baseline-")
 
 
-def tokens_css(tokens: dict[str, object]) -> str:
-    """The tokens as CSS custom properties, named as the app's generated tokens.css."""
+def tokens_css(tokens: dict[str, object], *, reality: bool = False) -> str:
+    """The tokens as CSS custom properties, named as the app's generated tokens.css (the Reality
+    colours only for the Reality pack)."""
     lines = [":root {"]
     for group, values in tokens.items():
         if group.startswith("$") or not isinstance(values, dict):
             continue
         for name, value in values.items():
-            if group == "color" and name.startswith(REALITY_TOKENS):
+            if group == "color" and name.startswith(REALITY_TOKENS) and not reality:
                 continue
             prop = f"--{name}" if group == "color" else f"--{group}-{name}"
             lines.append(f"  {prop}: {value};")

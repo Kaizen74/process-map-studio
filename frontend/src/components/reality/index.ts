@@ -17,3 +17,4 @@ export { FixOrKeep, type FixOrKeepProps } from "./FixOrKeep";
 export { DiscrepanciesSection, type DiscrepanciesSectionProps } from "./DiscrepanciesSection";
 export { ShapeCanvas, type ShapeCanvasProps } from "./ShapeCanvas";
 export { BeliefDumbbells, CaseJourney, Redline, TimeStretch } from "./DetailViews";
+export { PackDownloads, type PackDownloadsProps } from "./PackDownloads";

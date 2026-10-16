@@ -146,6 +146,33 @@ describe("Reality screen (PRD §5.12, P13b)", () => {
     expect(screen.queryByRole("note")).toBeNull(); // no draft banner
   });
 
+  it("a published version offers the Reality pack in A3 and 16:9 (P13d)", async () => {
+    const published = { ...DRAFT, label: "v1.0", state: "published", published_at: "2026-10-14T10:00:00+00:00" };
+    backend({ ...SNAP, draft: false, frozen: true, data_label: "Version v1.0, validated by Owner on 2026-10-14" }, [
+      published,
+    ]);
+    const { container } = renderApp(path());
+    const card = await screen.findByRole("region", { name: "Reality pack" });
+    expect(card).toHaveTextContent("All seven views of v1.0, one per page, to print or save as PDF.");
+    const a3 = within(card).getByRole("link", { name: "Download A3 Reality pack of v1.0" });
+    expect(a3).toHaveAttribute("href", `/api/versions/${VID}/reality/export?layout=a3`);
+    expect(a3).toHaveAttribute("download");
+    expect(within(card).getByRole("link", { name: "Download 16:9 Reality pack of v1.0" })).toHaveAttribute(
+      "href",
+      `/api/versions/${VID}/reality/export?layout=slide`,
+    );
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("a draft explains that the pack prints a published version, with no download", async () => {
+    backend();
+    renderApp(path());
+    const card = await screen.findByRole("region", { name: "Reality pack" });
+    expect(card).toHaveTextContent("Publish this draft to print it.");
+    expect(within(card).getByRole("link", { name: "Go to Review" })).toHaveAttribute("href", "/engagements/e1/review");
+    expect(within(card).queryByRole("link", { name: /Download/ })).toBeNull();
+  });
+
   it("without a map, explains what is missing and links to Draft", async () => {
     backend(SNAP, []);
     const { container } = renderApp(path());

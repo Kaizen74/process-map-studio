@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { EmptyState, ErrorState, SegmentedControl, SelectField, Skeleton } from "../../components/common";
+import { Card, EmptyState, ErrorState, SegmentedControl, SelectField, Skeleton } from "../../components/common";
 import {
   BeliefDumbbells,
   Callouts,
@@ -9,6 +9,7 @@ import {
   FixOrKeep,
   Glance,
   MetricTiles,
+  PackDownloads,
   RealityLegend,
   RealityStack,
   RealityTable,
@@ -129,9 +130,10 @@ export function RealityScreen() {
           />
         </div>
       )}
-      {snapshot.data && (
+      {snapshot.data && chosen && (
         <RealityBody
           snapshot={snapshot.data}
+          version={chosen}
           engagementId={engagementId}
           view={view}
           selected={selected}
@@ -149,6 +151,7 @@ export function RealityScreen() {
 
 interface BodyProps {
   snapshot: RealitySnapshot;
+  version: VersionSummary;
   engagementId: string;
   view: ViewId;
   selected: string | null;
@@ -160,7 +163,27 @@ interface BodyProps {
   onShowAll: () => void;
 }
 
-function RealityBody({ snapshot, engagementId, view, selected, table, showAll, onView, onSelect, onTable, onShowAll }: BodyProps) {
+/** The Reality pack (P13d): a published version's views on A3 or 16:9 pages; a draft is explained. */
+function PackCard({ version, engagementId }: { version: VersionSummary; engagementId: string }) {
+  const frozen = version.state === "published" || version.state === "superseded";
+  return (
+    <Card title="Reality pack" className="reality-pack-card">
+      {frozen ? (
+        <>
+          <p>All seven views of {version.label}, one per page, to print or save as PDF. Role names only; no quotes.</p>
+          <PackDownloads versionId={version.id} versionLabel={version.label} />
+        </>
+      ) : (
+        <p>
+          The pack prints a published version, whose figures are frozen. Publish this draft to print it.{" "}
+          <Link to={engagementPath(engagementId, "review")}>Go to Review</Link>
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function RealityBody({ snapshot, version, engagementId, view, selected, table, showAll, onView, onSelect, onTable, onShowAll }: BodyProps) {
   const current = snapshot.views[view];
   const codes = snapshot.codes;
   const action = current.availability.action ? ACTIONS[current.availability.action] : undefined;
@@ -227,9 +250,10 @@ function RealityBody({ snapshot, engagementId, view, selected, table, showAll, o
           <RealityLegend legend={snapshot.legend} evidence={snapshot.evidence.text} />
         </section>
       </div>
-      <aside className="reality-side" aria-label="Intent and discrepancies">
+      <aside className="reality-side" aria-label="Intent, discrepancies and the Reality pack">
         <IntentCard engagementId={engagementId} snapshot={snapshot} />
         <DiscrepancyCard engagementId={engagementId} snapshot={snapshot} selected={selected} onSelect={onSelect} />
+        <PackCard version={version} engagementId={engagementId} />
       </aside>
     </div>
   );

@@ -730,9 +730,17 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("note")).toContainText("Draft: figures may change");
     await expect(page.getByRole("region", { name: "Intent" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+    // P13d candidates for Eric (never baselines until he approves): each view at 1440 x 900.
+    const shoot = async (name: string) => {
+      if (process.env.PMS_SCREENSHOT_DIR) {
+        await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, `p13d-candidate-reality-${name}-1440x900.png`) });
+      }
+    };
+    await shoot("glance");
     for (const view of ["Reality stack", "Fix or keep", "Redline", "Where the time goes", "Belief vs evidence", "Typical case"]) {
       await page.getByRole("radiogroup", { name: "Reality view" }).getByRole("radio", { name: view }).click();
       await expect(page.locator(".reality-view__headline")).not.toBeEmpty();
+      await shoot(view.toLowerCase().replace(/ /g, "-"));
       expect(await seriousViolations(page)).toEqual([]);
       // P13c RQ7 in a real browser: no two drawn labels overlap on the P13c canvases.
       expect(await overlappingLabels(page), `labels overlap on ${view}`).toEqual([]);
@@ -741,6 +749,59 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("table")).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Reality").toBe(false);
+    // P13d: the Reality pack of the published version in both layouts, downloaded from the Reality
+    // screen and opened offline: no request outside the file, no error, and on every printed page
+    // nothing cut off, no text under 11 px and no two drawn labels overlapping (RQ7).
+    const versionList = (await (await request.get(`/api/engagements/${id}/versions`)).json()) as {
+      id: string;
+      label: string;
+      state: string;
+    }[];
+    const released = versionList.find((v) => v.state === "published");
+    expect(released, "a published version to print").toBeTruthy();
+    await page.goto(`/engagements/${id}/reality?version=${released?.id ?? ""}`);
+    const packCard = page.getByRole("region", { name: "Reality pack" });
+    await expect(packCard).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    for (const [label, layout, pageCount] of [["A3", "a3", 11], ["16:9", "slide", 11]] as const) {
+      const [pack] = await Promise.all([
+        page.waitForEvent("download"),
+        packCard.getByRole("link", { name: `Download ${label} Reality pack of ${released?.label ?? ""}` }).click(),
+      ]);
+      expect(pack.suggestedFilename()).toMatch(new RegExp(`-reality-pack-${layout}\\.html$`));
+      const html = readFileSync(await pack.path(), "utf-8");
+      expect(html.includes("Priya"), `a hidden name in the ${label} pack`).toBe(false);
+      const printed = await page.context().newPage();
+      const asked: string[] = [];
+      const problems: string[] = [];
+      printed.on("request", (r) => {
+        if (!r.url().startsWith("data:") && r.url() !== "about:blank") asked.push(r.url());
+      });
+      printed.on("console", (m) => {
+        if (m.type() === "error") problems.push(m.text());
+      });
+      printed.on("pageerror", (e) => problems.push(String(e)));
+      await printed.setViewportSize({ width: 1920, height: 1080 });
+      await printed.setContent(html, { waitUntil: "load" });
+      await printed.emulateMedia({ media: "print" });
+      const pages = await printChecks(printed);
+      expect(pages, `${label} pages`).toHaveLength(pageCount);
+      for (const p of pages) {
+        expect(p.overflow, `${label} page ${p.page} is cut off`).toBeLessThanOrEqual(0);
+        expect(p.smallest, `${label} page ${p.page}: "${p.where}" under 11 px`).toBeGreaterThanOrEqual(11);
+      }
+      expect(await overlappingLabels(printed), `labels overlap in the ${label} pack`).toEqual([]);
+      if (process.env.PMS_SCREENSHOT_DIR) {
+        for (const [i, p] of pages.entries()) {
+          const name = `p13d-candidate-pack-${layout}-${String(i + 1).padStart(2, "0")}-${p.page}.png`;
+          await printed.locator("section.page").nth(i).screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, name) });
+        }
+      }
+      expect(asked, `the ${label} pack asked for something outside itself`).toEqual([]);
+      expect(problems, `the ${label} pack logged errors`).toEqual([]);
+      await printed.close();
+    }
+
     await page.goto(`/engagements/${id}/leadership`);
     await expect(page.getByRole("heading", { level: 2, name: "Facts" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
@@ -849,6 +910,42 @@ test("interview templates: download Word and Markdown from the home screen", asy
   expect(text).toContain("| L3 |");
   expect(text).toContain("Use roles, not names.");
 });
+
+/**
+ * The print checks of the Reality pack (P13d, RQ7): for each printed page, how far its content
+ * runs past the page (0 or less when nothing is cut off) and its smallest text as printed,
+ * counting how far a drawing is scaled down to fit.
+ */
+async function printChecks(page: Page): Promise<{ page: string; overflow: number; smallest: number; where: string }[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("section.page")].map((p) => {
+      let smallest = 99;
+      let where = "";
+      for (const el of p.querySelectorAll("text, tspan, p, span, td, th, li, h1, h2, h3")) {
+        const own = el.tagName === "text" || el.children.length === 0;
+        if (!(el.textContent ?? "").trim() || !own) continue;
+        const svg = el.closest("svg");
+        let scale = 1;
+        if (svg?.viewBox.baseVal.width) {
+          const box = svg.getBoundingClientRect();
+          const vb = svg.viewBox.baseVal;
+          scale = Math.min(box.width / vb.width, box.height / vb.height);
+        }
+        const size = parseFloat(getComputedStyle(el).fontSize) * scale;
+        if (size < smallest) {
+          smallest = size;
+          where = (el.textContent ?? "").trim().slice(0, 30);
+        }
+      }
+      return {
+        page: p.dataset.view ?? p.dataset.section ?? "",
+        overflow: p.scrollHeight - p.clientHeight,
+        smallest: Math.round(smallest * 10) / 10,
+        where,
+      };
+    }),
+  );
+}
 
 /** RQ7 (P13c): pairs of drawn text labels on the Reality canvas whose boxes overlap on screen. */
 async function overlappingLabels(page: Page): Promise<string[]> {

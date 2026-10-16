@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Load control: Reality views</title><style>@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(data:font/woff2;base64,<21308 characters>) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(data:font/woff2;base64,<30120 characters>) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(data:font/woff2;base64,<21944 characters>) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(data:font/woff2;base64,<32248 characters>) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(data:font/woff2;base64,<17800 characters>) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(data:font/woff2;base64,<19612 characters>) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(data:font/woff2;base64,<17912 characters>) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(data:font/woff2;base64,<19852 characters>) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root {
+  --bg: #F4F3EF;
+  --surface: #FFFFFF;
+  --surface-2: #FAFAF7;
+  --border: #E4E2DB;
+  --border-soft: #F0EEE8;
+  --border-strong: #CFCCC2;
+  --border-input: #8C897F;
+  --ink: #1E1D1A;
+  --ink-2: #3F3D38;
+  --ink-3: #55534D;
+  --ink-4: #6F6C64;
+  --edge: #9A978E;
+  --node-stroke: #8C897F;
+  --decision-fill: #EEEDFE;
+  --decision-stroke: #534AB7;
+  --approval-fill: #E1F5EE;
+  --approval-stroke: #0F6E56;
+  --constraint: #D85A30;
+  --danger-text: #993C1D;
+  --danger-bg: #FBEEE8;
+  --highlight-bg: rgba(83, 74, 183, 0.16);
+  --highlight-line: #534AB7;
+  --on-ink: #FFFFFF;
+  --scrim: rgba(30, 29, 26, 0.32);
+  --label-chip: rgba(255, 255, 255, 0.92);
+  --impact-control: #B42318;
+  --impact-control-bg: #FCEBE9;
+  --impact-time: #9A5B00;
+  --impact-time-bg: #FDF1DC;
+  --impact-capacity: #2563A8;
+  --impact-capacity-bg: #E8F0FA;
+  --impact-workaround: #6D45B8;
+  --impact-workaround-bg: #F1ECFA;
+  --designed-work: #0F6E56;
+  --baseline-fill: #ECEAE4;
+  --baseline-stroke: #8C897F;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --text-micro: 10.5px;
+  --text-label: 11.5px;
+  --text-body: 12.5px;
+  --text-card-value: 13.5px;
+  --text-popover-title: 14px;
+  --text-viewer-title: 18px;
+  --text-panel-title: 21px;
+  --text-screen-title: 24px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --radius-control: 5px;
+  --radius-node: 6px;
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-section: 12px;
+  --radius-pill: 999px;
+  --line-hairline: 1px;
+  --line-outline: 1.5px;
+  --line-edge: 1.5px;
+  --line-edge-selected: 2px;
+  --line-highlight: 1.5px;
+  --shadow-popover: 0 12px 32px rgba(30, 29, 26, 0.14);
+  --shadow-segment: 0 1px 2px rgba(30, 29, 26, 0.12);
+  --shadow-selection: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+  --motion-duration: 120ms;
+  --motion-easing: ease-out;
+  --layout-min-width: 1080px;
+  --layout-panel-width: 400px;
+  --layout-hit-target: 28px;
+  --layout-map-label-column: 120px;
+  --layout-map-phase-band: 48px;
+}
+/* Reality views (PRD §5.12): tokens only. Colour means impact class only (ER-01), always with its
+   glyph and word (ER-02); the documented baseline is lighter than everything observed (ER-06). */
+
+.reality-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-24);
+  align-items: start;
+}
+
+.reality-main,
+.reality-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.reality-banner {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+.reality-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-section);
+  background: var(--surface);
+}
+
+.reality-view__title {
+  margin: 0;
+  font-size: var(--text-viewer-title);
+  font-weight: var(--weight-medium);
+}
+
+.reality-view__headline {
+  margin: 0;
+  font-size: var(--text-popover-title);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.reality-canvas {
+  width: 100%;
+  height: auto;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+}
+
+.reality-label {
+  fill: var(--ink-2);
+}
+
+.reality-label--strong {
+  fill: var(--ink);
+  font-weight: var(--weight-medium);
+}
+
+.is-dimmed {
+  opacity: 0.15;
+}
+
+/* Impact colours, used only on discrepancies and the legend. */
+.impact-glyph {
+  flex: none;
+  fill: none;
+  stroke-width: 1.6;
+}
+
+.impact-glyph--control_exposure { stroke: var(--impact-control); }
+.impact-glyph--time_impact { stroke: var(--impact-time); }
+.impact-glyph--capacity_drain { stroke: var(--impact-capacity); }
+.impact-glyph--workaround { stroke: var(--impact-workaround); }
+
+.impact-word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--ink-2);
+}
+
+.x-badge,
+.x-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 2px var(--space-8);
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--on-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  clip-path: polygon(14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%, 0 50%);
+}
+
+.x-badge {
+  cursor: pointer;
+  min-height: 24px;
+}
+
+.x-badge[aria-pressed="true"] {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.x-badge--control_exposure, .x-tag--control_exposure { background: var(--impact-control); }
+.x-badge--time_impact, .x-tag--time_impact { background: var(--impact-time); }
+.x-badge--capacity_drain, .x-tag--capacity_drain { background: var(--impact-capacity); }
+.x-badge--workaround, .x-tag--workaround { background: var(--impact-workaround); }
+
+.code-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evidence-chips {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ink-3);
+  border-radius: 3px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+.evidence-chip--on {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+  color: var(--on-ink);
+}
+
+.metric-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  padding: var(--space-12);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+}
+
+.metric-tile__number {
+  font-size: 32px;
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--ink);
+}
+
+.metric-tile__caption {
+  color: var(--ink-2);
+}
+
+.metric-tile__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+}
+
+/* Glance */
+.glance-trunk {
+  stroke: var(--baseline-stroke);
+  stroke-linecap: butt;
+}
+
+.glance-ribbon {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.glance-ribbon--documented { stroke: var(--baseline-stroke); }
+.glance-ribbon--neutral { stroke: var(--ink-3); }
+.glance-ribbon--control_exposure { stroke: var(--impact-control); }
+.glance-ribbon--time_impact { stroke: var(--impact-time); }
+.glance-ribbon--capacity_drain { stroke: var(--impact-capacity); }
+.glance-ribbon--workaround { stroke: var(--impact-workaround); }
+
+.line--dashed { stroke-dasharray: 10 6; }
+.line--dotted { stroke-dasharray: 2 5; }
+
+.reality-code {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+
+.reality-code--control_exposure { fill: var(--impact-control); }
+.reality-code--time_impact { fill: var(--impact-time); }
+.reality-code--capacity_drain { fill: var(--impact-capacity); }
+.reality-code--workaround { fill: var(--impact-workaround); }
+
+/* Reality stack */
+.stack-band {
+  fill: var(--surface-2);
+}
+
+.stack-lens rect {
+  fill: var(--highlight-bg);
+  stroke: var(--ink-3);
+  stroke-dasharray: 6 4;
+}
+
+.stack-mark {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.stack-mark--documented_step {
+  fill: var(--baseline-fill);
+  stroke: var(--baseline-stroke);
+  stroke-width: 1.5;
+}
+
+.stack-mark--done_step {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+.stack-mark--belief {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-dasharray: 4 3;
+}
+
+.stack-mark--intent {
+  fill: var(--surface);
+  stroke: var(--ink);
+}
+
+.stack-mark--minutes,
+.stack-mark--hours {
+  fill: var(--surface);
+  stroke: var(--ink-2);
+}
+
+.stack-mark--branch { fill: var(--surface); stroke-width: 2; }
+.stack-mark--control_exposure { stroke: var(--impact-control); }
+.stack-mark--time_impact { stroke: var(--impact-time); }
+.stack-mark--capacity_drain { stroke: var(--impact-capacity); }
+.stack-mark--workaround { stroke: var(--impact-workaround); }
+
+.stack-text {
+  fill: var(--ink);
+}
+
+.stack-text--done_step {
+  fill: var(--on-ink);
+}
+
+/* Fix or keep */
+.fix-or-keep {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.fix-zone {
+  fill: var(--surface-2);
+  stroke: var(--border-strong);
+}
+
+.fix-zone--ask {
+  stroke-dasharray: 6 4;
+}
+
+.fix-circle { fill-opacity: 0.85; stroke: var(--surface); stroke-width: 2; }
+.fix-circle--control_exposure { fill: var(--impact-control); }
+.fix-circle--time_impact { fill: var(--impact-time); }
+.fix-circle--capacity_drain { fill: var(--impact-capacity); }
+.fix-circle--workaround { fill: var(--impact-workaround); }
+.fix-circle--neutral { fill: var(--ink-3); }
+
+.fix-code {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+
+.decide-first h3 {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-popover-title);
+  font-weight: var(--weight-medium);
+}
+
+.decide-first__list,
+.discrepancy-list,
+.intent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.decide-first__list > li,
+.discrepancy-row,
+.intent-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.decide-first__row,
+.discrepancy-row__head {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.decide-first__row[aria-pressed="true"],
+.discrepancy-row__head[aria-pressed="true"] {
+  text-decoration: underline;
+}
+
+.decide-first__code {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+
+.decide-first__meta,
+.discrepancy-row__meta,
+.intent-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  align-items: center;
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
+
+.decide-first__reason,
+.discrepancy-row__note,
+.discrepancy-row__verdict {
+  color: var(--ink-2);
+  font-size: var(--text-label);
+}
+
+.discrepancy-row__actions,
+.intent-row__actions,
+.intent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.intent-group__title {
+  margin: var(--space-8) 0;
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+
+.intent-row__kind {
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+}
+
+.intent-form,
+.verdict-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.callouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.callout {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card);
+}
+
+.callout--control_exposure { border-color: var(--impact-control); }
+.callout--time_impact { border-color: var(--impact-time); }
+.callout--capacity_drain { border-color: var(--impact-capacity); }
+.callout--workaround { border-color: var(--impact-workaround); }
+
+.callout p {
+  margin: 0;
+}
+
+.reality-table-wrap {
+  overflow-x: auto;
+}
+
+.reality-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+
+.reality-table caption {
+  text-align: left;
+  font-weight: var(--weight-medium);
+  padding-bottom: var(--space-8);
+}
+
+.reality-table th,
+.reality-table td {
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.reality-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border-soft);
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
+
+.reality-legend__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reality-legend__row li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.reality-legend__note {
+  margin: 0;
+}
+
+.legend-line {
+  stroke: var(--ink-2);
+  stroke-width: 2;
+}
+
+/* P13c views: Redline, Where the time goes, Belief vs evidence, Typical case. The backend places
+   every shape; a shape's role gives its look. Impact colour appears only on shapes tied to an X
+   code, always beside its code and words. */
+.reality-main .segmented {
+  flex-wrap: wrap;
+}
+
+.reality-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.reality-figure__note {
+  margin: 0;
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+}
+
+.rs { fill: none; stroke: none; }
+:where(text).rs { fill: var(--ink-2); }
+.rs.line--dashed { stroke-dasharray: 8 5; }
+.rs.line--dotted { stroke-dasharray: 2 4; }
+.rs.line--double { stroke-width: 3; }
+
+/* text */
+.rs--markup-label,
+.rs--column-label,
+.rs--practice-label,
+.rs--cause-label,
+.rs--cause-figure,
+.rs--row-label,
+.rs--value-believed,
+.rs--value-measured,
+.rs--lane-name,
+.rs--event-label,
+.rs--legend,
+.rs--side-item,
+.rs--strip-name,
+.rs--finish-designed-label,
+.rs--promise-label,
+.rs--finish-actual-label { fill: var(--ink-2); }
+
+.rs--step-label { fill: var(--ink); }
+
+.rs--page-title,
+.rs--side-title,
+.rs--causes-title,
+.rs--total,
+.rs--multiplier,
+.rs--gap,
+.rs--note { fill: var(--ink); font-weight: var(--weight-medium); }
+
+.rs--pill,
+.rs--tick-label { fill: var(--ink-3); font-family: var(--font-mono); }
+.rs--method { fill: var(--ink-3); }
+.rs-glyph { fill: var(--ink); font-weight: var(--weight-medium); pointer-events: none; }
+
+/* the documented baseline is lighter than everything observed (ER-06) */
+.rs--step-documented,
+.rs--manual { fill: var(--baseline-fill); stroke: var(--baseline-stroke); stroke-width: 1.5; }
+.rs--step-ghost,
+.rs--no-time { fill: var(--surface); stroke: var(--baseline-stroke); stroke-width: 1.5; }
+.rs--strike,
+.rs--connector { stroke: var(--baseline-stroke); stroke-width: 1.5; }
+
+/* markups and their glyphs: neutral unless tied to a code's impact */
+.rs--markup-added,
+.rs--markup-off-system,
+.rs--markup-no-record,
+.rs--markup-owner,
+.rs--markup-longer,
+.rs--markup-wait,
+.rs--legend-added,
+.rs--legend-skipped,
+.rs--legend-reorder,
+.rs--legend-loop,
+.rs--legend-bypass,
+.rs--legend-off-system,
+.rs--legend-longer,
+.rs--legend-wait,
+.rs--legend-no-record,
+.rs--legend-owner { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2; }
+.rs--markup-off-system,
+.rs--legend-off-system { stroke-dasharray: 3 2; }
+.rs--markup-no-record,
+.rs--legend-no-record { stroke-dasharray: 1 2; }
+
+.rs--arc-skipped,
+.rs--arc-bypass,
+.rs--arc-reorder,
+.rs--arc-loop { stroke: var(--ink-2); stroke-width: 2; }
+.rs--leader,
+.rs--drop,
+.rs--guide,
+.rs--event-tick { stroke: var(--ink-4); stroke-width: 1; }
+
+/* time */
+/* designed work in the designed-work colour, extra work solid ink: each also named under the
+   strip ("Work", "Extra", "Waiting"), so the meaning never rests on colour alone */
+.rs--work-designed { fill: var(--designed-work); }
+.rs--work { fill: var(--ink-2); }
+.rs--work-extra { fill: var(--ink); }
+.rs--wait { stroke: var(--ink-3); stroke-width: 1; }
+.rs-hatch-ground { fill: var(--surface); }
+.rs-hatch-line { stroke: var(--ink-3); stroke-width: 2; }
+.rs--cause { fill: var(--ink-3); }
+
+/* belief */
+.rs--axis,
+.rs--tick { stroke: var(--border-strong); stroke-width: 1; }
+.rs--gap-bar { fill: var(--ink-3); }
+.rs--dot-believed { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.rs--dot-measured { fill: var(--ink); stroke: var(--ink); }
+
+/* typical case */
+.rs--lane-system { fill: var(--surface-2); stroke: var(--border); }
+.rs--lane-tool,
+.rs--lane-off_system,
+.rs--lane-outside { fill: var(--surface); stroke: var(--border-strong); stroke-dasharray: 4 3; }
+.rs--path { stroke: var(--ink); stroke-width: 2; }
+.rs--event-recorded { fill: var(--ink); }
+.rs--event-off-system { fill: var(--surface); stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 2; }
+.rs--finish-designed { stroke: var(--baseline-stroke); stroke-width: 2; }
+.rs--promise { stroke: var(--ink-2); }
+.rs--finish-actual { stroke: var(--ink); stroke-width: 2; }
+
+/* impact: the one meaning of colour (ER-01) */
+.rs-impact--control_exposure:is(rect, circle) { stroke: var(--impact-control); }
+.rs-impact--time_impact:is(rect, circle) { stroke: var(--impact-time); }
+.rs-impact--capacity_drain:is(rect, circle) { stroke: var(--impact-capacity); }
+.rs-impact--workaround:is(rect, circle) { stroke: var(--impact-workaround); }
+.rs-impact--control_exposure:is(path, line) { stroke: var(--impact-control); }
+.rs-impact--time_impact:is(path, line) { stroke: var(--impact-time); }
+.rs-impact--capacity_drain:is(path, line) { stroke: var(--impact-capacity); }
+.rs-impact--workaround:is(path, line) { stroke: var(--impact-workaround); }
+.rs--cause.rs-impact--control_exposure,
+.rs--gap-bar.rs-impact--control_exposure { fill: var(--impact-control); }
+.rs--cause.rs-impact--time_impact,
+.rs--gap-bar.rs-impact--time_impact { fill: var(--impact-time); }
+.rs--cause.rs-impact--capacity_drain,
+.rs--gap-bar.rs-impact--capacity_drain { fill: var(--impact-capacity); }
+.rs--cause.rs-impact--workaround,
+.rs--gap-bar.rs-impact--workaround { fill: var(--impact-workaround); }
+text.rs-impact--control_exposure,
+text.rs-impact--time_impact,
+text.rs-impact--capacity_drain,
+text.rs-impact--workaround { fill: var(--ink); }
+.rs--arc-bypass.rs-impact--control_exposure { stroke-width: 3; }
+
+/* Each legend line drawn as its meaning is drawn on the views (found by the P13d pack review). */
+.legend-line--dashed { stroke-dasharray: 10 6; }
+.legend-line--dotted { stroke-dasharray: 2 5; }
+.legend-line--double { stroke-width: 5; }
+
+/* The Reality pack's page layout (PRD §3.18.6, §7.4): tokens only; the drawings use the app's own
+   Reality stylesheet, embedded before this one. One view per page that never overflows (a print
+   check measures it); legend and data label on every page; no text under 11 px. */
+html { background: var(--bg); }
+body.pack {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--ink);
+  background: var(--bg);
+}
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: var(--space-24) auto;
+  padding: var(--space-20) var(--space-32);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  break-after: page;
+  page-break-after: always;
+  break-inside: avoid;
+}
+.pack--a3 .page { width: 400mm; height: 277mm; }
+.pack--slide .page { width: 1920px; height: 1080px; padding: 32px 64px; }
+/* The drawing takes the room the page has left, scaled to fit it, so it can never push the page
+   over. The pack prints a drawing only when that scale keeps its 12.5 px text at 11 px or more
+   (export_reality.ROOM); otherwise its table, which keeps its own height. */
+.pack-drawing { position: relative; flex: 1 1 0; min-height: 0; }
+.pack-drawing svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.pack-drawing--table { position: static; flex: none; }
+.pack h1 { margin: 0; font-size: var(--text-screen-title); font-weight: var(--weight-medium); }
+.pack h3 { margin: var(--space-8) 0 0; font-size: var(--text-popover-title); font-weight: var(--weight-medium); }
+.pack-cover { justify-content: center; gap: var(--space-16); }
+.pack-section {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.pack-strong { margin: 0; font-weight: var(--weight-medium); }
+.pack-small { margin: 0; font-size: var(--text-label); color: var(--ink-2); }
+.pack-availability { margin: 0; color: var(--ink-2); }
+.pack-list { margin: 0; padding-left: var(--space-16); display: flex; flex-direction: column; gap: var(--space-6); }
+.pack-verdict { font-weight: var(--weight-medium); }
+.pack .callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+.pack--slide .callouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pack .reality-legend { margin-top: auto; flex-direction: row; flex-wrap: wrap; column-gap: var(--space-24); row-gap: var(--space-4); }
+.pack .reality-legend__note { flex-basis: auto; }
+.pack .x-tag { display: inline-flex; min-width: 36px; }
+.pack .reality-table td, .pack .reality-table th { vertical-align: top; }
+/* Print: nothing smaller than 11 px. */
+.pack .metric-tile__label,
+.pack .evidence-chip,
+.pack .reality-table,
+.pack .reality-legend,
+.pack .pack-section,
+.pack .pack-small,
+.pack .x-tag { font-size: max(11px, var(--text-label)); }
+@media print {
+  html, body.pack { background: var(--surface); }
+  .page { margin: 0; border: 0; }
+}
+
+@page { size: 1920px 1080px; margin: 0; }</style></head><body class="pack pack--slide"><section class="page pack-cover" data-section="cover"><h1>Load control: Reality views</h1><p>Version v1.0, validated by Owner on 2026-09-28</p><p>Signal strength: Strong</p><p>2 documents · 2 interviews · 200 cases</p><p class="pack-small">Every figure, headline and verdict is worked out by fixed rules from the sources and confirmed intent; nothing here is written by AI. Verdicts are recommendations; the process owner decides.</p></section><div data-section="facts"><section class="page pack-view" data-view="rv1" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">How different is real Load control from the manual?</h2><p class="reality-view__headline">Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan.</p><ul class="metric-tiles"><li class="metric-tile"><span data-figure="rv1.documented_share" class="metric-tile__number">70%</span><span class="metric-tile__caption">of cases follow the manual</span><span class="metric-tile__label">measured</span></li><li class="metric-tile"><span data-figure="rv1.control_share" class="metric-tile__number">100%</span><span class="metric-tile__caption">of cases without a record (X1)</span><span class="metric-tile__label">measured</span></li><li class="metric-tile"><span data-figure="rv1.target_met" class="metric-tile__number">21%</span><span class="metric-tile__caption">of cases meet a confirmed target</span><span class="metric-tile__label">measured</span></li><li class="metric-tile"><span data-figure="rv1.hours_beyond" class="metric-tile__number">6 h a month</span><span class="metric-tile__caption">beyond the designed time</span><span class="metric-tile__label">measured</span></li></ul><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 376" preserveAspectRatio="xMinYMin meet" role="img" aria-label="How different is real Load control from the manual? Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan."><line class="glance-trunk" x1="80" x2="560" y1="188" y2="188" stroke-width="27"/><text class="reality-label" x="80" y="164.5">The manual</text><path class="glance-ribbon glance-ribbon--documented line--solid" d="M560 183.7 C 800 183.7, 860 80.0, 1120 80.0" stroke-width="18.3"/><text class="reality-label" x="1140" y="84"><tspan class="reality-label--strong">70%</tspan> As documented</text><path class="glance-ribbon glance-ribbon--capacity_drain line--dashed" d="M560 195.2 C 800 195.2, 860 152.0, 1120 152.0" stroke-width="4.7"/><text class="reality-label" x="1140" y="156"><tspan class="reality-label--strong">18%</tspan> Repeats Draft load plan<tspan class="reality-code reality-code--capacity_drain"> X4</tspan></text><path class="glance-ribbon glance-ribbon--workaround line--dashed" d="M560 198.8 C 800 198.8, 860 224.0, 1120 224.0" stroke-width="2.5"/><text class="reality-label" x="1140" y="228"><tspan class="reality-label--strong">10%</tspan> Adds Manual weight override<tspan class="reality-code reality-code--workaround"> X5</tspan></text><path class="glance-ribbon glance-ribbon--neutral line--dotted" d="M560 200.8 C 800 200.8, 860 296.0, 1120 296.0" stroke-width="1.5"/><text class="reality-label" x="1140" y="300"><tspan class="reality-label--strong">2%</tspan> Other: 1 rarer route</text></svg></div><ul class="callouts"><li class="callout callout--control_exposure"><p>X1 Approve load plan (never recorded; 100% of cases).</p><p>Potential control exposure, for the control owner to confirm.</p></li><li class="callout callout--time_impact"><p>X2 Load and return LIR (wait 13 min median, 90th percentile 27).</p><p>+13 min a case; 24 h a month.</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">Line width = share of cases (26 px = 100%)</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-view" data-view="rv2" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">Where does reality break away from the manual, and what does it cost?</h2><p class="reality-view__headline">Check and load is the hotspot: 53 extra minutes a case and 24 hours a month.</p><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 848" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Where does reality break away from the manual, and what does it cost? Check and load is the hotspot: 53 extra minutes a case and 24 hours a month."><rect class="stack-band stack-band--promise" x="0" y="52" width="1600" height="88"/><rect class="stack-band stack-band--belief" x="0" y="152" width="1600" height="96"/><rect class="stack-band stack-band--documented" x="0" y="260" width="1600" height="148"/><rect class="stack-band stack-band--done" x="0" y="420" width="1600" height="280"/><rect class="stack-band stack-band--consequence" x="0" y="712" width="1600" height="72"/><g class="stack-lens"><rect x="604.7" y="26" width="394.7" height="814"/><text class="reality-label reality-label--strong" x="612.7" y="40">Largest loss: Check and load</text></g><text class="reality-label" x="12" y="72"><tspan x="12" dy="0" class="reality-label--strong">What we promise</tspan><tspan x="12" dy="16">5 confirmed statements</tspan></text><text class="reality-label" x="12" y="172"><tspan x="12" dy="0" class="reality-label--strong">What experts believe</tspan><tspan x="12" dy="16">0 of 2 interviews state a</tspan><tspan x="12" dy="16">time</tspan><tspan x="12" dy="16">No official account</tspan><tspan x="12" dy="16">states a time for a step.</tspan></text><text class="reality-label" x="12" y="280"><tspan x="12" dy="0" class="reality-label--strong">What the manual says</tspan><tspan x="12" dy="16">2 documents</tspan></text><text class="reality-label" x="12" y="440"><tspan x="12" dy="0" class="reality-label--strong">What actually happens</tspan><tspan x="12" dy="16">2 interviews · 200 cases</tspan></text><text class="reality-label" x="12" y="732"><tspan x="12" dy="0" class="reality-label--strong">What it costs</tspan><tspan x="12" dy="16">measured from 200 cases</tspan></text><text class="reality-label reality-label--strong" x="218" y="20">Plan</text><text class="reality-label reality-label--strong" x="612.7" y="20">Check and load</text><text class="reality-label reality-label--strong" x="1007.3" y="20">Close out</text><text class="reality-label reality-label--strong" x="1402" y="20"></text><g><rect class="stack-mark stack-mark--intent line--solid" x="214" y="60" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--intent" x="222" y="75"><tspan x="222" dy="0">Preliminary load plans are ready by T-120.</tspan><tspan x="222" dy="16">target at least 120 minutes before</tspan></text></g><g><rect class="stack-mark stack-mark--intent line--solid" x="214" y="104" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--intent" x="222" y="119"><tspan x="222" dy="0">Every load plan is approved before release to Ramp.</tspan></text></g><g><rect class="stack-mark stack-mark--intent line--solid" x="608.7" y="60" width="386.7" height="56" rx="6"/><text class="stack-text stack-text--intent" x="616.7" y="75"><tspan x="616.7" dy="0">The loading report reaches Load Control within 10</tspan><tspan x="616.7" dy="16">minutes of loading completion.</tspan><tspan x="616.7" dy="16">target at most 10 min</tspan></text></g><g><rect class="stack-mark stack-mark--intent line--solid" x="1003.3" y="60" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--intent" x="1011.3" y="75"><tspan x="1011.3" dy="0">Weight deviations outside tolerance are decided by</tspan><tspan x="1011.3" dy="16">the Load control lead.</tspan></text></g><g><rect class="stack-mark stack-mark--intent line--solid" x="1398" y="60" width="182" height="40" rx="6"/><text class="stack-text stack-text--intent" x="1406" y="75"><tspan x="1406" dy="0">Load sheets are issued</tspan><tspan x="1406" dy="16">without delaying the…</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="214" y="268" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="222" y="283"><tspan x="222" dy="0">Draft load plan</tspan><tspan x="222" dy="16">No time stated</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="214" y="312" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="222" y="327"><tspan x="222" dy="0">Approve load plan</tspan><tspan x="222" dy="16">No time stated</tspan></text></g><g><rect class="stack-mark stack-mark--branch stack-mark--time_impact line--solid" x="214" y="356" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--branch" x="222" y="371"><tspan x="222" dy="0">X3 Draft load plan: design gap</tspan><tspan x="222" dy="16">target T-120 vs documented T-90</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="608.7" y="268" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="616.7" y="283"><tspan x="616.7" dy="0">Special loads OK?</tspan><tspan x="616.7" dy="16">No time stated</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="608.7" y="312" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="616.7" y="327"><tspan x="616.7" dy="0">Load and return LIR</tspan><tspan x="616.7" dy="16">10 min</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="1003.3" y="268" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="1011.3" y="283"><tspan x="1011.3" dy="0">Deviation in limits?</tspan><tspan x="1011.3" dy="16">No time stated</tspan></text></g><g><rect class="stack-mark stack-mark--documented_step line--solid" x="1003.3" y="312" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--documented_step" x="1011.3" y="327"><tspan x="1011.3" dy="0">Issue load sheet</tspan><tspan x="1011.3" dy="16">No time stated</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="214" y="428" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="222" y="443"><tspan x="222" dy="0">Draft load plan</tspan><tspan x="222" dy="16">20 min</tspan></text></g><g><rect class="stack-mark stack-mark--branch stack-mark--control_exposure line--solid" x="214" y="472" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--branch" x="222" y="487"><tspan x="222" dy="0">X1 Approve load plan</tspan><tspan x="222" dy="16">never recorded; 100% of cases</tspan></text></g><g><rect class="stack-mark stack-mark--branch stack-mark--capacity_drain line--solid" x="214" y="516" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--branch" x="222" y="531"><tspan x="222" dy="0">X4 Draft load plan</tspan><tspan x="222" dy="16">rework in 20% of cases</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="608.7" y="428" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="616.7" y="443"><tspan x="616.7" dy="0">Special loads OK?</tspan><tspan x="616.7" dy="16">9 min</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="608.7" y="472" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="616.7" y="487"><tspan x="616.7" dy="0">Resolve or offload</tspan><tspan x="616.7" dy="16">40 min · added in practice</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="608.7" y="516" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="616.7" y="531"><tspan x="616.7" dy="0">Load and return LIR</tspan><tspan x="616.7" dy="16">53 min</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="608.7" y="560" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="616.7" y="575"><tspan x="616.7" dy="0">Busy wave?</tspan><tspan x="616.7" dy="16">added in practice</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="608.7" y="604" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="616.7" y="619"><tspan x="616.7" dy="0">Read report at aircraft</tspan><tspan x="616.7" dy="16">added in practice</tspan></text></g><g><rect class="stack-mark stack-mark--branch stack-mark--time_impact line--solid" x="608.7" y="648" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--branch" x="616.7" y="663"><tspan x="616.7" dy="0">X2 Load and return LIR</tspan><tspan x="616.7" dy="16">wait 13 min median, 90th percentile 27</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="1003.3" y="428" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="1011.3" y="443"><tspan x="1011.3" dy="0">Deviation in limits?</tspan><tspan x="1011.3" dy="16">7 min</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="1003.3" y="472" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="1011.3" y="487"><tspan x="1011.3" dy="0">Approve deviation</tspan><tspan x="1011.3" dy="16">15 min · added in practice</tspan></text></g><g><rect class="stack-mark stack-mark--done_step line--solid" x="1003.3" y="516" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--done_step" x="1011.3" y="531"><tspan x="1011.3" dy="0">Issue load sheet</tspan><tspan x="1011.3" dy="16">6 min</tspan></text></g><g><rect class="stack-mark stack-mark--branch stack-mark--workaround line--solid" x="1003.3" y="560" width="386.7" height="40" rx="6"/><text class="stack-text stack-text--branch" x="1011.3" y="575"><tspan x="1011.3" dy="0">X5 Manual weight override</tspan><tspan x="1011.3" dy="16">12% of cases</tspan></text></g><g><rect class="stack-mark stack-mark--minutes line--solid" x="214" y="720" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--minutes" x="222" y="735"><tspan x="222" dy="0">+4 min a case</tspan></text></g><g><rect class="stack-mark stack-mark--hours line--solid" x="214" y="748" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--hours" x="222" y="763"><tspan x="222" dy="0">7 h a month</tspan></text></g><g><rect class="stack-mark stack-mark--minutes line--solid" x="608.7" y="720" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--minutes" x="616.7" y="735"><tspan x="616.7" dy="0">+53 min a case</tspan></text></g><g><rect class="stack-mark stack-mark--hours line--solid" x="608.7" y="748" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--hours" x="616.7" y="763"><tspan x="616.7" dy="0">24 h a month</tspan></text></g><g><rect class="stack-mark stack-mark--minutes line--solid" x="1003.3" y="720" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--minutes" x="1011.3" y="735"><tspan x="1011.3" dy="0">+16 min a case</tspan></text></g><g><rect class="stack-mark stack-mark--hours line--solid" x="1003.3" y="748" width="386.7" height="24" rx="6"/><text class="stack-text stack-text--hours" x="1011.3" y="763"><tspan x="1011.3" dy="0">1 h a month</tspan></text></g><g><rect class="stack-mark stack-mark--minutes line--solid" x="1398" y="720" width="182" height="24" rx="6"/><text class="stack-text stack-text--minutes" x="1406" y="735"><tspan x="1406" dy="0">+73 min a case</tspan></text></g><g><rect class="stack-mark stack-mark--hours line--solid" x="1398" y="748" width="182" height="24" rx="6"/><text class="stack-text stack-text--hours" x="1406" y="763"><tspan x="1406" dy="0">32 h a month</tspan></text></g></svg></div><ul class="callouts"><li class="callout callout--control_exposure"><p>X1 Approve load plan (never recorded; 100% of cases).</p><p>Potential control exposure, for the control owner to confirm.</p></li><li class="callout callout--time_impact"><p>X2 Load and return LIR (wait 13 min median, 90th percentile 27).</p><p>+13 min a case; 24 h a month.</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-view" data-view="rv4" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">What exactly changed versus the manual?</h2><p class="reality-view__headline">10 changes from the manual, 1 code on a control.</p><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 542" preserveAspectRatio="xMinYMin meet" role="img" aria-label="What exactly changed versus the manual? 10 changes from the manual, 1 code on a control."><defs><pattern id="rs-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="rs-hatch-ground" width="6" height="6"/><line class="rs-hatch-line" x1="0" y1="0" x2="0" y2="6"/></pattern></defs><g data-role="page-title"><text class="rs rs--page-title line--solid" x="28" y="28"><tspan x="28" dy="0">Every documented step</tspan></text></g><g data-role="step-documented"><rect class="rs rs--step-documented line--solid" x="44" y="166" width="130" height="72" rx="3"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="50" y="184"><tspan x="50" dy="0">Draft load plan</tspan></text></g><g data-role="connector"><line class="rs rs--connector line--solid" x1="174" y1="202" x2="214" y2="202"/></g><g data-role="pill"><text class="rs rs--pill line--solid" x="126.8" y="300"><tspan x="126.8" dy="0">+4 min</tspan></text></g><g data-role="step-ghost"><rect class="rs rs--step-ghost line--dashed" x="214" y="166" width="130" height="72" rx="3"/></g><g data-role="strike"><line class="rs rs--strike line--solid" x1="218" y1="202" x2="340" y2="202"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="220" y="184"><tspan x="220" dy="0">Approve load</tspan><tspan x="220" dy="16">plan</tspan></text></g><g data-role="connector"><line class="rs rs--connector line--solid" x1="344" y1="202" x2="384" y2="202"/></g><g data-role="step-documented"><rect class="rs rs--step-documented line--solid" x="384" y="166" width="130" height="72" rx="3"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="390" y="184"><tspan x="390" dy="0">Special loads</tspan><tspan x="390" dy="16">OK?</tspan></text></g><g data-role="connector"><line class="rs rs--connector line--solid" x1="514" y1="202" x2="554" y2="202"/></g><g data-role="step-documented"><rect class="rs rs--step-documented line--solid" x="554" y="166" width="130" height="72" rx="3"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="560" y="184"><tspan x="560" dy="0">Load and return</tspan><tspan x="560" dy="16">LIR</tspan><tspan x="560" dy="16">10 min</tspan></text></g><g data-role="connector"><line class="rs rs--connector line--solid" x1="684" y1="202" x2="724" y2="202"/></g><g data-role="pill"><text class="rs rs--pill line--solid" x="629.6" y="300"><tspan x="629.6" dy="0">+13 min</tspan></text></g><g data-role="step-documented"><rect class="rs rs--step-documented line--solid" x="724" y="166" width="130" height="72" rx="3"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="730" y="184"><tspan x="730" dy="0">Deviation in</tspan><tspan x="730" dy="16">limits?</tspan></text></g><g data-role="connector"><line class="rs rs--connector line--solid" x1="854" y1="202" x2="894" y2="202"/></g><g data-role="step-documented"><rect class="rs rs--step-documented line--solid" x="894" y="166" width="130" height="72" rx="3"/></g><g data-role="step-label"><text class="rs rs--step-label line--solid" x="900" y="184"><tspan x="900" dy="0">Issue load sheet</tspan></text></g><g data-role="arc-skipped"><path class="rs rs--arc-skipped line--dashed rs-impact--control_exposure" d="M109.0 166.0 C 109.0 126.0, 449.0 126.0, 449.0 166.0"/></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="279" y1="122" x2="279" y2="100"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--control_exposure" x="174.6" y="64"><tspan x="174.6" dy="0">X1 Skipped: Approve load plan</tspan><tspan x="174.6" dy="16">never recorded; 100% of cases</tspan><tspan x="174.6" dy="16">(measured)</tspan></text></g><g data-role="drop"><line class="rs rs--drop line--solid" x1="279" y1="238" x2="279" y2="260"/></g><g data-role="markup-no-record"><rect class="rs rs--markup-no-record line--solid rs-impact--control_exposure" x="270" y="260" width="18" height="18" rx="3"/></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="279" y1="278" x2="279" y2="318"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--control_exposure" x="185.4" y="330"><tspan x="185.4" dy="0">X1 No record: Approve load</tspan><tspan x="185.4" dy="16">plan</tspan><tspan x="185.4" dy="16">Approve load plan: 100% of</tspan><tspan x="185.4" dy="16">cases without a record…</tspan></text></g><g data-role="markup-wait"><rect class="rs rs--markup-wait line--solid rs-impact--time_impact" x="520" y="195" width="28" height="14" rx="7"/></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="534" y1="209" x2="534" y2="282"/></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="534" y1="282" x2="534" y2="318"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--time_impact" x="429.6" y="330"><tspan x="429.6" dy="0">X2 Waits: Load and return LIR</tspan><tspan x="429.6" dy="16">wait 13 min median, 90th</tspan><tspan x="429.6" dy="16">percentile 27 (measured)</tspan></text></g><g data-role="arc-loop"><path class="rs rs--arc-loop line--dashed rs-impact--capacity_drain" d="M166.0 238.0 C 166.0 278.0, 52.0 278.0, 52.0 238.0"/></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="109" y1="282" x2="118" y2="392"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--capacity_drain" x="28" y="404"><tspan x="28" dy="0">X4 Loops back: Draft load</tspan><tspan x="28" dy="16">plan</tspan><tspan x="28" dy="16">rework in 20% of cases</tspan><tspan x="28" dy="16">(measured)</tspan></text></g><g data-role="markup-added"><rect class="rs rs--markup-added line--solid rs-impact--workaround" x="864" y="142" width="20" height="20" rx="3"/><text class="rs-glyph" x="874" y="158" text-anchor="middle">+</text></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="874" y1="142" x2="874" y2="100"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--workaround" x="791.2" y="64"><tspan x="791.2" dy="0">X5 Added: Manual weight</tspan><tspan x="791.2" dy="16">override</tspan><tspan x="791.2" dy="16">12% of cases (measured)</tspan></text></g><g data-role="markup-added"><rect class="rs rs--markup-added line--solid rs-impact--workaround" x="524" y="142" width="20" height="20" rx="3"/><text class="rs-glyph" x="534" y="158" text-anchor="middle">+</text></g><g data-role="leader"><line class="rs rs--leader line--dotted" x1="534" y1="142" x2="534" y2="100"/></g><g data-role="markup-label"><text class="rs rs--markup-label line--solid rs-impact--workaround" x="433.2" y="64"><tspan x="433.2" dy="0">X6 Added: Resolve or offload</tspan><tspan x="433.2" dy="16">described in 1 of 1</tspan><tspan x="433.2" dy="16">interviews (stated)</tspan></text></g><g data-role="side-title"><text class="rs rs--side-title line--solid" x="1304" y="28"><tspan x="1304" dy="0">Not drawn on the view</tspan></text></g><g data-role="side-item"><text class="rs rs--side-item line--solid" x="1304" y="56"><tspan x="1304" dy="0">X7 Off-system: Busy wave? → Read</tspan><tspan x="1304" dy="16">report at aircraft</tspan></text></g><g data-role="side-item"><text class="rs rs--side-item line--solid" x="1304" y="96"><tspan x="1304" dy="0">X8 Done by another role: Deviation</tspan><tspan x="1304" dy="16">in limits?</tspan></text></g><g data-role="side-item"><text class="rs rs--side-item line--solid" x="1304" y="136"><tspan x="1304" dy="0">X9 Added: Approve deviation</tspan></text></g><g data-role="legend-skipped"><rect class="rs rs--legend-skipped line--solid" x="24" y="504" width="14" height="12" rx="3"/></g><g data-role="legend"><text class="rs rs--legend line--solid" x="46" y="514"><tspan x="46" dy="0">Skipped in practice</tspan></text></g><g data-role="legend-no-record"><rect class="rs rs--legend-no-record line--solid" x="208.8" y="504" width="14" height="12" rx="3"/></g><g data-role="legend"><text class="rs rs--legend line--solid" x="230.8" y="514"><tspan x="230.8" dy="0">No record</tspan></text></g><g data-role="legend-wait"><rect class="rs rs--legend-wait line--solid" x="321.6" y="504" width="14" height="12" rx="3"/></g><g data-role="legend"><text class="rs rs--legend line--solid" x="343.6" y="514"><tspan x="343.6" dy="0">Waits</tspan></text></g><g data-role="legend-loop"><rect class="rs rs--legend-loop line--solid" x="405.6" y="504" width="14" height="12" rx="3"/></g><g data-role="legend"><text class="rs rs--legend line--solid" x="427.6" y="514"><tspan x="427.6" dy="0">Loops back</tspan></text></g><g data-role="legend-added"><rect class="rs rs--legend-added line--solid" x="525.6" y="504" width="14" height="12" rx="3"/><text class="rs-glyph" x="532.6" y="512" text-anchor="middle">+</text></g><g data-role="legend"><text class="rs rs--legend line--solid" x="547.6" y="514"><tspan x="547.6" dy="0">Added in practice</tspan></text></g></svg></div><ul class="callouts"><li class="callout callout--control_exposure"><p>X1 Approve load plan (never recorded; 100% of cases).</p><p>Potential control exposure, for the control owner to confirm.</p></li><li class="callout callout--time_impact"><p>X2 Load and return LIR (wait 13 min median, 90th percentile 27).</p><p>+13 min a case; 24 h a month.</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">The documented steps once, in the manual&#x27;s order; markups show practice</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-view" data-view="rv5" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">Where does the extra time come from?</h2><p class="reality-view__headline">Check and load adds 92 minutes a case; 16 of it is waiting, not work.</p><p class="pack-availability">Steps without a time show &quot;No time stated&quot;; the totals are incomplete.</p><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 540" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Where does the extra time come from? Check and load adds 92 minutes a case; 16 of it is waiting, not work."><defs><pattern id="rs-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="rs-hatch-ground" width="6" height="6"/><line class="rs-hatch-line" x1="0" y1="0" x2="0" y2="6"/></pattern></defs><g data-role="column-label"><text class="rs rs--column-label line--solid" x="174" y="88"><tspan x="174" dy="0">Plan</tspan><tspan x="174" dy="16">No time stated</tspan></text></g><g data-role="column-label"><text class="rs rs--column-label line--solid" x="270" y="32"><tspan x="270" dy="0">Check and load</tspan><tspan x="270" dy="16">10 min</tspan></text></g><g data-role="column-label"><text class="rs rs--column-label line--solid" x="336.3" y="88"><tspan x="336.3" dy="0">Close out</tspan><tspan x="336.3" dy="16">No time stated</tspan></text></g><g data-role="practice-label"><text class="rs rs--practice-label line--solid" x="174" y="288"><tspan x="174" dy="0">Work 20 min</tspan></text></g><g data-role="practice-label"><text class="rs rs--practice-label line--solid" x="306" y="288"><tspan x="306" dy="0">Work 86 min</tspan><tspan x="306" dy="16">Extra +76 min</tspan><tspan x="306" dy="16">Waiting 16 min</tspan></text></g><g data-role="practice-label"><text class="rs rs--practice-label line--solid" x="985" y="288"><tspan x="985" dy="0">Work 22 min</tspan><tspan x="985" dy="16">Waiting 6 min</tspan></text></g><g data-role="strip-name"><text class="rs rs--strip-name line--solid" x="28" y="150"><tspan x="28" dy="0">The manual</tspan></text></g><g data-role="strip-name"><text class="rs rs--strip-name line--solid" x="28" y="250"><tspan x="28" dy="0">In practice</tspan></text></g><g data-role="no-time"><rect class="rs rs--no-time line--dashed" x="170" y="128" width="96" height="36" rx="3"/></g><g data-role="guide"><line class="rs rs--guide line--dotted" x1="170" y1="164" x2="170" y2="228"/></g><g data-role="work"><rect class="rs rs--work line--solid" x="170" y="228" width="132" height="36" rx="3"/></g><g data-role="manual"><rect class="rs rs--manual line--solid" x="266" y="128" width="66.3" height="36" rx="3"/></g><g data-role="guide"><line class="rs rs--guide line--dotted" x1="266" y1="164" x2="302" y2="228"/></g><g data-role="wait"><rect class="rs rs--wait line--solid" x="302" y="228" width="108.8" height="36" rx="3" style="fill:url(#rs-hatch)"/></g><g data-role="work-designed"><rect class="rs rs--work-designed line--solid" x="410.7" y="228" width="66.3" height="36" rx="3"/></g><g data-role="work-extra"><rect class="rs rs--work-extra line--solid" x="477" y="228" width="504" height="36" rx="3"/></g><g data-role="no-time"><rect class="rs rs--no-time line--dashed" x="332.3" y="128" width="96" height="36" rx="3"/></g><g data-role="guide"><line class="rs rs--guide line--dotted" x1="332.3" y1="164" x2="981" y2="228"/></g><g data-role="wait"><rect class="rs rs--wait line--solid" x="981" y="228" width="39.8" height="36" rx="3" style="fill:url(#rs-hatch)"/></g><g data-role="work"><rect class="rs rs--work line--solid" x="1020.8" y="228" width="147.2" height="36" rx="3"/></g><g data-role="total"><text class="rs rs--total line--solid" x="1388" y="150"><tspan x="1388" dy="0">10 min, incomplete</tspan></text></g><g data-role="total"><text class="rs rs--total line--solid" x="1388" y="250"><tspan x="1388" dy="0">150 min, incomplete</tspan></text></g><g data-role="causes-title"><text class="rs rs--causes-title line--solid" x="28" y="368"><tspan x="28" dy="0">Added minutes by cause</tspan></text></g><g data-role="cause-label"><text class="rs rs--cause-label line--solid rs-impact--workaround" x="28" y="400"><tspan x="28" dy="0">X6 Resolve or offload</tspan></text></g><g data-role="cause"><rect class="rs rs--cause line--solid rs-impact--workaround" x="470" y="388" width="265.2" height="16" rx="3"/></g><g data-role="cause-figure"><text class="rs rs--cause-figure line--solid" x="747.2" y="400"><tspan x="747.2" dy="0">+40 min a case</tspan></text></g><g data-role="cause-label"><text class="rs rs--cause-label line--solid rs-impact--workaround" x="28" y="428"><tspan x="28" dy="0">X9 Approve deviation</tspan></text></g><g data-role="cause"><rect class="rs rs--cause line--solid rs-impact--workaround" x="470" y="416" width="99.5" height="16" rx="3"/></g><g data-role="cause-figure"><text class="rs rs--cause-figure line--solid" x="581.5" y="428"><tspan x="581.5" dy="0">+15 min a case</tspan></text></g><g data-role="cause-label"><text class="rs rs--cause-label line--solid rs-impact--time_impact" x="28" y="456"><tspan x="28" dy="0">X2 Load and return LIR</tspan></text></g><g data-role="cause"><rect class="rs rs--cause line--solid rs-impact--time_impact" x="470" y="444" width="88.9" height="16" rx="3"/></g><g data-role="cause-figure"><text class="rs rs--cause-figure line--solid" x="570.9" y="456"><tspan x="570.9" dy="0">+13 min a case</tspan></text></g><g data-role="cause-label"><text class="rs rs--cause-label line--solid rs-impact--capacity_drain" x="28" y="484"><tspan x="28" dy="0">X4 Draft load plan</tspan></text></g><g data-role="cause"><rect class="rs rs--cause line--solid rs-impact--capacity_drain" x="470" y="472" width="26.5" height="16" rx="3"/></g><g data-role="cause-figure"><text class="rs rs--cause-figure line--solid" x="508.5" y="484"><tspan x="508.5" dy="0">+4 min a case</tspan></text></g><g data-role="cause-label"><text class="rs rs--cause-label line--solid rs-impact--workaround" x="28" y="512"><tspan x="28" dy="0">X5 Manual weight override</tspan></text></g><g data-role="cause"><rect class="rs rs--cause line--solid rs-impact--workaround" x="470" y="500" width="4" height="16" rx="3"/></g><g data-role="cause-figure"><text class="rs rs--cause-figure line--solid" x="486" y="512"><tspan x="486" dy="0">+1 min a case</tspan></text></g></svg></div><ul class="callouts"><li class="callout callout--workaround"><p>X6 Resolve or offload (described in 1 of 1 interviews).</p><p>+40 min a case.</p></li><li class="callout callout--workaround"><p>X9 Approve deviation (described in 1 of 1 interviews).</p><p>+15 min a case.</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">Both strips share one scale: width is minutes a case</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-view" data-view="rv6" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">How far is what we believe from what happens?</h2><p class="reality-view__headline">No step has both a believed and a measured time to compare.</p><p class="pack-availability">No official account states a time for a step the system measures.</p><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">Each row has its own scale, from 0 to a little past the larger value</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-view" data-view="rv7" data-section="facts"><p class="pack-section">Facts</p><h2 class="reality-view__title">What does the hidden work feel like for one customer?</h2><p class="reality-view__headline">A typical case touches 1 tool and leaves 3 steps without a record.</p><p class="pack-strong">A typical case: median timings of 36 cases, not one real case.</p><ul class="metric-tiles"><li class="metric-tile"><span data-figure="rv7.tools" class="metric-tile__number">1 tool</span><span class="metric-tile__caption">touched outside the system</span><span class="metric-tile__label">stated</span></li><li class="metric-tile"><span data-figure="rv7.missing" class="metric-tile__number">3 steps</span><span class="metric-tile__caption">without a system record</span><span class="metric-tile__label">stated</span></li></ul><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 464" preserveAspectRatio="xMinYMin meet" role="img" aria-label="What does the hidden work feel like for one customer? A typical case touches 1 tool and leaves 3 steps without a record."><defs><pattern id="rs-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="rs-hatch-ground" width="6" height="6"/><line class="rs-hatch-line" x1="0" y1="0" x2="0" y2="6"/></pattern></defs><g data-role="lane-system"><rect class="rs rs--lane-system line--solid" x="232" y="64" width="1256" height="72" rx="3"/></g><g data-role="lane-name"><text class="rs rs--lane-name line--solid" x="20" y="96"><tspan x="20" dy="0">DCS</tspan></text></g><g data-role="lane-off_system"><rect class="rs rs--lane-off_system line--solid" x="232" y="136" width="1256" height="72" rx="3"/></g><g data-role="lane-name"><text class="rs rs--lane-name line--solid" x="20" y="168"><tspan x="20" dy="0">Off-system work</tspan></text></g><g data-role="lane-tool"><rect class="rs rs--lane-tool line--solid" x="232" y="208" width="1256" height="72" rx="3"/></g><g data-role="lane-name"><text class="rs rs--lane-name line--solid" x="20" y="240"><tspan x="20" dy="0">Sheet</tspan></text></g><g data-role="finish-actual"><line class="rs rs--finish-actual line--solid" x1="1421" y1="60" x2="1421" y2="284"/></g><g data-role="finish-actual-label"><text class="rs rs--finish-actual-label line--solid" x="1374.2" y="32"><tspan x="1374.2" dy="0">Actual finish</tspan><tspan x="1374.2" dy="16">121 min</tspan></text></g><g data-role="path"><line class="rs rs--path line--solid" x1="240" y1="100" x2="483" y2="100"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="483" y1="100" x2="526" y2="172"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="526" y1="172" x2="568.9" y2="100"/></g><g data-role="path"><line class="rs rs--path line--solid" x1="568.9" y1="100" x2="1119.4" y2="100"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="1119.4" y1="100" x2="1225.3" y2="244"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="1225.3" y1="244" x2="1331.2" y2="100"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="1331.2" y1="100" x2="1367.3" y2="172"/></g><g data-role="path"><line class="rs rs--path line--dotted" x1="1367.3" y1="172" x2="1403.4" y2="100"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="240" cy="100" r="6"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="483" cy="100" r="6"/></g><g data-role="event-off-system"><circle class="rs rs--event-off-system line--solid" cx="526" cy="172" r="6"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="568.9" cy="100" r="6"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="1119.4" cy="100" r="6"/></g><g data-role="event-off-system"><circle class="rs rs--event-off-system line--solid" cx="1225.3" cy="244" r="6"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="1331.2" cy="100" r="6"/></g><g data-role="event-off-system"><circle class="rs rs--event-off-system line--solid" cx="1367.3" cy="172" r="6"/></g><g data-role="event-recorded"><circle class="rs rs--event-recorded line--solid" cx="1403.4" cy="100" r="6"/></g><g data-role="axis"><line class="rs rs--axis line--solid" x1="240" y1="288" x2="1480" y2="288"/></g><g data-role="tick"><line class="rs rs--tick line--solid" x1="240" y1="288" x2="240" y2="294"/></g><g data-role="tick-label"><text class="rs rs--tick-label line--solid" x="222" y="308"><tspan x="222" dy="0">0 min</tspan></text></g><g data-role="tick"><line class="rs rs--tick line--solid" x1="532.8" y1="288" x2="532.8" y2="294"/></g><g data-role="tick-label"><text class="rs rs--tick-label line--solid" x="511.2" y="308"><tspan x="511.2" dy="0">30 min</tspan></text></g><g data-role="tick"><line class="rs rs--tick line--solid" x1="825.6" y1="288" x2="825.6" y2="294"/></g><g data-role="tick-label"><text class="rs rs--tick-label line--solid" x="804" y="308"><tspan x="804" dy="0">60 min</tspan></text></g><g data-role="tick"><line class="rs rs--tick line--solid" x1="1118.4" y1="288" x2="1118.4" y2="294"/></g><g data-role="tick-label"><text class="rs rs--tick-label line--solid" x="1096.8" y="308"><tspan x="1096.8" dy="0">90 min</tspan></text></g><g data-role="tick"><line class="rs rs--tick line--solid" x1="1411.2" y1="288" x2="1411.2" y2="294"/></g><g data-role="tick-label"><text class="rs rs--tick-label line--solid" x="1386" y="308"><tspan x="1386" dy="0">120 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="240" y1="314" x2="240" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="204" y="340"><tspan x="204" dy="0">Draft load plan</tspan><tspan x="204" dy="16">0 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="483" y1="314" x2="483" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="421.8" y="340"><tspan x="421.8" dy="0">Special loads OK?</tspan><tspan x="421.8" dy="16">25 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="526" y1="314" x2="526" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="461.2" y="380"><tspan x="461.2" dy="0">Resolve or offload</tspan><tspan x="461.2" dy="16">no time recorded</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="568.9" y1="314" x2="568.9" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="514.9" y="420"><tspan x="514.9" dy="0">Draft load plan</tspan><tspan x="514.9" dy="16">34 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="1119.4" y1="314" x2="1119.4" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="1051" y="340"><tspan x="1051" dy="0">Load and return LIR</tspan><tspan x="1051" dy="16">90 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="1225.3" y1="314" x2="1225.3" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="1167.7" y="380"><tspan x="1167.7" dy="0">Busy wave?</tspan><tspan x="1167.7" dy="16">no time recorded</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="1331.2" y1="314" x2="1331.2" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="1259.2" y="340"><tspan x="1259.2" dy="0">Deviation in limits?</tspan><tspan x="1259.2" dy="16">112 min</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="1367.3" y1="314" x2="1367.3" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="1306.1" y="380"><tspan x="1306.1" dy="0">Approve deviation</tspan><tspan x="1306.1" dy="16">no time recorded</tspan></text></g><g data-role="event-tick"><line class="rs rs--event-tick line--dotted" x1="1403.4" y1="314" x2="1403.4" y2="326"/></g><g data-role="event-label"><text class="rs rs--event-label line--solid" x="1345.8" y="420"><tspan x="1345.8" dy="0">Issue load sheet</tspan><tspan x="1345.8" dy="16">119 min</tspan></text></g></svg></div><ul class="callouts"><li class="callout callout--time_impact"><p>X2 Load and return LIR (wait 13 min median, 90th percentile 27).</p><p>+13 min a case; 24 h a month.</p></li><li class="callout callout--time_impact"><p>X3 Draft load plan: design gap (target T-120 vs documented T-90).</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">Across: minutes since the case started (median timings, not one real case)</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section></div><div data-section="interpretation"><section class="page" data-section="interpretation"><p class="pack-section">Interpretation</p><h2 class="reality-view__title">Where the gaps concentrate</h2><h3>The hotspot</h3><p class="pack-strong">Largest loss: Check and load</p><h3>Impact classes by column</h3><table class="reality-table"><thead><tr><th>Column</th><th><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></th><th><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></th><th><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></th><th><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></th></tr></thead><tbody><tr><th>Plan</th><td><span class="x-tag x-tag--control_exposure">X1</span></td><td><span class="x-tag x-tag--time_impact">X3</span></td><td><span class="x-tag x-tag--capacity_drain">X4</span></td><td></td></tr><tr><th>Check and load</th><td></td><td><span class="x-tag x-tag--time_impact">X2</span></td><td></td><td><span class="x-tag x-tag--workaround">X6</span> <span class="x-tag x-tag--workaround">X7</span></td></tr><tr><th>Close out</th><td></td><td></td><td></td><td><span class="x-tag x-tag--workaround">X5</span> <span class="x-tag x-tag--workaround">X8</span> <span class="x-tag x-tag--workaround">X9</span></td></tr><tr><th>Whole process</th><td></td><td></td><td></td><td></td></tr></tbody></table><h3>Potential control exposures</h3><ul class="pack-list"><li><span class="x-tag x-tag--control_exposure">X1</span> X1 Approve load plan (never recorded; 100% of cases). Potential control exposure, for the control owner to confirm.</li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section></div><div data-section="recommendation"><section class="page pack-view" data-view="rv3" data-section="recommendation"><p class="pack-section">Recommendation</p><h2 class="reality-view__title">Which gaps should we fix, and which should we keep?</h2><p class="reality-view__headline">2 gaps put the intent at risk; none is yet clearly a practice to keep.</p><div class="pack-drawing"><svg class="reality-canvas" viewBox="0 0 1600 838" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Which gaps should we fix, and which should we keep? 2 gaps put the intent at risk; none is yet clearly a practice to keep."><rect class="fix-zone fix-zone--as_designed" x="80" y="40" width="520" height="300"/><rect class="fix-zone fix-zone--codify" x="600" y="40" width="520" height="300"/><rect class="fix-zone fix-zone--rewrite" x="80" y="340" width="520" height="300"/><rect class="fix-zone fix-zone--correct" x="600" y="340" width="520" height="300"/><rect class="fix-zone fix-zone--ask" x="80" y="664" width="1040" height="150"/><text class="reality-label" x="92" y="60"><tspan x="92" dy="0" class="reality-label--strong">Working as designed</tspan><tspan x="92" dy="16">Follows the manual and delivers the promise.</tspan></text><text class="reality-label" x="612" y="60"><tspan x="612" dy="0" class="reality-label--strong">Codify the practice</tspan><tspan x="612" dy="16">Departs from the manual and delivers the promise.</tspan></text><text class="reality-label" x="92" y="360"><tspan x="92" dy="0" class="reality-label--strong">Rewrite the rule</tspan><tspan x="92" dy="16">Follows the manual and falls short of the promise.</tspan></text><text class="reality-label" x="612" y="360"><tspan x="612" dy="0" class="reality-label--strong">Correct the practice</tspan><tspan x="612" dy="16">Departs from the manual and falls short of the promise.</tspan></text><text class="reality-label" x="92" y="684"><tspan x="92" dy="0" class="reality-label--strong">Ask</tspan><tspan x="92" dy="16">Not enough evidence to say where the fix lies.</tspan></text><text class="reality-label" x="92" y="28"><tspan x="92" dy="0" class="reality-label--strong">Follows the manual</tspan></text><text class="reality-label" x="612" y="28"><tspan x="612" dy="0" class="reality-label--strong">Departs from it</tspan></text><text class="reality-label" x="1136" y="190"><tspan x="1136" dy="0" class="reality-label--strong">Delivers the</tspan><tspan x="1136" dy="16">promise</tspan></text><text class="reality-label" x="1136" y="490"><tspan x="1136" dy="0" class="reality-label--strong">Falls short of</tspan><tspan x="1136" dy="16">the promise</tspan></text><g><circle class="fix-circle fix-circle--control_exposure" cx="670" cy="436" r="9"/><text class="fix-code" x="670" y="461" text-anchor="middle">X1</text></g><g><circle class="fix-circle fix-circle--time_impact" cx="780" cy="436" r="44"/><text class="fix-code" x="780" y="496" text-anchor="middle">X2</text></g><g><circle class="fix-circle fix-circle--time_impact" cx="150" cy="436" r="9"/><text class="fix-code" x="150" y="461" text-anchor="middle">X3</text></g><g><circle class="fix-circle fix-circle--capacity_drain" cx="150" cy="748" r="24"/><text class="fix-code" x="150" y="788" text-anchor="middle">X4</text></g><g><circle class="fix-circle fix-circle--workaround" cx="260" cy="748" r="9"/><text class="fix-code" x="260" y="773" text-anchor="middle">X5</text></g><g><circle class="fix-circle fix-circle--workaround" cx="370" cy="748" r="9"/><text class="fix-code" x="370" y="773" text-anchor="middle">X6</text></g><g><circle class="fix-circle fix-circle--workaround" cx="480" cy="748" r="9"/><text class="fix-code" x="480" y="773" text-anchor="middle">X7</text></g><g><circle class="fix-circle fix-circle--workaround" cx="590" cy="748" r="9"/><text class="fix-code" x="590" y="773" text-anchor="middle">X8</text></g></svg></div><ul class="callouts"><li class="callout callout--control_exposure"><p>Decide first: X1 Approve load plan.</p><p>The control objective is not met: restore the control or remove the cause.</p></li></ul><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note">Circle area = hours a month; small circles have no measured hours</p><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section><section class="page pack-decide" data-section="recommendation"><p class="pack-section">Recommendation</p><h2 class="reality-view__title">Decide first</h2><table class="reality-table"><thead><tr><th>Code</th><th>Gap</th><th>Impact</th><th>Verdict</th><th>Hours a month</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="x-tag x-tag--control_exposure">X1</span></td><td>Approve load plan</td><td><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></td><td><span class="pack-verdict">Correct (suggested)</span><br><span class="pack-small">The control objective is not met: restore the control or remove the cause.</span><br><span class="pack-small">potential control exposure, for the control owner to confirm</span></td><td><span data-figure="X1.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, no interview, 200 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--time_impact">X2</span></td><td>Load and return LIR</td><td><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></td><td><span class="pack-verdict">Correct (suggested)</span><br><span class="pack-small">Practice misses the target (10) while the documented way meets it.</span></td><td><span data-figure="X2.hours">24 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, 200 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--time_impact">X3</span></td><td>Draft load plan: design gap</td><td><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></td><td><span class="pack-verdict">Rewrite (suggested)</span><br><span class="pack-small">The manual itself misses the intent: the documented way can&#x27;t meet it.</span></td><td><span data-figure="X3.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--capacity_drain">X4</span></td><td>Draft load plan</td><td><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">No case-level figure to compare with the target: ask the process owner, or add system records.</span></td><td><span data-figure="X4.hours">7 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, 40 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X5</span></td><td>Manual weight override</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">No confirmed intent covers it: ask the process owner which way is intended.</span></td><td><span data-figure="X5.hours">1 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, no interview, 23 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X6</span></td><td>Resolve or offload</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">No confirmed intent covers it: ask the process owner which way is intended.</span></td><td><span data-figure="X6.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X7</span></td><td>Busy wave? → Read report at aircraft</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">The SME&#x27;s stated reason suggests codify; confirm the gap class.</span></td><td><span data-figure="X7.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X8</span></td><td>Deviation in limits?</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">Not enough evidence to say where the fix lies: ask the process owner.</span></td><td><span data-figure="X8.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X9</span></td><td>Approve deviation</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span><br><span class="pack-small">No confirmed intent covers it: ask the process owner which way is intended.</span></td><td><span data-figure="X9.hours">0 h a month</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr></tbody></table><p class="inline-note">Verdicts are recommendations; the process owner decides.</p><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section></div><section class="page" data-section="appendix"><p class="pack-section">Appendix</p><h2 class="reality-view__title">Discrepancies</h2><table class="reality-table"><thead><tr><th>Code</th><th>Location</th><th>Types</th><th>Delta</th><th>Impact</th><th>Verdict</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="x-tag x-tag--control_exposure">X1</span></td><td>Approve load plan</td><td>D1 D11</td><td><span data-figure="X1.delta">never recorded; 100% of cases</span> (measured)</td><td><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></td><td><span class="pack-verdict">Correct (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, no interview, 200 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--time_impact">X2</span></td><td>Load and return LIR</td><td>D8 D14</td><td><span data-figure="X2.delta">wait 13 min median, 90th percentile 27</span> (measured)</td><td><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></td><td><span class="pack-verdict">Correct (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, 200 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--time_impact">X3</span></td><td>Draft load plan: design gap</td><td>D13</td><td><span data-figure="X3.delta">target T-120 vs documented T-90</span> (target)</td><td><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></td><td><span class="pack-verdict">Rewrite (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--capacity_drain">X4</span></td><td>Draft load plan</td><td>D4</td><td><span data-figure="X4.delta">rework in 20% of cases</span> (measured)</td><td><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, 40 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X5</span></td><td>Manual weight override</td><td>D2</td><td><span data-figure="X5.delta">12% of cases</span> (measured)</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip" aria-hidden="true">I</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, no interview, 23 system cases.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X6</span></td><td>Resolve or offload</td><td>D2</td><td><span data-figure="X6.delta">described in 1 of 1 interviews</span> (stated)</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X7</span></td><td>Busy wave? → Read report at aircraft</td><td>D2 D6</td><td><span data-figure="X7.delta">described in 1 of 1 interviews</span> (stated)</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X8</span></td><td>Deviation in limits?</td><td>D12</td><td><span data-figure="X8.delta">Load control lead (documented) vs Captain (done)</span> (stated)</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip evidence-chip--on" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: 1 document, 1 interview, no system case.</span></td></tr><tr><td><span class="x-tag x-tag--workaround">X9</span></td><td>Approve deviation</td><td>D2</td><td><span data-figure="X9.delta">described in 1 of 1 interviews</span> (stated)</td><td><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></td><td><span class="pack-verdict">Ask (suggested)</span></td><td><span class="evidence-chips"><span class="evidence-chip" aria-hidden="true">D</span><span class="evidence-chip evidence-chip--on" aria-hidden="true">I</span><span class="evidence-chip" aria-hidden="true">S</span></span> <span class="pack-small">Evidence: no document, 1 interview, no system case.</span></td></tr></tbody></table><h2 class="reality-view__title">Intent statements</h2><table class="reality-table"><thead><tr><th>Kind</th><th>Statement</th><th>Target</th><th>Result</th></tr></thead><tbody><tr><td>Target</td><td>Preliminary load plans are ready by T-120.</td><td>target at least 120 minutes before</td><td>Met</td></tr><tr><td>Control objective</td><td>Every load plan is approved before release to Ramp.</td><td></td><td>Not met</td></tr><tr><td>Target</td><td>The loading report reaches Load Control within 10 minutes of loading completion.</td><td>target at most 10 min</td><td>Not met</td></tr><tr><td>Promise</td><td>Load sheets are issued without delaying the departure slot.</td><td></td><td>Not known yet</td></tr><tr><td>Policy rule</td><td>Weight deviations outside tolerance are decided by the Load control lead.</td><td></td><td>Not known yet</td></tr></tbody></table><p class="pack-small">Rules version 1 · copy version 3 · layout version 4 · app version 1.0.0</p><footer class="reality-legend"><ul class="reality-legend__row"><li><span class="impact-word impact-word--control_exposure"><svg class="impact-glyph impact-glyph--control_exposure" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M7 1.5 13 12.5H1Z"/></svg>Control exposure</span></li><li><span class="impact-word impact-word--time_impact"><svg class="impact-glyph impact-glyph--time_impact" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 3.8V7l2.4 1.6"/></svg>Time impact</span></li><li><span class="impact-word impact-word--capacity_drain"><svg class="impact-glyph impact-glyph--capacity_drain" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg>Capacity drain</span></li><li><span class="impact-word impact-word--workaround"><svg class="impact-glyph impact-glyph--workaround" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" stroke-dasharray="1.6 1.6"/></svg>Workaround</span></li></ul><ul class="reality-legend__row"><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--solid"/></svg>In the system of record, or as documented</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dashed"/></svg>A deviation the system records</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--dotted"/></svg>Off-system work</li><li><svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line legend-line--double"/></svg>An approved local variation</li></ul><p class="reality-legend__note pack-data-label">Version v1.0, validated by Owner on 2026-09-28 · 2 documents · 2 interviews · 200 cases</p></footer></section></body></html>
