@@ -102,7 +102,9 @@ export function SourcesScreen() {
   const list = sources.data ?? [];
   const missing = readiness.data?.missing ?? [];
   const opened = list.find((s) => s.id === openId);
-  const showSpeakers = opened?.kind === "interview_transcript" && opened.text_status === "ready";
+  // Transcripts map their speakers; email threads map their senders (R11).
+  const showSpeakers =
+    (opened?.kind === "interview_transcript" || opened?.kind === "email_thread") && opened.text_status === "ready";
 
   return (
     <main className="screen" aria-labelledby="sources-title">
@@ -181,7 +183,13 @@ export function SourcesScreen() {
       )}
 
       {openId && showSpeakers && (
-        <SpeakerMapping key={openId} engagementId={engagementId} sourceId={openId} roles={roles.data ?? []} />
+        <SpeakerMapping
+          key={openId}
+          engagementId={engagementId}
+          sourceId={openId}
+          roles={roles.data ?? []}
+          senders={opened?.kind === "email_thread"}
+        />
       )}
       {/* Names to hide sit below the speaker mapping (PRD §5.4); shown once there are sources. */}
       {list.length > 0 && <RedactionList engagementId={engagementId} />}

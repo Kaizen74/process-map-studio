@@ -352,3 +352,25 @@ def test_model_change_writes_an_audit_row(settings_config: AppConfig, sessions: 
         "effort": "medium",
         "verifier_enabled": False,
     }
+
+
+def test_module_and_regional_changes_write_audit_rows(
+    settings_config: AppConfig, sessions: Sessions
+) -> None:
+    """R10: who switched a module or changed a regional setting, from what to what; an unchanged
+    value writes no row."""
+    ok(settings_actions.set_modules(settings_config, {"value_enabled": True}, sessions))
+    row = audit_rows(sessions)[0]
+    assert (row["action"], row["target_type"], row["target_id"]) == (
+        "Switched optional modules",
+        "settings",
+        "modules",
+    )
+    assert (row["before"], row["after"]) == ({"VALUE_ENABLED": "0"}, {"VALUE_ENABLED": "true"})
+    ok(settings_actions.set_modules(settings_config, {"value_enabled": True}, sessions))
+    ok(settings_actions.set_regional(settings_config, "SGD", None, sessions))  # already SGD
+    assert len(audit_rows(sessions)) == 1
+    ok(settings_actions.set_regional(settings_config, "eur", "Europe/Paris", sessions))
+    row = audit_rows(sessions)[0]
+    assert (row["action"], row["target_id"]) == ("Changed regional settings", "regional")
+    assert row["after"] == {"CURRENCY": "EUR", "DEFAULT_TIMEZONE": "Europe/Paris"}

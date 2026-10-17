@@ -11,7 +11,9 @@ from app.domain.models import (
     ConnectionTest,
     ModelChoices,
     ModelUpdate,
+    ModuleSettings,
     ProfileUpdate,
+    RegionalSettings,
     ResearchSetting,
     SettingsView,
     WebSearchTest,
@@ -58,6 +60,20 @@ def update_model(request: Request, body: ModelUpdate) -> SettingsView:
             body.verifier_enabled,
             sessions=request.app.state.sessions,
         )
+    )
+
+
+@router.put("/modules")
+def set_modules(request: Request, body: ModuleSettings) -> SettingsView:
+    state = request.app.state
+    return unwrap(settings.set_modules(state.config, body.model_dump(), state.sessions))
+
+
+@router.put("/regional")
+def set_regional(request: Request, body: RegionalSettings) -> SettingsView:
+    state = request.app.state
+    return unwrap(
+        settings.set_regional(state.config, body.currency, body.default_timezone, state.sessions)
     )
 
 

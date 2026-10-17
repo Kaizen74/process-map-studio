@@ -1,5 +1,6 @@
 /* Leadership view (PRD §5.4): three columns told apart by text headers and dividers, not colour.
-   Work is solid ink; wait is coral hatching (shape and pattern, never colour alone). Tokens only. */
+   Work is solid ink; wait is hatched in the time colour (shape and pattern, never colour alone;
+   Eric approved 2026-10-15, as on the Time lens, so coral keeps one meaning). Tokens only. */
 .leadership-columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -68,8 +69,8 @@
   display: inline-block;
   box-sizing: border-box;
   height: 100%;
-  border: var(--line-hairline) solid var(--constraint);
-  background: repeating-linear-gradient(45deg, var(--constraint) 0 1.5px, transparent 1.5px 4px);
+  border: var(--line-hairline) solid var(--impact-time);
+  background: repeating-linear-gradient(45deg, var(--impact-time) 0 1.5px, transparent 1.5px 4px);
 }
 .phase-legend {
   display: flex;

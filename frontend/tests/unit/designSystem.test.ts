@@ -135,6 +135,57 @@ describe("contrast (WCAG 2.1 AA)", () => {
       expect(contrast(color("border-input"), color(bg))).toBeGreaterThanOrEqual(3);
     }
   });
+
+  // PRD §5.2 impact and Reality tokens (P13): each impact colour carries text on white, on the
+  // page background and on its own tint, and white text sits on it; the documented baseline's
+  // stroke still meets 3:1 so its meaning never rests on the quiet fill.
+  const impacts = ["impact-control", "impact-time", "impact-capacity", "impact-workaround"];
+
+  it.each(impacts)("%s is at least 4.5:1 on every background, on its tint and under white text", (name) => {
+    for (const bg of [...backgrounds, `${name}-bg`]) {
+      expect(contrast(color(name), color(bg))).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast(color("on-ink"), color(name))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("designed work is text-safe and the baseline stroke is at least 3:1", () => {
+    for (const bg of backgrounds) {
+      expect(contrast(color("designed-work"), color(bg))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(color("baseline-stroke"), color(bg))).toBeGreaterThanOrEqual(3);
+    }
+    expect(contrast(color("ink"), color("baseline-fill"))).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("RQ3 channel discipline (PRD §5.12.8)", () => {
+  it("impact and Reality tokens are used only by the Reality components and the views they feed", () => {
+    const allowed = ["src/components/reality/", "src/styles/tokens.css"];
+    const users = filesUnder(join(root, "src"), [".ts", ".tsx", ".css"])
+      .filter((file) => /--(impact-|designed-work|baseline-)/.test(readFileSync(file, "utf8")))
+      .map((file) => relative(root, file).replaceAll("\\", "/"));
+    // The sanctioned uses outside: the wait hatch in the time colour on the Time lens and on
+    // Leadership's phase bars (PRD §5.2; Eric approved both, 2026-10-15).
+    const usesIn = (path: string) =>
+      [...readFileSync(join(root, path), "utf8").matchAll(/^([^{}]+)\{[^}]*--(impact-|designed-work|baseline-)[^}]*\}/gm)].map(
+        (m) => (m[1] ?? "").trim().split("\n").pop(),
+      );
+    expect(usesIn("src/components/map/map.css")).toEqual([".map-bar__wait"]);
+    expect(usesIn("src/components/leadership/leadership.css")).toEqual([".phase-bar__wait"]);
+    allowed.push("src/components/map/map.css", "src/components/leadership/leadership.css");
+    expect(users.filter((f) => !allowed.some((a) => f.startsWith(a)))).toEqual([]);
+    expect(users.some((f) => f.startsWith("src/components/reality/"))).toBe(true);
+  });
+});
+
+describe("Reality legend lines (found by the P13d pack review, 2026-10-16)", () => {
+  it("draws each line style of the legend differently, so the legend explains the lines", () => {
+    const css = readFileSync(join(root, "src/components/reality/reality.css"), "utf8");
+    const rule = (name: string) => css.match(new RegExp(`\\.legend-line--${name}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+    expect(rule("dashed")).toMatch(/stroke-dasharray:\s*[\d.]+\s+[\d.]+/);
+    expect(rule("dotted")).toMatch(/stroke-dasharray:\s*[\d.]+\s+[\d.]+/);
+    expect(rule("dashed")).not.toEqual(rule("dotted"));
+    expect(rule("double")).toMatch(/stroke-width/);
+  });
 });
 
 describe("self-hosted fonts", () => {

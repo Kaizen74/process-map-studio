@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import quality as quality_action
-from app.actions import redaction
+from app.actions import reality, redaction, system_trace
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
@@ -203,6 +203,7 @@ def publish(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ve
                 {"blockers": [b.model_dump() for b in found]},
             )
         label = next_published_label(versions_repo.published_labels(session, version.engagement_id))
+        system_trace.freeze(session, version_id)  # a published version never changes after this
         versions_repo.publish(
             session,
             version_id,
@@ -212,6 +213,10 @@ def publish(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ve
             quality_card=card.model_dump(mode="json"),
             change_log=_change_log(session, version_id),
         )
+        if reality.enabled(config):  # the Reality snapshot is frozen with the version (§3.18.1)
+            published = versions_repo.get(session, version_id)
+            assert published is not None
+            reality.freeze(session, published)
         audit.record(
             session,
             actor=actor,
@@ -264,7 +269,7 @@ def reopen(config: AppConfig, sessions: Sessions, version_id: str) -> Result[Ver
     return Ok(detail)
 
 
-def _slug(text: str) -> str:
+def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "process"
 
 
@@ -288,7 +293,7 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str) -> 
         data = data.model_copy(update={"quality_card": card})
         content = quality_action.render_exports(data)[fmt]
         name, media = FILES[fmt]
-        filename = f"{_slug(graph.process.name)}-{_slug(version.label)}-{name}"
+        filename = f"{slug(graph.process.name)}-{slug(version.label)}-{name}"
         audit.record(
             session,
             actor=actor,

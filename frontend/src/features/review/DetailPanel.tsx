@@ -3,6 +3,8 @@ import {
   ConfidenceBreakdown,
   ConstraintList,
   DecisionRights,
+  DispositionValueSection,
+  type DispositionValueSectionProps,
   EvidenceCard,
   HandoffTime,
   KnowHowSection,
@@ -14,6 +16,7 @@ import {
   ReviewActions,
   RoleAccountability,
   StoriesSection,
+  SystemDataSection,
   WorkTypeSection,
   type PassageLink,
 } from "../../components/panel";
@@ -22,7 +25,9 @@ import { useElement, useSetWorkType } from "../../hooks/useReview";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
+import type { SystemTrace } from "../../lib/systemRecords";
 import { GapFindingsSection } from "../../components/gap";
+import { DiscrepanciesSection, type DiscrepanciesSectionProps } from "../../components/reality";
 import { ImagesSection } from "./ImagesSection";
 
 export interface DetailPanelProps {
@@ -49,6 +54,12 @@ export interface DetailPanelProps {
   onOpenGapReport: (analysisId: string) => void;
   /** A judgment step's exits marked typical (§3.12.5), for "Typical responses" (4a). */
   typicalResponses?: readonly string[] | undefined;
+  /** Section 4e (R8): the step's system-trace evidence; omitted while System records is off. */
+  system?: { traces: readonly SystemTrace[]; tooFew: boolean } | undefined;
+  /** Disposition and value (R10b): omitted while the value module is off or the step has no row. */
+  disposition?: DispositionValueSectionProps | undefined;
+  /** Section 12 (P13b): the step's X codes from the Reality snapshot; omitted while Reality is off. */
+  discrepancies?: DiscrepanciesSectionProps | undefined;
   onClose: () => void;
 }
 
@@ -66,6 +77,9 @@ export function DetailPanel({
   onAddAfter,
   onOpenGapReport,
   typicalResponses = [],
+  system,
+  disposition,
+  discrepancies,
   onClose,
 }: DetailPanelProps) {
   const detail = useElement(element.id);
@@ -130,6 +144,9 @@ export function DetailPanel({
             </PanelSection>
           ) : (
             <PanelSection title="Evidence" note="opens at the exact passage">
+              {detail.data.evidence.length === 0 && system && system.traces.length > 0 && (
+                <p className="inline-note">Its evidence is the system record: see System data below.</p>
+              )}
               <ul className="evidence-list">
                 {detail.data.evidence.map((card, i) => (
                   <li key={`${card.source_id}-${card.segment_id ?? "silent"}-${i}`}>
@@ -159,12 +176,15 @@ export function DetailPanel({
           <KnowHowSection knowHow={detail.data.know_how} onOpen={openPassage} />
           <StoriesSection stories={detail.data.stories} onOpen={openPassage} />
           <OfficialLivedSection element={detail.data} onOpen={openPassage} />
+          {system && <SystemDataSection traces={system.traces} element={element} tooFew={system.tooFew} />}
+          {disposition && <DispositionValueSection key={element.id} {...disposition} />}
           <HandoffTime element={detail.data} />
           <Kpi element={detail.data} />
           <ConstraintList element={detail.data} />
           <KnowledgeRisk element={detail.data} />
           <AiFlag element={detail.data} />
           <GapFindingsSection items={detail.data.gap_findings} onOpen={onOpenGapReport} />
+          {discrepancies && <DiscrepanciesSection {...discrepancies} />}
         </>
       )}
       {step && (

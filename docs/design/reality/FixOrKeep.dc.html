@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scan: fix or keep</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E1D1A}a:hover{color:#55534D}
+</style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 1000px; background: #F4F3EF; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1E1D1A; overflow: hidden">
+
+<!-- quadrants -->
+<div style="position: absolute; left: 120px; top: 228px; width: 420px; height: 312px; background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 12px 0 0 0; box-sizing: border-box"></div>
+<div style="position: absolute; left: 540px; top: 228px; width: 420px; height: 312px; background: #F1ECFA; border: 1px solid #E4E2DB; border-radius: 0 12px 0 0; box-sizing: border-box"></div>
+<div style="position: absolute; left: 120px; top: 540px; width: 420px; height: 320px; background: #FAFAF7; border: 1px solid #E4E2DB; border-radius: 0 0 0 12px; box-sizing: border-box"></div>
+<div style="position: absolute; left: 540px; top: 540px; width: 420px; height: 320px; background: #FCEBE9; border: 1px solid #E4E2DB; border-radius: 0 0 12px 0; box-sizing: border-box"></div>
+
+<!-- header -->
+<div style="position: absolute; left: 64px; top: 40px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">Corporate onboarding · Version 1.0 · Illustrative, synthetic data</div>
+<h1 style="position: absolute; left: 64px; top: 66px; margin: 0; font-size: 36px; line-height: 44px; font-weight: 500">Which gaps should we fix, and which should we keep?</h1>
+<p style="position: absolute; left: 64px; top: 118px; width: 1400px; margin: 0; font-size: 22px; line-height: 30px; color: #3F3D38">Two workarounds put approvals at risk and need correcting. One protects the 2-hour promise and should become the official way.</p>
+
+<!-- axes -->
+<div style="position: absolute; left: 64px; top: 186px; font-size: 14px; color: #3F3D38">Does the practice deliver what we promise?</div>
+<div style="position: absolute; left: 64px; top: 236px; width: 48px; font-size: 13px; line-height: 16px; font-weight: 500; text-align: right">Yes</div>
+<div style="position: absolute; left: 64px; top: 836px; width: 48px; font-size: 13px; line-height: 16px; font-weight: 500; text-align: right">No</div>
+<div style="position: absolute; left: 120px; top: 868px; width: 420px; text-align: center; font-size: 13px; font-weight: 500">Follows the manual</div>
+<div style="position: absolute; left: 540px; top: 868px; width: 420px; text-align: center; font-size: 13px; font-weight: 500">Departs from the manual</div>
+
+<!-- quadrant titles -->
+<div style="position: absolute; left: 140px; top: 244px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 500">Working as designed</span><span style="font-size: 13px; color: #3F3D38">Keep it. Nothing to change.</span></div>
+<div style="position: absolute; left: 560px; top: 244px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 500; color: #6D45B8">Codify the practice</span><span style="font-size: 13px; color: #3F3D38">Make the better way official.</span></div>
+<div style="position: absolute; left: 140px; top: 556px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 500">Rewrite the rule</span><span style="font-size: 13px; color: #3F3D38">The manual itself misses the promise.</span></div>
+<div style="position: absolute; left: 560px; top: 556px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 500; color: #B42318">Correct the practice</span><span style="font-size: 13px; color: #3F3D38">Restore the control or remove the cause.</span></div>
+
+<!-- bubbles: area = hours a month -->
+<div style="position: absolute; left: 285px; top: 385px; width: 30px; height: 30px; box-sizing: border-box; border: 2px solid #8C897F; border-radius: 50%"></div>
+<div style="position: absolute; left: 326px; top: 384px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Documented route</b><br>10% of cases</div>
+
+<div style="position: absolute; left: 681px; top: 381px; width: 38px; height: 38px; background: #6D45B8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X4</div>
+<div style="position: absolute; left: 730px; top: 382px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Spreadsheet queue</b><br>18 h/mo upkeep · keeps the promise</div>
+
+<div style="position: absolute; left: 292px; top: 652px; width: 76px; height: 76px; background: #2563A8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500">X6</div>
+<div style="position: absolute; left: 380px; top: 672px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Every case fully screened</b><br>72 h/mo · policy asks for tiers</div>
+
+<div style="position: absolute; left: 563px; top: 640px; width: 94px; height: 94px; background: #B42318; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500">X1</div>
+<div style="position: absolute; left: 668px; top: 650px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Approval in chat</b><br>110 h/mo · no record</div>
+
+<div style="position: absolute; left: 857px; top: 612px; width: 46px; height: 46px; background: #B42318; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X5</div>
+<div style="position: absolute; left: 816px; top: 662px; width: 130px; text-align: center; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Local copies</b><br>26 h/mo</div>
+
+<div style="position: absolute; left: 576px; top: 760px; width: 68px; height: 68px; background: #2563A8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500">X3</div>
+<div style="position: absolute; left: 652px; top: 778px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Uploaded twice</b><br>58 h/mo</div>
+
+<div style="position: absolute; left: 790px; top: 740px; width: 70px; height: 70px; background: #9A5B00; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500">X2</div>
+<div style="position: absolute; left: 790px; top: 816px; width: 140px; font-size: 12px; line-height: 16px"><b style="font-weight: 500">Re-keyed</b> · 62 h/mo</div>
+
+<!-- decide first -->
+<div style="position: absolute; left: 1000px; top: 186px; font-size: 14px; color: #3F3D38">Decide first: severity, then hours lost</div>
+<div style="position: absolute; left: 1000px; top: 212px; width: 536px; display: flex; flex-direction: column; gap: 10px">
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">1</span>
+    <span style="width: 34px; height: 30px; background: #B42318; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X1</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Approval given in chat, no record</b><span style="font-size: 12px; color: #3F3D38">Correct the practice · potential control exposure, for the control owner to confirm</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">110 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: documents, interviews and system records"><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">2</span>
+    <span style="width: 34px; height: 30px; background: #B42318; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X5</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Evidence copied to local drives</b><span style="font-size: 12px; color: #3F3D38">Correct the practice · off-system, so the system can't show it</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">26 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: documents and interviews; no system record"><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; box-sizing: border-box; border: 1.5px solid #8C897F; color: #55534D; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">3</span>
+    <span style="width: 34px; height: 30px; background: #9A5B00; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X2</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Screening times out and is re-keyed</b><span style="font-size: 12px; color: #3F3D38">Correct the cause · the system, not the people</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">62 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: interviews and system records; not in documents"><b style="width: 20px; height: 18px; box-sizing: border-box; border: 1.5px solid #8C897F; color: #55534D; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">4</span>
+    <span style="width: 34px; height: 30px; background: #2563A8; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X6</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Manual screens every case in full</b><span style="font-size: 12px; color: #3F3D38">Rewrite the rule · the policy asks for screening by risk tier</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">72 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: documents, interviews and system records"><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">5</span>
+    <span style="width: 34px; height: 30px; background: #2563A8; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X3</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Evidence uploaded twice</b><span style="font-size: 12px; color: #3F3D38">Correct the practice · upload screen gives no confirmation</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">58 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: interviews and system records; not in documents"><b style="width: 20px; height: 18px; box-sizing: border-box; border: 1.5px solid #8C897F; color: #55534D; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+  <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) 96px; gap: 12px; align-items: center">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #55534D">6</span>
+    <span style="width: 34px; height: 30px; background: #6D45B8; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500">X4</span>
+    <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; font-weight: 500">Team queue kept in a spreadsheet</b><span style="font-size: 12px; color: #3F3D38">Codify the practice · build the queue view into the system</span></span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">18 h/mo</span><span style="display: flex; gap: 3px" aria-label="Evidence: interviews only"><b style="width: 20px; height: 18px; box-sizing: border-box; border: 1.5px solid #8C897F; color: #55534D; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">D</b><b style="width: 20px; height: 18px; background: #1E1D1A; color: #FFFFFF; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">I</b><b style="width: 20px; height: 18px; box-sizing: border-box; border: 1.5px solid #8C897F; color: #55534D; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; border-radius: 3px">S</b></span></span>
+  </div>
+</div>
+
+<!-- footer legend -->
+<div style="position: absolute; left: 64px; top: 910px; width: 1472px; border-top: 1px solid #CFCCC2; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; font-size: 13px; color: #3F3D38">
+  <span>Circle area = hours a month</span>
+  <span>Evidence: <b style="font-weight: 500">D</b> documents · <b style="font-weight: 500">I</b> interviews · <b style="font-weight: 500">S</b> system records (filled = present)</span>
+  <span>Verdicts are recommendations; the process owner decides</span>
+  <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #55534D">Illustrative, synthetic data</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

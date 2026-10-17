@@ -442,3 +442,20 @@ def test_fewer_than_the_three_kinds_of_story_is_a_warning() -> None:
         "a time something surprised (M5.3)."
     )
     assert run_sensemaking_warnings(graph, {"went_well", "went_badly", "surprise"}).warnings == []
+
+
+def test_l10_checks_eric_s_dispositions_against_the_map() -> None:
+    """R9a (§3.15): Automate and AI-assisted need a complete AI flag and never sit on complex or
+    chaotic work, whatever changed on the step after Eric chose."""
+    chosen = {"plan": "automate_rules", "check": "ai_assisted"}
+    assert run_lint(clean(), chosen=chosen).failures == []
+    no_flag = replace(clean(), "plan", ai_flag=None)
+    [failure] = run_lint(no_flag, chosen={"plan": "automate_rules"}).failures
+    assert (failure.rule, failure.element_id) == ("L10", "plan")
+    assert failure.message.endswith("needs a complete AI flag for its disposition.")
+    support = flag(component="communication", basis="judgment_support_only")
+    complex_work = replace(clean(), "issue", work_type="complex", ai_flag=support)
+    assert [f.rule for f in run_lint(complex_work, chosen={"issue": "ai_assisted"}).failures] == [
+        "L10"
+    ]
+    assert run_lint(complex_work, chosen={"issue": "keep_human"}).failures == []

@@ -17,6 +17,7 @@
   any stated reason), its know-how and stories; the glossary, the capability notes and the
   coverage report with its follow-up questions and probes.
 - G9: the three standard interview templates (PRD Appendix F.9) in Markdown, as downloaded.
+- G10: the system-records outputs from fixture A.11 (P10b R12; `test_golden_g10.py`).
 
 Record IDs and times change on every run, so each ID is replaced by a stable token in order of
 first appearance. To accept a legitimate change, run the tests with PMS_UPDATE_GOLDEN=1, review the
@@ -181,9 +182,12 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
             v: client.get(f"{url}/exceptions", params={"view": v}).json()
             for v in ("done", "documented")
         }
+        # P9u: the Registers lists made from the interviews.
+        lists = {name: client.get(f"{url}/{name}").json()
+                 for name in ("stories", "glossary", "capability-notes")}  # fmt: skip
         bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
                   "views": views, "view_graphs": view_graphs,
-                  "exceptions": exceptions}  # fmt: skip
+                  "exceptions": exceptions, "lists": lists}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 

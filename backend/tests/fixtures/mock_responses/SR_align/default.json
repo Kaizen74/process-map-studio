@@ -1,0 +1,14 @@
+{
+  "matches": [
+    {
+      "activity": "Manual weight override",
+      "step_key": "manual-weight-override",
+      "reason": "The override is the step that handles a weight deviation by hand."
+    },
+    {
+      "activity": "Plan approved",
+      "step_key": "approve-load-plan",
+      "reason": "The approval of the load plan."
+    }
+  ]
+}

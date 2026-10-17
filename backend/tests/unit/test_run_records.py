@@ -112,7 +112,7 @@ def test_differences_in_plain_words() -> None:
 def test_every_draft_is_stamped_with_the_codebook_version(drafted: Drafted) -> None:
     """PRD Appendix E: the codebook version is stamped on every draft (and shown per version)."""
     [version] = drafted.client.get(f"/api/engagements/{drafted.engagement_id}/versions").json()
-    assert version["codebook_version"] == prompts.instruction_versions()["codebook"] == "1"
+    assert version["codebook_version"] == prompts.instruction_versions()["codebook"] == "2"
 
 
 def test_a_reopened_draft_keeps_how_its_content_was_made(drafted: Drafted) -> None:
@@ -130,4 +130,4 @@ def test_a_reopened_draft_keeps_how_its_content_was_made(drafted: Drafted) -> No
         [row] = [
             r for r in versions_repo.rows(session, drafted.engagement_id) if r["id"] == reopened.id
         ]
-        assert row["codebook_version"] == "1"
+        assert row["codebook_version"] == "2"

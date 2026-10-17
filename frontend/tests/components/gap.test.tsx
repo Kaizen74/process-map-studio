@@ -61,6 +61,33 @@ const WEB: GapEvidence = {
 };
 
 describe("finding card", () => {
+  it("shows a system log's record as figures and words, never as a quote (R6)", async () => {
+    const LOG: GapEvidence = { ...SOP, side: "system", source_id: "log-1", source_kind: "system_log",
+      source_name: "DCS extract", stance: "silent", segment_id: null, anchor: "2026-03-02 to 2026-04-26",
+      quote: "" }; // prettier-ignore
+    const onOpenSource = vi.fn();
+    const f = finding({
+      finding_type: "offline_work",
+      title: "Work done outside the system: Read report at aircraft",
+      text: "Interviews describe Read report at aircraft, but the DCS extract log has no record of it in 200 cases: it is done offline or not recorded.",
+      severity: "low",
+      evidence: [SILENT, LOG],
+    });
+    const { container } = render(
+      <FindingCard finding={f} mode="internal" locked={false} onGoTo={vi.fn()}
+        onOpenSource={onOpenSource} onDecide={vi.fn()} />,
+    ); // prettier-ignore
+    expect(screen.getByText("Offline work")).toBeInTheDocument();
+    const records = screen.getByText("System records").parentElement as HTMLElement;
+    expect(within(records).getByText("DCS extract")).toBeInTheDocument();
+    expect(
+      within(records).getByText(/System log · 2026-03-02 to 2026-04-26 · No record \(silent, not a contradiction\)/),
+    ).toBeInTheDocument();
+    // The log is not one of the engagement's sources: it is not offered in the source viewer.
+    expect(within(records).queryByRole("button")).toBeNull();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("shows the finding with both sides' evidence and offers every decision", async () => {
     const onDecide = vi.fn();
     const onOpenSource = vi.fn();

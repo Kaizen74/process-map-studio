@@ -28,6 +28,12 @@ def test_defaults_when_nothing_is_set(settings_config: AppConfig) -> None:
         effort="high",
         verifier_enabled=True,
         web_research_enabled=False,
+        system_records_enabled=False,
+        gap_analysis_enabled=True,
+        value_enabled=False,
+        reality_views_enabled=False,
+        currency="SGD",
+        default_timezone="Asia/Singapore",
         key_set=False,
         key_last4="",
     )

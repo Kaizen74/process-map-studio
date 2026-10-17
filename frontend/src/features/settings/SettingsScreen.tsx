@@ -4,7 +4,9 @@ import { useHealth } from "../../hooks/useSystem";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { ConnectionCard } from "./ConnectionCard";
 import { ModelCard } from "./ModelCard";
+import { ModulesCard } from "./ModulesCard";
 import { OwnerNameCard } from "./OwnerNameCard";
+import { RegionalCard } from "./RegionalCard";
 import { UsageCard } from "./UsageCard";
 import { WebResearchCard } from "./WebResearchCard";
 import "./settings.css";
@@ -56,6 +58,8 @@ export function SettingsScreen() {
           <OwnerNameCard settings={settings.data} />
           <ModelCard settings={settings.data} />
           <WebResearchCard settings={settings.data} />
+          <ModulesCard settings={settings.data} />
+          <RegionalCard settings={settings.data} />
           <UsageCard />
           <AboutCard />
         </div>

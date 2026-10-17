@@ -15,7 +15,7 @@ from functools import cache
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import exceptions as exceptions_action
-from app.actions import lenses, redaction
+from app.actions import lenses, redaction, system_trace
 from app.actions import questions as questions_action
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
@@ -194,7 +194,9 @@ def export_input(
     stories, capabilities, glossary, know_how = sensemaking_content(
         session, version_id, version.engagement_id, graph, names
     )
-    exceptions = exceptions_action.report_for(session, version_id, "done") if view_graphs else None
+    exceptions = (
+        exceptions_action.report_for(session, version_id, "done", every) if view_graphs else None
+    )
     return ExportInput(
         exceptions=exceptions,
         stories=stories,
@@ -259,12 +261,15 @@ def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCar
     pending = sum(
         1 for p in map_repo.merge_proposals(session, version_id) if p.decision == "pending"
     )
+    traced = system_trace.traced_steps(session, version_id)
+    chosen = {r.id: r.disposition for r in map_repo.elements(session, version_id) if r.disposition}
     return quality.build_quality_card(
         QualityInput(
             graph=graph,
             lint=versions_action.lint_graph(
-                every, versions_action.story_types(session, version_id)
+                every, versions_action.story_types(session, version_id), traced, chosen
             ),
+            traced=sorted(traced),
             pending_merges=pending,
             open_image_suggestions=map_repo.suggested_image_count(session, version_id),
             unverified_claims=unverified,

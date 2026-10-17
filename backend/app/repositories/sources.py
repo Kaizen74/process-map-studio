@@ -496,3 +496,23 @@ def coverage_counts(
         hit, total = counts[source_id]
         counts[source_id] = (hit + (segment_id in cited), total + 1)
     return counts
+
+
+def question_ids(session: Session, source_id: str) -> set[str]:
+    """The guide questions (Appendix F IDs) the source's passages answer."""
+    rows = session.scalars(
+        select(SourceSegment.question_id).where(
+            SourceSegment.source_id == source_id, SourceSegment.question_id.is_not(None)
+        )
+    )
+    return {q for q in rows if q}
+
+
+def kinds(session: Session, engagement_id: str) -> list[tuple[str, str, str]]:
+    """(ID, kind, text status) of each of the engagement's sources, without counting passages."""
+    rows = session.execute(
+        select(Source.id, Source.kind, Source.text_status)
+        .where(Source.engagement_id == engagement_id)
+        .order_by(Source.created_at, Source.id)
+    )
+    return [(i, k, t) for i, k, t in rows]

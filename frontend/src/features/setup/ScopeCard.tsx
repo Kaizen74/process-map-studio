@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { Engagement, ScopeFields } from "../../api/types";
-import { Button, Card, ChipField, TextAreaField, TextField } from "../../components/common";
+import { Button, Card, CheckboxField, ChipField, TextAreaField, TextField } from "../../components/common";
 import { useToast } from "../../components/shell";
 import { useUpdateEngagement } from "../../hooks/useEngagements";
 import { fieldOf, messageOf } from "../../lib/errors";
@@ -8,9 +8,12 @@ import { validateEngagementName, validateScopeList, validateScopeText } from "..
 
 type TextKey = "name" | "process_name" | "trigger" | "end_point" | "out_of_scope" | "process_kpi" | "industry";
 type ListKey = "in_scope_roles" | "adjacent_industries" | "confidential_terms";
-type Form = Record<TextKey, string> & Record<ListKey, string[]>;
+type FlagKey = "trigger_external" | "end_point_external";
+type Form = Record<TextKey, string> & Record<ListKey, string[]> & Record<FlagKey, boolean>;
 
-const LABELS: Record<TextKey | ListKey, string> = {
+const LABELS: Record<TextKey | ListKey | FlagKey, string> = {
+  trigger_external: "Starts outside the organisation",
+  end_point_external: "Ends outside the organisation",
   name: "Engagement name",
   process_name: "Process name",
   trigger: "Trigger",
@@ -37,6 +40,8 @@ function formOf(e: Engagement): Form {
     in_scope_roles: [...e.in_scope_roles],
     adjacent_industries: [...e.adjacent_industries],
     confidential_terms: [...e.confidential_terms],
+    trigger_external: e.trigger_external ?? false,
+    end_point_external: e.end_point_external ?? false,
   };
 }
 
@@ -103,6 +108,22 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
         <div className="setup-form__pair">
           {text("trigger", "What starts the process.")}
           {text("end_point", "What marks it as finished.")}
+        </div>
+        <div className="setup-form__pair">
+          <CheckboxField
+            label={LABELS.trigger_external}
+            checked={form.trigger_external}
+            onChange={set("trigger_external")}
+            error={errors.trigger_external ?? null}
+            help="Tick when what starts the process comes from outside, for example a customer's request."
+          />
+          <CheckboxField
+            label={LABELS.end_point_external}
+            checked={form.end_point_external}
+            onChange={set("end_point_external")}
+            error={errors.end_point_external ?? null}
+            help="Tick when it ends with a handover outside, for example to a customer or an authority. The Typical case view then shows a lane for it."
+          />
         </div>
         {list("in_scope_roles", "Roles whose work this map covers.")}
         <TextAreaField

@@ -11,7 +11,7 @@ from app.domain.models import RedactionTermView
 from app.repositories.tables import RedactionTerm
 
 # Origins of terms that hide names; `confidential_term` only restricts web research.
-NAME_ORIGINS = ("speaker_map", "manual")
+NAME_ORIGINS = ("speaker_map", "email_header", "manual")
 
 
 def _view(row: RedactionTerm) -> RedactionTermView:

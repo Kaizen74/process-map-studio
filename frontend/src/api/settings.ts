@@ -24,3 +24,17 @@ export const saveResearch = (enabled: boolean) =>
   request<Settings>("/settings/research", { method: "PUT", body: { web_research_enabled: enabled } });
 
 export const testWebSearch = () => request<WebSearchTest>("/settings/test-web-search", { method: "POST" });
+
+// Optional modules (R7, R10; decision A): a field left out keeps its value.
+export type ModuleSwitches = Partial<
+  Pick<Settings, "system_records_enabled" | "gap_analysis_enabled" | "value_enabled" | "reality_views_enabled">
+>;
+
+export const saveModules = (modules: ModuleSwitches) =>
+  request<Settings>("/settings/modules", { method: "PUT", body: modules });
+
+// Settings → Regional (R10): a field left out keeps its value.
+export type RegionalUpdate = Partial<Pick<Settings, "currency" | "default_timezone">>;
+
+export const saveRegional = (regional: RegionalUpdate) =>
+  request<Settings>("/settings/regional", { method: "PUT", body: regional });

@@ -7,6 +7,9 @@ export const KIND_OPTIONS = [
   { value: "manual", label: "Manual" },
   { value: "job_description", label: "Job description" },
   { value: "executed_artefact", label: "Executed artefact" },
+  { value: "working_spreadsheet", label: "Working spreadsheet" },
+  { value: "email_thread", label: "Email thread" },
+  { value: "policy_or_charter", label: "Policy or charter" },
   { value: "other", label: "Other document" },
 ] as const;
 
@@ -14,9 +17,9 @@ export function kindLabel(kind: string): string {
   return KIND_OPTIONS.find((k) => k.value === kind)?.label ?? kind;
 }
 
-export const ACCEPTED_FORMATS = [".docx", ".pdf", ".txt", ".vtt", ".srt"] as const;
+export const ACCEPTED_FORMATS = [".docx", ".pdf", ".txt", ".vtt", ".srt", ".xlsx", ".csv", ".eml"] as const;
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
-export const BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files.";
+export const BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files.";
 export const TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again.";
 
 /** null when the file can be uploaded, otherwise why not (same wording as the server). */

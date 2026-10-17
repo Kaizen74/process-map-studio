@@ -161,7 +161,7 @@ _NUMBER_WORD = re.compile(
 _NUMBER = re.compile(r"(?<![\w.])(?P<t>[Tt]\s?[-\u2013]\s?)?(?P<n>\d+(?:[.,]\d+)?)")
 
 
-def _words_to_digits(text: str) -> str:
+def words_to_digits(text: str) -> str:
     """ "twenty minutes" → "20 minutes"; "fifteen to forty" → "15 to 40"."""
 
     def replace(match: re.Match[str]) -> str:
@@ -182,7 +182,7 @@ def numbers_in(text: str) -> set[str]:
     same as the plain number 90); "1,5" and "1.5" → "1.5"; "06:40" → "6" and "40".
     """
     found: set[str] = set()
-    for match in _NUMBER.finditer(_words_to_digits(text)):
+    for match in _NUMBER.finditer(words_to_digits(text)):
         raw = match.group("n").replace(",", ".")
         value = str(float(raw)).removesuffix(".0") if "." in raw else str(int(raw))
         found.add(f"T-{value}" if match.group("t") else value)

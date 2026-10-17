@@ -37,3 +37,20 @@ export const EXCLUDED = "No images, verbatim quotes or names.";
 export function exportUrl(versionId: string, format: ExportFormat): string {
   return `/api/versions/${encodeURIComponent(versionId)}/export/${format}`;
 }
+
+// The Reality pack of a published version (PRD §3.18.6, §7.4; P13d): one offline HTML file of the
+// seven Reality views, laid out for A3 landscape or 16:9 slide pages, from
+// `GET /api/versions/{vid}/reality/export?layout=a3|slide`.
+
+export type PackLayout = "a3" | "slide";
+
+export const PACK_LAYOUTS: readonly { layout: PackLayout; label: string }[] = [
+  { layout: "a3", label: "A3" },
+  { layout: "slide", label: "16:9" },
+];
+
+export const PACK_EXCLUDED = "Role names only; no images, interview quotes or names.";
+
+export function realityPackUrl(versionId: string, layout: PackLayout): string {
+  return `/api/versions/${encodeURIComponent(versionId)}/reality/export?layout=${layout}`;
+}

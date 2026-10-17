@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import draft, gap, interview, sources
+from app.actions import draft, event_logs, gap, intent_ai, interview, log_alignment, sources
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
@@ -25,6 +25,8 @@ Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
 
 JOB_MISSING = "That job doesn't exist."
+# Jobs whose AI usage is shown on the job itself.
+AI_JOBS = (*gap.GAP_JOBS, interview.GUIDE_JOB, log_alignment.ALIGN_JOB, *intent_ai.INTENT_JOBS)
 READ_STAGE = "Reading the file"
 UNEXPECTED = (
     "Something went wrong while reading this file. Nothing else was changed. "
@@ -37,7 +39,7 @@ def get_job(sessions: Sessions, job_id: str) -> Result[JobView]:
         job = repo.get(session, job_id)
         if job is None:
             return Err(ErrorKind.NOT_FOUND, JOB_MISSING)
-        if job.type in (*gap.GAP_JOBS, interview.GUIDE_JOB):
+        if job.type in AI_JOBS:
             return Ok(job.model_copy(update={"usage": ai_calls.usage_for_job(session, job.id)}))
         return Ok(draft.with_progress(session, job))
 
@@ -106,6 +108,44 @@ def _run_guide(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     _finish(sessions, job.id, result)
 
 
+def _run_import(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = event_logs.run_import(config, sessions, job.id)
+    except Exception as exc:  # the events saved so far are removed by mark_failed (R12)
+        log.exception("System log import job %s failed", job.id)
+        event_logs.mark_failed(sessions, job.target_id or "")
+        result = Err(ErrorKind.IO, event_logs.UNEXPECTED, {"type": type(exc).__name__})
+    _record(sessions, job.id, result)
+
+
+def _run_align(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = log_alignment.run_suggest(config, sessions, job.id)
+    except Exception as exc:  # suggestions are stored only at the very end
+        log.exception("Alignment suggestion job %s failed", job.id)
+        result = Err(ErrorKind.IO, log_alignment.UNEXPECTED, {"type": type(exc).__name__})
+    _record(sessions, job.id, result)
+
+
+def _run_intent(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    run = intent_ai.run_extract if job.type == intent_ai.EXTRACT_JOB else intent_ai.run_compare
+    try:
+        result = run(config, sessions, job.id)
+    except Exception as exc:  # proposals are stored only at the very end
+        log.exception("Intent job %s failed", job.id)
+        result = Err(ErrorKind.IO, intent_ai.UNEXPECTED, {"type": type(exc).__name__})
+    _record(sessions, job.id, result)
+
+
+def _record(sessions: Sessions, job_id: str, result: Result[str]) -> None:
+    with session_scope(sessions) as session:
+        match result:
+            case Ok(value=message):
+                repo.update(session, job_id, status="done", progress=1.0, message=message)
+            case Err(message=message):
+                repo.update(session, job_id, status="failed", error=message)
+
+
 def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
     """Run one job and record how it went. Jobs already finished are left alone."""
     with session_scope(sessions) as session:
@@ -122,6 +162,12 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         _run_gap(config, sessions, job)
     elif job.type == interview.GUIDE_JOB:
         _run_guide(config, sessions, job)
+    elif job.type == event_logs.IMPORT_JOB:
+        _run_import(config, sessions, job)
+    elif job.type == log_alignment.ALIGN_JOB:
+        _run_align(config, sessions, job)
+    elif job.type in intent_ai.INTENT_JOBS:
+        _run_intent(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
 

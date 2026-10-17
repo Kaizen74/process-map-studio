@@ -44,6 +44,8 @@ PROCESS_DOCUMENTS = {
     SourceKind.SOP.value,
     SourceKind.MANUAL.value,
     SourceKind.EXECUTED_ARTEFACT.value,
+    SourceKind.WORKING_SPREADSHEET.value,
+    SourceKind.EMAIL_THREAD.value,
     SourceKind.OTHER.value,
 }
 TRANSCRIPTS = {SourceKind.INTERVIEW_TRANSCRIPT.value}

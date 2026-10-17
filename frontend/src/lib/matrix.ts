@@ -3,7 +3,7 @@
 // cells come from the backend and are never recomputed here.
 import type { StanceOrState } from "./stateGlyph";
 
-export type AlignmentCell = "supports" | "contradicts" | "silent" | "not_applicable";
+export type AlignmentCell = "supports" | "contradicts" | "silent" | "not_applicable" | "account_unclear";
 
 export interface AlignmentRow {
   element_id: string;
@@ -11,15 +11,24 @@ export interface AlignmentRow {
   kind: "activity" | "decision" | "approval" | string;
   sop: AlignmentCell;
   interview: AlignmentCell;
+  /** P9u-2: the interview by the account it gives of the step (§3.12.3). */
+  sme_official: AlignmentCell;
+  sme_lived: AlignmentCell;
   jd: AlignmentCell;
   artefact: AlignmentCell;
   state: StanceOrState;
   divergence_types: string[];
 }
 
-export const COLUMNS: readonly { key: "sop" | "interview" | "jd" | "artefact"; label: string }[] = [
+// The four layers plus job descriptions (PRD §6.3 P9, P9u-2): the interview is shown split by the
+// account it gives, official (how it is meant to work) and lived (what is done).
+export const COLUMNS: readonly {
+  key: "sop" | "sme_official" | "sme_lived" | "jd" | "artefact";
+  label: string;
+}[] = [
   { key: "sop", label: "SOP / manual" },
-  { key: "interview", label: "Interview" },
+  { key: "sme_official", label: "SME official" },
+  { key: "sme_lived", label: "SME lived" },
   { key: "jd", label: "Job description" },
   { key: "artefact", label: "Executed artefacts" },
 ];

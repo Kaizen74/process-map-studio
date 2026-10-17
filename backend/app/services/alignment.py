@@ -12,14 +12,17 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from app.domain.enums import ElementKind, Provenance, ReviewStatus, Stance
-from app.domain.graph import AlignmentRow, Graph, GraphEvidence
+from app.domain.enums import ElementKind, Provenance, ReviewStatus, SourceKind, Stance
+from app.domain.graph import AccountSummary, AlignmentRow, Graph, GraphEvidence
 from app.services.calibration import ARTEFACTS, DOCUMENTS, INTERVIEW, JOB_DESCRIPTIONS
 
 NOT_APPLICABLE = "not_applicable"
+ACCOUNT_UNCLEAR = "account_unclear"
 STEPS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+# A policy or charter (P13a) is never drafted from, so it never adds a stance; it sits with the
+# documents so every kind has exactly one column.
 COLUMNS: dict[str, set[str]] = {
-    "sop": DOCUMENTS,
+    "sop": DOCUMENTS | {SourceKind.POLICY_OR_CHARTER.value},
     "interview": INTERVIEW,
     "jd": JOB_DESCRIPTIONS,
     "artefact": ARTEFACTS,
@@ -35,6 +38,18 @@ def cell(evidence: Iterable[GraphEvidence], kinds: set[str]) -> str:
     return NOT_APPLICABLE
 
 
+def layer(interview: str, accounts: AccountSummary, account: str) -> str:
+    """The SME official or SME lived layer (P9u-2): the interview cell where the step's interview
+    claims give that account; `silent` where they give only the other one; `account_unclear`
+    where they give neither (never guessed); the interview cell when the interview is silent or
+    absent."""
+    if interview in (Stance.SILENT.value, NOT_APPLICABLE):
+        return interview
+    if getattr(accounts, account) > 0:
+        return interview
+    return Stance.SILENT.value if accounts.official + accounts.lived > 0 else ACCOUNT_UNCLEAR
+
+
 def alignment_matrix(graph: Graph) -> list[AlignmentRow]:
     """One row per step that is on the map (not start, end or rejected), in process order."""
     rows = []
@@ -43,6 +58,8 @@ def alignment_matrix(graph: Graph) -> list[AlignmentRow]:
             continue
         # A recommended step comes from external practice: no source is asked about it.
         evidence = [] if element.provenance == Provenance.RECOMMENDED.value else element.evidence
+        cells = {column: cell(evidence, kinds) for column, kinds in COLUMNS.items()}
+        accounts = element.account_summary
         rows.append(
             AlignmentRow(
                 element_id=element.id,
@@ -50,7 +67,9 @@ def alignment_matrix(graph: Graph) -> list[AlignmentRow]:
                 kind=element.kind,
                 state=element.source_state,
                 divergence_types=list(element.divergence_types),
-                **{column: cell(evidence, kinds) for column, kinds in COLUMNS.items()},
+                sme_official=layer(cells["interview"], accounts, "official"),
+                sme_lived=layer(cells["interview"], accounts, "lived"),
+                **cells,
             )
         )
     return rows

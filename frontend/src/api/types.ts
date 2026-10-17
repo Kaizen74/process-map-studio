@@ -17,6 +17,17 @@ export interface Settings {
   effort: EffortLevel | string;
   verifier_enabled: boolean;
   web_research_enabled: boolean;
+  /** Optional module (R7, decision A): off until Eric switches it on. */
+  system_records_enabled: boolean;
+  /** Optional module (R10, decision A): on by default, as before. */
+  gap_analysis_enabled: boolean;
+  /** Optional module (R10, decision A): the value calculator and step dispositions; off by default. */
+  value_enabled: boolean;
+  reality_views_enabled: boolean;
+  /** Settings → Regional (R10): an ISO 4217 code for the value calculator. */
+  currency: string;
+  /** Settings → Regional (R10): the time zone a new system log starts with. */
+  default_timezone: string;
   key_set: boolean;
   key_last4: string;
 }
@@ -74,6 +85,8 @@ export interface ScopeFields {
   industry?: string;
   adjacent_industries?: string[];
   confidential_terms?: string[];
+  trigger_external?: boolean;
+  end_point_external?: boolean;
 }
 
 export interface Engagement {
@@ -90,6 +103,9 @@ export interface Engagement {
   confidential_terms: string[];
   /** Absent from engagements saved before C7a: the defaults apply. */
   conventions?: MappingConventions;
+  /** E1: the process starts or ends outside the organisation (absent before E1: no). */
+  trigger_external?: boolean;
+  end_point_external?: boolean;
   status: string;
   created_at: string;
   updated_at: string;
@@ -224,7 +240,7 @@ export interface RedactionTerm {
   engagement_id: string;
   term: string;
   replacement: string;
-  origin: "speaker_map" | "manual" | string;
+  origin: "speaker_map" | "email_header" | "manual" | string;
 }
 
 // --- Jobs and drafting (API_CONTRACT.md → Jobs, Draft) — phase P3 ---------------------------
@@ -243,7 +259,17 @@ export interface JobStage {
 export interface Job {
   id: string;
   engagement_id: string | null;
-  type: "read_source" | "draft" | "refresh" | "gap_internal" | "gap_external" | "interview_guide";
+  type:
+    | "read_source"
+    | "draft"
+    | "refresh"
+    | "gap_internal"
+    | "gap_external"
+    | "interview_guide"
+    | "event_log_import"
+    | "event_log_alignment"
+    | "intent_extract"
+    | "intent_compare";
   target_id: string | null;
   status: JobStatus;
   stage: string;

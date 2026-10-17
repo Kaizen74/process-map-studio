@@ -14,7 +14,8 @@ from datetime import date
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import map_edits, redaction
+from app.actions import map_edits, redaction, system_trace
+from app.actions import versions as versions_action
 from app.actions.draft import now_iso
 from app.actions.engagements import actor_name
 from app.actions.settings import effective_settings
@@ -36,6 +37,7 @@ from app.domain.gap import (
     GapStarted,
     GapStep,
     GapUsage,
+    NewGapFinding,
     ScanResult,
     StoredGapFinding,
 )
@@ -363,6 +365,7 @@ def _run_internal(
     progress.mark("report", "running")
     findings = ga_internal.report(dset, checked, output.unknowns)
     with session_scope(sessions) as session:
+        findings += _system_findings(session, analysis.version_id, findings)
         repo.replace_findings(session, analysis.id, findings)
         repo.set_status(session, analysis.id, "draft_report", model=ctx.model)
     progress.mark("report", "done", 1.0)
@@ -374,6 +377,28 @@ def _run_internal(
         f"{_plural(len(questions), 'question')} for your SMEs, "
         f"{_plural(rejected, 'rejected finding')}."
     )
+
+
+def _system_findings(session: Session, version_id: str,
+                     findings: list[NewGapFinding]) -> list[NewGapFinding]:  # fmt: skip
+    """System-record facts from Eric's confirmed alignment (§3.13.6, R6); Claude's dead-control
+    findings gain the system's silence as evidence. Without imported logs: nothing."""
+    version = versions_repo.get(session, version_id)
+    graph = versions_action.build_graph(session, version_id) if version else None
+    if version is None or graph is None:
+        return []
+    keys = {e.id: e.stable_key for e in map_repo.elements(session, version_id)}
+    dead = [f for f in findings if f.finding_type == "dead_control_candidate"
+            and f.verification_status != "rejected"]  # fmt: skip
+    ai_dead = {keys[i] for f in dead for i in f.element_ids if i in keys}
+    extra = system_trace.system_findings(session, version, graph, ai_dead)
+    for f in dead:
+        for i in f.element_ids:
+            support = extra.dead_control_support.get(keys.get(i, ""))
+            if support is not None and support[1] not in f.notes:
+                f.evidence.append(support[0])
+                f.notes.append(support[1])
+    return extra.findings
 
 
 def _run_external(

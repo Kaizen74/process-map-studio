@@ -6,8 +6,11 @@ import {
   getQualityCard,
   getRegisters,
   getVersion,
+  listCapabilityNotes,
   listCauses,
+  listGlossary,
   listLaneBoundaries,
+  listStories,
   listThemes,
   listVersions,
   publishVersion,
@@ -130,6 +133,31 @@ export function useExceptions(versionId: string | null, view: "done" | "document
   return useQuery({
     queryKey: ["versions", versionId ?? "", "exceptions", view],
     queryFn: () => getExceptions(versionId ?? "", view),
+    enabled: Boolean(versionId) && enabled,
+  });
+}
+
+/** The Registers lists made from the interviews (P9u): stories, glossary, Preserve / Improve. */
+export function useStories(versionId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "stories"],
+    queryFn: () => listStories(versionId ?? ""),
+    enabled: Boolean(versionId) && enabled,
+  });
+}
+
+export function useGlossary(versionId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "glossary"],
+    queryFn: () => listGlossary(versionId ?? ""),
+    enabled: Boolean(versionId) && enabled,
+  });
+}
+
+export function useCapabilityNotes(versionId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "capability-notes"],
+    queryFn: () => listCapabilityNotes(versionId ?? ""),
     enabled: Boolean(versionId) && enabled,
   });
 }

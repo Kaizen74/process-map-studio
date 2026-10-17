@@ -5,7 +5,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { SegmentPage } from "../src/api/types";
 import type { ExceptionReport } from "../src/lib/exceptions";
-import type { ElementDetail, Graph, Layout } from "../src/lib/mapTypes";
+import type {
+  CapabilityNote,
+  ElementDetail,
+  GlossaryEntry,
+  Graph,
+  Layout,
+  StoryEntry,
+} from "../src/lib/mapTypes";
 
 export interface SampleMap {
   graph: Graph;
@@ -17,6 +24,8 @@ export interface SampleMap {
   view_graphs: { done: Graph; documented: Graph };
   /** X2: each view's exceptions report (the Exceptions lens and register). */
   exceptions: { done: ExceptionReport; documented: ExceptionReport };
+  /** P9u: the Registers lists made from the interviews. */
+  lists: { stories: StoryEntry[]; glossary: GlossaryEntry[]; "capability-notes": CapabilityNote[] };
 }
 
 export const SAMPLE: SampleMap = JSON.parse(

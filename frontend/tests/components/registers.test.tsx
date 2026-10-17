@@ -4,7 +4,7 @@ import { AiFlagList, CauseList, ConstraintGroups, ExternalPracticeList, KRiskLis
 import type { CauseEntry, Registers } from "../../src/lib/registers";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
-import { exceptionsFor } from "../sampleMap";
+import { SAMPLE, exceptionsFor } from "../sampleMap";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -186,13 +186,21 @@ describe("Registers screen (PRD §5.4)", () => {
     },
   ];
 
-  function backend(versions: unknown[] = [DRAFT], boundaries: unknown[] = BOUNDARIES) {
+  function backend(
+    versions: unknown[] = [DRAFT],
+    boundaries: unknown[] = BOUNDARIES,
+    lists?: { stories?: unknown[]; glossary?: unknown[]; notes?: unknown[] },
+  ) {
     let causes = CAUSES;
     let themes = THEMES;
     return fakeApi({
       "GET /api/engagements/e1/themes": () => ({ body: themes }),
       "GET /api/versions/v2/lane-boundaries": () => ({ body: boundaries }),
       "GET /api/versions/v2/exceptions": (_, url) => ({ body: exceptionsFor(url ?? "") }),
+      "GET /api/versions/v2/stories": () => ({ body: lists?.stories ?? SAMPLE.lists.stories }),
+      "GET /api/versions/v2/glossary": () => ({ body: lists?.glossary ?? SAMPLE.lists.glossary }),
+      "GET /api/versions/v2/capability-notes": () => ({ body: lists?.notes ?? SAMPLE.lists["capability-notes"] }),
+      "GET /api/versions/v2/graph": () => ({ body: { ...SAMPLE.graph, version: { ...SAMPLE.graph.version, id: "v2" } } }),
       "PATCH /api/themes/t1": (body) => {
         const patch = body as { status: string; theme?: string };
         if (patch.theme === "Blame the crew") {
@@ -226,8 +234,11 @@ describe("Registers screen (PRD §5.4)", () => {
       "External practice (R)",
       "Validation questions",
       "Rejected claims",
+      "Stories",
+      "Glossary",
       "Cause library",
       "Emerging themes",
+      "Preserve / Improve",
       "Lane boundaries",
       "Exceptions and workarounds",
     ]);
@@ -351,6 +362,57 @@ describe("Registers screen (PRD §5.4)", () => {
     const routes = await screen.findByRole("list", { name: "Exception routes and variations" });
     fireEvent.click(within(routes).getByRole("button", { name: "Go to Resolve or offload" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
+  });
+
+  it("stories: the SME's case, its type, told once, the quote and links to its steps (P9u, criterion 59)", async () => {
+    backend();
+    const { container } = renderApp("/engagements/e1/registers?register=stories");
+    const list = await screen.findByRole("list", { name: "Stories" });
+    const card = within(list).getByRole("listitem");
+    expect(card).toHaveTextContent("Had to re-trim three flights in one night");
+    expect(card).toHaveTextContent("Went badly");
+    expect(card).toHaveTextContent("Told once");
+    expect(card).toHaveTextContent("· 24:10");
+    expect(await within(card).findByRole("button", { name: "Go to Draft load plan" })).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Go to Deviation in limits?" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(card).getByRole("button", { name: "Go to Deviation in limits?" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeInTheDocument();
+  });
+
+  it("glossary: each term with its plain meaning and steps, in the order first heard", async () => {
+    backend();
+    const { container } = renderApp("/engagements/e1/registers?register=glossary");
+    const list = await screen.findByRole("list", { name: "Glossary" });
+    const cards = within(list).getAllByRole("listitem");
+    expect(cards.map((c) => c.querySelector("q")?.textContent)).toEqual(["re-trim", "wave", "forward hold"]);
+    expect(cards[0]).toHaveTextContent("Rebalance an aircraft's load after it has been planned.");
+    expect(await within(cards[0] as HTMLElement).findByRole("button", { name: "Go to Approve deviation" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("Preserve / Improve: strengths and weaknesses by capability dimension, with the inferred cause (criterion 73)", async () => {
+    backend();
+    const { container } = renderApp("/engagements/e1/registers?register=preserve");
+    const preserve = await screen.findByRole("list", { name: "Preserve: what works well, Skillset" });
+    expect(within(preserve).getByRole("listitem")).toHaveTextContent("Ramp supervisors know the aircraft types");
+    const improve = screen.getByRole("list", { name: "Improve: what gets in the way, Systems" });
+    expect(within(improve).getByRole("listitem")).toHaveTextContent("The paper loading report gets lost or arrives late");
+    expect(within(improve).getByRole("listitem")).toHaveTextContent("Cause type (inferred): System fragmentation");
+    expect(await within(improve).findByRole("button", { name: "Go to Load and return LIR" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("each list says what would appear when it is empty; a step not on the map gets no link", async () => {
+    const note = { ...SAMPLE.lists["capability-notes"][0], steps: ["A step from an older map"] };
+    backend([DRAFT], BOUNDARIES, { stories: [], glossary: [], notes: [note] });
+    renderApp("/engagements/e1/registers?register=stories");
+    expect(await screen.findByText(/No stories yet/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Glossary" }));
+    expect(await screen.findByText(/No terms yet/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Preserve / Improve" }));
+    expect(await screen.findByText("A step from an older map (not on this map)")).toBeInTheDocument();
+    expect(screen.getByText("No weaknesses stated.")).toBeInTheDocument();
   });
 
   it("no lane boundaries: says what would put a step there", async () => {

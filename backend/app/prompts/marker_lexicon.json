@@ -1,6 +1,6 @@
 {
-  "version": "1",
-  "codebook_version": "1",
+  "version": "2",
+  "codebook_version": "2",
   "note": "Marker pre-tags (PRD §3.12.10 Step B). Hints only: the model confirms or rejects each with a quote, and a tag is never evidence on its own. Phrases match whole words, ignoring case; within one family the longest phrase at a place wins.",
   "families": {
     "sequence": {

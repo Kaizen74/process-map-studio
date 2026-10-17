@@ -37,9 +37,12 @@ Settings are stored in the private `.env` file in the app folder (never in the d
 ```json
 {"owner_name": "Owner", "model": "claude-opus-5-5", "effort": "high",
  "verifier_enabled": true, "web_research_enabled": false,
+ "system_records_enabled": false, "gap_analysis_enabled": true, "value_enabled": false,
+ "reality_views_enabled": false,
+ "currency": "SGD", "default_timezone": "Asia/Singapore",
  "key_set": true, "key_last4": "x9Q2"}
 ```
-`key_last4` is `""` when no key is set.
+`key_last4` is `""` when no key is set. Optional modules (decision A; a module switched off hides its screens and never deletes data): `system_records_enabled` (R7, 2026-10-08), the System records module, **off** by default (`SYSTEM_RECORDS_ENABLED`); `gap_analysis_enabled` (R10, 2026-10-13), the Gap analysis screen, **on** by default as before (`GAP_ANALYSIS_ENABLED`); `value_enabled` (R10), the value calculator with step dispositions (the panel's "Disposition and value" section and the Registers' "Disposition and value" list), **off** by default (`VALUE_ENABLED`); `reality_views_enabled` (P13a, 2026-10-13), the Reality views (P13), **off** by default (`REALITY_VIEWS_ENABLED`; its Settings switch arrives with the Reality screen in P13b). Regional (R10): `currency`, an ISO 4217 code for the value calculator (`CURRENCY`, default `SGD`); `default_timezone`, the time zone a new system log starts with (`DEFAULT_TIMEZONE`, default `Asia/Singapore`).
 
 ### GET /api/settings
 Request: none. Response `200`: the settings object.
@@ -92,6 +95,12 @@ Used by: Settings screen, "Model" card.
 ### PUT /api/settings/research (phase P10)
 Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
 
+### PUT /api/settings/modules (R7, 2026-10-08; PRD §5.4 Settings "Optional modules", decision A)
+Switches optional modules on or off. Request any of `{"system_records_enabled": true, "gap_analysis_enabled": true, "value_enabled": true, "reality_views_enabled": true}` (a field left out keeps its value; R10 added the middle two, P13a the last, 2026-10-13). Each change is written to the audit log. Response `200`: the settings object. Switching off hides the module's screens and lenses and never deletes data. Errors: `422` (field named: "Choose on or off."); `500 IO`.
+
+### PUT /api/settings/regional (R10, 2026-10-13; PRD §3.4 Settings item 9, §5.4 Settings "Regional")
+Request any of `{"currency": "SGD", "default_timezone": "Asia/Singapore"}` (a field left out keeps its value). `currency`: three letters A–Z after trimming, upper-cased (an ISO 4217 code; the app does not convert amounts, it only labels them). `default_timezone`: an IANA time zone the computer knows (Python `zoneinfo.available_timezones()`). Response `200`: the settings object. Errors: `422 VALIDATION` with the field named ("Enter a three-letter currency code, for example SGD." · "Choose a time zone from the list, for example Asia/Singapore."); `500 IO`. Used by: Settings screen, "Regional" card. The System records upload form starts with `default_timezone`; a log's own time zone can still be changed.
+
 ### POST /api/settings/test-web-search (phase P10)
 Checks that web search works for this key: one small search with a generic question ("published guidance on aircraft load control"), `max_uses` 1 (billed as one search by Anthropic). Mocked in tests. Response `200`: `{"available": true, "message": "Web search works for your Anthropic organisation."}`, or `available: false` with a plain message: no key saved; "Web search isn't enabled for your Anthropic organisation. See the README, 'If something goes wrong'." (the organisation has web search switched off in the Claude Console: Anthropic answers 400 saying web search is not enabled); key rejected. Errors: `503 AI_RATE_LIMIT`; `500 IO` (Anthropic couldn't be reached).
 
@@ -120,6 +129,7 @@ An engagement is one process being mapped. Deleting it removes all its rows **an
  "process_kpi": "Load sheet issued by T-10", "industry": "Aviation ground handling",
  "adjacent_industries": ["Air cargo"], "confidential_terms": ["Acme Ground Services"],
  "conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"},
+ "trigger_external": false, "end_point_external": false,
  "status": "active", "created_at": "2026-09-26T09:00:00+00:00", "updated_at": "…"}
 ```
 Rules: `name` 1–120 characters (required). Text fields up to 2,000 characters. List fields (`in_scope_roles`, `adjacent_industries`, `confidential_terms`): up to 50 items, each 1–120 characters, duplicates (ignoring case) removed, no line breaks. `confidential_terms` are company, client, site and system names that must never be sent to web research (PRD §3.11); they are **not** redacted from the app or internal exports.
@@ -137,6 +147,7 @@ Used by: Home engagement cards.
 ### GET /api/engagements/{id} · PATCH /api/engagements/{id} · DELETE /api/engagements/{id}
 GET → `200` engagement object. PATCH → any scope fields (same rules) → `200` engagement object. DELETE → `204`, removes rows and files.
 **Mapping conventions** (C7a, 2026-10-06; PRD Appendix E tier 2, §5.4 Setup, criterion 58): the engagement object also has `"conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"}` (these defaults until Eric sets them). `granularity`: `coarse` (8–12 steps) · `standard` (12–20) · `fine` (20–25); `label_style`: `standard` (verb + object, at most 5 words) · `sme` (the SME's own everyday name for the step, where there is one; added to the glossary with a plain meaning); `phase_naming`: `sme` · `standard`. PATCH sends the whole `conventions` object (`422` naming `conventions.<field>` for an unknown value); a change writes the "Edited process scope" audit row. They take effect at the next draft or refresh: S2 (canonicalise) and S4 (assemble) receive `<conventions granularity="…" label_style="…" phase_naming="…"/>` with their data when any setting differs from the defaults (with the defaults nothing extra is sent: the codebook already states them), and follow them, departing only with a stated reason.
+**Outside the organisation** (E1, 2026-10-15; Eric's decision, DECISIONS 51): the engagement object also has `"trigger_external": false, "end_point_external": false` (booleans; `false` until Eric ticks them on the scope card): whether the process starts from, or ends with, something outside the organisation (a customer, a supplier, an authority). PATCH accepts either (`422` naming the field when the value is not `true` or `false`); a change writes the "Edited process scope" audit row. Read by the Reality views' Typical case (RV7), which draws an "Outside the organisation" lane when either is `true` (PRD §3.18.3); nothing else changes.
 Errors: `404 NOT_FOUND` ("That engagement doesn't exist. It may have been deleted."); `422 VALIDATION`.
 Used by: Setup screen (scope card), Home (delete, from P1 UI), top bar (engagement name).
 
@@ -163,10 +174,13 @@ Now also writes an audit row (`target_type: "settings"`, before/after model, eff
 
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
-Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:
+Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, and since P10b R11 (2026-10-13) `.xlsx`, `.csv` and `.eml`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:
 - `.vtt`, `.srt`: caption cues become speaker turns with start and end times.
 - `.txt`: an interview transcript (`kind: "interview_transcript"`) is split into speaker turns (`Speaker: text` or `[mm:ss] Speaker: text`, or an Otter.ai export: the speaker and time on their own line, e.g. `Speaker 1  0:06`, the words on the lines below, the "Transcribed by https://otter.ai" footer dropped); any other `.txt` is split into paragraphs.
 - `.docx`, `.pdf`: read as documents (paragraphs, headings as sections; PDF text per page); for an interview transcript the lines are then joined into speaker turns.
+- `.xlsx` (R11; openpyxl, read only, the values Excel last calculated): one passage per filled row, sheet by sheet; the sheet name is the passage's `section` and the anchor is the row's cell in column A, written as Excel writes it (`Load plan!A5`, `'Shift log'!A12`). The first row whose filled cells are all text (at least two) is the header row; each row below it reads `Header: value | Header: value` (a cell under no header keeps its value only); rows above it are kept as they are. Numbers are written without a trailing `.0`, dates as `2026-03-02` (or `2026-03-02 09:14` with a time). More than 5,000 filled rows is refused ("This spreadsheet has more than 5,000 filled rows. If it is a system export, import it under System records; otherwise save only the rows that matter and upload again."); a workbook with no filled cell is refused ("The spreadsheet has no filled cells."). `.xls` and `.xlsm` are not read (save as `.xlsx`).
+- `.csv` (R11; UTF-8 or Windows-1252; comma, semicolon, tab or bar): as one sheet, the anchor `row 5` (the record's number, the header row being row 1); the same header rule and limits.
+- `.eml` (R11; the standard library `email`): one email, plus any email attached to it as a message. Each email gives a header passage (`From: … · To: … · Cc: … · Sent: 2026-03-03 09:14 +08:00 · Subject: …`, without a speaker) and its body as paragraph passages (plain text, else the HTML part as text), `section` "Email 1" (2, 3 … for attached emails). The sender is the `speaker_label` of their own paragraphs, so senders are mapped to roles like transcript speakers (the speaker-mapping card, without the Interviewer choice). The quoted part of a reply ("On … wrote:", "-----Original Message-----", an Outlook `From:`/`Sent:` block, `>` lines) is kept with `section` "Earlier in the thread", attributed to the sender its quote line names, or to no one when none is named. A signature (after a `-- ` line) is left out. Attachments other than emails are not read: save them and upload them as sources of their own. Every address, and every display name that looks like a person's name (the speaker-label rule; not a team such as "LC Ops Desk" or one of the engagement's roles), in the From, To, Cc, Bcc, Reply-To and Sender headers (and in quoted `From:`/`To:`/`Cc:` lines and "… wrote:" lines) is added to the engagement's redaction terms with origin `email_header` ("Tan, Wei Ming" also as "Wei Ming Tan"), so they are hidden everywhere outside the owner-only places. A file with no From, Subject or Date header is refused ("This .eml file doesn't look like an email.").
 - Every passage is checked for instruction-like text (PRD §3.8 G9) and flagged `instruction_like: true`.
 - Speaker labels that look like a person's name ("Priya Nair") are added to the engagement's redaction terms automatically (origin `speaker_map`, shown as "[name]" until the speaker is mapped).
 - Images inside PDFs (at least 48 px) are saved to `data/images/<engagement_id>/` as **suggestions** (`status: "suggested"`, page number kept); nothing is shown on a map until Eric keeps them (P8).
@@ -181,12 +195,12 @@ Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the origin
  "text_status": "ready", "error": "", "segment_count": 10, "ocr_pages": [],
  "suggested_images": 0, "created_at": "…"}
 ```
-`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `other`). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`. `filename` and `error` are shown with names hidden (G10), so a file called "Priya Nair interview.txt" is listed as "[name] interview.txt" or with the mapped role.
+`kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `working_spreadsheet`, `email_thread`, `other`; `working_spreadsheet` and `email_thread` since R11). Working spreadsheets and email threads are **artefacts** (criterion 92): like executed artefacts they are a trace of work as done, so they count with them for source state (`trace_contradicted`, PRD §3.7), the alignment matrix's artefact column, the practice side of Analysis A, readiness (a process document) and signal strength (Moderate without an SOP or manual). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`. `filename` and `error` are shown with names hidden (G10), so a file called "Priya Nair interview.txt" is listed as "[name] interview.txt" or with the mapped role.
 
 ### POST /api/engagements/{id}/sources (multipart form)
-Fields: `file` (required); `kind` (optional: guessed from the file name if missing: `.vtt`/`.srt`/names with "transcript" or "interview" → `interview_transcript`, "sop" → `sop`, "jd"/"job description" → `job_description`, "manual" → `manual`, else `other`); `version_date` (optional, `YYYY-MM-DD`); `owner` (optional, up to 120 characters); `controlled_copy` (optional, `true`/`false`).
+Fields: `file` (required); `kind` (optional: guessed from the file name if missing: `.xlsx`/`.csv` → `working_spreadsheet`, `.eml` → `email_thread` (R11), `.vtt`/`.srt`/names with "transcript" or "interview" → `interview_transcript`, "sop" → `sop`, "jd"/"job description" → `job_description`, "manual" → `manual`, else `other`); `version_date` (optional, `YYYY-MM-DD`); `owner` (optional, up to 120 characters); `controlled_copy` (optional, `true`/`false`).
 Response `201`: source object with `text_status: "pending"` and `job_id`; the file is read in the background (poll the source or `GET /api/jobs/{job_id}`).
-Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pdf, .txt, .vtt and .srt files." · "That file is larger than 50 MB." · "The file is empty." · bad kind or date). A file that can't be read is still kept with `text_status: "failed"` and a plain `error`, so Eric can see it and delete or replace it.
+Errors: `404` engagement; `422 VALIDATION` ("Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files." · "That file is larger than 50 MB." · "The file is empty." · bad kind or date). A file that can't be read is still kept with `text_status: "failed"` and a plain `error`, so Eric can see it and delete or replace it.
 Used by: Sources screen (drop zone).
 
 ### GET /api/engagements/{id}/sources
@@ -224,7 +238,7 @@ Response `200`: one entry per speaker label, in order of first appearance:
 [{"label": "Interviewer", "segment_count": 1, "role_id": null, "is_interviewer": true},
  {"label": "Priya Nair", "segment_count": 8, "role_id": "…", "is_interviewer": false}]
 ```
-Errors: `404`. A document without speakers returns `[]`.
+Errors: `404`. A document without speakers returns `[]`; an email thread's speakers are its senders (R11).
 
 ### PUT /api/sources/{sid}/speakers (owner-only)
 Request: `{"Priya Nair": "<role id>", "Interviewer": "interviewer", "Speaker 3": null}` — for each label: a role of this engagement, `"interviewer"`, or `null` to clear the mapping. Labels not sent are left as they are.
@@ -239,7 +253,7 @@ Names to hide everywhere except the three owner-only places (speaker-mapping car
 ```json
 {"id": "…", "engagement_id": "…", "term": "Priya Nair", "replacement": "Load controller", "origin": "speaker_map"}
 ```
-`origin`: `speaker_map` (added automatically from a name-like speaker label) or `manual` (added by Eric).
+`origin`: `speaker_map` (added automatically from a name-like speaker label), `email_header` (R11: added automatically from an email's headers or quoted header lines) or `manual` (added by Eric). Mapping a speaker whose label is on the list (any origin) shows it as the mapped role.
 
 ### GET /api/engagements/{id}/redaction-terms
 Response `200`: terms, oldest first. Errors: `404`.
@@ -254,6 +268,9 @@ Response `204`. Errors: `404` (also for confidential terms, which are edited on 
 ## Interview templates (PRD v1.10 Appendix F.9, §4 Interview and sensemaking, §5.4) — phase P1
 
 Standard templates generated deterministically (no AI, no engagement data) from `backend/app/prompts/question_bank.json`, stamped with its version. Available before any engagement exists. The question bank is Appendix F word for word (a test compares them); wording changes need the PRD to change or a logged decision.
+
+### GET /api/templates/data-request?format=docx|md|csv (R1, 2026-10-07; PRD §3.13.2, criterion 82)
+The data request template Eric sends to the system owner (IT) to ask for an event-log extract. No engagement and no AI: the same file every time, with [bracketed] placeholders for the process, scope and dates. `docx` (Word, editable), `md` (`text/markdown; charset=utf-8`): 1 purpose in plain words ("to measure volumes and waiting times in [process]; no individual performance analysis"); 2 process scope with the start and end events; 3 the date window (3–6 months recommended, at least 4 weeks); 4 the column table (B.40: case_id, activity, timestamp, end_timestamp, resource, role, system, case attributes) marking the required ones, with one sample row; 5 privacy requirements (role rather than user IDs; user IDs, if any, converted to roles on import and discarded; no free-text comments; no customer personal data); 6 format (CSV UTF-8 or Excel, one file per system); 7 data owner approval (name, role, date ☐) and the retention promise ("stored only on the analyst's computer and deleted with the engagement"). `csv` (`text/csv; charset=utf-8`): the header row only, `case_id,activity,timestamp,end_timestamp,resource,role,system`, ready to fill. Filenames `data-request-template.docx|md` and `data-request-header.csv`. Errors: `422` for another format. Used by: System records screen (R7).
 
 ### GET /api/templates/interview/plans
 What the home screen and the Interview screen show for each template (added 2026-09-30 so the screens never hold their own copy of the minute plans).
@@ -331,6 +348,446 @@ Response `200`: the guide. Audit row "Edited interview guide" (after: version, t
 The latest version as a file (`document.generation_note` is not printed), in the F.9 layout (Word made with python-docx, or Markdown), the same renderer as the templates: the header table shows the filled-in values. `Content-Disposition: attachment; filename="interview-guide-practice-ramp-agent.docx"`. Errors `404` (no guide), `422` ("Choose docx or md.").
 Used by: Interview screen, Interviewees: **Make guide**, then **Download Word** / **Download Markdown** (G2).
 
+## System records: event logs (PRD §4 System records, §3.13.3, criteria 83 and 84, constraint 24) — phase P10b (2026-10-07, R3)
+
+Importing a system's event-log extract, deterministic and without AI. The uploaded file is **held in memory only**, never written to disk or the database, until it is imported or deleted, because it may carry user IDs: the import turns them into roles and then forgets them (constraint 24). If the app restarts before the import, the file is gone and Eric uploads it again (`409 FILE_NOT_HELD`). A CSV file (UTF-8; comma, semicolon, tab or bar) or, since R11 (2026-10-13), an Excel workbook (.xlsx, recognised by its content, read in memory with openpyxl through defusedxml): its **first sheet**, the first filled row as the header (empty header cells at the end left out), each later filled row a record; date cells are written as `2026-03-02 09:14:00` (the log's time zone applies as for CSV), whole numbers without `.0`. Other sheets are not read.
+
+### Log object
+```json
+{"id": "…", "engagement_id": "…", "name": "DCS extract", "system": "DCS",
+ "timezone": "Asia/Singapore", "window_start": "2026-03-02" | null, "window_end": "2026-04-26" | null,
+ "status": "uploaded" | "mapped" | "imported" | "failed",
+ "column_map": {"case_id": "case_id", "Region": "case_attribute", "Comment": null},
+ "timestamp_format": "%Y-%m-%d %H:%M:%S" | null, "file_held": true,
+ "resources": [{"value": "LC07", "events": 152, "suggested_role_id": "…" | null}],
+ "role_map": {"LC07": "…" | null},
+ "validation_report": {…} | null,
+ "approved_by_role": "", "approved_at": null, "created_at": "…"}
+```
+- `column_map`: every header of the file, in file order → a B.40 field or `null` (left out). Each field other than `case_attribute` at most once.
+- `timestamp_format`: Eric's correction, or `null` to use the detected format (named in the report).
+- `resources` and `role_map` come from memory and exist only while the file is held (empty otherwise, always empty once imported). `suggested_role_id`: the engagement role named most often for that user ID in the file's role column, else a role whose name is the value itself, else `null`. `role_map` values: a role ID or `null` (Unknown role).
+- `validation_report` (§3.13.3 step 4): `{rows_read, rows_kept, cases, activities, date_from, date_to (UTC), dropped: {unparseable_time, missing_case_or_activity, duplicate}, dropped_share, single_event_cases, outside_window, unknown_role_events, timestamp_format, missing_columns, refused, refusal}`. A preview while mapping, the final report after the import. Counts only: never a row, a case's events or a user ID. A role column value that is not an engagement role or alias (matched ignoring case) is passed over for the role Eric gave that user ID, if any; otherwise the event has an unknown role.
+- The upload is kept in memory by the web layer too (no temporary file, whatever its size).
+- `status`: `uploaded` (suggested column map) → `mapped` (Eric confirmed it) → `imported`; `failed` when the import job could not finish (the file is then gone; upload again).
+
+### POST /api/engagements/{id}/event-logs (multipart: file, name, system, timezone, window_start, window_end)
+`name` required, `system` optional (each one line, up to 120 characters); `timezone` an IANA name, default `Asia/Singapore` (the Settings Regional default comes with R10); window dates `YYYY-MM-DD` or empty, start not after end. Response `201`: log (`uploaded`) with the suggested column map, the user IDs with suggested roles, and the preview report. Audit row "Uploaded system log" (name and system only).
+Errors: `404` (engagement); `422` naming the field: "Give the log a name.", "The file is empty.", "The file is larger than 100 MB.", "The file has no header row.", "The Excel file could not be opened. Save it again as .xlsx, or as CSV, and upload it again.", "Two columns have the same name: Status. Rename one and upload again.", "Choose a time zone from the list, for example Asia/Singapore.", "Use a date like 2026-03-02.", "The window starts after it ends.".
+
+### GET /api/engagements/{id}/event-logs
+`200`: the engagement's logs, oldest first. Errors `404`.
+
+### GET /api/event-logs/{lid} · DELETE /api/event-logs/{lid}
+GET `200`: log. DELETE `204`: removes the log, its events (and, later, its metrics and alignment) and the held file; audit row "Deleted system log". Errors `404`.
+
+### PUT /api/event-logs/{lid}/column-map
+`{"columns": {header: field | null}, "timestamp_format": null | "%d/%m/%Y %H:%M", "timezone": "Asia/Singapore"}` (`timezone` optional since R7: the wizard's time-zone step; left out, the log keeps its own). Every header of the file exactly once; fields are B.40; a field other than `case_attribute` used twice is refused ("Each field can be used for one column only: timestamp."). Response `200`: log, status `mapped`, with a new preview report (which may say the import would be refused, and why). Audit row "Confirmed column map".
+Errors: `404`; `409 ALREADY_IMPORTED`; `409 FILE_NOT_HELD`; `409 IMPORT_RUNNING` while its import job runs; `422` naming `columns` or `timestamp_format` ("Choose a date format from the list.").
+
+### PUT /api/event-logs/{lid}/role-map
+`{"roles": {user ID: role_id | null}}`: the file's user IDs only (others refused), each to one of the engagement's roles or `null` (Unknown role). Held in memory with the file; never saved. Response `200`: log with a new preview report (`unknown_role_events`). Errors as for the column map (`422` names `roles`: "Choose one of this engagement's roles.", "That user ID isn't in the file.").
+
+### POST /api/event-logs/{lid}/import (job)
+`{"approved_by_role": "Head of ground operations", "confirm_approval": true}`. Response `202`: `{"job_id": "…", "log_id": "…"}`. The job (`event_log_import`) reads the held file with the confirmed maps, writes the events (case, activity, start, end, role, case attributes: never a user ID), stores the final report, works out and stores the metrics (below), sets the log `imported` with `approved_by_role` and `approved_at`, then forgets the file and the role map. Audit row "Imported system log" (counts and the approver's role). If the file has gone (restart) the job fails in plain words and the log becomes `failed`.
+**Progress (R12, 2026-10-13; criterion 94):** the job reports its `stage`, `progress` (0–1) and `message` as it goes, each saved on its own so `GET /api/jobs/{id}` answers throughout: `reading` (0.05, "Reading the extract and turning user IDs into roles."), `figures` (0.25, "Working out the figures from 500,000 events."), then `saving` after each batch of 25,000 events (0.35 to 0.95, "Saving events: 250,000 of 500,000."); done: progress 1.0 and "Imported 500,000 events from 100,000 cases.". The log becomes `imported` only in the last step, so a log is never shown half imported; if the job fails part-way, the events and figures saved so far are removed and the log is `failed`. Start reuses the report worked out at the last step (the file is not read again unless the column map, date format, time zone, window, user-ID roles or the engagement's roles changed). A 500,000-event log imports in well under a minute on the build machine and every metric endpoint then meets p95 < 200 ms (`tests/latency/test_large_import.py`).
+Errors, checked in this order: `404`; `409 ALREADY_IMPORTED`; `409 FILE_NOT_HELD`; `409 IMPORT_RUNNING`; `409 APPROVAL_REQUIRED` without `confirm_approval: true` or without an approver's role ("Tick that the data owner approved this extract for this purpose, and give the approver's role."); `422` (field `approved_by_role`) when the role is longer than 120 characters or contains a name on the hidden-names list; `409 COLUMN_MAP_NOT_CONFIRMED` while the log is `uploaded`; `422` (field `roles`) when a user ID has neither a role nor Unknown role ("Choose a role or Unknown role for every user ID (3 left)."); `422 IMPORT_REFUSED` with the report's refusal when required columns are missing, there are no rows, or more than 20% of rows were dropped.
+Used by: System records screen (R7).
+
+### GET /api/event-logs/{lid}/metrics?scope=activity|transition|case|variant|role (R4, 2026-10-07; PRD §3.13.5, criteria 85 and 94)
+The log's metrics, worked out once by the import job (§3.13.3 step 6) and stored; this endpoint only reads them. Deterministic formulas, no AI. Times in minutes (one decimal); median and 90th percentile (linear interpolation between the closest ranks); months are the log's own calendar months (its time zone).
+Response `200`: `{"log_id", "scope", "minimum_cases": 5, "groups": [{"key", "label", "case_count", "metrics": {…}}], "too_few": 2}`. A group based on fewer than 5 cases is never returned, only counted in `too_few` (the screen says "too few cases to show"); a month with fewer than 5 cases is left out of `months` and counted in `months_too_few`. Role-level only: no metric ever names a person (constraint 24).
+- `activity` (by events, most first): `{activity, events, cases, cases_per_week, cases_per_month, months: [{month: "2026-03", events, cases}], months_too_few, work: spread | null, wait_before: spread | null, basis, rework_cases, rework_share}`. `work` = end − start (only when the log has end times); `wait_before` = this start − the previous event's end in the case (or − its start without end times). `cases_per_week` = cases ÷ the whole weeks from the log's first to last day; `cases_per_month` = that × 52 ÷ 12. `basis`: `"wait"` with end times, `"not_separable"` without ("working and waiting (not separable)").
+- `transition` (consecutive events A → B in a case; most frequent first): `{from_activity, to_activity, count, cases, elapsed: spread, basis, handoffs}`; `elapsed` = B start − A end (or − A start); `handoffs` = how many of these moves changed role (both roles known).
+- `case` (one group, key `all`): `{cases, events, activities, date_from, date_to, weeks, cycle_time: spread, basis, rework_cases, rework_share, handoffs, handoffs_per_case, variants, exception_share}`; cycle time = first event start to last event end (or start); rework = cases where any activity occurs more than once; exception share = cases not following the most common variant.
+- `variant` (top 10, most common first; key = rank): `{rank, activities: [...], cases, share, cumulative_share}` (shares of all cases).
+- `role` (by events; key and label = the role name, or "Unknown role"): `{role, events, cases, activities: [...], work: spread | null}`.
+- `spread`: `{median_min, p90_min, n}`.
+Errors: `404` (log); `409 NOT_IMPORTED` ("Import the log first: its figures are worked out during the import."); `422` ("Choose activity, transition, case, variant or role.").
+
+### Case-key maps: linking two logs (R11c, 2026-10-13; PRD §3.13.1, §4)
+When two systems give the same case different IDs (a flight number in one, a turnaround reference in the other), a case-key map links their imported logs. Without one, each log is analysed on its own; with one, the app also works out the **end-to-end time across both systems** for the linked cases. Deterministic, no AI. Case IDs identify work items, not people; the map stores only the two IDs per pair.
+
+A map object (one per linked pair of logs):
+```json
+{"from_log_id": "…", "from_log_name": "DCS extract", "to_log_id": "…", "to_log_name": "Ramp log",
+ "pairs": 200, "from_found": 200, "to_found": 198, "linked_cases": 198,
+ "end_to_end": {"median_min": 104.2, "p90_min": 131.0, "n": 198} | null,
+ "basis": "wait" | "not_separable", "minimum_cases": 5, "created_at": "…"}
+```
+- `pairs`: distinct pairs in the file; `from_found` / `to_found`: pairs whose ID is a case of that log; `linked_cases`: pairs found in both.
+- `end_to_end` (measured): per linked case, from the earliest event start in either log to the latest event end (or start) in either log, in minutes; median and 90th percentile as for the metrics. `null` when fewer than 5 cases are linked (never shown for fewer, constraint 24). `basis`: `"wait"` when both logs have end times, else `"not_separable"`.
+
+#### POST /api/engagements/{id}/case-key-maps (multipart: file, from_log_id, to_log_id)
+The file: CSV or .xlsx (first sheet), read in memory like a log extract. Its first row is the header (any names); the **first column** holds the first log's case IDs and the **second column** the second log's. Other columns are ignored and never stored; rows with either ID empty are left out, and repeated pairs count once. Both logs must be **imported** logs of this engagement and different. A new file for the same two logs (in either order) replaces the earlier map. Response `201`: the map object. Audit row "Linked system logs" (the two log names and the counts; no case ID).
+Errors: `404` (engagement); `422` naming the field: (`from_log_id`/`to_log_id`) "Choose two different imported logs of this engagement."; (`file`) "The file is empty.", "The file is larger than 100 MB.", "The Excel file could not be opened. Save it again as .xlsx, or as CSV, and upload it again.", "The file needs two columns: the first log's case IDs, then the second log's.", "Give the two columns different names, for example DCS case and Ramp case.", "The file has no pairs of case IDs.".
+
+#### GET /api/engagements/{id}/case-key-maps
+`200`: the engagement's maps, oldest first. Errors `404`.
+
+#### DELETE /api/engagements/{id}/case-key-maps?from_log_id=…&to_log_id=…
+`204`: removes the map between the two logs (in either order). Audit row "Removed case-key map". Errors `404` ("Those two logs aren't linked."). Deleting a log removes its maps.
+
+Used by: System records screen, **Linked logs** card (shown once two logs are imported).
+
+### Alignment of log activities to map steps (R5a, 2026-10-07; PRD §3.13.4, criterion 86)
+Matches the activities an imported log records to the steps of the engagement's current map (the draft, or else the latest published version). Nothing is applied until Eric confirms: the app's own matches and Claude's are only proposals, and only confirmed rows are used by the map (R5b).
+
+#### Alignment object
+```json
+{"log_id": "…", "version_id": "…",
+ "rows": [{"activity": "Plan created", "element_id": "…", "element_label": "Draft load plan",
+           "status": "proposed", "confirmed": false, "proposed_by": "app",
+           "reason": "Same words: plan. Same role: Load controller.", "events": 200, "cases": 200}],
+ "summary": {"activities": 7, "matched": 6, "hidden_work": 1, "no_system_record": 5, "waiting": 12}}
+```
+- One row per log activity (in the log's order of volume), then one row per step that no activity is matched to, in map order (`activity: ""`, `events` and `cases` 0).
+- `status` (B.43): `proposed` or `confirmed` (activity → step); `hidden_work` (an activity with no step: a *hidden work* candidate); `no_system_record` (a step with no activity: *offline / not recorded*). `confirmed` tells a decision from a proposal.
+- `proposed_by`: `app` (the deterministic pass, worked out on every read and never stored), `claude` (a stored suggestion from the AI pass) or `eric` (confirmed). Several activities may be matched to one step (for example a revision activity as rework into the step it repeats); an activity is matched to at most one step.
+- The deterministic pass compares words (lower case, simple word endings removed, small words ignored) between the activity name and each step's label and the SME terms linked to that step in the glossary, and adds weight when the activity's most frequent role is the step's lane role. The best step is proposed when the match is strong enough (shared words over the shorter name, plus 0.25 for the same role, more than 0.5); otherwise the activity is proposed as hidden work. `reason` says which words and role matched.
+- `summary.waiting`: rows still waiting for Eric's decision.
+- Confirmed rows survive a new map version: they are matched to the new version's steps by the step's stable key; a confirmed row whose step no longer exists drops back to a proposal.
+
+#### GET /api/event-logs/{lid}/alignment
+`200`: alignment. Errors: `404` (log); `409 NOT_IMPORTED`; `409 NO_MAP` ("Draft the map first: the log's activities are matched to its steps.").
+
+#### PUT /api/event-logs/{lid}/alignment
+`{"rows": [{"activity": "Plan created", "element_id": "…", "status": "confirmed"}, {"activity": "Manual weight override", "element_id": null, "status": "hidden_work"}, {"activity": "", "element_id": "…", "status": "no_system_record"}]}`: Eric's decisions, each replacing any earlier decision or suggestion for that activity (or, for `no_system_record`, that step). `confirmed` needs an activity of the log and a step of the current map; `hidden_work` an activity and no step; `no_system_record` a step and no activity. A step can't be both matched and marked as having no system record ("Issue load sheet has a system record: Load sheet issued is matched to it."). Response `200`: alignment. Audit row "Confirmed system alignment" (the decisions as activity → step label). Errors: as GET, plus `422` naming `rows` ("That activity isn't in the log.", "Choose a step of the current map.", "Choose confirmed, hidden_work or no_system_record.").
+
+#### POST /api/event-logs/{lid}/alignment/suggest (AI job)
+Claude's pass (`SR_align`) for the activities the deterministic pass could not match and Eric hasn't decided. Claude sees only those activity names (with volumes and their most frequent role), the current map's steps (stable key, label, kind, lane role) and the glossary terms, names on the hidden-names list replaced; no events, no case IDs, no figures per person. Each suggestion must name an activity that was sent and a step that exists, with a reason; any other is left out (counted in the job message, never shown). Kept suggestions are stored as `proposed_by: "claude"` proposals, replacing earlier ones for those activities; confirmed rows are never touched. Response `202`: `{"job_id", "log_id"}`; the job (`event_log_alignment`) ends with a message such as "Claude suggested 1 match. 1 suggestion was left out: it named an activity or step that isn't in the log or on the map.". AI usage is shown on the job like the gap analyses.
+Errors: `404`; `409 NOT_IMPORTED`; `409 NO_MAP`; `409 NOTHING_TO_SUGGEST` ("Every activity already has a match or a decision."); the job fails in plain words without a key, when Anthropic is busy or after a format failure (nothing saved).
+Used by: System records screen (R7).
+
+### System trace on the map (R5b, 2026-10-07; PRD §3.13.4, §3.12.7, Appendix E tier 2, criterion 87)
+What Eric's **confirmed** alignment rows (any imported log of the engagement) do to a map. Deterministic, no AI. A draft reflects the current confirmed alignment every time it is read; publishing freezes what the draft showed into the published version (stored), so a published version never changes afterwards. Unconfirmed proposals and Claude's suggestions never change a map. A step with no system record is the system being **silent**: it never contradicts anything (constraint 4).
+- **Edges** (`GET /versions/{vid}/graph` and everything built on it: layout, lint, exports): a line from step A to step B, both matched, gets `sequence_basis: "system_trace"` (B.34, now the strongest basis) when the log records an activity of A directly followed by an activity of B in at least 5 cases, and in more cases than the reverse.
+- **Contradiction:** when the log records B directly followed by A in at least 5 cases and more often than A followed by B, the line's order is contradicted: B's `source_state` becomes `trace_contradicted` (when it had any support) and `sequence` is added to its `divergence_types`; the line keeps its own basis.
+- **Corroboration:** a matched step recorded in at least 5 cases is supported by the trace layer: `practiced_only` and `documented_only` become `corroborated` (the trace confirms the account). Other states are unchanged.
+
+#### GET /api/versions/{vid}/system-traces
+The system-trace evidence of a version's steps (no quotes: a trace is figures, not words). `200`: `[{"element_id", "label", "stance": "supports" | "contradicts", "log_id", "log_name", "system", "window_start", "window_end", "cases", "events", "cases_per_week", "rework_cases", "rework_share", "activities": [{"activity", "cases", "events", "work": spread | null, "wait_before": spread | null, "basis"}], "note"}]`, one item per step and log, in map order. Only steps recorded in at least 5 cases are listed. `cases` = cases with any activity matched to the step; `rework_cases` = cases where those activities occur more than once (on A.11, Draft load plan: `Plan created` then `Plan revised`, 40 cases, 20%); `note` gives a contradiction in words ("The system records Special loads OK? before Draft load plan in 6 cases."). Errors `404`.
+Used by: panel section 4e and the Volume and wait lens (R8).
+- **Step summary (R8, 2026-10-08; added fields, older frozen items read them as empty):** `"cases_per_month"` (cases per week × 52 ÷ 12), `"main_activity"` (the step's activity in the most cases), `"work"` and `"wait_before"` (that activity's spreads, or `null`), `"basis"` (its time basis), `"variants"` (how many of the log's top variants, each of at least 5 cases, pass through any of the step's activities) and `"variant_share"` (the share of all cases those variants hold). The Volume and wait lens reads `cases_per_month` and `wait_before.median_min`; panel 4e reads them all and sets the step's stated times (SME, documented) beside the measured median work.
+
+#### GET /api/versions/{vid}/system-variants (R8, 2026-10-08; PRD §5.6 Variants tab, §3.13.4, criterion 89)
+The system's variants of each imported log, read through Eric's **confirmed** matches and compared with the version's As done and As documented paths; and each log's hidden work. Deterministic, no AI, figures from the stored metrics only (top 10 variants, each of at least 5 cases). Advisory: nothing here changes the map. Worked out on every read, for drafts and published versions alike (the comparison uses the version's own steps, matched by stable key).
+`200`:
+```json
+{"logs": [{"log_id": "…", "log_name": "DCS extract", "cases": 200, "too_few": 0,
+           "variants": [{"rank": 1, "cases": 141, "share": 0.705, "cumulative_share": 0.705,
+                         "path": [{"activity": "Plan created", "element_id": "…", "label": "Draft load plan", "status": "matched"},
+                                  {"activity": "Manual weight override", "element_id": null, "label": "", "status": "hidden_work"}],
+                         "views": {"done": {"fits": true, "notes": []},
+                                   "documented": {"fits": false, "notes": ["Busy wave? isn't in the As documented view."]}}}],
+           "hidden_work": [{"activity": "Manual weight override", "cases": 23, "share": 0.115, "role_id": "…" | null,
+                            "after_element_id": "…" | null, "after_label": "Deviation in limits?",
+                            "before_element_id": "…" | null, "before_label": "Issue load sheet"}]}],
+ "too_few_steps": ["…"]}
+```
+- `path`: the variant's activities in order; `status` `matched` (Eric confirmed a step), `hidden_work` (confirmed as no step) or `not_matched` (no decision yet).
+- `views.<view>.fits` is true when every matched step is in that view and, for each two steps one after the other on the path (a step repeated straight after itself counts once), the view's lines lead from the first to the second. `notes` say in words what doesn't fit: "X isn't in the As done view.", "The As done view has no way from X to Y.", "Z is hidden work: no step on the map.", "Z isn't matched to a step yet.". A variant with no matched step has `fits: false` and the note "No activity of this variant is matched to a step yet.".
+- `hidden_work`: the activities Eric confirmed as hidden work that are recorded in at least 5 cases, with the share of the log's cases, the engagement role that records it most (`role_id`, from the import's role mapping), and the matched steps it most often directly follows and precedes. Used to fill in **Add as step**.
+- `too_few_steps`: steps with a confirmed match recorded in fewer than 5 cases in every log (the lens says "too few cases"; no figure is given).
+Errors `404`. Used by: the Variants tab and the Volume and wait lens (R8).
+
+## Step disposition (PRD §3.15, criterion 91, constraint 7) — phase P10b (2026-10-08, R9a)
+
+Every step gets a disposition (B.41): `delete` (Delete) · `automate_rules` (Automate (rules)) · `ai_assisted` (AI-assisted) · `human_approves` (Human approves) · `keep_human` (Keep human). The app **suggests** one deterministically, with its reason, every time it is read (no AI; nothing stored); Eric **chooses** (drafts only), and his choice is kept: it is copied when a version is reopened and carried to the redrafted step when a draft is refreshed (like a confirmed work type). Dispositions feed the value calculator (R9b), the AI-flag register, the leadership Recommendation panel and the Master Process Map (R10).
+
+**Suggestion rules**, the first that applies:
+1. **Delete** — a kept gap finding on the step (not dismissed) of type `dead_control_candidate` or with gap class `obsolete_rule` ("Gap finding: <title>."); or a documented-only decision or approval that Eric confirmed has no system record in an imported log and that has no KPI and no constraint (no stated purpose): "The documents describe it, no interview mentions it, the <log> log has no record of it and no purpose is stated."
+2. **Keep human** — work type complex or chaotic ("<Complex> work: it needs human judgment."); or knowledge risk High with heuristics or experience at least half of its know-how items ("High knowledge risk, mostly heuristics and experience.").
+3. **Human approves** — an approval ("An approval: a person authorises it."); or a step with a risk flag ("Carries a <financial> risk: a person authorises it.").
+4. **AI-assisted** — work type complicated ("Complicated work: an AI agent can prepare it with expert oversight."); or a clear activity whose AI flag reads its input (component `perception`: "Clear work that needs documents read: …").
+5. **Automate (rules)** — work type clear and, for a decision, rule-based ("Clear, rule-based work.").
+6. Otherwise **Keep human** ("Work type not confirmed yet: kept human until it is.").
+For AI-assisted and Automate the reason adds " Needs a complete AI flag before you can choose it." when the step has none (L10).
+
+### GET /api/versions/{vid}/dispositions
+`200`: one row per step (start and end left out; rejected steps too) in map order:
+```json
+[{"element_id": "…", "label": "Approve load plan", "kind": "approval", "suggested": "delete",
+  "reason": "The documents describe it, …", "disposition": null, "note": "", "risk_flag": "none",
+  "allowed": ["delete", "human_approves", "keep_human"],
+  "not_allowed": [{"disposition": "automate_rules", "reason": "Complex work can't be automated or AI-assisted."}]}]
+```
+`disposition` is Eric's choice (or `null`); `allowed` lists what he may choose for this step (the rules below); `not_allowed` (R10b, 2026-10-13) gives each other disposition with the reason it is refused, in B.41 order, so the panel explains instead of disabling a choice. Errors `404`.
+
+### PUT /api/elements/{eid}/disposition
+`{"disposition": "human_approves" | null, "note": "…", "risk_flag": "none" | "financial" | "safety" | "regulatory"}` (`risk_flag` optional: left out, it keeps its value; `null` disposition clears Eric's choice). Rules (`422` naming the field):
+- a step of a **draft** (`409` otherwise), not the start or the end;
+- `disposition` one of B.41 ("Choose one of the five dispositions.");
+- `automate_rules` and `ai_assisted` are refused for complex or chaotic work ("<Complex> work can't be automated or AI-assisted.") and need a complete AI flag: component, input, output, handoff and basis ("Add a complete AI flag first: component, input, output, handoff and basis.");
+- `automate_rules` is refused on a judgment decision or approval ("A judgment step can't be automated by rules.", constraint 7);
+- `note` one line, up to 300 characters, no name on the hidden-names list.
+Response `200`: the step's row as in `GET …/dispositions`. Audit row "Chose disposition" (before and after: disposition, note, risk flag; and the suggestion at the time). The stored lint report is refreshed.
+**Lint L10** (hard failure) now also fails a step whose chosen disposition is `automate_rules` or `ai_assisted` without a complete AI flag, or on complex or chaotic work.
+
+## Value calculator (PRD §3.14, criterion 90, constraint 24) — phase P10b (2026-10-08, R9b)
+
+Indicative hours and cost per step and phase, and what each disposition could release. Deterministic, no AI. Every figure carries its evidence label (B.42: `measured` · `estimated` · `mixed` · `assumed`); scenarios are labelled "Potential, not committed"; money is per step, phase and disposition, never per person. The currency is the `CURRENCY` setting (default `SGD`; the Settings Regional card comes with R10).
+
+### GET · PUT /api/engagements/{id}/role-costs
+GET `200`: `{"currency": "SGD", "rows": [{"role_id", "role_name", "hourly_cost": 48.0 | null, "note"}]}`, one row per role of the engagement (not the system roles), in lane order. PUT `{"rows": [{"role_id", "hourly_cost": 48.0 | null, "note": ""}]}`: each row replaces that role's cost (`null` removes it); roles left out keep theirs. Rules (`422` naming the field): a role of this engagement ("Choose one of this engagement's roles."); a loaded hourly cost of 0 to 100,000 ("Give an hourly cost from 0 to 100,000."); `note` one line, up to 200 characters, no name on the hidden-names list. Response `200`: as GET. Audit row "Set role costs" (role names and costs). Errors `404`. Used by: Registers, "Disposition and value" (Role costs form, R10c).
+
+### GET · PUT /api/engagements/{id}/value-assumptions
+GET `200`: the five dispositions in B.41 order: `[{"disposition": "automate_rules", "reduction_pct": 80.0, "note": "", "default": true}]` (defaults: Delete 100 · Automate (rules) 80 · AI-assisted 50 · Human approves 30 · Keep human 0). PUT `{"rows": [{"disposition", "reduction_pct", "note"}]}`: each row replaces that disposition's assumption; `reduction_pct` 0 to 100 ("Give a reduction from 0 to 100 percent."). Response `200`: as GET. Audit row "Set value assumptions". Errors `404`, `422`. Used by: Registers, "Disposition and value" (Assumptions form, R10c).
+
+### PUT /api/elements/{eid}/value-override
+`{"time_min": 12.0 | null, "volume_month": 400.0 | null, "note": "From the shift roster"}`: Eric's own time per case and volume per month for a step (provenance `R`, used only where nothing is measured or stated, §3.14's order). A step of a draft (`409` otherwise), not the start or end; `time_min` above 0 and at most 10,000 minutes, `volume_month` above 0 and at most 1,000,000; a note is required while either is set ("Say where the figure comes from."), one line up to 300 characters, no hidden name. `null` for both clears them. Response `200`: the step's value row as in `GET …/value`. Audit row "Set value override". Kept on refresh and reopen like the disposition.
+
+### GET /api/versions/{vid}/value?view=done|documented
+Default `done`. `200`:
+```json
+{"currency": "SGD", "view": "done", "potential": "Potential, not committed",
+ "steps": [{"element_id", "label", "phase_id", "phase_name", "role_name",
+            "time": {"value": 23.9, "label": "measured", "source": "DCS extract: median work 19.9 min, 1.2 times per case"} | null,
+            "volume": {"value": 108.3, "label": "measured", "source": "DCS extract: 25 cases a week"} | null,
+            "hours_per_month": 43.1 | null, "cost_per_month": 2068.8 | null, "evidence": "measured" | null,
+            "missing": ["No hourly cost for Load controller."],
+            "disposition": "ai_assisted", "chosen": false, "reduction_pct": 50.0,
+            "hours_released": 21.6 | null, "cost_released": 1034.4 | null}],
+ "phases": [{"phase_id", "name", "hours_per_month", "cost_per_month", "evidence", "steps_counted", "steps_missing", "steps_without_cost"}],
+ "totals": {"hours_per_month", "cost_per_month", "evidence", "steps_counted", "steps_missing", "steps_without_cost"},
+ "scenarios": [{"disposition", "reduction_pct", "steps", "hours_per_month", "hours_released", "cost_released"}]}
+```
+- **Time per case** (minutes of work): measured = the step's main activity's median work × how many of its activities a case has (events ÷ cases; rework counts), from the busiest log matched to it; else the SME's estimate = the step's stated work minutes (from its verified evidence) → `estimated`; else Eric's override → `assumed`.
+- **Volume per month**: measured = the step's cases per month from the system records; else Eric's override → `assumed` (no source states volumes).
+- **Hours per month** = time × volume ÷ 60 (one decimal); **cost per month** = hours × the lane role's hourly cost (none when the role has no cost: `missing` says so). The step's `evidence` is the inputs' label when they agree, else `mixed`; a phase's and the total's likewise over the steps counted. A step without both inputs has no figure and says what is missing; a phase's and the total's cost sum only the steps with a role cost, and `steps_without_cost` says how many counted steps have hours but no cost (so a partial cost is never shown as the whole).
+- **Scenarios**: each step's disposition (Eric's choice, else the suggestion; `chosen` says which) × that disposition's reduction gives the hours and cost it could release; per disposition, summed. Always labelled potential.
+- Steps of the view only (start, end and rejected steps left out). Errors `404`, `422` (`view`).
+- Used by: the step panel's "Disposition and value" section (R10b) and the Registers' "Disposition and value" list (R10c; As done / As documented switch), only while `value_enabled`.
+
+## Intent (PRD §3.16, §4 Intent and Reality, constraint 25, G16) — phase P13a (2026-10-13)
+
+What the organisation intends: quoted from a `policy_or_charter` source (proposed by S1 intent, P13a-2) or stated by an owner and typed in by Eric. Intent is evidence: it is never drawn from interviews, never inferred from what the process does, and never invented. Nothing proposed counts until Eric confirms it. The Reality views module switch (`reality_views_enabled`, `REALITY_VIEWS_ENABLED`, off by default, decision A) hides the screens; these endpoints work whatever it says, like the other modules' endpoints.
+
+Sources of kind `policy_or_charter` (B.1; guessed from a file name containing "charter" or "policy") are read like any document but are **never drafted from**: the draft and refresh leave them out (they state intent, not how the process runs), so they don't count for source state, readiness or signal strength.
+
+### Intent statement object
+```json
+{"id": "…", "engagement_id": "…", "scope": "step", "element_stable_key": "…", "element_label": "Approve load plan",
+ "phase_name": null, "kind": "control_objective", "origin": "document",
+ "text": "Every load plan is approved before release to Ramp.",
+ "metric": null, "comparator": null, "target_value": null, "unit": null,
+ "source_id": "…", "source_name": "charter_load_control.docx", "anchor": "§2", "quote": "Every load plan is approved before release to Ramp.",
+ "owner_role_id": null, "owner_role_name": "", "stated_on": null,
+ "label": "Quoted from charter_load_control.docx §2",
+ "verification_status": "verified", "rejection_guardrail": null, "status": "confirmed", "note": "", "created_at": "…"}
+```
+- `scope` `process` · `phase` (with `phase_name`) · `step` (with `element_stable_key`; `element_label` from the current map, `""` when the step isn't on it any more). `kind` B.44; `origin` B.45; `metric` B.49 or `null`, then `comparator` `at_most` · `at_least` · `equals`, `target_value` (a number) and `unit` `min` · `pct` · `count` (all four set or all `null`).
+- `label`: "Quoted from <file> <anchor>" for a document, "Target set by <role>, <d Mon yyyy>" for an owner-stated statement (never presented as a quote).
+- `text`, `quote`, `label` and `source_name` are shown with names hidden (G10). `verification_status` B.18 (owner-stated: `verified`); `rejection_guardrail` B.20 for a proposal the checks turned down (it can't be confirmed). `status` `proposed` · `confirmed` · `dismissed` (owner-stated statements start `confirmed`: Eric typed them).
+
+### GET /api/engagements/{id}/intent
+`200`: the engagement's statements, oldest first, every status. Errors `404`.
+
+### POST /api/engagements/{id}/intent (owner-stated)
+`{"scope": "step", "element_stable_key": "…", "phase_name": null, "kind": "policy_rule", "text": "Weight deviations outside tolerance are decided by the Load control lead.", "metric": null, "comparator": null, "target_value": null, "unit": null, "owner_role_id": "…", "stated_on": "2026-10-01"}`. Rules (`422` naming the field): `kind` B.44 ("Choose promise, target, control objective or policy rule."); `scope` ("Choose process, phase or step."); a step scope needs a step of the current map ("Choose a step of the current map."), a phase scope a phase of it ("Choose a phase of the current map."); `text` 1 to 200 characters on one line ("Describe the intent in one line of up to 200 characters.") with no name on the hidden-names list ("Use role names, not people's names."); `metric` B.49; with a metric, `comparator`, `target_value` (0 or more) and `unit` are all required and the unit fits the metric (`*_min` → `min`, `*_pct` → `pct`) ("Give the comparison, the target value and its unit."); without one, all three are left out ("A target value needs a metric."); `owner_role_id` a role of this engagement ("Choose the owner's role."); `stated_on` a date `YYYY-MM-DD`, not in the future ("Give the date the target was set, for example 2026-10-01."). Response `201`: the statement (`origin: "owner_stated"`, `status: "confirmed"`, `verification_status: "verified"`). Audit row "Added intent statement".
+
+### PATCH /api/intent/{iid}
+`{"status": "confirmed" | "dismissed" | "proposed", "note": "…", "edits": {"text"?, "scope"?, "element_stable_key"?, "phase_name"?, "kind"?, "metric"?, "comparator"?, "target_value"?, "unit"?, "owner_role_id"?, "stated_on"?}}` (each part optional). Edits follow the POST rules; for a document statement a target value must appear in its quote ("The target value must be in the quoted text.", G5) and the owner and date can't be set. A statement turned down by the checks can't be confirmed (`409` "This statement failed the checks, so it can't be used. Add it yourself as an owner-stated target if it holds."). `note` one line, up to 300 characters. Response `200`: the statement. Audit row "Confirmed intent statement" · "Dismissed intent statement" · "Edited intent statement" (before and after). Errors `404` ("That intent statement doesn't exist."), `409`, `422`.
+
+### DELETE /api/intent/{iid}
+`204` for an owner-stated statement. A statement quoted from a document is dismissed instead, so it stays on record (`409` "Dismiss a statement quoted from a document instead; it stays on record."). Audit row "Deleted intent statement". Errors `404`.
+
+### POST /api/engagements/{id}/intent/extract (AI, job; PRD §3.16, G16) — P13a-2
+Claude's pass (`S1_extract_intent`) over each ready `policy_or_charter` source, and over the purpose clauses of ready SOPs and manuals (passages containing "to ensure", "so that" or "in order to"); one call per source. Claude sees only those passages (names hidden), the current map's steps (stable key, label) and phase names; never an interview. Each proposal carries `kind`, `text`, a `scope` (with `element_stable_key` or `phase_name`), optionally `metric`, `comparator`, `target_value` and `unit`, the cited passage refs and a verbatim `quote`.
+- Checks (G16), in order: G3 the cited passages were sent with that source; G4 the quote is found in them; G5 every number in the text, and the target value, is found in the quote, and every role named is found in the passages; a target is all four fields or none, its unit fits the metric, the text is one line of up to 200 characters. A proposal failing a check is **rejected** with that guardrail. A scope naming a step or phase not on the current map covers the process instead.
+- Then `IX_verify` (when the verifier is on in Settings): `not_supported` → rejected `IXV`.
+- Stored as document statements: kept ones `status: "proposed"`, `verification_status: "verified"`; rejected ones `verification_status: "rejected"` with `rejection_guardrail`, listed so Eric sees what was turned down (they can't be confirmed). A rerun replaces earlier document statements that are still proposed; confirmed and dismissed ones are never touched, and a proposal repeating one of them (same source and text) is not added again.
+- Response `202`: `{"job_id", "engagement_id"}`; the job (`intent_extract`) ends with a message such as "Claude proposed 6 intent statements: 4 passed the checks; 2 were turned down and are listed as rejected.". AI usage is shown on the job.
+- Errors: `404`; `409` "Add a policy or charter and wait for it to be read first." when no ready source has anything to read.
+
+### POST /api/versions/{vid}/intent/compare (AI, job; PRD §3.16 design gaps, G16) — P13a-2
+Claude's pass (`IX_compare`) pairing **confirmed** intent statements with the documented process: the statements (text, and quote or owner label) and the passages of the engagement's ready SOPs and manuals, names hidden. Each proposal names one statement, the documented passages, a quote from each side and the conflict in at most 25 words.
+- Checks (G16): `IX1` both quotes are given and the conflict is 1 to 25 words; G3 the statement was sent and is confirmed, and the documented passages were sent; G4 the intent quote is found in the statement's quote (its text for an owner-stated statement) and the documented quote in the cited passages; G5 every number and role in the conflict is found on one of the two sides. Then `IX_verify` (verifier switch): `not_supported` → rejected `IXV`.
+- Stored on the version as proposals (rejected ones too, with the guardrail); a rerun replaces this version's proposals that are still proposed; confirmed and dismissed ones are kept, and a proposal for the same statement and passages is not added again. A proposal counts (D13) only after Eric confirms it.
+- Response `202`: `{"job_id", "version_id"}`; the job (`intent_compare`) ends with a message such as "Claude proposed 1 design gap: it passed the checks." or "… 1 was turned down and is listed as rejected.".
+- Errors: `404` ("That version doesn't exist."); `409` "This version is published and can't be changed. Reopen it as a new draft." · "Confirm at least one intent statement first." · "Add an SOP or manual and wait for it to be read first.".
+
+### GET /api/versions/{vid}/intent/conflicts — P13a-2
+`200`: the version's design-gap proposals, oldest first, every status:
+```json
+{"id": "…", "version_id": "…", "intent_id": "…", "intent_text": "Screening is proportionate to the client's risk tier.",
+ "intent_label": "Quoted from policy_screening.docx §2", "intent_quote": "Screening is proportionate to the client's risk tier.",
+ "segment_ids": ["…"], "source_name": "sop_KYC-01.docx", "anchor": "§3.1", "quote": "Every case is screened in full.",
+ "conflict_text": "The policy screens by risk tier; the SOP screens every case in full.",
+ "verifier_verdict": "supported", "verification_status": "verified", "rejection_guardrail": null,
+ "status": "proposed", "note": "", "created_at": "…"}
+```
+`source_name` and `anchor` are the first documented passage's. Text fields are shown with names hidden (G10). Errors `404`.
+
+### PATCH /api/intent-conflicts/{cid} — P13a-2
+`{"status"?: "confirmed" | "dismissed" | "proposed", "note"?: "…"}`. A proposal the checks turned down can't be confirmed (`409` "This design gap failed the checks, so it can't be used."). `note` one line, up to 300 characters ("A note is one line of up to 300 characters."). Response `200`: the conflict. Audit row "Confirmed design gap" · "Dismissed design gap" · "Reopened design gap" · "Noted design gap". Errors `404` ("That design gap doesn't exist."), `409`, `422`.
+
+## Discrepancies (PRD §3.17, §4 Intent and Reality, constraint 26) — phase P13a
+
+Every difference between intent, documents, belief and practice on a version, worked out by fixed rules from facts the app holds (`REALITY_RULES_VERSION`, G15); no AI call is made. Like the intent endpoints, these work whatever the Reality views switch says.
+
+### GET /api/versions/{vid}/discrepancies?view=done
+`200`:
+```json
+{"rules_version": "1", "view": "done",
+ "items": [
+  {"item_id": "…", "code": "X1", "status": "seen", "types": ["D1", "D11"],
+   "location": {"kind": "step", "keys": ["approve-load-plan"]}, "title": "Approve load plan",
+   "delta": {"value": 100.0, "unit": "pct", "kind": "measured", "label": "never recorded; 100% of cases"},
+   "deltas": [{"type": "D1", "value": 100.0, "unit": "pct", "kind": "measured", "label": "never recorded; 100% of cases"},
+              {"type": "D11", "value": 100.0, "unit": "pct", "kind": "measured", "label": "Approve load plan: 100% of cases without a record"}],
+   "incidence": 1.0, "cases": 200, "hours_per_month": 0.0, "shown": true,
+   "impact_class": "control_exposure", "impact_note": "potential control exposure, for the control owner to confirm",
+   "verdict": {"suggested": "correct", "reason": "The control objective is not met: restore the control or remove the cause.",
+               "decided": null, "note": "", "decision_owner_role_id": null},
+   "evidence": {"documents": 1, "interviews": 0, "system_cases": 200},
+   "element_ids": ["…"], "intent_ids": ["…"]}],
+ "intents": [{"intent_id": "…", "result": "not_met", "actual": null, "label": "measured", "met_share": 0.0, "cases": 200,
+              "documented": null, "documented_meets": null}]}
+```
+- `view`: `done` only (the As done view; a `documented` value is refused with `422` "Discrepancies are worked out on the As done view.").
+- `items`: one per location, in code order, then the process-level types (D9 parallel routes, D10 belief gap) with `code: null`, `impact_class: null` and no verdict. `location.kind`: `step` · `run` (a contiguous run of added steps) · `activity` (a hidden-work log activity; `keys` holds its name) · `order` (D3, two steps) · `design` (D13, always its own code) · `process`.
+- `code`: `X1`, `X2` … given the first time a location is seen in the engagement, in order of impact class, then hours a month, then process order; kept for that location in every later version and never reused. A location coded earlier but not found now is listed with `status: "not_seen"` (no figures). Locations not drawn (below 5% of cases and not a control exposure) get no code and are left out.
+- `delta`: the first type's figure; `deltas` every type's. `kind` is the figure label (B.50). `hours_per_month`: hours the discrepancy accounts for, from measured figures only (0 when none).
+- `impact_class` B.46; `impact_note` "potential control exposure, for the control owner to confirm" on control exposures. `verdict.suggested` B.47 with its reason; `verdict.decided` Eric's verdict, which always wins.
+- `intents`: each confirmed statement's evaluation (§3.16): `met` · `not_met` · `unknown`.
+- Errors: `404` ("That version doesn't exist.").
+
+### PUT /api/discrepancy-items/{item_id}/verdict
+`{"verdict": "codify" | "correct" | "rewrite" | "ask" | null, "note": "…", "decision_owner_role_id": "…" | null}`. `null` clears Eric's verdict (the suggestion shows again). Rules (`422` naming the field): `verdict` ("Choose codify, correct, rewrite or ask."); `note` one line, up to 300 characters ("A note is one line of up to 300 characters."); `decision_owner_role_id` a role of this engagement ("Choose the decision owner's role."). Response `200`: `{"item_id", "code", "verdict_decided", "verdict_note", "decision_owner_role_id"}`. Audit row "Decided discrepancy verdict" (before and after). Errors `404` ("That discrepancy doesn't exist."), `422`. The path uses the item's ID (`item_id` in the GET) because codes repeat across engagements.
+
+## Reality snapshot (PRD §3.18, §4 Intent and Reality, §5.12, constraint 26, G17) — phase P13b (2026-10-14); RV4–RV7 phase P13c (2026-10-15)
+
+Everything the Reality screen draws for one version, worked out by fixed rules (`services/reality`, `reality_copy`, `reality_layout`) from the discrepancy engine's facts, Eric's confirmed intent, his verdicts and the system records. No AI call is made and no AI-written text appears. One snapshot per version (the As done view): a **draft** is worked out when asked and kept while its inputs are unchanged (`inputs_hash`); **publishing freezes** it (when the Reality views switch is on; otherwise the first request for that published version works it out and freezes it). A frozen snapshot is never worked out again, also under newer rules or after a later verdict. The Reality screen, the panel's Discrepancies section and Leadership read only this snapshot, so a figure has one value everywhere (RQ9). Like the intent endpoints, it answers whatever the Reality views switch says; the switch hides the screen.
+
+### GET /api/versions/{vid}/reality
+`200`:
+```json
+{"version_id": "…", "rules_version": "1", "copy_version": "2", "layout_version": "3", "app_version": "1.0.0",
+ "inputs_hash": "<64 hex>", "frozen": false, "draft": true,
+ "process_name": "Aircraft load control",
+ "data_label": "Draft: figures may change",
+ "evidence": {"documents": 2, "interviews": 1, "cases": 200, "text": "2 documents · 1 interview · 200 cases"},
+ "figures": {"rv1.documented_share": {"id": "rv1.documented_share", "value": 70.0, "unit": "pct", "text": "70%",
+                                      "label": "measured", "percent_type": "variant_share"}},
+ "tiles": [{"figure": {"id": "rv1.documented_share", "value": 70.0, "unit": "pct", "text": "70%", "label": "measured",
+                       "percent_type": "variant_share"},
+            "caption": "of cases follow the manual"}],
+ "columns": [{"id": "<phase id>", "name": "Check and load", "kind": "phase", "step_keys": ["load-and-return-lir"]},
+             {"id": "process", "name": "Whole process", "kind": "process", "step_keys": []}],
+ "columns_note": "",
+ "codes": [{"code": "X1", "item_id": "…", "title": "Approve load plan", "types": ["D1", "D11"],
+            "impact_class": "control_exposure", "impact_word": "Control exposure", "glyph": "triangle",
+            "impact_note": "potential control exposure, for the control owner to confirm",
+            "location": {"kind": "step", "keys": ["approve-load-plan"]}, "element_ids": ["…"], "column_id": "<phase id>",
+            "delta": {"id": "X1.delta", "value": 100.0, "unit": "pct", "text": "never recorded; 100% of cases",
+                      "label": "measured", "percent_type": "incidence"},
+            "minutes": null,
+            "hours": {"id": "X1.hours", "value": 0.0, "unit": "h", "text": "0 h a month", "label": "measured", "percent_type": null},
+            "verdict": {"suggested": "correct", "decided": null, "shown": "correct", "status": "suggested",
+                        "reason": "The control objective is not met: restore the control or remove the cause.", "note": ""},
+            "evidence": {"documents": 1, "interviews": 0, "system_cases": 200,
+                         "chips": {"documents": true, "interviews": false, "system": true},
+                         "sentence": "Evidence: 1 document, no interview, 200 system cases."},
+            "control": true, "shown": true, "rank": 1}],
+ "intents": [{"id": "…", "kind": "control_objective", "text": "Every load plan is approved before release to Ramp.",
+              "scope": "step", "step_keys": ["approve-load-plan"], "result": "not_met", "target": ""}],
+ "views": {"rv1": {"id": "rv1", "title": "How different is real Aircraft load control from the manual?",
+                   "headline": "Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan.",
+                   "callouts": [{"code": "X1", "impact_class": "control_exposure",
+                                 "lines": ["X1 Approve load plan: never recorded; 100% of cases.",
+                                           "Potential control exposure, for the control owner to confirm."]}],
+                   "availability": {"state": "ready", "message": "", "action": null},
+                   "table": {"columns": ["Route", "Share", "Label", "Codes"], "rows": [["As documented", "70%", "measured", ""]]},
+                   "glance": {"basis": "cases", "routes": [{"id": "documented", "name": "As documented", "documented": true,
+                              "share": {"…": "a figure"}, "codes": [], "impact_class": null, "other_count": 0}]},
+                   "geometry": {"width": 1600, "height": 560, "trunk": {"x1": 80, "x2": 640, "y": 280, "width": 26},
+                                "ribbons": [{"route_id": "documented", "path": "M640 280 C…", "width": 18.2,
+                                             "style": "solid", "label_x": 1220, "label_y": 280}],
+                                "scale_note": "Line width = share of cases (26 px = 100%)"}},
+           "rv2": {"…": "as rv1, with", "stack": {"bands": [{"id": "promise", "name": "What we promise",
+                     "evidence": "4 confirmed statements", "state": "ready", "message": "",
+                     "cells": [{"column_id": "…", "items": [{"kind": "intent", "key": "…", "label": "…", "figure": null,
+                                "code": null, "impact_class": null, "result": "not_met", "note": "…"}]}]}],
+                   "lens": {"column_id": "…", "label": "Largest loss: Check and load"},
+                   "highlighted": ["X2", "X1"], "listed": ["X3"]},
+                   "geometry": {"width": 1600, "height": 1000, "columns": [{"id", "x", "width"}],
+                                "bands": [{"id", "y", "height"}], "marks": [{"kind", "band_id", "column_id", "x", "y",
+                                "width", "height", "lines": ["…"], "code": null, "key": null, "impact_class": null,
+                                "style": "solid"}], "lens": {"x", "y", "width", "height", "label_x", "label_y"},
+                                "column_labels": [{"id", "x", "y", "lines": ["Check and load"]}],
+                                "band_labels": [{"id": "promise", "x", "y", "lines": ["What we promise", "4 confirmed statements"]}]}},
+           "rv3": {"…": "as rv1, with", "fix": {"quadrants": [{"id": "as_designed", "name": "Working as designed",
+                     "meaning": "Follows the manual and delivers the promise."}],
+                     "circles": [{"code": "X1", "zone": "correct"}], "ask": ["X5"],
+                     "decide_first": ["X1", "X2"], "limit": 6,
+                     "note": "Verdicts are recommendations; the process owner decides."},
+                   "geometry": {"width": 1600, "height": 760, "zones": [{"id", "x", "y", "width", "height", "label_x", "label_y"}],
+                                "circles": [{"code", "cx", "cy", "r"}],
+                                "labels": [{"id": "zone:correct", "x", "y", "lines": ["Correct the practice", "Departs from the manual and falls short of the promise."]}],
+                                "scale_note": "Circle area = hours a month"}},
+           "rv4": {"…": "as rv1, with", "redline": {
+                     "pages": [{"id": "all", "name": "Every documented step", "step_keys": ["draft-load-plan", "approve-load-plan"]}],
+                     "steps": [{"key": "approve-load-plan", "label": "Approve load plan", "minutes": null, "ghost": true, "codes": ["X1"]}],
+                     "markups": [{"code": "X1", "type": "D1", "kind": "skipped", "keys": ["approve-load-plan"],
+                                  "label": "Skipped: Approve load plan", "share": {"…": "a figure"},
+                                  "impact_class": "control_exposure", "drawn": true, "tool": ""}],
+                     "pills": [{"…": "a figure, id rv4.pill.<step key>"}], "listed": ["X7", "X8"]},
+                   "geometry": {"width": 1600, "height": 542, "shapes": [{"kind": "rect", "role": "step-ghost", "x": 129, "y": 172,
+                                "width": 130, "height": 72, "x2": 0, "y2": 0, "r": 0, "path": "", "lines": [], "code": null,
+                                "key": "approve-load-plan", "impact_class": null, "style": "dashed"}],
+                                "scale_note": "The documented steps once, in the manual's order; markups show practice"}},
+           "rv5": {"…": "as rv1, with", "time": {
+                     "columns": [{"column_id": "…", "name": "Check and load", "manual": {"…": "figure"}, "work": {"…": "figure"},
+                                  "wait": {"…": "figure"}, "designed": {"…": "figure"}, "extra": {"…": "figure"}, "complete": true}],
+                     "manual_total": {"…": "figure"}, "practice_total": {"…": "figure"}, "multiplier": null, "complete": false,
+                     "causes": [{"code": "X6", "title": "Resolve or offload", "minutes": {"…": "figure"}}]},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Both strips share one scale: width is minutes a case"}},
+           "rv6": {"…": "as rv1, with", "belief": {
+                     "rows": [{"key": "load", "label": "Load", "believed": {"…": "figure (stated)"}, "measured": {"…": "figure (measured)"},
+                               "gap": {"…": "figure: 10.0× longer"}, "direction": "longer",
+                               "prevalence": "stated in 2 of 3 interviews", "code": null, "impact_class": null}],
+                     "note": "A visibility gap, not a competence gap.", "method": "How belief is measured: …"},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Each row has its own scale, from 0 to a little past the larger value"}},
+           "rv7": {"…": "as rv1, with", "case": {
+                     "route_name": "Repeats Draft load plan", "cases": 36,
+                     "label": "A typical case: median timings of 36 cases, not one real case.",
+                     "lanes": [{"id": "system", "name": "DCS", "kind": "system"}, {"id": "tool:sheet", "name": "Sheet", "kind": "tool"}],
+                     "events": [{"key": "draft-load-plan", "label": "Draft load plan", "lane_id": "system",
+                                 "minutes": {"…": "figure, id rv7.event.<n>"}, "recorded": true}],
+                     "designed_finish": null, "promise": null, "actual_finish": {"…": "figure"},
+                     "tiles": [{"figure": {"…": "figure"}, "caption": "touched outside the system"}]},
+                   "geometry": {"…": "shapes as rv4", "scale_note": "Across: minutes since the case started (median timings, not one real case)"}}},
+ "legend": {"impacts": [{"impact_class": "control_exposure", "word": "Control exposure", "glyph": "triangle"}],
+            "lines": [{"style": "solid", "meaning": "In the system of record, or as documented"}],
+            "scales": ["Line width = share of cases"], "data_label": "Draft: figures may change"}}
+```
+- **Versions and determinism (G15, G17):** `rules_version` (the discrepancy rules), `copy_version` (the headline and callout templates), `layout_version` (the geometry rules) and `app_version` are stamped on every snapshot. The same inputs give a byte-identical snapshot. `inputs_hash` is the SHA-256 of everything the snapshot is worked out from.
+- **`frozen`** is true from publishing on; `draft` is true for a draft. `data_label`: "Draft: figures may change" on a draft; "Version v1.0, validated by [owner name] on [date]" on a published or superseded version.
+- **`evidence`**: SOPs and manuals, interview transcripts and system-log cases behind the snapshot (`cases` is `null` without a log); `text` says it in words, for every view's data label.
+- **`figures`**: every figure on the snapshot by its ID, each with its unit (`pct` · `min` · `h` · `x` · `count` · ``), the text shown, its label (B.50 `measured` · `stated` · `documented` · `target` · `mixed`; hours beyond the designed time use the value calculator's `measured` · `estimated` · `mixed`) and, for a percentage, its type (`variant_share` adds to 100% · `incidence` overlaps and is never added · `prevalence` "n of N interviews"). Every figure drawn anywhere (tiles, codes, cells, tables) is one of these and carries the same ID and text.
+- **`tiles`** (§3.18.5): at most five, in this order, from those that can be worked out (a tile whose inputs are missing is left out, never estimated): share of cases on the documented route (measured), else "n of N steps practised as documented" (stated); cycle-time multiplier, done against the manual's times; the largest control-exposure incidence (D5, D11); the share of cases meeting the first confirmed target with a measured share (D14); hours a month beyond the designed time; the largest belief-gap multiplier (D10).
+- **`columns`** (§3.18.2): the shared axis of the hero views. The As done view's phases (at most 7, in process order; with more, the phases with a control exposure, then those losing most hours, are kept and `columns_note` says "n phases not shown, none with a control exposure"); a version with fewer than 2 phases uses up to 7 usual-route steps (`kind: "step"`). The last column is always the whole process.
+- **`codes`**: one entry per X code drawn on this version, in code order — its identity everywhere (RQ4): the same code, impact word, glyph, title and figures on every view, the panel, Leadership and the pack. `minutes`: extra minutes a case (from the measured hours over the process's cases a month, else the stated wait, extra time or added step's time; `null` when nothing states it). `hours`: hours a month from measured figures only (0 h when none is measured). `verdict.shown` is Eric's verdict when he decided one (`status: "confirmed"`), else the suggestion (`status: "suggested"`); `null` for process-level types. `evidence.chips` D · I · S are filled when that kind of evidence exists. `rank` is the Decide-first order: impact class, then hours, then code.
+- **`intents`**: each confirmed intent statement as the snapshot evaluated it (`result` `met` · `not_met` · `unknown`; `target` in words, for example "target at most 10 min"), with the step keys it covers (none for a process-wide statement).
+- **`views`**: `rv1` Glance, `rv2` Reality stack and `rv3` Fix or keep (P13b); `rv4` Redline, `rv5` Where the time goes, `rv6` Belief vs evidence and `rv7` Typical case (P13c). Each has its fixed `title` (the executive question), a `headline` (at most 20 words) and up to 3 `callouts` (each at most 2 lines), chosen and filled from the versioned template catalogue with computed values only; `availability` (`state`: `ready` · `partial` · `missing`, the §3.18.3 sentence and the one `action` that fixes it: `add_intent` · `upload_documents` · `import_log` · `draft`); `table`, the view as a table with the same figure texts (its accessible equivalent); its model; and `geometry` for a 1600-wide reference frame (the screen scales it; the UI draws it and never computes layout).
+- **rv1 `glance.routes`**: with system records, the routes are the log's variants as read through Eric's confirmed matches: every variant that fits the As documented view joins one grey **As documented** ribbon; each other variant of at least 5% of cases is its own ribbon, named by what it does ("Repeats Draft load plan", "Adds Manual weight override"), with the codes found on it; rarer ones join "Other: n rarer routes" (a route carrying a control exposure always has its own ribbon). Shares are variant shares. Without system records (`basis: "steps"`): "n of N steps practised as documented" and one ribbon per coded deviation, as step counts labelled stated. At most 7 ribbons, ordered by share.
+- **rv2 `stack.bands`**: `promise` (confirmed intent on its steps or phase; process-wide statements in the whole-process column), `belief` (the median minutes official accounts state for a step, "stated in n of N interviews"), `documented` (the documented steps with their designed minutes), `done` (the As done steps with their minutes, and each code's branch with its badge and two short lines) and `consequence` (per column: extra minutes a case and hours a month, the sums of its codes' figures). A band without its evidence has `state: "missing"` and its §3.18.3 sentence. `lens`: the column losing most hours a month (else most extra minutes). `highlighted`: at most 5 codes drawn as branches (control exposures first, never hidden), `listed` the rest.
+- **rv3 `fix`**: the 2 × 2 of Follows the manual / Departs from it × Delivers the promise / Falls short; each code's circle sits in the zone of its shown verdict (`codify` · `correct` · `rewrite`; `ask` codes sit in the Ask strip below; `as_designed` is the documented route). Circle area is hours a month. `decide_first`: codes by `rank` (6 shown, the rest behind "Show all"). Without confirmed intent every code sits in Ask and `availability` explains how to add intent.
+- **P13c geometry (`rv4`–`rv7`)**: a list of `shapes`, each placed by the backend: `kind` `rect` (x, y, width, height) · `circle` (centre x, y and r) · `line` (x, y to x2, y2) · `path` (`path`, with its bounding box in x, y, width, height) · `text` (the box's top-left x, y, width and height; line i at y + 12 + 16 i). `role` says what a shape means (for example `step-documented`, `step-ghost`, `markup-added`, `markup-wait`, `arc-loop`, `manual`, `wait`, `work-extra`, `dot-believed`, `dot-measured`, `lane-system`, `event-off-system`, `promise`); `style` is `solid` · `dashed` · `dotted` · `double`; `code`, `key` and `impact_class` tie a shape to its X code, step and impact. RQ7: no text box overlaps another or a path's box.
+- **rv4 `redline`** (§5.12.3): the documented steps once, in one row of at most 12 (paged by phase beyond that). One markup per code and practice type (D1 skipped, D2 added, D3 another order, D4 loops back, D5 goes round, D6 off-system, D7 takes longer, D8 waits, D11 no record, D12 another role), each naming its share; at most 6 drawn, control exposures always; the rest `listed` at the side. `pills`: each step's extra minutes a case (the sum of its codes' minutes). A waiting capsule sits on the connector into its step. Without an SOP or manual: `availability` `missing` with `upload_documents`.
+- **rv5 `time`**: per column, the manual's minutes, practice's work and waiting (measured where the log measures them, else stated), the designed part (practice work up to the manual's minutes) and the extra work beyond it; waiting is drawn between steps, never inside one, and both strips share one scale. `causes`: the codes adding minutes, largest first. A column without a stated time shows "No time stated"; totals then say "incomplete" and `multiplier` is `null`.
+- **rv6 `belief`**: one row per belief gap (the D10 rule: a step whose official accounts state a time and whose time the system measures in at least 5 cases, differing by a factor of 1.5 or more), at most 6, largest gap first. `believed` is the median of the stated times, never one answer; `prevalence` "stated in n of N interviews". Without system records, or without a stated time on a measured step, `availability` says so.
+- **rv7 `case`**: a composite, never one case: the most common route that differs from the documented one with at least 5 cases (else the most common such route); each event's time is the median minutes from case start among that route's cases. Lanes: the log's system of record, each tool named on an off-system step after a route step (at most 4), "Off-system work" when none is named (never counted as a tool), and "Outside the organisation" (`kind: "outside"`) when the scope card says the trigger or the end point is outside the organisation: a "Starts outside" event before the first one and an "Ends outside" event at the actual finish sit in it, with no time of their own; at most 6 lanes and 15 events. Off-system events have no time. `tiles`: tools touched, minutes late against the promise (a confirmed cycle-time target) or the designed time, steps without a record. Without a route of at least 5 cases: `availability` `missing` with `import_log`, no event drawn.
+- Errors: `404` ("That version doesn't exist.").
+
+### GET /api/versions/{vid}/reality/export?layout=a3|slide — phase P13d (2026-10-16)
+The **Reality pack** (PRD §3.18.6, §7.4; criterion 117): one self-contained HTML file built from the version's **frozen** Reality snapshot (the same figures, codes, headlines and geometry as the Reality screen; G17), for printing or saving as PDF from the browser. `layout`: `a3` (default; A3 landscape pages) or `slide` (16:9, 1920 × 1080 pages, at most 2 callouts per view). Response `200` `text/html; charset=utf-8` with `Content-Disposition: attachment; filename="load-control-v1-0-reality-pack-a3.html"` (`…-reality-pack-slide.html`).
+- **Structure (§7.4):** a cover (process, version, owner and date from the data label, signal strength, evidence summary); **Facts**: Glance, Reality stack, Redline, Where the time goes, Belief vs evidence, Typical case, one per page, each with its question as title, its computed headline, the drawing (or its §3.18.3 sentence when its data is missing), its callouts, the legend strip and the data label; **Interpretation**: impact classes by column with the hotspot (the column losing most hours a month, else most extra minutes), and potential control exposures for the control owner to confirm; **Recommendation**: Fix or keep with Decide first (verdicts marked suggested or confirmed); **Appendix**: the discrepancy table (code, types, location, delta with its label, impact, verdict, evidence D · I · S), the confirmed intent statements and the rule, copy and layout versions. Verdicts appear only in Recommendation and the Appendix (a structural check, as Q7).
+- **Rules:** the shared design tokens and the self-hosted fonts embedded; no external request (`Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; font-src data:`), no script, no images; role names only; no verbatim interview quotes; 0 hits on the redaction list; text at least 11 px in print (a drawing fills the room its page leaves and is printed only when that keeps its 12.5 px text at 11 px or more, that is when it is at most 852 px tall on A3 or 863 px on 16:9 at its 1600 px width; a taller one is printed as its table, with the sentence "This picture is too large to print legibly on one page, so its figures are printed as a table. The Reality screen shows the picture."); every figure printed is the snapshot's (each carries `data-figure="<id>"`, RQ9).
+- An audit row "Exported Reality pack". Answers whatever the Reality views switch says (the switch hides the button).
+- Errors: `404` ("That version doesn't exist."); `409 CONFLICT` ("Publish a version with a green quality card first.") unless the version is published or superseded with a green quality card; `422 VALIDATION` (`details.field` `layout`: "Choose the A3 or the 16:9 layout.").
+
 ## Readiness (PRD §4, §5.3 guided navigation, §5.4 Draft checklist) — phase P1
 
 ### GET /api/engagements/{id}/readiness
@@ -379,7 +836,7 @@ Response `200`:
              "started_at": "…", "finished_at": null}],
  "created_at": "…"}
 ```
-`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis). `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
+`status`: `queued` · `running` · `done` · `failed` (with a plain `error`). `type`: `read_source` (P2) · `draft` (P3) · `refresh` (P6) · `gap_internal` and `gap_external` (P10; `target_id` the analysis, `usage` its AI calls, `stages` as in Gap analysis) · `interview_guide` (P4c) · `event_log_import` and `event_log_alignment` (P10b) · `intent_extract` (P13a; `target_id` the engagement) and `intent_compare` (P13a; `target_id` the version), each with `usage`. `target_id`: the source ID for `read_source`; for `draft`, the version being built (`null` until the job starts).
 - `usage`: tokens used by this job's AI calls so far (`null` for jobs that make none).
 - `claims`: claims of the version being built, checked so far (`verified`, `rejected`).
 - `stages`: the draft's stages in order (empty for `read_source`). Stage `status`: `waiting` · `running` · `done` · `failed` · `skipped` (Independent verification when the verifier is switched off in Settings) · `later` (a stage built in a later phase; none since P4). Times are UTC ISO 8601; the screen shows the elapsed time.
@@ -503,7 +960,7 @@ Response `200`:
 ```
 - `status`: `pass` · `fail` (hard checks Q1–Q9) · `warning` (Q10 only, when above 25 steps or 6 lanes). `all_green`: every hard check passes.
 - 2026-10-06 (K3, PRD v1.10–1.11 §7.2): **Q11** "Work types confirmed" (warning): every decision, approval and judgment step (mechanism judgment, or complex or chaotic work) has a work type Eric confirmed (`PUT /elements/{eid}/work-type`); detail "n decisions, approvals or judgment steps without a confirmed work type: “…”, “…”, “…” and n more."; passes on maps drafted before v1.10 (no work types). **Q12** "System alignment complete" (warning) is on the card only when the engagement uses system records (P10b): every imported log activity aligned or marked hidden work. Checks are always in order Q1…Q11(, Q12).
-- Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
+- Q1 every step on the map tagged O/I/R and every R with a reference · Q2 every O/I step with at least one verified passage (an `O` step added from hidden work may instead rest on its system trace: a confirmed match recorded in at least 5 cases, R8) and no unverified claim behind any step · Q3 no lint L4/L5 failure · Q4 no L6–L9 or L11 failure · Q5 no L10 failure · Q6 no unreviewed step, pending merge, open image suggestion, or unconfirmed step needing a check · Q7 the rendered Master Process Map and HTML map have exactly the three sections in order, and recommendation content (AI flag blocks, knowledge risks, external practice, questions) only in section 3 · Q8 no name from the redaction list in any rendered export (md, json, csv, html) · Q9 no image data or image reference in any rendered export.
 - `warnings`: the lint warnings (steps without time, activities without KPI, AI flags outside 3–7, line crossings, large map), and, for a map drafted from interviews only, "Signal strength: Limited. Built from interviews only; confirm the steps with a document or another SME before relying on them." (a warning, never a blocker). Rejected steps are not on the map and count for nothing. Each failing detail names what to fix; names hidden.
 Errors: `404` ("That version doesn't exist."). Used by: Review banner and quality popover (P7), readiness `blockers_count`, publish.
 
@@ -511,7 +968,8 @@ Errors: `404` ("That version doesn't exist."). Used by: Review banner and qualit
 
 ### GET /api/versions/{vid}/alignment-matrix
 How each kind of source stands on each step (PRD §3.7 Stage 3: classified, never reconciled). One row per step (activity, decision, approval; not start, end or rejected steps), in process order:
-`{"element_id", "label", "kind", "sop", "interview", "jd", "artefact", "state", "divergence_types": [...]}`.
+`{"element_id", "label", "kind", "sop", "interview", "sme_official", "sme_lived", "jd", "artefact", "state", "divergence_types": [...]}`.
+- **SME official · SME lived** (P9u-2, 2026-10-07; PRD §6.3 P9 "four layers", §3.12.3): the interview column split by the account the interview gives of the step. A layer takes the `interview` cell when the step's verified interview claims include that account (official: how it is meant to work; lived: what the SME does or did); it is `silent` when the interview speaks of the step but only with the other account; `account_unclear` when the interview speaks of it only with claims whose account is unclear (neither layer can claim it; never guessed); and the `interview` cell itself when that is `silent` or `not_applicable`.
 - Columns: `sop` = SOPs, manuals and other documents · `interview` = interview transcripts · `jd` = job descriptions · `artefact` = executed artefacts.
 - Each cell is `supports` · `contradicts` · `silent` · `not_applicable`: `contradicts` if any source of that kind contradicts the step, else `supports` if any supports it, else `silent` if the draft was made from a source of that kind (silence is never contradiction), else `not_applicable` (no source of that kind). A recommended (`R`) step is not assessed: every cell is `not_applicable`. Cells count the same stances as the step's source state.
 - `state` and `divergence_types` are the step's own (B.4, B.5). Labels have names hidden. Works for drafts and published versions.
@@ -567,6 +1025,7 @@ Response `200`:
 - **Facts, per phase** (in phase order; steps with no phase under "No phase"): `work_min` and `wait_min` add up the steps' times (steps without a time add nothing; `links.work` / `links.wait` list the steps that do); `rework_loops`: lines of kind `rework` or `reject` leaving a step of the phase; `handoffs`: lines of any kind between two steps in different lanes, counted in the phase of the step they leave; `divergence_counts`: steps of the phase by divergence type (B.5). `sources`: the sources the version was drafted from.
 - **Interpretation, one entry per cause type** (B.9) found on the steps' constraints, in B.9 order. **Systemic** when the cause constrains 2 or more steps that sit in different lanes or different phases (it is not one team's local issue); otherwise **Local**. `reason` says which in plain words (for example "On 2 steps in 2 lanes: Load controller, Ramp."). `evidence_weight`: how many of the version's sources support at least one of those steps (a verified "supports" passage), of all its sources. `confidence`: the average confidence of those steps (their own confidence, worked out when the map was built), rounded to 2 places; `null` if none has one. Constraint texts have names hidden.
 - **Recommendation:** `recoverable_wait_min`: waiting time on steps constrained by a systemic cause (time a fix to that cause could win back); `rework_loops`: all rework and reject lines; `ai_flags`: up to 3 steps with an AI flag, rule-based decisions first (automation candidates), then by confidence, in the fixed five-field block (a judgment step's flag is support only); `decisions_needed`: one line per **systemic** cause, with the text Eric saved (empty until he writes one).
+- **Reality figures** (P13b, 2026-10-14; G17): while the Reality views switch is on, `reality` holds the figures Leadership shares with the Reality views, read from the version's frozen Reality snapshot: `{"data_label": "Version v1.0, validated by … on …", "tiles": [{"figure": {figure}, "caption": "of cases follow the manual"}]}` (the same tiles, IDs and texts as the Glance view); `null` while the switch is off.
 Errors: `404` ("That version doesn't exist."); `409` "The leadership view shows a published map. Publish this draft first, then open Leadership." (a draft).
 
 ### PUT /api/versions/{vid}/leadership/decisions
@@ -589,7 +1048,7 @@ A report as returned by `GET /api/gap-analyses/{gid}`:
  "usage": {"calls", "input_tokens", "output_tokens"} | null, "search_count": 0}
 ```
 - `notes` (analysis): plain-language notes about the run, e.g. "The search limit was reached before the research finished, so this report may be incomplete." (a web search tool error, kept as a partial result) or "Left out as not a gap (the map already does this): “…”." `sources` and `brief` are for Analysis B (`[]` and `null` for A).
-A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice" | "external", "source_id", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote", "url", "tier", "page_age", "citation_id"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison": "absent" | "different" | null, "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "notes": [], "disposition" (B.25), "disposition_note", "created_item_ref", "gap_class" (B.32) | null, "stated_reason", "cause_type" (B.9) | null}`.
+A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "finding_type" (B.22 or B.23), "title", "text", "element_ids": [...], "elements": [{"id", "label"}], "evidence": [{"side": "documents" | "practice" | "external" | "system", "source_id", "source_kind", "source_name", "stance", "segment_id" | null, "anchor", "quote", "url", "tier", "page_age", "citation_id"}], "basis", "provenance": "O" | "I" | "R" | "", "severity": "high" | "medium" | "low" | null, "evidence_strength": "strong" | "weak" | "dated", "comparison": "absent" | "different" | null, "verification_status": "verified" | "rejected", "rejection_guardrail", "rejection_reason", "verifier_verdict": "supported" | "partial" | "not_supported" | "not_run", "needs_check", "question", "notes": [], "disposition" (B.25), "disposition_note", "created_item_ref", "gap_class" (B.32) | null, "stated_reason", "cause_type" (B.9) | null}`.
 - External evidence (Analysis B): `side` `external`, `source_kind` and `tier` the source tier (B.24), `source_name` the page title, `url`, `page_age`, `citation_id` (c1 …), and `quote` the cited text cut to at most 25 words. `url`, `tier`, `page_age` and `citation_id` are empty for internal evidence; `source_id` (the engagement's source, to open it in the viewer) is empty for external evidence.
 - Finding `notes`: plain-language flags, e.g. "A link to a step that isn't on this map was removed." (GX6) or "Confirm with your compliance team; this is not legal advice." (a legal or regulatory finding).
 - `findings`: kept findings in report order (facts, then interpretation, then recommendation; high severity first within a section). `rejected`: findings a guardrail or the verifier turned down, with the guardrail (`G3` passage, `G4` quote, `G5` number or role, `GAV` gap verifier); shown in a collapsible section, never as findings. `questions`: causes the sources don't explain (`question` holds the suggested SME question; `provenance` and `severity` empty) — they are dispositioned like findings.
@@ -605,7 +1064,15 @@ A finding: `{"id", "section": "fact" | "interpretation" | "recommendation", "fin
 3. **Checking every quote against your documents** (no AI): every evidence item must cite a passage it was given (G3) and quote it (G4); numbers and roles in a finding must be in its passages (G5); every step it names must be in the set (G3); it must have evidence from both sides — the documents and practice — where a side's silence (from the set) counts as that side's evidence; a pattern or likely cause (`interpretation`) needs a basis citing what the SMEs said (interview passages), else it is rejected (G3). Names are replaced by roles (G10).
 4. **Independent verification** (`GA_verify`, follows the verifier switch; `skipped` when it is off): sees each finding and its passages only; `not_supported` → rejected `GAV`; `partial` → kept with `needs_check`.
 5. **Writing the report** (no AI): severity by the §3.11.1 rules; provenance `O` for facts, `I` for interpretation and recommendation.
-With no step that differs, the report is empty and no AI call is made. If a stage fails, the analysis is `failed` with the job's plain error and no findings. The map is not changed.
+6. **System records** (no AI; R6, 2026-10-08; PRD §3.13.6, criterion 88): from every imported log of the engagement, using only the alignment rows Eric has **confirmed**, facts (`section: "fact"`, provenance `O`, `verifier_verdict: "not_run"`) of these B.22 types, each resting on at least 5 cases:
+   - `hidden_work`: an activity Eric confirmed as hidden work. `element_ids`: the matched step it most often directly follows, if any. Severity **High** when that step is a decision or approval, else **Medium**.
+   - `offline_work`: a step Eric confirmed as having no system record, when an interview describes it (source state other than `documented_only`). **Medium** on a decision or approval, else **Low**.
+   - `dead_control_candidate` (stronger evidence): a documented-only approval or decision Eric confirmed as having no system record. When Claude's findings already name the step as a dead-control candidate, the system evidence and a note are added to that finding; otherwise a new finding is made. **High**.
+   - `sequence_drift`: a step the system trace contradicts (R5b: the system records it before the step the map puts first). **High** on a decision or approval, else **Low**.
+   - `estimate_gap`: a stated time (each account's own words: the SME's and the documents' time texts, or the step's time) that differs from the measured median work of the step's main activity by more than 50%. Needs end times and a single minutes figure in the text. **Medium** on a decision or approval, else **Low**.
+   - `measured_rework`: the step's activities occur more than once in over 10% of cases. **Medium**.
+   System evidence: `{"side": "system", "source_id": <log ID>, "source_kind": "system_log", "source_name": <log name>, "stance": "supports" | "contradicts" | "silent", "segment_id": null, "anchor": "2026-03-02 to 2026-04-26" (the log's window, or ""), "quote": ""}` — figures, never a quote or a user ID; the figures are in the finding's text.
+With no step that differs and no system finding, the report is empty and no AI call is made. If a stage fails, the analysis is `failed` with the job's plain error and no findings. The map is not changed.
 Errors: `404` ("That version doesn't exist."); `409` "A gap analysis is already running for this version." (one of its analyses is queued or running).
 
 ### POST /api/versions/{vid}/gap-analyses/external
@@ -762,6 +1229,7 @@ And:
 - `raci[].sources`: the passages behind that RACI entry (for a contested `A?`, the competing sources and anchors).
 - `lane_role_name`, `phase_name`, `decider_role_name`: `""` when there is none.
 - `image_count`: images on the step that aren't discarded (images arrive in P8). `gap_findings`: see Gap analysis → Gap findings on a step (P10).
+- **Panel section 12, Discrepancies** (P13b, 2026-10-14; decision in DECISIONS.md): while the Reality views switch is on, the panel reads the step's X codes and the confirmed intent on it from the version's Reality snapshot (`GET /api/versions/{vid}/reality`: `codes` whose `element_ids` hold the step, and `intents` whose `step_keys` hold its key), fetched once per version and shared with the Reality screen, so the codes and figures are the same in both. The element response itself is unchanged.
 - Names on the hidden list are replaced by roles in every text, including quotes and file names.
 Errors: `404` ("That step doesn't exist."). Used by: Review detail panel (P5).
 
@@ -820,9 +1288,10 @@ The edit form (`PATCH`) follows the same rule: an AI flag with an automation bas
 ### POST /api/versions/{vid}/elements (phase P6)
 Add a missing step (Eric's own, never an AI claim).
 Request: `{"kind": "activity", "label": "Check fuel figures", "lane_role_id": "…", "after_element_id": "…", "provenance": "O", "segment_ids": ["…"], "r_reference": "", "mechanism": "judgment"}`.
+- **From hidden work (R8, 2026-10-08; PRD §5.6 Variants tab):** `"system_activity": {"log_id": "…", "activity": "Manual weight override"}` with provenance `O` stands in for `segment_ids` (passages may still be added). The activity must be one Eric confirmed as hidden work in an imported log of this engagement, recorded in at least 5 cases (`422`, field `system_activity`: "Choose an activity you confirmed as hidden work in one of this engagement's logs." · "That activity is recorded in fewer than 5 cases."). The step is created as below and, in the same change, the activity's alignment row becomes a confirmed match to the new step (by stable key), so the step's evidence is the system trace (`GET …/system-traces`); the audit row "Added step" names the log and activity.
 Response `201`: the element as `GET /api/elements/{eid}`, with `review_status: "added"` (locked).
 - **Placement:** the step goes after `after_element_id` (any step or the start, not the end). The first outgoing line of that step that stays on the main path (not `no`, `reject`, `rework` or `exception`) now points at the new step, and a `sequence` line runs from the new step to where that line used to go. Without such a line, a `sequence` line joins them. The new step takes that step's phase. The layout is worked out afresh on the next `GET …/layout`.
-- **Provenance:** `O` needs at least one passage (`segment_ids` from this engagement's sources; each becomes a verified "supports" evidence link) — "Pick the passage this step comes from."; `R` needs a reference (`r_reference`, 1–500 characters) — "Type the reference this recommended step comes from."; `I` is refused ("Choose Observed (with a passage) or Recommended (with a reference).").
+- **Provenance:** `O` needs at least one passage (`segment_ids` from this engagement's sources; each becomes a verified "supports" evidence link) — "Pick the passage this step comes from." — or a hidden-work activity (`system_activity`, R8); `R` needs a reference (`r_reference`, 1–500 characters) — "Type the reference this recommended step comes from."; `I` is refused ("Choose Observed (with a passage) or Recommended (with a reference).").
 - **RACI and decision rights:** the lane's role becomes Accountable (and Responsible for an activity; the decider for a decision or approval). `mechanism` (`rule_based` or `judgment`, default `judgment`) classifies a decision or approval (constraint 7). Everything else is added with Edit.
 - Field rules as `PATCH /api/elements/{eid}` (name, kind, lane, no hidden names). Source state `not_assessed` and no confidence: the step wasn't compared across sources. An audit row "Added step".
 Errors: `404` version or step; `409` published version; `422` naming the field (`after_element_id`, `segment_ids`, `r_reference`, …). Used by: Review Add step and "Add as step from this passage" (P6).
@@ -931,6 +1400,9 @@ The validation session pack as a Markdown file (`text/markdown; charset=utf-8`, 
 4. **Preserve / improve check**: the interviews' strengths ("Of these strengths, which must we keep?") and weaknesses ("Of these weaknesses, which matter most?") from the capability notes; if none, the two open questions instead.
 5. **Open validation questions**: the version's open questions, each with the step it is about.
 A footer: "Process Map Studio · <process> <version label> · enter the outcomes as edits on the Review screen". Errors: `404` ("That version doesn't exist."). Used by: Review screen, **Download validation pack** (C6).
+
+### GET /api/versions/{vid}/stories (P9u, 2026-10-07; PRD §3.12.2, §5.4 Registers "Stories", criterion 59)
+Every story fragment the interviews told on this map, in the order told, for the Registers **Stories** list: `[{"label", "fragment_type": B.31, "signifiers": [], "frequency", "single_account": true, "quote", "source_id", "segment_id", "anchor", "steps": [labels]}]` (the same fields as a step's stories in `GET /api/elements/{eid}`, plus the labels of the steps S3c linked it to; a story linked to no step is listed with `steps: []`). Kept when told once (§3.12.9 rule 2). Names hidden; quotes stay in the app (never exported verbatim). Read-only. Errors: `404`.
 
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).

@@ -74,7 +74,12 @@ export type ChoosableWorkType = Exclude<WorkType, "not_classified">;
 export const CHOOSABLE_WORK_TYPES: readonly ChoosableWorkType[] = ["clear", "complicated", "complex", "chaotic", "confused"];
 
 export type ViewMembership = "both" | "done_only" | "documented_only";
-export type SequenceBasis = "explicit_order" | "document_order" | "dependency" | "narration_order";
+export type SequenceBasis =
+  | "system_trace"
+  | "explicit_order"
+  | "document_order"
+  | "dependency"
+  | "narration_order";
 
 export interface GraphEdge {
   id: string;
@@ -227,6 +232,11 @@ export interface StoryCard {
   source_id: string;
   segment_id: string | null;
   anchor: string;
+}
+
+/** API_CONTRACT.md → GET /api/versions/{vid}/stories (P9u): a story with the steps it is about. */
+export interface StoryEntry extends StoryCard {
+  steps: string[];
 }
 
 /** API_CONTRACT.md → GET /api/versions/{vid}/capability-notes (Preserve · Improve). */

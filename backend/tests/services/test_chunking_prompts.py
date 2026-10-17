@@ -97,6 +97,7 @@ STAGES = [
     "GB_structure",
     "GB_verify",
     "R_repair",
+    "SR_align",
 ]
 # A prompt's version goes up whenever its wording changes (it is stored with every AI call).
 VERSIONS = {

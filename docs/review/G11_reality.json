@@ -1,0 +1,7095 @@
+{
+  "version_id": "id-1",
+  "rules_version": "1",
+  "copy_version": "3",
+  "layout_version": "4",
+  "app_version": "1.0.0",
+  "inputs_hash": "<inputs hash>",
+  "frozen": true,
+  "draft": false,
+  "process_name": "Load control",
+  "data_label": "Version v1.0, validated by Owner on 2026-09-28",
+  "evidence": {
+    "documents": 2,
+    "interviews": 2,
+    "cases": 200,
+    "text": "2 documents · 2 interviews · 200 cases"
+  },
+  "figures": {
+    "X1.hours": {
+      "id": "X1.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X1.delta": {
+      "id": "X1.delta",
+      "value": 100.0,
+      "unit": "pct",
+      "text": "never recorded; 100% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X2.hours": {
+      "id": "X2.hours",
+      "value": 24.2,
+      "unit": "h",
+      "text": "24 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X2.delta": {
+      "id": "X2.delta",
+      "value": 13.4,
+      "unit": "min",
+      "text": "wait 13 min median, 90th percentile 27",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X2.minutes": {
+      "id": "X2.minutes",
+      "value": 13.4,
+      "unit": "min",
+      "text": "+13 min a case",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X3.hours": {
+      "id": "X3.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X3.delta": {
+      "id": "X3.delta",
+      "value": -30.0,
+      "unit": "min",
+      "text": "target T-120 vs documented T-90",
+      "label": "target",
+      "percent_type": null
+    },
+    "X4.hours": {
+      "id": "X4.hours",
+      "value": 7.2,
+      "unit": "h",
+      "text": "7 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X4.delta": {
+      "id": "X4.delta",
+      "value": 20.0,
+      "unit": "pct",
+      "text": "rework in 20% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X4.minutes": {
+      "id": "X4.minutes",
+      "value": 4.0,
+      "unit": "min",
+      "text": "+4 min a case",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X5.hours": {
+      "id": "X5.hours",
+      "value": 1.0,
+      "unit": "h",
+      "text": "1 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X5.delta": {
+      "id": "X5.delta",
+      "value": 11.5,
+      "unit": "pct",
+      "text": "12% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X5.minutes": {
+      "id": "X5.minutes",
+      "value": 0.6,
+      "unit": "min",
+      "text": "+1 min a case",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X6.hours": {
+      "id": "X6.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X6.delta": {
+      "id": "X6.delta",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X6.minutes": {
+      "id": "X6.minutes",
+      "value": 40.0,
+      "unit": "min",
+      "text": "+40 min a case",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X7.hours": {
+      "id": "X7.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X7.delta": {
+      "id": "X7.delta",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X8.hours": {
+      "id": "X8.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X8.delta": {
+      "id": "X8.delta",
+      "value": null,
+      "unit": "",
+      "text": "Load control lead (documented) vs Captain (done)",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X9.hours": {
+      "id": "X9.hours",
+      "value": 0.0,
+      "unit": "h",
+      "text": "0 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X9.delta": {
+      "id": "X9.delta",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X9.minutes": {
+      "id": "X9.minutes",
+      "value": 15.0,
+      "unit": "min",
+      "text": "+15 min a case",
+      "label": "stated",
+      "percent_type": null
+    },
+    "rv1.documented_share": {
+      "id": "rv1.documented_share",
+      "value": 70.5,
+      "unit": "pct",
+      "text": "70%",
+      "label": "measured",
+      "percent_type": "variant_share"
+    },
+    "rv1.control_share": {
+      "id": "rv1.control_share",
+      "value": 100.0,
+      "unit": "pct",
+      "text": "100%",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "rv1.target_met": {
+      "id": "rv1.target_met",
+      "value": 21.0,
+      "unit": "pct",
+      "text": "21%",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "rv1.hours_beyond": {
+      "id": "rv1.hours_beyond",
+      "value": 6.1,
+      "unit": "h",
+      "text": "6 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv1.route.2": {
+      "id": "rv1.route.2",
+      "value": 18.0,
+      "unit": "pct",
+      "text": "18%",
+      "label": "measured",
+      "percent_type": "variant_share"
+    },
+    "rv1.route.3": {
+      "id": "rv1.route.3",
+      "value": 9.5,
+      "unit": "pct",
+      "text": "10%",
+      "label": "measured",
+      "percent_type": "variant_share"
+    },
+    "rv1.route.other": {
+      "id": "rv1.route.other",
+      "value": 2.0,
+      "unit": "pct",
+      "text": "2%",
+      "label": "measured",
+      "percent_type": "variant_share"
+    },
+    "rv2.documented.load-and-return-lir": {
+      "id": "rv2.documented.load-and-return-lir",
+      "value": 10.0,
+      "unit": "min",
+      "text": "10 min",
+      "label": "documented",
+      "percent_type": null
+    },
+    "rv2.done.draft-load-plan": {
+      "id": "rv2.done.draft-load-plan",
+      "value": 19.9,
+      "unit": "min",
+      "text": "20 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.done.special-loads-ok": {
+      "id": "rv2.done.special-loads-ok",
+      "value": 9.0,
+      "unit": "min",
+      "text": "9 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.done.resolve-or-offload": {
+      "id": "rv2.done.resolve-or-offload",
+      "value": 40.0,
+      "unit": "min",
+      "text": "40 min",
+      "label": "stated",
+      "percent_type": null
+    },
+    "rv2.done.load-and-return-lir": {
+      "id": "rv2.done.load-and-return-lir",
+      "value": 53.4,
+      "unit": "min",
+      "text": "53 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv2.done.deviation-in-limits": {
+      "id": "rv2.done.deviation-in-limits",
+      "value": 7.1,
+      "unit": "min",
+      "text": "7 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.done.approve-deviation": {
+      "id": "rv2.done.approve-deviation",
+      "value": 15.0,
+      "unit": "min",
+      "text": "15 min",
+      "label": "stated",
+      "percent_type": null
+    },
+    "rv2.done.issue-load-sheet": {
+      "id": "rv2.done.issue-load-sheet",
+      "value": 6.1,
+      "unit": "min",
+      "text": "6 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.minutes.id-2": {
+      "id": "rv2.minutes.id-2",
+      "value": 4.0,
+      "unit": "min",
+      "text": "+4 min a case",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.hours.id-2": {
+      "id": "rv2.hours.id-2",
+      "value": 7.2,
+      "unit": "h",
+      "text": "7 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.minutes.id-3": {
+      "id": "rv2.minutes.id-3",
+      "value": 53.4,
+      "unit": "min",
+      "text": "+53 min a case",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv2.hours.id-3": {
+      "id": "rv2.hours.id-3",
+      "value": 24.2,
+      "unit": "h",
+      "text": "24 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.minutes.id-4": {
+      "id": "rv2.minutes.id-4",
+      "value": 15.6,
+      "unit": "min",
+      "text": "+16 min a case",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv2.hours.id-4": {
+      "id": "rv2.hours.id-4",
+      "value": 1.0,
+      "unit": "h",
+      "text": "1 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv2.minutes.process": {
+      "id": "rv2.minutes.process",
+      "value": 73.0,
+      "unit": "min",
+      "text": "+73 min a case",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv2.hours.process": {
+      "id": "rv2.hours.process",
+      "value": 32.4,
+      "unit": "h",
+      "text": "32 h a month",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X1.D1": {
+      "id": "X1.D1",
+      "value": 100.0,
+      "unit": "pct",
+      "text": "never recorded; 100% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X1.D11": {
+      "id": "X1.D11",
+      "value": 100.0,
+      "unit": "pct",
+      "text": "Approve load plan: 100% of cases without a record",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X2.D8": {
+      "id": "X2.D8",
+      "value": 13.4,
+      "unit": "min",
+      "text": "wait 13 min median, 90th percentile 27",
+      "label": "measured",
+      "percent_type": null
+    },
+    "X4.D4": {
+      "id": "X4.D4",
+      "value": 20.0,
+      "unit": "pct",
+      "text": "rework in 20% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X5.D2": {
+      "id": "X5.D2",
+      "value": 11.5,
+      "unit": "pct",
+      "text": "12% of cases",
+      "label": "measured",
+      "percent_type": "incidence"
+    },
+    "X6.D2": {
+      "id": "X6.D2",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X7.D2": {
+      "id": "X7.D2",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X7.D6": {
+      "id": "X7.D6",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews; no system record; tool “sheet”",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X8.D12": {
+      "id": "X8.D12",
+      "value": null,
+      "unit": "",
+      "text": "Load control lead (documented) vs Captain (done)",
+      "label": "stated",
+      "percent_type": null
+    },
+    "X9.D2": {
+      "id": "X9.D2",
+      "value": 1.0,
+      "unit": "count",
+      "text": "described in 1 of 1 interviews",
+      "label": "stated",
+      "percent_type": null
+    },
+    "rv4.pill.draft-load-plan": {
+      "id": "rv4.pill.draft-load-plan",
+      "value": 4.0,
+      "unit": "min",
+      "text": "+4 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv4.pill.load-and-return-lir": {
+      "id": "rv4.pill.load-and-return-lir",
+      "value": 13.4,
+      "unit": "min",
+      "text": "+13 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv5.work.id-2": {
+      "id": "rv5.work.id-2",
+      "value": 19.9,
+      "unit": "min",
+      "text": "20 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv5.manual.id-3": {
+      "id": "rv5.manual.id-3",
+      "value": 10.0,
+      "unit": "min",
+      "text": "10 min",
+      "label": "documented",
+      "percent_type": null
+    },
+    "rv5.work.id-3": {
+      "id": "rv5.work.id-3",
+      "value": 86.0,
+      "unit": "min",
+      "text": "86 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv5.wait.id-3": {
+      "id": "rv5.wait.id-3",
+      "value": 16.4,
+      "unit": "min",
+      "text": "16 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv5.designed.id-3": {
+      "id": "rv5.designed.id-3",
+      "value": 10.0,
+      "unit": "min",
+      "text": "10 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv5.extra.id-3": {
+      "id": "rv5.extra.id-3",
+      "value": 76.0,
+      "unit": "min",
+      "text": "+76 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv5.work.id-4": {
+      "id": "rv5.work.id-4",
+      "value": 22.2,
+      "unit": "min",
+      "text": "22 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv5.wait.id-4": {
+      "id": "rv5.wait.id-4",
+      "value": 6.0,
+      "unit": "min",
+      "text": "6 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv5.manual_total": {
+      "id": "rv5.manual_total",
+      "value": 10.0,
+      "unit": "min",
+      "text": "10 min",
+      "label": "documented",
+      "percent_type": null
+    },
+    "rv5.practice_total": {
+      "id": "rv5.practice_total",
+      "value": 150.5,
+      "unit": "min",
+      "text": "150 min",
+      "label": "mixed",
+      "percent_type": null
+    },
+    "rv7.event.0": {
+      "id": "rv7.event.0",
+      "value": 0.0,
+      "unit": "min",
+      "text": "0 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.event.1": {
+      "id": "rv7.event.1",
+      "value": 24.9,
+      "unit": "min",
+      "text": "25 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.event.2": {
+      "id": "rv7.event.2",
+      "value": 33.7,
+      "unit": "min",
+      "text": "34 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.event.3": {
+      "id": "rv7.event.3",
+      "value": 90.1,
+      "unit": "min",
+      "text": "90 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.event.4": {
+      "id": "rv7.event.4",
+      "value": 111.8,
+      "unit": "min",
+      "text": "112 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.event.5": {
+      "id": "rv7.event.5",
+      "value": 119.2,
+      "unit": "min",
+      "text": "119 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.actual_finish": {
+      "id": "rv7.actual_finish",
+      "value": 121.0,
+      "unit": "min",
+      "text": "121 min",
+      "label": "measured",
+      "percent_type": null
+    },
+    "rv7.tools": {
+      "id": "rv7.tools",
+      "value": 1.0,
+      "unit": "count",
+      "text": "1 tool",
+      "label": "stated",
+      "percent_type": null
+    },
+    "rv7.missing": {
+      "id": "rv7.missing",
+      "value": 3.0,
+      "unit": "count",
+      "text": "3 steps",
+      "label": "stated",
+      "percent_type": null
+    }
+  },
+  "tiles": [
+    {
+      "figure": {
+        "id": "rv1.documented_share",
+        "value": 70.5,
+        "unit": "pct",
+        "text": "70%",
+        "label": "measured",
+        "percent_type": "variant_share"
+      },
+      "caption": "of cases follow the manual"
+    },
+    {
+      "figure": {
+        "id": "rv1.control_share",
+        "value": 100.0,
+        "unit": "pct",
+        "text": "100%",
+        "label": "measured",
+        "percent_type": "incidence"
+      },
+      "caption": "of cases without a record (X1)"
+    },
+    {
+      "figure": {
+        "id": "rv1.target_met",
+        "value": 21.0,
+        "unit": "pct",
+        "text": "21%",
+        "label": "measured",
+        "percent_type": "incidence"
+      },
+      "caption": "of cases meet a confirmed target"
+    },
+    {
+      "figure": {
+        "id": "rv1.hours_beyond",
+        "value": 6.1,
+        "unit": "h",
+        "text": "6 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "caption": "beyond the designed time"
+    }
+  ],
+  "columns": [
+    {
+      "id": "id-2",
+      "name": "Plan",
+      "kind": "phase",
+      "step_keys": [
+        "draft-load-plan",
+        "approve-load-plan"
+      ]
+    },
+    {
+      "id": "id-3",
+      "name": "Check and load",
+      "kind": "phase",
+      "step_keys": [
+        "special-loads-ok",
+        "resolve-or-offload",
+        "load-and-return-lir",
+        "busy-wave",
+        "read-report-at-aircraft"
+      ]
+    },
+    {
+      "id": "id-4",
+      "name": "Close out",
+      "kind": "phase",
+      "step_keys": [
+        "deviation-in-limits",
+        "approve-deviation",
+        "issue-load-sheet"
+      ]
+    },
+    {
+      "id": "process",
+      "name": "Whole process",
+      "kind": "process",
+      "step_keys": []
+    }
+  ],
+  "columns_note": "",
+  "codes": [
+    {
+      "code": "X1",
+      "item_id": "id-5",
+      "title": "Approve load plan",
+      "types": [
+        "D1",
+        "D11"
+      ],
+      "impact_class": "control_exposure",
+      "impact_word": "Control exposure",
+      "glyph": "triangle",
+      "impact_note": "potential control exposure, for the control owner to confirm",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "approve-load-plan"
+        ]
+      },
+      "element_ids": [
+        "id-6"
+      ],
+      "column_id": "id-2",
+      "delta": {
+        "id": "X1.delta",
+        "value": 100.0,
+        "unit": "pct",
+        "text": "never recorded; 100% of cases",
+        "label": "measured",
+        "percent_type": "incidence"
+      },
+      "minutes": null,
+      "hours": {
+        "id": "X1.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "correct",
+        "decided": null,
+        "shown": "correct",
+        "status": "suggested",
+        "reason": "The control objective is not met: restore the control or remove the cause.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 1,
+        "interviews": 0,
+        "system_cases": 200,
+        "chips": {
+          "documents": true,
+          "interviews": false,
+          "system": true
+        },
+        "sentence": "Evidence: 1 document, no interview, 200 system cases."
+      },
+      "control": true,
+      "shown": true,
+      "rank": 1
+    },
+    {
+      "code": "X2",
+      "item_id": "id-7",
+      "title": "Load and return LIR",
+      "types": [
+        "D8",
+        "D14"
+      ],
+      "impact_class": "time_impact",
+      "impact_word": "Time impact",
+      "glyph": "clock",
+      "impact_note": "",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "load-and-return-lir"
+        ]
+      },
+      "element_ids": [
+        "id-8"
+      ],
+      "column_id": "id-3",
+      "delta": {
+        "id": "X2.delta",
+        "value": 13.4,
+        "unit": "min",
+        "text": "wait 13 min median, 90th percentile 27",
+        "label": "measured",
+        "percent_type": null
+      },
+      "minutes": {
+        "id": "X2.minutes",
+        "value": 13.4,
+        "unit": "min",
+        "text": "+13 min a case",
+        "label": "measured",
+        "percent_type": null
+      },
+      "hours": {
+        "id": "X2.hours",
+        "value": 24.2,
+        "unit": "h",
+        "text": "24 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "correct",
+        "decided": null,
+        "shown": "correct",
+        "status": "suggested",
+        "reason": "Practice misses the target (10) while the documented way meets it.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 1,
+        "interviews": 1,
+        "system_cases": 200,
+        "chips": {
+          "documents": true,
+          "interviews": true,
+          "system": true
+        },
+        "sentence": "Evidence: 1 document, 1 interview, 200 system cases."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 2
+    },
+    {
+      "code": "X3",
+      "item_id": "id-9",
+      "title": "Draft load plan: design gap",
+      "types": [
+        "D13"
+      ],
+      "impact_class": "time_impact",
+      "impact_word": "Time impact",
+      "glyph": "clock",
+      "impact_note": "",
+      "location": {
+        "kind": "design",
+        "keys": [
+          "draft-load-plan"
+        ]
+      },
+      "element_ids": [
+        "id-10"
+      ],
+      "column_id": "id-2",
+      "delta": {
+        "id": "X3.delta",
+        "value": -30.0,
+        "unit": "min",
+        "text": "target T-120 vs documented T-90",
+        "label": "target",
+        "percent_type": null
+      },
+      "minutes": null,
+      "hours": {
+        "id": "X3.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "rewrite",
+        "decided": null,
+        "shown": "rewrite",
+        "status": "suggested",
+        "reason": "The manual itself misses the intent: the documented way can't meet it.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 1,
+        "interviews": 1,
+        "system_cases": null,
+        "chips": {
+          "documents": true,
+          "interviews": true,
+          "system": false
+        },
+        "sentence": "Evidence: 1 document, 1 interview, no system case."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 3
+    },
+    {
+      "code": "X4",
+      "item_id": "id-11",
+      "title": "Draft load plan",
+      "types": [
+        "D4"
+      ],
+      "impact_class": "capacity_drain",
+      "impact_word": "Capacity drain",
+      "glyph": "bars",
+      "impact_note": "",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "draft-load-plan"
+        ]
+      },
+      "element_ids": [
+        "id-10"
+      ],
+      "column_id": "id-2",
+      "delta": {
+        "id": "X4.delta",
+        "value": 20.0,
+        "unit": "pct",
+        "text": "rework in 20% of cases",
+        "label": "measured",
+        "percent_type": "incidence"
+      },
+      "minutes": {
+        "id": "X4.minutes",
+        "value": 4.0,
+        "unit": "min",
+        "text": "+4 min a case",
+        "label": "measured",
+        "percent_type": null
+      },
+      "hours": {
+        "id": "X4.hours",
+        "value": 7.2,
+        "unit": "h",
+        "text": "7 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "No case-level figure to compare with the target: ask the process owner, or add system records.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 1,
+        "interviews": 1,
+        "system_cases": 40,
+        "chips": {
+          "documents": true,
+          "interviews": true,
+          "system": true
+        },
+        "sentence": "Evidence: 1 document, 1 interview, 40 system cases."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 4
+    },
+    {
+      "code": "X5",
+      "item_id": "id-12",
+      "title": "Manual weight override",
+      "types": [
+        "D2"
+      ],
+      "impact_class": "workaround",
+      "impact_word": "Workaround",
+      "glyph": "dotted_square",
+      "impact_note": "",
+      "location": {
+        "kind": "activity",
+        "keys": [
+          "Manual weight override"
+        ]
+      },
+      "element_ids": [],
+      "column_id": "id-4",
+      "delta": {
+        "id": "X5.delta",
+        "value": 11.5,
+        "unit": "pct",
+        "text": "12% of cases",
+        "label": "measured",
+        "percent_type": "incidence"
+      },
+      "minutes": {
+        "id": "X5.minutes",
+        "value": 0.6,
+        "unit": "min",
+        "text": "+1 min a case",
+        "label": "measured",
+        "percent_type": null
+      },
+      "hours": {
+        "id": "X5.hours",
+        "value": 1.0,
+        "unit": "h",
+        "text": "1 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "No confirmed intent covers it: ask the process owner which way is intended.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 0,
+        "interviews": 0,
+        "system_cases": 23,
+        "chips": {
+          "documents": false,
+          "interviews": false,
+          "system": true
+        },
+        "sentence": "Evidence: no document, no interview, 23 system cases."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 5
+    },
+    {
+      "code": "X6",
+      "item_id": "id-13",
+      "title": "Resolve or offload",
+      "types": [
+        "D2"
+      ],
+      "impact_class": "workaround",
+      "impact_word": "Workaround",
+      "glyph": "dotted_square",
+      "impact_note": "",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "resolve-or-offload"
+        ]
+      },
+      "element_ids": [
+        "id-14"
+      ],
+      "column_id": "id-3",
+      "delta": {
+        "id": "X6.delta",
+        "value": 1.0,
+        "unit": "count",
+        "text": "described in 1 of 1 interviews",
+        "label": "stated",
+        "percent_type": null
+      },
+      "minutes": {
+        "id": "X6.minutes",
+        "value": 40.0,
+        "unit": "min",
+        "text": "+40 min a case",
+        "label": "stated",
+        "percent_type": null
+      },
+      "hours": {
+        "id": "X6.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "No confirmed intent covers it: ask the process owner which way is intended.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 0,
+        "interviews": 1,
+        "system_cases": null,
+        "chips": {
+          "documents": false,
+          "interviews": true,
+          "system": false
+        },
+        "sentence": "Evidence: no document, 1 interview, no system case."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 6
+    },
+    {
+      "code": "X7",
+      "item_id": "id-15",
+      "title": "Busy wave? → Read report at aircraft",
+      "types": [
+        "D2",
+        "D6"
+      ],
+      "impact_class": "workaround",
+      "impact_word": "Workaround",
+      "glyph": "dotted_square",
+      "impact_note": "",
+      "location": {
+        "kind": "run",
+        "keys": [
+          "busy-wave",
+          "read-report-at-aircraft"
+        ]
+      },
+      "element_ids": [
+        "id-16",
+        "id-17"
+      ],
+      "column_id": "id-3",
+      "delta": {
+        "id": "X7.delta",
+        "value": 1.0,
+        "unit": "count",
+        "text": "described in 1 of 1 interviews",
+        "label": "stated",
+        "percent_type": null
+      },
+      "minutes": null,
+      "hours": {
+        "id": "X7.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "The SME's stated reason suggests codify; confirm the gap class.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 0,
+        "interviews": 1,
+        "system_cases": null,
+        "chips": {
+          "documents": false,
+          "interviews": true,
+          "system": false
+        },
+        "sentence": "Evidence: no document, 1 interview, no system case."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 7
+    },
+    {
+      "code": "X8",
+      "item_id": "id-18",
+      "title": "Deviation in limits?",
+      "types": [
+        "D12"
+      ],
+      "impact_class": "workaround",
+      "impact_word": "Workaround",
+      "glyph": "dotted_square",
+      "impact_note": "",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "deviation-in-limits"
+        ]
+      },
+      "element_ids": [
+        "id-19"
+      ],
+      "column_id": "id-4",
+      "delta": {
+        "id": "X8.delta",
+        "value": null,
+        "unit": "",
+        "text": "Load control lead (documented) vs Captain (done)",
+        "label": "stated",
+        "percent_type": null
+      },
+      "minutes": null,
+      "hours": {
+        "id": "X8.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "Not enough evidence to say where the fix lies: ask the process owner.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 1,
+        "interviews": 1,
+        "system_cases": null,
+        "chips": {
+          "documents": true,
+          "interviews": true,
+          "system": false
+        },
+        "sentence": "Evidence: 1 document, 1 interview, no system case."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 8
+    },
+    {
+      "code": "X9",
+      "item_id": "id-20",
+      "title": "Approve deviation",
+      "types": [
+        "D2"
+      ],
+      "impact_class": "workaround",
+      "impact_word": "Workaround",
+      "glyph": "dotted_square",
+      "impact_note": "",
+      "location": {
+        "kind": "step",
+        "keys": [
+          "approve-deviation"
+        ]
+      },
+      "element_ids": [
+        "id-21"
+      ],
+      "column_id": "id-4",
+      "delta": {
+        "id": "X9.delta",
+        "value": 1.0,
+        "unit": "count",
+        "text": "described in 1 of 1 interviews",
+        "label": "stated",
+        "percent_type": null
+      },
+      "minutes": {
+        "id": "X9.minutes",
+        "value": 15.0,
+        "unit": "min",
+        "text": "+15 min a case",
+        "label": "stated",
+        "percent_type": null
+      },
+      "hours": {
+        "id": "X9.hours",
+        "value": 0.0,
+        "unit": "h",
+        "text": "0 h a month",
+        "label": "measured",
+        "percent_type": null
+      },
+      "verdict": {
+        "suggested": "ask",
+        "decided": null,
+        "shown": "ask",
+        "status": "suggested",
+        "reason": "No confirmed intent covers it: ask the process owner which way is intended.",
+        "note": ""
+      },
+      "evidence": {
+        "documents": 0,
+        "interviews": 1,
+        "system_cases": null,
+        "chips": {
+          "documents": false,
+          "interviews": true,
+          "system": false
+        },
+        "sentence": "Evidence: no document, 1 interview, no system case."
+      },
+      "control": false,
+      "shown": true,
+      "rank": 9
+    }
+  ],
+  "intents": [
+    {
+      "id": "id-22",
+      "kind": "target",
+      "text": "Preliminary load plans are ready by T-120.",
+      "scope": "step",
+      "step_keys": [
+        "draft-load-plan"
+      ],
+      "result": "met",
+      "target": "target at least 120 minutes before"
+    },
+    {
+      "id": "id-23",
+      "kind": "control_objective",
+      "text": "Every load plan is approved before release to Ramp.",
+      "scope": "step",
+      "step_keys": [
+        "approve-load-plan"
+      ],
+      "result": "not_met",
+      "target": ""
+    },
+    {
+      "id": "id-24",
+      "kind": "target",
+      "text": "The loading report reaches Load Control within 10 minutes of loading completion.",
+      "scope": "step",
+      "step_keys": [
+        "load-and-return-lir"
+      ],
+      "result": "not_met",
+      "target": "target at most 10 min"
+    },
+    {
+      "id": "id-25",
+      "kind": "promise",
+      "text": "Load sheets are issued without delaying the departure slot.",
+      "scope": "process",
+      "step_keys": [],
+      "result": "unknown",
+      "target": ""
+    },
+    {
+      "id": "id-26",
+      "kind": "policy_rule",
+      "text": "Weight deviations outside tolerance are decided by the Load control lead.",
+      "scope": "step",
+      "step_keys": [
+        "deviation-in-limits"
+      ],
+      "result": "unknown",
+      "target": ""
+    }
+  ],
+  "views": {
+    "rv1": {
+      "id": "rv1",
+      "title": "How different is real Load control from the manual?",
+      "headline": "Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan.",
+      "callouts": [
+        {
+          "code": "X1",
+          "impact_class": "control_exposure",
+          "lines": [
+            "X1 Approve load plan (never recorded; 100% of cases).",
+            "Potential control exposure, for the control owner to confirm."
+          ]
+        },
+        {
+          "code": "X2",
+          "impact_class": "time_impact",
+          "lines": [
+            "X2 Load and return LIR (wait 13 min median, 90th percentile 27).",
+            "+13 min a case; 24 h a month."
+          ]
+        },
+        {
+          "code": "X3",
+          "impact_class": "time_impact",
+          "lines": [
+            "X3 Draft load plan: design gap (target T-120 vs documented T-90)."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "ready",
+        "message": "",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Route",
+          "Share of cases",
+          "Label",
+          "Codes"
+        ],
+        "rows": [
+          [
+            "As documented",
+            "70%",
+            "measured",
+            ""
+          ],
+          [
+            "Repeats Draft load plan",
+            "18%",
+            "measured",
+            "X4"
+          ],
+          [
+            "Adds Manual weight override",
+            "10%",
+            "measured",
+            "X5"
+          ],
+          [
+            "Other: 1 rarer route",
+            "2%",
+            "measured",
+            ""
+          ]
+        ]
+      },
+      "glance": {
+        "basis": "cases",
+        "routes": [
+          {
+            "id": "documented",
+            "name": "As documented",
+            "documented": true,
+            "share": {
+              "id": "rv1.documented_share",
+              "value": 70.5,
+              "unit": "pct",
+              "text": "70%",
+              "label": "measured",
+              "percent_type": "variant_share"
+            },
+            "codes": [],
+            "impact_class": null,
+            "other_count": 0
+          },
+          {
+            "id": "route-2",
+            "name": "Repeats Draft load plan",
+            "documented": false,
+            "share": {
+              "id": "rv1.route.2",
+              "value": 18.0,
+              "unit": "pct",
+              "text": "18%",
+              "label": "measured",
+              "percent_type": "variant_share"
+            },
+            "codes": [
+              "X4"
+            ],
+            "impact_class": "capacity_drain",
+            "other_count": 0
+          },
+          {
+            "id": "route-3",
+            "name": "Adds Manual weight override",
+            "documented": false,
+            "share": {
+              "id": "rv1.route.3",
+              "value": 9.5,
+              "unit": "pct",
+              "text": "10%",
+              "label": "measured",
+              "percent_type": "variant_share"
+            },
+            "codes": [
+              "X5"
+            ],
+            "impact_class": "workaround",
+            "other_count": 0
+          },
+          {
+            "id": "other",
+            "name": "Other: 1 rarer route",
+            "documented": false,
+            "share": {
+              "id": "rv1.route.other",
+              "value": 2.0,
+              "unit": "pct",
+              "text": "2%",
+              "label": "measured",
+              "percent_type": "variant_share"
+            },
+            "codes": [],
+            "impact_class": null,
+            "other_count": 1
+          }
+        ]
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 376.0,
+        "trunk": {
+          "x1": 80.0,
+          "x2": 560.0,
+          "y": 188.0,
+          "width": 27.0
+        },
+        "ribbons": [
+          {
+            "route_id": "documented",
+            "path": "M560 183.7 C 800 183.7, 860 80.0, 1120 80.0",
+            "width": 18.3,
+            "style": "solid",
+            "label_x": 1140.0,
+            "label_y": 80.0
+          },
+          {
+            "route_id": "route-2",
+            "path": "M560 195.2 C 800 195.2, 860 152.0, 1120 152.0",
+            "width": 4.7,
+            "style": "dashed",
+            "label_x": 1140.0,
+            "label_y": 152.0
+          },
+          {
+            "route_id": "route-3",
+            "path": "M560 198.8 C 800 198.8, 860 224.0, 1120 224.0",
+            "width": 2.5,
+            "style": "dashed",
+            "label_x": 1140.0,
+            "label_y": 224.0
+          },
+          {
+            "route_id": "other",
+            "path": "M560 200.8 C 800 200.8, 860 296.0, 1120 296.0",
+            "width": 1.5,
+            "style": "dotted",
+            "label_x": 1140.0,
+            "label_y": 296.0
+          }
+        ],
+        "scale_note": "Line width = share of cases (26 px = 100%)"
+      }
+    },
+    "rv2": {
+      "id": "rv2",
+      "title": "Where does reality break away from the manual, and what does it cost?",
+      "headline": "Check and load is the hotspot: 53 extra minutes a case and 24 hours a month.",
+      "callouts": [
+        {
+          "code": "X1",
+          "impact_class": "control_exposure",
+          "lines": [
+            "X1 Approve load plan (never recorded; 100% of cases).",
+            "Potential control exposure, for the control owner to confirm."
+          ]
+        },
+        {
+          "code": "X2",
+          "impact_class": "time_impact",
+          "lines": [
+            "X2 Load and return LIR (wait 13 min median, 90th percentile 27).",
+            "+13 min a case; 24 h a month."
+          ]
+        },
+        {
+          "code": "X3",
+          "impact_class": "time_impact",
+          "lines": [
+            "X3 Draft load plan: design gap (target T-120 vs documented T-90)."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "ready",
+        "message": "",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Band",
+          "Plan",
+          "Check and load",
+          "Close out",
+          "Whole process"
+        ],
+        "rows": [
+          [
+            "What we promise",
+            "Preliminary load plans are ready by T-120.: met, target at least 120 minutes before; Every load plan is approved before release to Ramp.: not met",
+            "The loading report reaches Load Control within 10 minutes of loading completion.: not met, target at most 10 min",
+            "Weight deviations outside tolerance are decided by the Load control lead.: not known yet",
+            "Load sheets are issued without delaying the departure slot.: not known yet"
+          ],
+          [
+            "What experts believe",
+            "No official account states a time for a step.",
+            "No official account states a time for a step.",
+            "No official account states a time for a step.",
+            "No official account states a time for a step."
+          ],
+          [
+            "What the manual says",
+            "Draft load plan: No time stated; Approve load plan: No time stated; X3 Draft load plan: design gap: target T-120 vs documented T-90 (target)",
+            "Special loads OK?: No time stated; Load and return LIR: 10 min (documented)",
+            "Deviation in limits?: No time stated; Issue load sheet: No time stated",
+            ""
+          ],
+          [
+            "What actually happens",
+            "Draft load plan: 20 min (measured); X1 Approve load plan: never recorded; 100% of cases (measured); X4 Draft load plan: rework in 20% of cases (measured)",
+            "Special loads OK?: 9 min (measured); Resolve or offload: 40 min (stated), added in practice; Load and return LIR: 53 min (mixed); Busy wave?: added in practice; Read report at aircraft: added in practice; X2 Load and return LIR: wait 13 min median, 90th percentile 27 (measured)",
+            "Deviation in limits?: 7 min (measured); Approve deviation: 15 min (stated), added in practice; Issue load sheet: 6 min (measured); X5 Manual weight override: 12% of cases (measured)",
+            ""
+          ],
+          [
+            "What it costs",
+            "Extra minutes a case: +4 min a case (measured); Hours a month: 7 h a month (measured)",
+            "Extra minutes a case: +53 min a case (mixed); Hours a month: 24 h a month (measured)",
+            "Extra minutes a case: +16 min a case (mixed); Hours a month: 1 h a month (measured)",
+            "Extra minutes a case: +73 min a case (mixed); Hours a month: 32 h a month (measured)"
+          ]
+        ]
+      },
+      "stack": {
+        "bands": [
+          {
+            "id": "promise",
+            "name": "What we promise",
+            "evidence": "5 confirmed statements",
+            "state": "ready",
+            "message": "",
+            "cells": [
+              {
+                "column_id": "id-2",
+                "items": [
+                  {
+                    "kind": "intent",
+                    "key": "id-22",
+                    "label": "Preliminary load plans are ready by T-120.",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": "met",
+                    "note": "target at least 120 minutes before"
+                  },
+                  {
+                    "kind": "intent",
+                    "key": "id-23",
+                    "label": "Every load plan is approved before release to Ramp.",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": "not_met",
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "id-3",
+                "items": [
+                  {
+                    "kind": "intent",
+                    "key": "id-24",
+                    "label": "The loading report reaches Load Control within 10 minutes of loading completion.",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": "not_met",
+                    "note": "target at most 10 min"
+                  }
+                ]
+              },
+              {
+                "column_id": "id-4",
+                "items": [
+                  {
+                    "kind": "intent",
+                    "key": "id-26",
+                    "label": "Weight deviations outside tolerance are decided by the Load control lead.",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": "unknown",
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "process",
+                "items": [
+                  {
+                    "kind": "intent",
+                    "key": "id-25",
+                    "label": "Load sheets are issued without delaying the departure slot.",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": "unknown",
+                    "note": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "belief",
+            "name": "What experts believe",
+            "evidence": "0 of 2 interviews state a time",
+            "state": "missing",
+            "message": "No official account states a time for a step.",
+            "cells": [
+              {
+                "column_id": "id-2",
+                "items": []
+              },
+              {
+                "column_id": "id-3",
+                "items": []
+              },
+              {
+                "column_id": "id-4",
+                "items": []
+              },
+              {
+                "column_id": "process",
+                "items": []
+              }
+            ]
+          },
+          {
+            "id": "documented",
+            "name": "What the manual says",
+            "evidence": "2 documents",
+            "state": "ready",
+            "message": "",
+            "cells": [
+              {
+                "column_id": "id-2",
+                "items": [
+                  {
+                    "kind": "documented_step",
+                    "key": "draft-load-plan",
+                    "label": "Draft load plan",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "No time stated"
+                  },
+                  {
+                    "kind": "documented_step",
+                    "key": "approve-load-plan",
+                    "label": "Approve load plan",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "No time stated"
+                  },
+                  {
+                    "kind": "branch",
+                    "key": null,
+                    "label": "Draft load plan: design gap",
+                    "figure": {
+                      "id": "X3.delta",
+                      "value": -30.0,
+                      "unit": "min",
+                      "text": "target T-120 vs documented T-90",
+                      "label": "target",
+                      "percent_type": null
+                    },
+                    "code": "X3",
+                    "impact_class": "time_impact",
+                    "result": null,
+                    "note": "target T-120 vs documented T-90"
+                  }
+                ]
+              },
+              {
+                "column_id": "id-3",
+                "items": [
+                  {
+                    "kind": "documented_step",
+                    "key": "special-loads-ok",
+                    "label": "Special loads OK?",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "No time stated"
+                  },
+                  {
+                    "kind": "documented_step",
+                    "key": "load-and-return-lir",
+                    "label": "Load and return LIR",
+                    "figure": {
+                      "id": "rv2.documented.load-and-return-lir",
+                      "value": 10.0,
+                      "unit": "min",
+                      "text": "10 min",
+                      "label": "documented",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "id-4",
+                "items": [
+                  {
+                    "kind": "documented_step",
+                    "key": "deviation-in-limits",
+                    "label": "Deviation in limits?",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "No time stated"
+                  },
+                  {
+                    "kind": "documented_step",
+                    "key": "issue-load-sheet",
+                    "label": "Issue load sheet",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "No time stated"
+                  }
+                ]
+              },
+              {
+                "column_id": "process",
+                "items": []
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "name": "What actually happens",
+            "evidence": "2 interviews · 200 cases",
+            "state": "ready",
+            "message": "",
+            "cells": [
+              {
+                "column_id": "id-2",
+                "items": [
+                  {
+                    "kind": "done_step",
+                    "key": "draft-load-plan",
+                    "label": "Draft load plan",
+                    "figure": {
+                      "id": "rv2.done.draft-load-plan",
+                      "value": 19.9,
+                      "unit": "min",
+                      "text": "20 min",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "branch",
+                    "key": null,
+                    "label": "Approve load plan",
+                    "figure": {
+                      "id": "X1.delta",
+                      "value": 100.0,
+                      "unit": "pct",
+                      "text": "never recorded; 100% of cases",
+                      "label": "measured",
+                      "percent_type": "incidence"
+                    },
+                    "code": "X1",
+                    "impact_class": "control_exposure",
+                    "result": null,
+                    "note": "never recorded; 100% of cases"
+                  },
+                  {
+                    "kind": "branch",
+                    "key": null,
+                    "label": "Draft load plan",
+                    "figure": {
+                      "id": "X4.delta",
+                      "value": 20.0,
+                      "unit": "pct",
+                      "text": "rework in 20% of cases",
+                      "label": "measured",
+                      "percent_type": "incidence"
+                    },
+                    "code": "X4",
+                    "impact_class": "capacity_drain",
+                    "result": null,
+                    "note": "rework in 20% of cases"
+                  }
+                ]
+              },
+              {
+                "column_id": "id-3",
+                "items": [
+                  {
+                    "kind": "done_step",
+                    "key": "special-loads-ok",
+                    "label": "Special loads OK?",
+                    "figure": {
+                      "id": "rv2.done.special-loads-ok",
+                      "value": 9.0,
+                      "unit": "min",
+                      "text": "9 min",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "resolve-or-offload",
+                    "label": "Resolve or offload",
+                    "figure": {
+                      "id": "rv2.done.resolve-or-offload",
+                      "value": 40.0,
+                      "unit": "min",
+                      "text": "40 min",
+                      "label": "stated",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "added in practice"
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "load-and-return-lir",
+                    "label": "Load and return LIR",
+                    "figure": {
+                      "id": "rv2.done.load-and-return-lir",
+                      "value": 53.4,
+                      "unit": "min",
+                      "text": "53 min",
+                      "label": "mixed",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "busy-wave",
+                    "label": "Busy wave?",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "added in practice"
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "read-report-at-aircraft",
+                    "label": "Read report at aircraft",
+                    "figure": null,
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "added in practice"
+                  },
+                  {
+                    "kind": "branch",
+                    "key": null,
+                    "label": "Load and return LIR",
+                    "figure": {
+                      "id": "X2.delta",
+                      "value": 13.4,
+                      "unit": "min",
+                      "text": "wait 13 min median, 90th percentile 27",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": "X2",
+                    "impact_class": "time_impact",
+                    "result": null,
+                    "note": "wait 13 min median, 90th percentile 27"
+                  }
+                ]
+              },
+              {
+                "column_id": "id-4",
+                "items": [
+                  {
+                    "kind": "done_step",
+                    "key": "deviation-in-limits",
+                    "label": "Deviation in limits?",
+                    "figure": {
+                      "id": "rv2.done.deviation-in-limits",
+                      "value": 7.1,
+                      "unit": "min",
+                      "text": "7 min",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "approve-deviation",
+                    "label": "Approve deviation",
+                    "figure": {
+                      "id": "rv2.done.approve-deviation",
+                      "value": 15.0,
+                      "unit": "min",
+                      "text": "15 min",
+                      "label": "stated",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": "added in practice"
+                  },
+                  {
+                    "kind": "done_step",
+                    "key": "issue-load-sheet",
+                    "label": "Issue load sheet",
+                    "figure": {
+                      "id": "rv2.done.issue-load-sheet",
+                      "value": 6.1,
+                      "unit": "min",
+                      "text": "6 min",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "branch",
+                    "key": null,
+                    "label": "Manual weight override",
+                    "figure": {
+                      "id": "X5.delta",
+                      "value": 11.5,
+                      "unit": "pct",
+                      "text": "12% of cases",
+                      "label": "measured",
+                      "percent_type": "incidence"
+                    },
+                    "code": "X5",
+                    "impact_class": "workaround",
+                    "result": null,
+                    "note": "12% of cases"
+                  }
+                ]
+              },
+              {
+                "column_id": "process",
+                "items": []
+              }
+            ]
+          },
+          {
+            "id": "consequence",
+            "name": "What it costs",
+            "evidence": "measured from 200 cases",
+            "state": "ready",
+            "message": "",
+            "cells": [
+              {
+                "column_id": "id-2",
+                "items": [
+                  {
+                    "kind": "minutes",
+                    "key": null,
+                    "label": "Extra minutes a case",
+                    "figure": {
+                      "id": "rv2.minutes.id-2",
+                      "value": 4.0,
+                      "unit": "min",
+                      "text": "+4 min a case",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "hours",
+                    "key": null,
+                    "label": "Hours a month",
+                    "figure": {
+                      "id": "rv2.hours.id-2",
+                      "value": 7.2,
+                      "unit": "h",
+                      "text": "7 h a month",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "id-3",
+                "items": [
+                  {
+                    "kind": "minutes",
+                    "key": null,
+                    "label": "Extra minutes a case",
+                    "figure": {
+                      "id": "rv2.minutes.id-3",
+                      "value": 53.4,
+                      "unit": "min",
+                      "text": "+53 min a case",
+                      "label": "mixed",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "hours",
+                    "key": null,
+                    "label": "Hours a month",
+                    "figure": {
+                      "id": "rv2.hours.id-3",
+                      "value": 24.2,
+                      "unit": "h",
+                      "text": "24 h a month",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "id-4",
+                "items": [
+                  {
+                    "kind": "minutes",
+                    "key": null,
+                    "label": "Extra minutes a case",
+                    "figure": {
+                      "id": "rv2.minutes.id-4",
+                      "value": 15.6,
+                      "unit": "min",
+                      "text": "+16 min a case",
+                      "label": "mixed",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "hours",
+                    "key": null,
+                    "label": "Hours a month",
+                    "figure": {
+                      "id": "rv2.hours.id-4",
+                      "value": 1.0,
+                      "unit": "h",
+                      "text": "1 h a month",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  }
+                ]
+              },
+              {
+                "column_id": "process",
+                "items": [
+                  {
+                    "kind": "minutes",
+                    "key": null,
+                    "label": "Extra minutes a case",
+                    "figure": {
+                      "id": "rv2.minutes.process",
+                      "value": 73.0,
+                      "unit": "min",
+                      "text": "+73 min a case",
+                      "label": "mixed",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  },
+                  {
+                    "kind": "hours",
+                    "key": null,
+                    "label": "Hours a month",
+                    "figure": {
+                      "id": "rv2.hours.process",
+                      "value": 32.4,
+                      "unit": "h",
+                      "text": "32 h a month",
+                      "label": "measured",
+                      "percent_type": null
+                    },
+                    "code": null,
+                    "impact_class": null,
+                    "result": null,
+                    "note": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "lens": {
+          "column_id": "id-3",
+          "label": "Largest loss: Check and load"
+        },
+        "highlighted": [
+          "X1",
+          "X2",
+          "X3",
+          "X4",
+          "X5"
+        ],
+        "listed": [
+          "X6",
+          "X7",
+          "X8",
+          "X9"
+        ]
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 848.0,
+        "columns": [
+          {
+            "id": "id-2",
+            "x": 210.0,
+            "y": 0.0,
+            "width": 394.7,
+            "height": 848.0
+          },
+          {
+            "id": "id-3",
+            "x": 604.7,
+            "y": 0.0,
+            "width": 394.7,
+            "height": 848.0
+          },
+          {
+            "id": "id-4",
+            "x": 999.3,
+            "y": 0.0,
+            "width": 394.7,
+            "height": 848.0
+          },
+          {
+            "id": "process",
+            "x": 1394.0,
+            "y": 0.0,
+            "width": 190.0,
+            "height": 848.0
+          }
+        ],
+        "bands": [
+          {
+            "id": "promise",
+            "x": 0.0,
+            "y": 52.0,
+            "width": 1600.0,
+            "height": 88.0
+          },
+          {
+            "id": "belief",
+            "x": 0.0,
+            "y": 152.0,
+            "width": 1600.0,
+            "height": 96.0
+          },
+          {
+            "id": "documented",
+            "x": 0.0,
+            "y": 260.0,
+            "width": 1600.0,
+            "height": 148.0
+          },
+          {
+            "id": "done",
+            "x": 0.0,
+            "y": 420.0,
+            "width": 1600.0,
+            "height": 280.0
+          },
+          {
+            "id": "consequence",
+            "x": 0.0,
+            "y": 712.0,
+            "width": 1600.0,
+            "height": 72.0
+          }
+        ],
+        "marks": [
+          {
+            "kind": "intent",
+            "band_id": "promise",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 60.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Preliminary load plans are ready by T-120.",
+              "target at least 120 minutes before"
+            ],
+            "code": null,
+            "key": "id-22",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "intent",
+            "band_id": "promise",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 104.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "Every load plan is approved before release to Ramp."
+            ],
+            "code": null,
+            "key": "id-23",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "intent",
+            "band_id": "promise",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 60.0,
+            "width": 386.7,
+            "height": 56.0,
+            "lines": [
+              "The loading report reaches Load Control within 10",
+              "minutes of loading completion.",
+              "target at most 10 min"
+            ],
+            "code": null,
+            "key": "id-24",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "intent",
+            "band_id": "promise",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 60.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Weight deviations outside tolerance are decided by",
+              "the Load control lead."
+            ],
+            "code": null,
+            "key": "id-26",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "intent",
+            "band_id": "promise",
+            "column_id": "process",
+            "x": 1398.0,
+            "y": 60.0,
+            "width": 182.0,
+            "height": 40.0,
+            "lines": [
+              "Load sheets are issued",
+              "without delaying the…"
+            ],
+            "code": null,
+            "key": "id-25",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 268.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Draft load plan",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 312.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Approve load plan",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "approve-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "branch",
+            "band_id": "documented",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 356.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "X3 Draft load plan: design gap",
+              "target T-120 vs documented T-90"
+            ],
+            "code": "X3",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 268.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Special loads OK?",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 312.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Load and return LIR",
+              "10 min"
+            ],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 268.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Deviation in limits?",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "documented_step",
+            "band_id": "documented",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 312.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Issue load sheet",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 428.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Draft load plan",
+              "20 min"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "branch",
+            "band_id": "done",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 472.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "X1 Approve load plan",
+              "never recorded; 100% of cases"
+            ],
+            "code": "X1",
+            "key": null,
+            "impact_class": "control_exposure",
+            "style": "solid"
+          },
+          {
+            "kind": "branch",
+            "band_id": "done",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 516.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "X4 Draft load plan",
+              "rework in 20% of cases"
+            ],
+            "code": "X4",
+            "key": null,
+            "impact_class": "capacity_drain",
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 428.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Special loads OK?",
+              "9 min"
+            ],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 472.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Resolve or offload",
+              "40 min · added in practice"
+            ],
+            "code": null,
+            "key": "resolve-or-offload",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 516.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Load and return LIR",
+              "53 min"
+            ],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 560.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Busy wave?",
+              "added in practice"
+            ],
+            "code": null,
+            "key": "busy-wave",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 604.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Read report at aircraft",
+              "added in practice"
+            ],
+            "code": null,
+            "key": "read-report-at-aircraft",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "branch",
+            "band_id": "done",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 648.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "X2 Load and return LIR",
+              "wait 13 min median, 90th percentile 27"
+            ],
+            "code": "X2",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 428.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Deviation in limits?",
+              "7 min"
+            ],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 472.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Approve deviation",
+              "15 min · added in practice"
+            ],
+            "code": null,
+            "key": "approve-deviation",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "done_step",
+            "band_id": "done",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 516.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "Issue load sheet",
+              "6 min"
+            ],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "branch",
+            "band_id": "done",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 560.0,
+            "width": 386.7,
+            "height": 40.0,
+            "lines": [
+              "X5 Manual weight override",
+              "12% of cases"
+            ],
+            "code": "X5",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "minutes",
+            "band_id": "consequence",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 720.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "+4 min a case"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "hours",
+            "band_id": "consequence",
+            "column_id": "id-2",
+            "x": 214.0,
+            "y": 748.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "7 h a month"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "minutes",
+            "band_id": "consequence",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 720.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "+53 min a case"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "hours",
+            "band_id": "consequence",
+            "column_id": "id-3",
+            "x": 608.7,
+            "y": 748.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "24 h a month"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "minutes",
+            "band_id": "consequence",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 720.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "+16 min a case"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "hours",
+            "band_id": "consequence",
+            "column_id": "id-4",
+            "x": 1003.3,
+            "y": 748.0,
+            "width": 386.7,
+            "height": 24.0,
+            "lines": [
+              "1 h a month"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "minutes",
+            "band_id": "consequence",
+            "column_id": "process",
+            "x": 1398.0,
+            "y": 720.0,
+            "width": 182.0,
+            "height": 24.0,
+            "lines": [
+              "+73 min a case"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "hours",
+            "band_id": "consequence",
+            "column_id": "process",
+            "x": 1398.0,
+            "y": 748.0,
+            "width": 182.0,
+            "height": 24.0,
+            "lines": [
+              "32 h a month"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          }
+        ],
+        "lens": {
+          "x": 604.7,
+          "y": 26.0,
+          "width": 394.7,
+          "height": 814.0,
+          "label_x": 612.7,
+          "label_y": 40.0
+        },
+        "column_labels": [
+          {
+            "id": "id-2",
+            "x": 218.0,
+            "y": 20.0,
+            "lines": [
+              "Plan"
+            ]
+          },
+          {
+            "id": "id-3",
+            "x": 612.7,
+            "y": 20.0,
+            "lines": [
+              "Check and load"
+            ]
+          },
+          {
+            "id": "id-4",
+            "x": 1007.3,
+            "y": 20.0,
+            "lines": [
+              "Close out"
+            ]
+          },
+          {
+            "id": "process",
+            "x": 1402.0,
+            "y": 20.0,
+            "lines": []
+          }
+        ],
+        "band_labels": [
+          {
+            "id": "promise",
+            "x": 12.0,
+            "y": 72.0,
+            "lines": [
+              "What we promise",
+              "5 confirmed statements"
+            ]
+          },
+          {
+            "id": "belief",
+            "x": 12.0,
+            "y": 172.0,
+            "lines": [
+              "What experts believe",
+              "0 of 2 interviews state a",
+              "time",
+              "No official account",
+              "states a time for a step."
+            ]
+          },
+          {
+            "id": "documented",
+            "x": 12.0,
+            "y": 280.0,
+            "lines": [
+              "What the manual says",
+              "2 documents"
+            ]
+          },
+          {
+            "id": "done",
+            "x": 12.0,
+            "y": 440.0,
+            "lines": [
+              "What actually happens",
+              "2 interviews · 200 cases"
+            ]
+          },
+          {
+            "id": "consequence",
+            "x": 12.0,
+            "y": 732.0,
+            "lines": [
+              "What it costs",
+              "measured from 200 cases"
+            ]
+          }
+        ]
+      }
+    },
+    "rv3": {
+      "id": "rv3",
+      "title": "Which gaps should we fix, and which should we keep?",
+      "headline": "2 gaps put the intent at risk; none is yet clearly a practice to keep.",
+      "callouts": [
+        {
+          "code": "X1",
+          "impact_class": "control_exposure",
+          "lines": [
+            "Decide first: X1 Approve load plan.",
+            "The control objective is not met: restore the control or remove the cause."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "ready",
+        "message": "",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Code",
+          "Title",
+          "Zone",
+          "Verdict",
+          "Reason",
+          "Hours a month",
+          "Evidence"
+        ],
+        "rows": [
+          [
+            "X1",
+            "Approve load plan",
+            "Correct the practice",
+            "correct (suggested)",
+            "The control objective is not met: restore the control or remove the cause.",
+            "0 h a month",
+            "Evidence: 1 document, no interview, 200 system cases."
+          ],
+          [
+            "X2",
+            "Load and return LIR",
+            "Correct the practice",
+            "correct (suggested)",
+            "Practice misses the target (10) while the documented way meets it.",
+            "24 h a month",
+            "Evidence: 1 document, 1 interview, 200 system cases."
+          ],
+          [
+            "X3",
+            "Draft load plan: design gap",
+            "Rewrite the rule",
+            "rewrite (suggested)",
+            "The manual itself misses the intent: the documented way can't meet it.",
+            "0 h a month",
+            "Evidence: 1 document, 1 interview, no system case."
+          ],
+          [
+            "X4",
+            "Draft load plan",
+            "Ask",
+            "ask (suggested)",
+            "No case-level figure to compare with the target: ask the process owner, or add system records.",
+            "7 h a month",
+            "Evidence: 1 document, 1 interview, 40 system cases."
+          ],
+          [
+            "X5",
+            "Manual weight override",
+            "Ask",
+            "ask (suggested)",
+            "No confirmed intent covers it: ask the process owner which way is intended.",
+            "1 h a month",
+            "Evidence: no document, no interview, 23 system cases."
+          ],
+          [
+            "X6",
+            "Resolve or offload",
+            "Ask",
+            "ask (suggested)",
+            "No confirmed intent covers it: ask the process owner which way is intended.",
+            "0 h a month",
+            "Evidence: no document, 1 interview, no system case."
+          ],
+          [
+            "X7",
+            "Busy wave? → Read report at aircraft",
+            "Ask",
+            "ask (suggested)",
+            "The SME's stated reason suggests codify; confirm the gap class.",
+            "0 h a month",
+            "Evidence: no document, 1 interview, no system case."
+          ],
+          [
+            "X8",
+            "Deviation in limits?",
+            "Ask",
+            "ask (suggested)",
+            "Not enough evidence to say where the fix lies: ask the process owner.",
+            "0 h a month",
+            "Evidence: 1 document, 1 interview, no system case."
+          ],
+          [
+            "X9",
+            "Approve deviation",
+            "Ask",
+            "ask (suggested)",
+            "No confirmed intent covers it: ask the process owner which way is intended.",
+            "0 h a month",
+            "Evidence: no document, 1 interview, no system case."
+          ]
+        ]
+      },
+      "fix": {
+        "quadrants": [
+          {
+            "id": "as_designed",
+            "name": "Working as designed",
+            "meaning": "Follows the manual and delivers the promise."
+          },
+          {
+            "id": "codify",
+            "name": "Codify the practice",
+            "meaning": "Departs from the manual and delivers the promise."
+          },
+          {
+            "id": "rewrite",
+            "name": "Rewrite the rule",
+            "meaning": "Follows the manual and falls short of the promise."
+          },
+          {
+            "id": "correct",
+            "name": "Correct the practice",
+            "meaning": "Departs from the manual and falls short of the promise."
+          },
+          {
+            "id": "ask",
+            "name": "Ask",
+            "meaning": "Not enough evidence to say where the fix lies."
+          }
+        ],
+        "circles": [
+          {
+            "code": "X1",
+            "zone": "correct"
+          },
+          {
+            "code": "X2",
+            "zone": "correct"
+          },
+          {
+            "code": "X3",
+            "zone": "rewrite"
+          },
+          {
+            "code": "X4",
+            "zone": "ask"
+          },
+          {
+            "code": "X5",
+            "zone": "ask"
+          },
+          {
+            "code": "X6",
+            "zone": "ask"
+          },
+          {
+            "code": "X7",
+            "zone": "ask"
+          },
+          {
+            "code": "X8",
+            "zone": "ask"
+          }
+        ],
+        "ask": [
+          "X4",
+          "X5",
+          "X6",
+          "X7",
+          "X8"
+        ],
+        "decide_first": [
+          "X1",
+          "X2",
+          "X3",
+          "X4",
+          "X5",
+          "X6",
+          "X7",
+          "X8",
+          "X9"
+        ],
+        "limit": 6,
+        "note": "Verdicts are recommendations; the process owner decides."
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 838.0,
+        "zones": [
+          {
+            "id": "as_designed",
+            "x": 80.0,
+            "y": 40.0,
+            "width": 520.0,
+            "height": 300.0,
+            "label_x": 92.0,
+            "label_y": 60.0
+          },
+          {
+            "id": "codify",
+            "x": 600.0,
+            "y": 40.0,
+            "width": 520.0,
+            "height": 300.0,
+            "label_x": 612.0,
+            "label_y": 60.0
+          },
+          {
+            "id": "rewrite",
+            "x": 80.0,
+            "y": 340.0,
+            "width": 520.0,
+            "height": 300.0,
+            "label_x": 92.0,
+            "label_y": 360.0
+          },
+          {
+            "id": "correct",
+            "x": 600.0,
+            "y": 340.0,
+            "width": 520.0,
+            "height": 300.0,
+            "label_x": 612.0,
+            "label_y": 360.0
+          },
+          {
+            "id": "ask",
+            "x": 80.0,
+            "y": 664.0,
+            "width": 1040.0,
+            "height": 150.0,
+            "label_x": 92.0,
+            "label_y": 684.0
+          }
+        ],
+        "circles": [
+          {
+            "code": "X1",
+            "cx": 670.0,
+            "cy": 436.0,
+            "r": 9.0
+          },
+          {
+            "code": "X2",
+            "cx": 780.0,
+            "cy": 436.0,
+            "r": 44.0
+          },
+          {
+            "code": "X3",
+            "cx": 150.0,
+            "cy": 436.0,
+            "r": 9.0
+          },
+          {
+            "code": "X4",
+            "cx": 150.0,
+            "cy": 748.0,
+            "r": 24.0
+          },
+          {
+            "code": "X5",
+            "cx": 260.0,
+            "cy": 748.0,
+            "r": 9.0
+          },
+          {
+            "code": "X6",
+            "cx": 370.0,
+            "cy": 748.0,
+            "r": 9.0
+          },
+          {
+            "code": "X7",
+            "cx": 480.0,
+            "cy": 748.0,
+            "r": 9.0
+          },
+          {
+            "code": "X8",
+            "cx": 590.0,
+            "cy": 748.0,
+            "r": 9.0
+          }
+        ],
+        "labels": [
+          {
+            "id": "zone:as_designed",
+            "x": 92.0,
+            "y": 60.0,
+            "lines": [
+              "Working as designed",
+              "Follows the manual and delivers the promise."
+            ]
+          },
+          {
+            "id": "zone:codify",
+            "x": 612.0,
+            "y": 60.0,
+            "lines": [
+              "Codify the practice",
+              "Departs from the manual and delivers the promise."
+            ]
+          },
+          {
+            "id": "zone:rewrite",
+            "x": 92.0,
+            "y": 360.0,
+            "lines": [
+              "Rewrite the rule",
+              "Follows the manual and falls short of the promise."
+            ]
+          },
+          {
+            "id": "zone:correct",
+            "x": 612.0,
+            "y": 360.0,
+            "lines": [
+              "Correct the practice",
+              "Departs from the manual and falls short of the promise."
+            ]
+          },
+          {
+            "id": "zone:ask",
+            "x": 92.0,
+            "y": 684.0,
+            "lines": [
+              "Ask",
+              "Not enough evidence to say where the fix lies."
+            ]
+          },
+          {
+            "id": "axis:follows",
+            "x": 92.0,
+            "y": 28.0,
+            "lines": [
+              "Follows the manual"
+            ]
+          },
+          {
+            "id": "axis:departs",
+            "x": 612.0,
+            "y": 28.0,
+            "lines": [
+              "Departs from it"
+            ]
+          },
+          {
+            "id": "axis:delivers",
+            "x": 1136.0,
+            "y": 190.0,
+            "lines": [
+              "Delivers the",
+              "promise"
+            ]
+          },
+          {
+            "id": "axis:short",
+            "x": 1136.0,
+            "y": 490.0,
+            "lines": [
+              "Falls short of",
+              "the promise"
+            ]
+          }
+        ],
+        "scale_note": "Circle area = hours a month; small circles have no measured hours"
+      }
+    },
+    "rv4": {
+      "id": "rv4",
+      "title": "What exactly changed versus the manual?",
+      "headline": "10 changes from the manual, 1 code on a control.",
+      "callouts": [
+        {
+          "code": "X1",
+          "impact_class": "control_exposure",
+          "lines": [
+            "X1 Approve load plan (never recorded; 100% of cases).",
+            "Potential control exposure, for the control owner to confirm."
+          ]
+        },
+        {
+          "code": "X2",
+          "impact_class": "time_impact",
+          "lines": [
+            "X2 Load and return LIR (wait 13 min median, 90th percentile 27).",
+            "+13 min a case; 24 h a month."
+          ]
+        },
+        {
+          "code": "X4",
+          "impact_class": "capacity_drain",
+          "lines": [
+            "X4 Draft load plan (rework in 20% of cases).",
+            "+4 min a case; 7 h a month."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "ready",
+        "message": "",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Code",
+          "Change",
+          "On or after",
+          "Share",
+          "Label",
+          "On the view"
+        ],
+        "rows": [
+          [
+            "X1",
+            "Skipped: Approve load plan",
+            "Approve load plan",
+            "never recorded; 100% of cases",
+            "measured",
+            "drawn"
+          ],
+          [
+            "X1",
+            "No record: Approve load plan",
+            "Approve load plan",
+            "Approve load plan: 100% of cases without a record",
+            "measured",
+            "drawn"
+          ],
+          [
+            "X2",
+            "Waits: Load and return LIR",
+            "Load and return LIR",
+            "wait 13 min median, 90th percentile 27",
+            "measured",
+            "drawn"
+          ],
+          [
+            "X4",
+            "Loops back: Draft load plan",
+            "Draft load plan",
+            "rework in 20% of cases",
+            "measured",
+            "drawn"
+          ],
+          [
+            "X5",
+            "Added: Manual weight override",
+            "Deviation in limits?",
+            "12% of cases",
+            "measured",
+            "drawn"
+          ],
+          [
+            "X6",
+            "Added: Resolve or offload",
+            "Special loads OK?",
+            "described in 1 of 1 interviews",
+            "stated",
+            "drawn"
+          ],
+          [
+            "X7",
+            "Added: Busy wave? → Read report at aircraft",
+            "Load and return LIR",
+            "described in 1 of 1 interviews",
+            "stated",
+            "listed"
+          ],
+          [
+            "X7",
+            "Off-system: Busy wave? → Read report at aircraft",
+            "Load and return LIR",
+            "described in 1 of 1 interviews; no system record; tool “sheet”",
+            "stated",
+            "listed"
+          ],
+          [
+            "X8",
+            "Done by another role: Deviation in limits?",
+            "Deviation in limits?",
+            "Load control lead (documented) vs Captain (done)",
+            "stated",
+            "listed"
+          ],
+          [
+            "X9",
+            "Added: Approve deviation",
+            "Deviation in limits?",
+            "described in 1 of 1 interviews",
+            "stated",
+            "listed"
+          ]
+        ]
+      },
+      "redline": {
+        "pages": [
+          {
+            "id": "all",
+            "name": "Every documented step",
+            "step_keys": [
+              "draft-load-plan",
+              "approve-load-plan",
+              "special-loads-ok",
+              "load-and-return-lir",
+              "deviation-in-limits",
+              "issue-load-sheet"
+            ]
+          }
+        ],
+        "steps": [
+          {
+            "key": "draft-load-plan",
+            "label": "Draft load plan",
+            "minutes": null,
+            "ghost": false,
+            "codes": [
+              "X4"
+            ]
+          },
+          {
+            "key": "approve-load-plan",
+            "label": "Approve load plan",
+            "minutes": null,
+            "ghost": true,
+            "codes": [
+              "X1"
+            ]
+          },
+          {
+            "key": "special-loads-ok",
+            "label": "Special loads OK?",
+            "minutes": null,
+            "ghost": false,
+            "codes": []
+          },
+          {
+            "key": "load-and-return-lir",
+            "label": "Load and return LIR",
+            "minutes": {
+              "id": "rv2.documented.load-and-return-lir",
+              "value": 10.0,
+              "unit": "min",
+              "text": "10 min",
+              "label": "documented",
+              "percent_type": null
+            },
+            "ghost": false,
+            "codes": [
+              "X2"
+            ]
+          },
+          {
+            "key": "deviation-in-limits",
+            "label": "Deviation in limits?",
+            "minutes": null,
+            "ghost": false,
+            "codes": [
+              "X8"
+            ]
+          },
+          {
+            "key": "issue-load-sheet",
+            "label": "Issue load sheet",
+            "minutes": null,
+            "ghost": false,
+            "codes": []
+          }
+        ],
+        "markups": [
+          {
+            "code": "X1",
+            "type": "D1",
+            "kind": "skipped",
+            "keys": [
+              "approve-load-plan"
+            ],
+            "label": "Skipped: Approve load plan",
+            "share": {
+              "id": "X1.D1",
+              "value": 100.0,
+              "unit": "pct",
+              "text": "never recorded; 100% of cases",
+              "label": "measured",
+              "percent_type": "incidence"
+            },
+            "impact_class": "control_exposure",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X1",
+            "type": "D11",
+            "kind": "no_record",
+            "keys": [
+              "approve-load-plan"
+            ],
+            "label": "No record: Approve load plan",
+            "share": {
+              "id": "X1.D11",
+              "value": 100.0,
+              "unit": "pct",
+              "text": "Approve load plan: 100% of cases without a record",
+              "label": "measured",
+              "percent_type": "incidence"
+            },
+            "impact_class": "control_exposure",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X2",
+            "type": "D8",
+            "kind": "wait",
+            "keys": [
+              "load-and-return-lir"
+            ],
+            "label": "Waits: Load and return LIR",
+            "share": {
+              "id": "X2.D8",
+              "value": 13.4,
+              "unit": "min",
+              "text": "wait 13 min median, 90th percentile 27",
+              "label": "measured",
+              "percent_type": null
+            },
+            "impact_class": "time_impact",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X4",
+            "type": "D4",
+            "kind": "loop",
+            "keys": [
+              "draft-load-plan"
+            ],
+            "label": "Loops back: Draft load plan",
+            "share": {
+              "id": "X4.D4",
+              "value": 20.0,
+              "unit": "pct",
+              "text": "rework in 20% of cases",
+              "label": "measured",
+              "percent_type": "incidence"
+            },
+            "impact_class": "capacity_drain",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X5",
+            "type": "D2",
+            "kind": "added",
+            "keys": [
+              "deviation-in-limits"
+            ],
+            "label": "Added: Manual weight override",
+            "share": {
+              "id": "X5.D2",
+              "value": 11.5,
+              "unit": "pct",
+              "text": "12% of cases",
+              "label": "measured",
+              "percent_type": "incidence"
+            },
+            "impact_class": "workaround",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X6",
+            "type": "D2",
+            "kind": "added",
+            "keys": [
+              "special-loads-ok"
+            ],
+            "label": "Added: Resolve or offload",
+            "share": {
+              "id": "X6.D2",
+              "value": 1.0,
+              "unit": "count",
+              "text": "described in 1 of 1 interviews",
+              "label": "stated",
+              "percent_type": null
+            },
+            "impact_class": "workaround",
+            "drawn": true,
+            "tool": ""
+          },
+          {
+            "code": "X7",
+            "type": "D2",
+            "kind": "added",
+            "keys": [
+              "load-and-return-lir"
+            ],
+            "label": "Added: Busy wave? → Read report at aircraft",
+            "share": {
+              "id": "X7.D2",
+              "value": 1.0,
+              "unit": "count",
+              "text": "described in 1 of 1 interviews",
+              "label": "stated",
+              "percent_type": null
+            },
+            "impact_class": "workaround",
+            "drawn": false,
+            "tool": ""
+          },
+          {
+            "code": "X7",
+            "type": "D6",
+            "kind": "off_system",
+            "keys": [
+              "load-and-return-lir"
+            ],
+            "label": "Off-system: Busy wave? → Read report at aircraft",
+            "share": {
+              "id": "X7.D6",
+              "value": 1.0,
+              "unit": "count",
+              "text": "described in 1 of 1 interviews; no system record; tool “sheet”",
+              "label": "stated",
+              "percent_type": null
+            },
+            "impact_class": "workaround",
+            "drawn": false,
+            "tool": "sheet"
+          },
+          {
+            "code": "X8",
+            "type": "D12",
+            "kind": "owner",
+            "keys": [
+              "deviation-in-limits"
+            ],
+            "label": "Done by another role: Deviation in limits?",
+            "share": {
+              "id": "X8.D12",
+              "value": null,
+              "unit": "",
+              "text": "Load control lead (documented) vs Captain (done)",
+              "label": "stated",
+              "percent_type": null
+            },
+            "impact_class": "workaround",
+            "drawn": false,
+            "tool": ""
+          },
+          {
+            "code": "X9",
+            "type": "D2",
+            "kind": "added",
+            "keys": [
+              "deviation-in-limits"
+            ],
+            "label": "Added: Approve deviation",
+            "share": {
+              "id": "X9.D2",
+              "value": 1.0,
+              "unit": "count",
+              "text": "described in 1 of 1 interviews",
+              "label": "stated",
+              "percent_type": null
+            },
+            "impact_class": "workaround",
+            "drawn": false,
+            "tool": ""
+          }
+        ],
+        "pills": [
+          {
+            "id": "rv4.pill.draft-load-plan",
+            "value": 4.0,
+            "unit": "min",
+            "text": "+4 min",
+            "label": "measured",
+            "percent_type": null
+          },
+          {
+            "id": "rv4.pill.load-and-return-lir",
+            "value": 13.4,
+            "unit": "min",
+            "text": "+13 min",
+            "label": "measured",
+            "percent_type": null
+          }
+        ],
+        "listed": [
+          "X7",
+          "X8",
+          "X9"
+        ]
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 542.0,
+        "shapes": [
+          {
+            "kind": "text",
+            "role": "page-title",
+            "x": 24.0,
+            "y": 16.0,
+            "width": 159.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Every documented step"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-documented",
+            "x": 44.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 46.0,
+            "y": 172.0,
+            "width": 116.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Draft load plan"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "connector",
+            "x": 174.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 214.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "pill",
+            "x": 122.8,
+            "y": 288.0,
+            "width": 51.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+4 min"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-ghost",
+            "x": 214.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "approve-load-plan",
+            "impact_class": null,
+            "style": "dashed"
+          },
+          {
+            "kind": "line",
+            "role": "strike",
+            "x": 218.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 340.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "approve-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 216.0,
+            "y": 172.0,
+            "width": 94.4,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Approve load",
+              "plan"
+            ],
+            "code": null,
+            "key": "approve-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "connector",
+            "x": 344.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 384.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-documented",
+            "x": 384.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 386.0,
+            "y": 172.0,
+            "width": 101.6,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Special loads",
+              "OK?"
+            ],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "connector",
+            "x": 514.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 554.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-documented",
+            "x": 554.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 556.0,
+            "y": 172.0,
+            "width": 116.0,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Load and return",
+              "LIR",
+              "10 min"
+            ],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "connector",
+            "x": 684.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 724.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "pill",
+            "x": 625.6,
+            "y": 288.0,
+            "width": 58.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+13 min"
+            ],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-documented",
+            "x": 724.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 726.0,
+            "y": 172.0,
+            "width": 94.4,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Deviation in",
+              "limits?"
+            ],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "connector",
+            "x": 854.0,
+            "y": 202.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 894.0,
+            "y2": 202.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "step-documented",
+            "x": 894.0,
+            "y": 166.0,
+            "width": 130.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "step-label",
+            "x": 896.0,
+            "y": 172.0,
+            "width": 123.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Issue load sheet"
+            ],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "path",
+            "role": "arc-skipped",
+            "x": 109.0,
+            "y": 126.0,
+            "width": 340.0,
+            "height": 40.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "M109.0 166.0 C 109.0 126.0, 449.0 126.0, 449.0 166.0",
+            "lines": [],
+            "code": "X1",
+            "key": null,
+            "impact_class": "control_exposure",
+            "style": "dashed"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 279.0,
+            "y": 122.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 279.0,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 170.6,
+            "y": 52.0,
+            "width": 216.8,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X1 Skipped: Approve load plan",
+              "never recorded; 100% of cases",
+              "(measured)"
+            ],
+            "code": "X1",
+            "key": null,
+            "impact_class": "control_exposure",
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "drop",
+            "x": 279.0,
+            "y": 238.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 279.0,
+            "y2": 260.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "markup-no-record",
+            "x": 270.0,
+            "y": 260.0,
+            "width": 18.0,
+            "height": 18.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X1",
+            "key": null,
+            "impact_class": "control_exposure",
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 279.0,
+            "y": 278.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 279.0,
+            "y2": 318.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 181.4,
+            "y": 318.0,
+            "width": 195.2,
+            "height": 64.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X1 No record: Approve load",
+              "plan",
+              "Approve load plan: 100% of",
+              "cases without a record…"
+            ],
+            "code": "X1",
+            "key": null,
+            "impact_class": "control_exposure",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "markup-wait",
+            "x": 520.0,
+            "y": 195.0,
+            "width": 28.0,
+            "height": 14.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X2",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 534.0,
+            "y": 209.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 534.0,
+            "y2": 282.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 534.0,
+            "y": 282.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 534.0,
+            "y2": 318.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 425.6,
+            "y": 318.0,
+            "width": 216.8,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X2 Waits: Load and return LIR",
+              "wait 13 min median, 90th",
+              "percentile 27 (measured)"
+            ],
+            "code": "X2",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "path",
+            "role": "arc-loop",
+            "x": 52.0,
+            "y": 238.0,
+            "width": 114.0,
+            "height": 40.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "M166.0 238.0 C 166.0 278.0, 52.0 278.0, 52.0 238.0",
+            "lines": [],
+            "code": "X4",
+            "key": null,
+            "impact_class": "capacity_drain",
+            "style": "dashed"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 109.0,
+            "y": 282.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 118.0,
+            "y2": 392.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 24.0,
+            "y": 392.0,
+            "width": 188.0,
+            "height": 64.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X4 Loops back: Draft load",
+              "plan",
+              "rework in 20% of cases",
+              "(measured)"
+            ],
+            "code": "X4",
+            "key": null,
+            "impact_class": "capacity_drain",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "markup-added",
+            "x": 864.0,
+            "y": 142.0,
+            "width": 20.0,
+            "height": 20.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X5",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 874.0,
+            "y": 142.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 874.0,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 787.2,
+            "y": 52.0,
+            "width": 173.6,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X5 Added: Manual weight",
+              "override",
+              "12% of cases (measured)"
+            ],
+            "code": "X5",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "markup-added",
+            "x": 524.0,
+            "y": 142.0,
+            "width": 20.0,
+            "height": 20.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X6",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "leader",
+            "x": 534.0,
+            "y": 142.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 534.0,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "markup-label",
+            "x": 429.2,
+            "y": 52.0,
+            "width": 209.6,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X6 Added: Resolve or offload",
+              "described in 1 of 1",
+              "interviews (stated)"
+            ],
+            "code": "X6",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "side-title",
+            "x": 1300.0,
+            "y": 16.0,
+            "width": 159.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Not drawn on the view"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "side-item",
+            "x": 1300.0,
+            "y": 44.0,
+            "width": 238.4,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X7 Off-system: Busy wave? → Read",
+              "report at aircraft"
+            ],
+            "code": "X7",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "side-item",
+            "x": 1300.0,
+            "y": 84.0,
+            "width": 252.8,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X8 Done by another role: Deviation",
+              "in limits?"
+            ],
+            "code": "X8",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "side-item",
+            "x": 1300.0,
+            "y": 124.0,
+            "width": 202.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X9 Added: Approve deviation"
+            ],
+            "code": "X9",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "legend-skipped",
+            "x": 24.0,
+            "y": 504.0,
+            "width": 14.0,
+            "height": 12.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "skipped",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "legend",
+            "x": 42.0,
+            "y": 502.0,
+            "width": 144.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Skipped in practice"
+            ],
+            "code": null,
+            "key": "skipped",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "legend-no-record",
+            "x": 208.8,
+            "y": 504.0,
+            "width": 14.0,
+            "height": 12.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "no_record",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "legend",
+            "x": 226.8,
+            "y": 502.0,
+            "width": 72.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "No record"
+            ],
+            "code": null,
+            "key": "no_record",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "legend-wait",
+            "x": 321.6,
+            "y": 504.0,
+            "width": 14.0,
+            "height": 12.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "wait",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "legend",
+            "x": 339.6,
+            "y": 502.0,
+            "width": 44.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Waits"
+            ],
+            "code": null,
+            "key": "wait",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "legend-loop",
+            "x": 405.6,
+            "y": 504.0,
+            "width": 14.0,
+            "height": 12.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "loop",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "legend",
+            "x": 423.6,
+            "y": 502.0,
+            "width": 80.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Loops back"
+            ],
+            "code": null,
+            "key": "loop",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "legend-added",
+            "x": 525.6,
+            "y": 504.0,
+            "width": 14.0,
+            "height": 12.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "added",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "legend",
+            "x": 543.6,
+            "y": 502.0,
+            "width": 130.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Added in practice"
+            ],
+            "code": null,
+            "key": "added",
+            "impact_class": null,
+            "style": "solid"
+          }
+        ],
+        "scale_note": "The documented steps once, in the manual's order; markups show practice"
+      }
+    },
+    "rv5": {
+      "id": "rv5",
+      "title": "Where does the extra time come from?",
+      "headline": "Check and load adds 92 minutes a case; 16 of it is waiting, not work.",
+      "callouts": [
+        {
+          "code": "X6",
+          "impact_class": "workaround",
+          "lines": [
+            "X6 Resolve or offload (described in 1 of 1 interviews).",
+            "+40 min a case."
+          ]
+        },
+        {
+          "code": "X9",
+          "impact_class": "workaround",
+          "lines": [
+            "X9 Approve deviation (described in 1 of 1 interviews).",
+            "+15 min a case."
+          ]
+        },
+        {
+          "code": "X2",
+          "impact_class": "time_impact",
+          "lines": [
+            "X2 Load and return LIR (wait 13 min median, 90th percentile 27).",
+            "+13 min a case; 24 h a month."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "partial",
+        "message": "Steps without a time show \"No time stated\"; the totals are incomplete.",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Column",
+          "The manual",
+          "Work in practice",
+          "Waiting",
+          "Extra work"
+        ],
+        "rows": [
+          [
+            "Plan",
+            "No time stated",
+            "20 min (measured)",
+            "No time stated",
+            "No time stated"
+          ],
+          [
+            "Check and load",
+            "10 min (documented)",
+            "86 min (mixed)",
+            "16 min (measured)",
+            "+76 min (mixed)"
+          ],
+          [
+            "Close out",
+            "No time stated",
+            "22 min (mixed)",
+            "6 min (measured)",
+            "No time stated"
+          ],
+          [
+            "Whole process",
+            "10 min (documented), incomplete",
+            "150 min (mixed), incomplete",
+            "",
+            "incomplete"
+          ]
+        ]
+      },
+      "time": {
+        "columns": [
+          {
+            "column_id": "id-2",
+            "name": "Plan",
+            "manual": null,
+            "work": {
+              "id": "rv5.work.id-2",
+              "value": 19.9,
+              "unit": "min",
+              "text": "20 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "wait": null,
+            "designed": null,
+            "extra": null,
+            "complete": false
+          },
+          {
+            "column_id": "id-3",
+            "name": "Check and load",
+            "manual": {
+              "id": "rv5.manual.id-3",
+              "value": 10.0,
+              "unit": "min",
+              "text": "10 min",
+              "label": "documented",
+              "percent_type": null
+            },
+            "work": {
+              "id": "rv5.work.id-3",
+              "value": 86.0,
+              "unit": "min",
+              "text": "86 min",
+              "label": "mixed",
+              "percent_type": null
+            },
+            "wait": {
+              "id": "rv5.wait.id-3",
+              "value": 16.4,
+              "unit": "min",
+              "text": "16 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "designed": {
+              "id": "rv5.designed.id-3",
+              "value": 10.0,
+              "unit": "min",
+              "text": "10 min",
+              "label": "mixed",
+              "percent_type": null
+            },
+            "extra": {
+              "id": "rv5.extra.id-3",
+              "value": 76.0,
+              "unit": "min",
+              "text": "+76 min",
+              "label": "mixed",
+              "percent_type": null
+            },
+            "complete": false
+          },
+          {
+            "column_id": "id-4",
+            "name": "Close out",
+            "manual": null,
+            "work": {
+              "id": "rv5.work.id-4",
+              "value": 22.2,
+              "unit": "min",
+              "text": "22 min",
+              "label": "mixed",
+              "percent_type": null
+            },
+            "wait": {
+              "id": "rv5.wait.id-4",
+              "value": 6.0,
+              "unit": "min",
+              "text": "6 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "designed": null,
+            "extra": null,
+            "complete": false
+          }
+        ],
+        "manual_total": {
+          "id": "rv5.manual_total",
+          "value": 10.0,
+          "unit": "min",
+          "text": "10 min",
+          "label": "documented",
+          "percent_type": null
+        },
+        "practice_total": {
+          "id": "rv5.practice_total",
+          "value": 150.5,
+          "unit": "min",
+          "text": "150 min",
+          "label": "mixed",
+          "percent_type": null
+        },
+        "multiplier": null,
+        "complete": false,
+        "causes": [
+          {
+            "code": "X6",
+            "title": "Resolve or offload",
+            "minutes": {
+              "id": "X6.minutes",
+              "value": 40.0,
+              "unit": "min",
+              "text": "+40 min a case",
+              "label": "stated",
+              "percent_type": null
+            }
+          },
+          {
+            "code": "X9",
+            "title": "Approve deviation",
+            "minutes": {
+              "id": "X9.minutes",
+              "value": 15.0,
+              "unit": "min",
+              "text": "+15 min a case",
+              "label": "stated",
+              "percent_type": null
+            }
+          },
+          {
+            "code": "X2",
+            "title": "Load and return LIR",
+            "minutes": {
+              "id": "X2.minutes",
+              "value": 13.4,
+              "unit": "min",
+              "text": "+13 min a case",
+              "label": "measured",
+              "percent_type": null
+            }
+          },
+          {
+            "code": "X4",
+            "title": "Draft load plan",
+            "minutes": {
+              "id": "X4.minutes",
+              "value": 4.0,
+              "unit": "min",
+              "text": "+4 min a case",
+              "label": "measured",
+              "percent_type": null
+            }
+          },
+          {
+            "code": "X5",
+            "title": "Manual weight override",
+            "minutes": {
+              "id": "X5.minutes",
+              "value": 0.6,
+              "unit": "min",
+              "text": "+1 min a case",
+              "label": "measured",
+              "percent_type": null
+            }
+          }
+        ]
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 540.0,
+        "shapes": [
+          {
+            "kind": "text",
+            "role": "column-label",
+            "x": 170.0,
+            "y": 76.0,
+            "width": 108.8,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Plan",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "id-2",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "column-label",
+            "x": 266.0,
+            "y": 20.0,
+            "width": 108.8,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Check and load",
+              "10 min"
+            ],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "column-label",
+            "x": 332.3,
+            "y": 76.0,
+            "width": 108.8,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Close out",
+              "No time stated"
+            ],
+            "code": null,
+            "key": "id-4",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "practice-label",
+            "x": 170.0,
+            "y": 276.0,
+            "width": 87.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Work 20 min"
+            ],
+            "code": null,
+            "key": "id-2",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "practice-label",
+            "x": 302.0,
+            "y": 276.0,
+            "width": 108.8,
+            "height": 48.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Work 86 min",
+              "Extra +76 min",
+              "Waiting 16 min"
+            ],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "practice-label",
+            "x": 981.0,
+            "y": 276.0,
+            "width": 101.6,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Work 22 min",
+              "Waiting 6 min"
+            ],
+            "code": null,
+            "key": "id-4",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "strip-name",
+            "x": 24.0,
+            "y": 138.0,
+            "width": 80.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "The manual"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "strip-name",
+            "x": 24.0,
+            "y": 238.0,
+            "width": 87.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "In practice"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "no-time",
+            "x": 170.0,
+            "y": 128.0,
+            "width": 96.0,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-2",
+            "impact_class": null,
+            "style": "dashed"
+          },
+          {
+            "kind": "line",
+            "role": "guide",
+            "x": 170.0,
+            "y": 164.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 170.0,
+            "y2": 228.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "rect",
+            "role": "work",
+            "x": 170.0,
+            "y": 228.0,
+            "width": 132.0,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-2",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "manual",
+            "x": 266.0,
+            "y": 128.0,
+            "width": 66.3,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "guide",
+            "x": 266.0,
+            "y": 164.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 302.0,
+            "y2": 228.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "rect",
+            "role": "wait",
+            "x": 302.0,
+            "y": 228.0,
+            "width": 108.8,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "work-designed",
+            "x": 410.7,
+            "y": 228.0,
+            "width": 66.3,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "work-extra",
+            "x": 477.0,
+            "y": 228.0,
+            "width": 504.0,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-3",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "no-time",
+            "x": 332.3,
+            "y": 128.0,
+            "width": 96.0,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-4",
+            "impact_class": null,
+            "style": "dashed"
+          },
+          {
+            "kind": "line",
+            "role": "guide",
+            "x": 332.3,
+            "y": 164.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 981.0,
+            "y2": 228.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "rect",
+            "role": "wait",
+            "x": 981.0,
+            "y": 228.0,
+            "width": 39.8,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-4",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "work",
+            "x": 1020.8,
+            "y": 228.0,
+            "width": 147.2,
+            "height": 36.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "id-4",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "total",
+            "x": 1384.0,
+            "y": 138.0,
+            "width": 137.6,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "10 min, incomplete"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "total",
+            "x": 1384.0,
+            "y": 238.0,
+            "width": 144.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "150 min, incomplete"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "causes-title",
+            "x": 24.0,
+            "y": 356.0,
+            "width": 166.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Added minutes by cause"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-label",
+            "x": 24.0,
+            "y": 388.0,
+            "width": 159.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X6 Resolve or offload"
+            ],
+            "code": "X6",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "cause",
+            "x": 470.0,
+            "y": 388.0,
+            "width": 265.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X6",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-figure",
+            "x": 743.2,
+            "y": 388.0,
+            "width": 108.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+40 min a case"
+            ],
+            "code": "X6",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-label",
+            "x": 24.0,
+            "y": 416.0,
+            "width": 152.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X9 Approve deviation"
+            ],
+            "code": "X9",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "cause",
+            "x": 470.0,
+            "y": 416.0,
+            "width": 99.5,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X9",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-figure",
+            "x": 577.5,
+            "y": 416.0,
+            "width": 108.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+15 min a case"
+            ],
+            "code": "X9",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-label",
+            "x": 24.0,
+            "y": 444.0,
+            "width": 166.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X2 Load and return LIR"
+            ],
+            "code": "X2",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "cause",
+            "x": 470.0,
+            "y": 444.0,
+            "width": 88.9,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X2",
+            "key": null,
+            "impact_class": "time_impact",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-figure",
+            "x": 566.9,
+            "y": 444.0,
+            "width": 108.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+13 min a case"
+            ],
+            "code": "X2",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-label",
+            "x": 24.0,
+            "y": 472.0,
+            "width": 137.6,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X4 Draft load plan"
+            ],
+            "code": "X4",
+            "key": null,
+            "impact_class": "capacity_drain",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "cause",
+            "x": 470.0,
+            "y": 472.0,
+            "width": 26.5,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X4",
+            "key": null,
+            "impact_class": "capacity_drain",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-figure",
+            "x": 504.5,
+            "y": 472.0,
+            "width": 101.6,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+4 min a case"
+            ],
+            "code": "X4",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-label",
+            "x": 24.0,
+            "y": 500.0,
+            "width": 188.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "X5 Manual weight override"
+            ],
+            "code": "X5",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "cause",
+            "x": 470.0,
+            "y": 500.0,
+            "width": 4.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": "X5",
+            "key": null,
+            "impact_class": "workaround",
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "cause-figure",
+            "x": 482.0,
+            "y": 500.0,
+            "width": 101.6,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "+1 min a case"
+            ],
+            "code": "X5",
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          }
+        ],
+        "scale_note": "Both strips share one scale: width is minutes a case"
+      }
+    },
+    "rv6": {
+      "id": "rv6",
+      "title": "How far is what we believe from what happens?",
+      "headline": "No step has both a believed and a measured time to compare.",
+      "callouts": [],
+      "availability": {
+        "state": "missing",
+        "message": "No official account states a time for a step the system measures.",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Step",
+          "Believed",
+          "Measured",
+          "Gap",
+          "How belief is known"
+        ],
+        "rows": []
+      },
+      "belief": {
+        "rows": [],
+        "note": "A visibility gap, not a competence gap.",
+        "method": "How belief is measured: the median of the times official accounts state for a step, never one person's answer, set against the system's median for the same step."
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 84.0,
+        "shapes": [
+          {
+            "kind": "text",
+            "role": "note",
+            "x": 24.0,
+            "y": 28.0,
+            "width": 288.8,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "A visibility gap, not a competence gap."
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "method",
+            "x": 24.0,
+            "y": 52.0,
+            "width": 1167.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "How belief is measured: the median of the times official accounts state for a step, never one person's answer, set against the system's median for the same step."
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          }
+        ],
+        "scale_note": "Each row has its own scale, from 0 to a little past the larger value"
+      }
+    },
+    "rv7": {
+      "id": "rv7",
+      "title": "What does the hidden work feel like for one customer?",
+      "headline": "A typical case touches 1 tool and leaves 3 steps without a record.",
+      "callouts": [
+        {
+          "code": "X2",
+          "impact_class": "time_impact",
+          "lines": [
+            "X2 Load and return LIR (wait 13 min median, 90th percentile 27).",
+            "+13 min a case; 24 h a month."
+          ]
+        },
+        {
+          "code": "X3",
+          "impact_class": "time_impact",
+          "lines": [
+            "X3 Draft load plan: design gap (target T-120 vs documented T-90)."
+          ]
+        },
+        {
+          "code": "X4",
+          "impact_class": "capacity_drain",
+          "lines": [
+            "X4 Draft load plan (rework in 20% of cases).",
+            "+4 min a case; 7 h a month."
+          ]
+        }
+      ],
+      "availability": {
+        "state": "ready",
+        "message": "",
+        "action": null
+      },
+      "table": {
+        "columns": [
+          "Event",
+          "Where",
+          "Minutes since the case started"
+        ],
+        "rows": [
+          [
+            "Draft load plan",
+            "DCS",
+            "0 min"
+          ],
+          [
+            "Special loads OK?",
+            "DCS",
+            "25 min"
+          ],
+          [
+            "Resolve or offload",
+            "Off-system work",
+            "no time recorded"
+          ],
+          [
+            "Draft load plan",
+            "DCS",
+            "34 min"
+          ],
+          [
+            "Load and return LIR",
+            "DCS",
+            "90 min"
+          ],
+          [
+            "Busy wave?",
+            "Sheet",
+            "no time recorded"
+          ],
+          [
+            "Deviation in limits?",
+            "DCS",
+            "112 min"
+          ],
+          [
+            "Approve deviation",
+            "Off-system work",
+            "no time recorded"
+          ],
+          [
+            "Issue load sheet",
+            "DCS",
+            "119 min"
+          ]
+        ]
+      },
+      "case": {
+        "route_name": "Repeats Draft load plan",
+        "cases": 36,
+        "label": "A typical case: median timings of 36 cases, not one real case.",
+        "lanes": [
+          {
+            "id": "system",
+            "name": "DCS",
+            "kind": "system"
+          },
+          {
+            "id": "tool:off-system",
+            "name": "Off-system work",
+            "kind": "off_system"
+          },
+          {
+            "id": "tool:sheet",
+            "name": "Sheet",
+            "kind": "tool"
+          }
+        ],
+        "events": [
+          {
+            "key": "draft-load-plan",
+            "label": "Draft load plan",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.0",
+              "value": 0.0,
+              "unit": "min",
+              "text": "0 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          },
+          {
+            "key": "special-loads-ok",
+            "label": "Special loads OK?",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.1",
+              "value": 24.9,
+              "unit": "min",
+              "text": "25 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          },
+          {
+            "key": "resolve-or-offload",
+            "label": "Resolve or offload",
+            "lane_id": "tool:off-system",
+            "minutes": null,
+            "recorded": false
+          },
+          {
+            "key": "draft-load-plan",
+            "label": "Draft load plan",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.2",
+              "value": 33.7,
+              "unit": "min",
+              "text": "34 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          },
+          {
+            "key": "load-and-return-lir",
+            "label": "Load and return LIR",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.3",
+              "value": 90.1,
+              "unit": "min",
+              "text": "90 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          },
+          {
+            "key": "busy-wave",
+            "label": "Busy wave?",
+            "lane_id": "tool:sheet",
+            "minutes": null,
+            "recorded": false
+          },
+          {
+            "key": "deviation-in-limits",
+            "label": "Deviation in limits?",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.4",
+              "value": 111.8,
+              "unit": "min",
+              "text": "112 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          },
+          {
+            "key": "approve-deviation",
+            "label": "Approve deviation",
+            "lane_id": "tool:off-system",
+            "minutes": null,
+            "recorded": false
+          },
+          {
+            "key": "issue-load-sheet",
+            "label": "Issue load sheet",
+            "lane_id": "system",
+            "minutes": {
+              "id": "rv7.event.5",
+              "value": 119.2,
+              "unit": "min",
+              "text": "119 min",
+              "label": "measured",
+              "percent_type": null
+            },
+            "recorded": true
+          }
+        ],
+        "designed_finish": null,
+        "promise": null,
+        "actual_finish": {
+          "id": "rv7.actual_finish",
+          "value": 121.0,
+          "unit": "min",
+          "text": "121 min",
+          "label": "measured",
+          "percent_type": null
+        },
+        "tiles": [
+          {
+            "figure": {
+              "id": "rv7.tools",
+              "value": 1.0,
+              "unit": "count",
+              "text": "1 tool",
+              "label": "stated",
+              "percent_type": null
+            },
+            "caption": "touched outside the system"
+          },
+          {
+            "figure": {
+              "id": "rv7.missing",
+              "value": 3.0,
+              "unit": "count",
+              "text": "3 steps",
+              "label": "stated",
+              "percent_type": null
+            },
+            "caption": "without a system record"
+          }
+        ]
+      },
+      "geometry": {
+        "width": 1600.0,
+        "height": 464.0,
+        "shapes": [
+          {
+            "kind": "rect",
+            "role": "lane-system",
+            "x": 232.0,
+            "y": 64.0,
+            "width": 1256.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "system",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "lane-name",
+            "x": 16.0,
+            "y": 84.0,
+            "width": 29.6,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "DCS"
+            ],
+            "code": null,
+            "key": "system",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "lane-off_system",
+            "x": 232.0,
+            "y": 136.0,
+            "width": 1256.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "tool:off-system",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "lane-name",
+            "x": 16.0,
+            "y": 156.0,
+            "width": 116.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Off-system work"
+            ],
+            "code": null,
+            "key": "tool:off-system",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "rect",
+            "role": "lane-tool",
+            "x": 232.0,
+            "y": 208.0,
+            "width": 1256.0,
+            "height": 72.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "tool:sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "lane-name",
+            "x": 16.0,
+            "y": 228.0,
+            "width": 44.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Sheet"
+            ],
+            "code": null,
+            "key": "tool:sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "finish-actual",
+            "x": 1421.0,
+            "y": 60.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1421.0,
+            "y2": 284.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "finish-actual-label",
+            "x": 1370.2,
+            "y": 20.0,
+            "width": 101.6,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Actual finish",
+              "121 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 240.0,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 483.0,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 483.0,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 526.0,
+            "y2": 172.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 526.0,
+            "y": 172.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 568.9,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 568.9,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1119.4,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 1119.4,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1225.3,
+            "y2": 244.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 1225.3,
+            "y": 244.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1331.2,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 1331.2,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1367.3,
+            "y2": 172.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "line",
+            "role": "path",
+            "x": 1367.3,
+            "y": 172.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1403.4,
+            "y2": 100.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 240.0,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 483.0,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-off-system",
+            "x": 526.0,
+            "y": 172.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "resolve-or-offload",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 568.9,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 1119.4,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-off-system",
+            "x": 1225.3,
+            "y": 244.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "busy-wave",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 1331.2,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-off-system",
+            "x": 1367.3,
+            "y": 172.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "approve-deviation",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "circle",
+            "role": "event-recorded",
+            "x": 1403.4,
+            "y": 100.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 6.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "axis",
+            "x": 240.0,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1480.0,
+            "y2": 288.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "tick",
+            "x": 240.0,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 240.0,
+            "y2": 294.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "tick-label",
+            "x": 218.0,
+            "y": 296.0,
+            "width": 44.0,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "0 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "tick",
+            "x": 532.8,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 532.8,
+            "y2": 294.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "tick-label",
+            "x": 507.2,
+            "y": 296.0,
+            "width": 51.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "30 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "tick",
+            "x": 825.6,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 825.6,
+            "y2": 294.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "tick-label",
+            "x": 800.0,
+            "y": 296.0,
+            "width": 51.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "60 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "tick",
+            "x": 1118.4,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1118.4,
+            "y2": 294.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "tick-label",
+            "x": 1092.8,
+            "y": 296.0,
+            "width": 51.2,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "90 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "tick",
+            "x": 1411.2,
+            "y": 288.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1411.2,
+            "y2": 294.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "text",
+            "role": "tick-label",
+            "x": 1382.0,
+            "y": 296.0,
+            "width": 58.4,
+            "height": 16.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "120 min"
+            ],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 240.0,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 240.0,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 200.0,
+            "y": 328.0,
+            "width": 116.0,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Draft load plan",
+              "0 min"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 483.0,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 483.0,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 417.8,
+            "y": 328.0,
+            "width": 130.4,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Special loads OK?",
+              "25 min"
+            ],
+            "code": null,
+            "key": "special-loads-ok",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 526.0,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 526.0,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 457.2,
+            "y": 368.0,
+            "width": 137.6,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Resolve or offload",
+              "no time recorded"
+            ],
+            "code": null,
+            "key": "resolve-or-offload",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 568.9,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 568.9,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 510.9,
+            "y": 408.0,
+            "width": 116.0,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Draft load plan",
+              "34 min"
+            ],
+            "code": null,
+            "key": "draft-load-plan",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 1119.4,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1119.4,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 1047.0,
+            "y": 328.0,
+            "width": 144.8,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Load and return LIR",
+              "90 min"
+            ],
+            "code": null,
+            "key": "load-and-return-lir",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 1225.3,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1225.3,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 1163.7,
+            "y": 368.0,
+            "width": 123.2,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Busy wave?",
+              "no time recorded"
+            ],
+            "code": null,
+            "key": "busy-wave",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 1331.2,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1331.2,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 1255.2,
+            "y": 328.0,
+            "width": 152.0,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Deviation in limits?",
+              "112 min"
+            ],
+            "code": null,
+            "key": "deviation-in-limits",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 1367.3,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1367.3,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 1302.1,
+            "y": 368.0,
+            "width": 130.4,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Approve deviation",
+              "no time recorded"
+            ],
+            "code": null,
+            "key": "approve-deviation",
+            "impact_class": null,
+            "style": "solid"
+          },
+          {
+            "kind": "line",
+            "role": "event-tick",
+            "x": 1403.4,
+            "y": 314.0,
+            "width": 0.0,
+            "height": 0.0,
+            "x2": 1403.4,
+            "y2": 326.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [],
+            "code": null,
+            "key": null,
+            "impact_class": null,
+            "style": "dotted"
+          },
+          {
+            "kind": "text",
+            "role": "event-label",
+            "x": 1341.8,
+            "y": 408.0,
+            "width": 123.2,
+            "height": 32.0,
+            "x2": 0.0,
+            "y2": 0.0,
+            "r": 0.0,
+            "path": "",
+            "lines": [
+              "Issue load sheet",
+              "119 min"
+            ],
+            "code": null,
+            "key": "issue-load-sheet",
+            "impact_class": null,
+            "style": "solid"
+          }
+        ],
+        "scale_note": "Across: minutes since the case started (median timings, not one real case)"
+      }
+    }
+  },
+  "legend": {
+    "impacts": [
+      {
+        "impact_class": "control_exposure",
+        "word": "Control exposure",
+        "glyph": "triangle"
+      },
+      {
+        "impact_class": "time_impact",
+        "word": "Time impact",
+        "glyph": "clock"
+      },
+      {
+        "impact_class": "capacity_drain",
+        "word": "Capacity drain",
+        "glyph": "bars"
+      },
+      {
+        "impact_class": "workaround",
+        "word": "Workaround",
+        "glyph": "dotted_square"
+      }
+    ],
+    "lines": [
+      {
+        "style": "solid",
+        "meaning": "In the system of record, or as documented"
+      },
+      {
+        "style": "dashed",
+        "meaning": "A deviation the system records"
+      },
+      {
+        "style": "dotted",
+        "meaning": "Off-system work"
+      },
+      {
+        "style": "double",
+        "meaning": "An approved local variation"
+      }
+    ],
+    "scales": [
+      "Line width = share of cases (26 px = 100%)",
+      "Circle area = hours a month; small circles have no measured hours"
+    ],
+    "data_label": "Version v1.0, validated by Owner on 2026-09-28"
+  }
+}

@@ -98,3 +98,26 @@ def test_mapping_conventions_are_set_per_engagement(client: TestClient) -> None:
         ))  # fmt: skip
         assert [r.after for r in rows] == [{"conventions": chosen},
                                            {"conventions": partial["conventions"]}]  # fmt: skip
+
+
+def test_the_scope_card_says_whether_the_process_starts_or_ends_outside(client: TestClient) -> None:
+    """E1 (Eric's decision 2026-10-15): two yes/no answers, no until ticked, audited like the
+    rest of the scope; the Typical case draws its "Outside the organisation" lane from them."""
+    created = client.post("/api/engagements", json={"name": "Load control"}).json()
+    assert (created["trigger_external"], created["end_point_external"]) == (False, False)
+    url = f"/api/engagements/{created['id']}"
+    saved = client.patch(url, json={"trigger_external": True})
+    assert saved.status_code == 200, saved.text
+    assert (saved.json()["trigger_external"], saved.json()["end_point_external"]) == (True, False)
+    assert client.get(url).json()["trigger_external"] is True
+    refused = client.patch(url, json={"end_point_external": "perhaps"})
+    assert refused.status_code == 422, refused.text
+    refused = client.patch(url, json={"end_point_external": None})
+    assert refused.status_code == 422, refused.text
+    assert refused.json()["error"]["details"]["field"] == "end_point_external"
+    with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        rows = list(session.scalars(
+            select(AuditRow).where(AuditRow.engagement_id == created["id"],
+                                   AuditRow.action == "Edited process scope")
+        ))  # fmt: skip
+        assert [r.after for r in rows] == [{"trigger_external": True}]

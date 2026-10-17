@@ -1,0 +1,81 @@
+/* System records screen (PRD §5.4). Tokens only. */
+.system__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+.system__logs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.system__logs h2 {
+  margin: 0;
+}
+.system-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.system-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.system-upload__file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+.system-upload__chosen {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.system-upload__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-10) var(--space-12);
+}
+.system-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.system-wizard__approve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 480px;
+}
+.system-wizard__approve p {
+  margin: 0;
+}
+.system-wizard__actions {
+  display: flex;
+  gap: var(--space-8);
+}
+.system-matching {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.system-matching__intro {
+  margin: 0;
+  color: var(--ink-2);
+}
+.system-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.system-ask p {
+  margin: 0;
+}
+.system-ask__note {
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}

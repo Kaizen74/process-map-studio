@@ -42,7 +42,8 @@ def test_a_draft_is_refused_in_plain_words(drafted: Drafted) -> None:
 def test_the_three_parts_of_the_published_sample(published: Drafted) -> None:
     body = view(published)
     assert (body["version"]["label"], body["version"]["state"]) == ("v1.0", "published")
-    assert set(body) == {"version", "facts", "interpretation", "recommendation"}
+    assert set(body) == {"version", "facts", "interpretation", "recommendation", "reality"}
+    assert body["reality"] is None  # the Reality views switch is off (P13b, G17)
     phases = [(p["name"], p["work_min"], p["wait_min"], p["rework_loops"], p["handoffs"])
               for p in body["facts"]["phases"]]  # fmt: skip
     assert phases == [

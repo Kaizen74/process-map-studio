@@ -1,0 +1,345 @@
+{
+  "sources": [
+    {
+      "id": "id-1",
+      "engagement_id": "id-2",
+      "kind": "working_spreadsheet",
+      "filename": "Load plan tracker.xlsx",
+      "format": "xlsx",
+      "mime": "application/octet-stream",
+      "version_date": "",
+      "owner": "",
+      "controlled_copy": false,
+      "text_status": "ready",
+      "error": "",
+      "segment_count": 6,
+      "ocr_pages": [],
+      "suggested_images": 0,
+      "created_at": "2026-10-13T00:00:00+00:00",
+      "coverage_pct": null,
+      "job_id": null
+    },
+    {
+      "id": "id-3",
+      "engagement_id": "id-2",
+      "kind": "email_thread",
+      "filename": "Re Load plan revision.eml",
+      "format": "eml",
+      "mime": "application/octet-stream",
+      "version_date": "",
+      "owner": "",
+      "controlled_copy": false,
+      "text_status": "ready",
+      "error": "",
+      "segment_count": 7,
+      "ocr_pages": [],
+      "suggested_images": 0,
+      "created_at": "2026-10-13T00:00:00+00:00",
+      "coverage_pct": null,
+      "job_id": null
+    }
+  ],
+  "sheet_segments": {
+    "segments": [
+      {
+        "id": "id-4",
+        "seq": 1,
+        "anchor": "Plan!A1",
+        "page": 1,
+        "section": "Plan",
+        "speaker_role": null,
+        "text": "Load plan tracker",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-5",
+        "seq": 2,
+        "anchor": "Plan!A3",
+        "page": 3,
+        "section": "Plan",
+        "speaker_role": null,
+        "text": "Flight | Step | Owner | Minutes | Date",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-6",
+        "seq": 3,
+        "anchor": "Plan!A4",
+        "page": 4,
+        "section": "Plan",
+        "speaker_role": null,
+        "text": "Flight: SQ 221 | Step: Draft load plan | Owner: Load controller | Minutes: 20 | Date: 2026-03-02",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-7",
+        "seq": 4,
+        "anchor": "Plan!A5",
+        "page": 5,
+        "section": "Plan",
+        "speaker_role": null,
+        "text": "Flight: SQ 221 | Step: Weight check | Owner: Ramp | Minutes: 12.5 | Date: 2026-03-02 09:14",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-8",
+        "seq": 5,
+        "anchor": "'Shift log'!A1",
+        "page": 1,
+        "section": "Shift log",
+        "speaker_role": null,
+        "text": "Shift | Note",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-9",
+        "seq": 6,
+        "anchor": "'Shift log'!A2",
+        "page": 2,
+        "section": "Shift log",
+        "speaker_role": null,
+        "text": "Shift: Night | Note: Plan revised twice; captain called LC | extra",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      }
+    ],
+    "total": 6,
+    "page": 1,
+    "pages": 1,
+    "coverage_pct": null
+  },
+  "email_segments": {
+    "segments": [
+      {
+        "id": "id-10",
+        "seq": 1,
+        "anchor": "¶ 1",
+        "page": null,
+        "section": "Email 1",
+        "speaker_role": null,
+        "text": "From: [name] · To: LC Ops Desk, [name] · Cc: [name] · Sent: 2026-03-03 09:14 +08:00 · Subject: Load plan revision SQ 221",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-11",
+        "seq": 2,
+        "anchor": "¶ 2",
+        "page": null,
+        "section": "Email 1",
+        "speaker_role": null,
+        "text": "Hi team,",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-12",
+        "seq": 3,
+        "anchor": "¶ 3",
+        "page": null,
+        "section": "Email 1",
+        "speaker_role": null,
+        "text": "The plan for SQ 221 was revised twice last night because the bags came late. We held the bags until the second wave.",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-13",
+        "seq": 4,
+        "anchor": "¶ 4",
+        "page": null,
+        "section": "Earlier in the thread",
+        "speaker_role": null,
+        "text": "Can we release the plan before the final figures? The captain is asking.",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-14",
+        "seq": 5,
+        "anchor": "¶ 5",
+        "page": null,
+        "section": "Email 2",
+        "speaker_role": null,
+        "text": "From: Ramp Lead · To: Load Control · Sent: 2026-03-02 21:05 +08:00 · Subject: FW: Late bags",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-15",
+        "seq": 6,
+        "anchor": "¶ 6",
+        "page": null,
+        "section": "Email 2",
+        "speaker_role": null,
+        "text": "Forwarding for the record.",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      },
+      {
+        "id": "id-16",
+        "seq": 7,
+        "anchor": "¶ 7",
+        "page": null,
+        "section": "Earlier in the thread",
+        "speaker_role": null,
+        "text": "Bags for SQ 221 will be 20 minutes late.",
+        "cited": false,
+        "instruction_like": false,
+        "speaker_label": null,
+        "corrected": false,
+        "question_id": null
+      }
+    ],
+    "total": 7,
+    "page": 1,
+    "pages": 1,
+    "coverage_pct": null
+  },
+  "email_speakers": [
+    {
+      "label": "Tan, Wei Ming",
+      "segment_count": 2,
+      "role_id": null,
+      "is_interviewer": false
+    },
+    {
+      "label": "Priya Nair",
+      "segment_count": 1,
+      "role_id": null,
+      "is_interviewer": false
+    },
+    {
+      "label": "Ramp Lead",
+      "segment_count": 1,
+      "role_id": null,
+      "is_interviewer": false
+    },
+    {
+      "label": "Ops Desk",
+      "segment_count": 1,
+      "role_id": null,
+      "is_interviewer": false
+    }
+  ],
+  "redaction_terms": [
+    {
+      "id": "id-17",
+      "engagement_id": "id-2",
+      "term": "Tan, Wei Ming",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-18",
+      "engagement_id": "id-2",
+      "term": "Wei Ming Tan",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-19",
+      "engagement_id": "id-2",
+      "term": "weiming.tan@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-20",
+      "engagement_id": "id-2",
+      "term": "lc.ops@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-21",
+      "engagement_id": "id-2",
+      "term": "ramp.lead@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-22",
+      "engagement_id": "id-2",
+      "term": "Priya Nair",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-23",
+      "engagement_id": "id-2",
+      "term": "priya.nair@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-24",
+      "engagement_id": "id-2",
+      "term": "lc@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-25",
+      "engagement_id": "id-2",
+      "term": "ops.desk@example.com",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-26",
+      "engagement_id": "id-2",
+      "term": "Kumar, Ravi",
+      "replacement": "[name]",
+      "origin": "email_header"
+    },
+    {
+      "id": "id-27",
+      "engagement_id": "id-2",
+      "term": "Ravi Kumar",
+      "replacement": "[name]",
+      "origin": "email_header"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ from app.domain.graph import ElementRecord
 from app.domain.models import RefreshChanges, StepRename
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
+from app.repositories import event_logs as logs_repo
 from app.repositories import images as images_repo
 from app.repositories import versions as versions_repo
 from app.services import sensemaking
@@ -27,6 +28,10 @@ KEPT = {
     ReviewStatus.REJECTED.value,
 }
 STEP_KINDS = {"activity", "decision", "approval"}
+
+
+OWN_VALUE_FIELDS = ("disposition", "disposition_note", "risk_flag", "time_override_min",
+                    "volume_override_month", "value_override_note")  # fmt: skip
 
 
 def changes(old: list[ElementRecord], fresh: list[ElementRecord], kept: int) -> RefreshChanges:
@@ -102,6 +107,8 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
 
     # A replaced step's pictures (and Eric's keep or discard of them) go to its fresh successor.
     images_repo.move(session, successor)
+    # And Eric's system alignment: which log activities are this step, or that it has no record.
+    logs_repo.move_alignment(session, successor)
     # So does a work type Eric confirmed (with what it implies: never automated, a judgment step).
     confirmed_types = {
         successor[e.id]: e
@@ -122,6 +129,13 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
             if before.kind in {"decision", "approval"}:
                 updates["decision_mechanism"] = DecisionMechanism.JUDGMENT.value
         map_repo.update_element(session, step_id, updates)
+    # So do Eric's disposition, risk flag and value overrides (R9; constraint 8): his choices.
+    for e in replaced:
+        if e.id not in successor:
+            continue
+        own = {k: getattr(e, k) for k in OWN_VALUE_FIELDS if getattr(e, k) is not None}
+        if own:
+            map_repo.update_element(session, successor[e.id], own)
 
     # Out with the draft's replaced content, in with the fresh.
     versions_repo.clear_for_refresh(session, draft_id, set(keep))

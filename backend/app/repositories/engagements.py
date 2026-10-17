@@ -43,6 +43,8 @@ SCOPE_COLUMNS = (
     "industry",
     "adjacent_industries",
     "conventions",
+    "trigger_external",
+    "end_point_external",
 )
 
 
@@ -70,6 +72,8 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         adjacent_industries=list(row.adjacent_industries),
         confidential_terms=_confidential_terms(session, row.id),
         conventions=MappingConventions.model_validate(row.conventions or {}),
+        trigger_external=bool(row.trigger_external),
+        end_point_external=bool(row.end_point_external),
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,

@@ -26,7 +26,7 @@ export function DropZone({ onFiles, busy }: { onFiles: (files: File[]) => void; 
     >
       <p className="drop-zone__title">Drop files here</p>
       <p className="drop-zone__formats">
-        Interview transcripts, SOPs, manuals and job descriptions:{" "}
+        Interview transcripts, SOPs, manuals, job descriptions, working spreadsheets and emails:{" "}
         <span className="mono">{ACCEPTED_FORMATS.join(" ")}</span>, up to 50 MB each.
       </p>
       <Button variant="primary" onClick={() => input.current?.click()}>

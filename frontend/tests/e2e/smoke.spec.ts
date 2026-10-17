@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -130,7 +130,9 @@ const DRAFT_SOURCES = [
 
 test("draft: create a draft map, watch it finish, see the checked claims", async ({ page, request }) => {
   // The whole journey: draft, review, refresh, publish, export, reopen (each AI stage mocked).
-  test.setTimeout(120_000); // the whole journey: about 85 s measured with X3 (2026-10-06); was 90 s
+  // The whole journey: about 85 s measured with X3 (2026-10-06), plus R8, and since P13c all
+  // seven Reality views with an accessibility scan each: 1.7 to 2.4 min measured (2026-10-15).
+  test.setTimeout(240_000);
   const created = await request.post("/api/engagements", {
     data: { name: "Load control", trigger: "Flight scheduled", end_point: "Final load sheet issued" },
   });
@@ -250,6 +252,12 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.locator(".map-lens", { hasText: /^Exception$/ })).toHaveCount(2);
     expect(await seriousViolations(page)).toEqual([]);
     if (shots) await page.screenshot({ path: join(shots, "x3-as-done-exceptions-1440x900.png"), ...still });
+    if (shots) {
+      // P13a (PRD §5.2): the Time lens's wait hatch, for Eric to compare coral with the time colour.
+      await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Time" }).click();
+      await expect(page.locator(".map-bar__wait").first()).toBeVisible();
+      await page.screenshot({ path: join(shots, "p13a-time-lens-1440x900.png"), ...still });
+    }
     await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
     await expect(approvePlan).toHaveCount(0);
     // Soft (2026-10-01): a changed screen still fails the check until Eric approves new baselines,
@@ -429,6 +437,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(lirRow).toContainText("Contested");
     await expect(lirRow).toContainText("Threshold");
     await expect(matrixTable.getByRole("row", { name: /Approve load plan/ })).toContainText("Silent");
+    // P9u-2: the interview split by account (G4): the deviation check is told only in unclear terms.
+    await expect(matrixTable.getByRole("columnheader", { name: "SME lived" })).toBeVisible();
+    await expect(matrixTable.getByRole("row", { name: /Deviation in limits\?/ })).toContainText("Account unclear");
     expect(await seriousViolations(page)).toEqual([]);
     expect((await publicText(page)).includes("Priya"), "a name shown on Matrix").toBe(false);
     if (process.env.PMS_SCREENSHOT_DIR) {
@@ -446,11 +457,29 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     const registerChoice = page.getByRole("radiogroup", { name: "Register" });
     await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    for (const name of ["AI flags", "Constraints by cause", "External practice (R)", "Validation questions", "Rejected claims", "Emerging themes"]) {
+    for (const name of [
+      "AI flags",
+      "Constraints by cause",
+      "External practice (R)",
+      "Validation questions",
+      "Rejected claims",
+      "Stories",
+      "Glossary",
+      "Emerging themes",
+      "Preserve / Improve",
+    ]) {
       await registerChoice.getByRole("radio", { name }).click();
       await expect(registerChoice.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
       expect(await seriousViolations(page)).toEqual([]);
     }
+    // P9u: the interview lists from the real backend (the sample's story, terms and capability notes).
+    await registerChoice.getByRole("radio", { name: "Stories" }).click();
+    await expect(page.getByRole("list", { name: "Stories" })).toContainText("Had to re-trim three flights in one night");
+    await registerChoice.getByRole("radio", { name: "Preserve / Improve" }).click();
+    await expect(page.getByRole("list", { name: "Improve: what gets in the way, Systems" })).toContainText(
+      "The paper loading report gets lost or arrives late",
+    );
+    expect(await seriousViolations(page)).toEqual([]);
     // X3: how much of the process is exception handling, rework and workarounds.
     await registerChoice.getByRole("radio", { name: "Exceptions and workarounds" }).click();
     await expect(registerChoice.getByRole("radio", { name: "Exceptions and workarounds" })).toHaveAttribute(
@@ -649,7 +678,135 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(research).toHaveCount(0, { timeout: 10_000 });
     expect(await seriousViolations(page)).toEqual([]);
     expect((await request.put("/api/settings/research", { data: { web_research_enabled: false } })).status()).toBe(200);
+
+    // R8: System records on, a small log matched to the current map; the Volume and wait lens and
+    // the Variants tab in a real browser (contrast included). Switched back off at the end.
+    expect((await request.put("/api/settings/modules", { data: { system_records_enabled: true } })).status()).toBe(200);
+    const rows = ["case_id,activity,timestamp"];
+    for (let n = 0; n < 6; n++) {
+      rows.push(`C${n},Plan created,2026-03-02 0${n}:00`, `C${n},Special load checked,2026-03-02 0${n}:20`);
+      rows.push(`C${n},Manual weight override,2026-03-02 0${n}:40`);
+    }
+    const upload = await request.post(`/api/engagements/${id}/event-logs`, {
+      multipart: { name: "Six cases", file: { name: "six.csv", mimeType: "text/csv", buffer: Buffer.from(rows.join("\n")) } },
+    });
+    const log = (await upload.json()) as { id: string; column_map: Record<string, string | null> };
+    await request.put(`/api/event-logs/${log.id}/column-map`, { data: { columns: log.column_map } });
+    const approval = { approved_by_role: "Head of operations", confirm_approval: true };
+    expect((await request.post(`/api/event-logs/${log.id}/import`, { data: approval })).status()).toBe(202);
+    await expect
+      .poll(async () => ((await (await request.get(`/api/event-logs/${log.id}`)).json()) as { status: string }).status)
+      .toBe("imported");
+    const aligned = (await (await request.get(`/api/event-logs/${log.id}/alignment`)).json()) as { version_id: string };
+    const current = (await (await request.get(`/api/versions/${aligned.version_id}/graph`)).json()) as {
+      version: { state: string };
+      elements: { id: string; label: string }[];
+    };
+    const step = (label: string) => current.elements.find((e) => e.label === label)?.id ?? "";
+    const decided = await request.put(`/api/event-logs/${log.id}/alignment`, {
+      data: { rows: [
+        { activity: "Plan created", element_id: step("Draft load plan"), status: "confirmed" },
+        { activity: "Special load checked", element_id: step("Special loads OK?"), status: "confirmed" },
+        { activity: "Manual weight override", element_id: null, status: "hidden_work" },
+      ] }, // prettier-ignore
+    });
+    expect(decided.status()).toBe(200);
+    await page.goto(`/engagements/${id}/${current.version.state === "draft" ? "review" : "published"}`);
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Volume and wait" }).click();
+    await expect(page.locator(".map-lens", { hasText: /cases\/mo|No system data/ }).first()).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("tab", { name: "Variants" }).click();
+    await expect(page.getByRole("region", { name: "Hidden work in Six cases" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole("radiogroup", { name: "Lens" }).getByRole("radio", { name: "Plain" }).click();
+
+    // P13b: Reality views on. The screen opens on the current draft's snapshot: Glance, Reality
+    // stack and Fix or keep, each with its table, in a real browser (contrast included); Leadership
+    // shows the published version's frozen tiles. Switched back off at the end.
+    expect((await request.put("/api/settings/modules", { data: { reality_views_enabled: true } })).status()).toBe(200);
+    await page.goto(`/engagements/${id}/reality`);
+    await expect(page.getByRole("heading", { level: 1, name: "Reality" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /How different is real/ })).toBeVisible();
+    await expect(page.getByRole("note")).toContainText("Draft: figures may change");
+    await expect(page.getByRole("region", { name: "Intent" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    // P13d candidates for Eric (never baselines until he approves): each view at 1440 x 900.
+    const shoot = async (name: string) => {
+      if (process.env.PMS_SCREENSHOT_DIR) {
+        await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, `p13d-candidate-reality-${name}-1440x900.png`) });
+      }
+    };
+    await shoot("glance");
+    for (const view of ["Reality stack", "Fix or keep", "Redline", "Where the time goes", "Belief vs evidence", "Typical case"]) {
+      await page.getByRole("radiogroup", { name: "Reality view" }).getByRole("radio", { name: view }).click();
+      await expect(page.locator(".reality-view__headline")).not.toBeEmpty();
+      await shoot(view.toLowerCase().replace(/ /g, "-"));
+      expect(await seriousViolations(page)).toEqual([]);
+      // P13c RQ7 in a real browser: no two drawn labels overlap on the P13c canvases.
+      expect(await overlappingLabels(page), `labels overlap on ${view}`).toEqual([]);
+    }
+    await page.getByRole("button", { name: "Show as table" }).click();
+    await expect(page.getByRole("table")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    expect((await publicText(page)).includes("Priya"), "a name shown on Reality").toBe(false);
+    // P13d: the Reality pack of the published version in both layouts, downloaded from the Reality
+    // screen and opened offline: no request outside the file, no error, and on every printed page
+    // nothing cut off, no text under 11 px and no two drawn labels overlapping (RQ7).
+    const versionList = (await (await request.get(`/api/engagements/${id}/versions`)).json()) as {
+      id: string;
+      label: string;
+      state: string;
+    }[];
+    const released = versionList.find((v) => v.state === "published");
+    expect(released, "a published version to print").toBeTruthy();
+    await page.goto(`/engagements/${id}/reality?version=${released?.id ?? ""}`);
+    const packCard = page.getByRole("region", { name: "Reality pack" });
+    await expect(packCard).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    for (const [label, layout, pageCount] of [["A3", "a3", 11], ["16:9", "slide", 11]] as const) {
+      const [pack] = await Promise.all([
+        page.waitForEvent("download"),
+        packCard.getByRole("link", { name: `Download ${label} Reality pack of ${released?.label ?? ""}` }).click(),
+      ]);
+      expect(pack.suggestedFilename()).toMatch(new RegExp(`-reality-pack-${layout}\\.html$`));
+      const html = readFileSync(await pack.path(), "utf-8");
+      expect(html.includes("Priya"), `a hidden name in the ${label} pack`).toBe(false);
+      const printed = await page.context().newPage();
+      const asked: string[] = [];
+      const problems: string[] = [];
+      printed.on("request", (r) => {
+        if (!r.url().startsWith("data:") && r.url() !== "about:blank") asked.push(r.url());
+      });
+      printed.on("console", (m) => {
+        if (m.type() === "error") problems.push(m.text());
+      });
+      printed.on("pageerror", (e) => problems.push(String(e)));
+      await printed.setViewportSize({ width: 1920, height: 1080 });
+      await printed.setContent(html, { waitUntil: "load" });
+      await printed.emulateMedia({ media: "print" });
+      const pages = await printChecks(printed);
+      expect(pages, `${label} pages`).toHaveLength(pageCount);
+      for (const p of pages) {
+        expect(p.overflow, `${label} page ${p.page} is cut off`).toBeLessThanOrEqual(0);
+        expect(p.smallest, `${label} page ${p.page}: "${p.where}" under 11 px`).toBeGreaterThanOrEqual(11);
+      }
+      expect(await overlappingLabels(printed), `labels overlap in the ${label} pack`).toEqual([]);
+      if (process.env.PMS_SCREENSHOT_DIR) {
+        for (const [i, p] of pages.entries()) {
+          const name = `p13d-candidate-pack-${layout}-${String(i + 1).padStart(2, "0")}-${p.page}.png`;
+          await printed.locator("section.page").nth(i).screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, name) });
+        }
+      }
+      expect(asked, `the ${label} pack asked for something outside itself`).toEqual([]);
+      expect(problems, `the ${label} pack logged errors`).toEqual([]);
+      await printed.close();
+    }
+
+    await page.goto(`/engagements/${id}/leadership`);
+    await expect(page.getByRole("heading", { level: 2, name: "Facts" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
   } finally {
+    await request.put("/api/settings/modules", { data: { system_records_enabled: false, reality_views_enabled: false } });
     expect((await request.delete(`/api/engagements/${id}`)).status()).toBe(204);
   }
 });
@@ -753,3 +910,58 @@ test("interview templates: download Word and Markdown from the home screen", asy
   expect(text).toContain("| L3 |");
   expect(text).toContain("Use roles, not names.");
 });
+
+/**
+ * The print checks of the Reality pack (P13d, RQ7): for each printed page, how far its content
+ * runs past the page (0 or less when nothing is cut off) and its smallest text as printed,
+ * counting how far a drawing is scaled down to fit.
+ */
+async function printChecks(page: Page): Promise<{ page: string; overflow: number; smallest: number; where: string }[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("section.page")].map((p) => {
+      let smallest = 99;
+      let where = "";
+      for (const el of p.querySelectorAll("text, tspan, p, span, td, th, li, h1, h2, h3")) {
+        const own = el.tagName === "text" || el.children.length === 0;
+        if (!(el.textContent ?? "").trim() || !own) continue;
+        const svg = el.closest("svg");
+        let scale = 1;
+        if (svg?.viewBox.baseVal.width) {
+          const box = svg.getBoundingClientRect();
+          const vb = svg.viewBox.baseVal;
+          scale = Math.min(box.width / vb.width, box.height / vb.height);
+        }
+        const size = parseFloat(getComputedStyle(el).fontSize) * scale;
+        if (size < smallest) {
+          smallest = size;
+          where = (el.textContent ?? "").trim().slice(0, 30);
+        }
+      }
+      return {
+        page: p.dataset.view ?? p.dataset.section ?? "",
+        overflow: p.scrollHeight - p.clientHeight,
+        smallest: Math.round(smallest * 10) / 10,
+        where,
+      };
+    }),
+  );
+}
+
+/** RQ7 (P13c): pairs of drawn text labels on the Reality canvas whose boxes overlap on screen. */
+async function overlappingLabels(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const boxes = [...document.querySelectorAll("svg.reality-canvas [data-role] > text")].map((t) => ({
+      text: t.textContent ?? "",
+      r: t.getBoundingClientRect(),
+    }));
+    const out: string[] = [];
+    boxes.forEach((a, i) =>
+      boxes.slice(i + 1).forEach((b) => {
+        const x = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
+        const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+        if (x > 1 && y > 1) out.push(`${a.text} | ${b.text}`);
+      }),
+    );
+    return out;
+  });
+}

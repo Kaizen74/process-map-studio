@@ -13,7 +13,7 @@ layout (`services/layout.py`), so that warning is checked only when a layout is 
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 
 from app.domain.enums import (
     AiBasis,
@@ -27,6 +27,7 @@ from app.domain.enums import (
 )
 from app.domain.graph import Graph, GraphEdge, GraphElement, LintIssue, LintReport
 from app.domain.layout import Layout
+from app.services import disposition
 from app.services.layout import count_crossings
 from app.services.sensemaking import NEVER_AUTOMATED, awaiting_work_type
 from app.services.views import NAMES, VIEWS, view_graph
@@ -62,7 +63,11 @@ def _reachable(start: str, edges: list[GraphEdge]) -> set[str]:
     return seen
 
 
-def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
+def run_lint(graph: Graph, layout: Layout | None = None, traced: Collection[str] = (),
+             chosen: Mapping[str, str] | None = None) -> LintReport:  # fmt: skip
+    """`traced`: steps the system trace records; an observed step may rest on that instead of a
+    passage (R8: a step added from hidden work). `chosen`: Eric's dispositions by step (R9a, L10:
+    Automate and AI-assisted need a complete AI flag and never sit on complex or chaotic work)."""
     elements = [e for e in graph.elements if e.review_status != ReviewStatus.REJECTED.value]
     ids = {e.id for e in elements}
     edges = [e for e in graph.edges if e.from_ in ids and e.to in ids]
@@ -91,6 +96,7 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
         if (
             step
             and e.provenance in EVIDENCED
+            and not (e.provenance == Provenance.OBSERVED.value and e.id in traced)
             and not any(
                 ev.verified and ev.segment_id and ev.stance != Stance.SILENT.value
                 for ev in e.evidence
@@ -161,6 +167,11 @@ def run_lint(graph: Graph, layout: Layout | None = None) -> LintReport:
             ):
                 fail("L10", e, f"{_name(e)} is {e.work_type} work, so it can't be flagged for "
                                "automation.")  # fmt: skip
+        if step and (chosen or {}).get(e.id):
+            fields = e.ai_flag.model_dump() if e.ai_flag is not None else None
+            problem = disposition.lint_problem(e.work_type, fields, (chosen or {})[e.id])
+            if problem:
+                fail("L10", e, f"{_name(e)} {problem}.")
         # L11: exactly one Accountable, or several all marked contested.
         if step:
             contested = [r for r in e.raci if r.letter == "A" and r.contested]

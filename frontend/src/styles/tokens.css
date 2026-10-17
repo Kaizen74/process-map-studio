@@ -26,6 +26,17 @@
   --on-ink: #FFFFFF;
   --scrim: rgba(30, 29, 26, 0.32);
   --label-chip: rgba(255, 255, 255, 0.92);
+  --impact-control: #B42318;
+  --impact-control-bg: #FCEBE9;
+  --impact-time: #9A5B00;
+  --impact-time-bg: #FDF1DC;
+  --impact-capacity: #2563A8;
+  --impact-capacity-bg: #E8F0FA;
+  --impact-workaround: #6D45B8;
+  --impact-workaround-bg: #F1ECFA;
+  --designed-work: #0F6E56;
+  --baseline-fill: #ECEAE4;
+  --baseline-stroke: #8C897F;
   /* font */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;

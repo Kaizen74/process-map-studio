@@ -406,6 +406,11 @@
   color: var(--danger-text);
 }
 
+/* Volume and wait (R8): "No system data" and "too few cases" read as absent, in words. */
+.map-lens__muted {
+  font-style: italic;
+}
+
 .map-bar {
   display: inline-block;
   position: relative;
@@ -436,10 +441,12 @@
   background: var(--ink-2);
 }
 
+/* PRD §5.2 (P13a coral clean-up, approved by Eric 2026-10-15): waiting is drawn in the time
+   colour, so coral keeps one meaning on the review canvas, "needs attention". */
 .map-bar__wait {
   box-sizing: border-box;
-  border: var(--line-hairline) solid var(--constraint);
-  background: repeating-linear-gradient(45deg, var(--constraint) 0 1.5px, transparent 1.5px 4px);
+  border: var(--line-hairline) solid var(--impact-time);
+  background: repeating-linear-gradient(45deg, var(--impact-time) 0 1.5px, transparent 1.5px 4px);
 }
 
 /* Legend and toolbar -------------------------------------------------------------------------- */

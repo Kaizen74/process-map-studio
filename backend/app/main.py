@@ -15,14 +15,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.formparsers import MultiPartParser
 
 from app import db
+from app.actions import event_logs as event_log_actions
 from app.actions import jobs as job_actions
 from app.config import AppConfig, load_config
 from app.routers import (
     causes,
     draft,
     engagements,
+    event_logs,
     gap,
     images,
     interview,
@@ -30,12 +33,14 @@ from app.routers import (
     leadership,
     publish,
     readiness,
+    reality,
     redaction,
     review,
     settings,
     sources,
     system,
     templates,
+    value,
     versions,
 )
 from app.routers.http import ApiError, err_response, error_response
@@ -57,6 +62,12 @@ QUIET_LOGGERS = ("anthropic", "httpx2", "httpcore")
 
 def create_app(config: AppConfig | None = None) -> FastAPI:
     config = config or load_config()
+    # Uploads stay in memory up to the largest size the app accepts, instead of spilling to a
+    # temporary file above 1 MB: a system log may carry user IDs, which never touch the disk
+    # (constraint 24). Other uploads are smaller still (sources 50 MB).
+    MultiPartParser.spool_max_size = max(
+        MultiPartParser.spool_max_size, event_log_actions.MAX_BYTES + 1024 * 1024
+    )
     for name in QUIET_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
     app = FastAPI(title="Process Map Studio", version=config.app_version)
@@ -84,6 +95,9 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(leadership.router)
     app.include_router(templates.router)
     app.include_router(interview.router)
+    app.include_router(event_logs.router)
+    app.include_router(value.router)
+    app.include_router(reality.router)
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)

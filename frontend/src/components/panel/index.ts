@@ -25,3 +25,5 @@ export {
   WorkTypeSection,
   type PassageLink,
 } from "./SensemakingSections";
+export { SystemDataSection, type SystemDataSectionProps } from "./SystemDataSection";
+export { DispositionValueSection, type DispositionValueSectionProps } from "./DispositionValueSection";

@@ -12,6 +12,8 @@ from app.actions import (
     lenses,
     quality,
     registers,
+    system_trace,
+    system_variants,
     validation_pack,
     versions,
 )
@@ -22,11 +24,13 @@ from app.domain.graph import (
     GlossaryEntry,
     Graph,
     LintReport,
+    StoryEntry,
 )
 from app.domain.layout import Layout
 from app.domain.models import Registers
 from app.domain.quality import QualityCard
 from app.domain.sensemaking import CoverageReport, ExceptionReport, LaneBoundaryFinding, View
+from app.domain.system_records import SystemTraceItem, SystemVariants
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["versions"])
@@ -82,6 +86,21 @@ def get_validation_pack(request: Request, version_id: str) -> Response:
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/versions/{version_id}/system-traces")
+def get_system_traces(request: Request, version_id: str) -> list[SystemTraceItem]:
+    return unwrap(system_trace.get_system_traces(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/system-variants")
+def get_system_variants(request: Request, version_id: str) -> SystemVariants:
+    return unwrap(system_variants.get_system_variants(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/stories")
+def get_stories(request: Request, version_id: str) -> list[StoryEntry]:
+    return unwrap(lenses.get_stories(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/glossary")

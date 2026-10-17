@@ -15,6 +15,9 @@ class SourceKind(StrEnum):
     MANUAL = "manual"
     JOB_DESCRIPTION = "job_description"
     EXECUTED_ARTEFACT = "executed_artefact"
+    WORKING_SPREADSHEET = "working_spreadsheet"
+    EMAIL_THREAD = "email_thread"
+    POLICY_OR_CHARTER = "policy_or_charter"  # intent sources (§3.16, P13a): never drafted from
     OTHER = "other"
 
 
@@ -199,6 +202,8 @@ class Guardrail(StrEnum):
     GX2 = "GX2"
     GX3 = "GX3"
     GAV = "GAV"
+    IX1 = "IX1"  # a design gap without both quotes, or over 25 words (P13a)
+    IXV = "IXV"  # the intent verifier (IX_verify) turned it down (P13a)
 
 
 class GapMode(StrEnum):
@@ -211,6 +216,12 @@ class GapMode(StrEnum):
 class InternalFindingType(StrEnum):
     """B.22 internal finding type."""
 
+    # v1.11 system-record findings (§3.13.6; R6): made by the app from system logs, never by AI.
+    HIDDEN_WORK = "hidden_work"
+    OFFLINE_WORK = "offline_work"
+    SEQUENCE_DRIFT = "sequence_drift"
+    ESTIMATE_GAP = "estimate_gap"
+    MEASURED_REWORK = "measured_rework"
     DEAD_CONTROL_CANDIDATE = "dead_control_candidate"
     UNDOCUMENTED_WORK = "undocumented_work"
     OWNERSHIP_MISMATCH = "ownership_mismatch"
@@ -346,8 +357,9 @@ class AshenCategory(StrEnum):
 
 
 class SequenceBasis(StrEnum):
-    """B.34 sequence basis."""
+    """B.34 sequence basis, strongest first (system_trace since R5b, Appendix E tier 2)."""
 
+    SYSTEM_TRACE = "system_trace"
     EXPLICIT_ORDER = "explicit_order"
     DOCUMENT_ORDER = "document_order"
     DEPENDENCY = "dependency"
@@ -438,3 +450,81 @@ class AlignmentStatus(StrEnum):
     CONFIRMED = "confirmed"
     HIDDEN_WORK = "hidden_work"
     NO_SYSTEM_RECORD = "no_system_record"
+
+
+# PRD v1.12 (P13 Reality views: intent layer, discrepancy engine): vocabularies only until P13 uses
+# them.
+class IntentKind(StrEnum):
+    """B.44 intent kind."""
+
+    PROMISE = "promise"
+    TARGET = "target"
+    CONTROL_OBJECTIVE = "control_objective"
+    POLICY_RULE = "policy_rule"
+
+
+class IntentOrigin(StrEnum):
+    """B.45 intent origin."""
+
+    DOCUMENT = "document"
+    OWNER_STATED = "owner_stated"
+
+
+class ImpactClass(StrEnum):
+    """B.46 impact class (Reality views)."""
+
+    CONTROL_EXPOSURE = "control_exposure"
+    TIME_IMPACT = "time_impact"
+    CAPACITY_DRAIN = "capacity_drain"
+    WORKAROUND = "workaround"
+
+
+class Verdict(StrEnum):
+    """B.47 verdict (where the fix lies)."""
+
+    CODIFY = "codify"
+    CORRECT = "correct"
+    REWRITE = "rewrite"
+    ASK = "ask"
+    AS_DESIGNED = "as_designed"
+
+
+class DiscrepancyType(StrEnum):
+    """B.48 discrepancy type."""
+
+    SKIPPED_STEP = "D1"
+    ADDED_STEP = "D2"
+    REORDERED = "D3"
+    REWORK_LOOP = "D4"
+    CONTROL_BYPASSED = "D5"
+    OFF_SYSTEM = "D6"
+    TAKES_LONGER = "D7"
+    WAITING = "D8"
+    PARALLEL_ROUTES = "D9"
+    BELIEF_GAP = "D10"
+    NO_RECORD = "D11"
+    DIFFERENT_ROLE = "D12"
+    DESIGN_GAP = "D13"
+    PROMISE_MISSED = "D14"
+
+
+class IntentMetric(StrEnum):
+    """B.49 intent metric."""
+
+    CYCLE_TIME_MIN = "cycle_time_min"
+    STEP_TIME_MIN = "step_time_min"
+    WAIT_MIN = "wait_min"
+    LEAD_TIME_MIN = "lead_time_min"
+    STRAIGHT_THROUGH_PCT = "straight_through_pct"
+    RECORDED_PCT = "recorded_pct"
+    OTHER = "other"
+
+
+class FigureLabel(StrEnum):
+    """B.50 figure label (Reality views)."""
+
+    MEASURED = "measured"
+    STATED = "stated"
+    DOCUMENTED = "documented"
+    TARGET = "target"
+    MIXED = "mixed"

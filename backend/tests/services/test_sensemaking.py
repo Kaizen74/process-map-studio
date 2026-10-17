@@ -43,8 +43,9 @@ def tags(time: str) -> set[tuple[str, str]]:
 def test_the_lexicon_is_versioned_and_stamped_with_the_codebook_version() -> None:
     lex = lexicon()
     versions = prompts.instruction_versions()
-    assert lex.version == versions["marker_lexicon"] == "1"
-    assert lex.codebook_version == versions["codebook"] == "1"
+    # Version 2 since R5b: the codebook names system-recorded order as the strongest basis.
+    assert lex.version == versions["marker_lexicon"] == "2"
+    assert lex.codebook_version == versions["codebook"] == "2"
     # Every marker family of the §3.12.10 table is there.
     assert {
         "sequence", "handoff", "decision", "approval", "wait", "check", "rework", "variation",
@@ -122,7 +123,7 @@ def test_the_map_building_prompts_carry_the_codebook(name: str) -> None:
     result = prompts.load_prompt(name)
     assert isinstance(result, Ok)
     text = result.value.text
-    assert '<codebook version="1">' in text and text.rstrip().endswith("</codebook>")
+    assert '<codebook version="2">' in text and text.rstrip().endswith("</codebook>")
     assert "Tier 1 — invariants" in text and "Sequence evidence, strongest to weakest" in text
     assert result.value.version == prompts.instruction_versions()[name]  # the prompt's own
 

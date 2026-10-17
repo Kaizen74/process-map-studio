@@ -561,3 +561,53 @@ button.evidence:focus-visible {
   flex-wrap: wrap;
   gap: var(--space-8);
 }
+
+/* Section 4e, System data (R8). Tokens only. */
+.system-data + .system-data {
+  margin-top: var(--space-10);
+  padding-top: var(--space-10);
+  border-top: var(--line-hairline) solid var(--border-soft);
+}
+.system-data__source {
+  margin: 0 0 var(--space-6);
+  font-weight: var(--weight-medium);
+}
+.system-data__compare {
+  margin: var(--space-6) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+/* Disposition and value (R10b). Tokens only. */
+.disposition-form {
+  margin-top: var(--space-8);
+}
+.disposition-form__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.disposition-form__choices legend {
+  margin-bottom: var(--space-6);
+  font-weight: var(--weight-medium);
+}
+.disposition-form__choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--layout-hit-target);
+}
+.disposition-form__refused ul,
+.value-missing {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-16);
+}
+.value-scenario {
+  margin: var(--space-8) 0 0;
+  padding: var(--space-8) var(--space-10);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}

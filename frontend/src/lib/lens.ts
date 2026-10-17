@@ -8,7 +8,7 @@ import type { GraphElement, WorkType } from "./mapTypes";
 import type { StanceOrState } from "./stateGlyph";
 import { variantFor, type AsView } from "./views";
 
-export type Lens = "plain" | "source_state" | "confidence" | "time" | "work_type" | "exceptions";
+export type Lens = "plain" | "source_state" | "confidence" | "time" | "work_type" | "exceptions" | "volume";
 
 export const LENSES: readonly { value: Lens; label: string }[] = [
   { value: "plain", label: "Plain" },
@@ -18,6 +18,15 @@ export const LENSES: readonly { value: Lens; label: string }[] = [
   { value: "work_type", label: "Work type" },
   { value: "exceptions", label: "Exceptions" },
 ];
+
+/** The seventh lens (PRD §5.5 "Volume and wait"): offered only while System records is on. */
+export const VOLUME_LENS: { value: Lens; label: string } = { value: "volume", label: "Volume and wait" };
+export const ALL_LENSES: readonly { value: Lens; label: string }[] = [...LENSES, VOLUME_LENS];
+
+/** The lenses to offer: the System records module adds Volume and wait (decision A). */
+export function lensesFor(systemRecords: boolean): readonly { value: Lens; label: string }[] {
+  return systemRecords ? ALL_LENSES : LENSES;
+}
 
 /** PRD §5.5 Work type lens: a glyph shape and a word for each kind of work (never colour alone). */
 export const WORK_TYPE_LABELS: Readonly<Record<WorkType, string>> = {
@@ -49,15 +58,23 @@ const STATES = new Set<string>([
 
 export type LensLine =
   | { kind: "none" }
-  | { kind: "text"; text: string; danger: boolean }
+  | { kind: "text"; text: string; danger: boolean; muted?: boolean }
   | { kind: "state"; state: StanceOrState }
   | { kind: "confidence"; value: number; text: string; low: boolean; bar: number }
   | { kind: "time"; text: string; work: number; wait: number }
   | { kind: "work_type"; type: WorkType; label: string; proposed: boolean };
 
 export function isLens(value: unknown): value is Lens {
-  return LENSES.some((lens) => lens.value === value);
+  return ALL_LENSES.some((lens) => lens.value === value);
 }
+
+/** A step's Volume and wait line from the backend's figures (made by `volumeLines`). */
+export interface VolumeLine {
+  text: string;
+  muted: boolean;
+}
+
+const NO_SYSTEM_DATA: LensLine = { kind: "text", text: "No system data", danger: false, muted: true };
 
 /** "~20 min", "~40 min + 15 wait", "15 min wait"; "" when no minutes are known. */
 export function durationText(work: number | null, wait: number | null): string {
@@ -73,7 +90,9 @@ const NO_TIME: LensLine = { kind: "text", text: "No time stated", danger: true }
  * The line under a node for a lens. `longest` is the most minutes (work + wait) of any step.
  * Where the views differ on the step (§3.12.11 variants), the Plain lens shows the active view's
  * time, else its owner. The Exceptions lens (X3) shows the route the backend found for the step
- * in this view (`routes`, by element ID); nothing until that report has arrived.
+ * in this view (`routes`, by element ID); nothing until that report has arrived. The Volume and
+ * wait lens (R8) shows the line the backend's figures give the step (`volume`), else "No system
+ * data"; nothing until the figures have arrived.
  */
 export function lensLine(
   element: GraphElement,
@@ -81,6 +100,7 @@ export function lensLine(
   longest = 0,
   view: AsView = "done",
   routes?: ReadonlyMap<string, ExceptionStep>,
+  volume?: ReadonlyMap<string, VolumeLine>,
 ): LensLine {
   if (!STEPS.has(element.kind)) return { kind: "none" };
   const { work_min: work, wait_min: wait } = element.time;
@@ -122,6 +142,11 @@ export function lensLine(
     case "exceptions": {
       const step = routes?.get(element.id);
       return step ? { kind: "text", text: routeLine(step), danger: false } : { kind: "none" };
+    }
+    case "volume": {
+      if (!volume) return { kind: "none" }; // until the figures have arrived
+      const line = volume.get(element.id);
+      return line ? { kind: "text", text: line.text, danger: false, muted: line.muted } : NO_SYSTEM_DATA;
     }
     case "work_type": {
       const type = element.work_type ?? "not_classified";

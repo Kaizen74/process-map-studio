@@ -3,6 +3,7 @@ export {
   SeverityBadge,
   SourceCard,
   SourceListItem,
+  SystemRecordCard,
   type DecisionAction,
   type FindingCardProps,
 } from "./FindingCard";

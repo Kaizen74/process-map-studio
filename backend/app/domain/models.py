@@ -23,6 +23,12 @@ class SettingsView(BaseModel):
     effort: str
     verifier_enabled: bool
     web_research_enabled: bool
+    system_records_enabled: bool
+    gap_analysis_enabled: bool
+    value_enabled: bool
+    reality_views_enabled: bool
+    currency: str
+    default_timezone: str
     key_set: bool
     key_last4: str
 
@@ -107,6 +113,8 @@ class ScopeFields(BaseModel):
     adjacent_industries: list[str] | None = None
     confidential_terms: list[str] | None = None
     conventions: dict[str, str] | None = None  # MappingConventions, checked by the action
+    trigger_external: bool | None = None  # E1: the process starts outside the organisation
+    end_point_external: bool | None = None  # E1: it ends outside the organisation
 
 
 class EngagementCreate(ScopeFields):
@@ -126,6 +134,8 @@ class EngagementView(BaseModel):
     adjacent_industries: list[str]
     confidential_terms: list[str]
     conventions: MappingConventions = MappingConventions()
+    trigger_external: bool = False
+    end_point_external: bool = False
     status: str
     created_at: str
     updated_at: str
@@ -190,6 +200,8 @@ class ParsedDocument(BaseModel):
     # PDF pages with under 50 characters of text: sent to OCR (S0) from phase P3.
     ocr_pages: list[int] = []
     page_count: int | None = None
+    # Names and addresses from an email's headers (R11): added to the redaction terms on reading.
+    hidden_names: list[str] = []
 
 
 class ExtractedImage(BaseModel):
@@ -713,6 +725,15 @@ class WorkTypeInput(BaseModel):
     confirm: bool = False
 
 
+class SystemActivityRef(BaseModel):
+    """A log's activity (R8: Add as step from hidden work)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    log_id: str
+    activity: str
+
+
 class NewStep(BaseModel):
     """Eric's own step (API_CONTRACT.md → Review: POST /versions/{vid}/elements)."""
 
@@ -726,6 +747,8 @@ class NewStep(BaseModel):
     segment_ids: list[str] = []
     r_reference: str = ""
     mechanism: str = "judgment"
+    #: R8: an activity Eric confirmed as hidden work; its system trace is the step's evidence.
+    system_activity: SystemActivityRef | None = None
 
 
 class EdgeInput(BaseModel):
@@ -1016,3 +1039,155 @@ class ResearchSetting(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     web_research_enabled: bool
+
+
+class ModuleSettings(BaseModel):
+    """PUT /settings/modules: a field left out keeps its value (R10 adds more modules)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    system_records_enabled: bool | None = None
+    gap_analysis_enabled: bool | None = None
+    value_enabled: bool | None = None
+    reality_views_enabled: bool | None = None
+
+
+class RegionalSettings(BaseModel):
+    """PUT /settings/regional (R10): a field left out keeps its value."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    currency: str | None = None
+    default_timezone: str | None = None
+
+
+# --- Step disposition (R9a; API_CONTRACT.md → Step disposition) --------------------------------
+
+
+class DispositionInput(BaseModel):
+    """Eric's choice for a step (PUT /elements/{eid}/disposition)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    disposition: str | None
+    note: str = ""
+    risk_flag: str | None = None
+
+
+class RefusedDisposition(BaseModel):
+    """A disposition Eric can't choose for a step, and why (R10b)."""
+
+    disposition: str  # B.41
+    reason: str
+
+
+class DispositionView(BaseModel):
+    """A step's suggested disposition with its reason, and Eric's choice."""
+
+    element_id: str
+    label: str
+    kind: str
+    suggested: str  # B.41
+    reason: str
+    disposition: str | None  # Eric's choice, or None
+    note: str
+    risk_flag: str
+    allowed: list[str]
+    not_allowed: list[RefusedDisposition]
+
+
+# --- Value calculator (R9b; API_CONTRACT.md → Value calculator) ---------------------------------
+
+
+class RoleCostRow(BaseModel):
+    role_id: str
+    role_name: str = ""
+    hourly_cost: float | None = None
+    note: str = ""
+
+
+class RoleCostsView(BaseModel):
+    currency: str
+    rows: list[RoleCostRow]
+
+
+class RoleCostsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[RoleCostRow]
+
+
+class AssumptionRow(BaseModel):
+    disposition: str
+    reduction_pct: float
+    note: str = ""
+    default: bool = False
+
+
+class AssumptionsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[AssumptionRow]
+
+
+class ValueOverrideInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    time_min: float | None = None
+    volume_month: float | None = None
+    note: str = ""
+
+
+class ValueFigure(BaseModel):
+    value: float
+    label: str  # B.42
+    source: str
+
+
+class StepValueView(BaseModel):
+    element_id: str
+    label: str
+    phase_id: str | None
+    phase_name: str
+    role_name: str
+    time: ValueFigure | None
+    volume: ValueFigure | None
+    hours_per_month: float | None
+    cost_per_month: float | None
+    evidence: str | None
+    missing: list[str]
+    disposition: str
+    chosen: bool
+    reduction_pct: float
+    hours_released: float | None
+    cost_released: float | None
+
+
+class ValueTotalView(BaseModel):
+    phase_id: str | None = None
+    name: str = ""
+    hours_per_month: float
+    cost_per_month: float
+    evidence: str | None
+    steps_counted: int
+    steps_missing: int
+    steps_without_cost: int
+
+
+class ScenarioView(BaseModel):
+    disposition: str
+    reduction_pct: float
+    steps: int
+    hours_per_month: float
+    hours_released: float
+    cost_released: float
+
+
+class ValueView(BaseModel):
+    currency: str
+    view: str
+    potential: str
+    steps: list[StepValueView]
+    phases: list[ValueTotalView]
+    totals: ValueTotalView
+    scenarios: list[ScenarioView]

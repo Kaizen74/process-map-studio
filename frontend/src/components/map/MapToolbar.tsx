@@ -12,6 +12,8 @@ export interface MapToolbarProps {
   onView: (view: MapView) => void;
   lens: Lens;
   onLens: (lens: Lens) => void;
+  /** The lenses on offer; System records adds Volume and wait (decision A). */
+  lenses?: readonly { value: Lens; label: string }[];
   /** As done (default) or As documented (§3.12.11), and whether the other view is ghosted. */
   asView?: AsView;
   onAsView?: (view: AsView) => void;
@@ -52,6 +54,7 @@ export function MapToolbar({
   onView,
   lens,
   onLens,
+  lenses = LENSES,
   asView = "done",
   onAsView,
   showOther = false,
@@ -92,7 +95,7 @@ export function MapToolbar({
             <span className="map-toolbar__label" aria-hidden="true">
               Lens
             </span>
-            <SegmentedControl label="Lens" options={LENSES} value={lens} onChange={onLens} />
+            <SegmentedControl label="Lens" options={lenses} value={lens} onChange={onLens} />
           </>
         )}
       </div>

@@ -64,6 +64,14 @@ class ElementRecord(Record):
     variants: dict[str, Any] | None = None  # {"done": {owner, threshold, time, trigger}, ...}
     level: str | None = None  # B.39
     parent_element_id: str | None = None
+    # PRD v1.11 §3.14-3.15 (0012, 0014): Eric's disposition, the step's risk flag and his value
+    # overrides with their notes. Never part of the graph JSON (the graph is built field by field).
+    disposition: str | None = None  # B.41
+    disposition_note: str | None = None
+    risk_flag: str | None = None  # none · financial · safety · regulatory
+    time_override_min: float | None = None
+    volume_override_month: float | None = None
+    value_override_note: str | None = None
 
 
 class EdgeRecord(Record):
@@ -444,6 +452,12 @@ class StoryCard(Out):
     anchor: str
 
 
+class StoryEntry(StoryCard):
+    """A story in the Registers list (P9u): the card, plus the labels of the steps it is about."""
+
+    steps: list[str]
+
+
 class CapabilityNote(Out):
     """Rule 10 (C3): a strength to preserve or a weakness to improve, as the SME named it."""
 
@@ -531,6 +545,8 @@ class AlignmentRow(Out):
     kind: str
     sop: str
     interview: str
+    sme_official: str  # P9u-2: the interview column by the account it gives (§3.12.3)
+    sme_lived: str
     jd: str
     artefact: str
     state: str

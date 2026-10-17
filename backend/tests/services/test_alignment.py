@@ -7,7 +7,7 @@ from __future__ import annotations
 import pytest
 
 from app.domain.enums import SourceKind
-from app.domain.graph import GraphEvidence
+from app.domain.graph import AccountSummary, GraphEvidence
 from app.services import alignment
 from tests.services.test_lint import clean, element, replace
 
@@ -110,3 +110,31 @@ def test_a_trace_contradiction_shows_in_the_artefact_column() -> None:
     )
     row = alignment.alignment_matrix(graph)[0]
     assert (row.sop, row.artefact, row.state) == ("supports", "contradicts", "trace_contradicted")
+
+
+@pytest.mark.parametrize(
+    ("interview", "official", "lived", "unclear", "expected"),
+    [
+        ("supports", 1, 2, 0, ("supports", "supports")),  # both accounts given
+        ("supports", 0, 1, 1, ("silent", "supports")),  # only the lived account: official silent
+        ("contradicts", 1, 0, 0, ("contradicts", "silent")),  # the stance goes to its account
+        ("supports", 0, 0, 2, ("account_unclear", "account_unclear")),  # never guessed
+        ("silent", 0, 0, 0, ("silent", "silent")),  # the interview doesn't mention the step
+        ("not_applicable", 0, 0, 0, ("not_applicable", "not_applicable")),  # no interview at all
+    ],
+)
+def test_the_sme_official_and_lived_layers_split_the_interview_by_account(
+    interview: str, official: int, lived: int, unclear: int, expected: tuple[str, str]
+) -> None:
+    """P9u-2 (PRD §6.3 P9 four layers, §3.12.3): which account the interview gives of a step."""
+    accounts = AccountSummary(official=official, lived=lived, unclear=unclear)
+    found = (alignment.layer(interview, accounts, "official"),
+             alignment.layer(interview, accounts, "lived"))  # fmt: skip
+    assert found == expected
+
+
+def test_each_row_carries_both_layers() -> None:
+    graph = replace(clean(), "plan", evidence=[said("interview_transcript", "supports", "i")],
+                    account_summary=AccountSummary(official=1, lived=0, unclear=0))  # fmt: skip
+    plan = alignment.alignment_matrix(graph)[0]
+    assert (plan.interview, plan.sme_official, plan.sme_lived) == ("supports", "supports", "silent")

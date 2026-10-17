@@ -47,7 +47,8 @@ export interface GapAnalysis {
 }
 
 export interface GapEvidence {
-  side: "documents" | "practice" | "external";
+  /** "system": a system log's record (R6): figures in the finding's text, never a quote. */
+  side: "documents" | "practice" | "external" | "system";
   source_id: string;
   source_kind: string;
   source_name: string;
@@ -207,6 +208,11 @@ export const SECTION_LABELS: Readonly<Record<Section, string>> = {
 };
 
 const TYPE_LABELS: Readonly<Record<string, string>> = {
+  hidden_work: "Hidden work",
+  offline_work: "Offline work",
+  sequence_drift: "Order differs in the system",
+  estimate_gap: "Time differs from the measured time",
+  measured_rework: "Measured rework",
   dead_control_candidate: "Control nobody may perform",
   undocumented_work: "Undocumented work",
   ownership_mismatch: "Different owner",
@@ -424,3 +430,10 @@ export function runBlocker(
     return "Tick “This brief contains no confidential information” before running the research.";
   return null;
 }
+
+/** What a system log's record says about a step, in words (R6; silence is not contradiction). */
+export const SYSTEM_STANCE_LABELS: Readonly<Record<GapEvidence["stance"], string>> = {
+  supports: "Recorded",
+  contradicts: "Recorded in a different order",
+  silent: "No record (silent, not a contradiction)",
+};

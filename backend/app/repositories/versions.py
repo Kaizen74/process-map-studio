@@ -20,6 +20,7 @@ from app.repositories.tables import (
     ElementClaim,
     EvidenceLink,
     Image,
+    IntentConflict,
     MapVersion,
     MergeProposal,
     Phase,
@@ -388,6 +389,9 @@ def copy_content(session: Session, from_id: str, to_id: str) -> None:
         _copy(session, Image, image, element_id=elements[image.element_id or ""])
     for source in session.scalars(select(VersionSource).where(VersionSource.version_id == from_id)):
         _copy(session, VersionSource, source, version_id=to_id)
+    # Design gaps (P13a): Eric's decisions on them carry over to the reopened draft.
+    for gap in session.scalars(select(IntentConflict).where(IntentConflict.version_id == from_id)):
+        _copy(session, IntentConflict, gap, version_id=to_id)
     session.flush()
 
 
@@ -433,3 +437,16 @@ def set_run_record(
 def run_record(session: Session, version_id: str) -> dict[str, Any] | None:
     row = session.get(MapVersion, version_id)
     return dict(row.run_record) if row is not None and row.run_record else None
+
+
+def set_system_traces(session: Session, version_id: str, traces: list[Any]) -> None:
+    """Freeze a version's system-trace evidence (at publishing; migration 0013)."""
+    row = session.get(MapVersion, version_id)
+    if row is not None:
+        row.system_traces = traces
+        session.flush()
+
+
+def system_traces(session: Session, version_id: str) -> list[Any] | None:
+    row = session.get(MapVersion, version_id)
+    return list(row.system_traces) if row is not None and row.system_traces is not None else None

@@ -52,7 +52,8 @@ def _severity(f: GapFindingView) -> str:
 
 def _sides(f: GapFindingView) -> list[str]:
     lines = []
-    for side, label in (("documents", "Documents"), ("practice", "Practice")):
+    for side, label in (("documents", "Documents"), ("practice", "Practice"),
+                        ("system", "System records")):  # fmt: skip
         places = list(
             dict.fromkeys(  # a place cited twice (two quotes from one passage) is listed once
                 " ".join(part for part in (e.source_name, e.anchor) if part) + f" ({e.stance})"

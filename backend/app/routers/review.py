@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import map_edits, merges, questions, review
+from app.actions import dispositions, map_edits, merges, questions, review
 from app.domain.graph import ElementDetail, GraphEdge
 from app.domain.models import (
     AuditEntry,
+    DispositionInput,
+    DispositionView,
     EdgeInput,
     EdgePatch,
     ElementPatch,
@@ -60,6 +62,17 @@ def set_raci(request: Request, element_id: str, raci: list[RaciInput]) -> Elemen
 def set_work_type(request: Request, element_id: str, body: WorkTypeInput) -> ElementDetail:
     state = request.app.state
     return unwrap(review.set_work_type(state.config, state.sessions, element_id, body))
+
+
+@router.put("/elements/{element_id}/disposition")
+def set_disposition(request: Request, element_id: str, body: DispositionInput) -> DispositionView:
+    state = request.app.state
+    return unwrap(dispositions.set_disposition(state.config, state.sessions, element_id, body))
+
+
+@router.get("/versions/{version_id}/dispositions")
+def get_dispositions(request: Request, version_id: str) -> list[DispositionView]:
+    return unwrap(dispositions.get_dispositions(request.app.state.sessions, version_id))
 
 
 @router.get("/versions/{version_id}/audit")

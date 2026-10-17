@@ -57,6 +57,7 @@ const VIEW: LeadershipView = {
     ], // prettier-ignore
     decisions_needed: [{ cause_type: "system_fragmentation", text: "" }],
   },
+  reality: null,
 };
 const GRAPH = {
   elements: [

@@ -1,0 +1,24 @@
+{
+  "verdicts": [
+    {
+      "item_ref": "v1",
+      "verdict": "supported",
+      "reason": "The charter states it in these words."
+    },
+    {
+      "item_ref": "v2",
+      "verdict": "supported",
+      "reason": "The charter states it in these words."
+    },
+    {
+      "item_ref": "v3",
+      "verdict": "supported",
+      "reason": "The charter states it in these words."
+    },
+    {
+      "item_ref": "v4",
+      "verdict": "supported",
+      "reason": "The charter states it in these words."
+    }
+  ]
+}

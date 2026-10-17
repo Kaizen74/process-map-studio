@@ -23,6 +23,14 @@
     "sha256": "268daf663e59af5b381ec2b989eef4871f077f898e0ecf1e74ea6448a66492ca",
     "version": "1"
   },
+  "IX_compare.md": {
+    "sha256": "70ae52d5d9cac260a4ab87ba4a406ac4e2b3904e8e74054c16e6be68a1840629",
+    "version": "1"
+  },
+  "IX_verify.md": {
+    "sha256": "761f8008ab6794b27921dec25fddd1cc1598cad9bcec4c80bf2012142c86dfa8",
+    "version": "1"
+  },
   "R_repair.md": {
     "sha256": "4971ca642242918283cde45bdb31193e1a1adffec7eb191a0be0d547825c730d",
     "version": "1"
@@ -33,6 +41,10 @@
   },
   "S1_extract_document.md": {
     "sha256": "3eaac6b4db749c71bc49537565b9abf1c4a1b3e2dc5b6ccdce53983770c38d5e",
+    "version": "1"
+  },
+  "S1_extract_intent.md": {
+    "sha256": "345feed01fcde642b8cdfa4b1955f003749e863877895cbb18a8bcbed525dbc8",
     "version": "1"
   },
   "S1_extract_interview.md": {
@@ -67,13 +79,17 @@
     "sha256": "8a35a97aa38d44df014b3a3636ac7bf8b264c95353021e0f5607f57607545eb6",
     "version": "1"
   },
-  "codebook.md": {
-    "sha256": "78b4c75d6a8de350c859649f7c11fd8c5e8a563b0706f9e43d761425b1bc047f",
+  "SR_align.md": {
+    "sha256": "5b34e2d9bdeaf34226c0f0327cd55ea3fe7ccc8d475dca5cbb5180f1aba92d1c",
     "version": "1"
   },
+  "codebook.md": {
+    "sha256": "31115b9009881035819204239f442927f97b1108c21f37ea5f53c20aac08efe3",
+    "version": "2"
+  },
   "marker_lexicon.json": {
-    "sha256": "0a12bbb43c96d74660a4e1b7c2874277b047ff6444e2dba8e531ff9841ad2f08",
-    "version": "1"
+    "sha256": "95a07ae75a5d813d555c3fdbf5d181aac5cdc6da85bbbf1ce06033259e4d2dfb",
+    "version": "2"
   },
   "question_bank.json": {
     "sha256": "c03650395e1824b0f9fd06260df140c55befff9357d7a0711f0be54ba9078ab9",

@@ -14,6 +14,8 @@ function row(label: string, change: Partial<AlignmentRow> = {}): AlignmentRow {
     kind: "activity",
     sop: "supports",
     interview: "supports",
+    sme_official: "silent",
+    sme_lived: "supports",
     jd: "silent",
     artefact: "not_applicable",
     state: "corroborated",
@@ -25,8 +27,19 @@ function row(label: string, change: Partial<AlignmentRow> = {}): AlignmentRow {
 // The sample's rows (the G4 baseline), in process order.
 const ROWS: AlignmentRow[] = [
   row("Draft load plan", { jd: "supports" }),
-  row("Approve load plan", { kind: "approval", interview: "silent", jd: "supports", state: "documented_only" }),
-  row("Resolve or offload", { sop: "silent", state: "practiced_only" }),
+  row("Approve load plan", {
+    kind: "approval",
+    interview: "silent",
+    sme_lived: "silent",
+    jd: "supports",
+    state: "documented_only",
+  }),
+  row("Resolve or offload", {
+    sop: "silent",
+    sme_official: "account_unclear",
+    sme_lived: "account_unclear",
+    state: "practiced_only",
+  }),
   row("Load and return LIR", { sop: "contradicts", state: "contested", divergence_types: ["threshold"] }),
   row("Deviation in limits?", {
     kind: "decision",
@@ -67,7 +80,8 @@ describe("the alignment table", () => {
     expect(headers).toEqual([
       "Step",
       "SOP / manual",
-      "Interview",
+      "SME official",
+      "SME lived",
       "Job description",
       "Executed artefacts",
       "State",
@@ -75,7 +89,18 @@ describe("the alignment table", () => {
     ]);
     const approve = within(table).getByRole("row", { name: /Approve load plan/ });
     const cells = within(approve).getAllByRole("cell").map((c) => c.textContent);
-    expect(cells).toEqual(["Supports", "Silent", "Supports", "No source of this kind", "Documented only", "None"]);
+    expect(cells).toEqual([
+      "Supports",
+      "Silent",
+      "Silent",
+      "Supports",
+      "No source of this kind",
+      "Documented only",
+      "None",
+    ]);
+    // P9u-2: the interview speaks of it, but in answers whose account is unclear: never guessed.
+    const resolve = within(table).getByRole("row", { name: /Resolve or offload/ });
+    expect(within(resolve).getAllByText("Account unclear")).toHaveLength(2);
     const lir = within(table).getByRole("row", { name: /Load and return LIR/ });
     expect(within(lir).getByText("Threshold")).toHaveClass("chip--danger");
     expect(within(lir).getByText("Contested").closest(".glyph")).toHaveClass("glyph--danger-text");

@@ -1,0 +1,66 @@
+/* The Reality pack's page layout (PRD §3.18.6, §7.4): tokens only; the drawings use the app's own
+   Reality stylesheet, embedded before this one. One view per page that never overflows (a print
+   check measures it); legend and data label on every page; no text under 11 px. */
+html { background: var(--bg); }
+body.pack {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--ink);
+  background: var(--bg);
+}
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: var(--space-24) auto;
+  padding: var(--space-20) var(--space-32);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  break-after: page;
+  page-break-after: always;
+  break-inside: avoid;
+}
+.pack--a3 .page { width: 400mm; height: 277mm; }
+.pack--slide .page { width: 1920px; height: 1080px; padding: 32px 64px; }
+/* The drawing takes the room the page has left, scaled to fit it, so it can never push the page
+   over. The pack prints a drawing only when that scale keeps its 12.5 px text at 11 px or more
+   (export_reality.ROOM); otherwise its table, which keeps its own height. */
+.pack-drawing { position: relative; flex: 1 1 0; min-height: 0; }
+.pack-drawing svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.pack-drawing--table { position: static; flex: none; }
+.pack h1 { margin: 0; font-size: var(--text-screen-title); font-weight: var(--weight-medium); }
+.pack h3 { margin: var(--space-8) 0 0; font-size: var(--text-popover-title); font-weight: var(--weight-medium); }
+.pack-cover { justify-content: center; gap: var(--space-16); }
+.pack-section {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.pack-strong { margin: 0; font-weight: var(--weight-medium); }
+.pack-small { margin: 0; font-size: var(--text-label); color: var(--ink-2); }
+.pack-availability { margin: 0; color: var(--ink-2); }
+.pack-list { margin: 0; padding-left: var(--space-16); display: flex; flex-direction: column; gap: var(--space-6); }
+.pack-verdict { font-weight: var(--weight-medium); }
+.pack .callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+.pack--slide .callouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pack .reality-legend { margin-top: auto; flex-direction: row; flex-wrap: wrap; column-gap: var(--space-24); row-gap: var(--space-4); }
+.pack .reality-legend__note { flex-basis: auto; }
+.pack .x-tag { display: inline-flex; min-width: 36px; }
+.pack .reality-table td, .pack .reality-table th { vertical-align: top; }
+/* Print: nothing smaller than 11 px. */
+.pack .metric-tile__label,
+.pack .evidence-chip,
+.pack .reality-table,
+.pack .reality-legend,
+.pack .pack-section,
+.pack .pack-small,
+.pack .x-tag { font-size: max(11px, var(--text-label)); }
+@media print {
+  html, body.pack { background: var(--surface); }
+  .page { margin: 0; border: 0; }
+}

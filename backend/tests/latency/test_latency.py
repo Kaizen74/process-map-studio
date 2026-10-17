@@ -27,6 +27,7 @@ from tests.paths import BACKEND_ROOT
 from tests.uploads import wait_for_jobs
 
 FIXTURES = BACKEND_ROOT / "tests" / "fixtures" / "engagement_load_control"
+SYSTEM_LOG = BACKEND_ROOT / "tests" / "fixtures" / "system" / "dcs_log.csv"
 DOCUMENTS = [
     "sop_LC-07.docx",
     "sop_RP-02.docx",
@@ -142,7 +143,31 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
     )
     assert guide.status_code == 202, guide.text
     wait_for_jobs(client)
+    # Two system logs of fixture A.11 (R3): one imported, one still held in memory for mapping.
+    log_ids = []
+    for _ in range(2):
+        log = client.post(
+            f"/api/engagements/{built.engagement_id}/event-logs",
+            files={"file": ("dcs_log.csv", SYSTEM_LOG.read_bytes(), "text/csv")},
+            data={"name": "DCS extract"},
+        ).json()
+        client.put(f"/api/event-logs/{log['id']}/column-map", json={"columns": log["column_map"]})
+        client.put(f"/api/event-logs/{log['id']}/role-map",
+                   json={"roles": {r["value"]: None for r in log["resources"]}})  # fmt: skip
+        log_ids.append(log["id"])
+    approval = {"approved_by_role": "Head of operations", "confirm_approval": True}
+    imported = client.post(f"/api/event-logs/{log_ids[0]}/import", json=approval)
+    assert imported.status_code == 202, imported.text
+    wait_for_jobs(client)
+    # Eric confirms the app's proposals, so the graph endpoints include the system trace (R5b).
+    proposals = client.get(f"/api/event-logs/{log_ids[0]}/alignment").json()["rows"]
+    confirmed = [{"activity": r["activity"], "element_id": r["element_id"], "status": "confirmed"}
+                 for r in proposals if r["activity"] and r["element_id"]]  # fmt: skip
+    assert client.put(f"/api/event-logs/{log_ids[0]}/alignment",
+                      json={"rows": confirmed}).status_code == 200  # fmt: skip
     return client, ids | {
+        "imported_log": log_ids[0],
+        "held_log": log_ids[1],
         "sample_eid": built.engagement_id,
         "interviewee": interviewee,
         "published": published,
@@ -160,6 +185,17 @@ def loaded(tmp_path_factory: pytest.TempPathFactory) -> Loaded:
 ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/health", None),
     ("GET", "/api/templates/interview/plans", None),
+    ("GET", "/api/templates/data-request?format=md", None),
+    ("GET", "/api/engagements/{sample_eid}/event-logs", None),
+    ("GET", "/api/event-logs/{imported_log}", None),
+    ("GET", "/api/event-logs/{held_log}", None),
+    ("GET", "/api/event-logs/{imported_log}/metrics?scope=activity", None),
+    ("GET", "/api/event-logs/{imported_log}/metrics?scope=transition", None),
+    ("GET", "/api/event-logs/{imported_log}/metrics?scope=case", None),
+    ("GET", "/api/event-logs/{imported_log}/metrics?scope=variant", None),
+    ("GET", "/api/event-logs/{imported_log}/metrics?scope=role", None),
+    ("GET", "/api/event-logs/{imported_log}/alignment", None),
+    ("GET", "/api/versions/{map}/system-traces", None),
     ("GET", "/api/templates/interview?type=practice&format=docx", None),
     ("GET", "/api/templates/interview?type=landscape&format=md", None),
     ("GET", "/api/settings", None),
@@ -201,6 +237,12 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/lint", None),
     ("GET", "/api/versions/{map}/refresh-check", None),
     ("GET", "/api/versions/{map}/quality-card", None),
+    # P13a: intent statements, design gaps and the discrepancy engine (no AI call).
+    ("GET", "/api/engagements/{sample_eid}/intent", None),
+    ("GET", "/api/versions/{map}/intent/conflicts", None),
+    ("GET", "/api/versions/{map}/discrepancies", None),
+    # P13b: the Reality snapshot (worked out when the inputs change, else kept).
+    ("GET", "/api/versions/{map}/reality", None),
     ("GET", "/api/versions/{map}", None),
     ("GET", "/api/engagements/{eid}/versions", None),
     ("GET", "/api/elements/{element}", None),
@@ -217,6 +259,7 @@ ENDPOINTS: list[tuple[str, str, Any]] = [
     ("GET", "/api/versions/{map}/graph?view=done", None),
     ("GET", "/api/versions/{map}/layout?view=documented&show_other=1", None),
     ("GET", "/api/versions/{map}/glossary", None),
+    ("GET", "/api/versions/{map}/stories", None),
     ("GET", "/api/versions/{map}/capability-notes", None),
     ("GET", "/api/versions/{map}/coverage", None),
     ("GET", "/api/versions/{map}/validation-pack", None),
