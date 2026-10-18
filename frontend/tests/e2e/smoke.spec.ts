@@ -730,11 +730,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     await expect(page.getByRole("note")).toContainText("Draft: figures may change");
     await expect(page.getByRole("region", { name: "Intent" })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    // P13d candidates for Eric (never baselines until he approves): each view at 1440 x 900.
+    // P13d visual baselines (Eric approved 2026-10-18): each view at 1440 x 900. Soft, as for
+    // Review: a changed view fails the check until Eric approves new baselines, and the rest of
+    // the journey keeps running.
     const shoot = async (name: string) => {
-      if (process.env.PMS_SCREENSHOT_DIR) {
-        await page.screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, `p13d-candidate-reality-${name}-1440x900.png`) });
-      }
+      await expect.soft(page).toHaveScreenshot(`p13d-reality-${name}-1440x900.png`);
     };
     await shoot("glance");
     for (const view of ["Reality stack", "Fix or keep", "Redline", "Where the time goes", "Belief vs evidence", "Typical case"]) {
@@ -791,11 +791,11 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
         expect(p.smallest, `${label} page ${p.page}: "${p.where}" under 11 px`).toBeGreaterThanOrEqual(11);
       }
       expect(await overlappingLabels(printed), `labels overlap in the ${label} pack`).toEqual([]);
-      if (process.env.PMS_SCREENSHOT_DIR) {
-        for (const [i, p] of pages.entries()) {
-          const name = `p13d-candidate-pack-${layout}-${String(i + 1).padStart(2, "0")}-${p.page}.png`;
-          await printed.locator("section.page").nth(i).screenshot({ path: join(process.env.PMS_SCREENSHOT_DIR, name) });
-        }
+      // P13d visual baselines (Eric approved 2026-10-18): every printed page. The data label's
+      // date is the day the journey publishes, a few dozen pixels inside the 0.5% tolerance.
+      for (const [i, p] of pages.entries()) {
+        const name = `p13d-pack-${layout}-${String(i + 1).padStart(2, "0")}-${p.page}.png`;
+        await expect.soft(printed.locator("section.page").nth(i)).toHaveScreenshot(name);
       }
       expect(asked, `the ${label} pack asked for something outside itself`).toEqual([]);
       expect(problems, `the ${label} pack logged errors`).toEqual([]);

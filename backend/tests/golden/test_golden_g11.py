@@ -3,11 +3,10 @@ Reality views on (intent evaluations, discrepancies with their codes, deltas, im
 verdicts, the seven view models with their geometry and copy) and the Reality pack in both
 layouts. Claude is mocked; the version is published at a fixed time by "Owner".
 
-Candidate stage (2026-10-16): G11 becomes a byte-for-byte baseline only once Eric has approved
-the candidate. Until then this test proves the output is stable (no clock, no record ID left in
-it) and writes the candidate with PMS_GOLDEN_CANDIDATES=<folder> (docs/review/ for Eric). On
-approval, the approved `G11_reality.json` and two `G11_reality_pack_*.html` files are copied into
-this folder, and from then on they are compared (and updated with PMS_UPDATE_GOLDEN=1) like G1-G10.
+Times that change on every run are fixed and record IDs numbered in order of first appearance, as
+for G1-G10; the snapshot's `inputs_hash` (a hash over record IDs) is masked. Eric approved the
+candidate on 2026-10-18 (DECISIONS 61). To accept a legitimate change: PMS_UPDATE_GOLDEN=1,
+review the diff, log it in DECISIONS.md; to show Eric first: PMS_GOLDEN_CANDIDATES=<folder>.
 """
 
 from __future__ import annotations
@@ -20,14 +19,9 @@ import pytest
 
 from app.actions import publish as publish_action
 from tests.golden.test_golden_baselines import (
-    FONT_DATA,
-    HERE,
     PUBLISHED_AT,
-    UUID,
     matches_baseline,
     matches_text_baseline,
-    stable_ids,
-    write_candidate,
 )
 from tests.unit.test_discrepancies_a12 import Reality
 from tests.unit.test_discrepancies_a12 import reality as reality  # the shared fixture
@@ -35,12 +29,6 @@ from tests.unit.test_intent_api import engagement as engagement  # the shared fi
 from tests.unit.test_reality_api import publish, snapshot, switch
 
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(\+00:00|Z)?")
-NAMES = ("G11_reality.json", "G11_reality_pack_a3.html", "G11_reality_pack_slide.html")
-
-
-def _ids(text: str) -> str:
-    tokens: dict[str, str] = {}
-    return UUID.sub(lambda m: tokens.setdefault(m.group(0), f"id-{len(tokens) + 1}"), text)
 
 
 def test_g11_reality_snapshot_and_pack_of_fixture_a12(
@@ -65,15 +53,6 @@ def test_g11_reality_snapshot_and_pack_of_fixture_a12(
         again = client.get(f"/api/versions/{vid}/reality/export", params={"layout": layout}).text
         assert again == html
     # The inputs hash covers record IDs, which change on every run.
-    stable = {**snap, "inputs_hash": "<inputs hash>"}
-    if all((HERE / name).exists() for name in NAMES):  # approved: byte for byte, as G1-G10
-        matches_baseline(NAMES[0], stable)
-        matches_text_baseline(NAMES[1], packs["a3"])
-        matches_text_baseline(NAMES[2], packs["slide"])
-        return
-    write_candidate(NAMES[0], json.dumps(stable_ids(stable), indent=2, ensure_ascii=False) + "\n")
-    for name, layout in zip(NAMES[1:], ("a3", "slide"), strict=True):
-        rendered = FONT_DATA.sub(
-            lambda m: f"data:font/woff2;base64,<{len(m.group(1))} characters>", _ids(packs[layout])
-        )
-        write_candidate(name, rendered)
+    matches_baseline("G11_reality.json", {**snap, "inputs_hash": "<inputs hash>"})
+    matches_text_baseline("G11_reality_pack_a3.html", packs["a3"])
+    matches_text_baseline("G11_reality_pack_slide.html", packs["slide"])
