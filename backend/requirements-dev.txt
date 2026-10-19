@@ -2,6 +2,7 @@
 -r requirements.txt
 pytest==9.1.1
 pytest-cov==7.1.0
+pytest-xdist==3.8.0  # the backend tests on every core (deep review 2026-10-19); latency tests stay serial
 ruff==0.16.9
 types-openpyxl==3.1.5.20260827
 mypy==2.3.1

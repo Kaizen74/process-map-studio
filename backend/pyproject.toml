@@ -19,9 +19,10 @@ markers = [
 ]
 
 [tool.coverage.run]
-# PRD §6.2: coverage >= 85% on services and actions.
+# PRD §6.2: coverage >= 85% on services and actions; the pipeline (grounding, assembly) counts
+# too since the deep review (2026-10-19), when it measured 92% of branches.
 branch = true
-source = ["app/services", "app/actions"]
+source = ["app/services", "app/actions", "app/pipeline"]
 
 [tool.coverage.report]
 fail_under = 85

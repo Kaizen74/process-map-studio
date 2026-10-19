@@ -12,6 +12,8 @@ Endpoints are added here as each phase builds them. The full planned list is PRD
 
 Every response carries an `X-Request-ID` header. Error bodies also include it as `details.request_id`, so the screen's **Copy details** can give "error code · request ID" for bug reports.
 
+**Only the app's own pages (deep review, 2026-10-19).** Every request, `/api` or not, must name the app's own host (`127.0.0.1`, `localhost` or `::1`, any port); otherwise `403 FOREIGN_HOST` ("This address isn't the app's own, so the app refused the request. Open the app at http://127.0.0.1:8000."). This stops DNS rebinding, where a web page's name is re-pointed at 127.0.0.1. A request that changes anything (`POST`, `PUT`, `PATCH`, `DELETE`) must also come from the app's own page: an `Origin` header, when sent, must be one of those hosts on the same port; without `Origin`, a `Sec-Fetch-Site` header, when sent, must be `same-origin` or `none`; otherwise `403 FOREIGN_SITE` ("This request came from another website, so the app refused it."). Reading (`GET`, `HEAD`, `OPTIONS`) needs no origin check: the app sends no CORS headers, so no other site can read an answer, and download links keep working. Every response also carries `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'` (no other site may show the app in a frame), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+
 ## System
 
 ### GET /api/health

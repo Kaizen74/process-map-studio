@@ -77,7 +77,7 @@ fi
 # The speed tests (p95 < 200 ms) run without the coverage tracer, which roughly doubles the time
 # of Python-heavy endpoints and so measured the tracer rather than the app (2026-10-06).
 check "Backend tests (architecture, unit, actions; coverage >= 85% on services and actions)" \
-  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider --cov --cov-report=term --ignore=tests/latency --ignore=tests/reality_checks && '$PY' -m pytest -p no:cacheprovider tests/latency"
+  bash -c "cd backend && '$PY' -m pytest -p no:cacheprovider -n auto --cov --cov-report=term --ignore=tests/latency --ignore=tests/reality_checks && '$PY' -m pytest -p no:cacheprovider tests/latency"
 
 # 4. Reality checks RQ1-RQ10 (PRD §5.12.8, from P13d): the snapshot, Leadership and the Reality
 # pack on fixture A.12, and the token scan of the Reality components (RQ3). The printed pages'
