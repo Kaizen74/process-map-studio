@@ -205,11 +205,17 @@ function Summary({
       )}
       {state.last_refresh && <RefreshChangesNote changes={state.last_refresh} />}
       {summary.steps === 0 ? (
-        <p className="draft-missing" role="status">
-          No steps could be drafted: nothing in these sources described a step that passed every check. Add a process
-          document or another interview, check that each speaker is mapped to the right role, then draft again. The
-          rejected claims below show what was set aside and why.
-        </p>
+        <div className="draft-missing" role="status">
+          <p>
+            No steps could be drafted: nothing in these sources described a step that passed every check. Add a process
+            document or another interview, check that each speaker is mapped to the right role, then draft again. The
+            rejected claims below show what was set aside and why.
+          </p>
+          <p>
+            The map still shows where the process starts and ends. You can also add the steps yourself on{" "}
+            <Link to={engagementPath(engagementId, "review")}>Review</Link>, each from a passage in your sources.
+          </p>
+        </div>
       ) : (
         <div className="draft-start">
           <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
