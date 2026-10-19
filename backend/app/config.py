@@ -24,6 +24,8 @@ DESIGN_TOKENS_FILE = REPO_ROOT / "shared" / "design_tokens.json"
 FONTS_DIR = REPO_ROOT / "frontend" / "public" / "fonts"
 # The Reality pack draws its views with the app's own Reality stylesheet (PRD §3.18.6, RQ4).
 REALITY_CSS_FILE = REPO_ROOT / "frontend" / "src" / "components" / "reality" / "reality.css"
+# Model prices for the draft cost estimate (deep review item 5): dated, editable by Eric.
+MODEL_PRICES_FILE = REPO_ROOT / "shared" / "model_prices.json"
 # Canned AI answers used when MOCK_CLAUDE=1 (PRD §3.7).
 MOCK_FIXTURES_DIR = REPO_ROOT / "backend" / "tests" / "fixtures" / "mock_responses"
 
@@ -45,6 +47,7 @@ SETTING_DEFAULTS: Mapping[str, str] = MappingProxyType(
         "WEB_SEARCH_MAX_USES_CAP": "20",
         "OWNER_NAME": "Owner",
         "CURRENCY": "SGD",  # §3.4: the value calculator's currency (R9b; Settings Regional, R10)
+        "DRAFT_COST_LIMIT_USD": "",  # the most one draft may cost; empty = no limit (2026-10-19)
     }
 )
 

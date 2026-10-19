@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { DraftState, Graph, Job, LintReport, RefreshCheck, RejectedClaims } from "./types";
+import type { DraftEstimate, DraftState, Graph, Job, LintReport, RefreshCheck, RejectedClaims } from "./types";
 import type { AsView } from "../lib/views";
 
 const enc = encodeURIComponent;
@@ -10,6 +10,10 @@ export const startDraft = (engagementId: string) =>
 
 export const getDraft = (engagementId: string) =>
   request<DraftState>(`/engagements/${enc(engagementId)}/draft`);
+
+/** What drafting now would probably cost (no AI call). */
+export const getDraftEstimate = (engagementId: string) =>
+  request<DraftEstimate>(`/engagements/${enc(engagementId)}/draft/estimate`);
 
 export const getJob = (jobId: string) => request<Job>(`/jobs/${enc(jobId)}`);
 

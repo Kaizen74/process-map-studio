@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { JobStage, Readiness } from "../../src/api/types";
+import type { DraftEstimate, JobStage, Readiness } from "../../src/api/types";
 import {
   AI_CALL_STATUS,
   STAGE_LOOK,
@@ -8,8 +8,10 @@ import {
   draftChecklist,
   durationLabel,
   elapsedLabel,
+  estimateLines,
   groupDigits,
   stageElapsedMs,
+  usd,
 } from "../../src/lib/draft";
 
 const stage = (extra: Partial<JobStage>): JobStage => ({
@@ -119,4 +121,42 @@ describe("AI usage wording", () => {
     [850, "850 ms"],
     [14_200, "14.2 s"],
   ])("%i ms reads %s", (ms, text) => expect(durationLabel(ms)).toBe(text));
+});
+
+describe("cost estimate lines (deep review item 5)", () => {
+  const base: DraftEstimate = {
+    sources: 1,
+    characters: 1000,
+    input_tokens: 1000,
+    output_tokens: 500,
+    cost_usd: 0.014,
+    basis: "measured",
+    drafts_measured: 1,
+    model: "claude-opus-5-5",
+    prices_checked_on: "2026-01-02",
+    limit_usd: null,
+    over_limit: false,
+  };
+
+  it("writes dollars to the cent, with thousands separated and tiny amounts named", () => {
+    expect(usd(0.67)).toBe("US$0.67");
+    expect(usd(2.999)).toBe("US$3.00");
+    expect(usd(1234.5)).toBe("US$1,234.50");
+    expect(usd(0.004)).toBe("less than US$0.01");
+    expect(usd(0)).toBe("less than US$0.01");
+  });
+
+  it("names the basis, the source count and the price date as written", () => {
+    expect(estimateLines(base)).toEqual({
+      cost: "Estimated cost: about US$0.01 for 1 source (based on your last 1 real draft; prices checked 2 Jan 2026).",
+      limit: null,
+    });
+  });
+
+  it("adds the limit sentence only when the estimate is above it", () => {
+    expect(estimateLines({ ...base, limit_usd: 5 }).limit).toBeNull();
+    expect(estimateLines({ ...base, cost_usd: 7, limit_usd: 5, over_limit: true }).limit).toBe(
+      "That is above your limit of US$5.00, so the draft won't start. Raise the limit in Settings, or draft from fewer sources.",
+    );
+  });
 });

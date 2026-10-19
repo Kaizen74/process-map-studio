@@ -31,6 +31,7 @@ class SettingsView(BaseModel):
     default_timezone: str
     key_set: bool
     key_last4: str
+    draft_cost_limit_usd: float | None = None  # the most one draft may cost (2026-10-19)
 
 
 class ProfileUpdate(BaseModel):
@@ -73,6 +74,30 @@ class ModelChoices(BaseModel):
     models: list[ModelSummary]
     from_anthropic: bool
     message: str
+
+
+class SpendingSettings(BaseModel):
+    """PUT /settings/spending (2026-10-19): the most one draft or refresh may cost; null = none."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    draft_cost_limit_usd: float | None
+
+
+class DraftEstimate(BaseModel):
+    """GET /engagements/{id}/draft/estimate (deep review item 5): what a draft would cost."""
+
+    sources: int
+    characters: int
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float | None
+    basis: str  # "assumed" until a real draft has run on this computer, then "measured"
+    drafts_measured: int
+    model: str
+    prices_checked_on: str
+    limit_usd: float | None
+    over_limit: bool
 
 
 class ModelUpdate(BaseModel):
@@ -149,6 +174,18 @@ class VersionLabel(BaseModel):
 class ReviewProgress(BaseModel):
     reviewed: int
     total: int
+
+
+class DraftAcceptance(BaseModel):
+    """How much of Claude's draft Eric kept (deep review item 4): `drafted` = `confirmed` +
+    `edited` + `rejected` + `unreviewed`; `added` counts the steps Eric added himself."""
+
+    drafted: int
+    confirmed: int
+    edited: int
+    rejected: int
+    unreviewed: int
+    added: int
 
 
 class EngagementSummary(EngagementView):
@@ -843,6 +880,7 @@ class ChangeEntry(BaseModel):
 
 class VersionDetail(VersionSummary):
     review: ReviewProgress
+    acceptance: DraftAcceptance
     change_log: list[ChangeEntry]
     quality_card: dict[str, object] | None
 

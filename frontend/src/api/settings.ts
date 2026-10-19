@@ -38,3 +38,7 @@ export type RegionalUpdate = Partial<Pick<Settings, "currency" | "default_timezo
 
 export const saveRegional = (regional: RegionalUpdate) =>
   request<Settings>("/settings/regional", { method: "PUT", body: regional });
+
+// Settings → AI spending (2026-10-19): null for no limit.
+export const saveSpending = (limit: number | null) =>
+  request<Settings>("/settings/spending", { method: "PUT", body: { draft_cost_limit_usd: limit } });

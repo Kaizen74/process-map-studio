@@ -135,8 +135,20 @@ export interface ChangeEntry {
   stable_key: string;
 }
 
+/** How much of Claude's draft Eric kept (deep review item 4): drafted = confirmed + edited +
+ * rejected + unreviewed; `added` counts the steps he added himself. */
+export interface DraftAcceptance {
+  drafted: number;
+  confirmed: number;
+  edited: number;
+  rejected: number;
+  unreviewed: number;
+  added: number;
+}
+
 export interface VersionDetail extends VersionSummary {
   review: { reviewed: number; total: number };
+  acceptance: DraftAcceptance;
   change_log: ChangeEntry[];
   quality_card: QualityCard | null;
 }

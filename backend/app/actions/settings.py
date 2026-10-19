@@ -97,7 +97,32 @@ def _view(values: Mapping[str, str]) -> SettingsView:
         default_timezone=values["DEFAULT_TIMEZONE"].strip() or SETTING_DEFAULTS["DEFAULT_TIMEZONE"],
         key_set=bool(key),
         key_last4=settings_store.mask_key(key),
+        draft_cost_limit_usd=draft_cost_limit(values),
     )
+
+
+BAD_LIMIT = "Enter an amount above 0 and up to 1,000, or leave it empty for no limit."
+MAX_LIMIT = 1000.0
+
+
+def draft_cost_limit(values: Mapping[str, str]) -> float | None:
+    """The most one draft may cost (US$), or None for no limit (deep review item 5)."""
+    try:
+        limit = float(values.get("DRAFT_COST_LIMIT_USD", "").strip() or "nan")
+    except ValueError:
+        return None
+    return limit if 0 < limit <= MAX_LIMIT else None
+
+
+def set_spending(
+    config: AppConfig, limit: float | None, sessions: sessionmaker[Session] | None = None
+) -> Result[SettingsView]:
+    """Save the most one draft or refresh may cost; None removes the limit."""
+    if limit is not None and not 0 < limit <= MAX_LIMIT:
+        return Err(ErrorKind.VALIDATION, BAD_LIMIT, {"field": "draft_cost_limit_usd"})
+    value = "" if limit is None else f"{limit:.2f}"
+    return _save_changes(config, {"DRAFT_COST_LIMIT_USD": value}, "Changed the AI spending limit",
+                         "spending", sessions)  # fmt: skip
 
 
 def get_settings(config: AppConfig) -> Result[SettingsView]:

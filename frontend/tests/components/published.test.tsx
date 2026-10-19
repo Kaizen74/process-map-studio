@@ -31,6 +31,7 @@ function backend({ versions, draftExists = false }: { versions: VersionSummary[]
   const detail = (v: VersionSummary): VersionDetail => ({
     ...v,
     review: { reviewed: 8, total: 8 },
+    acceptance: { drafted: 9, confirmed: 6, edited: 2, rejected: 1, unreviewed: 0, added: 2 },
     change_log:
       v.id === V1
         ? [
@@ -121,6 +122,10 @@ describe("the Published screen (PRD §5.4, §5.9)", () => {
     await within(log).findByText("Issue load sheet");
     expect(log).toHaveTextContent("ConfirmedDraft load plan");
     expect(log).toHaveTextContent("EditedIssue load sheet");
+    // Deep review item 4: how much of Claude's draft was kept, in one plain sentence.
+    expect(log).toHaveTextContent(
+      "Of the 9 steps Claude drafted, you kept 6 as drafted, edited 2 and rejected 1. You added 2 steps yourself.",
+    );
   });
 
   it("picks earlier versions, labelled superseded; only the latest reopens", async () => {

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import causes, redaction, refresh, run_records
+from app.actions import causes, draft_cost, redaction, refresh, run_records
 from app.actions import images as images_action
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
@@ -150,6 +150,8 @@ def start_draft(
         return Err(
             ErrorKind.CONFLICT, f"The draft can't start yet: {missing[0]}.", {"missing": missing}
         )
+    if (refused := draft_cost.over_limit(config, sessions, engagement_id)) is not None:
+        return refused
     with session_scope(sessions) as session:
         latest = _latest_map_job(session, engagement_id)
         if latest is not None and latest.status in jobs_repo.UNFINISHED:
@@ -191,6 +193,8 @@ def start_refresh(
         return Err(
             ErrorKind.CONFLICT, f"The draft can't start yet: {missing[0]}.", {"missing": missing}
         )
+    if (refused := draft_cost.over_limit(config, sessions, version.engagement_id)) is not None:
+        return refused
     with session_scope(sessions) as session:
         latest = _latest_map_job(session, version.engagement_id)
         if latest is not None and latest.status in jobs_repo.UNFINISHED:

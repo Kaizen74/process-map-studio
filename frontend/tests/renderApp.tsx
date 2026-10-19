@@ -125,6 +125,7 @@ export const SETTINGS = {
   reality_views_enabled: false,
   currency: "SGD",
   default_timezone: "Asia/Singapore",
+  draft_cost_limit_usd: null,
   key_set: false,
   key_last4: "",
 };
