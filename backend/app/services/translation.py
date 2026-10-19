@@ -247,7 +247,10 @@ def translate(steps: list[TranslationStep], edges: list[TranslationEdge]) -> Tra
                     else:
                         todo.append(x.to_id)
             for target in dict.fromkeys(reached):
-                if (a.id, target) in present:
+                # A path through the other view's steps that comes back to where it started is a
+                # loop that view doesn't describe, not a line to draw (found by the property
+                # tests, 2026-10-19: a step was joined to itself).
+                if target == a.id or (a.id, target) in present:
                     continue
                 present.add((a.id, target))
                 b = by_id[target]

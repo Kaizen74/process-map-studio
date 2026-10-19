@@ -16,6 +16,7 @@ from app.domain.models import (
     RegionalSettings,
     ResearchSetting,
     SettingsView,
+    SpendingSettings,
     WebSearchTest,
 )
 from app.routers.http import unwrap
@@ -75,6 +76,12 @@ def set_regional(request: Request, body: RegionalSettings) -> SettingsView:
     return unwrap(
         settings.set_regional(state.config, body.currency, body.default_timezone, state.sessions)
     )
+
+
+@router.put("/spending")
+def set_spending(request: Request, body: SpendingSettings) -> SettingsView:
+    state = request.app.state
+    return unwrap(settings.set_spending(state.config, body.draft_cost_limit_usd, state.sessions))
 
 
 @router.put("/research")

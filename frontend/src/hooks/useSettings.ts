@@ -9,6 +9,7 @@ import {
   saveModules,
   saveRegional,
   saveResearch,
+  saveSpending,
   type ModuleSwitches,
   type RegionalUpdate,
   testConnection,
@@ -48,6 +49,18 @@ export const useSaveResearch = () => useSettingsMutation((enabled: boolean) => s
 export const useSaveModules = () => useSettingsMutation((modules: ModuleSwitches) => saveModules(modules));
 
 export const useSaveRegional = () => useSettingsMutation((regional: RegionalUpdate) => saveRegional(regional));
+
+/** The draft cost estimates carry the limit, so they are asked for again after a change. */
+export function useSaveSpending() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: saveSpending,
+    onSuccess: (settings) => {
+      client.setQueryData(SETTINGS, settings);
+      void client.invalidateQueries({ queryKey: ["draft-estimate"] });
+    },
+  });
+}
 
 /** One small search (billed as one search); the AI usage list gains the call. */
 export function useTestWebSearch() {

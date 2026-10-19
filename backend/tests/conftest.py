@@ -17,7 +17,12 @@ os.environ.setdefault("MOCK_CLAUDE", "1")
 
 import pytest  # noqa: E402
 
+from app import main as _main  # noqa: E402
 from app.config import AppConfig, load_config  # noqa: E402
+
+# FastAPI's TestClient addresses the app as "testserver"; the app answers only its own names
+# (main.LOCAL_HOSTS), so tests add this one. test_local_only.py checks the real rule.
+_main.LOCAL_HOSTS = _main.LOCAL_HOSTS | {"testserver"}
 from tests.paths import REPO_ROOT  # noqa: E402
 
 REAL_ENV_FILE = REPO_ROOT / ".env"

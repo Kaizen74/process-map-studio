@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import type { DraftState, Job, Readiness, RefreshChanges, SignalStrength } from "../../api/types";
 import { Button, Card, Chip, ErrorState, SignalMeter, Skeleton } from "../../components/common";
-import { useDraft, useStartDraft } from "../../hooks/useDraft";
+import { useDraft, useDraftEstimate, useStartDraft } from "../../hooks/useDraft";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { useVersions } from "../../hooks/useVersions";
-import { checklistSummary, draftChecklist, groupDigits } from "../../lib/draft";
+import { checklistSummary, draftChecklist, estimateLines, groupDigits } from "../../lib/draft";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
@@ -67,6 +67,26 @@ function Checklist({ engagementId, readiness }: { engagementId: string; readines
         </div>
       )}
     </Card>
+  );
+}
+
+/** What drafting now would probably cost (deep review item 5); quiet if it can't be worked out. */
+function CostEstimate({ engagementId }: { engagementId: string }) {
+  const estimate = useDraftEstimate(engagementId, true);
+  if (estimate.isError) {
+    return <p className="draft-note">The cost of this draft couldn't be estimated. Drafting still works.</p>;
+  }
+  if (!estimate.data) return null;
+  const lines = estimateLines(estimate.data);
+  return (
+    <div className="draft-cost">
+      <p className="draft-note">{lines.cost}</p>
+      {lines.limit && (
+        <p className="draft-cost__limit" role="status">
+          {lines.limit} <Link to="/settings">Open Settings</Link>
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -185,11 +205,17 @@ function Summary({
       )}
       {state.last_refresh && <RefreshChangesNote changes={state.last_refresh} />}
       {summary.steps === 0 ? (
-        <p className="draft-missing" role="status">
-          No steps could be drafted: nothing in these sources described a step that passed every check. Add a process
-          document or another interview, check that each speaker is mapped to the right role, then draft again. The
-          rejected claims below show what was set aside and why.
-        </p>
+        <div className="draft-missing" role="status">
+          <p>
+            No steps could be drafted: nothing in these sources described a step that passed every check. Add a process
+            document or another interview, check that each speaker is mapped to the right role, then draft again. The
+            rejected claims below show what was set aside and why.
+          </p>
+          <p>
+            The map still shows where the process starts and ends. You can also add the steps yourself on{" "}
+            <Link to={engagementPath(engagementId, "review")}>Review</Link>, each from a passage in your sources.
+          </p>
+        </div>
       ) : (
         <div className="draft-start">
           <Link className="btn btn--primary" to={engagementPath(engagementId, "review")}>
@@ -278,6 +304,7 @@ export function DraftScreen() {
               ? "Replaces this draft. Nothing has been reviewed yet, so nothing you've done is lost."
               : "Takes a few minutes. You can leave this screen; drafting carries on."}
           </p>
+          {readiness.data?.ready_to_draft && <CostEstimate engagementId={engagementId} />}
         </div>
       )}
       {startError !== null && (

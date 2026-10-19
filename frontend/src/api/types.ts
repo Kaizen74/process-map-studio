@@ -28,6 +28,8 @@ export interface Settings {
   currency: string;
   /** Settings → Regional (R10): the time zone a new system log starts with. */
   default_timezone: string;
+  /** Settings → AI spending (2026-10-19): the most one draft or refresh may cost; null for no limit. */
+  draft_cost_limit_usd: number | null;
   key_set: boolean;
   key_last4: string;
 }
@@ -313,6 +315,23 @@ export interface RefreshCheck {
   made_with: RunRecord | null;
   now: RunRecord;
   changes: string[];
+}
+
+/** What drafting now would probably cost (API_CONTRACT.md → GET …/draft/estimate). */
+export interface DraftEstimate {
+  sources: number;
+  characters: number;
+  input_tokens: number;
+  output_tokens: number;
+  /** null when the model has no price in the app's price list. */
+  cost_usd: number | null;
+  basis: "assumed" | "measured";
+  drafts_measured: number;
+  model: string;
+  /** The day the price list was checked, "2026-10-19". */
+  prices_checked_on: string;
+  limit_usd: number | null;
+  over_limit: boolean;
 }
 
 /** What a refresh changed among the steps not yet reviewed (API_CONTRACT.md → refresh). */

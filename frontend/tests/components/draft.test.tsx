@@ -269,6 +269,9 @@ describe("Draft screen", () => {
     );
     expect(within(summary).getByRole("status")).toHaveTextContent(/Add a process document or another interview/);
     expect(within(summary).queryByRole("link", { name: "Start reviewing" })).toBeNull();
+    // Eric, 2026-10-19: the map still has its start and end, so he can add the steps himself.
+    expect(within(summary).getByRole("status")).toHaveTextContent(/The map still shows where the process starts and ends/);
+    expect(within(summary).getByRole("link", { name: "Review" })).toHaveAttribute("href", "/engagements/e1/review");
   });
 
   it("says what a refresh drafted differently among the steps not yet reviewed", async () => {

@@ -36,6 +36,7 @@ def test_get_settings_defaults(client: TestClient) -> None:
         "default_timezone": "Asia/Singapore",
         "key_set": False,
         "key_last4": "",
+        "draft_cost_limit_usd": None,  # 2026-10-19: no spending limit unless Eric sets one
     }
 
 

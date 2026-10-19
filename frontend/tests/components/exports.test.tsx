@@ -37,7 +37,8 @@ function backend(versions: VersionSummary[], analyses: Record<string, unknown[]>
     "GET /api/engagements/e1/versions": () => ({ body: versions }),
   };
   for (const v of versions) {
-    const detail: VersionDetail = { ...v, review: { reviewed: 8, total: 8 }, change_log: [], quality_card: GREEN };
+    const detail: VersionDetail = { ...v, review: { reviewed: 8, total: 8 }, change_log: [], quality_card: GREEN,
+      acceptance: { drafted: 8, confirmed: 8, edited: 0, rejected: 0, unreviewed: 0, added: 0 } };
     routes[`GET /api/versions/${v.id}`] = () => ({ body: detail });
     routes[`GET /api/versions/${v.id}/gap-analyses`] = () => ({ body: analyses[v.id] ?? [] });
   }

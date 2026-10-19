@@ -24,6 +24,7 @@ from app.db import session_scope
 from app.domain.enums import ElementKind, ReviewStatus, VersionState
 from app.domain.models import (
     ChangeEntry,
+    DraftAcceptance,
     ExportFile,
     PublishBlocker,
     ReviewProgress,
@@ -84,8 +85,31 @@ def _detail(session: Session, version_id: str) -> VersionDetail | None:
         **found,
         signal=version_signal(session, version_id),
         review=ReviewProgress(reviewed=reviewed, total=total),
+        acceptance=_acceptance(session, version_id, steps),
         change_log=log,
         quality_card=versions_repo.quality_card(session, version_id),
+    )
+
+
+def _acceptance(session: Session, version_id: str, steps: list[Any]) -> DraftAcceptance:
+    """How much of Claude's draft Eric kept (deep review item 4). Eric's own steps are those marked
+    added, or added in this version according to its audit log (so one he added and then
+    rejected stays his); every other step is Claude's, counted by its review status."""
+    added_here = {row["target_id"] for row in audit.list_for_version(session, version_id)
+                  if row["action"] == "Added step" and row["target_type"] == "element"}  # fmt: skip
+    mine = [e for e in steps if e.review_status == ReviewStatus.ADDED.value or e.id in added_here]
+    claude = [e for e in steps if e not in mine]
+
+    def count(status: ReviewStatus) -> int:
+        return sum(1 for e in claude if e.review_status == status.value)
+
+    return DraftAcceptance(
+        drafted=len(claude),
+        confirmed=count(ReviewStatus.CONFIRMED),
+        edited=count(ReviewStatus.EDITED),
+        rejected=count(ReviewStatus.REJECTED),
+        unreviewed=count(ReviewStatus.DRAFT),
+        added=len(mine),
     )
 
 

@@ -12,6 +12,8 @@ Endpoints are added here as each phase builds them. The full planned list is PRD
 
 Every response carries an `X-Request-ID` header. Error bodies also include it as `details.request_id`, so the screen's **Copy details** can give "error code · request ID" for bug reports.
 
+**Only the app's own pages (deep review, 2026-10-19).** Every request, `/api` or not, must name the app's own host (`127.0.0.1`, `localhost` or `::1`, any port); otherwise `403 FOREIGN_HOST` ("This address isn't the app's own, so the app refused the request. Open the app at http://127.0.0.1:8000."). This stops DNS rebinding, where a web page's name is re-pointed at 127.0.0.1. A request that changes anything (`POST`, `PUT`, `PATCH`, `DELETE`) must also come from the app's own page: an `Origin` header, when sent, must be one of those hosts on the same port; without `Origin`, a `Sec-Fetch-Site` header, when sent, must be `same-origin` or `none`; otherwise `403 FOREIGN_SITE` ("This request came from another website, so the app refused it."). Reading (`GET`, `HEAD`, `OPTIONS`) needs no origin check: the app sends no CORS headers, so no other site can read an answer, and download links keep working. Every response also carries `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'` (no other site may show the app in a frame), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+
 ## System
 
 ### GET /api/health
@@ -91,6 +93,9 @@ Request: `{"model": "claude-opus-5-5", "effort": "high", "verifier_enabled": tru
 Response `200`: the settings object.
 Errors: `422 VALIDATION`; `500 IO`. (The change is written to the app log now and to the audit log once the database arrives in phase P1.)
 Used by: Settings screen, "Model" card.
+
+### PUT /api/settings/spending (2026-10-19)
+The most one draft (or refresh) may cost. Request `{"draft_cost_limit_usd": 2.5}` (above 0, up to 1,000) or `{"draft_cost_limit_usd": null}` for no limit (the default). Response `200`: the settings object, which carries `draft_cost_limit_usd` (`null` when no limit). Errors: `422` (field `draft_cost_limit_usd`: "Enter an amount above 0 and up to 1,000, or leave it empty for no limit."); `500 IO`. Used by: Settings screen, "AI spending" card.
 
 ### PUT /api/settings/research (phase P10)
 Turns external research (gap analysis B, PRD §3.11.2) on or off. Request `{"web_research_enabled": true}`. Response `200`: the settings object. Off by default; while off, nothing is ever sent to web search. Errors: `422` (field `web_research_enabled`: "Choose on or off."); `500 IO`.
@@ -856,7 +861,17 @@ Errors:
 - `409 CONFLICT` "The draft can't start yet: <first missing item>." with `details.missing`: the readiness `missing` list (key, transcript, document, speakers).
 - `409 CONFLICT` "A draft map is already being made." (a draft job is queued or running) or "This draft has steps you've already reviewed. Refresh it from the sources on the Review screen instead." (from P6, when a step is confirmed, edited or added).
 - `409 CONFLICT` "This process has a published map. Reopen it as a new draft on the Published screen." (from P7, once a version is published and no draft exists: a new draft from scratch would lose the review).
+- `409 COST_LIMIT` (2026-10-19) when a draft spending limit is set (Settings → AI spending) and the estimate below is above it: "This draft is estimated at about US$3.40, above your limit of US$2.00. Raise the limit in Settings, or draft from fewer sources." with `details`: `{"estimate_usd": 3.4, "limit_usd": 2.0}`. The same check applies to refreshing a draft. No limit is set by default.
+
 Used by: Draft screen (Create draft map, Retry).
+
+### GET /api/engagements/{id}/draft/estimate (2026-10-19, Eric approved deep review item 5)
+What drafting this engagement now would probably cost, before it starts. Response `200`:
+`{"sources": 6, "characters": 48210, "input_tokens": 48210, "output_tokens": 24105, "cost_usd": 0.67, "basis": "assumed", "drafts_measured": 0, "model": "claude-opus-5-5", "prices_checked_on": "2026-10-19", "limit_usd": null, "over_limit": false}`
+- `sources` and `characters`: the sources a draft would read (ready, not a policy or charter) and the characters of their text.
+- `basis` `assumed` (no real draft yet: 1.0 input and 0.5 output tokens per character, a rough rule) or `measured` (tokens per character from the last real drafts and refreshes on this computer, up to 5, any engagement; `drafts_measured` says how many). Mock calls never count.
+- `cost_usd`: tokens × the model's price per million tokens from `shared/model_prices.json` (dated `prices_checked_on`; Eric can edit it); `null` when the model has no price there. Rounded to cents. `limit_usd` and `over_limit`: the spending limit, if set, and whether the estimate is above it.
+- Errors: `404` engagement missing. Used by: Draft screen (under **Create draft map**).
 
 ### POST /api/versions/{vid}/refresh (phase P6)
 **AI.** Refresh draft from sources: runs every stage again on the engagement's ready sources and folds the result into the same draft, whose number goes up (`v0.1` → `v0.2`). Request: none. Response `202`: `{"job_id": "…"}` (job type `refresh`, target the draft; progress and stages as the draft job, shown on the Draft screen).
@@ -910,7 +925,7 @@ Each element: `id, stable_key, kind, label, lane_role_id, phase_id, time: {work_
 - `level` and `parent_element_id` (2026-10-06, K2; PRD §3.12.10 rule 9, §3.9 rule 10, B.39): a step whose verified interview claims all answer Landscape questions (`L1`–`L7`, by question ID) and that no document describes is `landscape` (team-level); every other step is `practice`. A practice step in the same lane and phase as a landscape **activity** is linked to it through `parent_element_id` (with several such activities, the one whose label shares most words with the step's; none on a tie). Both are `null` on a map with no landscape step (one level). With `?view=`, the layout, lint and graph of a view draw the **finest level**: a landscape activity with practice steps under it is left out, and its lines go to the practice steps where its own flow starts (those with no line in from another of its steps) and come from those where it ends (no line out to another of its steps); a landscape activity with no practice steps is drawn as a normal activity. The panel shows "Part of: …" and the table view groups the practice steps under it.
 - Every source the draft was made from appears in each element's `evidence`; a source that says nothing about the element is `silent` with `segment_id: null` (constraint 4).
 - Names on the hidden list are replaced by roles in every text. Verbatim quotes and images are never included.
-- Start and end are elements of kind `start` and `end` (from the scope card's trigger and end point) with no confidence.
+- Start and end are elements of kind `start` and `end` (from the scope card's trigger and end point) with no confidence. Every draft has them, including one from which no step could be drafted (Eric, 2026-10-19): that map is the start and the end with no line between them, since no source describes what happens there; Eric can add steps after the start (`POST …/elements`) and draw the lines himself.
 Errors: `404` ("That version doesn't exist."). Used by: Review (P5), exports (P7).
 
 ### GET /api/versions/{vid}/layout
@@ -1185,7 +1200,7 @@ Errors: `404` ("That engagement doesn't exist."). Used by: Published screen vers
 
 ### GET /api/versions/{vid}
 One version with its review progress, change log and stored quality card.
-Response `200`: the fields above plus `"review": {"reviewed": 8, "total": 8}` (steps; start and end don't count), `"change_log": [{"change": "confirmed", "step": "Draft load plan", "stable_key": "draft-load-plan"}]` (a published version: what was confirmed, edited, rejected or added while it was the draft, in process order; `[]` for a draft) and `"quality_card"` (the card as `GET …/quality-card`, or `null` if never worked out). Names hidden.
+Response `200`: the fields above plus `"review": {"reviewed": 8, "total": 8}` (steps; start and end don't count), `"change_log": [{"change": "confirmed", "step": "Draft load plan", "stable_key": "draft-load-plan"}]` (a published version: what was confirmed, edited, rejected or added while it was the draft, in process order; `[]` for a draft) and `"quality_card"` (the card as `GET …/quality-card`, or `null` if never worked out). Names hidden. Since 2026-10-19 (Eric approved, deep review item 4) also `"acceptance": {"drafted": 9, "confirmed": 6, "edited": 2, "rejected": 1, "unreviewed": 0, "added": 2}`: how much of Claude's draft Eric kept, from the steps' review status (start and end don't count). `drafted` = the steps Claude drafted = `confirmed` (kept as drafted) + `edited` + `rejected` + `unreviewed`; `added` = the steps Eric added himself (status `added`, or recorded as "Added step" in this version's audit log, so an added step he later rejected still counts as his). A reopened draft carries the earlier version's decisions with its steps, so its counts include them.
 Errors: `404` ("That version doesn't exist."). Used by: Published screen, Review banner.
 
 ### POST /api/versions/{vid}/publish

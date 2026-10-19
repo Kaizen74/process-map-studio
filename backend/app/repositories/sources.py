@@ -516,3 +516,15 @@ def kinds(session: Session, engagement_id: str) -> list[tuple[str, str, str]]:
         .order_by(Source.created_at, Source.id)
     )
     return [(i, k, t) for i, k, t in rows]
+
+
+def text_characters(session: Session, source_ids: list[str]) -> int:
+    """The characters of the sources' passages (for the draft cost estimate)."""
+    if not source_ids:
+        return 0
+    total = session.scalar(
+        select(func.coalesce(func.sum(func.length(SourceSegment.text)), 0)).where(
+            SourceSegment.source_id.in_(source_ids)
+        )
+    )
+    return int(total or 0)

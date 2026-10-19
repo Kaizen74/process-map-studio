@@ -9,6 +9,7 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -59,6 +60,25 @@ NOT_BUILT_PAGE = """<!doctype html>
 # loggers stay at WARNING whatever the rest of the logging is set to.
 QUIET_LOGGERS = ("anthropic", "httpx2", "httpcore")
 
+# The names under which a browser on this computer reaches the app (it listens on 127.0.0.1 only).
+# Any other Host means DNS rebinding: a web page whose name was re-pointed at 127.0.0.1, which the
+# browser would otherwise treat as that site's own server (deep review, 2026-10-19).
+LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+FOREIGN_HOST = (
+    "This address isn't the app's own, so the app refused the request. "
+    "Open the app at http://127.0.0.1:8000."
+)
+FOREIGN_SITE = "This request came from another website, so the app refused it."
+# On every answer: no other site may show the app in a frame (clickjacking: an invisible frame
+# whose clicks would come from the app's own origin), no type guessing, no referrer leaving it.
+HARDENING = {
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+
 
 def create_app(config: AppConfig | None = None) -> FastAPI:
     config = config or load_config()
@@ -98,6 +118,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(event_logs.router)
     app.include_router(value.router)
     app.include_router(reality.router)
+    _add_local_only(app)  # added first, so it runs inside the request ID middleware
     _add_request_ids(app)
     _add_error_handlers(app)
     _add_frontend(app, config.frontend_dist)
@@ -115,6 +136,52 @@ def _open_database(config: AppConfig) -> sessionmaker[Session]:
 
 def request_id_of(request: Request) -> str:
     return str(getattr(request.state, "request_id", ""))
+
+
+def _host_and_port(netloc: str, scheme: str) -> tuple[str, str]:
+    """("127.0.0.1", "8000") from "127.0.0.1:8000"; the scheme's port when none is given;
+    ("", "") for anything that isn't a host."""
+    if scheme not in ("http", "https"):
+        return "", ""
+    parts = urlsplit(f"{scheme}://{netloc}")
+    try:
+        port = parts.port
+    except ValueError:
+        return "", ""
+    return (parts.hostname or "").lower(), str(port or (443 if scheme == "https" else 80))
+
+
+def _add_local_only(app: FastAPI) -> None:
+    """Answer only requests addressed to the app itself, and accept changes only from the app's
+    own pages. Reading needs no origin check: without CORS headers, the browser never lets
+    another site read an answer, and a link to a download must keep working."""
+
+    @app.middleware("http")
+    async def local_only(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = _refusal(request) or await call_next(request)
+        response.headers.update(HARDENING)
+        return response
+
+
+def _refusal(request: Request) -> Response | None:
+    """The 403 for a request the app must not answer; None for one it may."""
+    rid = request_id_of(request)
+    host = _host_and_port(request.headers.get("host", ""), request.url.scheme)
+    if host[0] not in LOCAL_HOSTS:
+        return error_response(403, "FOREIGN_HOST", FOREIGN_HOST, None, rid)
+    if request.method in SAFE_METHODS:
+        return None
+    origin = request.headers.get("origin")
+    if origin is not None:
+        parts = urlsplit(origin)
+        came_from = _host_and_port(parts.netloc, parts.scheme)  # "null" → ("", "")
+        if came_from[0] not in LOCAL_HOSTS or came_from[1] != host[1]:
+            return error_response(403, "FOREIGN_SITE", FOREIGN_SITE, None, rid)
+    elif request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
+        return error_response(403, "FOREIGN_SITE", FOREIGN_SITE, None, rid)
+    return None
 
 
 def _add_request_ids(app: FastAPI) -> None:

@@ -1,6 +1,7 @@
 // Draft screen display rules (PRD §5.4 Draft): stage labels and shapes, elapsed times and token
 // counts. Pure functions; the stages and their times come from the backend job.
-import type { JobStage, Readiness, StageStatus } from "../api/types";
+import type { DraftEstimate, JobStage, Readiness, StageStatus } from "../api/types";
+import { plural } from "./format";
 
 export interface StageLook {
   label: string;
@@ -138,4 +139,44 @@ export const AI_CALL_STATUS: Readonly<Record<string, string>> = {
 /** "14.2 s", "850 ms". */
 export function durationLabel(ms: number): string {
   return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+}
+
+/** "US$0.67", "US$12.40"; "less than US$0.01" for a cost that rounds to nothing. */
+export function usd(amount: number): string {
+  const cents = Math.round(amount * 100);
+  if (cents < 1) return "less than US$0.01";
+  return `US$${groupDigits(Math.floor(cents / 100))}.${String(cents % 100).padStart(2, "0")}`;
+}
+
+const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "19 Oct 2026" from a plain date "2026-10-19", read as written (no time zone shift). */
+function plainDate(day: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  const month = m ? MONTH[Number(m[2]) - 1] : undefined;
+  return m && month ? `${Number(m[3])} ${month} ${m[1]}` : day;
+}
+
+/**
+ * The cost line under Create draft map (2026-10-19, deep review item 5): the estimate, how it was
+ * worked out and the day the prices were checked; a second sentence when it is above the limit.
+ */
+export function estimateLines(e: DraftEstimate): { cost: string; limit: string | null } {
+  if (e.cost_usd === null) {
+    return {
+      cost: `No cost estimate: the price of ${e.model} isn't in the app's price list.`,
+      limit: e.limit_usd === null ? null : "Your spending limit can't be checked without a price, so it doesn't stop this draft.",
+    };
+  }
+  const basis =
+    e.basis === "measured"
+      ? `based on your last ${plural(e.drafts_measured, "real draft")}`
+      : "a rough rule until your first real draft";
+  return {
+    cost: `Estimated cost: about ${usd(e.cost_usd)} for ${plural(e.sources, "source")} (${basis}; prices checked ${plainDate(e.prices_checked_on)}).`,
+    limit:
+      e.over_limit && e.limit_usd !== null
+        ? `That is above your limit of ${usd(e.limit_usd)}, so the draft won't start. Raise the limit in Settings, or draft from fewer sources.`
+        : null,
+  };
 }

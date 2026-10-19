@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import AiCallRecord, AiUsageRow
-from app.repositories.tables import AiCall
+from app.repositories.tables import AiCall, Job
 
 
 def add(session: Session, job_id: str | None, calls: list[AiCallRecord]) -> None:
@@ -56,3 +56,19 @@ def totals(session: Session) -> dict[str, int]:
         )
     ).one()
     return {"calls": row[0], "input_tokens": row[1], "output_tokens": row[2]}
+
+
+def real_usage_by_job(
+    session: Session, job_types: tuple[str, ...], limit: int
+) -> list[tuple[str | None, int, int]]:
+    """(target ID, input tokens, output tokens) of the latest finished jobs of these types that
+    made real calls, newest first. Mock calls (status "mock") never count."""
+    rows = session.execute(
+        select(Job.target_id, func.sum(AiCall.input_tokens), func.sum(AiCall.output_tokens))
+        .join(AiCall, AiCall.job_id == Job.id)
+        .where(Job.type.in_(job_types), Job.status == "done", AiCall.status == "ok")
+        .group_by(Job.id)
+        .order_by(Job.created_at.desc(), Job.id.desc())
+        .limit(limit)
+    ).all()
+    return [(r[0], int(r[1] or 0), int(r[2] or 0)) for r in rows]

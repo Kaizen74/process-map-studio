@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, ErrorState, SelectField, Skeleton } from "../
 import { PublishedBanner, useToast } from "../../components/shell";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useReopen, useVersion, useVersions } from "../../hooks/useVersions";
+import { acceptanceSentence } from "../../lib/acceptance";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { formatDate } from "../../lib/format";
@@ -33,9 +34,19 @@ function ChangeLog({ versionId }: { versionId: string }) {
   }
   if (!version.data) return <Skeleton height="80px" />;
   const log: ChangeEntry[] = version.data.change_log;
-  if (log.length === 0) return <p className="tab-empty">No steps were changed while this version was the draft.</p>;
+  const summary = <p className="change-log__summary">{acceptanceSentence(version.data.acceptance)}</p>;
+  if (log.length === 0) {
+    return (
+      <>
+        {summary}
+        <p className="tab-empty">No steps were changed while this version was the draft.</p>
+      </>
+    );
+  }
   return (
-    <ul className="change-log">
+    <>
+      {summary}
+      <ul className="change-log">
       {log.map((entry) => (
         <li key={entry.stable_key}>
           <span className={`change-log__change change-log__change--${entry.change}`}>
@@ -44,7 +55,8 @@ function ChangeLog({ versionId }: { versionId: string }) {
           <span>{entry.step}</span>
         </li>
       ))}
-    </ul>
+      </ul>
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { ModelCard } from "./ModelCard";
 import { ModulesCard } from "./ModulesCard";
 import { OwnerNameCard } from "./OwnerNameCard";
 import { RegionalCard } from "./RegionalCard";
+import { SpendingCard } from "./SpendingCard";
 import { UsageCard } from "./UsageCard";
 import { WebResearchCard } from "./WebResearchCard";
 import "./settings.css";
@@ -60,6 +61,7 @@ export function SettingsScreen() {
           <WebResearchCard settings={settings.data} />
           <ModulesCard settings={settings.data} />
           <RegionalCard settings={settings.data} />
+          <SpendingCard settings={settings.data} />
           <UsageCard />
           <AboutCard />
         </div>

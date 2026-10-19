@@ -27,14 +27,18 @@ def db_path(data_dir: Path) -> Path:
 
 
 def make_engine(path: Path) -> Engine:
-    """A SQLite engine with foreign keys enforced (so deletes cascade)."""
+    """A SQLite engine with foreign keys enforced (so deletes cascade) and deleted content
+    overwritten: SQLite otherwise keeps deleted rows in free pages, where a deleted client's
+    interview could still be read from the file. Some SQLite builds do this by default, others
+    don't, so it is set here (deep review, 2026-10-19)."""
     path.parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(f"sqlite:///{path}", connect_args={"check_same_thread": False})
 
     @event.listens_for(engine, "connect")
-    def _enable_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
+    def _set_pragmas(dbapi_connection: Any, _record: Any) -> None:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA secure_delete=ON")
         cursor.close()
 
     return engine

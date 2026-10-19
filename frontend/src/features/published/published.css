@@ -22,3 +22,7 @@
 .version-banner__actions .field {
   min-width: 220px;
 }
+.change-log__summary {
+  margin: 0 0 var(--space-10);
+  color: var(--ink-2);
+}

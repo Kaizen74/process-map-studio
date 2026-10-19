@@ -254,6 +254,26 @@ class _Gate:
         return None
 
 
+def _start_and_end(
+    session: Session, version_id: str, trigger: str, end_point: str
+) -> list[ElementRecord]:
+    """Start and end come from the scope card (Setup)."""
+    return map_repo.add_elements(
+        session,
+        version_id,
+        [
+            ElementRecord(
+                stable_key=START, kind=ElementKind.START.value, label=trigger or "Start",
+                provenance=Provenance.OBSERVED.value, source_state=SourceState.NOT_ASSESSED,
+            ),
+            ElementRecord(
+                stable_key=END, kind=ElementKind.END.value, label=end_point or "End",
+                provenance=Provenance.OBSERVED.value, source_state=SourceState.NOT_ASSESSED,
+            ),
+        ],
+    )  # fmt: skip
+
+
 def assemble(
     config: AppConfig,
     sessions: Sessions,
@@ -275,7 +295,13 @@ def assemble(
         roles = engagements_repo.list_roles(session, version.engagement_id)
         groups = role_groups(session, version.engagement_id)
         terms = redaction.name_replacements(session, version.engagement_id)
+    trigger = redaction.hide(engagement.trigger, terms)
+    end_point = redaction.hide(engagement.end_point, terms)
     if not steps:
+        # Nothing could be drafted: the map still shows where the process starts and ends (Eric,
+        # 2026-10-19), with no line between them, since no source describes what happens there.
+        with session_scope(sessions) as session:
+            _start_and_end(session, version_id, trigger, end_point)
         return Ok(tally)
     match prompts.load_prompt(STAGE_ID):
         case Err() as err:
@@ -287,8 +313,6 @@ def assemble(
             return err
         case Ok(value=repair):
             pass
-    trigger = redaction.hide(engagement.trigger, terms)
-    end_point = redaction.hide(engagement.end_point, terms)
     conventions = prompts.render_conventions(engagement.conventions.model_dump())
     call = ai_service.StageCall(
         stage_id=STAGE_ID,
@@ -319,21 +343,7 @@ def assemble(
     by_claim = {c.claim_id: c for c in refs}
     rejected: list[ClaimRecord] = []
     with session_scope(sessions) as session:
-        # Start and end come from the scope card (Setup).
-        [start, end] = map_repo.add_elements(
-            session,
-            version_id,
-            [
-                ElementRecord(
-                    stable_key=START, kind=ElementKind.START.value, label=trigger or "Start",
-                    provenance=Provenance.OBSERVED.value, source_state=SourceState.NOT_ASSESSED,
-                ),
-                ElementRecord(
-                    stable_key=END, kind=ElementKind.END.value, label=end_point or "End",
-                    provenance=Provenance.OBSERVED.value, source_state=SourceState.NOT_ASSESSED,
-                ),
-            ],
-        )  # fmt: skip
+        start, end = _start_and_end(session, version_id, trigger, end_point)
         ids = {START: start.id, END: end.id} | {s.ref: s.element.id for s in steps}
         stances = map_repo.evidence(session, version_id)
 

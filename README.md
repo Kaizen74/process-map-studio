@@ -78,6 +78,7 @@ The **data** folder contains your confidential transcripts and documents. Move i
 - **Back up:** stop the app, then copy the **data** folder to a secure, company-approved location. Do this after every important review or publish.
 - **Restore:** stop the app, replace the **data** folder with your backup copy, start the app.
 - Automatic safety copies of the database are also kept in **data/backups** (one per start that applied an update).
+- **Deleting an engagement** removes its transcripts, documents and pictures from the app, and the app overwrites the deleted text inside its database so it can't be read back. Your own backup copies, and the safety copies in **data/backups**, still contain it: delete those too when a client asks you to.
 
 ## What is never uploaded to GitHub
 Your API key (the `.env` file) and the **data** folder (all transcripts, documents, images and maps) never go to GitHub. A built-in check blocks them even if someone tries.
@@ -91,12 +92,15 @@ Your API key (the `.env` file) and the **data** folder (all transcripts, documen
 | macOS: "can't be opened because it is from an unidentified developer" | Right-click the file → Open → Open |
 | Windows: "Windows protected your PC" | More info → Run anyway |
 | The browser doesn't open after Start | Open your browser and go to http://127.0.0.1:8000 |
+| "This address isn't the app's own, so the app refused the request" | Open the app at http://127.0.0.1:8000 (not your computer's name or another address). The app answers only its own address, so other websites can't reach your work |
+| "This request came from another website, so the app refused it" | Something outside the app tried to change your work, and the app blocked it. Use the app only in its own browser tab at http://127.0.0.1:8000 |
 | "Port already in use" | The app is already running. Look for its window, or restart your computer and start again |
 | "Your API key was rejected" | Copy a fresh key from platform.claude.com → paste it in Settings → Test connection |
 | A file won't upload ("reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files" or "larger than 50 MB") | Save the file as Word (.docx), PDF or Excel (.xlsx), or split a very large file into parts, then upload again. An Outlook .msg email: print it to PDF and upload the PDF |
 | A spreadsheet says "more than 5,000 filled rows" | If it is an export from a system, import it on the **System records** screen instead. Otherwise save a copy with only the rows that matter and upload that |
 | A file stays at "Reading…" for more than a minute | Close the app's window and start it again. It finishes any reading that was interrupted when it starts |
 | A person's name shows somewhere it shouldn't | On the Sources screen, add the name (and any nickname) under **Names to hide**. It is hidden everywhere except that list, the speaker mapping and the correction editor |
+| "This draft is estimated at about US$…, above your limit of US$…" | Raise the limit in Settings → **AI spending** (or empty the box for no limit), or draft from fewer sources. The estimate uses the prices in `shared/model_prices.json`; if Anthropic's prices change, ask Claude Code to update that file |
 | Drafting stops with an error | Click **Copy details** on the error, open Claude Code in the app folder, paste the Bug-fix prompt from the PRD and the copied details |
 | "Web search isn't enabled for your Anthropic organisation" (external best-practice analysis) | Sign in to platform.claude.com, open your organisation's settings and enable web search (or ask your organisation admin). Then in the app: Settings → **Test web search** |
 | A system log won't import | Open the validation report on the System records screen: it lists each problem (for example a missing column or unreadable dates) and how to fix it. Send the data request template to your IT contact and ask for a corrected extract |

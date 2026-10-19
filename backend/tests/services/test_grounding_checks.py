@@ -77,6 +77,69 @@ def test_quotes_must_be_found_in_the_cited_text(quote: str, cited: str, passed: 
         assert (result.guardrail, result.reason) == ("G4", "quote not found in source")
 
 
+# Found by the deep review (2026-10-19): character similarity alone let a long quote reverse the
+# source's meaning, because one inserted word changes few characters. A quote may differ from
+# the source only in spelling and in filler words; it may not add, swap or drop a word that
+# carries meaning, and it may never gain or lose a negation.
+LONG = (
+    "After the weights come in the load controller checks the special loads against the "
+    "airline rules and the lead approves the final load plan before it is released to the ramp "
+    "team for loading"
+)
+SPOKEN = "So um the lead you know approves the final load plan before it's released to the ramp."
+
+
+@pytest.mark.parametrize(
+    ("quote", "cited"),
+    [
+        ("the lead does not approve the final load plan before it is released to the ramp", LONG),
+        ("the lead never approves the final load plan before it is released to the ramp team",
+         LONG),
+        ("the load controller checks the special loads against the airline rules and the ramp "
+         "approves the final load plan", LONG),  # a different role
+        ("checks the special loads against the airline rules and the lead approves the final "
+         "load plan after it is released to the ramp team", LONG),  # before becomes after
+        ("the lead approves the final load plan before it is released to the ramp team "
+         "without loading", LONG),  # a word added
+        ("Special loads shall not be checked against the acceptance checklist before loading",
+         SOP_4),  # a negation added to a document
+        ("The preliminary load plan shall be approved by the Load Control Lead before release",
+         SOP_32.replace("shall be approved", "shall not be approved")),  # a negation dropped
+        ("the lead couldn't release the final load plan before the weights come in and the "
+         "ramp team is told", "the lead could release the final load plan before the weights "
+         "come in and the ramp team is told"),  # spelled close, opposite meaning
+        ("the load controller checks the special loads against the airline rules and the lead "
+         "always approves the final load plan", LONG),  # a meaningful word added
+        ("the lead approves the final load plan before it is released to the ramp team",
+         "Then the lead only approves the final load plan before it is released to the ramp "
+         "team for loading"),  # a meaningful word left out (an excerpt may start anywhere)
+    ],
+)  # fmt: skip
+def test_a_quote_that_changes_the_meaning_is_refused(quote: str, cited: str) -> None:
+    result = grounding.verify_quote(quote, cited)
+    assert (result.passed, result.guardrail) == (False, "G4"), quote
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "the lead aproves the final load plan before it is released to the ramp team",  # typo
+        "the lead approves the final load plan before its released to the ramp team",
+        "the lead approves the final load plan before it's released to the ramp team",
+        # "the" left out:
+        "the lead approves final load plan before it is released to the ramp team",
+    ],
+)
+def test_spelling_and_small_words_may_still_differ(quote: str) -> None:
+    assert grounding.verify_quote(quote, LONG).passed, quote
+
+
+def test_fillers_in_speech_may_be_left_out() -> None:
+    """Claude tidies spoken hesitations when it quotes an interview; that changes no meaning."""
+    quote = "So the lead approves the final load plan before it's released to the ramp."
+    assert grounding.verify_quote(quote, SPOKEN).passed
+
+
 def test_a_quote_can_span_two_cited_passages() -> None:
     joined = f"{SOP_32}\n{SOP_4}"
     assert grounding.verify_quote("before release to Ramp. §4 Special loads shall", joined).passed

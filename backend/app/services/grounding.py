@@ -129,14 +129,54 @@ def verify_quote(quote: str, cited_text: str, threshold: float = QUOTE_THRESHOLD
         return PASSED
     text_words = haystack.split()
     width = len(words)
-    best = 0.0
-    for size in {max(1, width - 1), width, width + 1}:
+    # A window a few words wider than the quote lets spoken fillers the quote left out fit in.
+    for size in sorted({max(1, width - 1), width, width + 1, width + 2, width + 3}):
         for start in range(max(1, len(text_words) - size + 1)):
-            window = " ".join(text_words[start : start + size])
-            best = max(best, SequenceMatcher(None, needle, window, autojunk=False).ratio())
-            if best >= threshold:
+            window = text_words[start : start + size]
+            similar = SequenceMatcher(None, needle, " ".join(window), autojunk=False).ratio()
+            if similar >= threshold and same_meaning(words, window):
                 return PASSED
     return fail
+
+
+# Words a quote may leave out of (or, for articles, add to) the source: spoken hesitations and
+# articles, which carry no meaning a map relies on.
+FILLERS = frozenset({
+    "um", "umm", "uh", "uhm", "er", "erm", "ah", "eh", "hmm", "mm", "like", "you", "know",
+    "i", "mean", "sort", "kind", "of", "so", "well", "just", "actually", "basically", "really",
+    "okay", "ok", "right", "yeah", "a", "an", "the",
+})  # fmt: skip
+ARTICLES = frozenset({"a", "an", "the"})
+# Negations: a quote that gains or loses one says the opposite of its source.
+NEGATIONS = frozenset({
+    "not", "no", "never", "none", "nobody", "nothing", "neither", "nor", "without", "cannot",
+    "cant", "dont", "doesnt", "didnt", "isnt", "arent", "wasnt", "werent", "wont", "wouldnt",
+    "shouldnt", "couldnt", "hasnt", "havent", "hadnt", "mustnt", "neednt", "shant",
+})  # fmt: skip
+SPELLING = 0.8  # a changed stretch must read almost the same: a typo, "its" for "it is"
+
+
+def same_meaning(quote: Sequence[str], source: Sequence[str]) -> bool:
+    """G4 (deep review, 2026-10-19): the quote differs from its source only in spelling and
+    fillers. Character similarity alone cannot tell "approves" from "does not approve" in a long
+    quote, so each stretch that differs is checked word by word: a changed stretch must be spelled
+    almost the same, no negation may be gained or lost, the quote may leave out only fillers and
+    add only articles."""
+    for tag, q1, q2, s1, s2 in SequenceMatcher(None, quote, source, autojunk=False).get_opcodes():
+        if tag == "equal":
+            continue
+        said, written = quote[q1:q2], source[s1:s2]
+        if NEGATIONS.intersection(said) or NEGATIONS.intersection(written):
+            return False
+        if tag == "delete" and not ARTICLES.issuperset(said):
+            return False  # the quote adds a word its source doesn't have
+        if tag == "insert" and not FILLERS.issuperset(written):
+            return False  # the quote leaves out a word that carries meaning
+        if tag == "replace" and (
+            SequenceMatcher(None, "".join(said), "".join(written)).ratio() < SPELLING
+        ):
+            return False  # a different word, not a different spelling
+    return True
 
 
 _UNITS = {
