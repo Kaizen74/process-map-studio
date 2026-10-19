@@ -242,7 +242,7 @@ function RealityBody({ snapshot, version, engagementId, view, selected, table, s
             selected={selected}
             onSelect={onSelect}
           />
-          <Callouts callouts={current.callouts} />
+          <Callouts callouts={current.callouts} legend={snapshot.legend} />
           <button type="button" className="btn btn--link" aria-expanded={table} onClick={onTable}>
             {table ? "Hide the table" : "Show as table"}
           </button>

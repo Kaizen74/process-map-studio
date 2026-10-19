@@ -1,37 +1,46 @@
 # Reality views: the executive comprehension test
 
 This is the one check of the Reality views that a computer can't run (PRD §5.12.9). It tells us
-whether people who have never seen the app understand the two main pictures in a minute. Eric runs
-it once, before phase P13 is closed. It takes about 30 minutes in total.
+whether people who have never seen the app understand the main pictures in a minute each. Eric runs
+it once, before phase P13 is closed. It takes about 40 minutes in total.
+
+Changed on 2026-10-19 (Eric approved, DECISIONS 72), after a pilot
+([comprehension_pilot_2026-10-19.md](comprehension_pilot_2026-10-19.md)):
+- the views are shown on screen from a version with confirmed intent;
+- Fix or keep is shown as a third view, because "what to fix first" is answered there.
 
 ## What you need
 
 - Five executives or senior managers who have not seen the Reality views before. They don't need
   to know the process.
-- A published version with the Reality views switched on: either a real one, or the built-in
-  example (fixture A.12).
-- The **Glance** and **Reality stack** pages, either on screen (**Reality** → choose the view) or
-  printed from the Reality pack (**Download A3**, pages 2 and 3).
+- The test kit in [comprehension_kit/](comprehension_kit/): three pictures of the built-in example
+  (a published version with confirmed intent), as the Reality screen shows them. Open them full
+  screen on a laptop, one at a time:
+  1. `1-glance.png` (Glance)
+  2. `2-reality-stack.png` (Reality stack)
+  3. `3-fix-or-keep.png` (Fix or keep)
 - A timer and this sheet.
 
 ## How to run it (about 5 minutes a person)
 
-1. Show the **Glance** view for **60 seconds**. Don't explain it.
-2. Show the **Reality stack** view for **60 seconds**. Don't explain it.
-3. Put both away and ask the four questions below, in this order. Write down each answer in
+1. Show **Glance** for **60 seconds**. Don't explain it.
+2. Show **Reality stack** for **60 seconds**. Don't explain it.
+3. Show **Fix or keep** for **60 seconds**. Don't explain it.
+4. Put all three away and ask the four questions below, in this order. Write down each answer in
    their words. Don't help, hint or correct.
-4. Thank them. Only then may you explain anything.
+5. Thank them. Only then may you explain anything.
 
 ## The four questions
 
-| | Question | A right answer for this version names… |
-|---|---|---|
-| Q1 | How big is the gap between the manual and reality? | Glance's main figure (for example the share of cases that follow the manual) |
-| Q2 | Where does it concentrate? | The outlined phase on the Reality stack (the hotspot) |
-| Q3 | What is the main risk? | The control exposure, or the largest impact class when there is none |
-| Q4 | What should be fixed first? | The first code under Decide first, or the hotspot's largest gap |
+| | Question | A right answer names… | For the test kit, that is… |
+|---|---|---|---|
+| Q1 | How big is the gap between the manual and reality? | Glance's main figure | Only 70% of cases follow the manual (30% don't) |
+| Q2 | Where does it concentrate? | The hotspot on the Reality stack | Check and load (53 extra minutes a case, 24 hours a month) |
+| Q3 | What is the main risk? | The control exposure, or the largest impact class when there is none | Approve load plan is never recorded (X1, a control exposure) |
+| Q4 | What should be fixed first? | The first code under Decide first (Fix or keep) | X1 Approve load plan: restore the control |
 
-Before you start, fill in the right-answer column for the version you show, from the app.
+The answer need not use the app's words; it must name the same thing. If you show another
+version instead of the kit, fill in the last column from the app first.
 
 ## Pass mark
 

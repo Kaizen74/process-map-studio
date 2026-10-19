@@ -105,13 +105,23 @@ def _tiles(tiles: Sequence[Tile]) -> str:
     return f'<ul class="metric-tiles">{items}</ul>'
 
 
-def _callouts(view: ViewBase, layout: str) -> str:
+def _callouts(view: ViewBase, layout: str, snapshot: RealitySnapshot) -> str:
     shown = view.callouts[: CALLOUTS[layout]]
     if not shown:
         return ""
+    # A callout's impact colour comes with the legend's symbol and word (constraint 17).
+    impacts = {i.impact_class: i for i in snapshot.legend.impacts}
+
+    def tag(impact: str | None) -> str:
+        if impact is None or impact not in impacts:
+            return ""
+        i = impacts[impact]
+        return (f'<p class="callout__impact"><span class="impact-word impact-word--{e(impact)}">'
+                f"{_glyph(i.glyph, impact)}{e(i.word)}</span></p>")  # fmt: skip
+
     items = "".join(
         f'<li class="callout{f" callout--{e(c.impact_class)}" if c.impact_class else ""}">'
-        + "".join(f"<p>{e(line)}</p>" for line in c.lines) + "</li>"
+        + tag(c.impact_class) + "".join(f"<p>{e(line)}</p>" for line in c.lines) + "</li>"
         for c in shown
     )  # fmt: skip
     return f'<ul class="callouts">{items}</ul>'
@@ -312,7 +322,7 @@ def _view_page(snapshot: RealitySnapshot, vid: str, layout: str, section: str) -
             f'<p class="pack-section">{e(section.capitalize())}</p>'
             f'<h2 class="reality-view__title">{e(view.title)}</h2>'
             f'<p class="reality-view__headline">{e(view.headline)}</p>{note}{body}'
-            f"{_callouts(view, layout)}{_legend(snapshot, scale)}</section>")  # fmt: skip
+            f"{_callouts(view, layout, snapshot)}{_legend(snapshot, scale)}</section>")  # fmt: skip
 
 
 def _verdict(c: CodeView) -> str:

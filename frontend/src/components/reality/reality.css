@@ -428,6 +428,10 @@
 .callout p {
   margin: 0;
 }
+.callout p.callout__impact {
+  margin-bottom: var(--space-4);
+  font-size: var(--text-label);
+}
 
 .reality-table-wrap {
   overflow-x: auto;
