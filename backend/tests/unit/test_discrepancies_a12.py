@@ -89,7 +89,7 @@ def test_a12_every_expected_discrepancy_with_its_delta(
 
     monkeypatch.setattr(ai_service, "call_claude", no_ai)  # RT7: classifying never calls AI
     detection = reality.detect()
-    assert detection.rules_version == "1"
+    assert detection.rules_version == "2"
     assert reality.table(detection) == [
         ("D4", "Draft load plan", "rework in 20% of cases", "measured"),
         ("D1", "Approve load plan", "never recorded; 100% of cases", "measured"),

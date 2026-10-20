@@ -276,6 +276,7 @@ A typical engagement, start to finish (each step has its own section above):
 9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
 
 ## What changed recently
+- 2026-10-20: **Reality views are easier to read.** Glance now shows the same "hours a month lost to the gaps" as the Reality stack, so there is one time figure, not two. A gap that costs no measured time says "No time cost measured" instead of "0 h a month". Fix or keep lists every gap among its codes. The view takes the full width of the screen (Intent, Discrepancies and the Reality pack are below it); **Show full size** draws it larger, scrolling sideways, when you want to read the small labels. The legend explains the D I S boxes.
 - 2026-10-19: **Reality callouts say what kind of gap they are.** Each box under a Reality view (and in the printed pack) now starts with its symbol and word, for example "Control exposure" or "Time impact", so the colour is never the only clue.
 - 2026-10-19: **An empty draft still has a start and an end.** When nothing in the sources could be drafted, the map now shows where the process starts and ends, so you can add the steps yourself on Review. No line is drawn between them, because no source describes what happens there.
 - 2026-10-19: **What a draft will cost, before it starts.** The **Draft** screen shows an estimate under **Create draft map**, and **Settings → AI spending** lets you set the most one draft (or refresh) may cost. No limit is set unless you set one.

@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-COPY_VERSION = "3"  # 2: Redline, time, belief and typical case (P13c); 3: outside lane (E1)
+COPY_VERSION = "4"  # 2: Redline, time, belief and typical case (P13c); 3: outside lane (E1);
+# 4: the hours tile's caption, "No time cost measured", the evidence key (comprehension pilot)
 OUTSIDE_LANE = "Outside the organisation"  # the Typical case's lane (E1)
 OUTSIDE_START = "Starts outside"
 OUTSIDE_END = "Ends outside"
@@ -120,6 +121,12 @@ QUADRANTS = {
     "correct": ("Correct the practice", "Departs from the manual and falls short of the promise."),
     "ask": ("Ask", "Not enough evidence to say where the fix lies."),
 }
+
+# A code's hours a month when the gap costs no measured time (a missing record, for example).
+NO_TIME_COST = "No time cost measured"
+EVIDENCE_KEY = (
+    "D I S: documents, interviews, system records. A filled box: that source shows the gap."
+)
 
 IMPACT_WORDS = {
     "control_exposure": ("Control exposure", "triangle"),

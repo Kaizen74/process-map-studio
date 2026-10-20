@@ -165,5 +165,5 @@ def test_only_the_done_view_and_known_versions(reality: Reality) -> None:
         422, "Discrepancies are worked out on the As done view.")  # fmt: skip
     assert client.get("/api/versions/nope/discrepancies").status_code == 404
     body = client.get(f"/api/versions/{reality.version_id}/discrepancies").json()
-    assert (body["rules_version"], body["view"]) == ("1", "done")
+    assert (body["rules_version"], body["view"]) == ("2", "done")
     assert {i["result"] for i in body["intents"]} == {"met", "not_met", "unknown"}

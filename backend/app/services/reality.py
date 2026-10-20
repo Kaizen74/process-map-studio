@@ -65,7 +65,7 @@ from app.services import reality_detail as detail
 from app.services import reality_layout as layout
 from app.services import reality_shapes as shapes
 from app.services import verdicts as verdict_rules
-from app.services.discrepancies import Facts, StepFacts
+from app.services.discrepancies import Facts
 from app.services.reality_base import (
     PROCESS,
     Figures,
@@ -277,35 +277,6 @@ def _done_total(inputs: Inputs) -> tuple[float | None, str]:
     return sum(v for v, _ in known), blend([lb for _, lb in known])
 
 
-def _beyond(s: StepFacts) -> tuple[float | None, str]:
-    """A step's minutes to set against its documented time: the wait when its accounts state one
-    (as D7 and D14 compare it), else its work and wait."""
-    if s.stated_wait is not None:
-        wait = rules.measured_wait(s)
-        if wait is not None and wait.cases >= rules.MINIMUM_CASES:
-            return wait.median, rules.MEASURED
-        return s.stated_wait, rules.STATED
-    return step_minutes(s)
-
-
-def _hours_beyond(facts: Facts) -> tuple[float, str] | None:
-    """The sum of max(0, done - documented minutes) times volume, over steps with a measured
-    volume and a documented time (an added step's documented time is 0)."""
-    total, labels = 0.0, []
-    for s in facts.steps:
-        if not s.in_done or not s.per_month:
-            continue
-        done, label = _beyond(s)
-        designed = s.documented_min if s.in_documented else 0.0
-        if done is None or designed is None:
-            continue
-        total += max(0.0, done - designed) * s.per_month / 60
-        labels.append({"stated": "estimated"}.get(label, label))
-    if not labels:
-        return None
-    return round(total, 1), blend(labels)
-
-
 def tiles(inputs: Inputs, codes: Sequence[CodeView], process: Sequence[verdict_rules.Group],
           groups: Mapping[str, verdict_rules.Group], figures: Figures) -> list[Tile]:  # fmt: skip
     facts = inputs.facts
@@ -341,10 +312,11 @@ def tiles(inputs: Inputs, codes: Sequence[CodeView], process: Sequence[verdict_r
                         copy.pct(target.met_share), target.label or rules.MEASURED,
                         "incidence")  # fmt: skip
         out.append(Tile(figure=f, caption="of cases meet a confirmed target"))
-    beyond = _hours_beyond(facts)
-    if beyond is not None:
-        f = figures.add("rv1.hours_beyond", beyond[0], "h", copy.hours(beyond[0]), beyond[1])
-        out.append(Tile(figure=f, caption="beyond the designed time"))
+    if facts.total_cases:  # the stack's whole-process "Hours a month": one time-lost figure
+        lost = round(sum(_h(c) for c in codes), 1)
+        if lost > 0:
+            f = figures.add(f"rv2.hours.{PROCESS}", lost, "h", copy.hours(lost), rules.MEASURED)
+            out.append(Tile(figure=f, caption="lost to the gaps, all phases"))
     beliefs = [fd for g in process for fd in g.found if fd.type == "D10" and fd.delta.value]
     if beliefs:
         top = max(beliefs, key=lambda fd: fd.delta.value or 0.0)
@@ -816,8 +788,8 @@ def _codes(inputs: Inputs, coded: Sequence[Coded], place: Mapping[str, str],
         word, glyph = copy.IMPACT_WORDS[c.impact]
         hours = None
         if facts.total_cases:  # hours come from measured figures only: none without a log
-            hours = figures.add(f"{c.item.code}.hours", c.hours, "h", copy.hours(c.hours),
-                                rules.MEASURED)  # fmt: skip
+            text = copy.hours(c.hours) if c.hours > 0 else copy.NO_TIME_COST
+            hours = figures.add(f"{c.item.code}.hours", c.hours, "h", text, rules.MEASURED)
         out.append(CodeView(
             code=c.item.code, item_id=c.item.item_id, title=c.item.title, types=c.group.types,
             impact_class=c.impact, impact_word=word, glyph=glyph,
@@ -903,7 +875,7 @@ def build(inputs: Inputs, app_version: str, frozen: bool) -> RealitySnapshot:
                  for k, (w, g) in copy.IMPACT_WORDS.items()],
         lines=[LegendLine(style=s, meaning=m) for s, m in copy.LINES],
         scales=[rv1.geometry.scale_note, rv3.geometry.scale_note],
-        data_label=inputs.data_label,
+        data_label=inputs.data_label, evidence_key=copy.EVIDENCE_KEY,
     )  # fmt: skip
     return RealitySnapshot(
         version_id=inputs.version_id, rules_version=rules.REALITY_RULES_VERSION,

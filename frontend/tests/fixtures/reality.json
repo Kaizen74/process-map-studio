@@ -1,8 +1,8 @@
 {
   "snapshot": {
     "version_id": "id-1",
-    "rules_version": "1",
-    "copy_version": "3",
+    "rules_version": "2",
+    "copy_version": "4",
     "layout_version": "4",
     "app_version": "1.0.0",
     "inputs_hash": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -21,7 +21,7 @@
         "id": "X1.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -61,7 +61,7 @@
         "id": "X3.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -125,7 +125,7 @@
         "id": "X6.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -149,7 +149,7 @@
         "id": "X7.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -165,7 +165,7 @@
         "id": "X8.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -181,7 +181,7 @@
         "id": "X9.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -225,11 +225,11 @@
         "label": "measured",
         "percent_type": "incidence"
       },
-      "rv1.hours_beyond": {
-        "id": "rv1.hours_beyond",
-        "value": 6.1,
+      "rv2.hours.process": {
+        "id": "rv2.hours.process",
+        "value": 32.4,
         "unit": "h",
-        "text": "6 h a month",
+        "text": "32 h a month",
         "label": "measured",
         "percent_type": null
       },
@@ -375,14 +375,6 @@
         "unit": "min",
         "text": "+73 min a case",
         "label": "mixed",
-        "percent_type": null
-      },
-      "rv2.hours.process": {
-        "id": "rv2.hours.process",
-        "value": 32.4,
-        "unit": "h",
-        "text": "32 h a month",
-        "label": "measured",
         "percent_type": null
       },
       "X1.D1": {
@@ -670,14 +662,14 @@
       },
       {
         "figure": {
-          "id": "rv1.hours_beyond",
-          "value": 6.1,
+          "id": "rv2.hours.process",
+          "value": 32.4,
           "unit": "h",
-          "text": "6 h a month",
+          "text": "32 h a month",
           "label": "measured",
           "percent_type": null
         },
-        "caption": "beyond the designed time"
+        "caption": "lost to the gaps, all phases"
       }
     ],
     "columns": [
@@ -756,7 +748,7 @@
           "id": "X1.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -886,7 +878,7 @@
           "id": "X3.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -1088,7 +1080,7 @@
           "id": "X6.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -1152,7 +1144,7 @@
           "id": "X7.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -1213,7 +1205,7 @@
           "id": "X8.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -1281,7 +1273,7 @@
           "id": "X9.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -3022,7 +3014,7 @@
               "Correct the practice",
               "correct (suggested)",
               "The control objective is not met: restore the control or remove the cause.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, no interview, 200 system cases."
             ],
             [
@@ -3040,7 +3032,7 @@
               "Rewrite the rule",
               "rewrite (suggested)",
               "The manual itself misses the intent: the documented way can't meet it.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, 1 interview, no system case."
             ],
             [
@@ -3067,7 +3059,7 @@
               "Ask",
               "ask (suggested)",
               "No confirmed intent covers it: ask the process owner which way is intended.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ],
             [
@@ -3076,7 +3068,7 @@
               "Ask",
               "ask (suggested)",
               "The SME's stated reason suggests codify; confirm the gap class.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ],
             [
@@ -3085,7 +3077,7 @@
               "Ask",
               "ask (suggested)",
               "Not enough evidence to say where the fix lies: ask the process owner.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, 1 interview, no system case."
             ],
             [
@@ -3094,7 +3086,7 @@
               "Ask",
               "ask (suggested)",
               "No confirmed intent covers it: ask the process owner which way is intended.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ]
           ]
@@ -7091,13 +7083,14 @@
         "Line width = share of cases (26 px = 100%)",
         "Circle area = hours a month; small circles have no measured hours"
       ],
-      "data_label": "Draft: figures may change"
+      "data_label": "Draft: figures may change",
+      "evidence_key": "D I S: documents, interviews, system records. A filled box: that source shows the gap."
     }
   },
   "decided": {
     "version_id": "id-1",
-    "rules_version": "1",
-    "copy_version": "3",
+    "rules_version": "2",
+    "copy_version": "4",
     "layout_version": "4",
     "app_version": "1.0.0",
     "inputs_hash": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -7116,7 +7109,7 @@
         "id": "X1.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7156,7 +7149,7 @@
         "id": "X3.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7220,7 +7213,7 @@
         "id": "X6.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7244,7 +7237,7 @@
         "id": "X7.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7260,7 +7253,7 @@
         "id": "X8.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7276,7 +7269,7 @@
         "id": "X9.hours",
         "value": 0.0,
         "unit": "h",
-        "text": "0 h a month",
+        "text": "No time cost measured",
         "label": "measured",
         "percent_type": null
       },
@@ -7320,11 +7313,11 @@
         "label": "measured",
         "percent_type": "incidence"
       },
-      "rv1.hours_beyond": {
-        "id": "rv1.hours_beyond",
-        "value": 6.1,
+      "rv2.hours.process": {
+        "id": "rv2.hours.process",
+        "value": 32.4,
         "unit": "h",
-        "text": "6 h a month",
+        "text": "32 h a month",
         "label": "measured",
         "percent_type": null
       },
@@ -7470,14 +7463,6 @@
         "unit": "min",
         "text": "+73 min a case",
         "label": "mixed",
-        "percent_type": null
-      },
-      "rv2.hours.process": {
-        "id": "rv2.hours.process",
-        "value": 32.4,
-        "unit": "h",
-        "text": "32 h a month",
-        "label": "measured",
         "percent_type": null
       },
       "X1.D1": {
@@ -7765,14 +7750,14 @@
       },
       {
         "figure": {
-          "id": "rv1.hours_beyond",
-          "value": 6.1,
+          "id": "rv2.hours.process",
+          "value": 32.4,
           "unit": "h",
-          "text": "6 h a month",
+          "text": "32 h a month",
           "label": "measured",
           "percent_type": null
         },
-        "caption": "beyond the designed time"
+        "caption": "lost to the gaps, all phases"
       }
     ],
     "columns": [
@@ -7851,7 +7836,7 @@
           "id": "X1.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -7981,7 +7966,7 @@
           "id": "X3.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -8183,7 +8168,7 @@
           "id": "X6.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -8247,7 +8232,7 @@
           "id": "X7.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -8308,7 +8293,7 @@
           "id": "X8.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -8376,7 +8361,7 @@
           "id": "X9.hours",
           "value": 0.0,
           "unit": "h",
-          "text": "0 h a month",
+          "text": "No time cost measured",
           "label": "measured",
           "percent_type": null
         },
@@ -10117,7 +10102,7 @@
               "Correct the practice",
               "correct (suggested)",
               "The control objective is not met: restore the control or remove the cause.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, no interview, 200 system cases."
             ],
             [
@@ -10135,7 +10120,7 @@
               "Rewrite the rule",
               "rewrite (suggested)",
               "The manual itself misses the intent: the documented way can't meet it.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, 1 interview, no system case."
             ],
             [
@@ -10162,7 +10147,7 @@
               "Ask",
               "ask (suggested)",
               "No confirmed intent covers it: ask the process owner which way is intended.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ],
             [
@@ -10171,7 +10156,7 @@
               "Codify the practice",
               "codify (confirmed)",
               "The SME's stated reason suggests codify; confirm the gap class.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ],
             [
@@ -10180,7 +10165,7 @@
               "Ask",
               "ask (suggested)",
               "Not enough evidence to say where the fix lies: ask the process owner.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: 1 document, 1 interview, no system case."
             ],
             [
@@ -10189,7 +10174,7 @@
               "Ask",
               "ask (suggested)",
               "No confirmed intent covers it: ask the process owner which way is intended.",
-              "0 h a month",
+              "No time cost measured",
               "Evidence: no document, 1 interview, no system case."
             ]
           ]
@@ -14185,7 +14170,8 @@
         "Line width = share of cases (26 px = 100%)",
         "Circle area = hours a month; small circles have no measured hours"
       ],
-      "data_label": "Draft: figures may change"
+      "data_label": "Draft: figures may change",
+      "evidence_key": "D I S: documents, interviews, system records. A filled box: that source shows the gap."
     }
   },
   "intent": [
@@ -14431,14 +14417,14 @@
       },
       {
         "figure": {
-          "id": "rv1.hours_beyond",
-          "value": 6.1,
+          "id": "rv2.hours.process",
+          "value": 32.4,
           "unit": "h",
-          "text": "6 h a month",
+          "text": "32 h a month",
           "label": "measured",
           "percent_type": null
         },
-        "caption": "beyond the designed time"
+        "caption": "lost to the gaps, all phases"
       }
     ]
   },

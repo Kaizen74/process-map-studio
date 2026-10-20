@@ -134,6 +134,7 @@ export function RealityLegend({ legend, evidence }: { legend: Legend; evidence: 
       <p className="reality-legend__note">
         {legend.scales.join(" · ")}
       </p>
+      {legend.evidence_key && <p className="reality-legend__note">{legend.evidence_key}</p>}
       <p className="reality-legend__note">
         {legend.data_label} · {evidence}
       </p>

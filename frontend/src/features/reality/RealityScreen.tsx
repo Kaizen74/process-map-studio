@@ -61,6 +61,7 @@ export function RealityScreen() {
   const selected = params.get("code");
   const [table, setTable] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [fullSize, setFullSize] = useState(false);
 
   const set = (name: string, value: string | null) =>
     setParams(
@@ -143,6 +144,8 @@ export function RealityScreen() {
           onSelect={select}
           onTable={() => setTable((t) => !t)}
           onShowAll={() => setShowAll(true)}
+          fullSize={fullSize}
+          onFullSize={() => setFullSize((f) => !f)}
         />
       )}
     </main>
@@ -161,6 +164,9 @@ interface BodyProps {
   onSelect: (code: string) => void;
   onTable: () => void;
   onShowAll: () => void;
+  /** The drawing at its own width (scrolling sideways), where its words are legible. */
+  fullSize: boolean;
+  onFullSize: () => void;
 }
 
 /** The Reality pack (P13d): a published version's views on A3 or 16:9 pages; a draft is explained. */
@@ -183,7 +189,21 @@ function PackCard({ version, engagementId }: { version: VersionSummary; engageme
   );
 }
 
-function RealityBody({ snapshot, version, engagementId, view, selected, table, showAll, onView, onSelect, onTable, onShowAll }: BodyProps) {
+function RealityBody({
+  snapshot,
+  version,
+  engagementId,
+  view,
+  selected,
+  table,
+  showAll,
+  onView,
+  onSelect,
+  onTable,
+  onShowAll,
+  fullSize,
+  onFullSize,
+}: BodyProps) {
   const current = snapshot.views[view];
   const codes = snapshot.codes;
   const action = current.availability.action ? ACTIONS[current.availability.action] : undefined;
@@ -201,7 +221,7 @@ function RealityBody({ snapshot, version, engagementId, view, selected, table, s
           value={view}
           onChange={onView}
         />
-        <section className="reality-view" aria-labelledby="reality-question">
+        <section className={`reality-view${fullSize ? " reality-view--full" : ""}`} aria-labelledby="reality-question">
           <h2 id="reality-question" className="reality-view__title">
             {current.title}
           </h2>
@@ -243,6 +263,9 @@ function RealityBody({ snapshot, version, engagementId, view, selected, table, s
             onSelect={onSelect}
           />
           <Callouts callouts={current.callouts} legend={snapshot.legend} />
+          <button type="button" className="btn btn--link" aria-pressed={fullSize} onClick={onFullSize}>
+            Show full size
+          </button>
           <button type="button" className="btn btn--link" aria-expanded={table} onClick={onTable}>
             {table ? "Hide the table" : "Show as table"}
           </button>
@@ -268,7 +291,8 @@ function viewCodes(snapshot: RealitySnapshot, view: ViewId): string[] {
     case "rv2":
       return [...v.rv2.stack.highlighted, ...v.rv2.stack.listed];
     case "rv3":
-      return v.rv3.fix.circles.map((c) => c.code);
+      // Every gap the view lists under Decide first: it draws at most 8 circles (pilot, 2026-10-19).
+      return v.rv3.fix.decide_first;
     case "rv4":
       return v.rv4.redline.markups.map((m) => m.code);
     case "rv5":

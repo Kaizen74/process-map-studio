@@ -759,6 +759,8 @@ class Legend(BaseModel):
     lines: list[LegendLine]
     scales: list[str]
     data_label: str
+    # The key to the D I S evidence boxes (copy version 4); empty in snapshots frozen before it.
+    evidence_key: str = ""
 
 
 class SnapshotIntent(BaseModel):

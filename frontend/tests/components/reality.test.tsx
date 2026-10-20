@@ -106,6 +106,37 @@ describe("Reality screen (PRD §5.12, P13b)", () => {
     expect(within(decide).getAllByRole("listitem")).toHaveLength(SNAP.views.rv3.fix.decide_first.length);
   });
 
+  // The comprehension pilot's remaining confusions (Eric, 2026-10-20).
+  it("Fix or keep lists every gap among its codes, not only the circles it draws", async () => {
+    backend();
+    renderApp(path("?view=rv3"));
+    await screen.findByRole("region", { name: "Decide first" });
+    const badges = screen.getByRole("list", { name: "Codes on this view" });
+    expect(within(badges).getAllByRole("listitem")).toHaveLength(SNAP.views.rv3.fix.decide_first.length);
+    expect(SNAP.views.rv3.fix.circles.length).toBeLessThan(SNAP.views.rv3.fix.decide_first.length);
+  });
+
+  it("the legend explains the D I S evidence boxes", async () => {
+    backend();
+    renderApp(path());
+    const legend = await screen.findByRole("contentinfo", { name: "Legend" });
+    expect(legend).toHaveTextContent(SNAP.legend.evidence_key ?? "missing");
+  });
+
+  it("a drawing can be shown at full size, where its text is legible, and fitted again", async () => {
+    backend();
+    const { container } = renderApp(path("?view=rv2"));
+    await screen.findByText(SNAP.views.rv2.headline);
+    const toggle = screen.getByRole("button", { name: "Show full size" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    const canvas = container.querySelector(".reality-view--full .reality-canvas");
+    expect(canvas).not.toBeNull();
+    expect((canvas as SVGElement).style.getPropertyValue("--canvas-width")).toBe(`${SNAP.views.rv2.geometry.width}px`);
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("selecting an X code highlights it everywhere and dims the rest; Esc clears it", async () => {
     backend();
     renderApp(path("?view=rv3"));
