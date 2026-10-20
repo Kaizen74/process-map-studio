@@ -10,7 +10,7 @@ import pytest
 
 from app.domain.graph import Graph, GraphAiFlag, LintIssue, LintReport
 from app.domain.quality import QualityInput
-from app.services import export_html, quality
+from app.services import export_html, quality, signal
 from app.services import exports as renderers
 from tests.services.test_export_html import FONTS, TOKENS
 from tests.services.test_exports import data, sample_graph
@@ -194,6 +194,13 @@ def test_an_interview_only_map_gets_a_warning_never_a_blocker() -> None:
     assert quality.SIGNAL_WARNING in limited.warnings and limited.all_green
     strong = quality.build_quality_card(card_input(source_kinds=["interview_transcript", "sop"]))
     assert quality.SIGNAL_WARNING not in strong.warnings
+
+
+def test_a_documents_only_map_gets_its_own_warning_never_a_blocker() -> None:
+    """Eric, 2026-10-20: drafted from documents alone, the map shows the process as written."""
+    card = quality.build_quality_card(card_input(source_kinds=["sop", "job_description"]))
+    assert card.all_green and quality.SIGNAL_WARNING not in card.warnings
+    assert signal.DOCUMENTS_QUALITY_WARNING in card.warnings
 
 
 def test_more_than_three_names_end_with_how_many_more() -> None:

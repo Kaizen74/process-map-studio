@@ -191,6 +191,22 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 
+def test_the_frontend_documents_only_sample_matches_the_backend(settings_config: AppConfig) -> None:
+    """The documents-only sample (Eric, 2026-10-20) as the frontend draws it: the graph and each
+    view's graph and layout. Every step is documented only, so As done has no step. Not a PRD
+    baseline; rewritten with PMS_UPDATE_GOLDEN=1 like the baselines."""
+    for client, version_id in drafted(settings_config, make_ai_fixtures.DOCUMENTS_ONLY):
+        url = f"/api/versions/{version_id}"
+        bundle = {
+            "graph": client.get(f"{url}/graph").json(),
+            "views": {v: client.get(f"{url}/layout", params={"view": v}).json()
+                      for v in ("done", "documented")},
+            "view_graphs": {v: client.get(f"{url}/graph", params={"view": v}).json()
+                            for v in ("done", "documented")},
+        }  # fmt: skip
+        matches_baseline("documents_only_map.json", bundle, FRONTEND_FIXTURES)
+
+
 PUBLISHED_AT = "2026-09-28T09:00:00+00:00"
 FONT_DATA = re.compile(r"data:font/woff2;base64,([A-Za-z0-9+/=]+)")
 

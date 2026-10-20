@@ -106,6 +106,15 @@
   overflow: hidden;
 }
 
+/* Why a documents-only map opens As documented (2026-10-20). */
+.map-card__note {
+  margin: 0;
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-label);
+  color: var(--ink-3);
+  border-bottom: var(--line-hairline) solid var(--border);
+}
+
 .map-card__canvas--scroll {
   overflow-x: auto;
 }

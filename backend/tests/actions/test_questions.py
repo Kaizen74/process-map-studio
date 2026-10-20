@@ -200,3 +200,43 @@ def test_a_format_failure_saves_nothing(settings_config: AppConfig, tmp_path: Pa
         result = s5.ask(a.config, a.sessions, context(a.config), version_id=a.version_id)
         assert isinstance(result, Err) and result.message == s5.FORMAT_FAILED
         assert questions(a) == []
+
+
+def test_a_documents_only_map_never_mentions_a_missing_interview(
+    settings_config: AppConfig, tmp_path: Path
+) -> None:
+    """Eric, 2026-10-20: with no interview behind the map, the fallback wording for a step only
+    the documents describe says no interview has described it yet."""
+    folder = tmp_path / "mocks"
+    shutil.copytree(make_ai_fixtures.MOCKS, folder)
+    shutil.rmtree(folder / s5.STAGE_ID)
+    (folder / s5.STAGE_ID).mkdir()
+    (folder / s5.STAGE_ID / "default.json").write_text('{"questions": []}')
+    config = dataclasses.replace(settings_config, mock_fixtures_dir=folder)
+    for a in assembled_with(config, make_ai_fixtures.DOCUMENTS_ONLY):
+        tally = run(a)
+        assert tally.templated == 6
+        found = [(r, q) for r, q, _, _ in questions(a) if r == "documented_only"]
+        assert found[1] == (
+            "documented_only",
+            'The documents describe "Approve load plan"; no interview has described it yet. Is '
+            "it done this way in practice?",
+        )
+        assert all("interview doesn't" not in q for _, q in found)
+
+
+def test_the_documents_only_sample_gets_a_question_for_every_step(
+    settings_config: AppConfig,
+) -> None:
+    for a in assembled_with(settings_config, make_ai_fixtures.DOCUMENTS_ONLY):
+        tally = run(a)
+        assert (tally.questions, tally.gaps, tally.templated) == (7, 1, 0)
+        assert [(r, label) for r, _, label, _ in questions(a)] == [
+            ("documented_only", "Draft load plan"),
+            ("documented_only", "Approve load plan"),
+            ("documented_only", "Special loads OK?"),
+            ("documented_only", "Return loading report"),
+            ("documented_only", "Deviation in limits?"),
+            ("documented_only", "Issue load sheet"),
+            ("gap", None),
+        ]

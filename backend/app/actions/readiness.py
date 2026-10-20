@@ -39,15 +39,9 @@ NAV_ORDER = (
 OPTIONAL = {"gap_analysis"}
 DONE, ATTENTION, NOT_STARTED = "done", "attention", "not_started"
 
-# Kinds that describe the steps of the process. A job description alone describes roles only.
-PROCESS_DOCUMENTS = {
-    SourceKind.SOP.value,
-    SourceKind.MANUAL.value,
-    SourceKind.EXECUTED_ARTEFACT.value,
-    SourceKind.WORKING_SPREADSHEET.value,
-    SourceKind.EMAIL_THREAD.value,
-    SourceKind.OTHER.value,
-}
+# Kinds that describe the steps of the process (one list, with signal strength). A job
+# description alone describes roles only.
+PROCESS_DOCUMENTS = signal.PROCESS_DOCUMENTS
 TRANSCRIPTS = {SourceKind.INTERVIEW_TRANSCRIPT.value}
 
 ADD_KEY = "Add your Claude API key in Settings"
@@ -57,6 +51,9 @@ ONLY_JDS = (
     "Add a process document such as an SOP or manual (job descriptions alone don't describe "
     "the steps)"
 )
+# Either kind of source can start a draft (Eric, 2026-10-20); with neither, one of these.
+ADD_SOURCE = "Add an interview transcript or a process document such as an SOP or manual"
+ADD_SOURCE_ONLY_JDS = f"{ADD_SOURCE} (job descriptions alone don't describe the steps)"
 
 
 def _names(sources: list[SourceFacts]) -> str:
@@ -111,20 +108,30 @@ def assess(
     documents_ready, document_item, named_d = _kind_missing(
         sources, PROCESS_DOCUMENTS, document_add, "process document"
     )
-    # A draft from interviews alone is allowed (P12, Eric's decision): a missing or unreadable
-    # document is recommended, not required; one still being read is waited for.
-    waiting_document = document_item is not None and document_item.startswith("Wait")
-    recommended = [document_item] if document_item and not waiting_document else []
-    if not waiting_document:
-        named_d = set()  # an unreadable document is counted below as a failed file
+    # A draft needs a source that describes the steps: an interview (P12, Eric's decision) or,
+    # since 2026-10-20 (Eric), a process document alone. The other kind is recommended, not
+    # required; a missing or unreadable one is named as a recommendation, one still being read
+    # is waited for (the draft would leave it out).
+    items = [(i, named) for i, named in ((transcript_item, named_t), (document_item, named_d)) if i]
+    waiting = [i for i, _ in items if i.startswith("Wait")]
+    others = [(i, named) for i, named in items if not i.startswith("Wait")]
+    broken = [(i, named) for i, named in others if named]
+    named: set[str] = set()  # unreadable files named in a message; the rest are counted below
+    if transcripts_ready or documents_ready or waiting:
+        needed: list[str] = []
+        recommended = [i for i, _ in others]
+    elif broken:  # nothing to draft from: name what to fix first
+        needed = [i for i, _ in broken]
+        recommended = []
+        named = set().union(*(n for _, n in broken))
+    else:
+        needed = [ADD_SOURCE_ONLY_JDS if has_jd else ADD_SOURCE]
+        recommended = []
     speaker_items = _speaker_items(sources)
-    blocking_document = document_item if waiting_document else None
-    source_items = [i for i in (transcript_item, blocking_document) if i] + speaker_items
+    source_items = waiting + needed + speaker_items
     missing = ([] if key_set else [ADD_KEY]) + source_items
 
-    failed_unnamed = [
-        s for s in sources if s.text_status == "failed" and s.id not in named_t | named_d
-    ]
+    failed_unnamed = [s for s in sources if s.text_status == "failed" and s.id not in named]
     source_issues = len(source_items) + len(failed_unnamed)
 
     draft_exists = facts.version_count > 0
@@ -162,8 +169,11 @@ def assess(
     nav["leadership"] = DONE if facts.published else NOT_STARTED
     nav["exports"] = DONE if facts.exported else NOT_STARTED
 
+    # With a process document read, the interview is recommended, not required (2026-10-20):
+    # it stays on the path but is no longer the next step.
+    optional = OPTIONAL | ({"interview"} if documents_ready else set())
     next_step = next(
-        (key for key in NAV_ORDER if key not in OPTIONAL and nav[key] != DONE),
+        (key for key in NAV_ORDER if key not in optional and nav[key] != DONE),
         None,
     )
     return Readiness(

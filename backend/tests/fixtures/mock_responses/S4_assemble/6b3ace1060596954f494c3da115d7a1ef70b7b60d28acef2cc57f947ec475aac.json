@@ -1,0 +1,320 @@
+{
+  "phases": [
+    {
+      "name": "Plan",
+      "time_window": "",
+      "step_refs": [
+        "e1",
+        "e2"
+      ]
+    },
+    {
+      "name": "Check and load",
+      "time_window": "",
+      "step_refs": [
+        "e3",
+        "e4"
+      ]
+    },
+    {
+      "name": "Close out",
+      "time_window": "",
+      "step_refs": [
+        "e5",
+        "e6"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "step_ref": "e1",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "By T-90",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "Preliminary load plan",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e2",
+      "claim_refs": [],
+      "decision_mechanism": "judgment",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "Preliminary load plan",
+      "handoff_out": "Plan released to Ramp",
+      "raci": [
+        {
+          "role": "Load control lead",
+          "letter": "R"
+        },
+        {
+          "role": "Load control lead",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e3",
+      "claim_refs": [],
+      "decision_mechanism": "rule_based",
+      "decider_role": "Load controller",
+      "rule_or_threshold": "Special loads checked against the acceptance checklist",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e4",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "Within 10 minutes of loading completion",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "Loading report to Load Control",
+      "raci": [
+        {
+          "role": "Ramp",
+          "letter": "R"
+        },
+        {
+          "role": "Ramp",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e5",
+      "claim_refs": [],
+      "decision_mechanism": "judgment",
+      "decider_role": "Load control lead",
+      "rule_or_threshold": "Actual weights within the airline tolerance",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load control lead",
+          "letter": "R"
+        },
+        {
+          "role": "Load control lead",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    },
+    {
+      "step_ref": "e6",
+      "claim_refs": [],
+      "decision_mechanism": "none",
+      "decider_role": "",
+      "rule_or_threshold": "",
+      "escalation": "",
+      "work_min": null,
+      "wait_min": null,
+      "duration_text": "",
+      "complexity": "",
+      "kpi": "Final load sheet no later than T-10",
+      "handoff_in": "",
+      "handoff_out": "",
+      "raci": [
+        {
+          "role": "Load controller",
+          "letter": "R"
+        },
+        {
+          "role": "Load controller",
+          "letter": "A"
+        }
+      ],
+      "k_risk": "",
+      "constraints": [],
+      "ai_flags": [],
+      "variant_done": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      },
+      "variant_documented": {
+        "owner": "",
+        "threshold": "",
+        "time": "",
+        "trigger": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from_ref": "start",
+      "to_ref": "e1",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e1",
+      "to_ref": "e2",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e2",
+      "to_ref": "e3",
+      "kind": "approve",
+      "label": "Approve"
+    },
+    {
+      "from_ref": "e2",
+      "to_ref": "e1",
+      "kind": "reject",
+      "label": "Rework"
+    },
+    {
+      "from_ref": "e3",
+      "to_ref": "e4",
+      "kind": "yes",
+      "label": "Yes"
+    },
+    {
+      "from_ref": "e4",
+      "to_ref": "e5",
+      "kind": "sequence",
+      "label": ""
+    },
+    {
+      "from_ref": "e5",
+      "to_ref": "e6",
+      "kind": "yes",
+      "label": "Within tolerance"
+    },
+    {
+      "from_ref": "e6",
+      "to_ref": "end",
+      "kind": "sequence",
+      "label": ""
+    }
+  ]
+}

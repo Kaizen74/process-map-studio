@@ -4,9 +4,10 @@ and then asks every screen's data: every GET route the app has, with the scenari
 actions that start work. Nothing may fail with a server error; a refusal says what is missing in
 plain words; no screen shows "None" or "nan" where a figure is missing.
 
-Scenarios: nothing yet · documents only · interviews only · interviews and documents (no system
-log) · interviews and a system log (no documents) · documents, interviews and a log not yet matched
-to the map · a charter without SOPs · everything (A.12)."""
+Scenarios: nothing yet · documents only (uploaded; drafted; and, since 2026-10-20, drafted and
+published) · interviews only · interviews and documents (no system log) · interviews and a system
+log (no documents) · documents, interviews and a log not yet matched to the map · a charter without
+SOPs · everything (A.12)."""
 
 from __future__ import annotations
 
@@ -23,6 +24,8 @@ from app.config import AppConfig
 from app.domain.reality import Shape
 from app.services.reality_shapes import collisions
 from tests import fixture_engagement
+from tests.fixtures.make_ai_fixtures import DOCUMENTS_ONLY
+from tests.unit.test_documents_only_journey import add_missing_exits
 from tests.unit.test_draft_api import make_client, run_draft, with_key
 from tests.unit.test_log_alignment_api import EXPECTED, UNRECORDED, import_log
 from tests.uploads import FIXTURES, wait_for_jobs
@@ -137,6 +140,15 @@ def documents_only(s: Scenario) -> None:
         s.ids["source_id"] = _upload(s.client, s.ids["engagement_id"], name)
 
 
+def documents_only_drafted(s: Scenario) -> None:
+    """A map drafted from documents alone (Eric, 2026-10-20): every step documented only."""
+    built = fixture_engagement.build(s.client, DOCUMENTS_ONLY)
+    s.ids |= {"engagement_id": built.engagement_id,
+              "source_id": built.sources["sop_LC-07.docx"]}  # fmt: skip
+    _draft(s)
+    _intent(s)
+
+
 def interviews_only(s: Scenario) -> None:
     built = fixture_engagement.build(s.client, INTERVIEW)
     s.ids |= {"engagement_id": built.engagement_id,
@@ -185,6 +197,12 @@ def published_interviews_only(s: Scenario) -> None:
     _publish(s)
 
 
+def published_documents_only(s: Scenario) -> None:
+    documents_only_drafted(s)
+    add_missing_exits(s.client, s.ids["version_id"])  # what the documents don't say, from Eric
+    _publish(s)
+
+
 def published_interviews_and_documents(s: Scenario) -> None:
     interviews_and_documents(s)
     _publish(s)
@@ -196,11 +214,13 @@ def published_everything(s: Scenario) -> None:
 
 
 SCENARIOS: dict[str, Callable[[Scenario], None]] = {
-    "nothing": nothing, "documents_only": documents_only, "interviews_only": interviews_only,
+    "nothing": nothing, "documents_only": documents_only,
+    "documents_only_drafted": documents_only_drafted, "interviews_only": interviews_only,
     "interviews_and_documents": interviews_and_documents,
     "interviews_and_log": interviews_and_log, "log_not_matched": log_not_matched,
     "charter_without_sops": charter_without_sops, "everything": everything,
     "published_interviews_only": published_interviews_only,
+    "published_documents_only": published_documents_only,
     "published_interviews_and_documents": published_interviews_and_documents,
     "published_everything": published_everything,
 }  # fmt: skip
@@ -362,7 +382,9 @@ def test_every_figure_says_where_it_comes_from(scenario: Scenario) -> None:
     assert problems == []
 
 
-SIGNAL = {"nothing": None, "documents_only": None, "interviews_only": "limited",
+# Documents alone are Limited since 2026-10-20 (Eric): a draft can be made from them.
+SIGNAL = {"nothing": None, "documents_only": "limited", "documents_only_drafted": "limited",
+          "published_documents_only": "limited", "interviews_only": "limited",
           "interviews_and_log": "limited", "charter_without_sops": "moderate",
           "published_interviews_only": "limited"}  # fmt: skip
 
@@ -379,4 +401,5 @@ def test_the_evidence_behind_a_map_is_stated(
     found = readiness.json()["signal"]
     assert (found or {}).get("level") == SIGNAL.get(name, "strong")
     if found and found["level"] == "limited":
-        assert "interviews only" in found["detail"]
+        built_from = "documents only" if "documents_only" in name else "interviews only"
+        assert built_from in found["detail"]

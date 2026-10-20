@@ -77,17 +77,27 @@ describe("draft checklist", () => {
     expect(draftChecklist(ready).every((item) => item.done)).toBe(true);
   });
 
-  it("doesn't call speakers mapped before any transcript is read", () => {
-    const items = draftChecklist({ ...ready, transcripts_ready: false, key_set: false });
-    expect(items.filter((i) => !i.done).map((i) => i.key)).toEqual(["key", "transcript", "speakers"]);
+  it("needs a transcript or a process document; speakers count only once a transcript is read", () => {
+    const items = draftChecklist({ ...ready, transcripts_ready: false, documents_ready: false, key_set: false });
+    expect(items.filter((i) => !i.done).map((i) => i.key)).toEqual(["key", "source", "transcript", "document"]);
+    expect(items.filter((i) => i.required).map((i) => i.key)).toEqual(["key", "source"]);
     expect(items.find((i) => i.key === "key")?.to).toBe("settings");
+    expect(checklistSummary(items)).toBe("0 of 2 ready.");
   });
 
-  it("recommends a process document but doesn't count it as needed", () => {
+  it("documents alone are enough to draft (Eric, 2026-10-20); the interview is recommended", () => {
+    const items = draftChecklist({ ...ready, transcripts_ready: false });
+    expect(items.find((i) => i.key === "source")).toMatchObject({ done: true, required: true });
+    expect(items.find((i) => i.key === "transcript")).toMatchObject({ done: false, required: false });
+    expect(items.map((i) => i.key)).not.toContain("speakers");
+    expect(checklistSummary(items)).toBe("2 of 2 ready.");
+  });
+
+  it("an interview alone is enough to draft; a process document is recommended", () => {
     const items = draftChecklist({ ...ready, documents_ready: false });
     const document = items.find((i) => i.key === "document");
     expect(document).toMatchObject({ done: false, required: false });
-    expect(items.filter((i) => i.required).map((i) => i.key)).toEqual(["key", "transcript", "speakers"]);
+    expect(items.filter((i) => i.required).map((i) => i.key)).toEqual(["key", "source", "speakers"]);
     expect(checklistSummary(items)).toBe("3 of 3 ready.");
     expect(checklistSummary(draftChecklist({ ...ready, key_set: false }))).toBe("2 of 3 ready.");
   });

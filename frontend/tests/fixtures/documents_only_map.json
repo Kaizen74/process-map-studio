@@ -1,0 +1,2591 @@
+{
+  "graph": {
+    "version": {
+      "id": "id-1",
+      "label": "v0.1",
+      "state": "draft",
+      "quality_card": null
+    },
+    "process": {
+      "name": "Load control",
+      "trigger": "Flight scheduled",
+      "end_point": "Final load sheet issued",
+      "kpi": "",
+      "cycle_time": {
+        "elapsed_min": 0.0,
+        "work_min": 0.0,
+        "incomplete_steps": 0
+      }
+    },
+    "roles": [
+      {
+        "id": "id-2",
+        "name": "Load controller",
+        "is_system": false,
+        "lane_order": 1
+      },
+      {
+        "id": "id-3",
+        "name": "Load control lead",
+        "is_system": false,
+        "lane_order": 2
+      },
+      {
+        "id": "id-4",
+        "name": "Ramp",
+        "is_system": false,
+        "lane_order": 3
+      },
+      {
+        "id": "id-5",
+        "name": "Airline ops",
+        "is_system": false,
+        "lane_order": 4
+      },
+      {
+        "id": "id-6",
+        "name": "Captain",
+        "is_system": false,
+        "lane_order": 5
+      }
+    ],
+    "phases": [
+      {
+        "id": "id-7",
+        "name": "Plan",
+        "time_window": "",
+        "order": 1
+      },
+      {
+        "id": "id-8",
+        "name": "Check and load",
+        "time_window": "",
+        "order": 2
+      },
+      {
+        "id": "id-9",
+        "name": "Close out",
+        "time_window": "",
+        "order": 3
+      }
+    ],
+    "elements": [
+      {
+        "id": "id-10",
+        "stable_key": "start",
+        "kind": "start",
+        "label": "Flight scheduled",
+        "lane_role_id": null,
+        "phase_id": null,
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "not_assessed",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-11",
+        "stable_key": "draft-load-plan",
+        "kind": "activity",
+        "label": "Draft load plan",
+        "lane_role_id": "id-2",
+        "phase_id": "id-7",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": "By T-90"
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": "Preliminary load plan"
+        },
+        "raci": [
+          {
+            "role_id": "id-2",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-2",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-12",
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§3.1",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-14",
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-18",
+        "stable_key": "approve-load-plan",
+        "kind": "approval",
+        "label": "Approve load plan",
+        "lane_role_id": "id-3",
+        "phase_id": "id-7",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "Preliminary load plan",
+          "out": "Plan released to Ramp"
+        },
+        "raci": [
+          {
+            "role_id": "id-3",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-3",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-19",
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§3.2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-20",
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-21",
+        "stable_key": "special-loads-ok",
+        "kind": "decision",
+        "label": "Special loads OK?",
+        "lane_role_id": "id-2",
+        "phase_id": "id-8",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "rule_based",
+          "decider_role_id": "id-2",
+          "rule_or_threshold": "Special loads checked against the acceptance checklist",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-2",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-2",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-22",
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§4",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-14",
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-23",
+        "stable_key": "return-loading-report",
+        "kind": "activity",
+        "label": "Return loading report",
+        "lane_role_id": "id-4",
+        "phase_id": "id-8",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": "Within 10 minutes of loading completion"
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": "Loading report to Load Control"
+        },
+        "raci": [
+          {
+            "role_id": "id-4",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-4",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-24",
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-25",
+        "stable_key": "deviation-in-limits",
+        "kind": "decision",
+        "label": "Deviation in limits?",
+        "lane_role_id": "id-3",
+        "phase_id": "id-9",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": "id-3",
+          "rule_or_threshold": "Actual weights within the airline tolerance",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-3",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-3",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-26",
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§5",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-27",
+        "stable_key": "issue-load-sheet",
+        "kind": "activity",
+        "label": "Issue load sheet",
+        "lane_role_id": "id-2",
+        "phase_id": "id-9",
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "Final load sheet no later than T-10",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-2",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-2",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "documented_only",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-28",
+            "source_id": "id-13",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "§6",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-14",
+            "source_id": "id-15",
+            "source_kind": "job_description",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-16",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-17",
+            "source_kind": "job_description",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": 0.7,
+        "confidence_breakdown": [
+          {
+            "label": "Observed (O)",
+            "delta": 0.6
+          },
+          {
+            "label": "Independent verifier: supported",
+            "delta": 0.1
+          }
+        ],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "documented_only",
+        "work_type": "not_classified",
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": "not_classified",
+        "level": null,
+        "parent_element_id": null
+      },
+      {
+        "id": "id-29",
+        "stable_key": "end",
+        "kind": "end",
+        "label": "Final load sheet issued",
+        "lane_role_id": null,
+        "phase_id": null,
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "not_assessed",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "draft",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "id-30",
+        "from": "id-10",
+        "to": "id-11",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-31",
+        "from": "id-11",
+        "to": "id-18",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "document_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-32",
+        "from": "id-18",
+        "to": "id-21",
+        "kind": "approve",
+        "label": "Approve",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-33",
+        "from": "id-18",
+        "to": "id-11",
+        "kind": "reject",
+        "label": "Rework",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-34",
+        "from": "id-21",
+        "to": "id-23",
+        "kind": "yes",
+        "label": "Yes",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-35",
+        "from": "id-23",
+        "to": "id-25",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "narration_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-36",
+        "from": "id-25",
+        "to": "id-27",
+        "kind": "yes",
+        "label": "Within tolerance",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-37",
+        "from": "id-27",
+        "to": "id-29",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": "explicit_order",
+        "view_membership": "documented_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O"
+      },
+      {
+        "id": "id-38",
+        "from": "id-10",
+        "to": "id-29",
+        "kind": "gap",
+        "label": "Not described",
+        "sequence_basis": "document_order",
+        "view_membership": "done_only",
+        "information_payload": null,
+        "typical": null,
+        "provenance": "I"
+      }
+    ]
+  },
+  "views": {
+    "done": {
+      "view": "done",
+      "canvas": {
+        "w": 368,
+        "h": 172
+      },
+      "lanes": [
+        {
+          "role_id": "",
+          "label": "",
+          "step_count": 0,
+          "y": 48,
+          "h": 124
+        }
+      ],
+      "phases": [],
+      "nodes": [
+        {
+          "id": "id-10",
+          "shape": "circle",
+          "x": 174,
+          "y": 84,
+          "w": 16,
+          "h": 16,
+          "label_lines": [],
+          "label_pos": {
+            "x": 182,
+            "y": 92,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 182,
+            "y": 106,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-29",
+          "shape": "double_circle",
+          "x": 298,
+          "y": 84,
+          "w": 16,
+          "h": 16,
+          "label_lines": [],
+          "label_pos": {
+            "x": 306,
+            "y": 92,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 306,
+            "y": 106,
+            "align": "center"
+          },
+          "ghost": false
+        }
+      ],
+      "edges": [
+        {
+          "id": "id-38",
+          "kind": "gap",
+          "is_back_edge": false,
+          "points": [
+            [
+              190,
+              92
+            ],
+            [
+              298,
+              92
+            ]
+          ],
+          "label": "Not described",
+          "label_pos": {
+            "x": 196,
+            "y": 83,
+            "align": "left"
+          },
+          "ghost": false
+        }
+      ]
+    },
+    "documented": {
+      "view": "documented",
+      "canvas": {
+        "w": 1112,
+        "h": 420
+      },
+      "lanes": [
+        {
+          "role_id": "id-2",
+          "label": "Load controller",
+          "step_count": 3,
+          "y": 48,
+          "h": 124
+        },
+        {
+          "role_id": "id-3",
+          "label": "Load control lead",
+          "step_count": 2,
+          "y": 172,
+          "h": 124
+        },
+        {
+          "role_id": "id-4",
+          "label": "Ramp",
+          "step_count": 1,
+          "y": 296,
+          "h": 124
+        }
+      ],
+      "phases": [
+        {
+          "phase_id": "id-7",
+          "label": "Plan",
+          "time_window": "",
+          "x": 120,
+          "w": 372
+        },
+        {
+          "phase_id": "id-8",
+          "label": "Check and load",
+          "time_window": "",
+          "x": 492,
+          "w": 248
+        },
+        {
+          "phase_id": "id-9",
+          "label": "Close out",
+          "time_window": "",
+          "x": 740,
+          "w": 372
+        }
+      ],
+      "nodes": [
+        {
+          "id": "id-10",
+          "shape": "circle",
+          "x": 174,
+          "y": 84,
+          "w": 16,
+          "h": 16,
+          "label_lines": [],
+          "label_pos": {
+            "x": 182,
+            "y": 92,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 182,
+            "y": 106,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-11",
+          "shape": "rounded_rect",
+          "x": 256,
+          "y": 70,
+          "w": 100,
+          "h": 44,
+          "label_lines": [
+            "Draft load plan"
+          ],
+          "label_pos": {
+            "x": 306,
+            "y": 85,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 306,
+            "y": 120,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-18",
+          "shape": "pill",
+          "x": 380,
+          "y": 194,
+          "w": 100,
+          "h": 44,
+          "label_lines": [
+            "Approve",
+            "load plan"
+          ],
+          "label_pos": {
+            "x": 430,
+            "y": 201,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 430,
+            "y": 244,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-21",
+          "shape": "diamond",
+          "x": 528,
+          "y": 66,
+          "w": 52,
+          "h": 52,
+          "label_lines": [
+            "Special",
+            "loads OK?"
+          ],
+          "label_pos": {
+            "x": 554,
+            "y": 122,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 554,
+            "y": 156,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-23",
+          "shape": "rounded_rect",
+          "x": 628,
+          "y": 318,
+          "w": 100,
+          "h": 44,
+          "label_lines": [
+            "Return",
+            "loading report"
+          ],
+          "label_pos": {
+            "x": 678,
+            "y": 325,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 678,
+            "y": 368,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-25",
+          "shape": "diamond",
+          "x": 776,
+          "y": 190,
+          "w": 52,
+          "h": 52,
+          "label_lines": [
+            "Deviation",
+            "in limits?"
+          ],
+          "label_pos": {
+            "x": 802,
+            "y": 246,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 802,
+            "y": 280,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-27",
+          "shape": "rounded_rect",
+          "x": 876,
+          "y": 70,
+          "w": 100,
+          "h": 44,
+          "label_lines": [
+            "Issue load sheet"
+          ],
+          "label_pos": {
+            "x": 926,
+            "y": 85,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 926,
+            "y": 120,
+            "align": "center"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-29",
+          "shape": "double_circle",
+          "x": 1042,
+          "y": 84,
+          "w": 16,
+          "h": 16,
+          "label_lines": [],
+          "label_pos": {
+            "x": 1050,
+            "y": 92,
+            "align": "center"
+          },
+          "lens_pos": {
+            "x": 1050,
+            "y": 106,
+            "align": "center"
+          },
+          "ghost": false
+        }
+      ],
+      "edges": [
+        {
+          "id": "id-30",
+          "kind": "sequence",
+          "is_back_edge": false,
+          "points": [
+            [
+              190,
+              92
+            ],
+            [
+              256,
+              92
+            ]
+          ],
+          "label": "",
+          "label_pos": null,
+          "ghost": false
+        },
+        {
+          "id": "id-31",
+          "kind": "sequence",
+          "is_back_edge": false,
+          "points": [
+            [
+              356,
+              92
+            ],
+            [
+              368,
+              92
+            ],
+            [
+              368,
+              216
+            ],
+            [
+              380,
+              216
+            ]
+          ],
+          "label": "",
+          "label_pos": null,
+          "ghost": false
+        },
+        {
+          "id": "id-32",
+          "kind": "approve",
+          "is_back_edge": false,
+          "points": [
+            [
+              480,
+              216
+            ],
+            [
+              492,
+              216
+            ],
+            [
+              492,
+              92
+            ],
+            [
+              528,
+              92
+            ]
+          ],
+          "label": "Approve",
+          "label_pos": {
+            "x": 486,
+            "y": 225,
+            "align": "left"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-33",
+          "kind": "reject",
+          "is_back_edge": true,
+          "points": [
+            [
+              430,
+              194
+            ],
+            [
+              430,
+              62
+            ],
+            [
+              306,
+              62
+            ],
+            [
+              306,
+              70
+            ]
+          ],
+          "label": "Rework",
+          "label_pos": {
+            "x": 424,
+            "y": 53,
+            "align": "right"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-34",
+          "kind": "yes",
+          "is_back_edge": false,
+          "points": [
+            [
+              580,
+              92
+            ],
+            [
+              616,
+              92
+            ],
+            [
+              616,
+              340
+            ],
+            [
+              628,
+              340
+            ]
+          ],
+          "label": "Yes",
+          "label_pos": {
+            "x": 586,
+            "y": 83,
+            "align": "left"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-35",
+          "kind": "sequence",
+          "is_back_edge": false,
+          "points": [
+            [
+              728,
+              340
+            ],
+            [
+              740,
+              340
+            ],
+            [
+              740,
+              216
+            ],
+            [
+              776,
+              216
+            ]
+          ],
+          "label": "",
+          "label_pos": null,
+          "ghost": false
+        },
+        {
+          "id": "id-36",
+          "kind": "yes",
+          "is_back_edge": false,
+          "points": [
+            [
+              828,
+              216
+            ],
+            [
+              864,
+              216
+            ],
+            [
+              864,
+              92
+            ],
+            [
+              876,
+              92
+            ]
+          ],
+          "label": "Within tolerance",
+          "label_pos": {
+            "x": 834,
+            "y": 225,
+            "align": "left"
+          },
+          "ghost": false
+        },
+        {
+          "id": "id-37",
+          "kind": "sequence",
+          "is_back_edge": false,
+          "points": [
+            [
+              976,
+              92
+            ],
+            [
+              1042,
+              92
+            ]
+          ],
+          "label": "",
+          "label_pos": null,
+          "ghost": false
+        }
+      ]
+    }
+  },
+  "view_graphs": {
+    "done": {
+      "version": {
+        "id": "id-1",
+        "label": "v0.1",
+        "state": "draft",
+        "quality_card": null
+      },
+      "process": {
+        "name": "Load control",
+        "trigger": "Flight scheduled",
+        "end_point": "Final load sheet issued",
+        "kpi": "",
+        "cycle_time": {
+          "elapsed_min": 0.0,
+          "work_min": 0.0,
+          "incomplete_steps": 0
+        }
+      },
+      "roles": [
+        {
+          "id": "id-2",
+          "name": "Load controller",
+          "is_system": false,
+          "lane_order": 1
+        },
+        {
+          "id": "id-3",
+          "name": "Load control lead",
+          "is_system": false,
+          "lane_order": 2
+        },
+        {
+          "id": "id-4",
+          "name": "Ramp",
+          "is_system": false,
+          "lane_order": 3
+        },
+        {
+          "id": "id-5",
+          "name": "Airline ops",
+          "is_system": false,
+          "lane_order": 4
+        },
+        {
+          "id": "id-6",
+          "name": "Captain",
+          "is_system": false,
+          "lane_order": 5
+        }
+      ],
+      "phases": [
+        {
+          "id": "id-7",
+          "name": "Plan",
+          "time_window": "",
+          "order": 1
+        },
+        {
+          "id": "id-8",
+          "name": "Check and load",
+          "time_window": "",
+          "order": 2
+        },
+        {
+          "id": "id-9",
+          "name": "Close out",
+          "time_window": "",
+          "order": 3
+        }
+      ],
+      "elements": [
+        {
+          "id": "id-10",
+          "stable_key": "start",
+          "kind": "start",
+          "label": "Flight scheduled",
+          "lane_role_id": null,
+          "phase_id": null,
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "not_assessed",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [],
+          "confidence": null,
+          "confidence_breakdown": [],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "both",
+          "work_type": null,
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": null,
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-29",
+          "stable_key": "end",
+          "kind": "end",
+          "label": "Final load sheet issued",
+          "lane_role_id": null,
+          "phase_id": null,
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "not_assessed",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [],
+          "confidence": null,
+          "confidence_breakdown": [],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "both",
+          "work_type": null,
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": null,
+          "level": null,
+          "parent_element_id": null
+        }
+      ],
+      "edges": [
+        {
+          "id": "id-38",
+          "from": "id-10",
+          "to": "id-29",
+          "kind": "gap",
+          "label": "Not described",
+          "sequence_basis": "document_order",
+          "view_membership": "done_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "I"
+        }
+      ]
+    },
+    "documented": {
+      "version": {
+        "id": "id-1",
+        "label": "v0.1",
+        "state": "draft",
+        "quality_card": null
+      },
+      "process": {
+        "name": "Load control",
+        "trigger": "Flight scheduled",
+        "end_point": "Final load sheet issued",
+        "kpi": "",
+        "cycle_time": {
+          "elapsed_min": 0.0,
+          "work_min": 0.0,
+          "incomplete_steps": 4
+        }
+      },
+      "roles": [
+        {
+          "id": "id-2",
+          "name": "Load controller",
+          "is_system": false,
+          "lane_order": 1
+        },
+        {
+          "id": "id-3",
+          "name": "Load control lead",
+          "is_system": false,
+          "lane_order": 2
+        },
+        {
+          "id": "id-4",
+          "name": "Ramp",
+          "is_system": false,
+          "lane_order": 3
+        },
+        {
+          "id": "id-5",
+          "name": "Airline ops",
+          "is_system": false,
+          "lane_order": 4
+        },
+        {
+          "id": "id-6",
+          "name": "Captain",
+          "is_system": false,
+          "lane_order": 5
+        }
+      ],
+      "phases": [
+        {
+          "id": "id-7",
+          "name": "Plan",
+          "time_window": "",
+          "order": 1
+        },
+        {
+          "id": "id-8",
+          "name": "Check and load",
+          "time_window": "",
+          "order": 2
+        },
+        {
+          "id": "id-9",
+          "name": "Close out",
+          "time_window": "",
+          "order": 3
+        }
+      ],
+      "elements": [
+        {
+          "id": "id-10",
+          "stable_key": "start",
+          "kind": "start",
+          "label": "Flight scheduled",
+          "lane_role_id": null,
+          "phase_id": null,
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "not_assessed",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [],
+          "confidence": null,
+          "confidence_breakdown": [],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "both",
+          "work_type": null,
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": null,
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-11",
+          "stable_key": "draft-load-plan",
+          "kind": "activity",
+          "label": "Draft load plan",
+          "lane_role_id": "id-2",
+          "phase_id": "id-7",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": "By T-90"
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": "Preliminary load plan"
+          },
+          "raci": [
+            {
+              "role_id": "id-2",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-2",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-12",
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§3.1",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": "id-14",
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "supports",
+              "anchor": "¶ 2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-18",
+          "stable_key": "approve-load-plan",
+          "kind": "approval",
+          "label": "Approve load plan",
+          "lane_role_id": "id-3",
+          "phase_id": "id-7",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "judgment",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "Preliminary load plan",
+            "out": "Plan released to Ramp"
+          },
+          "raci": [
+            {
+              "role_id": "id-3",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-3",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-19",
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§3.2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": "id-20",
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "supports",
+              "anchor": "¶ 2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-21",
+          "stable_key": "special-loads-ok",
+          "kind": "decision",
+          "label": "Special loads OK?",
+          "lane_role_id": "id-2",
+          "phase_id": "id-8",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "rule_based",
+            "decider_role_id": "id-2",
+            "rule_or_threshold": "Special loads checked against the acceptance checklist",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [
+            {
+              "role_id": "id-2",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-2",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-22",
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§4",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": "id-14",
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "supports",
+              "anchor": "¶ 2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-23",
+          "stable_key": "return-loading-report",
+          "kind": "activity",
+          "label": "Return loading report",
+          "lane_role_id": "id-4",
+          "phase_id": "id-8",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": "Within 10 minutes of loading completion"
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": "Loading report to Load Control"
+          },
+          "raci": [
+            {
+              "role_id": "id-4",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-4",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-24",
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-25",
+          "stable_key": "deviation-in-limits",
+          "kind": "decision",
+          "label": "Deviation in limits?",
+          "lane_role_id": "id-3",
+          "phase_id": "id-9",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "judgment",
+            "decider_role_id": "id-3",
+            "rule_or_threshold": "Actual weights within the airline tolerance",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [
+            {
+              "role_id": "id-3",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-3",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-26",
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§5",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-27",
+          "stable_key": "issue-load-sheet",
+          "kind": "activity",
+          "label": "Issue load sheet",
+          "lane_role_id": "id-2",
+          "phase_id": "id-9",
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "Final load sheet no later than T-10",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [
+            {
+              "role_id": "id-2",
+              "letter": "R",
+              "contested": false
+            },
+            {
+              "role_id": "id-2",
+              "letter": "A",
+              "contested": false
+            }
+          ],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "documented_only",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [
+            {
+              "segment_id": "id-28",
+              "source_id": "id-13",
+              "source_kind": "sop",
+              "stance": "supports",
+              "anchor": "§6",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": "id-14",
+              "source_id": "id-15",
+              "source_kind": "job_description",
+              "stance": "supports",
+              "anchor": "¶ 2",
+              "verified": true,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-16",
+              "source_kind": "sop",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            },
+            {
+              "segment_id": null,
+              "source_id": "id-17",
+              "source_kind": "job_description",
+              "stance": "silent",
+              "anchor": "",
+              "verified": false,
+              "note": ""
+            }
+          ],
+          "confidence": 0.7,
+          "confidence_breakdown": [
+            {
+              "label": "Observed (O)",
+              "delta": 0.6
+            },
+            {
+              "label": "Independent verifier: supported",
+              "delta": 0.1
+            }
+          ],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "documented_only",
+          "work_type": "not_classified",
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": "not_classified",
+          "level": null,
+          "parent_element_id": null
+        },
+        {
+          "id": "id-29",
+          "stable_key": "end",
+          "kind": "end",
+          "label": "Final load sheet issued",
+          "lane_role_id": null,
+          "phase_id": null,
+          "time": {
+            "work_min": null,
+            "wait_min": null,
+            "text": ""
+          },
+          "complexity": null,
+          "kpi": "",
+          "decision": {
+            "mechanism": "none",
+            "decider_role_id": null,
+            "rule_or_threshold": "",
+            "escalation": ""
+          },
+          "handoff": {
+            "in": "",
+            "out": ""
+          },
+          "raci": [],
+          "provenance": "O",
+          "r_reference": "",
+          "source_state": "not_assessed",
+          "divergence_types": [],
+          "constraints": [],
+          "k_risk": "",
+          "ai_flag": null,
+          "evidence": [],
+          "confidence": null,
+          "confidence_breakdown": [],
+          "needs_check": false,
+          "review_status": "draft",
+          "account_summary": {
+            "official": 0,
+            "lived": 0,
+            "unclear": 0
+          },
+          "practice_described": null,
+          "variants": null,
+          "view_membership": "both",
+          "work_type": null,
+          "constraint_type": null,
+          "work_type_basis": [],
+          "work_type_status": null,
+          "level": null,
+          "parent_element_id": null
+        }
+      ],
+      "edges": [
+        {
+          "id": "id-30",
+          "from": "id-10",
+          "to": "id-11",
+          "kind": "sequence",
+          "label": "",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-31",
+          "from": "id-11",
+          "to": "id-18",
+          "kind": "sequence",
+          "label": "",
+          "sequence_basis": "document_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-32",
+          "from": "id-18",
+          "to": "id-21",
+          "kind": "approve",
+          "label": "Approve",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-33",
+          "from": "id-18",
+          "to": "id-11",
+          "kind": "reject",
+          "label": "Rework",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-34",
+          "from": "id-21",
+          "to": "id-23",
+          "kind": "yes",
+          "label": "Yes",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-35",
+          "from": "id-23",
+          "to": "id-25",
+          "kind": "sequence",
+          "label": "",
+          "sequence_basis": "narration_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-36",
+          "from": "id-25",
+          "to": "id-27",
+          "kind": "yes",
+          "label": "Within tolerance",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        },
+        {
+          "id": "id-37",
+          "from": "id-27",
+          "to": "id-29",
+          "kind": "sequence",
+          "label": "",
+          "sequence_basis": "explicit_order",
+          "view_membership": "documented_only",
+          "information_payload": null,
+          "typical": null,
+          "provenance": "O"
+        }
+      ]
+    }
+  }
+}

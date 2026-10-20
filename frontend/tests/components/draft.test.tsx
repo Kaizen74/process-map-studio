@@ -119,13 +119,15 @@ describe("Draft screen", () => {
     }, READINESS);
     renderApp(PATH);
     const checklist = await screen.findByRole("region", { name: "Before drafting" });
-    expect(within(checklist).getByText("0 of 3 ready.")).toBeInTheDocument();
+    expect(within(checklist).getByText("0 of 2 ready.")).toBeInTheDocument();
     expect(within(checklist).getByRole("link", { name: "Add it in Settings" })).toHaveAttribute("href", "/settings");
     expect(within(checklist).getAllByRole("link", { name: "Go to Sources" })[0]).toHaveAttribute(
       "href",
       "/engagements/e1/sources",
     );
-    expect(within(checklist).getByText("Add an interview transcript")).toBeInTheDocument();
+    expect(
+      within(checklist).getByText("Add an interview transcript or a process document such as an SOP or manual"),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Create draft map" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("The draft can't start yet: Add your Claude API key");
@@ -237,6 +239,33 @@ describe("Draft screen", () => {
     expect(meter).toHaveTextContent("Signal strength: Limited (1 of 3)");
     expect(meter).toHaveTextContent(/confirm it with a document or another SME/);
     expect(meter?.querySelectorAll(".signal__bar--on")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Create draft map" })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("allows a draft from documents alone and says the map shows the process as written (2026-10-20)", async () => {
+    const documentsOnly = {
+      ...READY,
+      transcripts_ready: false,
+      recommended: ["Add an interview transcript"],
+      signal: {
+        level: "limited" as const,
+        label: "Limited",
+        score: 1,
+        detail:
+          "Built from documents only. Every step is 'documented only': it shows the process as written, not as it is done. Confirm it with an interview before relying on it.",
+      },
+    };
+    draftApi(EMPTY, {}, documentsOnly);
+    const { container } = renderApp(PATH);
+    const checklist = await screen.findByRole("region", { name: "Before drafting" });
+    expect(within(checklist).getByText("2 of 2 ready.")).toBeInTheDocument();
+    expect(within(checklist).queryByText("Every speaker mapped to a role")).not.toBeInTheDocument();
+    expect(within(checklist).getByText("Recommended, not required:")).toBeInTheDocument();
+    expect(within(checklist).getByText("Add an interview transcript")).toBeInTheDocument();
+    const meter = container.querySelector(".signal");
+    expect(meter).toHaveTextContent("Signal strength: Limited (1 of 3)");
+    expect(meter).toHaveTextContent(/Built from documents only/);
     expect(screen.getByRole("button", { name: "Create draft map" })).toBeInTheDocument();
     expect(await seriousViolations(container)).toEqual([]);
   });

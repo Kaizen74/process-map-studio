@@ -44,10 +44,10 @@ export function groupDigits(n: number): string {
 }
 
 export interface ChecklistItem {
-  key: "key" | "transcript" | "document" | "speakers";
+  key: "key" | "source" | "transcript" | "document" | "speakers";
   label: string;
   done: boolean;
-  /** False for what makes the map stronger but doesn't stop the draft (the process document). */
+  /** False for what makes the map stronger but doesn't stop the draft (the other kind of source). */
   required: boolean;
   /** Where to fix it. */
   to: "settings" | "sources";
@@ -59,7 +59,9 @@ export interface ChecklistItem {
  * recommended, not required: a draft from interviews alone is allowed at Limited signal (P12).
  */
 export function draftChecklist(readiness: Readiness): ChecklistItem[] {
-  return [
+  // A draft needs a source that describes the steps: an interview or, since 2026-10-20 (Eric), a
+  // process document alone. The other kind is recommended. Speakers count once a transcript is read.
+  const items: ChecklistItem[] = [
     {
       key: "key",
       required: true,
@@ -69,9 +71,17 @@ export function draftChecklist(readiness: Readiness): ChecklistItem[] {
       action: "Add it in Settings",
     },
     {
-      key: "transcript",
+      key: "source",
       required: true,
-      label: "At least one interview transcript read",
+      label: "An interview transcript or a process document (an SOP or manual) read",
+      done: readiness.transcripts_ready || readiness.documents_ready,
+      to: "sources",
+      action: "Go to Sources",
+    },
+    {
+      key: "transcript",
+      required: false,
+      label: "An interview transcript read: recommended, it shows how the work is actually done",
       done: readiness.transcripts_ready,
       to: "sources",
       action: "Go to Sources",
@@ -84,18 +94,21 @@ export function draftChecklist(readiness: Readiness): ChecklistItem[] {
       to: "sources",
       action: "Go to Sources",
     },
-    {
+  ];
+  if (readiness.transcripts_ready) {
+    items.push({
       key: "speakers",
       required: true,
       label: "Every speaker mapped to a role",
-      done: readiness.transcripts_ready && readiness.speakers_unmapped === 0,
+      done: readiness.speakers_unmapped === 0,
       to: "sources",
       action: "Map speakers in Sources",
-    },
-  ];
+    });
+  }
+  return items;
 }
 
-/** "3 of 3 ready.": only the required items count; the document is recommended. */
+/** "3 of 3 ready.": only the required items count; the other kind of source is recommended. */
 export function checklistSummary(items: ChecklistItem[]): string {
   const required = items.filter((i) => i.required);
   return `${required.filter((i) => i.done).length} of ${required.length} ready.`;

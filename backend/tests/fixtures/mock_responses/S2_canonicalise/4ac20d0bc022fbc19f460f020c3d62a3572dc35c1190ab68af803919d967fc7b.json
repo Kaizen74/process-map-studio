@@ -1,0 +1,64 @@
+{
+  "steps": [
+    {
+      "ref": "st1",
+      "kind": "activity",
+      "label": "Draft load plan",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c1",
+        "c8"
+      ]
+    },
+    {
+      "ref": "st2",
+      "kind": "approval",
+      "label": "Approve load plan",
+      "lane_role": "Load control lead",
+      "claim_refs": [
+        "c2",
+        "c7"
+      ]
+    },
+    {
+      "ref": "st3",
+      "kind": "decision",
+      "label": "Special loads OK?",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c3",
+        "c8"
+      ]
+    },
+    {
+      "ref": "st4",
+      "kind": "activity",
+      "label": "Return loading report",
+      "lane_role": "Ramp",
+      "claim_refs": [
+        "c6"
+      ]
+    },
+    {
+      "ref": "st5",
+      "kind": "decision",
+      "label": "Deviation in limits?",
+      "lane_role": "Load control lead",
+      "claim_refs": [
+        "c4"
+      ]
+    },
+    {
+      "ref": "st6",
+      "kind": "activity",
+      "label": "Issue load sheet",
+      "lane_role": "Load controller",
+      "claim_refs": [
+        "c5",
+        "c8"
+      ]
+    }
+  ],
+  "new_roles": [],
+  "merge_proposals": []
+}

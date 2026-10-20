@@ -58,3 +58,15 @@ export function exceptionsFor(url: string): ExceptionReport {
   const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
   return SAMPLE.exceptions[view === "documented" ? "documented" : "done"];
 }
+
+/** The documents-only sample (Eric, 2026-10-20): every step documented only, so As done has none.
+ * Written by the backend test test_the_frontend_documents_only_sample_matches_the_backend. */
+export interface DocumentsOnlyMap {
+  graph: Graph;
+  views: { done: Layout; documented: Layout };
+  view_graphs: { done: Graph; documented: Graph };
+}
+
+export const DOCUMENTS_ONLY: DocumentsOnlyMap = JSON.parse(
+  readFileSync(join(__dirname, "fixtures", "documents_only_map.json"), "utf-8"),
+) as DocumentsOnlyMap;

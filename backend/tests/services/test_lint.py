@@ -395,8 +395,8 @@ def test_not_described_connectors_and_narration_order_are_warnings() -> None:
     assert report.failures == []
     assert [(w.rule, w.element_id, w.view, w.message) for w in report.warnings] == [
         ("L12", None, "done",
-         'As done: 1 "not described" connector(s): the interview doesn\'t say what happens '
-         "there."),
+         'As done: 1 "not described" connector(s): no interview or system record says what '
+         "happens there."),
         ("L12", "end", None,
          'The line from "Issue" to "End" rests only on the order the sources mention them.'),
     ]  # fmt: skip

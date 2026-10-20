@@ -278,8 +278,8 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
 
     warnings = [w.message for w in inp.lint.warnings]
     strength = signal.signal_strength(inp.source_kinds)
-    if strength is not None and strength.level == "limited":
-        warnings.append(signal.QUALITY_WARNING)  # a warning, never a blocker (P12)
+    if strength is not None and (warning := signal.quality_warning(strength)) is not None:
+        warnings.append(warning)  # a warning, never a blocker (P12)
     all_green = all(c.status == "pass" for c in checks if c.hard)
     return QualityCard(checks=checks, warnings=warnings, all_green=all_green)
 
