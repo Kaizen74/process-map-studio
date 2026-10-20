@@ -122,7 +122,8 @@ def test_callouts_per_page_and_headlines_from_the_snapshot(published: Reality) -
         for vid_ in [*FACTS, "rv3"]:
             page = page_of(html, vid_)
             view = s["views"][vid_]
-            assert f'<p class="reality-view__headline">{view["headline"]}</p>' in page
+            headline = escape(view["headline"])  # printed HTML-escaped ("manual's" since copy 5)
+            assert f'<p class="reality-view__headline">{headline}</p>' in page
             shown = page.count('<li class="callout')
             assert shown == min(most, len(view["callouts"])), (layout, vid_)
 

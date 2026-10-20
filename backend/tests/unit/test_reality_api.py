@@ -63,14 +63,33 @@ def test_a12_snapshot(reality: Reality, monkeypatch: pytest.MonkeyPatch) -> None
     assert (s["frozen"], s["draft"], s["data_label"]) == (False, True, "Draft: figures may change")
     assert s["evidence"]["text"] == "2 documents · 2 interviews · 200 cases"
     assert [(t["figure"]["text"], t["caption"]) for t in s["tiles"]] == [
-        ("70%", "of cases follow the manual"),
-        ("100%", "of cases without a record (X1)"),
+        ("70%", "of cases take the manual's route"),
+        ("100%", "of cases leave no record of the control (X1)"),
         ("21%", "of cases meet a confirmed target"),
-        ("6 h a month", "beyond the designed time"),
+        ("32 h a month", "lost to the gaps, all phases"),
     ]
+    # One time-lost figure everywhere (comprehension pilot, 2026-10-19): Glance's hours tile is
+    # the Reality stack's whole-process "Hours a month", not a second total.
+    hours_tile = s["tiles"][-1]["figure"]
+    process = [i["figure"] for b in s["views"]["rv2"]["stack"]["bands"] for cell in b["cells"]
+               if cell["column_id"] == "process" for i in cell["items"]
+               if i["kind"] == "hours"]  # fmt: skip
+    assert process == [hours_tile] and hours_tile["id"] == "rv2.hours.process"
+    # A gap with no time cost says so instead of "0 h a month" (it read as unimportant).
+    by_code = {c["code"]: c for c in s["codes"]}
+    assert by_code["X1"]["hours"]["text"] == "No time cost measured"
+    assert by_code["X2"]["hours"]["text"] == "24 h a month"
+    # The stack's whole-process column has a heading, like the phases (second dry run).
+    headings = {c["id"]: c["lines"] for c in s["views"]["rv2"]["geometry"]["column_labels"]}
+    assert headings["process"] == ["Whole process"]
+    # The D I S evidence boxes have a key in the legend.
+    assert s["legend"]["evidence_key"] == (
+        "D I S: documents, interviews, system records. A filled box: that source shows the gap."
+    )
     rv1, rv2, rv3 = (s["views"][v] for v in ("rv1", "rv2", "rv3"))
     assert rv1["headline"] == (
-        "Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan."
+        "Only 70% of cases take the manual's route. "
+        "100% of cases leave no record of Approve load plan."
     )
     assert rv2["headline"] == (
         "Check and load is the hotspot: 53 extra minutes a case and 24 hours a month."
@@ -160,7 +179,7 @@ def test_publishing_freezes_the_snapshot(reality: Reality) -> None:
     s = snapshot(client, reality.version_id)
     assert s["frozen"] and not s["draft"]
     assert s["data_label"].startswith("Version v1.0, validated by ")
-    assert s["views"]["rv1"]["headline"].startswith("Only 70% of cases follow the manual.")
+    assert s["views"]["rv1"]["headline"].startswith("Only 70% of cases take the manual's route.")
     # A later decision changes nothing on the published version's snapshot.
     x1 = next(c for c in s["codes"] if c["code"] == "X1")
     body = {"verdict": "codify", "note": "Changed after publishing."}

@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 
 from app.domain.enums import FigureLabel
 
-REALITY_RULES_VERSION = "1"
+REALITY_RULES_VERSION = "2"  # 2: Glance's hours tile is the stack's time lost (2026-10-20)
 MINIMUM_CASES = 5  # constraint 24: no case share from fewer cases
 SHOW_SHARE = 0.05  # §3.17.3: drawn from 5% of cases (control exposures at any frequency)
 SKIP_SHARE = 0.05  # D1 (a): absent in at least 5% of the cases reaching the next step

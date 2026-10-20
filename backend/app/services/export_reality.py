@@ -127,7 +127,7 @@ def _callouts(view: ViewBase, layout: str, snapshot: RealitySnapshot) -> str:
     return f'<ul class="callouts">{items}</ul>'
 
 
-def _legend(snapshot: RealitySnapshot, scale_note: str) -> str:
+def _legend(snapshot: RealitySnapshot, scale_note: str, evidence_key: bool = False) -> str:
     impacts = "".join(
         f'<li><span class="impact-word impact-word--{e(i.impact_class)}">'
         f"{_glyph(i.glyph, i.impact_class)}{e(i.word)}</span></li>"
@@ -139,6 +139,8 @@ def _legend(snapshot: RealitySnapshot, scale_note: str) -> str:
         for ln in snapshot.legend.lines
     )
     note = f'<p class="reality-legend__note">{e(scale_note)}</p>' if scale_note else ""
+    if evidence_key and snapshot.legend.evidence_key:  # on pages that show the D I S boxes
+        note += f'<p class="reality-legend__note">{e(snapshot.legend.evidence_key)}</p>'
     return (f'<footer class="reality-legend"><ul class="reality-legend__row">{impacts}</ul>'
             f'<ul class="reality-legend__row">{lines}</ul>{note}'
             f'<p class="reality-legend__note pack-data-label">{e(snapshot.data_label)} · '
@@ -365,7 +367,7 @@ def _decide_first(snapshot: RealitySnapshot) -> str:
             f"<thead><tr><th>Code</th><th>Gap</th><th>Impact</th><th>Verdict</th>"
             f"<th>Hours a month</th><th>Evidence</th></tr></thead><tbody>{''.join(rows)}</tbody>"
             f'</table><p class="inline-note">{e(note)}</p>'
-            f'{_legend(snapshot, "")}</section>')  # fmt: skip
+            f'{_legend(snapshot, "", evidence_key=True)}</section>')  # fmt: skip
 
 
 def _interpretation(snapshot: RealitySnapshot) -> str:
@@ -430,7 +432,8 @@ def _appendix(snapshot: RealitySnapshot) -> str:
             f'<h2 class="reality-view__title">Intent statements</h2><table class="reality-table">'
             f"<thead><tr><th>Kind</th><th>Statement</th><th>Target</th><th>Result</th></tr>"
             f"</thead><tbody>{intents}</tbody></table>"
-            f'<p class="pack-small">{versions}</p>{_legend(snapshot, "")}</section>')  # fmt: skip
+            f'<p class="pack-small">{versions}</p>'
+            f'{_legend(snapshot, "", evidence_key=True)}</section>')  # fmt: skip
 
 
 def _cover(snapshot: RealitySnapshot, signal: str) -> str:

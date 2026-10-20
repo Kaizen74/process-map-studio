@@ -1,18 +1,27 @@
 /* Reality views (PRD §5.12): tokens only. Colour means impact class only (ER-01), always with its
    glyph and word (ER-02); the documented baseline is lighter than everything observed (ER-06). */
 
+/* One column (comprehension pilot, 2026-10-20): the view takes the full width so its drawing is
+   as large as the screen allows; Intent, Discrepancies and the pack sit below it, side by side. */
 .reality-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-24);
   align-items: start;
 }
 
-.reality-main,
-.reality-side {
+.reality-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
+  min-width: 0;
+}
+
+.reality-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-16);
+  align-items: start;
   min-width: 0;
 }
 
@@ -49,10 +58,23 @@
 }
 
 .reality-canvas {
+  /* The drawing's own width, set on each drawing from the backend layout; read by "Show full size". */
+  --canvas-width: 100%;
   width: 100%;
   height: auto;
   font-family: var(--font-sans);
   font-size: var(--text-body);
+}
+
+/* "Show full size": the drawing at the width the backend laid it out for, scrolling sideways. */
+.reality-view--full {
+  overflow-x: auto;
+}
+
+.reality-view--full .reality-canvas {
+  width: var(--canvas-width);
+  max-width: none;
+  flex: none;
 }
 
 .reality-label {

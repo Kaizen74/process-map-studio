@@ -12,7 +12,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-COPY_VERSION = "3"  # 2: Redline, time, belief and typical case (P13c); 3: outside lane (E1)
+COPY_VERSION = "5"  # 2: Redline, time, belief and typical case (P13c); 3: outside lane (E1);
+# 4: the hours tile's caption, "No time cost measured", the evidence key (comprehension pilot);
+# 5: "take the manual's route", "no record of the control", the whole-process heading
 OUTSIDE_LANE = "Outside the organisation"  # the Typical case's lane (E1)
 OUTSIDE_START = "Starts outside"
 OUTSIDE_END = "Ends outside"
@@ -31,8 +33,8 @@ TITLES = {
 
 # Headline templates by slot, in the order they are considered (the first whose values exist).
 TEMPLATES: Mapping[str, str] = {
-    "rv1.share": "Only {documented_share} of cases follow the manual.",
-    "rv1.share_none": "No case in the log follows the manual as written.",
+    "rv1.share": "Only {documented_share} of cases take the manual's route.",
+    "rv1.share_none": "No case in the log takes the manual's route.",
     "rv1.steps": "{done_only} only in practice and {documented_only} only in the manual.",
     "rv1.no_manual": "No manual to compare with yet: {steps} come from interviews only.",
     "rv1.same": "No difference from the manual found in these sources.",
@@ -120,6 +122,15 @@ QUADRANTS = {
     "correct": ("Correct the practice", "Departs from the manual and falls short of the promise."),
     "ask": ("Ask", "Not enough evidence to say where the fix lies."),
 }
+
+# The heading of the whole-process column (Reality stack, Where the time goes, tables).
+WHOLE_PROCESS = "Whole process"
+
+# A code's hours a month when the gap costs no measured time (a missing record, for example).
+NO_TIME_COST = "No time cost measured"
+EVIDENCE_KEY = (
+    "D I S: documents, interviews, system records. A filled box: that source shows the gap."
+)
 
 IMPACT_WORDS = {
     "control_exposure": ("Control exposure", "triangle"),

@@ -287,6 +287,6 @@ def test_d14_only_a_metric_not_met() -> None:
 
 
 def test_the_rule_set_is_versioned() -> None:
-    assert rules.REALITY_RULES_VERSION == "1"
+    assert rules.REALITY_RULES_VERSION == "2"
     assert (rules.SHOW_SHARE, rules.REWORK_SHARE, rules.LONGER, rules.WAIT_MIN) == (
         0.05, 0.10, 0.50, 5.0)  # fmt: skip

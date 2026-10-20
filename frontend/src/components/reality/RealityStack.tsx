@@ -1,4 +1,5 @@
 import type { Mark, StackView } from "../../lib/reality";
+import { canvasWidth } from "../../lib/reality";
 import "./reality.css";
 
 export interface RealityStackProps {
@@ -22,7 +23,7 @@ function markClass(mark: Mark): string {
 export function RealityStack({ view, selected, onSelect }: RealityStackProps) {
   const g = view.geometry;
   return (
-    <svg className="reality-canvas" viewBox={`0 0 ${g.width} ${g.height}`} role="img" aria-label={`${view.title} ${view.headline}`}>
+    <svg className="reality-canvas" style={canvasWidth(g.width)} viewBox={`0 0 ${g.width} ${g.height}`} role="img" aria-label={`${view.title} ${view.headline}`}>
       {g.bands.map((b) => (
         <rect key={b.id} className={`stack-band stack-band--${b.id}`} x={b.x} y={b.y} width={b.width} height={b.height} />
       ))}

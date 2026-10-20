@@ -1,5 +1,6 @@
 import { useId } from "react";
 import type { Shape, ShapeGeometry } from "../../lib/reality";
+import { canvasWidth } from "../../lib/reality";
 import "./reality.css";
 
 export interface ShapeCanvasProps {
@@ -71,7 +72,7 @@ function ShapeElement({ shape, hatch }: { shape: Shape; hatch: string }) {
 export function ShapeCanvas({ geometry, label, selected, onSelect }: ShapeCanvasProps) {
   const hatch = `rs-hatch-${useId().replace(/:/g, "")}`;
   return (
-    <svg className="reality-canvas" viewBox={`0 0 ${geometry.width} ${geometry.height}`} role="img" aria-label={label}>
+    <svg className="reality-canvas" style={canvasWidth(geometry.width)} viewBox={`0 0 ${geometry.width} ${geometry.height}`} role="img" aria-label={label}>
       <defs>
         <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect className="rs-hatch-ground" width="6" height="6" />

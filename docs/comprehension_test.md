@@ -34,7 +34,7 @@ Changed on 2026-10-19 (Eric approved, DECISIONS 72), after a pilot
 
 | | Question | A right answer names… | For the test kit, that is… |
 |---|---|---|---|
-| Q1 | How big is the gap between the manual and reality? | Glance's main figure | Only 70% of cases follow the manual (30% don't) |
+| Q1 | How big is the gap between the manual and reality? | Glance's main figure | Only 70% of cases take the manual's route (30% don't) |
 | Q2 | Where does it concentrate? | The hotspot on the Reality stack | Check and load (53 extra minutes a case, 24 hours a month) |
 | Q3 | What is the main risk? | The control exposure, or the largest impact class when there is none | Approve load plan is never recorded (X1, a control exposure) |
 | Q4 | What should be fixed first? | The first code under Decide first (Fix or keep) | X1 Approve load plan: restore the control |

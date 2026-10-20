@@ -1,5 +1,5 @@
 import type { CodeView, FixView } from "../../lib/reality";
-import { verdictText } from "../../lib/reality";
+import { canvasWidth, verdictText } from "../../lib/reality";
 import { EvidenceChips, ImpactWord } from "./RealityBits";
 import "./reality.css";
 
@@ -24,7 +24,7 @@ export function FixOrKeep({ view, codes, selected, onSelect, showAll, onShowAll 
   const shown = showAll ? rows : rows.slice(0, view.fix.limit);
   return (
     <div className="fix-or-keep">
-      <svg className="reality-canvas" viewBox={`0 0 ${g.width} ${g.height}`} role="img" aria-label={`${view.title} ${view.headline}`}>
+      <svg className="reality-canvas" style={canvasWidth(g.width)} viewBox={`0 0 ${g.width} ${g.height}`} role="img" aria-label={`${view.title} ${view.headline}`}>
         {g.zones.map((z) => (
           <rect key={z.id} className={`fix-zone fix-zone--${z.id}`} x={z.x} y={z.y} width={z.width} height={z.height} />
         ))}

@@ -2,6 +2,8 @@
 // §5.12; P13b, P13c). Formatting only: every number, word, headline and position comes from the
 // backend; nothing here computes a figure or a layout (constraints 20 and 26).
 
+import type { CSSProperties } from "react";
+
 export type ImpactClass = "control_exposure" | "time_impact" | "capacity_drain" | "workaround";
 export type ImpactGlyph = "triangle" | "clock" | "bars" | "dotted_square";
 export type ViewId = "rv1" | "rv2" | "rv3" | "rv4" | "rv5" | "rv6" | "rv7";
@@ -485,6 +487,8 @@ export interface Legend {
   lines: LegendLine[];
   scales: string[];
   data_label: string;
+  /** The key to the D I S evidence boxes; missing in snapshots frozen before copy version 4. */
+  evidence_key?: string;
 }
 
 export interface RealitySnapshot {
@@ -620,4 +624,9 @@ export function intentsAt(snapshot: RealitySnapshot, stableKey: string): Snapsho
 export function verdictText(verdict: CodeVerdict | null): string {
   if (!verdict?.shown) return "";
   return `${VERDICT_LABELS[verdict.shown] ?? verdict.shown} (${verdict.status})`;
+}
+
+/** A drawing's own width (from the backend layout), for "Show full size": the CSS reads it. */
+export function canvasWidth(width: number): CSSProperties {
+  return { "--canvas-width": `${width}px` } as CSSProperties;
 }

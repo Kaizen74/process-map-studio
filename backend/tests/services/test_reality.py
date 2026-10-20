@@ -97,7 +97,7 @@ def test_the_same_inputs_give_a_byte_identical_snapshot() -> None:
     assert one.inputs_hash == reality.inputs_hash(inputs(RICH, intents=CONFIRMED))
     other = snap(dataclasses.replace(RICH, total_cases=120), intents=CONFIRMED)
     assert other.inputs_hash != one.inputs_hash
-    assert (one.rules_version, one.copy_version, one.layout_version) == ("1", "3", "4")
+    assert (one.rules_version, one.copy_version, one.layout_version) == ("2", "5", "5")
 
 
 def test_every_figure_has_one_value_everywhere() -> None:
@@ -151,9 +151,9 @@ def test_the_catalogue_is_neutral_and_names_no_one() -> None:
 def test_tiles_with_system_records() -> None:
     s = snap(RICH, intents=CONFIRMED, routes=ROUTES, volume=100.0)
     tiles = {t.figure.id: (t.figure.text, t.figure.label, t.caption) for t in s.tiles}
-    assert tiles["rv1.documented_share"] == ("70%", "measured", "of cases follow the manual")
+    assert tiles["rv1.documented_share"] == ("70%", "measured", "of cases take the manual's route")
     assert tiles["rv1.control_share"][0] == "100%"
-    assert s.views.rv1.headline.startswith("Only 70% of cases follow the manual.")
+    assert s.views.rv1.headline.startswith("Only 70% of cases take the manual's route.")
     assert "leave no record of" in s.views.rv1.headline
 
 

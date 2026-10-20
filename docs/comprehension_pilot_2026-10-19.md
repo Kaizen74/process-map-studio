@@ -97,3 +97,36 @@ Still confusing to all or most readers (proposals for Eric, not changed):
 - **Nine codes in one place, eight in another (3 of 5).**
 - **Small text in the drawings** (the flow on Glance, the stack, the fix-or-keep grid) and the
   **D, I, S evidence boxes** with no key (4 of 5).
+
+## The remaining confusions, fixed (2026-10-20)
+
+Eric asked for all four to be fixed (DECISIONS 73):
+- Glance's time tile is now the same "hours a month lost to the gaps" figure as the Reality stack.
+- A gap with no measured time cost reads "No time cost measured" instead of "0 h a month".
+- Fix or keep lists every gap among its codes.
+- The view takes the full width, "Show full size" draws it larger, and the legend explains the
+  D I S boxes.
+
+The test kit was regenerated with these changes.
+
+### Second dry run on the fixed kit (2026-10-20)
+
+The same five roles, as fresh AI readers, on the regenerated kit, with the same answer key.
+
+| Reader (role played) | Q1 | Q2 | Q3 | Q4 | All four? |
+|---|---|---|---|---|---|
+| 1 Chief financial officer | Right | Right | Right | Right | Yes |
+| 2 Chief operating officer | Right | Right | Right | Right | Yes |
+| 3 HR director | Right | Right | Right | Right | Yes |
+| 4 Head of risk | Right | Right | Right | Right | Yes |
+| 5 Chief executive | Right | Right | Right | Right | Yes |
+
+Result: 5 of 5. Compared with the first dry run:
+- **Gone:** the 6 h vs 32 h clash and "0 h a month". Every reader quoted 32 h a month as the cost.
+- **Still raised, now smaller:**
+  - 32 h overall vs 24 h at the hotspot, and the stack's +53 min vs X2's +13 min. These are parts of a whole.
+  - The Fix or keep grid is too small in a still picture (4 of 5).
+  - Jargon (LIR, T-120) belongs to the example's domain.
+- **New, for Eric (not changed):**
+  - The Reality stack's fourth cost column (the whole process) has no heading in the drawing (2 of 5).
+  - "70% follow the manual" beside "100% leave no record" read as a contradiction to two readers. The two figures measure different things: the route through the process, and one control's record.

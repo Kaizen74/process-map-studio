@@ -1,4 +1,5 @@
 import type { CodeView, GlanceView } from "../../lib/reality";
+import { canvasWidth } from "../../lib/reality";
 import "./reality.css";
 
 export interface GlanceProps {
@@ -19,6 +20,7 @@ export function Glance({ view, codes, selected, onSelect }: GlanceProps) {
   return (
     <svg
       className="reality-canvas"
+      style={canvasWidth(g.width)}
       viewBox={`0 0 ${g.width} ${g.height}`}
       role="img"
       aria-label={`${view.title} ${view.headline}`}
