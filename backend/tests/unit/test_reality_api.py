@@ -81,7 +81,8 @@ def test_a12_snapshot(reality: Reality, monkeypatch: pytest.MonkeyPatch) -> None
     assert by_code["X2"]["hours"]["text"] == "24 h a month"
     # The D I S evidence boxes have a key in the legend.
     assert s["legend"]["evidence_key"] == (
-        "D I S: documents, interviews, system records. A filled box: that source shows the gap.")
+        "D I S: documents, interviews, system records. A filled box: that source shows the gap."
+    )
     rv1, rv2, rv3 = (s["views"][v] for v in ("rv1", "rv2", "rv3"))
     assert rv1["headline"] == (
         "Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan."
