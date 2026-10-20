@@ -27,7 +27,7 @@ import { codesAt, intentsAt } from "../../lib/reality";
 import { volumeLines } from "../../lib/systemRecords";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { shortcutFor, stepAlong } from "../../lib/shortcuts";
-import { asView, inView, type AsView } from "../../lib/views";
+import { DOCUMENTED_DEFAULT_NOTE, asView, defaultView, inView, type AsView } from "../../lib/views";
 import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
@@ -83,10 +83,12 @@ function openGapChip(analyses: readonly GapAnalysis[], to: string): ReactNode {
  */
 export function Workbench({ engagementId, versionId, title, banner, below }: WorkbenchProps) {
   const [params, setParams] = useSearchParams();
-  // As done by default (§3.12.11); the view and Show the other view live in the address.
-  const shown: AsView = asView(params.get("as"));
-  const showOther = params.get("other") === "1";
+  // As done by default (§3.12.11), As documented when no step is done in practice (documents
+  // only, 2026-10-20); the view and Show the other view live in the address.
   const graph = useGraph(versionId);
+  const fallback: AsView = defaultView(graph.data?.elements ?? []);
+  const shown: AsView = asView(params.get("as"), fallback);
+  const showOther = params.get("other") === "1";
   const viewGraph = useGraph(versionId, shown); // the header strip's cycle time is per view
   const layout = useLayout(versionId, shown, showOther);
   const pictures = useVersionImages(versionId);
@@ -146,10 +148,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
         if (id) next.set("step", id);
         else next.delete("step");
         // A step only in the other view, not drawn here: show its view, so it is never out of reach.
-        const view = asView(current.get("as"));
+        const view = asView(current.get("as"), fallback);
         if (element && !inView(element, view) && current.get("other") !== "1") {
-          if (view === "done") next.set("as", "documented");
-          else next.delete("as");
+          setAs(next, view === "done" ? "documented" : "done");
         }
         return next;
       },
@@ -157,12 +158,17 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
     );
   }
 
+  /** The address names the view only where it isn't the map's default. */
+  function setAs(params: URLSearchParams, next: AsView) {
+    if (next === fallback) params.delete("as");
+    else params.set("as", next);
+  }
+
   function setShown(next: AsView) {
     setParams(
       (current) => {
         const params = new URLSearchParams(current);
-        if (next === "documented") params.set("as", "documented");
-        else params.delete("as");
+        setAs(params, next);
         return params;
       },
       { replace: true },
@@ -369,6 +375,9 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               extra={openGapChip(analyses.data ?? [], `${gapPath}?version=${encodeURIComponent(versionId)}`)}
               onRefresh={editable ? () => setRefreshOpen(true) : undefined}
             />
+            {view === "map" && fallback === "documented" && shown === "documented" && (
+              <p className="map-card__note">{DOCUMENTED_DEFAULT_NOTE}</p>
+            )}
             {view === "table" ? (
               <TableView
                 graph={g}

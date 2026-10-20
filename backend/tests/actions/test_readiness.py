@@ -9,6 +9,8 @@ import pytest
 from app.actions.readiness import (
     ADD_DOCUMENT,
     ADD_KEY,
+    ADD_SOURCE,
+    ADD_SOURCE_ONLY_JDS,
     ADD_TRANSCRIPT,
     NAV_ORDER,
     ONLY_JDS,
@@ -58,9 +60,10 @@ def test_brand_new_engagement_starts_at_setup() -> None:
     result = check(assess(facts(trigger="", end_point="", sources=[]), key_set=False))
     assert result.nav == dict.fromkeys(NAV_ORDER, "not_started")
     assert result.next_step == "setup"
-    # P12 (Eric, 2026-09-29): a process document is recommended, no longer required.
-    assert result.missing == [ADD_KEY, ADD_TRANSCRIPT]
-    assert result.recommended == [ADD_DOCUMENT] and result.signal is None
+    # P12 (Eric, 2026-09-29): a process document is recommended, no longer required; and since
+    # 2026-10-20 (Eric) an interview isn't either: either kind of source can start a draft.
+    assert result.missing == [ADD_KEY, ADD_SOURCE]
+    assert result.recommended == [] and result.signal is None
     assert not (result.transcripts_ready or result.documents_ready or result.draft_exists)
 
 
@@ -85,13 +88,49 @@ def test_missing_key_is_listed_but_does_not_affect_sources() -> None:
     assert result.nav["sources"] == "done" and result.next_step == "draft"
 
 
-def test_only_documents_asks_for_a_transcript() -> None:
+def test_documents_alone_can_be_drafted_with_a_limited_signal() -> None:
+    """Eric, 2026-10-20: a draft from an SOP or manual alone is allowed; the interview that shows
+    how the work is actually done is recommended, as the document is for an interview alone."""
     result = check(assess(facts(sources=[SOP]), key_set=True))
-    assert result.missing == [ADD_TRANSCRIPT]
-    assert result.nav["sources"] == "attention" and result.nav_counts == {"sources": 1}
-    # PRD v1.10 (2026-09-30): Interview comes before Sources; with no transcript yet, the
-    # interview is the next thing to do (was "sources" before Interview joined the path).
-    assert result.nav["interview"] == "not_started" and result.next_step == "interview"
+    assert result.ready_to_draft and result.missing == []
+    assert result.recommended == [ADD_TRANSCRIPT]
+    assert result.documents_ready and not result.transcripts_ready
+    assert result.signal is not None and (result.signal.level, result.signal.score) == (
+        "limited",
+        1,
+    )
+    assert "documents only" in result.signal.detail
+    # The interview stays on the path but is optional now: the next step is the draft.
+    assert result.nav["interview"] == "not_started" and "interview" not in result.nav_counts
+    assert result.nav["sources"] == "done" and result.next_step == "draft"
+
+
+def test_with_no_source_the_interview_is_still_the_next_step() -> None:
+    result = check(assess(facts(sources=[]), key_set=True))
+    assert result.missing == [ADD_SOURCE] and result.next_step == "interview"
+
+
+def test_job_descriptions_alone_cannot_be_drafted() -> None:
+    result = check(assess(facts(sources=[JD]), key_set=True))
+    assert not result.ready_to_draft and result.missing == [ADD_SOURCE_ONLY_JDS]
+    assert result.recommended == [] and result.signal is None
+    assert result.next_step == "interview"
+
+
+def test_a_lone_document_still_being_read_is_waited_for() -> None:
+    pending = source("manual.pdf", "manual", status="pending")
+    result = check(assess(facts(sources=[pending]), key_set=True))
+    assert result.missing == ["Wait for the process document to be read (manual.pdf)"]
+    assert result.recommended == [ADD_TRANSCRIPT]
+
+
+def test_an_unreadable_transcript_alone_is_what_is_missing() -> None:
+    failed = source("broken.txt", "interview_transcript", status="failed")
+    result = check(assess(facts(sources=[failed]), key_set=True))
+    assert result.missing == [
+        "The interview transcript couldn't be read (broken.txt). Remove it and upload a new copy"
+    ]
+    assert result.nav_counts == {"sources": 1}
 
 
 def test_the_interview_is_done_once_its_transcript_is_uploaded() -> None:
@@ -152,10 +191,13 @@ def test_waiting_transcript_is_named() -> None:
     assert result.nav_counts == {"sources": 1}
 
 
-def test_failed_transcript_is_named_once() -> None:
+def test_failed_transcript_beside_a_document_is_recommended_and_named_once() -> None:
+    """With a readable SOP the draft can start (2026-10-20), as an unreadable SOP beside a
+    readable transcript lets it: the broken file is named once and flagged on Sources."""
     failed = source("broken.txt", "interview_transcript", status="failed")
     result = check(assess(facts(sources=[failed, SOP]), key_set=True))
-    assert result.missing == [
+    assert result.ready_to_draft
+    assert result.recommended == [
         "The interview transcript couldn't be read (broken.txt). Remove it and upload a new copy"
     ]
     assert result.nav_counts == {"sources": 1}

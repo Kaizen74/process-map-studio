@@ -2,10 +2,10 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MapLegend, MapStage, MapToolbar } from "../../src/components/map";
 import { lensLine } from "../../src/lib/lens";
-import { asView, ghostLabel, inView, variantFor } from "../../src/lib/views";
+import { asView, defaultView, ghostLabel, inView, variantFor } from "../../src/lib/views";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
-import { SAMPLE, elementByLabel, exceptionsFor, graphFor, layoutFor } from "../sampleMap";
+import { DOCUMENTS_ONLY, SAMPLE, elementByLabel, exceptionsFor, graphFor, layoutFor } from "../sampleMap";
 
 // PRD §3.12.11 and §5.7.3 (V2): the map drawn As done (default) or As documented, with Show the
 // other view, "not described" connectors and the Work type lens. The backend lays out each view;
@@ -24,6 +24,18 @@ describe("views (pure helpers)", () => {
     expect([ghostLabel("done"), ghostLabel("documented")]).toEqual([
       "only in the documented version",
       "only in practice",
+    ]);
+  });
+
+  it("a map no interview or system record describes opens As documented (Eric, 2026-10-20)", () => {
+    expect(defaultView(SAMPLE.graph.elements)).toBe("done");
+    expect(defaultView(DOCUMENTS_ONLY.graph.elements)).toBe("documented");
+    expect(defaultView([])).toBe("done"); // nothing loaded yet, or a draft with no steps
+    // The address still wins; with none, the map's own default.
+    expect([asView(null, "documented"), asView("done", "documented"), asView("documented")]).toEqual([
+      "documented",
+      "done",
+      "documented",
     ]);
   });
 
@@ -135,7 +147,10 @@ describe("MapStage per view", () => {
 describe("legend and toolbar", () => {
   it('the legend shows "Not described" As done only, ghosted steps when shown, and the work type key', () => {
     const { rerender } = render(<MapLegend lens="plain" view="done" />);
-    expect(screen.getByText(/Not described/)).toBeInTheDocument();
+    // 2026-10-20: true with or without an interview behind the map.
+    expect(
+      screen.getByText("Not described (no interview or system record says what happens between)"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Only in the documented version")).not.toBeInTheDocument();
     rerender(<MapLegend lens="work_type" view="documented" showOther />);
     expect(screen.queryByText(/Not described/)).not.toBeInTheDocument();
@@ -235,6 +250,48 @@ describe("Review screen with the views (PRD §5.7.3)", () => {
       expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/exceptions?view=documented"))).toBe(true),
     );
     await waitFor(() => expect(lines()).not.toContain("Exception")); // the documents describe no exception route
+  });
+
+  it("an As done view with no step says so instead of an empty lane (2026-10-20)", () => {
+    const { container } = render(
+      <MapStage graph={DOCUMENTS_ONLY.view_graphs.done} layout={DOCUMENTS_ONLY.views.done} lens="plain" view="done" scale={1} selectedId={null} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByRole("group", { name: "No steps described yet" })).toBeInTheDocument();
+    const label = container.querySelector(".map-lane__label");
+    expect(label).toHaveTextContent("No steps described yet");
+    expect(label).not.toHaveTextContent(/No lane|0 steps/);
+  });
+
+  it("a documents-only map opens As documented, says why, and As done can still be chosen", async () => {
+    const vid = DOCUMENTS_ONLY.graph.version.id;
+    fakeApi({
+      "GET /api/engagements/e1": () => ({ body: ENGAGEMENT }),
+      "GET /api/engagements/e1/readiness": () => ({ body: READINESS }),
+      "GET /api/engagements/e1/draft": () => ({
+        body: { job: null, version: { id: vid, engagement_id: "e1", label: "v0.1", state: "draft",
+          created_at: "2026-10-20T10:00:00+00:00" }, summary: null }, // prettier-ignore
+      }),
+      [`GET /api/versions/${vid}/graph`]: (_body, url) => {
+        const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
+        return { body: view === "done" || view === "documented" ? DOCUMENTS_ONLY.view_graphs[view] : DOCUMENTS_ONLY.graph };
+      },
+      [`GET /api/versions/${vid}/layout`]: (_body, url) => {
+        const view = new URLSearchParams(url.split("?")[1] ?? "").get("view");
+        return { body: DOCUMENTS_ONLY.views[view === "done" ? "done" : "documented"] };
+      },
+    });
+    const { container } = renderApp("/engagements/e1/review");
+    await waitFor(() => expect(screen.getByRole("radio", { name: "As documented" })).toHaveAttribute("aria-checked", "true"));
+    expect(await screen.findByRole("button", { name: /^Approval, Approve load plan/ })).toBeInTheDocument();
+    expect(screen.getByText(/No interview or system record describes these steps yet/)).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("radio", { name: "As done" }));
+    await waitFor(() => expect(screen.getByRole("radio", { name: "As done" })).toHaveAttribute("aria-checked", "true"));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Approval, Approve load plan/ })).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "As documented" }));
+    expect(await screen.findByRole("button", { name: /^Approval, Approve load plan/ })).toBeInTheDocument();
   });
 
   it("choosing a step only in the other view shows that view, so no step is out of reach", async () => {

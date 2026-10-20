@@ -6,6 +6,9 @@ import { MapEdge } from "./MapEdge";
 import { MapNode } from "./MapNode";
 import "./map.css";
 
+/** The lane of a view that has no step at all. */
+const NO_STEPS = "No steps described yet";
+
 export interface MapStageProps {
   graph: Graph;
   layout: Layout;
@@ -63,22 +66,26 @@ export function MapStage({
             </span>
           ))}
         </div>
-        {layout.lanes.map((lane, i) => (
-          <div
-            key={lane.role_id || `lane-${i}`}
-            role="group"
-            aria-label={`${lane.label || "No lane"} lane, ${lane.step_count} ${lane.step_count === 1 ? "step" : "steps"}`}
-            className={i % 2 === 0 ? "map-lane" : "map-lane map-lane--even"}
-            style={{ top: lane.y, height: lane.h, width: w }}
-          >
-            <div className="map-lane__label" aria-hidden="true">
-              <span className="map-lane__name">{lane.label || "No lane"}</span>
-              <span className="map-lane__count">
-                {lane.step_count} {lane.step_count === 1 ? "step" : "steps"}
-              </span>
+        {layout.lanes.map((lane, i) => {
+          // A view with no step at all (As done of a documents-only map, 2026-10-20) has one
+          // unnamed, empty lane: it says so rather than "No lane · 0 steps".
+          const empty = !lane.label && lane.step_count === 0;
+          const count = `${lane.step_count} ${lane.step_count === 1 ? "step" : "steps"}`;
+          return (
+            <div
+              key={lane.role_id || `lane-${i}`}
+              role="group"
+              aria-label={empty ? NO_STEPS : `${lane.label || "No lane"} lane, ${count}`}
+              className={i % 2 === 0 ? "map-lane" : "map-lane map-lane--even"}
+              style={{ top: lane.y, height: lane.h, width: w }}
+            >
+              <div className="map-lane__label" aria-hidden="true">
+                <span className="map-lane__name">{empty ? NO_STEPS : lane.label || "No lane"}</span>
+                {!empty && <span className="map-lane__count">{count}</span>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {layout.phases.slice(1).map((p) => (
           <span key={p.phase_id} className="map-divider" style={{ left: p.x, height: h }} aria-hidden="true" />
         ))}

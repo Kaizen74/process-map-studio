@@ -101,6 +101,7 @@ export function SourcesScreen() {
 
   const list = sources.data ?? [];
   const missing = readiness.data?.missing ?? [];
+  const recommended = readiness.data?.recommended ?? [];
   const opened = list.find((s) => s.id === openId);
   // Transcripts map their speakers; email threads map their senders (R11).
   const showSpeakers =
@@ -209,6 +210,16 @@ export function SourcesScreen() {
               </p>
               <ul className="readiness-line__list">
                 {missing.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {recommended.length > 0 && (
+            <>
+              <p>Recommended, not required:</p>
+              <ul className="readiness-line__list">
+                {recommended.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>

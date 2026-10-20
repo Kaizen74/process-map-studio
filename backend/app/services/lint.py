@@ -260,8 +260,8 @@ def run_view_checks(graph: Graph) -> LintReport:
         if gaps:
             warnings.append(LintIssue(rule="L12", element_id=None, view=view,
                                       message=f"{name}: {len(gaps)} \"not described\" "
-                                      "connector(s): the interview doesn't say what happens "
-                                      "there."))  # fmt: skip
+                                      "connector(s): no interview or system record says "
+                                      "what happens there."))  # fmt: skip
     labels = {e.id: e.label for e in graph.elements}
     for edge in graph.edges:
         if edge.sequence_basis == "narration_order":

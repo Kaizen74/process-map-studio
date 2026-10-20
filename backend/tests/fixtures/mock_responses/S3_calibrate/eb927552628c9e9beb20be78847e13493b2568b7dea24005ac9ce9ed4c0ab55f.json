@@ -1,0 +1,14 @@
+{
+  "stances": [
+    {
+      "step_ref": "e4",
+      "stance": "supports",
+      "segment_ids": [
+        "p2"
+      ],
+      "quote": "The Ramp Supervisor shall return the loading report to Load Control within 10 minutes of loading completion.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

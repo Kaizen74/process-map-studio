@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from app.actions.readiness import ADD_DOCUMENT, ADD_KEY, ADD_TRANSCRIPT
+from app.actions.readiness import ADD_KEY, ADD_SOURCE, ADD_TRANSCRIPT
 from app.config import AppConfig
 from app.db import session_scope
 from app.main import create_app
@@ -66,8 +66,9 @@ def test_new_engagement_without_key(client: TestClient) -> None:
     body = readiness(client, created["id"])
     assert body["key_set"] is False
     assert body["next_step"] == "setup"
-    assert body["missing"] == [ADD_KEY, ADD_TRANSCRIPT]  # a document is recommended (P12)
-    assert body["recommended"] == [ADD_DOCUMENT] and body["signal"] is None
+    # Either kind of source can start a draft (2026-10-20): with neither, one is asked for.
+    assert body["missing"] == [ADD_KEY, ADD_SOURCE]
+    assert body["recommended"] == [] and body["signal"] is None
     assert body["nav"]["setup"] == "not_started" and body["nav_counts"] == {}
     assert body["ready_to_draft"] is False and body["blockers_count"] == 0
 
@@ -79,10 +80,13 @@ def test_key_and_uploaded_word_sop(client: TestClient, engagement: str, env_file
     assert KEY not in str(body)
     assert body["key_set"] is True and body["documents_ready"] is True
     assert body["nav"]["setup"] == "done"
-    assert body["nav"]["sources"] == "attention" and body["nav_counts"] == {"sources": 1}
-    assert body["missing"] == [ADD_TRANSCRIPT]
-    # PRD v1.10: with no transcript yet, the interview comes next (Interview precedes Sources).
-    assert body["nav"]["interview"] == "not_started" and body["next_step"] == "interview"
+    # Documents alone can be drafted (Eric, 2026-10-20); the interview is recommended, so it
+    # stays on the path but is no longer the next step.
+    assert body["nav"]["sources"] == "done" and body["nav_counts"] == {}
+    assert body["missing"] == [] and body["ready_to_draft"] is True
+    assert body["recommended"] == [ADD_TRANSCRIPT]
+    assert body["signal"]["level"] == "limited" and "documents only" in body["signal"]["detail"]
+    assert body["nav"]["interview"] == "not_started" and body["next_step"] == "draft"
 
 
 def test_a_read_transcript_is_ready_and_its_speakers_need_mapping(

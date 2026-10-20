@@ -21,7 +21,7 @@ from app.actions import redaction
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
-from app.domain.enums import Provenance, ReviewStatus, SourceState
+from app.domain.enums import Provenance, ReviewStatus, SourceKind, SourceState
 from app.domain.graph import QuestionRecord
 from app.domain.models import AiCallRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
@@ -48,6 +48,13 @@ TEMPLATES = {
         'The independent check found only partial support for "{label}". Is it described correctly?'
     ),
     "low_confidence": 'The evidence for "{label}" is thin. How is this step done in practice?',
+}
+# A map drafted from documents alone (Eric, 2026-10-20) has no interview to be silent.
+NO_INTERVIEW_TEMPLATES = TEMPLATES | {
+    "documented_only": (
+        'The documents describe "{label}"; no interview has described it yet. Is it done this way '
+        "in practice?"
+    ),
 }
 FORMAT_FAILED = (
     "Claude's answer for 'Writing validation questions' didn't match the expected format twice. "
@@ -156,6 +163,10 @@ def ask(
         items = needed(session, version_id)
         unknowns = claims_repo.list_unknowns(session, version_id)
         terms = redaction.name_replacements(session, version.engagement_id)
+        interviewed = SourceKind.INTERVIEW_TRANSCRIPT.value in versions_repo.source_kinds(
+            session, version_id
+        )
+    templates = TEMPLATES if interviewed else NO_INTERVIEW_TEMPLATES
 
     worded: dict[str, str] = {}
     if items:
@@ -202,7 +213,7 @@ def ask(
         text = grounding.redact_text(worded.get(item.ref, "").strip(), terms).text
         allowed = claims_text(list(item.step.claims)) + "\n" + "\n".join(item.notes)
         if not text or not grounding.verify_numbers(text, allowed).passed:
-            text = TEMPLATES[item.reason].format(label=item.step.element.label)
+            text = templates[item.reason].format(label=item.step.element.label)
             tally.templated += 1
         questions.append(
             QuestionRecord(element_id=item.step.element.id, phase_id=item.step.element.phase_id,

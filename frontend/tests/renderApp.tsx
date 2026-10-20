@@ -178,6 +178,6 @@ export const READINESS = {
   nav: Object.fromEntries(NAV_KEYS.map((k) => [k, "not_started"])),
   nav_counts: {},
   next_step: "setup",
-  missing: ["Add your Claude API key in Settings", "Add an interview transcript"],
+  missing: ["Add your Claude API key in Settings", "Add an interview transcript or a process document such as an SOP or manual"],
   ready_to_draft: false,
 };

@@ -1,8 +1,9 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DraftState } from "../../src/api/types";
 import { firstNeedingAttention } from "../../src/lib/review";
 import { fitScale } from "../../src/features/review/useFitScale";
+import { HeaderStrip } from "../../src/features/review/HeaderStrip";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
 import { SAMPLE, elementByLabel, layoutFor, graphFor } from "../sampleMap";
@@ -42,6 +43,15 @@ beforeEach(() => window.localStorage.clear());
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Review screen (PRD §5.6)", () => {
+  it("says the cycle time is not stated when no step on the main path states a time (2026-10-20)", () => {
+    const process = { ...SAMPLE.graph.process, cycle_time: { elapsed_min: 0, work_min: 0, incomplete_steps: 4 } };
+    render(<HeaderStrip process={process} />);
+    const strip = screen.getByRole("region", { name: "Process at a glance" });
+    expect(within(strip).queryByText(/min elapsed/)).not.toBeInTheDocument();
+    expect(within(strip).getAllByText("Not stated")).toHaveLength(1 + (process.kpi ? 0 : 1));
+    expect(within(strip).getByText("Incomplete: 4 steps without time")).toBeInTheDocument();
+  });
+
   it("shows the banner with read-only progress, the header strip and the map", async () => {
     backend();
     renderApp(PATH);

@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "ref": "q1",
+      "question": "The SOP says the Load controller prepares the preliminary load plan by T-90. Is that how and when it is done in practice?"
+    },
+    {
+      "ref": "q2",
+      "question": "The SOP says the Load control lead approves the preliminary load plan before release to Ramp. Does this approval happen in practice?"
+    },
+    {
+      "ref": "q3",
+      "question": "The SOP says special loads are checked against the acceptance checklist before loading. What happens when a special load can't be accepted?"
+    },
+    {
+      "ref": "q4",
+      "question": "The SOP asks Ramp to return the loading report within 10 minutes of loading completion. How long does it take in practice?"
+    },
+    {
+      "ref": "q5",
+      "question": "The SOP says the Load control lead decides on corrective action when weights deviate beyond the airline tolerance. Who decides in practice, and what happens next?"
+    },
+    {
+      "ref": "q6",
+      "question": "The SOP says the final load sheet is issued no later than T-10. When is it issued in practice?"
+    }
+  ]
+}

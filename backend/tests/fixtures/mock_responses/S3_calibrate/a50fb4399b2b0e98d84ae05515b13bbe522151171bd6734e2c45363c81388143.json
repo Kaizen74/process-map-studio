@@ -1,0 +1,54 @@
+{
+  "stances": [
+    {
+      "step_ref": "e1",
+      "stance": "supports",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "The Load Controller shall prepare the preliminary load plan by T-90.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e2",
+      "stance": "supports",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "The preliminary load plan shall be approved by the Load Control Lead before release to Ramp.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e3",
+      "stance": "supports",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Special loads shall be checked against the acceptance checklist before loading.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e5",
+      "stance": "supports",
+      "segment_ids": [
+        "p8"
+      ],
+      "quote": "the Load Control Lead shall decide on corrective action",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e6",
+      "stance": "supports",
+      "segment_ids": [
+        "p10"
+      ],
+      "quote": "The final load sheet shall be issued through the departure control system no later than T-10.",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

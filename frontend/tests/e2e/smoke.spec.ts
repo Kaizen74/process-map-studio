@@ -88,6 +88,8 @@ test("engagement: create, set up, upload and read sources, then delete", async (
   const table = page.getByRole("table", { name: "Sources for this engagement" });
   await expect(table.getByRole("row")).toHaveCount(4);
   await expect(table.getByRole("combobox", { name: "Kind of jd_load_controller.docx" })).toHaveValue("job_description");
+  // Documents alone can be drafted (2026-10-20); the interview is recommended.
+  await expect(page.getByText("Recommended, not required:")).toBeVisible();
   await expect(page.getByText("Add an interview transcript")).toBeVisible();
 
   await table.getByRole("button", { name: "sop_LC-07.docx", exact: true }).click();

@@ -780,7 +780,8 @@ def sample_app(
         config = dataclasses.replace(config, mock_fixtures_dir=fixtures_dir)
     app = create_app(config)
     try:
-        with TestClient(app) as client:
+        # The app answers only its own address (DNS-rebinding guard, deep review 2026-10-19).
+        with TestClient(app, base_url="http://127.0.0.1:8000") as client:
             yield (
                 app,
                 client,
@@ -1700,6 +1701,146 @@ def write_interview_only() -> None:
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), interview_only_s4(refs))
 
 
+# The documents-only sample (Eric, 2026-10-20): the same engagement with its two SOPs and two job
+# descriptions as the only sources, so a map can be drafted before any interview. Its S1 answers
+# are the full sample's (same passages sent): eight claims, c1-c5 from SOP LC-07, c6 from SOP
+# RP-02, c7-c8 from the job descriptions. Six steps, each only what the documents state. The
+# documents never say what happens when a special load can't be accepted or a deviation is outside
+# tolerance, so those two exits are left out (L4 fails) for Eric to add; nothing is invented.
+DOCUMENTS_ONLY = ["sop_LC-07.docx", "sop_RP-02.docx", "jd_load_control_lead.docx",
+                  "jd_load_controller.docx"]  # fmt: skip
+DOCUMENTS_ONLY_S2: dict[str, Any] = {
+    "steps": [
+        step("st1", "activity", "Draft load plan", "Load controller", [1, 8]),
+        step("st2", "approval", "Approve load plan", "Load control lead", [2, 7]),
+        step("st3", "decision", "Special loads OK?", "Load controller", [3, 8]),
+        step("st4", "activity", "Return loading report", "Ramp", [6]),
+        step("st5", "decision", "Deviation in limits?", "Load control lead", [4]),
+        step("st6", "activity", "Issue load sheet", "Load controller", [5, 8]),
+    ],
+    "new_roles": [],
+    "merge_proposals": [],
+}
+DOCUMENTS_LABELS = {
+    "e1": "Draft load plan", "e2": "Approve load plan", "e3": "Special loads OK?",
+    "e8": "Deviation in limits?", "e10": "Issue load sheet",
+}  # fmt: skip
+
+
+def documents_only_s3(refs: dict[str, str]) -> dict[tuple[str, int], dict[str, Any]]:
+    """The full sample's document stances, on this draft's steps. The SOP's corrective-action
+    passage supports the deviation check here (with no interview, nothing contradicts it), and
+    RP-02's loading report supports the return step."""
+    answers: dict[tuple[str, int], dict[str, Any]] = {}
+    for key, answer in S3_ANSWERS.items():
+        if key[0] not in DOCUMENTS_ONLY:
+            continue
+        stances = []
+        for s in answer["stances"]:
+            if key[0] == "sop_RP-02.docx":
+                stances.append(stance(refs["Return loading report"], "supports", s["segment_ids"],
+                                      s["quote"]))  # fmt: skip
+            elif s["step_ref"] in DOCUMENTS_LABELS:
+                ref = refs[DOCUMENTS_LABELS[s["step_ref"]]]
+                stances.append(stance(ref, "supports", s["segment_ids"], s["quote"]))
+        answers[key] = {"stances": stances}
+    return answers
+
+
+def documents_only_s4(refs: dict[str, str]) -> dict[str, Any]:
+    """Phases, RACI and details only from what the SOPs and job descriptions state."""
+    plan, approve = refs["Draft load plan"], refs["Approve load plan"]
+    special, report = refs["Special loads OK?"], refs["Return loading report"]
+    deviation, issue = refs["Deviation in limits?"], refs["Issue load sheet"]
+    return {
+        "phases": [
+            {"name": "Plan", "time_window": "", "step_refs": [plan, approve]},
+            {"name": "Check and load", "time_window": "", "step_refs": [special, report]},
+            {"name": "Close out", "time_window": "", "step_refs": [deviation, issue]},
+        ],
+        "steps": [
+            s4_step(plan, raci=raci((LC, "R"), (LC, "A")), duration_text="By T-90",
+                    handoff_out="Preliminary load plan"),
+            s4_step(approve, raci=raci((LEAD, "R"), (LEAD, "A")), decision_mechanism="judgment",
+                    handoff_in="Preliminary load plan", handoff_out="Plan released to Ramp"),
+            s4_step(special, raci=raci((LC, "R"), (LC, "A")), decision_mechanism="rule_based",
+                    decider_role=LC,
+                    rule_or_threshold="Special loads checked against the acceptance checklist"),
+            s4_step(report, raci=raci(("Ramp", "R"), ("Ramp", "A")),
+                    duration_text="Within 10 minutes of loading completion",
+                    handoff_out="Loading report to Load Control"),
+            s4_step(deviation, raci=raci((LEAD, "R"), (LEAD, "A")),
+                    decision_mechanism="judgment", decider_role=LEAD,
+                    rule_or_threshold="Actual weights within the airline tolerance"),
+            s4_step(issue, raci=raci((LC, "R"), (LC, "A")),
+                    kpi="Final load sheet no later than T-10"),
+        ],
+        "edges": [
+            edge("start", plan),
+            edge(plan, approve),
+            edge(approve, special, "approve", "Approve"),
+            edge(approve, plan, "reject", "Rework"),
+            edge(special, report, "yes", "Yes"),
+            edge(report, deviation),
+            edge(deviation, issue, "yes", "Within tolerance"),
+            edge(issue, "end"),
+        ],
+    }  # fmt: skip
+
+
+# S5 for the documents-only sample: every step is documented only, so each is asked about.
+DOCUMENTS_ONLY_S5: dict[str, Any] = {
+    "questions": [
+        {"ref": "q1", "question": "The SOP says the Load controller prepares the preliminary load "
+                                 "plan by T-90. Is that how and when it is done in practice?"},
+        {"ref": "q2", "question": "The SOP says the Load control lead approves the preliminary "
+                                 "load plan before release to Ramp. Does this approval happen in "
+                                 "practice?"},
+        {"ref": "q3", "question": "The SOP says special loads are checked against the acceptance "
+                                 "checklist before loading. What happens when a special load "
+                                 "can't be accepted?"},
+        {"ref": "q4", "question": "The SOP asks Ramp to return the loading report within 10 "
+                                 "minutes of loading completion. How long does it take in "
+                                 "practice?"},
+        {"ref": "q5", "question": "The SOP says the Load control lead decides on corrective action "
+                                 "when weights deviate beyond the airline tolerance. Who decides "
+                                 "in practice, and what happens next?"},
+        {"ref": "q6", "question": "The SOP says the final load sheet is issued no later than T-10. "
+                                 "When is it issued in practice?"},
+    ]
+}  # fmt: skip
+
+
+def write_documents_only() -> None:
+    """The later-stage answers for the documents-only sample (after the draft answers exist)."""
+    with sample_app(sources=DOCUMENTS_ONLY) as (app, client, built):
+        from app.pipeline import (
+            s2_canonicalise,
+            s3_calibrate,
+            s3b_verify,
+            s3c_sensemaking,
+            s4_assemble,
+        )
+
+        version_id = draft_version(app, client, built)
+        sessions = app.state.sessions
+        write(MOCKS, "S2_canonicalise", s2_hash(sessions, version_id, built.engagement_id),
+              DOCUMENTS_ONLY_S2)  # fmt: skip
+        run_stage(app, s2_canonicalise.canonicalise, version_id)
+        refs = step_ref_by_label(sessions, version_id)
+        answers = documents_only_s3(refs)
+        for key, digest in s3_hashes(sessions, version_id, built.sources).items():
+            write(MOCKS, "S3_calibrate", digest, answers.get(key, S3_EMPTY))
+        run_stage(app, s3_calibrate.calibrate, version_id)
+        for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
+            write(MOCKS, "S3b_verify", digest, verdicts(count))
+        run_stage(app, s3b_verify.verify, version_id)
+        run_stage(app, s3c_sensemaking.sense, version_id)  # nothing from interviews: the default
+        write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), documents_only_s4(refs))
+        run_stage(app, s4_assemble.assemble, version_id)
+        write(MOCKS, "S5_questions", s5_hash(sessions, version_id), DOCUMENTS_ONLY_S5)
+
+
 # The Reality fixture (PRD Appendix A.12, P13a-2): S1 intent over the charter. ILLUSTRATIVE ONLY.
 # The charter's passages are sent as p1 (its title) and p2-p5 (§1-§4). Four statements pass every
 # check; two planted traps are turned down: RT1 (a quote that isn't in its passage, G4) and RT2
@@ -1886,6 +2027,7 @@ def main() -> None:
         for label, (digest, _count) in s3b_hashes(sessions, version_id).items():
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
     write_interview_only()
+    write_documents_only()
     write_gap()
     write_reality()
     print(
@@ -1898,6 +2040,8 @@ if __name__ == "__main__":
         write_gap()
     elif sys.argv[1:] == ["interview"]:  # only the interview-only sample's answers
         write_interview_only()
+    elif sys.argv[1:] == ["documents"]:  # only the documents-only sample's answers
+        write_documents_only()
     elif sys.argv[1:] == ["reality"]:  # only the Reality fixture's intent answers (A.12)
         write_reality()
     else:

@@ -250,8 +250,22 @@ describe("Sources: registry", () => {
   it("shows exactly what the draft still needs, or that it is ready", async () => {
     sourcesApi([SOP]);
     renderApp(PATH);
-    expect(await screen.findByText("Add an interview transcript")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Add an interview transcript or a process document such as an SOP or manual"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Before drafting:")).toBeInTheDocument();
+  });
+
+  it("with a document read, says it is ready to draft and that an interview is recommended (2026-10-20)", async () => {
+    sourcesApi([SOP], {
+      "GET /api/engagements/e1/readiness": () => ({
+        body: { ...READINESS, key_set: true, documents_ready: true, missing: [], recommended: ["Add an interview transcript"], ready_to_draft: true },
+      }),
+    });
+    renderApp(PATH);
+    expect(await screen.findByText("Ready to draft.")).toBeInTheDocument();
+    expect(screen.getByText("Recommended, not required:")).toBeInTheDocument();
+    expect(screen.getByText("Add an interview transcript")).toBeInTheDocument();
   });
 
   it("says Ready to draft when nothing is missing", async () => {
