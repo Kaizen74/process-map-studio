@@ -147,7 +147,10 @@ describe("MapStage per view", () => {
 describe("legend and toolbar", () => {
   it('the legend shows "Not described" As done only, ghosted steps when shown, and the work type key', () => {
     const { rerender } = render(<MapLegend lens="plain" view="done" />);
-    expect(screen.getByText(/Not described/)).toBeInTheDocument();
+    // 2026-10-20: true with or without an interview behind the map.
+    expect(
+      screen.getByText("Not described (no interview or system record says what happens between)"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Only in the documented version")).not.toBeInTheDocument();
     rerender(<MapLegend lens="work_type" view="documented" showOther />);
     expect(screen.queryByText(/Not described/)).not.toBeInTheDocument();
@@ -247,6 +250,16 @@ describe("Review screen with the views (PRD §5.7.3)", () => {
       expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/exceptions?view=documented"))).toBe(true),
     );
     await waitFor(() => expect(lines()).not.toContain("Exception")); // the documents describe no exception route
+  });
+
+  it("an As done view with no step says so instead of an empty lane (2026-10-20)", () => {
+    const { container } = render(
+      <MapStage graph={DOCUMENTS_ONLY.view_graphs.done} layout={DOCUMENTS_ONLY.views.done} lens="plain" view="done" scale={1} selectedId={null} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByRole("group", { name: "No steps described yet" })).toBeInTheDocument();
+    const label = container.querySelector(".map-lane__label");
+    expect(label).toHaveTextContent("No steps described yet");
+    expect(label).not.toHaveTextContent(/No lane|0 steps/);
   });
 
   it("a documents-only map opens As documented, says why, and As done can still be chosen", async () => {

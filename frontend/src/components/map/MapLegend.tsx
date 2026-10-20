@@ -56,7 +56,7 @@ export function MapLegend({ lens, view = "done", showOther = false }: MapLegendP
         {view === "done" && (
           <li>
             <span className="legend-sample legend-sample--gap" aria-hidden="true" />
-            Not described (the lived account doesn't say what happens between)
+            Not described (no interview or system record says what happens between)
           </li>
         )}
         {showOther && (
