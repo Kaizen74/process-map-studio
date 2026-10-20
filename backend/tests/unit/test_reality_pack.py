@@ -127,6 +127,22 @@ def test_callouts_per_page_and_headlines_from_the_snapshot(published: Reality) -
             assert shown == min(most, len(view["callouts"])), (layout, vid_)
 
 
+def test_every_printed_callout_names_its_impact_in_words(published: Reality) -> None:
+    """Colour never carries the impact class alone (constraint 17): a callout drawn in an impact
+    colour also shows that class's symbol and word, as in the legend (found by the comprehension
+    pilot, 2026-10-19: readers couldn't tell a risk from lost time)."""
+    client, vid = published.engagement.client, published.version_id
+    words = {i["impact_class"]: i["word"] for i in snapshot(client, vid)["legend"]["impacts"]}
+    seen = 0
+    for layout in ("a3", "slide"):
+        for kind, body in re.findall(r'<li class="callout callout--(\w+)">(.*?)</li>',
+                                     pack(client, vid, layout), re.S):  # fmt: skip
+            assert f'<span class="impact-word impact-word--{kind}">' in body, body
+            assert '<svg class="impact-glyph' in body and words[kind] in body, body
+            seen += 1
+    assert seen
+
+
 def test_every_printed_figure_is_the_snapshot_figure(published: Reality) -> None:
     """RQ9 (G17): the pack prints each figure with the ID and text it has in the snapshot, the
     Reality screen and Leadership."""

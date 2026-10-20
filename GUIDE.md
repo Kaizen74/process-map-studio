@@ -276,6 +276,7 @@ A typical engagement, start to finish (each step has its own section above):
 9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
 
 ## What changed recently
+- 2026-10-19: **Reality callouts say what kind of gap they are.** Each box under a Reality view (and in the printed pack) now starts with its symbol and word, for example "Control exposure" or "Time impact", so the colour is never the only clue.
 - 2026-10-19: **An empty draft still has a start and an end.** When nothing in the sources could be drafted, the map now shows where the process starts and ends, so you can add the steps yourself on Review. No line is drawn between them, because no source describes what happens there.
 - 2026-10-19: **What a draft will cost, before it starts.** The **Draft** screen shows an estimate under **Create draft map**, and **Settings → AI spending** lets you set the most one draft (or refresh) may cost. No limit is set unless you set one.
 - 2026-10-19: **How much of the draft you kept.** The **Published** screen now says, in one sentence, how many of Claude's steps you kept as drafted, edited or rejected, and how many you added yourself. It's the simplest measure of how good the drafts are on your real work.

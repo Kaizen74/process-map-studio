@@ -72,6 +72,20 @@ describe("Reality screen (PRD §5.12, P13b)", () => {
     expect(await seriousViolations(container)).toEqual([]);
   });
 
+  it("every callout names its impact class in words, not by colour alone (constraint 17)", async () => {
+    // Found by the comprehension pilot (2026-10-19): readers couldn't tell a risk from lost time.
+    backend();
+    const { container } = renderApp(path());
+    const callouts = await screen.findByRole("list", { name: "Callouts" });
+    const words = new Map(SNAP.legend.impacts.map((i) => [i.impact_class, i.word]));
+    const items = within(callouts).getAllByRole("listitem");
+    expect(items).toHaveLength(SNAP.views.rv1.callouts.length);
+    SNAP.views.rv1.callouts.forEach((c, n) => {
+      if (c.impact_class) expect(items[n]).toHaveTextContent(words.get(c.impact_class) ?? "missing");
+    });
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("switches views, each with its own question and headline, and shows each as a table", async () => {
     backend();
     renderApp(path());

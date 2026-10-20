@@ -171,17 +171,27 @@ export function RealityTable({ table, caption }: { table: ViewTable; caption: st
 }
 
 /** At most three callouts, each with its impact border and at most two lines. */
-export function Callouts({ callouts }: { callouts: readonly Callout[] }) {
+export function Callouts({ callouts, legend }: { callouts: readonly Callout[]; legend: Legend }) {
   if (callouts.length === 0) return null;
+  // A callout's impact colour comes with the legend's glyph and word (constraint 17).
+  const impacts = new Map(legend.impacts.map((i) => [i.impact_class, i]));
   return (
     <ul className="callouts" aria-label="Callouts">
-      {callouts.map((c, i) => (
-        <li key={`${c.code ?? "note"}-${i}`} className={`callout${c.impact_class ? ` callout--${c.impact_class}` : ""}`}>
-          {c.lines.map((line, n) => (
-            <p key={n}>{line}</p>
-          ))}
-        </li>
-      ))}
+      {callouts.map((c, i) => {
+        const impact = c.impact_class ? impacts.get(c.impact_class) : undefined;
+        return (
+          <li key={`${c.code ?? "note"}-${i}`} className={`callout${c.impact_class ? ` callout--${c.impact_class}` : ""}`}>
+            {impact && (
+              <p className="callout__impact">
+                <ImpactWord code={{ glyph: impact.glyph, impact_class: impact.impact_class, impact_word: impact.word }} />
+              </p>
+            )}
+            {c.lines.map((line, n) => (
+              <p key={n}>{line}</p>
+            ))}
+          </li>
+        );
+      })}
     </ul>
   );
 }

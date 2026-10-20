@@ -67,3 +67,33 @@ five, and in the same way.
   logged.
 - The proposals above wait for Eric's decision. A layout change needs his approval of new
   screenshots before it is used.
+
+## Dry run after the changes (2026-10-19, same day)
+
+Eric approved the callout fix, a version with confirmed intent shown on screen, and Fix or keep as a
+third view. The test kit (`docs/comprehension_kit/`: Glance, Reality stack and Fix or keep of the
+published built-in example, drawn by the app with the fix) was then shown to five fresh AI readers in
+the same way. The answer key was fixed before any answer arrived (see the right-answer column of
+[comprehension_test.md](comprehension_test.md)).
+
+| Reader (role played) | Q1 | Q2 | Q3 | Q4 | All four? |
+|---|---|---|---|---|---|
+| 1 Chief financial officer | Right (70%) | Right (Check and load) | Right (approval never recorded) | Right (restore the approval) | Yes |
+| 2 Chief operating officer | Right | Right | Right | Right | Yes |
+| 3 HR director | Right | Right | Right | Right | Yes |
+| 4 Head of risk | Right | Right | Right | Right | Yes |
+| 5 Chief executive | Right | Right | Right | Right | Yes |
+
+Result: 5 of 5 answered all four. **This is still not the test:** it shows the kit and questions work as
+intended. Only five people can pass the views.
+
+Still confusing to all or most readers (proposals for Eric, not changed):
+- **Time figures that don't obviously reconcile (5 of 5).** Glance shows "6 h a month beyond the
+  designed time", while the stack shows 24 hours a month at Check and load and 32 in all. These measure
+  different things (time beyond a confirmed design target vs. time beyond the manual), but nothing on
+  the screen says so.
+- **"0 h a month" on the item to decide first (3 of 5).** X1 is a control exposure with no measured
+  hours; it reads as if it doesn't matter.
+- **Nine codes in one place, eight in another (3 of 5).**
+- **Small text in the drawings** (the flow on Glance, the stack, the fix-or-keep grid) and the
+  **D, I, S evidence boxes** with no key (4 of 5).
