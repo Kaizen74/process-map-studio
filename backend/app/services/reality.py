@@ -285,7 +285,7 @@ def tiles(inputs: Inputs, codes: Sequence[CodeView], process: Sequence[verdict_r
     if share is not None:
         f = figures.add("rv1.documented_share", round(100 * share, 1), "pct", copy.pct(share),
                         rules.MEASURED, "variant_share")  # fmt: skip
-        out.append(Tile(figure=f, caption="of cases follow the manual"))
+        out.append(Tile(figure=f, caption="of cases take the manual's route"))
     else:
         n, total = _practised(inputs, codes)
         if total:
@@ -304,7 +304,7 @@ def tiles(inputs: Inputs, codes: Sequence[CodeView], process: Sequence[verdict_r
         value = incidence or 0.0
         f = figures.add("rv1.control_share", round(100 * value, 1), "pct", copy.pct(value),
                         rules.MEASURED, "incidence")  # fmt: skip
-        words = "without a record" if kind == "D11" else "go round a control"
+        words = "leave no record of the control" if kind == "D11" else "go round a control"
         out.append(Tile(figure=f, caption=f"of cases {words} ({c.code})"))
     target = next((i for i in facts.intents if i.met_share is not None), None)
     if target is not None and target.met_share is not None:
@@ -753,7 +753,7 @@ def _item_text(i: StackItem) -> str:
 
 
 def _stack_table(model: StackModel, columns: Sequence[Column]) -> ViewTable:
-    names = {c.id: c.name for c in columns} | {PROCESS: "Whole process"}
+    names = {c.id: c.name for c in columns} | {PROCESS: copy.WHOLE_PROCESS}
     head = ["Band", *[names[c.column_id] for c in model.bands[0].cells]] if model.bands else []
     rows = []
     for b in model.bands:
@@ -886,7 +886,7 @@ def build(inputs: Inputs, app_version: str, frozen: bool) -> RealitySnapshot:
                                  cases=cases, text=copy.evidence_text(inputs.documents,
                                                                       inputs.interviews, cases)),
         figures=dict(figures.by_id), tiles=tiles_,
-        columns=[*columns, Column(id=PROCESS, name="Whole process", kind=PROCESS, step_keys=[])],
+        columns=[*columns, Column(id=PROCESS, name=copy.WHOLE_PROCESS, kind=PROCESS, step_keys=[])],
         columns_note=note, codes=codes,
         intents=[SnapshotIntent(id=i.intent_id, kind=i.kind, text=i.text, scope=i.scope,
                                 step_keys=list(i.step_keys), result=i.result,

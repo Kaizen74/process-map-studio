@@ -1,8 +1,8 @@
 {
   "version_id": "id-1",
   "rules_version": "2",
-  "copy_version": "4",
-  "layout_version": "4",
+  "copy_version": "5",
+  "layout_version": "5",
   "app_version": "1.0.0",
   "inputs_hash": "<inputs hash>",
   "frozen": true,
@@ -635,7 +635,7 @@
         "label": "measured",
         "percent_type": "variant_share"
       },
-      "caption": "of cases follow the manual"
+      "caption": "of cases take the manual's route"
     },
     {
       "figure": {
@@ -646,7 +646,7 @@
         "label": "measured",
         "percent_type": "incidence"
       },
-      "caption": "of cases without a record (X1)"
+      "caption": "of cases leave no record of the control (X1)"
     },
     {
       "figure": {
@@ -1359,7 +1359,7 @@
     "rv1": {
       "id": "rv1",
       "title": "How different is real Load control from the manual?",
-      "headline": "Only 70% of cases follow the manual. 100% of cases leave no record of Approve load plan.",
+      "headline": "Only 70% of cases take the manual's route. 100% of cases leave no record of Approve load plan.",
       "callouts": [
         {
           "code": "X1",
@@ -2922,7 +2922,9 @@
             "id": "process",
             "x": 1402.0,
             "y": 20.0,
-            "lines": []
+            "lines": [
+              "Whole process"
+            ]
           }
         ],
         "band_labels": [

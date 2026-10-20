@@ -31,8 +31,10 @@ from app.domain.reality import (
     Trunk,
     Zone,
 )
+from app.services import reality_copy as copy
 
-LAYOUT_VERSION = "4"  # 2: labels (P13b-4); 3: RV4-RV7 (P13c); 4: case starts at 0 (E1)
+LAYOUT_VERSION = "5"  # 2: labels (P13b-4); 3: RV4-RV7 (P13c); 4: case starts at 0 (E1);
+# 5: the stack's whole-process column has its heading (comprehension pilot)
 WIDTH = 1600.0
 CHAR_PX = 7.2  # an average 12.5 px IBM Plex Sans character
 LINE_PX = 16.0
@@ -197,7 +199,7 @@ def stack(model: StackModel, columns: Sequence[Column]) -> StackGeometry:
         lens = LensBox(x=b.x, y=LENS_LABEL_Y - 14, width=b.width,
                        height=round(height - LENS_LABEL_Y + 6, 1), label_x=round(b.x + PAD, 1),
                        label_y=LENS_LABEL_Y)  # fmt: skip
-    names = {c.id: c.name for c in columns}
+    names = {c.id: c.name for c in columns} | {"process": copy.WHOLE_PROCESS}
     headers = [Label(id=b.id, x=round(b.x + PAD, 1), y=HEADER_Y,
                      lines=wrap(names.get(b.id, ""), b.width - 2 * PAD, 1))
                for b in boxes]  # fmt: skip

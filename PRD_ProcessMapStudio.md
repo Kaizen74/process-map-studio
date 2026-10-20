@@ -911,7 +911,7 @@ Each discrepancy has a deterministic `location_key` (type family + step stable k
 Every view title is its executive question (fixed per view). Each **headline** (at most 20 words, delta first, percentage type named, plain words) and each **callout** (at most 2 lines; at most 3 per view) is chosen and filled by `services/reality_copy` from a fixed, versioned template catalogue using computed values. Selection follows impact precedence, then hours lost. Examples:
 | Slot | Template | Used when |
 |---|---|---|
-| RV1 headline | "Only {documented_share} of cases follow the manual." · "No case in the log follows the manual as written." | System records with a documented-route share above 0 · equal to 0 |
+| RV1 headline | "Only {documented_share} of cases take the manual's route." · "No case in the log takes the manual's route." (wording changed 2026-10-20, copy version 5: "follow the manual" beside "100% leave no record" read as a contradiction) | System records with a documented-route share above 0 · equal to 0 |
 | RV1 headline | "{done_only_steps} steps happen only in practice and {documented_only_steps} only in the manual." | No system records |
 | RV1 second sentence | "Cases take {multiplier} the designed time." · "{control_share} of {control_name} leave no record." | Multiplier ≥ 1.5 · a D11 exists |
 | RV2 headline | "{phase} is the hotspot: {added_min} extra minutes a case and {hours} hours a month." | The phase with the most hours lost |
@@ -2042,7 +2042,7 @@ Owner-stated target (entered in the test): "Weight deviations outside tolerance 
 
 *Expected negatives (must **not** be detected):* D7 on Load and return LIR (14 vs 10 minutes is within 50%, as A.11); D10 on the loading-report wait (official "within ten minutes" 22:30 vs measured 14 is a factor of 1.4, below 1.5); D3 anywhere (the log order matches both views); D1 on Approve load plan when A.11 is **not** loaded (interview silence only → "not described" question, constraint 4).
 
-*Expected views:* RV1 headline "No case in the log follows the manual as written."; tiles in §3.18.5 order, the cycle-time multiplier skipped because documented times are incomplete; RV2 lens on the phase with the most hours lost; RV3: X1 and X2 in **Correct the practice**, X3 as a design gap in **Rewrite the rule**, the busy-wave workaround in **Ask** until Eric confirms; RV6 shows no row (no belief gap passes the factor); RV7 uses the most common route that differs from the documented route (every route skips the approval; at least 5 cases).
+*Expected views:* RV1 headline "No case in the log takes the manual's route."; tiles in §3.18.5 order, the cycle-time multiplier skipped because documented times are incomplete; RV2 lens on the phase with the most hours lost; RV3: X1 and X2 in **Correct the practice**, X3 as a design gap in **Rewrite the rule**, the busy-wave workaround in **Ask** until Eric confirms; RV6 shows no row (no belief gap passes the factor); RV7 uses the most common route that differs from the documented route (every route skips the approval; at least 5 cases).
 
 *Reality traps (each must give the stated result; G11 asserts none reaches the snapshot):*
 | Trap | Planted input | Expected result |
