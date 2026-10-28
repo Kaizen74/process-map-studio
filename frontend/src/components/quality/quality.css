@@ -91,3 +91,83 @@ button.blockers__row:hover {
   font-size: var(--text-micro);
   color: var(--ink-3);
 }
+
+/* What to do next before publishing (2026-10-28): numbered steps in the order to do them. */
+.next-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding-left: var(--space-20);
+}
+.next-steps__step::marker {
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+}
+.next-steps__title {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+.next-steps__detail {
+  margin: 2px 0 0;
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.next-steps__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.next-steps__item {
+  display: block;
+  width: 100%;
+  padding: var(--space-4) var(--space-10);
+  font: inherit;
+  font-size: var(--text-label);
+  text-align: left;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 0;
+  border-radius: var(--radius-control);
+}
+button.next-steps__item {
+  cursor: pointer;
+}
+button.next-steps__item:hover {
+  box-shadow: var(--shadow-selection);
+}
+.next-steps__more,
+.next-steps__later {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
+.next-steps__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.next-steps__actions:empty {
+  display: none;
+}
+.next-steps__scope {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.next-steps__scope legend {
+  margin-bottom: var(--space-6);
+  font-weight: var(--weight-medium);
+}
+.next-steps__scope label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}

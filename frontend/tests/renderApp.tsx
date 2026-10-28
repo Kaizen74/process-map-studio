@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
 import { App } from "../src/App";
 import { ToastProvider } from "../src/components/shell";
+import { SAMPLE } from "./sampleMap";
 
 export interface FakeResponse {
   status?: number;
@@ -14,6 +15,8 @@ export type Handler = (body: unknown, url: string) => FakeResponse;
 
 /** Steps and versions have no pictures unless a test gives them some (phase P8). */
 const NO_PICTURES = /^GET \/api\/(elements|versions)\/[^/]+\/images$/;
+// A draft's Review asks what is left before publishing (2026-10-28): the sample's, from the backend.
+const NEXT_STEPS = /^GET \/api\/versions\/[^/]+\/next-steps$/;
 const PLANS = "GET /api/templates/interview/plans";
 
 /** The standard interview templates (always available; PRD v1.10 F.9), as the backend lists them. */
@@ -23,14 +26,21 @@ export const TEMPLATE_PLANS = [
     title: "Landscape",
     minutes: 60,
     who: "Team leads, contract holders, cross-functional owners (one per stakeholder group lead)",
-    purpose: "The end-to-end picture: which teams, how structured, what each manages",
+    purpose:
+      "The end-to-end picture: which teams, how structured, what each manages",
     plan: [
       { label: "Opener and framing", minutes: 3 },
       { label: "L1–L2 teams, structure, activities", minutes: 10 },
       { label: "L3–L5 interfaces, decision rights, boundaries", minutes: 20 },
-      { label: "Role module (3–5 blank rows for the stakeholder group)", minutes: 8 },
+      {
+        label: "Role module (3–5 blank rows for the stakeholder group)",
+        minutes: 8,
+      },
       { label: "L6–L7 strengths, weaknesses, risk", minutes: 8 },
-      { label: "Two stories with signifiers (M5.1–M5.2, M5.s1–s3)", minutes: 7 },
+      {
+        label: "Two stories with signifiers (M5.1–M5.2, M5.s1–s3)",
+        minutes: 7,
+      },
       { label: "Close (M7.1, M7.5, M7.6)", minutes: 4 },
     ],
     question_count: 16,
@@ -41,15 +51,26 @@ export const TEMPLATE_PLANS = [
     title: "Practice",
     minutes: 60,
     who: "People who do the work (one per person)",
-    purpose: "The workflow as actually performed: steps, decisions, know-how, variations, official vs lived",
+    purpose:
+      "The workflow as actually performed: steps, decisions, know-how, variations, official vs lived",
     plan: [
       { label: "M0 — Framing", minutes: 3 },
       { label: "M1 — Open conversation", minutes: 6 },
       { label: "M2 — The last real case: the As done spine", minutes: 14 },
-      { label: "M3 — Artefact walk-through (with the completed examples)", minutes: 6 },
+      {
+        label: "M3 — Artefact walk-through (with the completed examples)",
+        minutes: 6,
+      },
       { label: "M4 — Decisions: decision mapping and ASHEN", minutes: 12 },
-      { label: "M5 — Stories: prompting questions and the SME's own reading of them", minutes: 9 },
-      { label: "M6 — Contrast: official vs lived; now bring the documents", minutes: 6 },
+      {
+        label:
+          "M5 — Stories: prompting questions and the SME's own reading of them",
+        minutes: 9,
+      },
+      {
+        label: "M6 — Contrast: official vs lived; now bring the documents",
+        minutes: 6,
+      },
       { label: "M7 — Close: ask only what is still missing", minutes: 4 },
     ],
     question_count: 45,
@@ -80,20 +101,42 @@ export function fakeApi(routes: Record<string, Handler>) {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const key = `${init?.method ?? "GET"} ${url.split("?")[0] ?? url}`;
     const body =
-      init?.body instanceof FormData ? init.body : init?.body ? JSON.parse(String(init.body)) : undefined;
+      init?.body instanceof FormData
+        ? init.body
+        : init?.body
+          ? JSON.parse(String(init.body))
+          : undefined;
     calls.push({ key, body });
     const handler = routes[key];
     const result = handler
       ? handler(body, url)
       : NO_PICTURES.test(key)
         ? { body: [] }
-        : key === PLANS
-          ? { body: TEMPLATE_PLANS }
-          : { status: 404, body: { error: { code: "NOT_FOUND", message: "Not found.", details: {} } } };
-    if (result.status === 204) return new Response(null, { status: 204, headers: { "X-Request-ID": "req000000001" } });
+        : NEXT_STEPS.test(key)
+          ? { body: SAMPLE.next_steps }
+          : key === PLANS
+            ? { body: TEMPLATE_PLANS }
+            : {
+                status: 404,
+                body: {
+                  error: {
+                    code: "NOT_FOUND",
+                    message: "Not found.",
+                    details: {},
+                  },
+                },
+              };
+    if (result.status === 204)
+      return new Response(null, {
+        status: 204,
+        headers: { "X-Request-ID": "req000000001" },
+      });
     return new Response(JSON.stringify(result.body), {
       status: result.status ?? 200,
-      headers: { "Content-Type": "application/json", "X-Request-ID": "req000000001" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Request-ID": "req000000001",
+      },
     });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -101,7 +144,9 @@ export function fakeApi(routes: Record<string, Handler>) {
 }
 
 export function renderApp(path = "/") {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[path]}>
@@ -178,6 +223,21 @@ export const READINESS = {
   nav: Object.fromEntries(NAV_KEYS.map((k) => [k, "not_started"])),
   nav_counts: {},
   next_step: "setup",
-  missing: ["Add your Claude API key in Settings", "Add an interview transcript or a process document such as an SOP or manual"],
+  missing: [
+    "Add your Claude API key in Settings",
+    "Add an interview transcript or a process document such as an SOP or manual",
+  ],
   ready_to_draft: false,
 };
+
+/** Open "More" in the engagement bar (2026-10-28) and return its list of steps. */
+export async function moreSteps(): Promise<HTMLElement> {
+  const nav = await screen.findByRole("navigation", {
+    name: "Engagement steps",
+  });
+  const button = await within(nav).findByRole("button", {
+    name: /^More steps/,
+  });
+  if (button.getAttribute("aria-expanded") !== "true") fireEvent.click(button);
+  return screen.getByRole("dialog", { name: "More steps" });
+}

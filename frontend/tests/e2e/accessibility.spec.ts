@@ -140,7 +140,9 @@ test.describe("accessibility and offline assets", () => {
       expect((await request.put("/api/settings/modules", { data: { system_records_enabled: true } })).status()).toBe(200);
       await page.reload();
       await expect(page.getByText(/No logs yet/)).toBeVisible();
-      await expect(page.getByRole("link", { name: /^System records/ })).toBeVisible();
+      await page.getByRole("button", { name: /^More steps/ }).click(); // 2026-10-28: under More
+      await expect(page.getByRole("dialog", { name: "More steps" }).getByRole("link", { name: /^System records/ })).toBeVisible();
+      await page.keyboard.press("Escape");
       expect(await seriousViolations(page)).toEqual([]);
       const csv = "Case ID,Event Name,Start Time,Performed by\nC1,Opened,2026-03-02 09:00,U1\nC1,Closed,2026-03-02 10:00,U2\n";
       await page.getByTestId("log-file-input").setInputFiles({ name: "extract.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });

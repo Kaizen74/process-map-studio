@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { SegmentPage } from "../src/api/types";
 import type { ExceptionReport } from "../src/lib/exceptions";
+import type { NextSteps } from "../src/lib/reviewTypes";
 import type {
   CapabilityNote,
   ElementDetail,
@@ -26,6 +27,8 @@ export interface SampleMap {
   exceptions: { done: ExceptionReport; documented: ExceptionReport };
   /** P9u: the Registers lists made from the interviews. */
   lists: { stories: StoryEntry[]; glossary: GlossaryEntry[]; "capability-notes": CapabilityNote[] };
+  /** 2026-10-28: what is left before publishing (Review → What to do next). */
+  next_steps: NextSteps;
 }
 
 export const SAMPLE: SampleMap = JSON.parse(
@@ -65,6 +68,7 @@ export interface DocumentsOnlyMap {
   graph: Graph;
   views: { done: Layout; documented: Layout };
   view_graphs: { done: Graph; documented: Graph };
+  next_steps: NextSteps;
 }
 
 export const DOCUMENTS_ONLY: DocumentsOnlyMap = JSON.parse(

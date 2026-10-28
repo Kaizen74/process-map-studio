@@ -1,11 +1,14 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getGraph, getLint } from "../api/draft";
 import {
+  acceptRemaining,
   addStep,
   decideMerge,
+  discardSuggestions,
   getAudit,
   getElement,
   getLayout,
+  getNextSteps,
   listMergeProposals,
   listQuestions,
   listSegmentsAround,
@@ -69,7 +72,7 @@ const AFTER: Readonly<Record<ReviewAction, string>> = {
 export function refreshReview(client: QueryClient, versionId: string, engagementId: string) {
   // "images": rejecting or restoring a step hides or shows its pictures (marker and strip).
   // "dispositions" and "value" (R10b): an edit or a work type changes a step's suggestion.
-  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants", "dispositions", "value", "reality"]) {
+  for (const part of ["graph", "layout", "lint", "audit", "questions", "merge-proposals", "rejected-claims", "quality-card", "images", "exceptions", "system-traces", "system-variants", "dispositions", "value", "reality", "next-steps"]) {
     void client.invalidateQueries({ queryKey: ["versions", versionId, part] });
   }
   void client.invalidateQueries({ queryKey: ["engagements", engagementId] });
@@ -202,6 +205,32 @@ export function useAudit(versionId: string | null) {
     queryKey: ["versions", versionId ?? "", "audit"],
     queryFn: () => getAudit(versionId ?? ""),
     enabled: Boolean(versionId),
+  });
+}
+
+// What to do next before publishing (2026-10-28): the list and its one-click actions.
+
+export function useNextSteps(versionId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["versions", versionId ?? "", "next-steps"],
+    queryFn: () => getNextSteps(versionId ?? ""),
+    enabled: Boolean(versionId) && enabled,
+  });
+}
+
+export function useAcceptRemaining(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (phaseId?: string) => acceptRemaining(versionId, phaseId),
+    onSettled: () => refreshReview(client, versionId, engagementId),
+  });
+}
+
+export function useDiscardSuggestions(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => discardSuggestions(versionId),
+    onSettled: () => refreshReview(client, versionId, engagementId),
   });
 }
 

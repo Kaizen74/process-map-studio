@@ -46,6 +46,8 @@ function setupApi(initialRoles: Role[] = [], extra: Parameters<typeof fakeApi>[0
 }
 
 const scope = () => screen.getByRole("region", { name: "Process scope" });
+const SEVERAL_FLOWS =
+  "One engagement maps one flow, from its trigger to its end point. If a document covers several flows (for example import, export and transhipment), make one engagement for each and upload the same document to each.";
 const rolesCard = () => screen.getByRole("region", { name: "Roles and lanes" });
 
 describe("Setup: process scope", () => {
@@ -97,6 +99,13 @@ describe("Setup: process scope", () => {
     const body = calls.find((c) => c.key === "PATCH /api/engagements/e1")?.body as Record<string, unknown>;
     expect(body).toMatchObject({ trigger_external: true, end_point_external: false });
     expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("says one engagement maps one flow, for documents that cover several (2026-10-28)", async () => {
+    setupApi();
+    renderApp(PATH);
+    await screen.findByLabelText("Engagement name");
+    expect(within(scope()).getByText(SEVERAL_FLOWS)).toBeInTheDocument();
   });
 
   it("explains a missing name without saving", async () => {

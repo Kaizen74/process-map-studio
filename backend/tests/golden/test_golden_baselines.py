@@ -185,9 +185,11 @@ def test_the_frontend_sample_matches_the_backend(settings_config: AppConfig) -> 
         # P9u: the Registers lists made from the interviews.
         lists = {name: client.get(f"{url}/{name}").json()
                  for name in ("stories", "glossary", "capability-notes")}  # fmt: skip
+        # 2026-10-28: what is left before publishing (Review → What to do next).
+        next_steps = client.get(f"{url}/next-steps").json()
         bundle = {"graph": graph, "layout": layout, "elements": elements, "segments": segments,
                   "views": views, "view_graphs": view_graphs,
-                  "exceptions": exceptions, "lists": lists}  # fmt: skip
+                  "exceptions": exceptions, "lists": lists, "next_steps": next_steps}  # fmt: skip
         matches_baseline("sample_map.json", bundle, FRONTEND_FIXTURES)
 
 
@@ -203,6 +205,7 @@ def test_the_frontend_documents_only_sample_matches_the_backend(settings_config:
                       for v in ("done", "documented")},
             "view_graphs": {v: client.get(f"{url}/graph", params={"view": v}).json()
                             for v in ("done", "documented")},
+            "next_steps": client.get(f"{url}/next-steps").json(),
         }  # fmt: skip
         matches_baseline("documents_only_map.json", bundle, FRONTEND_FIXTURES)
 

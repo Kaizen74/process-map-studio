@@ -22,7 +22,13 @@ from app.actions.review import DRAFT_STATE, NOT_A_DRAFT
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import ElementKind, ImageStatus, ImageType
-from app.domain.models import ImagePatch, ImageRecord, ImageView, NameReplacement
+from app.domain.models import (
+    DiscardedSuggestions,
+    ImagePatch,
+    ImageRecord,
+    ImageView,
+    NameReplacement,
+)
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import elements as map_repo
@@ -250,6 +256,27 @@ def change(
         return Ok(_view(session, updated, engagement_id))
 
 
+def discard_suggestions(
+    config: AppConfig, sessions: Sessions, version_id: str
+) -> Result[DiscardedSuggestions]:
+    """Discard every open picture suggestion on a draft's steps at once (2026-10-28, Eric: one
+    manual gave 72 to decide one by one). One audit row with the count."""
+    actor = actor_name(config)
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
+        if version.state != DRAFT_STATE:
+            return Err(ErrorKind.CONFLICT, NOT_A_DRAFT)
+        count = repo.discard_suggested(session, version_id)
+        if count:
+            audit.record(session, actor=actor, action="Discarded all suggested images",
+                         target_type="version", target_id=version_id,
+                         engagement_id=version.engagement_id, version_id=version_id,
+                         before=None, after={"count": count})  # fmt: skip
+        return Ok(DiscardedSuggestions(discarded=count))
+
+
 def remove(config: AppConfig, sessions: Sessions, image_id: str) -> Result[None]:
     actor = actor_name(config)
     with session_scope(sessions) as session:
@@ -333,14 +360,14 @@ def _ensure_clean(stored_path: str) -> bool:
 
 
 def attach_suggestions(session: Session, version_id: str) -> int:
-    """Suggest each PDF picture on the steps whose verified evidence cites its page (API_CONTRACT
-    → Suggested images from PDFs). A step never gets the same picture twice, so a picture Eric
-    kept or discarded there isn't suggested again. Returns how many suggestions were added."""
-    placed = repo.placed(session, version_id)
+    """Suggest each PDF picture once, on the first step whose verified evidence cites its page
+    (API_CONTRACT → Suggested images from PDFs; once since 2026-10-28, Eric: a flow page cited by
+    every step made each picture a suggestion on every step). A picture already on a step of the
+    version, kept, discarded or suggested, isn't suggested again. Returns how many were added."""
+    placed = {path for _, path in repo.placed(session, version_id)}
     added = 0
     for element_id, picture in repo.page_matches(session, version_id):
-        key = (element_id, picture.stored_path)
-        if key in placed or not _ensure_clean(picture.stored_path):
+        if picture.stored_path in placed or not _ensure_clean(picture.stored_path):
             continue
         repo.add(
             session,
@@ -354,7 +381,7 @@ def attach_suggestions(session: Session, version_id: str) -> int:
                 page=picture.page,
             ),
         )
-        placed.add(key)
+        placed.add(picture.stored_path)
         added += 1
     return added
 

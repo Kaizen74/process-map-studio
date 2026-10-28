@@ -1,0 +1,124 @@
+{
+  "claims": [
+    {
+      "claim_type": "activity",
+      "text": "The Load control team drafts the preliminary load plan by T-90.",
+      "responsible_role": "Load control team",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "Draft the preliminary load plan by T-90",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "approval",
+      "text": "The Load control lead approves the plan.",
+      "responsible_role": "Load control lead",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "Load Control Lead approves the plan",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "Ramp loads the ULDs as per the load plan.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "Load ULDs as per the load plan",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "Ramp returns the loading report within 10 minutes.",
+      "responsible_role": "Ramp",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "10 minutes",
+      "threshold": "",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "Return the loading report within 10 minutes",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "decision",
+      "text": "The Captain checks the deviation against tolerance.",
+      "responsible_role": "",
+      "accountable_role": "",
+      "decider_role": "Captain",
+      "mechanism": "judgment",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Check deviation against tolerance",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "approval",
+      "text": "The Captain accepts the final load sheet.",
+      "responsible_role": "Captain",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Captain accepts the final load sheet",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "Airline ops verify pieces, weight and dimensions.",
+      "responsible_role": "Airline ops",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Verify pieces, weight and dimensions",
+      "provenance": "O",
+      "basis": ""
+    }
+  ],
+  "unknowns": [
+    {
+      "question": "Where does a deviation outside tolerance go next?",
+      "segment_ids": [
+        "p5"
+      ]
+    }
+  ]
+}

@@ -5,9 +5,10 @@ actions that start work. Nothing may fail with a server error; a refusal says wh
 plain words; no screen shows "None" or "nan" where a figure is missing.
 
 Scenarios: nothing yet · documents only (uploaded; drafted; and, since 2026-10-20, drafted and
-published) · interviews only · interviews and documents (no system log) · interviews and a system
-log (no documents) · documents, interviews and a log not yet matched to the map · a charter without
-SOPs · everything (A.12)."""
+published) · one manual whose process is a flow diagram (2026-10-28) · interviews only ·
+interviews and documents (no system log) · interviews and a system log (no documents) ·
+documents, interviews and a log not yet matched to the map · a charter without SOPs · everything
+(A.12)."""
 
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ from app.config import AppConfig
 from app.domain.reality import Shape
 from app.services.reality_shapes import collisions
 from tests import fixture_engagement
-from tests.fixtures.make_ai_fixtures import DOCUMENTS_ONLY
+from tests.fixtures.make_ai_fixtures import DIAGRAM_ROLE, DIAGRAM_SOURCES, DOCUMENTS_ONLY
 from tests.unit.test_documents_only_journey import add_missing_exits
 from tests.unit.test_draft_api import make_client, run_draft, with_key
 from tests.unit.test_log_alignment_api import EXPECTED, UNRECORDED, import_log
@@ -149,6 +150,16 @@ def documents_only_drafted(s: Scenario) -> None:
     _intent(s)
 
 
+def diagram_manual(s: Scenario) -> None:
+    """One manual whose process is a boxed flow diagram (Eric's cargo manual, 2026-10-28)."""
+    built = fixture_engagement.build(s.client, DIAGRAM_SOURCES)
+    s.client.post(f"/api/engagements/{built.engagement_id}/roles", json=DIAGRAM_ROLE)
+    s.ids |= {"engagement_id": built.engagement_id,
+              "source_id": built.sources[DIAGRAM_SOURCES[0]]}  # fmt: skip
+    _draft(s)
+    _intent(s)
+
+
 def interviews_only(s: Scenario) -> None:
     built = fixture_engagement.build(s.client, INTERVIEW)
     s.ids |= {"engagement_id": built.engagement_id,
@@ -215,7 +226,8 @@ def published_everything(s: Scenario) -> None:
 
 SCENARIOS: dict[str, Callable[[Scenario], None]] = {
     "nothing": nothing, "documents_only": documents_only,
-    "documents_only_drafted": documents_only_drafted, "interviews_only": interviews_only,
+    "documents_only_drafted": documents_only_drafted, "diagram_manual": diagram_manual,
+    "interviews_only": interviews_only,
     "interviews_and_documents": interviews_and_documents,
     "interviews_and_log": interviews_and_log, "log_not_matched": log_not_matched,
     "charter_without_sops": charter_without_sops, "everything": everything,
@@ -384,6 +396,7 @@ def test_every_figure_says_where_it_comes_from(scenario: Scenario) -> None:
 
 # Documents alone are Limited since 2026-10-20 (Eric): a draft can be made from them.
 SIGNAL = {"nothing": None, "documents_only": "limited", "documents_only_drafted": "limited",
+          "diagram_manual": "limited",
           "published_documents_only": "limited", "interviews_only": "limited",
           "interviews_and_log": "limited", "charter_without_sops": "moderate",
           "published_interviews_only": "limited"}  # fmt: skip
@@ -401,5 +414,6 @@ def test_the_evidence_behind_a_map_is_stated(
     found = readiness.json()["signal"]
     assert (found or {}).get("level") == SIGNAL.get(name, "strong")
     if found and found["level"] == "limited":
-        built_from = "documents only" if "documents_only" in name else "interviews only"
+        documents = "documents_only" in name or name == "diagram_manual"
+        built_from = "documents only" if documents else "interviews only"
         assert built_from in found["detail"]

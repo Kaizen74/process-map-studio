@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.enums import ElementKind, ReviewStatus
+from app.domain.enums import ElementKind, ImageStatus, ReviewStatus
 from app.domain.models import ImageRecord
 from app.repositories.tables import (
     Element,
@@ -48,6 +48,19 @@ def update(session: Session, image_id: str, fields: dict[str, Any]) -> ImageReco
         setattr(row, key, value)
     session.flush()
     return ImageRecord.model_validate(row)
+
+
+def discard_suggested(session: Session, version_id: str) -> int:
+    """Mark every open suggestion on the version's steps discarded; returns how many."""
+    rows = session.scalars(
+        select(Image)
+        .join(Element, Element.id == Image.element_id)
+        .where(Element.version_id == version_id, Image.status == ImageStatus.SUGGESTED.value)
+    ).all()
+    for row in rows:
+        row.status = ImageStatus.DISCARDED.value
+    session.flush()
+    return len(rows)
 
 
 def delete(session: Session, image_id: str) -> None:

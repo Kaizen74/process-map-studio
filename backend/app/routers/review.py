@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import dispositions, map_edits, merges, questions, review
+from app.actions import dispositions, map_edits, merges, next_steps, questions, review
 from app.domain.graph import ElementDetail, GraphEdge
 from app.domain.models import (
+    AcceptedSteps,
+    AcceptRemaining,
     AuditEntry,
     DispositionInput,
     DispositionView,
@@ -16,6 +18,7 @@ from app.domain.models import (
     MergeDecisionInput,
     MergeProposalView,
     NewStep,
+    NextSteps,
     QuestionStatus,
     QuestionView,
     RaciInput,
@@ -29,6 +32,21 @@ router = APIRouter(prefix="/api", tags=["review"])
 def _review(request: Request, element_id: str, action: str) -> ElementDetail:
     state = request.app.state
     return unwrap(review.review(state.config, state.sessions, element_id, action))
+
+
+@router.get("/versions/{version_id}/next-steps")
+def get_next_steps(request: Request, version_id: str) -> NextSteps:
+    state = request.app.state
+    return unwrap(next_steps.next_steps(state.config, state.sessions, version_id))
+
+
+@router.post("/versions/{version_id}/accept-remaining")
+def accept_remaining(
+    request: Request, version_id: str, body: AcceptRemaining | None = None
+) -> AcceptedSteps:
+    state = request.app.state
+    phase_id = body.phase_id if body else None
+    return unwrap(next_steps.accept_remaining(state.config, state.sessions, version_id, phase_id))
 
 
 @router.post("/elements/{element_id}/confirm")

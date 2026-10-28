@@ -27,11 +27,12 @@ import { codesAt, intentsAt } from "../../lib/reality";
 import { volumeLines } from "../../lib/systemRecords";
 import { firstNeedingAttention, nextToReview, openSteps } from "../../lib/review";
 import { shortcutFor, stepAlong } from "../../lib/shortcuts";
-import { DOCUMENTED_DEFAULT_NOTE, asView, defaultView, inView, type AsView } from "../../lib/views";
+import { asView, defaultView, documentedNote, inView, type AsView } from "../../lib/views";
 import { AddStepPanel } from "./AddStepPanel";
 import { DetailPanel } from "./DetailPanel";
 import { EditPanel } from "./EditPanel";
 import { HeaderStrip } from "./HeaderStrip";
+import { NextStepsCard } from "./NextStepsCard";
 import { SourcePanel, type OpenPassage } from "./SourcePanel";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { RefreshDialog } from "./RefreshDialog";
@@ -353,6 +354,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
           <h1 id="review-title" className="visually-hidden">
             {title}
           </h1>
+          {editable && <NextStepsCard graph={g} engagementId={engagementId} onSelect={select} />}
           <HeaderStrip process={viewGraph.data?.process ?? g.process} />
           <Card className="map-card">
             <MapToolbar
@@ -376,7 +378,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               onRefresh={editable ? () => setRefreshOpen(true) : undefined}
             />
             {view === "map" && fallback === "documented" && shown === "documented" && (
-              <p className="map-card__note">{DOCUMENTED_DEFAULT_NOTE}</p>
+              <p className="map-card__note">{documentedNote(g.elements)}</p>
             )}
             {view === "table" ? (
               <TableView

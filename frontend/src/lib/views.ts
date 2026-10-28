@@ -2,6 +2,7 @@
 // documented the documents' version. The backend lays out each view; the UI only picks which
 // one to draw. Pure helpers.
 
+import { plural } from "./format";
 import type { GraphElement } from "./mapTypes";
 
 export type AsView = "done" | "documented";
@@ -16,17 +17,33 @@ export function asView(value: string | null, fallback: AsView = "done"): AsView 
   return value === "documented" || value === "done" ? value : fallback;
 }
 
+/** How many steps (not start or end) each view draws. */
+export function viewCounts(elements: readonly Pick<GraphElement, "kind" | "view_membership">[]): Record<AsView, number> {
+  const steps = elements.filter((e) => e.kind !== "start" && e.kind !== "end");
+  return {
+    done: steps.filter((e) => inView(e, "done")).length,
+    documented: steps.filter((e) => inView(e, "documented")).length,
+  };
+}
+
 /**
- * The view a map opens in: As done, unless no step is in it but some are As documented. A map
- * drafted from documents alone (Eric, 2026-10-20) has no lived or traced step to draw As done.
+ * The view a map opens in: the one that draws more of it, As done on a tie (§3.12.11). A map from
+ * documents alone has nothing As done (2026-10-20); a map mostly from documents shows more As
+ * documented (2026-10-28, Eric's cargo manual: 1 step As done, 15 As documented).
  */
 export function defaultView(elements: readonly Pick<GraphElement, "kind" | "view_membership">[]): AsView {
-  const steps = elements.filter((e) => e.kind !== "start" && e.kind !== "end");
-  const documentedOnly = steps.length > 0 && !steps.some((e) => inView(e, "done"));
-  return documentedOnly ? "documented" : "done";
+  const counts = viewCounts(elements);
+  return counts.documented > counts.done ? "documented" : "done";
 }
 
 /** Why a map opened As documented (shown while it is). */
+export function documentedNote(elements: readonly Pick<GraphElement, "kind" | "view_membership">[]): string {
+  const { done, documented } = viewCounts(elements);
+  if (done === 0) return DOCUMENTED_DEFAULT_NOTE;
+  return `As documented shows more of this map: ${plural(documented, "step")}, against ${done} As done. Showing As documented.`;
+}
+
+/** Why a documents-only map opened As documented. */
 export const DOCUMENTED_DEFAULT_NOTE =
   "No interview or system record describes these steps yet, so As done has none. Showing As documented.";
 

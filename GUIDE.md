@@ -46,7 +46,7 @@ A tailored guide is the standard template for one interviewee, with the parts yo
 9. During the interview, say or note each question ID as you ask it, exactly as with the templates. Two example guides are in `docs/samples/` (`interview-guide-practice-sample.docx` and `interview-guide-follow-up-sample.docx`).
 
 ### Inside an engagement: the guided path
-When an engagement is open, the top bar shows its name and eleven steps: Setup · Interview · Sources · Draft · Review · Published · Matrix · Gap analysis · Registers · Leadership · Exports. Each has a small mark and a spoken label:
+When an engagement is open, the top bar shows its name and the main path: Setup · Sources · Draft · Review · Published · Exports. The other screens are under **More**: Interview, Matrix, Gap analysis, Registers and Leadership (and System records and Reality when you switch them on). **More** shows a number when some of them need attention, the **Next** tag when the step to do next is one of them, and the screen's name while you are on one. Each step has a small mark and a spoken label:
 - **filled circle:** done;
 - **ring with a number:** needs attention (the number says how many things to resolve);
 - **empty circle:** not started.
@@ -104,6 +104,9 @@ The app splits an interview into who said what and when. It reads `[06:40] Name:
 
 ### Review, step by step
 1. Open **Review** in the top bar (or **Start reviewing** on Draft). Without a draft it says so and links to Draft.
+   - **What to do next** at the top lists at most three things left before you can publish, numbered in the order to do them, each with one button: fix the problems on the map (each opens its step), check steps the verifier found only partly supported, decide merges, **Review the next step** or **Accept n steps as drafted…** (choose the whole map or one phase; steps with a problem to fix stay for you, and the app says which), **Discard all n suggested…** pictures, then publish. Accepting confirms the steps exactly as if you confirmed each one, and the audit log records it.
+   - **Download draft map** (on the same card) gives you the whole draft as the interactive map, to look at or share before anything is reviewed. Every page says "Draft: not reviewed, not published", with how many steps you have reviewed, and each step says whether you have reviewed it. It shows the same map first as Review: from documents alone, the documents' version comes first, and the empty "as done" map says why it has no steps.
+   - The map opens in the view that shows more of it: **As done** when people have described how the work is done, **As documented** when most of it comes only from documents (a line above the map says why).
 2. **The banner** at the top shows the draft's version (for example **Draft v0.1**), how many sources it was made from, and **n of N steps reviewed** with one small segment per step in process order: grey until reviewed, green once reviewed, darker grey when rejected. Click a segment to open that step.
 3. **Four cards** show the **Trigger**, the **End point**, the **Cycle time** along the usual route, the way most cases go, never through an exception route or a workaround (work plus waiting, with a red line such as "Incomplete: 1 step without time" when some steps have no time; "Not stated" when none has) and the **Process KPI** ("Not stated" if Setup has none).
 4. **The map** is drawn from the backend's layout: one lane per role (lanes of approvals and exception steps sit just above the lane they come from), phases along the top, and steps in process order from left to right.
@@ -217,7 +220,7 @@ Pictures help you and your SMEs see what a step looks like. They stay inside the
 
 ### Quality card and publishing, step by step
 1. The Review banner shows **Quality card: n of 9 green** with a dot (orange until everything is green). Click it to see all the checks: provenance, verified evidence, labelled exits, lanes and ownership, AI flags, fully reviewed, facts/interpretation/recommendation kept apart, no hidden names in the exports, no images in the exports, map size, and **work types confirmed** (whether every decision, approval and judgment step has a work type you confirmed). Map size and work types are warnings: they never stop you publishing. A failing check says in red what to fix; warnings such as steps without a time are listed beneath.
-2. Click **Publish**. If anything still stops it, the same box opens as **Publish blocked** and lists every item (for example "“Draft load plan” hasn't been reviewed yet"). Click an item to go straight to its step.
+2. Click **Publish**. If anything still stops it, the same box opens as **Publish blocked** and lists what to do, grouped and in order, like **What to do next** (for example "Fix 2 problems on the map", then "Review 6 steps"). Click a problem to go straight to its step.
 3. When everything is green, **Publish** makes the first published version **v1.0** (then v1.1, v1.2 …), records you as the validator and opens the **Published** screen. A published version never changes.
 
 ### Published, step by step
@@ -276,6 +279,15 @@ A typical engagement, start to finish (each step has its own section above):
 9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
 
 ## What changed recently
+- 2026-10-28: **See the whole map first, then work through it in order.** After your run on the cargo manual:
+  - **Flow diagrams in PDFs are read box by box.** Each box is read whole, with the team label printed beside it (for example "RAMP TEAM: 2. LOAD THE AIRCRAFT …"), so a stage's activities and its team stay together and far fewer claims are turned down. Pages that aren't diagrams, tables included, are read as before.
+  - **Fewer pictures to decide.** A logo or header that repeats on many pages is never suggested, each other picture is suggested once (not once per step), and **Discard all** clears them in one go.
+  - **Download draft map** on Review gives you the whole draft before you review anything, clearly stamped as a draft. Publishing still needs every step reviewed.
+  - **Accept n steps as drafted** confirms the rest of the map, or one phase, in one go; steps with a problem to fix stay for you.
+  - **What to do next** on Review, and **Publish blocked**, now say in plain words what is left and in what order.
+  - **The top bar is shorter:** the main path, with the other screens under **More**.
+  - **Setup** reminds you that one engagement maps one flow: a manual covering import, export and transhipment goes into three engagements.
+  - The comparison with the Copilot map: it also used other sources (department names from an HR file and internal system names), which the app will only show once you upload documents that say them.
 - 2026-10-20: **Clearer wording on Review when something isn't described.** The cycle time says **Not stated** instead of "~0 min" when no step on the main path has a time; an As done view with no steps says "No steps described yet" instead of an empty lane; and the dashed "Not described" line is explained as "no interview or system record says what happens between".
 - 2026-10-20: **Drafts from documents alone.** You can now create a draft map from an SOP or manual without an interview transcript; an interview is recommended rather than required (job descriptions alone still aren't enough). Such a map shows the process as written: its signal strength is **Limited** ("Built from documents only"), every step is "documented only" and gets a question for your SME, and **Review** opens it **As documented** with a line saying why, because no interview or system record describes how the work is actually done yet. Where the documents are silent (for example what happens when a check fails), the map leaves the exit out and the checks ask you to add it before publishing. Add an interview later and the next draft is Strong.
 - 2026-10-20: **Two more wording fixes on the Reality views.** Glance now says "70% of cases take the manual's route" and "100% of cases leave no record of the control (X1)", so the two figures no longer read as contradicting each other, and the Reality stack's last column is headed **Whole process**.

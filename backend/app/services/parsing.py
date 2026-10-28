@@ -32,6 +32,7 @@ from email.utils import getaddresses, parsedate_to_datetime
 from html.parser import HTMLParser
 from itertools import pairwise
 from pathlib import Path
+from typing import Any
 
 import pdfplumber
 import pypdf
@@ -45,6 +46,15 @@ from app.domain.result import Err, ErrorKind, Ok, Result
 
 OCR_THRESHOLD_CHARS = 50  # PRD §3.7 S0: pages with fewer characters are treated as scans
 MIN_IMAGE_SIDE_PX = 48  # smaller images (bullets, logos, rules) are not worth suggesting
+LOGO_MIN_PAGES = 3  # the same picture on this many pages is a logo or header, never suggested
+# Process-flow diagram pages (2026-10-28): text boxes, in PDF points.
+BOX_MIN_WIDTH, BOX_MIN_HEIGHT = 80, 20
+BOX_MIN_WORDS = 3  # a box holding fewer words is a decoration, not a stage
+BOX_TOUCH_PT = 2  # boxes this close are table cells
+DIAGRAM_MIN_BOXES = 3
+LABEL_MAX_GAP_PT = 120  # a label this far to the left of a box belongs to it
+LABEL_LINE_GAP_PT = 6  # the lines of one label are this close
+COLUMN_TOLERANCE_PT = 20  # boxes whose left edges are this close form one column
 _CLAUSE = re.compile(r"^(§\s?\d+(?:\.\d+)*|\d+(?:\.\d+)+)\s")
 _WHITESPACE = re.compile(r"[ \t\xa0]+")  # spaces, tabs, non-breaking spaces
 
@@ -107,23 +117,143 @@ def parse_docx(path: Path) -> Result[ParsedDocument]:
     return Ok(ParsedDocument(segments=segments))
 
 
+Box = tuple[float, float, float, float]  # x0, top, x1, bottom in PDF points
+
+
+def _boxes(page: Any) -> list[Box]:
+    """The text boxes of a diagram: rectangles at least 80 x 20 points that touch no other one
+    (cells of a table touch their neighbours) and hold no other box (a frame)."""
+    found: list[Box] = []
+    for r in page.rects:
+        box = (float(r["x0"]), float(r["top"]), float(r["x1"]), float(r["bottom"]))
+        if box[2] - box[0] < BOX_MIN_WIDTH or box[3] - box[1] < BOX_MIN_HEIGHT:
+            continue
+        if not any(all(abs(a - b) < 1 for a, b in zip(box, other, strict=True)) for other in found):
+            found.append(box)
+
+    def touches(a: Box, b: Box) -> bool:
+        gap_x = max(a[0], b[0]) - min(a[2], b[2])
+        gap_y = max(a[1], b[1]) - min(a[3], b[3])
+        return gap_x <= BOX_TOUCH_PT and gap_y <= BOX_TOUCH_PT
+
+    def holds(a: Box, b: Box) -> bool:
+        return a != b and a[0] <= b[0] and a[1] <= b[1] and a[2] >= b[2] and a[3] >= b[3]
+
+    return [b for b in found if not any(touches(b, o) or holds(b, o) for o in found if o != b)]
+
+
+def _inside(word: dict[str, Any], box: Box) -> bool:
+    return bool(
+        word["x0"] >= box[0] - 1 and word["x1"] <= box[2] + 1
+        and word["top"] >= box[1] - 1 and word["bottom"] <= box[3] + 1
+    )  # fmt: skip
+
+
+def _lines(words: list[dict[str, Any]]) -> list[tuple[float, str]]:
+    """Words → lines (top, text): words whose tops are within 3 points, left to right."""
+    lines: list[tuple[float, list[dict[str, Any]]]] = []
+    for word in sorted(words, key=lambda w: (w["top"], w["x0"])):
+        if lines and abs(lines[-1][0] - word["top"]) <= 3:
+            lines[-1][1].append(word)
+        else:
+            lines.append((word["top"], [word]))
+    return [(top, _tidy(" ".join(w["text"] for w in sorted(ws, key=lambda w: w["x0"]))))
+            for top, ws in lines]  # fmt: skip
+
+
+def _blocks(words: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    """Words → blocks of stacked lines that overlap sideways (a label of one or more lines)."""
+    blocks: list[list[dict[str, Any]]] = []
+    for word in sorted(words, key=lambda w: (w["top"], w["x0"])):
+        for block in blocks:
+            left, right = min(w["x0"] for w in block), max(w["x1"] for w in block)
+            bottom = max(w["bottom"] for w in block)
+            beside = word["x0"] <= right + 4 and word["x1"] >= left - 4
+            same_line = any(abs(w["top"] - word["top"]) <= 3 for w in block)
+            if (same_line and word["x0"] <= right + 8) or (
+                beside and 0 <= word["top"] - bottom <= LABEL_LINE_GAP_PT
+            ):
+                block.append(word)
+                break
+        else:
+            blocks.append([word])
+    return blocks
+
+
+def _area_text(page: Any, box: Box) -> str:
+    """The text inside an area, its lines joined (read on its own, letter-spaced words stay
+    whole)."""
+    area = page.within_bbox((box[0] - 1, box[1] - 1, box[2] + 1, box[3] + 1))
+    return " ".join(_tidy(line) for line in (area.extract_text() or "").splitlines())
+
+
+def _diagram_page(page: Any) -> list[str] | None:
+    """A process-flow diagram page read box by box (Eric's cargo manual, 2026-10-28), or None for
+    any other page. Each box becomes one passage, its lines joined, with the team label printed
+    beside it (to its left) in front: "RAMP TEAM: 2. LOAD THE AIRCRAFT • …". Boxes are read column
+    by column, top to bottom; text outside the boxes stays line by line (headings first)."""
+    boxes = _boxes(page)
+    words = [w for w in page.extract_words(extra_attrs=["upright"]) if w["upright"]]
+    texts = {b: [w for w in words if _inside(w, b)] for b in boxes}
+    boxes = [b for b in boxes if len(texts[b]) >= BOX_MIN_WORDS]
+    if len(boxes) < DIAGRAM_MIN_BOXES:
+        return None
+    outside = [w for w in words if not any(_inside(w, b) for b in boxes)]
+    labels: dict[Box, list[str]] = {b: [] for b in boxes}
+    rest: list[dict[str, Any]] = []
+    for block in _blocks(outside):
+        x1 = max(w["x1"] for w in block)
+        top, bottom = min(w["top"] for w in block), max(w["bottom"] for w in block)
+        near = [
+            b
+            for b in boxes
+            if 0 <= b[0] - x1 + 2 <= LABEL_MAX_GAP_PT + 2 and top < b[3] and bottom > b[1]
+        ]
+        if near:
+            box = min(near, key=lambda b: b[0] - x1)
+            area = (min(w["x0"] for w in block), top, x1, bottom)
+            labels[box].append(_area_text(page, area))
+        else:
+            rest += block
+    first_top = min(b[1] for b in boxes)
+    lines = _lines(rest)
+    columns: list[list[Box]] = []
+    for box in sorted(boxes, key=lambda b: (b[0], b[1])):
+        if columns and abs(columns[-1][0][0] - box[0]) <= COLUMN_TOLERANCE_PT:
+            columns[-1].append(box)
+        else:
+            columns.append([box])
+    passages = []
+    for column in columns:
+        for box in sorted(column, key=lambda b: b[1]):
+            body = _area_text(page, box)
+            label = " / ".join(labels[box])
+            passages.append(f"{label}: {body}" if label else body)
+    return (
+        [text for top, text in lines if top < first_top]
+        + passages
+        + [text for top, text in lines if top >= first_top]
+    )
+
+
 def parse_pdf_text(path: Path) -> Result[ParsedDocument]:
-    """The text layer, one segment per non-empty paragraph, anchored by page number.
+    """The text layer, one segment per non-empty line, anchored by page number; a process-flow
+    diagram page one segment per box, with its team label (`_diagram_page`).
 
     Pages with fewer than 50 characters are listed in `ocr_pages` (PRD §3.7 S0; OCR from P3).
     """
     try:
         with pdfplumber.open(path) as pdf:
-            pages = [page.extract_text() or "" for page in pdf.pages]
+            pages = [(page.extract_text() or "", _diagram_page(page)) for page in pdf.pages]
     except Exception as exc:  # pdfminer raises many types for damaged files
         return Err(ErrorKind.IO, "The PDF could not be read.", {"reason": type(exc).__name__})
     segments: list[ParsedSegment] = []
     ocr_pages: list[int] = []
-    for number, text in enumerate(pages, start=1):
+    for number, (text, diagram) in enumerate(pages, start=1):
         if len(text.strip()) < OCR_THRESHOLD_CHARS:
             ocr_pages.append(number)
             continue
-        for line in text.splitlines():
+        for line in diagram if diagram is not None else text.splitlines():
             clean = _tidy(line)
             if clean:
                 segments.append(ParsedSegment(seq=len(segments) + 1, text=clean, page=number))
@@ -158,7 +288,12 @@ def extract_pdf_images(path: Path) -> Result[list[ExtractedImage]]:
         return Err(
             ErrorKind.IO, "Images in the PDF could not be read.", {"reason": type(exc).__name__}
         )
-    return Ok(found)
+    # The same picture on many pages is a logo or a header (2026-10-28: one on all 39 pages of
+    # Eric's manual), never a picture of the work.
+    pages: dict[bytes, set[int]] = {}
+    for extracted in found:
+        pages.setdefault(extracted.data, set()).add(extracted.page)
+    return Ok([i for i in found if len(pages[i.data]) < LOGO_MIN_PAGES])
 
 
 def split_pdf_page(path: Path, page: int) -> Result[bytes]:

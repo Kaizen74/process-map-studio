@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Button, ErrorState, Popover, Skeleton } from "../../components/common";
-import { BlockerList, QualityCardView } from "../../components/quality";
+import { BlockerList, NextStepsList, QualityCardView } from "../../components/quality";
 import { useToast } from "../../components/shell";
+import { useNextSteps } from "../../hooks/useReview";
 import { usePublish, useQualityCard } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
@@ -22,6 +23,7 @@ export interface PublishControlsProps {
  */
 export function PublishControls({ versionId, engagementId, onSelect }: PublishControlsProps) {
   const card = useQualityCard(versionId);
+  const next = useNextSteps(versionId);
   const publish = usePublish(versionId, engagementId);
   const toast = useToast();
   const navigate = useNavigate();
@@ -71,13 +73,26 @@ export function PublishControls({ versionId, engagementId, onSelect }: PublishCo
         </Button>
         <Popover open={open} title={blockers ? "Publish blocked" : "Quality card"} align="end" onClose={close}>
           {blockers && (
-            <BlockerList
-              blockers={blockers}
-              onSelect={(id) => {
-                close();
-                onSelect(id);
-              }}
-            />
+            // What to do, grouped and in order (2026-10-28); the raw list while it loads.
+            <>
+              {next.data && !next.data.ready_to_publish ? (
+                <NextStepsList
+                  steps={next.data.steps}
+                  onSelect={(id) => {
+                    close();
+                    onSelect(id);
+                  }}
+                />
+              ) : (
+                <BlockerList
+                  blockers={blockers}
+                  onSelect={(id) => {
+                    close();
+                    onSelect(id);
+                  }}
+                />
+              )}
+            </>
           )}
           {card.isPending && <Skeleton height="200px" />}
           {card.isError && (

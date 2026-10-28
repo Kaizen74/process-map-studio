@@ -885,6 +885,45 @@ class VersionDetail(VersionSummary):
     quality_card: dict[str, object] | None
 
 
+class NextStepItem(BaseModel):
+    message: str
+    element_id: str | None
+
+
+class NextStep(BaseModel):
+    """One group of what is left before publishing (GET /versions/{vid}/next-steps)."""
+
+    #: fix_map · check_steps · merges · review_steps · pictures · publish
+    key: str
+    title: str
+    detail: str
+    count: int
+    bulk: int  # how many the one-click action would handle (accept or discard)
+    items: list[NextStepItem]
+
+
+class NextSteps(BaseModel):
+    ready_to_publish: bool
+    steps: list[NextStep]
+
+
+class AcceptRemaining(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phase_id: str | None = None
+
+
+class SkippedStep(BaseModel):
+    element_id: str
+    label: str
+    reason: str
+
+
+class AcceptedSteps(BaseModel):
+    accepted: int
+    skipped: list[SkippedStep]
+
+
 class PublishBlocker(BaseModel):
     #: unreviewed_element · needs_check · pending_merge · suggested_image · lint_failure ·
     #: quality_check
@@ -932,6 +971,12 @@ class ImageView(BaseModel):
     source_name: str
     page: int | None
     created_at: str
+
+
+class DiscardedSuggestions(BaseModel):
+    """POST /versions/{vid}/images/discard-suggestions (2026-10-28)."""
+
+    discarded: int
 
 
 class ImagePatch(BaseModel):

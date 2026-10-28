@@ -100,6 +100,25 @@
   font-size: var(--text-micro);
   color: var(--danger-text);
 }
+.engagement-nav__more {
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.engagement-nav__more--current {
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+}
+.engagement-nav__menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 .engagement-nav__tag {
   font-size: var(--text-micro);
   color: var(--ink-3);

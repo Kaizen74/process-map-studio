@@ -280,9 +280,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     // P7: Publish on an unreviewed draft is refused with what to fix, in the quality card popover.
     await page.getByRole("button", { name: "Publish" }).click();
     const blocked = page.getByRole("dialog", { name: "Publish blocked" });
-    await expect(blocked.getByRole("list", { name: "What to fix before publishing" })).toContainText(
-      "hasn't been reviewed yet",
-    );
+    // 2026-10-28: grouped by what to do, as on "What to do next", never by check code.
+    await expect(blocked.getByRole("list", { name: "What to do before publishing" })).toContainText(/Review \d+ steps/);
     await expect(blocked.getByRole("list", { name: "Quality checks" })).toContainText("Fully reviewed");
     expect(await seriousViolations(page)).toEqual([]);
     if (shots) await page.screenshot({ path: join(shots, "p7-publish-blocked.png"), ...still });
@@ -342,7 +341,7 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     expect(await seriousViolations(page)).toEqual([]);
 
     // Refresh draft from sources: the reviewed steps stay as they are; the draft number goes up.
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("button", { name: "More", exact: true }).click();
     await page.getByRole("button", { name: "Refresh draft from sources" }).click();
     const refresh = page.getByRole("dialog", { name: "Refresh draft from sources" });
     await expect(refresh).toContainText("The 10 steps you confirmed, edited, added or rejected stay exactly as they are.");
@@ -431,7 +430,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     }
 
     // P9: the Matrix, every step against every kind of source; silence shown as silent.
-    await page.getByRole("link", { name: /^Matrix/ }).click();
+    await page.getByRole("button", { name: /^More steps/ }).click(); // 2026-10-28: off the main path
+    await page.getByRole("dialog", { name: "More steps" }).getByRole("link", { name: /^Matrix/ }).click();
     const matrixTable = page.getByRole("table", { name: "How each kind of source stands on each step" });
     await expect(matrixTable.getByRole("row")).toHaveCount(11);  // header + ten steps (v1.10 A.5)
     const lirRow = matrixTable.getByRole("row", { name: /Load and return LIR/ });
@@ -455,7 +455,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
     ).toBeVisible();
 
     // P9: Registers, including the cause library (confirm an entry).
-    await page.getByRole("link", { name: /^Registers/ }).click();
+    await page.getByRole("button", { name: /^More steps/ }).click();
+    await page.getByRole("dialog", { name: "More steps" }).getByRole("link", { name: /^Registers/ }).click();
     const registerChoice = page.getByRole("radiogroup", { name: "Register" });
     await expect(page.getByText(/Widebody plans rely/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
@@ -784,7 +785,9 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
       });
       printed.on("pageerror", (e) => problems.push(String(e)));
       await printed.setViewportSize({ width: 1920, height: 1080 });
-      await printed.setContent(html, { waitUntil: "load" });
+      // The data label's date is the day this journey publishes; the pages are compared as of
+      // the day the baselines were approved, so another day can't fail them (Eric, 2026-10-28).
+      await printed.setContent(html.replace(/ on \d{4}-\d{2}-\d{2}/g, " on 2026-10-28"), { waitUntil: "load" });
       await printed.emulateMedia({ media: "print" });
       const pages = await printChecks(printed);
       expect(pages, `${label} pages`).toHaveLength(pageCount);
@@ -793,8 +796,8 @@ test("draft: create a draft map, watch it finish, see the checked claims", async
         expect(p.smallest, `${label} page ${p.page}: "${p.where}" under 11 px`).toBeGreaterThanOrEqual(11);
       }
       expect(await overlappingLabels(printed), `labels overlap in the ${label} pack`).toEqual([]);
-      // P13d visual baselines (Eric approved 2026-10-18): every printed page. The data label's
-      // date is the day the journey publishes, a few dozen pixels inside the 0.5% tolerance.
+      // P13d visual baselines (Eric approved 2026-10-18; five re-rendered by the newer test
+      // browser, approved 2026-10-28): every printed page, dated as above.
       for (const [i, p] of pages.entries()) {
         const name = `p13d-pack-${layout}-${String(i + 1).padStart(2, "0")}-${p.page}.png`;
         await expect.soft(printed.locator("section.page").nth(i)).toHaveScreenshot(name);

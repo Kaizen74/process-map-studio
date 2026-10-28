@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { AuditEntry, ElementDetail, Layout, MergeProposal, Question, SegmentPage } from "./types";
+import type { AcceptedSteps, AuditEntry, ElementDetail, Layout, MergeProposal, NextSteps, Question, SegmentPage } from "./types";
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { AsView } from "../lib/views";
@@ -19,6 +19,19 @@ export const getElement = (elementId: string) => request<ElementDetail>(`/elemen
 /** The page of a source that holds one passage (the source viewer opened from evidence). */
 export const listSegmentsAround = (sourceId: string, segmentId: string, pageSize = 200) =>
   request<SegmentPage>(`/sources/${enc(sourceId)}/segments?around=${enc(segmentId)}&page_size=${pageSize}`);
+
+// What is left before publishing, and the one-click actions (2026-10-28).
+export const getNextSteps = (versionId: string) => request<NextSteps>(`/versions/${enc(versionId)}/next-steps`);
+
+/** Accept the unreviewed steps that need nothing fixed as drafted (the whole map or one phase). */
+export const acceptRemaining = (versionId: string, phaseId?: string) =>
+  request<AcceptedSteps>(`/versions/${enc(versionId)}/accept-remaining`, {
+    method: "POST",
+    ...(phaseId ? { body: { phase_id: phaseId } } : {}),
+  });
+
+export const discardSuggestions = (versionId: string) =>
+  request<{ discarded: number }>(`/versions/${enc(versionId)}/images/discard-suggestions`, { method: "POST" });
 
 // Review actions (phase P6).
 export type ReviewAction = "confirm" | "reject" | "restore";

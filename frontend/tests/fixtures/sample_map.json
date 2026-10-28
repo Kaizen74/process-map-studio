@@ -10604,5 +10604,18 @@
         "anchor": "05:52"
       }
     ]
+  },
+  "next_steps": {
+    "ready_to_publish": false,
+    "steps": [
+      {
+        "key": "review_steps",
+        "title": "Review 10 steps",
+        "detail": "Confirm, edit or reject each one, or accept the 10 that need nothing fixed as drafted.",
+        "count": 10,
+        "bulk": 10,
+        "items": []
+      }
+    ]
   }
 }
