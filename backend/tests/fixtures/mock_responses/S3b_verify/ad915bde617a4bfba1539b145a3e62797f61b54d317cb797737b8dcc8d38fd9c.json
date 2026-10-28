@@ -1,0 +1,9 @@
+{
+  "verdicts": [
+    {
+      "claim_ref": "k1",
+      "verdict": "supported",
+      "reason": "The cited passages state it."
+    }
+  ]
+}

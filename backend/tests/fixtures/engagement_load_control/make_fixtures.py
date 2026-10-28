@@ -172,6 +172,140 @@ def write_pdf(name: str) -> None:
     (HERE / name).write_bytes(pdf_bytes([page1, page2, page3], (2, zlib.compress(bytes(pixels)))))
 
 
+def checker(size: int, light: tuple[int, int, int], dark: tuple[int, int, int]) -> bytes:
+    pixels = bytearray()
+    for y in range(size):
+        for x in range(size):
+            pixels += bytes(dark if (x // 8 + y // 8) % 2 else light)
+    return zlib.compress(bytes(pixels))
+
+
+def pdf_with_images(pages: list[tuple[bytes, list[int]]], images: list[tuple[int, bytes]]) -> bytes:
+    """A minimal PDF whose pages each draw some of `images` (size, zlib RGB data), named /Im<n>."""
+    width, height = 612, 792
+    objects: list[bytes] = []
+
+    def add(obj: bytes) -> int:
+        objects.append(obj)
+        return len(objects)
+
+    font = add(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+    image_ids = [
+        add(
+            b"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB "
+            b"/BitsPerComponent 8 /Filter /FlateDecode /Length %d >>\nstream\n"
+            % (size, size, len(data))
+            + data
+            + b"\nendstream"
+        )
+        for size, data in images
+    ]
+    contents = [add(b"<< /Length %d >>\nstream\n" % len(s) + s + b"\nendstream") for s, _ in pages]
+    pages_id = len(objects) + len(contents) + 1
+    page_ids = []
+    for content, (_, used) in zip(contents, pages, strict=True):
+        names = b" ".join(b"/Im%d %d 0 R" % (n, image_ids[n]) for n in used)
+        page_ids.append(
+            add(
+                b"<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %d %d] /Contents %d 0 R "
+                b"/Resources << /Font << /F1 %d 0 R >> /XObject << %s >> >> >>"
+                % (pages_id, width, height, content, font, names)
+            )
+        )
+    kids = b" ".join(b"%d 0 R" % p for p in page_ids)
+    assert add(b"<< /Type /Pages /Kids [%s] /Count %d >>" % (kids, len(page_ids))) == pages_id
+    catalog = add(b"<< /Type /Catalog /Pages %d 0 R >>" % pages_id)
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % number + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += b"trailer\n<< /Size %d /Root %d 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
+        len(objects) + 1,
+        catalog,
+        xref,
+    )
+    return bytes(out)
+
+
+BULLET = "\\225"  # "•" in WinAnsiEncoding, as an octal escape in a PDF string
+
+
+def text_at(x: float, y: float, lines: list[str], size: int = 9, leading: int = 11) -> str:
+    parts = [f"BT /F1 {size} Tf {x} {y} Td {leading} TL"]
+    for line in lines:
+        safe = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+        parts.append(f"({safe.replace('•', BULLET)}) Tj T*")
+    parts.append("ET")
+    return "\n".join(parts)
+
+
+# An illustrative process-flow diagram (2026-10-28, Eric's cargo manual has its flow on a page like
+# this): two columns of boxed stages, each with its team's label to the left, so a plain
+# line-by-line reading runs both columns and the labels together. Page 2 is a table drawn with
+# touching cells (not a diagram); page 3 ordinary text. The same logo is on every page.
+DIAGRAM_LEFT = [
+    ("LOAD CONTROL TEAM", ["1. PLAN THE LOAD", "• Draft the preliminary load plan by T-90",
+                           "• Load Control Lead approves the plan"]),
+    ("RAMP TEAM", ["2. LOAD THE AIRCRAFT", "• Load ULDs as per the load plan",
+                   "• Return the loading report within 10 minutes"]),
+    ("FLIGHT CREW", ["3. CLOSE OUT", "• Check deviation against tolerance",
+                     "• Captain accepts the final load sheet"]),
+]  # fmt: skip
+DIAGRAM_RIGHT = [
+    ("CARGO ACCEPTANCE", ["A. ACCEPT CARGO", "• Verify pieces, weight and dimensions",
+                          "• Cargo security screening"]),
+    ("BUILD-UP TEAM", ["B. BUILD ULDS", "• Allocate serviceable ULDs",
+                       "• Secure and net as required"]),
+]  # fmt: skip
+
+
+def diagram_page() -> bytes:
+    ops = [text_at(72, 750, ["Document ID: LC-FLOW-001   Page 1 of 3"]),
+           text_at(150, 725, ["PROCESS FLOW (ILLUSTRATIVE)"], size=11),
+           "q 40 0 0 40 520 740 cm /Im0 Do Q"]  # fmt: skip
+    for column, (label_x, box_x) in ((DIAGRAM_LEFT, (40, 130)), (DIAGRAM_RIGHT, (330, 420))):
+        top = 690
+        for index, (label, lines) in enumerate(column):
+            height = 14 + 11 * len(lines)
+            ops.append(f"{box_x} {top - height} 170 {height} re S")
+            ops.append(text_at(box_x + 6, top - 14, lines, size=8))
+            ops.append(text_at(label_x, top - height / 2 - 4, label.split(" ", 1), size=7))
+            ops.append(f"q 30 0 0 30 {label_x} {top - height - 6} cm /Im{1 + index % 2} Do Q")
+            top -= height + 20
+    return "\n".join(ops).encode("latin-1")
+
+
+def table_page() -> bytes:
+    ops = [text_at(72, 750, ["Document ID: LC-FLOW-001   Page 2 of 3"]),
+           "q 40 0 0 40 520 740 cm /Im0 Do Q"]  # fmt: skip
+    rows = [("Term", "Meaning"), ("ULD", "Unit load device used to carry cargo"),
+            ("NOTOC", "Notification to captain of special loads")]  # fmt: skip
+    for r, (term, meaning) in enumerate(rows):
+        y = 680 - 30 * r
+        ops.append(f"72 {y} 120 30 re S")
+        ops.append(f"192 {y} 300 30 re S")
+        ops.append(text_at(78, y + 12, [term], size=8))
+        ops.append(text_at(198, y + 12, [meaning], size=8))
+    return "\n".join(ops).encode("latin-1")
+
+
+def write_diagram_pdf(name: str) -> None:
+    text = text_at(72, 700, ["Section 4 Records",
+                             "The loading report is kept for three months by Load Control."])  # fmt: skip
+    page3 = (text_at(72, 750, ["Document ID: LC-FLOW-001   Page 3 of 3"]) + "\n" + text + "\n"
+             + "q 40 0 0 40 520 740 cm /Im0 Do Q").encode("latin-1")  # fmt: skip
+    logo = (64, checker(64, (230, 0, 43), (255, 255, 255)))
+    icons = [(56, checker(56, (39, 93, 140), (250, 249, 246))),
+             (60, checker(60, (20, 115, 93), (250, 249, 246)))]  # fmt: skip
+    pages = [(diagram_page(), [0, 1, 2]), (table_page(), [0]), (page3, [0])]
+    (HERE / name).write_bytes(pdf_with_images(pages, [logo, *icons]))
+
+
 # PRD Appendix A.1 (v1.10: sixteen turns with question tags), verbatim. "Priya Nair" is a fictional SME whose name must become a redaction
 # term and never appear in outputs or exports.
 TRANSCRIPT = [
@@ -335,6 +469,7 @@ def main() -> None:
     write_docx("jd_load_control_lead.docx", JD_LEAD)
     write_docx("jd_load_controller.docx", JD_CONTROLLER)
     write_pdf("manual_extract.pdf")
+    write_diagram_pdf("process_flow_diagram.pdf")
     write_transcripts()
     write_photo("photo_with_gps.jpg")
     (HERE / "README.md").write_text(
@@ -345,6 +480,9 @@ def main() -> None:
         "prompt-injection test line).\n"
         "- `manual_extract.pdf`: parser test document — page 1 text, page 2 nearly empty "
         "(treated as a scanned page), page 3 text with one embedded image.\n"
+        "- `process_flow_diagram.pdf`: a process-flow diagram page (two columns of boxed stages, "
+        "each with its team label beside it), a table page and a text page, with the same logo "
+        "on every page and small icons on the diagram.\n"
         "- `interview_transcript.txt`: Appendix A.1 verbatim (`[mm:ss] Speaker: text`); the same "
         "interview as `.vtt` (voice tags), `.srt`, `.docx` (one paragraph per turn) and `.pdf` "
         '(two pages, long turns wrapped onto continuation lines). "Priya Nair" is fictional.\n'

@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, Request, Response, UploadFile
 
 from app.actions import images
-from app.domain.models import ImagePatch, ImageView
+from app.domain.models import DiscardedSuggestions, ImagePatch, ImageView
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["images"])
@@ -44,6 +44,12 @@ def list_images(request: Request, element_id: str) -> list[ImageView]:
 @router.get("/versions/{version_id}/images")
 def version_images(request: Request, version_id: str) -> list[ImageView]:
     return unwrap(images.version_images(request.app.state.sessions, version_id))
+
+
+@router.post("/versions/{version_id}/images/discard-suggestions")
+def discard_suggestions(request: Request, version_id: str) -> DiscardedSuggestions:
+    state = request.app.state
+    return unwrap(images.discard_suggestions(state.config, state.sessions, version_id))
 
 
 @router.patch("/images/{image_id}")

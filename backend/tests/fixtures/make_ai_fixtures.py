@@ -1841,6 +1841,127 @@ def write_documents_only() -> None:
         write(MOCKS, "S5_questions", s5_hash(sessions, version_id), DOCUMENTS_ONLY_S5)
 
 
+# The diagram sample (2026-10-28, from Eric's cargo manual): `process_flow_diagram.pdf` alone, a
+# process-flow page whose boxed stages each carry their team's label (passages p3-p7, each box
+# with its label in front). Its engagement adds the role "Load control team" (the label). Each
+# claim names the team or role printed on its box, so the role check (G5) finds it in the cited
+# passage; one planted claim names "Airline ops", which no box says, and is rejected. The diagram
+# never says where an out-of-tolerance deviation or a refused load sheet goes, so those exits are
+# left out (L4, L5) for Eric to add.
+DIAGRAM_SOURCES = ["process_flow_diagram.pdf"]
+DIAGRAM_ROLE = {"name": "Load control team", "aliases": ["Load Control Team"]}
+DIAGRAM_S1: dict[str, Any] = {
+    "claims": [
+        claim("activity", "The Load control team drafts the preliminary load plan by T-90.", ["p3"],
+              "Draft the preliminary load plan by T-90", responsible="Load control team"),
+        claim("approval", "The Load control lead approves the plan.", ["p3"],
+              "Load Control Lead approves the plan", responsible="Load control lead"),
+        claim("activity", "Ramp loads the ULDs as per the load plan.", ["p4"],
+              "Load ULDs as per the load plan", responsible="Ramp"),
+        claim("activity", "Ramp returns the loading report within 10 minutes.", ["p4"],
+              "Return the loading report within 10 minutes", responsible="Ramp", duration="10 minutes"),
+        claim("decision", "The Captain checks the deviation against tolerance.", ["p5"],
+              "Check deviation against tolerance", decider="Captain", mechanism="judgment"),
+        claim("approval", "The Captain accepts the final load sheet.", ["p5"],
+              "Captain accepts the final load sheet", responsible="Captain"),
+        # Planted: no box names Airline ops (G5, role not found in the cited passage).
+        claim("activity", "Airline ops verify pieces, weight and dimensions.", ["p6"],
+              "Verify pieces, weight and dimensions", responsible="Airline ops"),
+    ],
+    "unknowns": [{"question": "Where does a deviation outside tolerance go next?",
+                  "segment_ids": ["p5"]}],
+}  # fmt: skip
+DIAGRAM_S2: dict[str, Any] = {
+    "steps": [
+        step("st1", "activity", "Draft load plan", "Load control team", [1]),
+        step("st2", "approval", "Approve load plan", "Load control lead", [2]),
+        step("st3", "activity", "Load ULDs", "Ramp", [3]),
+        step("st4", "activity", "Return loading report", "Ramp", [4]),
+        step("st5", "decision", "Deviation in limits?", "Captain", [5]),
+        step("st6", "approval", "Accept final load sheet", "Captain", [6]),
+    ],
+    "new_roles": [],
+    "merge_proposals": [],
+}
+DIAGRAM_QUOTES = {
+    "Draft load plan": ("p3", "Draft the preliminary load plan by T-90"),
+    "Approve load plan": ("p3", "Load Control Lead approves the plan"),
+    "Load ULDs": ("p4", "Load ULDs as per the load plan"),
+    "Return loading report": ("p4", "Return the loading report within 10 minutes"),
+    "Deviation in limits?": ("p5", "Check deviation against tolerance"),
+    "Accept final load sheet": ("p5", "Captain accepts the final load sheet"),
+}
+
+
+def diagram_s4(refs: dict[str, str]) -> dict[str, Any]:
+    plan, approve = refs["Draft load plan"], refs["Approve load plan"]
+    load, report = refs["Load ULDs"], refs["Return loading report"]
+    deviation, accept = refs["Deviation in limits?"], refs["Accept final load sheet"]
+    team = "Load control team"
+    return {
+        "phases": [
+            {"name": "Plan", "time_window": "", "step_refs": [plan, approve]},
+            {"name": "Load", "time_window": "", "step_refs": [load, report]},
+            {"name": "Close out", "time_window": "", "step_refs": [deviation, accept]},
+        ],
+        "steps": [
+            s4_step(plan, raci=raci((team, "R"), (team, "A")), duration_text="By T-90"),
+            s4_step(approve, raci=raci((LEAD, "R"), (LEAD, "A")), decision_mechanism="judgment"),
+            s4_step(load, raci=raci(("Ramp", "R"), ("Ramp", "A"))),
+            s4_step(report, raci=raci(("Ramp", "R"), ("Ramp", "A")), work_min=10,
+                    duration_text="Within 10 minutes"),
+            s4_step(deviation, raci=raci(("Captain", "R"), ("Captain", "A")),
+                    decision_mechanism="judgment", decider_role="Captain",
+                    rule_or_threshold="Deviation against tolerance"),
+            s4_step(accept, raci=raci(("Captain", "R"), ("Captain", "A")),
+                    decision_mechanism="judgment"),
+        ],
+        "edges": [
+            edge("start", plan),
+            edge(plan, approve),
+            edge(approve, load, "approve", "Approve"),
+            edge(approve, plan, "reject", "Rework"),
+            edge(load, report),
+            edge(report, deviation),
+            edge(deviation, accept, "yes", "Within tolerance"),
+            edge(accept, "end", "approve", "Accept"),
+        ],
+    }  # fmt: skip
+
+
+def diagram_app() -> Any:
+    """The diagram sample's engagement: the PDF alone, plus the label's role."""
+    return sample_app(sources=DIAGRAM_SOURCES)
+
+
+def write_diagram() -> None:
+    """Every answer for the diagram sample (its S1 answer first; the later stages run on it)."""
+    with diagram_app() as (app, client, built):
+        from app.pipeline import s2_canonicalise, s3_calibrate, s3b_verify, s4_assemble
+
+        added = client.post(f"/api/engagements/{built.engagement_id}/roles", json=DIAGRAM_ROLE)
+        assert added.status_code == 201, added.text
+        for (name, _index), (stage, digest) in chunk_hashes(app.state.sessions, built).items():
+            assert name in DIAGRAM_SOURCES and stage == "S1_extract_document", (name, stage)
+            write(MOCKS, stage, digest, DIAGRAM_S1)
+        version_id = draft_version(app, client, built)
+        sessions = app.state.sessions
+        write(MOCKS, "S2_canonicalise", s2_hash(sessions, version_id, built.engagement_id),
+              DIAGRAM_S2)  # fmt: skip
+        run_stage(app, s2_canonicalise.canonicalise, version_id)
+        refs = step_ref_by_label(sessions, version_id)
+        stances = [stance(refs[label], "supports", [seg], quote)
+                   for label, (seg, quote) in DIAGRAM_QUOTES.items()]  # fmt: skip
+        for _key, digest in s3_hashes(sessions, version_id, built.sources).items():
+            write(MOCKS, "S3_calibrate", digest, {"stances": stances})
+        run_stage(app, s3_calibrate.calibrate, version_id)
+        for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
+            write(MOCKS, "S3b_verify", digest, verdicts(count))
+        run_stage(app, s3b_verify.verify, version_id)
+        write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), diagram_s4(refs))
+        run_stage(app, s4_assemble.assemble, version_id)
+
+
 # The Reality fixture (PRD Appendix A.12, P13a-2): S1 intent over the charter. ILLUSTRATIVE ONLY.
 # The charter's passages are sent as p1 (its title) and p2-p5 (§1-§4). Four statements pass every
 # check; two planted traps are turned down: RT1 (a quote that isn't in its passage, G4) and RT2
@@ -2028,6 +2149,7 @@ def main() -> None:
             write(TRAPS, "S3b_verify", digest, TRAPS_S3B[label])
     write_interview_only()
     write_documents_only()
+    write_diagram()
     write_gap()
     write_reality()
     print(
@@ -2042,6 +2164,8 @@ if __name__ == "__main__":
         write_interview_only()
     elif sys.argv[1:] == ["documents"]:  # only the documents-only sample's answers
         write_documents_only()
+    elif sys.argv[1:] == ["diagram"]:  # only the diagram sample's answers (2026-10-28)
+        write_diagram()
     elif sys.argv[1:] == ["reality"]:  # only the Reality fixture's intent answers (A.12)
         write_reality()
     else:

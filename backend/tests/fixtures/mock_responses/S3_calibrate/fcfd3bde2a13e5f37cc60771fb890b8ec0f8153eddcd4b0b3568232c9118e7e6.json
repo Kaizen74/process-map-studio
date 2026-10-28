@@ -1,0 +1,64 @@
+{
+  "stances": [
+    {
+      "step_ref": "e1",
+      "stance": "supports",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "Draft the preliminary load plan by T-90",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e2",
+      "stance": "supports",
+      "segment_ids": [
+        "p3"
+      ],
+      "quote": "Load Control Lead approves the plan",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e3",
+      "stance": "supports",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "Load ULDs as per the load plan",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e4",
+      "stance": "supports",
+      "segment_ids": [
+        "p4"
+      ],
+      "quote": "Return the loading report within 10 minutes",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e5",
+      "stance": "supports",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Check deviation against tolerance",
+      "divergence_type": "none",
+      "divergence_note": ""
+    },
+    {
+      "step_ref": "e6",
+      "stance": "supports",
+      "segment_ids": [
+        "p5"
+      ],
+      "quote": "Captain accepts the final load sheet",
+      "divergence_type": "none",
+      "divergence_note": ""
+    }
+  ]
+}

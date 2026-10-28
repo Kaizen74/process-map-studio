@@ -61,6 +61,10 @@ function validate(form: Form): Partial<Record<keyof Form, string>> {
 }
 
 /** Process scope (PRD §5.4 Setup): what the map covers, plus terms never sent to web research. */
+// 2026-10-28 (Eric's cargo manual describes import, export and transhipment on one page).
+const SEVERAL_FLOWS =
+  "One engagement maps one flow, from its trigger to its end point. If a document covers several flows (for example import, export and transhipment), make one engagement for each and upload the same document to each.";
+
 export function ScopeCard({ engagement }: { engagement: Engagement }) {
   const [form, setForm] = useState<Form>(() => formOf(engagement));
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
@@ -109,6 +113,7 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
           {text("trigger", "What starts the process.")}
           {text("end_point", "What marks it as finished.")}
         </div>
+        <p className="setup-form__note">{SEVERAL_FLOWS}</p>
         <div className="setup-form__pair">
           <CheckboxField
             label={LABELS.trigger_external}

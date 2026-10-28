@@ -1,18 +1,45 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { seriousViolations } from "../axe";
-import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp } from "../renderApp";
+import {
+  ENGAGEMENT,
+  READINESS,
+  SETTINGS,
+  fakeApi,
+  moreSteps,
+  renderApp,
+} from "../renderApp";
 
 afterEach(() => vi.unstubAllGlobals());
 
 const PATH = "/engagements/e1/interview";
 const ROLES = [
-  { id: "r1", engagement_id: "e1", name: "Load controller", aliases: [], is_system: false, lane_order: 1 },
-  { id: "r2", engagement_id: "e1", name: "Ramp agent", aliases: [], is_system: false, lane_order: 2 },
+  {
+    id: "r1",
+    engagement_id: "e1",
+    name: "Load controller",
+    aliases: [],
+    is_system: false,
+    lane_order: 1,
+  },
+  {
+    id: "r2",
+    engagement_id: "e1",
+    name: "Ramp agent",
+    aliases: [],
+    is_system: false,
+    lane_order: 2,
+  },
 ];
 const PROFILE = {
-  id: "p1", engagement_id: "e1", role_id: "r2", role_name: "Ramp agent", stakeholder_group: "Ramp",
-  interview_type: "landscape", referred_by_role: "Load controller", previous_profile_id: null,
+  id: "p1",
+  engagement_id: "e1",
+  role_id: "r2",
+  role_name: "Ramp agent",
+  stakeholder_group: "Ramp",
+  interview_type: "landscape",
+  referred_by_role: "Load controller",
+  previous_profile_id: null,
   created_at: "2026-10-05T09:00:00+00:00",
 };
 
@@ -41,23 +68,42 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
       "GET /api/engagements": () => ({ body: [] }),
     });
     const { container } = renderApp("/");
-    const card = await screen.findByRole("region", { name: "Interview templates" });
-    const list = await within(card).findByRole("list", { name: "Interview templates" });
+    const card = await screen.findByRole("region", {
+      name: "Interview templates",
+    });
+    const list = await within(card).findByRole("list", {
+      name: "Interview templates",
+    });
     const items = within(list).getAllByRole("listitem");
-    expect(items.map((i) => i.querySelector(".template-list__title")?.textContent)).toEqual([
+    expect(
+      items.map((i) => i.querySelector(".template-list__title")?.textContent),
+    ).toEqual([
       "Landscape (60 min)",
       "Practice (60 min)",
       "Follow-up (30 min)",
     ]);
-    expect(within(card).getByRole("link", { name: "Download Word Practice interview template" })).toHaveAttribute(
+    expect(
+      within(card).getByRole("link", {
+        name: "Download Word Practice interview template",
+      }),
+    ).toHaveAttribute(
       "href",
       "/api/templates/interview?type=practice&format=docx",
     );
     expect(
-      within(card).getByRole("link", { name: "Download Markdown Follow-up interview template" }),
-    ).toHaveAttribute("href", "/api/templates/interview?type=follow_up&format=md");
-    expect(within(card).getAllByRole("link", { name: /^Download/ })).toHaveLength(6);
-    expect(card).toHaveTextContent("Say or note the question ID (for example [M2.2]) when you ask it");
+      within(card).getByRole("link", {
+        name: "Download Markdown Follow-up interview template",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/api/templates/interview?type=follow_up&format=md",
+    );
+    expect(
+      within(card).getAllByRole("link", { name: /^Download/ }),
+    ).toHaveLength(6);
+    expect(card).toHaveTextContent(
+      "Say or note the question ID (for example [M2.2]) when you ask it",
+    );
     expect(card).toHaveTextContent("No engagement needed.");
     expect(await seriousViolations(container)).toEqual([]);
   });
@@ -65,25 +111,47 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
   it("shows each template's purpose, minute plan and downloads on the Interview screen", async () => {
     interviewApi();
     const { container } = renderApp(PATH);
-    expect(await screen.findByRole("heading", { level: 1, name: "Interview" })).toBeInTheDocument();
-    const practice = await screen.findByRole("region", { name: "Practice (60 min)" });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Interview" }),
+    ).toBeInTheDocument();
+    const practice = await screen.findByRole("region", {
+      name: "Practice (60 min)",
+    });
     expect(practice).toHaveTextContent("The workflow as actually performed");
-    expect(practice).toHaveTextContent("For: People who do the work (one per person)");
-    const plan = within(practice).getByRole("table", { name: "Minute plan of the Practice template" });
+    expect(practice).toHaveTextContent(
+      "For: People who do the work (one per person)",
+    );
+    const plan = within(practice).getByRole("table", {
+      name: "Minute plan of the Practice template",
+    });
     const rows = within(plan).getAllByRole("row");
     expect(rows).toHaveLength(1 + 8 + 1); // header, eight movements, total
     expect(rows.at(-1)).toHaveTextContent("Total60");
     expect(practice).toHaveTextContent("45 question IDs · question bank v1.0");
-    expect(within(practice).getByRole("link", { name: "Download Word Practice interview template" })).toHaveAttribute(
-      "download",
-    );
-    expect(screen.getByRole("region", { name: "Landscape (60 min)" })).toBeInTheDocument();
+    expect(
+      within(practice).getByRole("link", {
+        name: "Download Word Practice interview template",
+      }),
+    ).toHaveAttribute("download");
+    expect(
+      screen.getByRole("region", { name: "Landscape (60 min)" }),
+    ).toBeInTheDocument();
     const followUp = screen.getByRole("region", { name: "Follow-up (30 min)" });
-    expect(within(followUp).getAllByRole("row").at(-1)).toHaveTextContent("Total30");
-    expect(screen.getByText(/Say or note the question ID \(for example \[M2\.2\]\)/)).toBeInTheDocument();
+    expect(within(followUp).getAllByRole("row").at(-1)).toHaveTextContent(
+      "Total30",
+    );
+    expect(
+      screen.getByText(/Say or note the question ID \(for example \[M2\.2\]\)/),
+    ).toBeInTheDocument();
     // PRD §5.4: three tabs, Templates first.
-    const tabs = within(screen.getByRole("tablist", { name: "Interview" })).getAllByRole("tab");
-    expect(tabs.map((t) => t.textContent)).toEqual(["Templates", "Guide", "Coverage"]);
+    const tabs = within(
+      screen.getByRole("tablist", { name: "Interview" }),
+    ).getAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual([
+      "Templates",
+      "Guide",
+      "Coverage",
+    ]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(await seriousViolations(container)).toEqual([]);
   });
@@ -93,35 +161,67 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
     const api = interviewApi({
       "GET /api/templates/interview/plans": () =>
         fail
-          ? { status: 500, body: { error: { code: "IO", message: "The interview question bank is missing or damaged in the app.", details: {} } } }
+          ? {
+              status: 500,
+              body: {
+                error: {
+                  code: "IO",
+                  message:
+                    "The interview question bank is missing or damaged in the app.",
+                  details: {},
+                },
+              },
+            }
           : { body: [] },
     });
     renderApp(PATH);
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("The interview templates couldn't be loaded");
-    expect(alert).toHaveTextContent("The interview question bank is missing or damaged in the app.");
+    expect(alert).toHaveTextContent(
+      "The interview templates couldn't be loaded",
+    );
+    expect(alert).toHaveTextContent(
+      "The interview question bank is missing or damaged in the app.",
+    );
     fail = false;
     fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
     await waitFor(() =>
-      expect(api.calls.filter((c) => c.key === "GET /api/templates/interview/plans")).toHaveLength(2),
+      expect(
+        api.calls.filter((c) => c.key === "GET /api/templates/interview/plans"),
+      ).toHaveLength(2),
     );
   });
 
-  it("puts Interview between Setup and Sources in the guided path", async () => {
+  it("lists Interview first under More, and More says the next step is there (2026-10-28)", async () => {
     interviewApi({
       "GET /api/engagements/e1/readiness": () => ({
-        body: { ...READINESS, nav: { ...READINESS.nav, setup: "done" }, next_step: "interview" },
+        body: {
+          ...READINESS,
+          nav: { ...READINESS.nav, setup: "done" },
+          next_step: "interview",
+        },
       }),
     });
     renderApp(PATH);
-    const nav = await screen.findByRole("navigation", { name: "Engagement steps" });
+    const nav = await screen.findByRole("navigation", {
+      name: "Engagement steps",
+    });
     const links = within(nav).getAllByRole("link");
-    expect(links.slice(0, 3).map((l) => l.getAttribute("href"))).toEqual([
+    expect(links.slice(0, 2).map((l) => l.getAttribute("href"))).toEqual([
       "/engagements/e1/setup",
-      "/engagements/e1/interview",
       "/engagements/e1/sources",
     ]);
-    await waitFor(() => expect(links[1]).toHaveAccessibleName(/^Interview, not started.*recommended next step/));
+    await waitFor(() =>
+      expect(
+        within(nav).getByRole("button", { name: /^More steps/ }),
+      ).toHaveAccessibleName(
+        "More steps, current: Interview, includes the recommended next step",
+      ),
+    );
+    const [first] = within(await moreSteps()).getAllByRole("link");
+    expect(first).toHaveAttribute("href", "/engagements/e1/interview");
+    expect(first).toHaveAccessibleName(
+      /^Interview, not started.*recommended next step/,
+    );
   });
 });
 
@@ -138,24 +238,46 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
     const { container } = renderApp(PATH);
     await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
-    expect(await within(section).findByText(/No interviewees yet/)).toBeInTheDocument();
-    fireEvent.click(within(section).getByRole("button", { name: "Add interviewee" }));
+    expect(
+      await within(section).findByText(/No interviewees yet/),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(section).getByRole("button", { name: "Add interviewee" }),
+    );
     const form = within(section).getByRole("form", { name: "Add interviewee" });
     fireEvent.click(within(form).getByRole("radio", { name: "Landscape" }));
-    fireEvent.change(within(form).getByRole("combobox", { name: "Role" }), { target: { value: "r2" } });
-    fireEvent.change(within(form).getByRole("textbox", { name: "Stakeholder group" }), { target: { value: " Ramp " } });
-    fireEvent.change(within(form).getByRole("textbox", { name: "Referred by (role)" }), {
-      target: { value: "Load controller" },
+    fireEvent.change(within(form).getByRole("combobox", { name: "Role" }), {
+      target: { value: "r2" },
     });
+    fireEvent.change(
+      within(form).getByRole("textbox", { name: "Stakeholder group" }),
+      { target: { value: " Ramp " } },
+    );
+    fireEvent.change(
+      within(form).getByRole("textbox", { name: "Referred by (role)" }),
+      {
+        target: { value: "Load controller" },
+      },
+    );
     expect(await seriousViolations(container)).toEqual([]);
-    fireEvent.click(within(form).getByRole("button", { name: "Add interviewee" }));
+    fireEvent.click(
+      within(form).getByRole("button", { name: "Add interviewee" }),
+    );
     await waitFor(() =>
-      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")?.body).toEqual({
-        interview_type: "landscape", role_id: "r2", stakeholder_group: "Ramp",
-        referred_by_role: "Load controller", previous_profile_id: null,
+      expect(
+        api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")
+          ?.body,
+      ).toEqual({
+        interview_type: "landscape",
+        role_id: "r2",
+        stakeholder_group: "Ramp",
+        referred_by_role: "Load controller",
+        previous_profile_id: null,
       }),
     );
-    const list = await within(section).findByRole("list", { name: "Interviewees" });
+    const list = await within(section).findByRole("list", {
+      name: "Interviewees",
+    });
     expect(list).toHaveTextContent("Ramp agent · Ramp");
     expect(list).toHaveTextContent("Landscape · referred by Load controller");
     expect(within(section).queryByRole("form")).toBeNull();
@@ -165,63 +287,129 @@ describe("Interviewees (C5a; PRD Appendix F.8 rule 1)", () => {
     const api = interviewApi({
       "POST /api/engagements/e1/profiles": () => ({
         status: 422,
-        body: { error: { code: "VALIDATION", message: "The stakeholder group contains a name from your list of names to hide. Use the role instead.", details: { field: "stakeholder_group" } } },
+        body: {
+          error: {
+            code: "VALIDATION",
+            message:
+              "The stakeholder group contains a name from your list of names to hide. Use the role instead.",
+            details: { field: "stakeholder_group" },
+          },
+        },
       }),
     });
     renderApp(PATH);
     await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
-    fireEvent.click(await within(section).findByRole("button", { name: "Add interviewee" }));
+    fireEvent.click(
+      await within(section).findByRole("button", { name: "Add interviewee" }),
+    );
     const form = within(section).getByRole("form", { name: "Add interviewee" });
-    fireEvent.click(within(form).getByRole("button", { name: "Add interviewee" }));
-    expect(within(form).getByText(/choose a role or name the stakeholder group/)).toBeInTheDocument();
-    expect(api.calls.some((c) => c.key === "POST /api/engagements/e1/profiles")).toBe(false);
-    fireEvent.change(within(form).getByRole("textbox", { name: "Stakeholder group" }), { target: { value: "Team X" } });
-    fireEvent.click(within(form).getByRole("button", { name: "Add interviewee" }));
-    const field = within(form).getByRole("textbox", { name: "Stakeholder group" });
+    fireEvent.click(
+      within(form).getByRole("button", { name: "Add interviewee" }),
+    );
+    expect(
+      within(form).getByText(/choose a role or name the stakeholder group/),
+    ).toBeInTheDocument();
+    expect(
+      api.calls.some((c) => c.key === "POST /api/engagements/e1/profiles"),
+    ).toBe(false);
+    fireEvent.change(
+      within(form).getByRole("textbox", { name: "Stakeholder group" }),
+      { target: { value: "Team X" } },
+    );
+    fireEvent.click(
+      within(form).getByRole("button", { name: "Add interviewee" }),
+    );
+    const field = within(form).getByRole("textbox", {
+      name: "Stakeholder group",
+    });
     await waitFor(() => expect(field).toHaveAttribute("aria-invalid", "true"));
-    expect(within(form).getByText(/names to hide. Use the role instead./)).toBeInTheDocument();
+    expect(
+      within(form).getByText(/names to hide. Use the role instead./),
+    ).toBeInTheDocument();
   });
 
   it("edits a profile; a follow-up chooses the earlier interview it builds on", async () => {
     const api = interviewApi({
       "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
-      "POST /api/engagements/e1/profiles": (body) => ({ status: 201, body: { ...PROFILE, id: "p2", ...(body as object) } }),
+      "POST /api/engagements/e1/profiles": (body) => ({
+        status: 201,
+        body: { ...PROFILE, id: "p2", ...(body as object) },
+      }),
     });
     renderApp(PATH);
     await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
-    fireEvent.click(await within(section).findByRole("button", { name: "Add interviewee" }));
+    fireEvent.click(
+      await within(section).findByRole("button", { name: "Add interviewee" }),
+    );
     const form = within(section).getByRole("form", { name: "Add interviewee" });
-    expect(within(form).queryByRole("combobox", { name: "Earlier interview" })).toBeNull();
+    expect(
+      within(form).queryByRole("combobox", { name: "Earlier interview" }),
+    ).toBeNull();
     fireEvent.click(within(form).getByRole("radio", { name: "Follow-up" }));
-    const earlier = within(form).getByRole("combobox", { name: "Earlier interview" });
-    expect(within(earlier).getAllByRole("option").map((o) => o.textContent)).toEqual([
-      "None",
-      "Ramp agent · Ramp (Landscape)",
-    ]);
+    const earlier = within(form).getByRole("combobox", {
+      name: "Earlier interview",
+    });
+    expect(
+      within(earlier)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["None", "Ramp agent · Ramp (Landscape)"]);
     fireEvent.change(earlier, { target: { value: "p1" } });
-    fireEvent.change(within(form).getByRole("combobox", { name: "Role" }), { target: { value: "r2" } });
-    fireEvent.click(within(form).getByRole("button", { name: "Add interviewee" }));
+    fireEvent.change(within(form).getByRole("combobox", { name: "Role" }), {
+      target: { value: "r2" },
+    });
+    fireEvent.click(
+      within(form).getByRole("button", { name: "Add interviewee" }),
+    );
     await waitFor(() =>
-      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")?.body).toMatchObject({
-        interview_type: "follow_up", previous_profile_id: "p1",
+      expect(
+        api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")
+          ?.body,
+      ).toMatchObject({
+        interview_type: "follow_up",
+        previous_profile_id: "p1",
       }),
     );
-    fireEvent.click(within(section).getByRole("button", { name: "Edit Ramp agent · Ramp" }));
-    const editForm = within(section).getByRole("form", { name: "Edit interviewee" });
-    expect(within(editForm).getByRole("textbox", { name: "Stakeholder group" })).toHaveValue("Ramp");
-    expect(within(editForm).getByRole("radio", { name: "Landscape" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(
+      within(section).getByRole("button", { name: "Edit Ramp agent · Ramp" }),
+    );
+    const editForm = within(section).getByRole("form", {
+      name: "Edit interviewee",
+    });
+    expect(
+      within(editForm).getByRole("textbox", { name: "Stakeholder group" }),
+    ).toHaveValue("Ramp");
+    expect(
+      within(editForm).getByRole("radio", { name: "Landscape" }),
+    ).toHaveAttribute("aria-checked", "true");
   });
 });
 
 describe("Tailored guides (G2, C5b; PRD Appendix F.8, F.9, criteria 69 and 80)", () => {
-  const GUIDE = { id: "g1", profile_id: "p1", interview_type: "landscape", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+  const GUIDE = {
+    id: "g1",
+    profile_id: "p1",
+    interview_type: "landscape",
+    version: 1,
+    created_at: "2026-10-06T09:00:00+00:00",
+  };
   const JOB = {
-    id: "j1", engagement_id: "e1", type: "interview_guide", target_id: "p1", status: "done", stage: "",
-    progress: 1, message: "Guide version 1 made. 4 role-module questions drafted and checked.", error: "",
-    usage: { calls: 1, input_tokens: 900, output_tokens: 300 }, claims: { verified: 0, rejected: 0 },
-    stages: [], created_at: "2026-10-06T09:00:00+00:00",
+    id: "j1",
+    engagement_id: "e1",
+    type: "interview_guide",
+    target_id: "p1",
+    status: "done",
+    stage: "",
+    progress: 1,
+    message:
+      "Guide version 1 made. 4 role-module questions drafted and checked.",
+    error: "",
+    usage: { calls: 1, input_tokens: 900, output_tokens: 300 },
+    claims: { verified: 0, rejected: 0 },
+    stages: [],
+    created_at: "2026-10-06T09:00:00+00:00",
   };
 
   it("makes a guide for an interviewee, then offers Word and Markdown downloads and a new version", async () => {
@@ -239,28 +427,54 @@ describe("Tailored guides (G2, C5b; PRD Appendix F.8, F.9, criteria 69 and 80)",
     const { container } = renderApp(PATH);
     await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
-    const list = await within(section).findByRole("list", { name: "Interviewees" });
+    const list = await within(section).findByRole("list", {
+      name: "Interviewees",
+    });
     expect(await within(list).findByText("No guide yet")).toBeInTheDocument();
-    expect(within(list).queryByRole("link", { name: /Download Word/ })).toBeNull();
-    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
+    expect(
+      within(list).queryByRole("link", { name: /Download Word/ }),
+    ).toBeNull();
+    fireEvent.click(
+      within(list).getByRole("button", {
+        name: "Make guide for Ramp agent · Ramp",
+      }),
+    );
     await waitFor(() =>
-      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/interview-guide")?.body).toEqual({
+      expect(
+        api.calls.find(
+          (c) => c.key === "POST /api/engagements/e1/interview-guide",
+        )?.body,
+      ).toEqual({
         profile_id: "p1",
       }),
     );
-    expect(await within(list).findByText("Guide version 1 (Landscape)")).toBeInTheDocument();
+    expect(
+      await within(list).findByText("Guide version 1 (Landscape)"),
+    ).toBeInTheDocument();
     expect(await within(list).findByRole("status")).toHaveTextContent(
       "Guide version 1 made. 4 role-module questions drafted and checked.",
     );
-    expect(within(list).getByRole("link", { name: "Download Word guide for Ramp agent · Ramp" })).toHaveAttribute(
+    expect(
+      within(list).getByRole("link", {
+        name: "Download Word guide for Ramp agent · Ramp",
+      }),
+    ).toHaveAttribute(
       "href",
       "/api/engagements/e1/interview-guide/export?profile_id=p1&format=docx",
     );
-    expect(within(list).getByRole("link", { name: "Download Markdown guide for Ramp agent · Ramp" })).toHaveAttribute(
+    expect(
+      within(list).getByRole("link", {
+        name: "Download Markdown guide for Ramp agent · Ramp",
+      }),
+    ).toHaveAttribute(
       "href",
       "/api/engagements/e1/interview-guide/export?profile_id=p1&format=md",
     );
-    expect(within(list).getByRole("button", { name: "Make new version for Ramp agent · Ramp" })).toBeInTheDocument();
+    expect(
+      within(list).getByRole("button", {
+        name: "Make new version for Ramp agent · Ramp",
+      }),
+    ).toBeInTheDocument();
     expect(await seriousViolations(container)).toEqual([]);
   });
 
@@ -269,67 +483,156 @@ describe("Tailored guides (G2, C5b; PRD Appendix F.8, F.9, criteria 69 and 80)",
       "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
       "GET /api/engagements/e1/interview-guides": () => ({
         status: 500,
-        body: { error: { code: "INTERNAL", message: "Something went wrong on our side.", details: {} } },
+        body: {
+          error: {
+            code: "INTERNAL",
+            message: "Something went wrong on our side.",
+            details: {},
+          },
+        },
       }),
       "POST /api/engagements/e1/interview-guide": () => ({
         status: 422,
-        body: { error: { code: "VALIDATION", message: "Choose one of this engagement's interviewees.", details: { field: "profile_id" } } },
+        body: {
+          error: {
+            code: "VALIDATION",
+            message: "Choose one of this engagement's interviewees.",
+            details: { field: "profile_id" },
+          },
+        },
       }),
     });
     renderApp(PATH);
     await openGuideTab();
     const section = await screen.findByRole("region", { name: "Interviewees" });
-    expect(await within(section).findByText("The tailored guides couldn't be loaded")).toBeInTheDocument();
+    expect(
+      await within(section).findByText(
+        "The tailored guides couldn't be loaded",
+      ),
+    ).toBeInTheDocument();
     const list = within(section).getByRole("list", { name: "Interviewees" });
-    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
-    expect(await within(list).findByRole("alert")).toHaveTextContent("Choose one of this engagement's interviewees.");
+    fireEvent.click(
+      within(list).getByRole("button", {
+        name: "Make guide for Ramp agent · Ramp",
+      }),
+    );
+    expect(await within(list).findByRole("alert")).toHaveTextContent(
+      "Choose one of this engagement's interviewees.",
+    );
   });
 
   it("says plainly when making the guide failed", async () => {
     interviewApi({
       "GET /api/engagements/e1/profiles": () => ({ body: [PROFILE] }),
-      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j1", profile_id: "p1" } }),
+      "POST /api/engagements/e1/interview-guide": () => ({
+        status: 202,
+        body: { job_id: "j1", profile_id: "p1" },
+      }),
       "GET /api/jobs/j1": () => ({
-        body: { ...JOB, status: "failed", message: "", error: "Something went wrong while making this guide. Nothing was saved." },
+        body: {
+          ...JOB,
+          status: "failed",
+          message: "",
+          error:
+            "Something went wrong while making this guide. Nothing was saved.",
+        },
       }),
     });
     renderApp(PATH);
     await openGuideTab();
     const list = await screen.findByRole("list", { name: "Interviewees" });
-    fireEvent.click(within(list).getByRole("button", { name: "Make guide for Ramp agent · Ramp" }));
-    expect(await within(list).findByRole("alert")).toHaveTextContent("Something went wrong while making this guide.");
+    fireEvent.click(
+      within(list).getByRole("button", {
+        name: "Make guide for Ramp agent · Ramp",
+      }),
+    );
+    expect(await within(list).findByRole("alert")).toHaveTextContent(
+      "Something went wrong while making this guide.",
+    );
     expect(within(list).getByText("No guide yet")).toBeInTheDocument();
   });
 });
 
 describe("Guide editor (C5c; PRD §5.4 Guide tab, criterion 49)", () => {
-  const SUMMARY = { id: "g1", profile_id: "p1", interview_type: "practice", version: 1, created_at: "2026-10-06T09:00:00+00:00" };
+  const SUMMARY = {
+    id: "g1",
+    profile_id: "p1",
+    interview_type: "practice",
+    version: 1,
+    created_at: "2026-10-06T09:00:00+00:00",
+  };
   const row = (over: Record<string, unknown>) => ({
-    id: "", lead_in: "", wording: "", note: "", probes: [], minutes: "2", signifier: false, movement: "",
-    targets: [], priority: "standard", held_back: [], ...over,
+    id: "",
+    lead_in: "",
+    wording: "",
+    note: "",
+    probes: [],
+    minutes: "2",
+    signifier: false,
+    movement: "",
+    targets: [],
+    priority: "standard",
+    held_back: [],
+    ...over,
   });
   const GUIDE_VIEW = {
-    id: "g1", engagement_id: "e1", profile_id: "p1", interview_type: "practice", version: 1, edited: false,
+    id: "g1",
+    engagement_id: "e1",
+    profile_id: "p1",
+    interview_type: "practice",
+    version: 1,
+    edited: false,
     created_at: "2026-10-06T09:00:00+00:00",
     document: {
-      kind: "practice", title: "Practice interview guide: Ramp agent · Ramp", minutes: 60, generation_note: "",
+      kind: "practice",
+      title: "Practice interview guide: Ramp agent · Ramp",
+      minutes: 60,
+      generation_note: "",
       tables: [
-        { label: "M2 — The last real case: the As done spine", minutes: 14, note: "", rows: [
-          row({ id: "M2.2", wording: "Walk me through what happened, step by step.", probes: ["And then?"],
-                movement: "M2", targets: ["Flow (steps)"], priority: "core", minutes: "3½" }),
-          row({}),
-        ] },
-        { label: "M6 — Contrast: official vs lived; now bring the documents", minutes: 6, note: "", rows: [
-          row({ id: "M6.5", wording: "SOP-derived (generator inserts, max 5):", movement: "M6", targets: ["Reality gap"],
-                held_back: ["The procedure mentions “Approve load plan”. Where does that happen in practice?"] }),
-        ] },
+        {
+          label: "M2 — The last real case: the As done spine",
+          minutes: 14,
+          note: "",
+          rows: [
+            row({
+              id: "M2.2",
+              wording: "Walk me through what happened, step by step.",
+              probes: ["And then?"],
+              movement: "M2",
+              targets: ["Flow (steps)"],
+              priority: "core",
+              minutes: "3½",
+            }),
+            row({}),
+          ],
+        },
+        {
+          label: "M6 — Contrast: official vs lived; now bring the documents",
+          minutes: 6,
+          note: "",
+          rows: [
+            row({
+              id: "M6.5",
+              wording: "SOP-derived (generator inserts, max 5):",
+              movement: "M6",
+              targets: ["Reality gap"],
+              held_back: [
+                "The procedure mentions “Approve load plan”. Where does that happen in practice?",
+              ],
+            }),
+          ],
+        },
       ],
     },
   };
 
-  function editorApi(patch: (body: unknown) => { status?: number; body: unknown }) {
+  function editorApi(
+    patch: (body: unknown) => { status?: number; body: unknown },
+  ) {
     return interviewApi({
-      "GET /api/engagements/e1/profiles": () => ({ body: [{ ...PROFILE, interview_type: "practice" }] }),
+      "GET /api/engagements/e1/profiles": () => ({
+        body: [{ ...PROFILE, interview_type: "practice" }],
+      }),
       "GET /api/engagements/e1/interview-guides": () => ({ body: [SUMMARY] }),
       "GET /api/engagements/e1/interview-guide": () => ({ body: GUIDE_VIEW }),
       "PATCH /api/engagements/e1/interview-guide": patch,
@@ -337,83 +640,206 @@ describe("Guide editor (C5c; PRD §5.4 Guide tab, criterion 49)", () => {
   }
 
   it("opens the guide as editable cards, parks SOP probes in M6, and saves the edits", async () => {
-    const api = editorApi((body) => ({ body: { ...GUIDE_VIEW, edited: true, document: GUIDE_VIEW.document, _sent: body } }));
+    const api = editorApi((body) => ({
+      body: {
+        ...GUIDE_VIEW,
+        edited: true,
+        document: GUIDE_VIEW.document,
+        _sent: body,
+      },
+    }));
     const { container } = renderApp(PATH);
     await openGuideTab();
     const list = await screen.findByRole("list", { name: "Interviewees" });
-    fireEvent.click(await within(list).findByRole("button", { name: "Edit guide for Ramp agent · Ramp" }));
-    const form = await screen.findByRole("form", { name: "Edit Practice interview guide: Ramp agent · Ramp" });
-    expect(within(form).getByRole("heading", { name: /M2 — The last real case/ })).toBeInTheDocument();
+    fireEvent.click(
+      await within(list).findByRole("button", {
+        name: "Edit guide for Ramp agent · Ramp",
+      }),
+    );
+    const form = await screen.findByRole("form", {
+      name: "Edit Practice interview guide: Ramp agent · Ramp",
+    });
+    expect(
+      within(form).getByRole("heading", { name: /M2 — The last real case/ }),
+    ).toBeInTheDocument();
     expect(form).toHaveTextContent("M2.2 · 3½ min · for: Flow (steps)");
-    const question = within(form).getByRole("textbox", { name: "Question M2.2" });
-    expect(question).toHaveValue("Walk me through what happened, step by step.");
-    const held = within(form).getByRole("textbox", { name: "Held-back probes for M6.5 (one per line)" });
-    expect(held).toHaveValue("The procedure mentions “Approve load plan”. Where does that happen in practice?");
-    expect(within(form).getByText(/Held back to avoid anchoring the SME/)).toBeInTheDocument();
-    fireEvent.change(question, { target: { value: "Walk me through the last flight you loaded." } });
-    fireEvent.change(within(form).getByRole("textbox", { name: "Probes for M2.2 (one per line)" }), {
-      target: { value: "And then?\nWho did that?" },
+    const question = within(form).getByRole("textbox", {
+      name: "Question M2.2",
     });
-    fireEvent.change(within(form).getByRole("textbox", { name: /^Your question \(M2/ }), {
-      target: { value: "What would a new colleague find hardest?" },
+    expect(question).toHaveValue(
+      "Walk me through what happened, step by step.",
+    );
+    const held = within(form).getByRole("textbox", {
+      name: "Held-back probes for M6.5 (one per line)",
     });
+    expect(held).toHaveValue(
+      "The procedure mentions “Approve load plan”. Where does that happen in practice?",
+    );
+    expect(
+      within(form).getByText(/Held back to avoid anchoring the SME/),
+    ).toBeInTheDocument();
+    fireEvent.change(question, {
+      target: { value: "Walk me through the last flight you loaded." },
+    });
+    fireEvent.change(
+      within(form).getByRole("textbox", {
+        name: "Probes for M2.2 (one per line)",
+      }),
+      {
+        target: { value: "And then?\nWho did that?" },
+      },
+    );
+    fireEvent.change(
+      within(form).getByRole("textbox", { name: /^Your question \(M2/ }),
+      {
+        target: { value: "What would a new colleague find hardest?" },
+      },
+    );
     expect(await seriousViolations(container)).toEqual([]);
     fireEvent.click(within(form).getByRole("button", { name: "Save guide" }));
-    await waitFor(() => expect(api.calls.some((c) => c.key === "PATCH /api/engagements/e1/interview-guide")).toBe(true));
-    const sent = api.calls.find((c) => c.key === "PATCH /api/engagements/e1/interview-guide")?.body as {
-      tables: { label: string; rows: { id: string; wording: string; probes: string[]; held_back: string[] }[] }[];
+    await waitFor(() =>
+      expect(
+        api.calls.some(
+          (c) => c.key === "PATCH /api/engagements/e1/interview-guide",
+        ),
+      ).toBe(true),
+    );
+    const sent = api.calls.find(
+      (c) => c.key === "PATCH /api/engagements/e1/interview-guide",
+    )?.body as {
+      tables: {
+        label: string;
+        rows: {
+          id: string;
+          wording: string;
+          probes: string[];
+          held_back: string[];
+        }[];
+      }[];
     };
-    expect(sent.tables.map((t) => t.label)).toEqual(GUIDE_VIEW.document.tables.map((t) => t.label));
+    expect(sent.tables.map((t) => t.label)).toEqual(
+      GUIDE_VIEW.document.tables.map((t) => t.label),
+    );
     expect(sent.tables[0]?.rows[0]).toEqual({
-      id: "M2.2", wording: "Walk me through the last flight you loaded.", probes: ["And then?", "Who did that?"], held_back: [],
+      id: "M2.2",
+      wording: "Walk me through the last flight you loaded.",
+      probes: ["And then?", "Who did that?"],
+      held_back: [],
     });
-    expect(sent.tables[0]?.rows[1]).toMatchObject({ id: "", wording: "What would a new colleague find hardest?" });
+    expect(sent.tables[0]?.rows[1]).toMatchObject({
+      id: "",
+      wording: "What would a new colleague find hardest?",
+    });
     expect(await within(form).findByRole("status")).toHaveTextContent("Saved.");
   });
 
   it("shows a refusal under the question it names and keeps the edits", async () => {
     editorApi(() => ({
       status: 422,
-      body: { error: { code: "VALIDATION", message: "Keep what the documents say for M6, after the interviewee has described the work in their own words.", details: { field: "tables[0].rows[0].wording" } } },
+      body: {
+        error: {
+          code: "VALIDATION",
+          message:
+            "Keep what the documents say for M6, after the interviewee has described the work in their own words.",
+          details: { field: "tables[0].rows[0].wording" },
+        },
+      },
     }));
     renderApp(PATH);
     await openGuideTab();
-    fireEvent.click(await screen.findByRole("button", { name: "Edit guide for Ramp agent · Ramp" }));
-    const form = await screen.findByRole("form", { name: /^Edit Practice interview guide/ });
-    const question = within(form).getByRole("textbox", { name: "Question M2.2" });
-    fireEvent.change(question, { target: { value: "The SOP says to walk through it. Do you?" } });
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Edit guide for Ramp agent · Ramp",
+      }),
+    );
+    const form = await screen.findByRole("form", {
+      name: /^Edit Practice interview guide/,
+    });
+    const question = within(form).getByRole("textbox", {
+      name: "Question M2.2",
+    });
+    fireEvent.change(question, {
+      target: { value: "The SOP says to walk through it. Do you?" },
+    });
     fireEvent.click(within(form).getByRole("button", { name: "Save guide" }));
-    await waitFor(() => expect(question).toHaveAttribute("aria-invalid", "true"));
-    expect(within(form).getByRole("alert")).toHaveTextContent("Not saved: Keep what the documents say for M6");
+    await waitFor(() =>
+      expect(question).toHaveAttribute("aria-invalid", "true"),
+    );
+    expect(within(form).getByRole("alert")).toHaveTextContent(
+      "Not saved: Keep what the documents say for M6",
+    );
     expect(question).toHaveValue("The SOP says to walk through it. Do you?");
     fireEvent.click(within(form).getByRole("button", { name: "Close editor" }));
-    expect(screen.queryByRole("form", { name: /^Edit Practice interview guide/ })).toBeNull();
+    expect(
+      screen.queryByRole("form", { name: /^Edit Practice interview guide/ }),
+    ).toBeNull();
   });
 });
 
 describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
   const MAP = {
-    id: "v1", engagement_id: "e1", label: "v0.1", state: "draft", created_at: "2026-10-06T09:00:00+00:00",
-    published_at: null, published_by: null, parent_version_id: null, signal: null,
+    id: "v1",
+    engagement_id: "e1",
+    label: "v0.1",
+    state: "draft",
+    created_at: "2026-10-06T09:00:00+00:00",
+    published_at: null,
+    published_by: null,
+    parent_version_id: null,
+    signal: null,
   };
-  const dim = (status: string, evidence_count: number, note = "") => ({ status, evidence_count, note });
+  const dim = (status: string, evidence_count: number, note = "") => ({
+    status,
+    evidence_count,
+    note,
+  });
   const REPORT = {
     version_id: "v1",
     dimensions: {
-      trigger: dim("missing", 0), end_point: dim("thin", 1), step_spine: dim("covered", 6),
-      handoffs: dim("covered", 3), decisions_and_criteria: dim("covered", 2), approvals: dim("thin", 1),
-      exceptions: dim("thin", 1), raci: dim("covered", 4), work_and_wait_time: dim("covered", 2),
-      kpis: dim("missing", 0), artefacts: dim("covered", 2), know_how: dim("thin", 1, "1 of 2 decisions"),
-      stories: dim("thin", 2), official_vs_lived: dim("covered", 1, "Both accounts on 1 step: Load and return LIR"),
+      trigger: dim("missing", 0),
+      end_point: dim("thin", 1),
+      step_spine: dim("covered", 6),
+      handoffs: dim("covered", 3),
+      decisions_and_criteria: dim("covered", 2),
+      approvals: dim("thin", 1),
+      exceptions: dim("thin", 1),
+      raci: dim("covered", 4),
+      work_and_wait_time: dim("covered", 2),
+      kpis: dim("missing", 0),
+      artefacts: dim("covered", 2),
+      know_how: dim("thin", 1, "1 of 2 decisions"),
+      stories: dim("thin", 2),
+      official_vs_lived: dim(
+        "covered",
+        1,
+        "Both accounts on 1 step: Load and return LIR",
+      ),
       sme_terms: dim("covered", 2),
     },
     follow_up_questions: [
-      { dimension: "trigger", question_id: "M2.1", question: "What sets it off?", about: "" },
-      { dimension: "know_how", question_id: "M4.8", question: "What would a new colleague need to know?", about: "Busy wave?" },
+      {
+        dimension: "trigger",
+        question_id: "M2.1",
+        question: "What sets it off?",
+        about: "",
+      },
+      {
+        dimension: "know_how",
+        question_id: "M4.8",
+        question: "What would a new colleague need to know?",
+        about: "Busy wave?",
+      },
     ],
     probes: [
-      { question_id: "F2", question: "You mentioned previously that “at peak we're short of containers”. How do you manage that today?",
-        quote: "at peak we're short of containers", source_id: "s1", anchor: "05:52", speaker_role: "Ramp" },
+      {
+        question_id: "F2",
+        question:
+          "You mentioned previously that “at peak we're short of containers”. How do you manage that today?",
+        quote: "at peak we're short of containers",
+        source_id: "s1",
+        anchor: "05:52",
+        speaker_role: "Ramp",
+      },
     ],
   };
 
@@ -421,7 +847,11 @@ describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
     interviewApi({ "GET /api/engagements/e1/versions": () => ({ body: [] }) });
     renderApp(PATH);
     fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
-    expect(await screen.findByText(/The coverage report appears after the first draft/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /The coverage report appears after the first draft/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows every dimension with shape and text, the follow-up questions, Copy and Download", async () => {
@@ -432,31 +862,56 @@ describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
     const createObjectURL = vi.fn(() => "blob:follow-up");
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "URL",
+      Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }),
+    );
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
     const { container } = renderApp(PATH);
     fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
-    const table = await screen.findByRole("table", { name: "What the interviews covered (v0.1)" });
+    const table = await screen.findByRole("table", {
+      name: "What the interviews covered (v0.1)",
+    });
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows).toHaveLength(15);
     expect(rows[0]).toHaveTextContent("TriggerMissing0");
-    expect(rows[11]).toHaveTextContent("Know-how at each decisionThin11 of 2 decisions");
+    expect(rows[11]).toHaveTextContent(
+      "Know-how at each decisionThin11 of 2 decisions",
+    );
     expect(rows[2]).toHaveTextContent("Step spineCovered6");
-    expect(within(table).getAllByText("Covered")[0]?.closest("[data-shape]")).toHaveAttribute("data-shape", "filled-circle");
-    const asks = screen.getByRole("list", { name: "Questions for thin or missing dimensions" });
-    expect(within(asks).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+    expect(
+      within(table).getAllByText("Covered")[0]?.closest("[data-shape]"),
+    ).toHaveAttribute("data-shape", "filled-circle");
+    const asks = screen.getByRole("list", {
+      name: "Questions for thin or missing dimensions",
+    });
+    expect(
+      within(asks)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual([
       "[M2.1] What sets it off?",
       "[M4.8] What would a new colleague need to know? (about Busy wave?)",
     ]);
-    expect(screen.getByRole("list", { name: "In the interviewee's own words" })).toHaveTextContent("ask the Ramp");
+    expect(
+      screen.getByRole("list", { name: "In the interviewee's own words" }),
+    ).toHaveTextContent("ask the Ramp");
     expect(await seriousViolations(container)).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
-    const copied = String((writeText.mock.calls[0] as unknown[] | undefined)?.[0]);
+    const copied = String(
+      (writeText.mock.calls[0] as unknown[] | undefined)?.[0],
+    );
     expect(copied).toContain("# Follow-up questions (v0.1)");
-    expect(copied).toContain("- [M4.8] What would a new colleague need to know? (about Busy wave?) — Know-how at each decision: thin");
+    expect(copied).toContain(
+      "- [M4.8] What would a new colleague need to know? (about Busy wave?) — Know-how at each decision: thin",
+    );
     expect(copied).toContain("## In the interviewee's own words");
-    expect(await screen.findByText("Copied the follow-up questions.")).toHaveAttribute("role", "status");
+    expect(
+      await screen.findByText("Copied the follow-up questions."),
+    ).toHaveAttribute("role", "status");
     fireEvent.click(screen.getByRole("button", { name: "Download .md" }));
     expect(createObjectURL).toHaveBeenCalled();
     expect(click).toHaveBeenCalled();
@@ -474,28 +929,61 @@ describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
         profiles = [PROFILE, created];
         return { status: 201, body: created };
       },
-      "POST /api/engagements/e1/interview-guide": () => ({ status: 202, body: { job_id: "j2", profile_id: "p2" } }),
+      "POST /api/engagements/e1/interview-guide": () => ({
+        status: 202,
+        body: { job_id: "j2", profile_id: "p2" },
+      }),
       "GET /api/jobs/j2": () => ({
-        body: { id: "j2", engagement_id: "e1", type: "interview_guide", target_id: "p2", status: "running", stage: "Saving the guide",
-                progress: 0.75, message: "", error: "", usage: null, claims: { verified: 0, rejected: 0 }, stages: [],
-                created_at: "2026-10-06T09:00:00+00:00" },
+        body: {
+          id: "j2",
+          engagement_id: "e1",
+          type: "interview_guide",
+          target_id: "p2",
+          status: "running",
+          stage: "Saving the guide",
+          progress: 0.75,
+          message: "",
+          error: "",
+          usage: null,
+          claims: { verified: 0, rejected: 0 },
+          stages: [],
+          created_at: "2026-10-06T09:00:00+00:00",
+        },
       }),
     });
     renderApp(PATH);
     fireEvent.click(await screen.findByRole("tab", { name: "Coverage" }));
-    expect(await screen.findByRole("combobox", { name: "Follow up with" })).toHaveValue("p1");
-    fireEvent.click(screen.getByRole("button", { name: "Create Follow-up guide" }));
+    expect(
+      await screen.findByRole("combobox", { name: "Follow up with" }),
+    ).toHaveValue("p1");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Follow-up guide" }),
+    );
     await waitFor(() =>
-      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")?.body).toEqual({
-        interview_type: "follow_up", role_id: "r2", stakeholder_group: "Ramp", referred_by_role: "",
+      expect(
+        api.calls.find((c) => c.key === "POST /api/engagements/e1/profiles")
+          ?.body,
+      ).toEqual({
+        interview_type: "follow_up",
+        role_id: "r2",
+        stakeholder_group: "Ramp",
+        referred_by_role: "",
         previous_profile_id: "p1",
       }),
     );
     await waitFor(() =>
-      expect(api.calls.find((c) => c.key === "POST /api/engagements/e1/interview-guide")?.body).toEqual({ profile_id: "p2" }),
+      expect(
+        api.calls.find(
+          (c) => c.key === "POST /api/engagements/e1/interview-guide",
+        )?.body,
+      ).toEqual({ profile_id: "p2" }),
     );
-    expect(await screen.findByRole("tab", { name: "Guide", selected: true })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("tab", { name: "Guide", selected: true }),
+    ).toBeInTheDocument();
     const list = await screen.findByRole("list", { name: "Interviewees" });
-    expect(await within(list).findByText("Saving the guide…")).toBeInTheDocument();
+    expect(
+      await within(list).findByText("Saving the guide…"),
+    ).toBeInTheDocument();
   });
 });

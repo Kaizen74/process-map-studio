@@ -2587,5 +2587,35 @@
         }
       ]
     }
+  },
+  "next_steps": {
+    "ready_to_publish": false,
+    "steps": [
+      {
+        "key": "fix_map",
+        "title": "Fix 2 problems on the map",
+        "detail": "These must be fixed before publishing. Each opens its step.",
+        "count": 2,
+        "bulk": 0,
+        "items": [
+          {
+            "message": "Decision \"Special loads OK?\" needs at least two labelled exits; it has 1.",
+            "element_id": "id-21"
+          },
+          {
+            "message": "Decision \"Deviation in limits?\" needs at least two labelled exits; it has 1.",
+            "element_id": "id-25"
+          }
+        ]
+      },
+      {
+        "key": "review_steps",
+        "title": "Review 6 steps",
+        "detail": "Confirm, edit or reject each one, or accept the 4 that need nothing fixed as drafted.",
+        "count": 6,
+        "bulk": 4,
+        "items": []
+      }
+    ]
   }
 }

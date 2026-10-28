@@ -108,6 +108,34 @@ export interface PublishBlocker {
   message: string;
 }
 
+/** What is left before publishing (GET /versions/{vid}/next-steps, 2026-10-28). */
+export type NextStepKey = "fix_map" | "check_steps" | "merges" | "review_steps" | "pictures" | "publish";
+
+export interface NextStepItem {
+  message: string;
+  element_id: string | null;
+}
+
+export interface NextStep {
+  key: NextStepKey;
+  title: string;
+  detail: string;
+  count: number;
+  /** How many the one-click action handles: accept as drafted, or discard. */
+  bulk: number;
+  items: NextStepItem[];
+}
+
+export interface NextSteps {
+  ready_to_publish: boolean;
+  steps: NextStep[];
+}
+
+export interface AcceptedSteps {
+  accepted: number;
+  skipped: { element_id: string; label: string; reason: string }[];
+}
+
 /** How much independent evidence a map rests on (P12): from the kinds of its sources. */
 export interface SignalStrength {
   level: "strong" | "moderate" | "limited";

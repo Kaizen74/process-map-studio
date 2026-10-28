@@ -139,3 +139,53 @@ def test_tiny_images_are_not_suggested(monkeypatch: pytest.MonkeyPatch) -> None:
 )
 def test_segment_anchor(kwargs: dict[str, object], expected: str) -> None:
     assert parsing.segment_anchor(**kwargs) == expected  # type: ignore[arg-type]
+
+
+# A process-flow diagram page (2026-10-28, from Eric's cargo manual): boxed stages in two columns,
+# each with its team's label beside it. Read line by line across the page, both columns and the
+# labels ran together and a team's name was split from its activities, so most claims failed the
+# role check. Each box is now one passage, its team label in front.
+DIAGRAM = FIXTURES / "process_flow_diagram.pdf"
+
+
+def pdf_texts(path: Path, page: int) -> list[str]:
+    result = parsing.parse_pdf_text(path)
+    assert isinstance(result, Ok)
+    return [s.text for s in result.value.segments if s.page == page]
+
+
+def test_a_diagram_page_is_read_box_by_box_with_its_team_label() -> None:
+    assert pdf_texts(DIAGRAM, 1) == [
+        "Document ID: LC-FLOW-001 Page 1 of 3",
+        "PROCESS FLOW (ILLUSTRATIVE)",
+        "LOAD CONTROL TEAM: 1. PLAN THE LOAD • Draft the preliminary load plan by T-90 "
+        "• Load Control Lead approves the plan",
+        "RAMP TEAM: 2. LOAD THE AIRCRAFT • Load ULDs as per the load plan "
+        "• Return the loading report within 10 minutes",
+        "FLIGHT CREW: 3. CLOSE OUT • Check deviation against tolerance "
+        "• Captain accepts the final load sheet",
+        "CARGO ACCEPTANCE: A. ACCEPT CARGO • Verify pieces, weight and dimensions "
+        "• Cargo security screening",
+        "BUILD-UP TEAM: B. BUILD ULDS • Allocate serviceable ULDs • Secure and net as required",
+    ]
+
+
+def test_a_table_and_ordinary_text_are_still_read_line_by_line() -> None:
+    """Cells that touch form a table, not a diagram: each row stays one line."""
+    assert pdf_texts(DIAGRAM, 2) == [
+        "Document ID: LC-FLOW-001 Page 2 of 3",
+        "Term Meaning",
+        "ULD Unit load device used to carry cargo",
+        "NOTOC Notification to captain of special loads",
+    ]
+    assert pdf_texts(DIAGRAM, 3) == [
+        "Document ID: LC-FLOW-001 Page 3 of 3",
+        "Section 4 Records",
+        "The loading report is kept for three months by Load Control.",
+    ]
+
+
+def test_a_picture_on_three_or_more_pages_is_a_logo_never_a_suggestion() -> None:
+    result = parsing.extract_pdf_images(DIAGRAM)
+    assert isinstance(result, Ok)
+    assert [(i.page, i.width) for i in result.value] == [(1, 56), (1, 60)]  # the two icons

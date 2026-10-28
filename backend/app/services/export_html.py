@@ -30,6 +30,20 @@ KINDS = {"activity": "Activity", "decision": "Decision", "approval": "Approval",
          "end": "End"}  # fmt: skip
 STANCES = {"supports": "supports", "contradicts": "contradicts", "silent": "silent"}
 PROVENANCE = {"O": "Observed (O)", "I": "Inferred (I)", "R": "Recommended (R)"}
+# A draft's map (2026-10-28): each step says how far its review has got.
+REVIEW_WORDS = {"draft": "Not reviewed yet", "confirmed": "Confirmed", "edited": "Edited",
+                "added": "Added"}  # fmt: skip
+STEP_KINDS = {"activity", "decision", "approval"}
+# Only a draft's map carries this rule, so a published map's file is unchanged.
+DRAFT_STYLE = (
+    ".draft-stamp { margin: var(--space-8) 0 0; padding: var(--space-8) var(--space-12); "
+    "border: var(--line-hairline) dashed var(--danger-text); color: var(--danger-text); "
+    "background: var(--danger-bg); font-weight: var(--weight-medium); }"
+)
+DRAFT_STAMP = (
+    "Draft: not reviewed, not published. {reviewed} of {total} steps reviewed. Nothing in it is "
+    "validated yet."
+)
 LETTERS = {"R": "Responsible", "A": "Accountable", "C": "Consulted", "I": "Informed"}
 
 # The self-hosted font files (frontend/public/fonts) and the characters each one covers.
@@ -341,6 +355,8 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
         rows.append(("Sources", "; ".join(evidence)))
     if el.provenance == Provenance.RECOMMENDED.value:
         rows.append(("Reference", el.r_reference or "none recorded"))
+    if not data.published_at and el.kind in STEP_KINDS:
+        rows.append(("Review", REVIEW_WORDS.get(el.review_status, el.review_status)))
     body = "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in rows)
     return (
         f'<article class="card step" id="step-{e(el.id)}" aria-labelledby="h-{e(el.id)}">'
@@ -509,6 +525,14 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
         + f" · validated by {data.validated_by or 'not recorded'}"
     )
     signal_line = md.signal_text(data)
+    steps = [el for el in graph.elements if el.kind in STEP_KINDS]
+    reviewed = sum(1 for el in steps if el.review_status != "draft")
+    stamp = (
+        f'<p class="draft-stamp" role="note">'
+        f"{e(DRAFT_STAMP.format(reviewed=reviewed, total=len(steps)))}</p>"
+        if not data.published_at
+        else ""
+    )
     return "\n".join(
         [
             "<!doctype html>",
@@ -521,7 +545,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
             "<style>",
             fonts_css(fonts),
             tokens_css(tokens),
-            STYLE.strip(),
+            STYLE.strip() + ("\n" + DRAFT_STYLE if stamp else ""),
             "</style>",
             "</head>",
             "<body>",
@@ -529,6 +553,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
             f"<header><h1>{e(graph.process.name)} — Master Process Map</h1>"
             f'<p class="meta">{e(meta)}</p>'
             + (f'<p class="meta signal">{e(signal_line)}</p>' if signal_line else "")
+            + stamp
             + "</header>",
             f'<div class="card">{_card(data.quality_card)}</div>',
             _facts(data, graph),

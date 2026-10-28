@@ -61,6 +61,7 @@ FILES = {
     "csv": ("raci.csv", "text/csv; charset=utf-8"),
     "html": ("map.html", "text/html; charset=utf-8"),
 }
+DRAFT_FILE = "draft-map.html"
 CARD_CHECKS = {"Q1", "Q2", "Q7", "Q8", "Q9"}  # blockers not already listed one by one
 
 
@@ -308,7 +309,11 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str) -> 
         stored = versions_repo.quality_card(session, version_id)
         published = version.state in (VersionState.PUBLISHED.value, VersionState.SUPERSEDED.value)
         card = QualityCard.model_validate(stored) if stored else None
-        if not published or card is None or not card.all_green:
+        # A draft's map (2026-10-28, Eric): html only, stamped as a draft, its card as it is now.
+        draft = version.state == VersionState.DRAFT.value and fmt == "html"
+        if draft:
+            card = quality_action.card_for(config, session, version_id)
+        elif not published or card is None or not card.all_green:
             return Err(ErrorKind.CONFLICT, NOT_EXPORTABLE)
         graph = versions_action.build_graph(session, version_id)
         assert graph is not None
@@ -317,11 +322,12 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str) -> 
         data = data.model_copy(update={"quality_card": card})
         content = quality_action.render_exports(data)[fmt]
         name, media = FILES[fmt]
+        name = DRAFT_FILE if draft else name
         filename = f"{slug(graph.process.name)}-{slug(version.label)}-{name}"
         audit.record(
             session,
             actor=actor,
-            action=f"Exported {fmt}",
+            action="Downloaded draft map" if draft else f"Exported {fmt}",
             target_type="version",
             target_id=version_id,
             engagement_id=version.engagement_id,

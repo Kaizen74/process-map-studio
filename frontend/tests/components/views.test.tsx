@@ -2,7 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MapLegend, MapStage, MapToolbar } from "../../src/components/map";
 import { lensLine } from "../../src/lib/lens";
-import { asView, defaultView, ghostLabel, inView, variantFor } from "../../src/lib/views";
+import type { ViewMembership } from "../../src/lib/mapTypes";
+import { asView, defaultView, documentedNote, ghostLabel, inView, variantFor } from "../../src/lib/views";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp } from "../renderApp";
 import { DOCUMENTS_ONLY, SAMPLE, elementByLabel, exceptionsFor, graphFor, layoutFor } from "../sampleMap";
@@ -31,6 +32,17 @@ describe("views (pure helpers)", () => {
     expect(defaultView(SAMPLE.graph.elements)).toBe("done");
     expect(defaultView(DOCUMENTS_ONLY.graph.elements)).toBe("documented");
     expect(defaultView([])).toBe("done"); // nothing loaded yet, or a draft with no steps
+    // 2026-10-28 (Eric's cargo map: 1 step As done, 15 As documented): the view with more steps.
+    const step = (view_membership: ViewMembership) => ({ kind: "activity" as const, view_membership });
+    const mostlyDocumented = [step("done_only"), step("documented_only"), step("documented_only")];
+    expect(defaultView(mostlyDocumented)).toBe("documented");
+    expect(defaultView([step("done_only"), step("documented_only")])).toBe("done"); // a tie: As done
+    expect(documentedNote(mostlyDocumented)).toBe(
+      "As documented shows more of this map: 2 steps, against 1 As done. Showing As documented.",
+    );
+    expect(documentedNote(DOCUMENTS_ONLY.graph.elements)).toBe(
+      "No interview or system record describes these steps yet, so As done has none. Showing As documented.",
+    );
     // The address still wins; with none, the map's own default.
     expect([asView(null, "documented"), asView("done", "documented"), asView("documented")]).toEqual([
       "documented",

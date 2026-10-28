@@ -225,3 +225,54 @@ def test_a_kept_suggestion_is_published_and_carried_by_reopen(drafted: Drafted) 
         (i["caption"], i["status"], i["page"]) for i in published
     ]
     assert attach(drafted, reopened["id"]) == 0  # already there, kept
+
+
+def test_a_picture_is_suggested_once_however_many_steps_cite_its_page(drafted: Drafted) -> None:
+    """2026-10-28 (Eric): a process-flow page cited by every step made each of its pictures a
+    suggestion on every step (72 decisions on one manual). A picture is now suggested once, on
+    the first step that cites its page."""
+    pdf_picture(drafted, "Draft load plan")
+    with session_scope(sessions(drafted)) as session:
+        source_id = session.scalar(
+            select(SourceSegment.source_id).where(SourceSegment.page == PAGE)
+        )
+        others = session.scalars(
+            select(SourceSegment.id)
+            .join(EvidenceLink, EvidenceLink.segment_id == SourceSegment.id)
+            .where(
+                EvidenceLink.element_id == drafted.ids["Special loads OK?"],
+                EvidenceLink.verified.is_(True),
+                SourceSegment.source_id == source_id,
+            )
+        ).all()
+        assert others  # both steps cite the same source
+        session.execute(update(SourceSegment).where(SourceSegment.id.in_(others)).values(page=PAGE))
+    assert attach(drafted) == 1
+    pictured = [i["element_id"] for i in version_images(drafted)]
+    assert pictured == [drafted.ids["Draft load plan"]]
+    assert attach(drafted) == 0  # nor again on the next step
+
+
+def test_every_open_suggestion_is_discarded_in_one_go(drafted: Drafted) -> None:
+    """2026-10-28 (Eric): "Discard all suggested pictures" on Review, one audit row."""
+    pdf_picture(drafted, "Draft load plan")
+    attach(drafted)
+    assert open_suggestions(drafted) == 1
+    url = f"/api/versions/{drafted.version_id}/images/discard-suggestions"
+    response = drafted.client.post(url)
+    assert response.status_code == 200, response.text
+    assert response.json() == {"discarded": 1}
+    assert open_suggestions(drafted) == 0 and on_step(drafted, "Draft load plan") == []
+    assert attach(drafted) == 0  # a discarded picture isn't suggested again
+    rows = [r for r in drafted.audit() if r["action"] == "Discarded all suggested images"]
+    assert [r["after"] for r in rows] == [{"count": 1}]
+    assert drafted.client.post(url).json() == {"discarded": 0}
+    missing = drafted.client.post("/api/versions/nope/images/discard-suggestions")
+    assert missing.status_code == 404
+
+
+def test_a_published_version_keeps_its_suggestions_decisions(drafted: Drafted) -> None:
+    confirm_all(drafted)
+    publish(drafted)
+    response = drafted.client.post(f"/api/versions/{drafted.version_id}/images/discard-suggestions")
+    assert response.status_code == 409

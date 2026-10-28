@@ -4,7 +4,11 @@ import type { NavKey } from "../../api/types";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { useSettings } from "../../hooks/useSettings";
 import { useEventLogs } from "../../hooks/useSystemRecords";
-import { engagementPath, visibleSteps, type StepKey } from "../../lib/engagementSteps";
+import {
+  engagementPath,
+  visibleSteps,
+  type StepKey,
+} from "../../lib/engagementSteps";
 
 /** Every screen sits under the top bar. Inside an engagement it shows the guided path (PRD §5.3). */
 export function AppShell() {
@@ -21,29 +25,44 @@ export function AppShell() {
     const status = readiness.data;
     // Optional modules aren't in the readiness nav: System records is done once a log is imported.
     const moduleStatus: Partial<Record<StepKey, NavItem["status"]>> = {
-      system_records: logs.data?.some((l) => l.status === "imported") ? "done" : "not_started",
+      system_records: logs.data?.some((l) => l.status === "imported")
+        ? "done"
+        : "not_started",
       // Reality views (P13b): done once a version is published (its snapshot is then frozen).
       reality: status.nav.published === "done" ? "done" : "not_started",
     };
     const items: NavItem[] = visibleSteps(settings.data).map((step) => {
       // Gap analysis has a switch (R10) and is also in the readiness nav; System records is not.
       const inReadiness = step.key in status.nav;
-      const count = inReadiness ? status.nav_counts[step.key as NavKey] : undefined;
+      const count = inReadiness
+        ? status.nav_counts[step.key as NavKey]
+        : undefined;
       return {
         key: step.key,
         label: step.label,
         to: engagementPath(id, step.key),
-        status: inReadiness ? status.nav[step.key as NavKey] : (moduleStatus[step.key] ?? "not_started"),
+        status: inReadiness
+          ? status.nav[step.key as NavKey]
+          : (moduleStatus[step.key] ?? "not_started"),
         ...(count !== undefined ? { count } : {}),
         ...(step.optional ? { optional: true } : {}),
+        ...(step.more ? { more: true } : {}),
       };
     });
-    nav = <EngagementNav items={items} {...(status.next_step ? { nextKey: status.next_step } : {})} />;
+    nav = (
+      <EngagementNav
+        items={items}
+        {...(status.next_step ? { nextKey: status.next_step } : {})}
+      />
+    );
   }
 
   return (
     <div className="app">
-      <TopBar {...(engagement.data ? { engagementName: engagement.data.name } : {})} nav={nav} />
+      <TopBar
+        {...(engagement.data ? { engagementName: engagement.data.name } : {})}
+        nav={nav}
+      />
       <Outlet />
     </div>
   );
