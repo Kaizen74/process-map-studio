@@ -61,3 +61,8 @@ def test_a_documents_only_draft_with_open_problems_still_downloads(documents_onl
     assert STAMP in html and "0 of 6 steps reviewed" in html
     for label in ("Draft load plan", "Return loading report", "Issue load sheet"):
         assert label in html
+    assert "not validated yet" in html and "validated by" not in html
+    # as in the app, the documents' map leads; the empty As done map says why
+    documented = html.index("<h3>Map as documented")
+    assert documented < html.index("<h3>Map as done") < html.index("<h3>Steps</h3>")
+    assert "No interview or system record describes these steps yet" in html

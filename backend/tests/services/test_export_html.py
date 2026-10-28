@@ -147,3 +147,45 @@ def test_a_not_described_connector_is_drawn_dashed() -> None:
 def test_a_map_from_before_the_views_is_drawn_once() -> None:
     html = render()
     assert html.count('role="group" aria-label="Swimlane map"') == 1
+
+
+def test_a_draft_says_it_is_not_validated_yet() -> None:
+    """2026-10-28, Eric's draft map download: "validated by Owner" on a draft read as if someone
+    had checked it. A published map keeps who validated it."""
+    draft = render(published_at="")
+    assert "Version v0.1 · not published yet · not validated yet" in draft
+    assert "validated by" not in draft
+    assert " · validated by Eric Yim</p>" in render()
+
+
+def test_the_view_that_draws_more_comes_first_and_an_empty_view_says_why() -> None:
+    """2026-10-28: as in the app (§3.12.11), the map from one manual leads with As documented; the
+    empty As done map says why it has no steps instead of only a "Not described" line."""
+    from tests.services.test_exports import sensemaking_data
+
+    inp = sensemaking_data()
+    documented = inp.view_graphs["documented"]
+    empty = documented.model_copy(
+        update={
+            "elements": [el for el in documented.elements if el.kind not in md.STEP_KINDS],
+            "edges": [],
+        }
+    )
+    inp = inp.model_copy(update={"view_graphs": {"done": empty, "documented": documented}})
+    html = export_html.render_map_html(inp, TOKENS, FONTS)
+    done = html.index("<h3>Map as done: the work as actually performed</h3>")
+    first = html.index("<h3>Map as documented: the documents&#x27; version</h3>")
+    assert first < done < html.index("<h3>Steps</h3>")
+    note = "No interview or system record describes these steps yet, so this view has none."
+    assert html.count(note) == 1 and html.index(note) > done
+
+
+def test_with_equal_views_as_done_comes_first_and_no_view_is_called_empty() -> None:
+    from tests.services.test_exports import sensemaking_data
+
+    inp = sensemaking_data()
+    same = inp.view_graphs["done"]
+    inp = inp.model_copy(update={"view_graphs": {"done": same, "documented": same}})
+    html = export_html.render_map_html(inp, TOKENS, FONTS)
+    assert html.index("<h3>Map as done") < html.index("<h3>Map as documented")
+    assert "so this view has none" not in html

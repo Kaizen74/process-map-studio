@@ -436,14 +436,26 @@ VIEW_TITLES = {
 }
 
 
+VIEW_EMPTY = {
+    "done": "No interview or system record describes these steps yet, so this view has none.",
+    "documented": "No document describes these steps yet, so this view has none.",
+}
+
+
 def _maps(data: ExportInput, graph: Graph, layout: Layout) -> list[str]:
-    """Both views, each drawn from its own backend layout (§3.12.11); the one map before v1.10."""
+    """Both views, each drawn from its own backend layout (§3.12.11); the one map before v1.10.
+    As in the app, the view that draws more steps comes first, As done on a tie (2026-10-28)."""
     if not data.view_graphs:
         return [_map(graph, layout)]
+    drawn = {view: md.on_the_map(data.view_graphs[view]) for view in VIEW_TITLES}
+    counts = {view: len(md.steps(g)) for view, g in drawn.items()}
+    order = ["documented", "done"] if counts["documented"] > counts["done"] else list(VIEW_TITLES)
     parts = []
-    for view, title in VIEW_TITLES.items():
-        drawn = md.on_the_map(data.view_graphs[view])
-        parts += [f"<h3>{e(title)}</h3>", _map(drawn, compute_layout(drawn))]
+    for view in order:
+        parts.append(f"<h3>{e(VIEW_TITLES[view])}</h3>")
+        if not counts[view]:
+            parts.append(f'<p class="meta">{e(VIEW_EMPTY[view])}</p>')
+        parts.append(_map(drawn[view], compute_layout(drawn[view])))
     return parts
 
 
@@ -522,7 +534,11 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
     meta = (
         f"Version {graph.version.label} · "
         + (f"published {published}" if published else "not published yet")
-        + f" · validated by {data.validated_by or 'not recorded'}"
+        + (
+            f" · validated by {data.validated_by or 'not recorded'}"
+            if published
+            else " · not validated yet"
+        )
     )
     signal_line = md.signal_text(data)
     steps = [el for el in graph.elements if el.kind in STEP_KINDS]
