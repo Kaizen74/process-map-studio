@@ -452,12 +452,37 @@ def _hits_line(r: Rect, points: list[Point]) -> bool:
     return False
 
 
+def _extra_spots(points: list[Point], spots: list[TextPos]) -> list[TextPos]:
+    """Where a label may go when its usual spots are all taken (2026-10-28, Eric's cargo
+    overview: five lines left the start, two exits shared one line): by the step the line leads
+    to, then stacked just above or below each usual spot."""
+    out: list[TextPos] = []
+    if len(points) >= 2:
+        (px, py), (tx, ty) = points[-2], points[-1]
+        if py == ty and px < tx:  # the line enters its step from the left
+            out += [TextPos(x=tx - EDGE_LABEL_GAP, y=ty - 9, align="right"),
+                    TextPos(x=tx - EDGE_LABEL_GAP, y=ty + 9, align="right")]  # fmt: skip
+    step = LABEL_CHIP_H + 2
+    for k in (1, 2):
+        out += [pos.model_copy(update={"y": pos.y - k * step}) for pos in spots]
+        out += [pos.model_copy(update={"y": pos.y + k * step}) for pos in spots]
+    return out
+
+
+def _inside(r: Rect, bounds: Rect) -> bool:
+    return bounds[0] <= r[0] and bounds[1] <= r[1] and r[2] <= bounds[2] and r[3] <= bounds[3]
+
+
 def _place_labels(
-    edges: list[GraphEdge], routes: list[tuple[list[Point], list[TextPos]]], nodes: list[Rect]
+    edges: list[GraphEdge],
+    routes: list[tuple[list[Point], list[TextPos]]],
+    nodes: list[Rect],
+    bounds: Rect,
 ) -> list[TextPos | None]:
     """Each label at its first spot that touches no node, no other line and no earlier label.
-    When every spot touches something, the least bad one: crossing a thin line is better than
-    covering a label, and covering a label is better than covering a step."""
+    When every usual spot covers a step or another label, the first extra spot inside the map
+    that covers neither (`_extra_spots`); failing that, the least bad usual spot: crossing a thin
+    line is better than covering a label, and covering a label is better than covering a step."""
     placed: list[Rect] = []
     out: list[TextPos | None] = []
     for i, edge in enumerate(edges):
@@ -465,7 +490,7 @@ def _place_labels(
         if not text:
             out.append(None)
             continue
-        spots = routes[i][1]
+        points, spots = routes[i]
         others = [pts for j, (pts, _) in enumerate(routes) if j != i]
 
         def cost(pos: TextPos, text: str = text, others: list[list[Point]] = others) -> int:
@@ -477,6 +502,11 @@ def _place_labels(
             )
 
         pos = min(spots, key=cost)  # the first of equals: spots are listed best first
+        if cost(pos) >= 10:
+            extra = [x for x in _extra_spots(points, spots) if _inside(label_rect(text, x), bounds)]
+            better = min(extra, key=cost, default=None)
+            if better is not None and cost(better) < 10:
+                pos = better
         placed.append(label_rect(text, pos))
         out.append(pos)
     return out
@@ -526,7 +556,8 @@ def compute_layout(graph: Graph) -> Layout:
     }
     routes = [_route(e, e.id in back, p, boxes, offsets.get(e.id, 0)) for e in edges]
     node_rects = [(b.x, b.y, b.x + b.w, b.y + b.h) for b in boxes.values()]
-    texts = _place_labels(edges, routes, node_rects)
+    bounds = (LABEL_COL, PHASE_BAND, _col_x(columns), _lane_y(len(p.lanes)))
+    texts = _place_labels(edges, routes, node_rects, bounds)
     layout_edges = [
         LayoutEdge(id=e.id, kind=e.kind, is_back_edge=e.id in back, points=points,
                    label=e.label, label_pos=text)

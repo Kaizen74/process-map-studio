@@ -462,3 +462,63 @@ def test_flows_side_by_side_get_one_phase_each_in_their_own_columns() -> None:
     for a, b in combinations(lay.nodes, 2):
         assert not overlaps(rect(a), rect(b)), (a.id, b.id)
     assert compute_layout(g).model_dump_json() == lay.model_dump_json()
+
+
+def cargo_overview() -> Graph:
+    """A stand-in for Eric's cargo overview (2026-10-28, generic names): four flows leave one
+    start, each with its labelled first line, and a decision whose two exits share one line."""
+    lanes = ("ops", "tow", "flow", "docs", "tsh", "air1", "air2", "wh", "staff", "qa", "own")
+    phases = [GraphPhase(id=p, name=p.capitalize(), order=i, time_window="")
+              for i, p in enumerate(("inbound", "transfer", "outbound", "manual"))]  # fmt: skip
+
+    def step(key: str, lane: str, phase: str, kind: str = "activity") -> GraphElement:
+        return element(key, kind, lane, phase_id=phase)
+
+    return graph(
+        [element("s", "start"),
+         step("a1", "ops", "inbound"), step("a2", "tow", "inbound"),
+         step("a3", "flow", "inbound"), step("a4", "docs", "inbound"),
+         step("t1", "tsh", "transfer"), step("t2", "tsh", "transfer", "decision"),
+         step("t3", "tsh", "transfer"), step("t4", "air1", "transfer"),
+         step("t5", "air2", "transfer"),
+         step("o1", "wh", "outbound"), step("o2", "tow", "outbound"),
+         step("m1", "staff", "manual"), step("m2", "staff", "manual", "decision"),
+         step("m3", "qa", "manual"), step("m4", "own", "manual"),
+         element("e", "end")],
+        [edge("s", "a1", label="Inbound flight arrives"), edge("a1", "a2"), edge("a2", "a3"),
+         edge("a3", "a4"), edge("a4", "e", label="Cargo ready for pickup"),
+         edge("s", "t1", label="Transfer cargo received"), edge("t1", "t2"),
+         edge("t2", "t3", "yes", "Yes: screened"), edge("t2", "t3", "no", "No: not applicable"),
+         edge("t3", "t4"), edge("t4", "t5"), edge("t5", "e", label="Transfer receipted"),
+         edge("s", "o1", label="Outbound cargo"), edge("o1", "o2"),
+         edge("o2", "e", label="Handed over for loading"),
+         edge("s", "m1", label="Improvement identified"), edge("m1", "m2"),
+         edge("m2", "e", "yes", "Yes: proceed"), edge("m2", "m3", "no", "No: seek clarification"),
+         edge("m3", "m4"), edge("m4", "e", label="Amendment approved")],
+        lanes,
+        phases,
+    )  # fmt: skip
+
+
+def test_labels_never_cover_each_other_or_a_step_when_lines_crowd() -> None:
+    """Eric's cargo overview (2026-10-28): five labelled lines leave the start, so their labels
+    piled up by the start dot ("Improveme…" under a step, two labels hidden), and both exits of
+    "Screening applicable?" share one line, so their labels overlapped. A label whose usual spots
+    are taken now goes by the step its line leads to, or stacks just above or below; never on
+    another label or a step, and always inside the map."""
+    g = cargo_overview()
+    # Two exits of one decision share their ends: give each line its own ID.
+    g = g.model_copy(update={"edges": [e.model_copy(update={"id": f"{e.id}:{e.kind}"})
+                                       for e in g.edges]})  # fmt: skip
+    lay = compute_layout(g)
+    labelled = [(e, le) for e, le in zip(g.edges, lay.edges, strict=True) if e.label]
+    rects = {e.label: label_rect(e.label, le.label_pos) for e, le in labelled if le.label_pos}
+    assert len(rects) == len(labelled), "every label is placed"
+    for (a, ra), (b, rb) in combinations(rects.items(), 2):
+        assert not overlaps(ra, rb), (a, b)
+    for name, r in rects.items():
+        for node in lay.nodes:
+            assert not overlaps(r, rect(node)), (name, node.id)
+        assert r[0] >= engine.LABEL_COL and r[1] >= engine.PHASE_BAND, name
+        assert r[2] <= lay.canvas.w and r[3] <= lay.canvas.h, name
+    assert compute_layout(g).model_dump_json() == lay.model_dump_json()
