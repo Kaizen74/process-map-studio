@@ -215,6 +215,11 @@ class S2Output(BaseModel):
     steps: list[S2Step]
     new_roles: list[S2Role]
     merge_proposals: list[S2Merge]
+    outside_flow: list[str] = Field(
+        default_factory=list,
+        description='With <flow scope="one_flow">: IDs of the claims that describe a different '
+        "flow, kept out of every step",
+    )
 
 
 # --- S3 Calibrate (PRD §3.7) --------------------------------------------------------------------

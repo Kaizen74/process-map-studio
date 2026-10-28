@@ -44,6 +44,7 @@ def diagram(settings_config: AppConfig) -> Iterator[Drafted]:
         ids = {e["label"]: e["id"] for e in graph["elements"]}
         drafted = Drafted(client, built.engagement_id, job["target_id"], ids)
         drafted.source_id = built.sources[DIAGRAM_SOURCES[0]]  # type: ignore[attr-defined]
+        drafted.job = job  # type: ignore[attr-defined]
         yield drafted
 
 
@@ -130,3 +131,47 @@ def test_from_a_whole_draft_to_a_published_map(diagram: Drafted) -> None:
     assert published.json()["signal"]["detail"] == signal.DOCUMENTS_ONLY.detail
     md = d.client.get(f"/api/versions/{d.version_id}/export/md").text
     assert "Built from documents only." in md
+
+
+def test_a_step_the_comparison_left_out_is_still_grounded_in_its_own_claims(
+    diagram: Drafted,
+) -> None:
+    """Eric's cargo manual (2026-10-28): two steps came back with no passage, "not assessed" and
+    drawn As done, because the comparison call left them out. A step's own checked claims ground
+    it: the passage they quote supports it, so it is documented only, drawn As documented only,
+    and passes L2."""
+    d = diagram
+    step = get(d, f"/api/elements/{d.ids['Return loading report']}")
+    passages = [e for e in step["evidence"] if e["stance"] == "supports"]
+    assert passages and all(e["verified"] for e in passages)
+    assert step["source_state"] == "documented_only"
+    assert step["view_membership"] == "documented_only"
+    report = get(d, f"/api/versions/{d.version_id}/lint")
+    assert not [f for f in report["failures"] if f["rule"] == "L2"], report
+
+
+def test_claims_about_another_flow_on_the_page_are_set_aside_and_listed(diagram: Drafted) -> None:
+    """DECISIONS 81: the page also shows the export flow (accept cargo, build ULDs). This
+    engagement maps load control from "Flight scheduled" to "Final load sheet issued", so those
+    checked claims are kept off the map, out of the rejected claims, and listed, each with its
+    passage."""
+    d = diagram
+    aside = get(d, f"/api/versions/{d.version_id}/outside-flow")
+    assert aside["total"] == 2
+    assert [(c["claim_text"], c["claim_type"], c["source_name"], c["anchor"])
+            for c in aside["items"]] == [
+        ("Cargo acceptance verifies pieces, weight and dimensions.", "activity",
+         "process_flow_diagram.pdf", "p. 1"),
+        ("The Build-up team secures and nets the ULDs as required.", "activity",
+         "process_flow_diagram.pdf", "p. 1"),
+    ]  # fmt: skip
+    assert all(c["passage_available"] and c["segment_id"] for c in aside["items"])
+    graph = get(d, f"/api/versions/{d.version_id}/graph")
+    assert [e["label"] for e in graph["elements"] if e["kind"] not in STRUCTURAL] == [
+        label for label, _kind, _lane in STEPS
+    ]
+    rejected = get(d, f"/api/versions/{d.version_id}/rejected-claims")
+    assert rejected["total"] == 1
+    assert d.job["message"].endswith(  # type: ignore[attr-defined]
+        " 2 claims about other flows set aside: see Outside this flow."
+    )

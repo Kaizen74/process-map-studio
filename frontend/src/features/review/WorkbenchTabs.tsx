@@ -5,13 +5,14 @@ import {
   AuditTab,
   LintTab,
   MergeTab,
+  OutsideFlowTab,
   QuestionsTab,
   RaciMatrix,
   RejectedClaimsTab,
   TabBar,
   VariantsTab,
 } from "../../components/tabs";
-import { useRejectedClaims } from "../../hooks/useDraft";
+import { useOutsideFlow, useRejectedClaims } from "../../hooks/useDraft";
 import {
   useAudit,
   useDecideMerge,
@@ -24,10 +25,10 @@ import { saveText } from "../../lib/download";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { Graph } from "../../lib/mapTypes";
 import { questionsFileName, questionsMarkdown, validationPackUrl } from "../../lib/questions";
-import type { RejectedClaim } from "../../lib/reviewTypes";
+import type { PassageClaim } from "../../lib/reviewTypes";
 import type { HiddenWorkItem, LogVariants, SystemVariants } from "../../lib/systemRecords";
 
-type TabId = "raci" | "questions" | "rejected" | "audit" | "merges" | "lint" | "variants";
+type TabId = "raci" | "questions" | "rejected" | "outside" | "audit" | "merges" | "lint" | "variants";
 
 export interface WorkbenchTabsProps {
   graph: Graph;
@@ -37,8 +38,8 @@ export interface WorkbenchTabsProps {
   selectedId: string | null;
   editable: boolean;
   onSelect: (elementId: string) => void;
-  onOpenPassage: (claim: RejectedClaim) => void;
-  onAddFromPassage: (claim: RejectedClaim) => void;
+  onOpenPassage: (claim: PassageClaim) => void;
+  onAddFromPassage: (claim: PassageClaim) => void;
   /** System records (R8): the Variants tab, shown when a log is imported and the module is on. */
   variants?: SystemVariants | undefined;
   /** Add as step from hidden work; omitted where the version can't change. */
@@ -87,6 +88,7 @@ export function WorkbenchTabs({
   const toast = useToast();
   const questions = useQuestions(versionId);
   const rejected = useRejectedClaims(versionId);
+  const outside = useOutsideFlow(versionId);
   const audit = useAudit(versionId);
   const merges = useMergeProposals(versionId);
   const lint = useLint(versionId);
@@ -102,6 +104,10 @@ export function WorkbenchTabs({
     { id: "raci", label: "RACI matrix" },
     { id: "questions", label: count("Validation questions", open, " open") },
     { id: "rejected", label: count("Rejected claims", rejected.data?.total) },
+    // DECISIONS 81: shown only when drafting set claims about another flow aside.
+    ...(outside.data && outside.data.total > 0
+      ? [{ id: "outside" as const, label: count("Outside this flow", outside.data.total) }]
+      : []),
     { id: "audit", label: "Audit log" },
     // A published version hides Merge and Map checks (PRD §5.9): nothing there can change.
     ...(editable
@@ -159,6 +165,13 @@ export function WorkbenchTabs({
               onOpenPassage={onOpenPassage}
               onAddStep={editable ? onAddFromPassage : undefined}
             />
+          )}
+        </Loaded>
+      )}
+      {shown === "outside" && (
+        <Loaded query={outside} what="claims about other flows">
+          {(data) => (
+            <OutsideFlowTab data={data} onOpenPassage={onOpenPassage} onAddStep={editable ? onAddFromPassage : undefined} />
           )}
         </Loaded>
       )}

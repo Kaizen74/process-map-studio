@@ -94,3 +94,23 @@ def replace_replacement(
     for row in rows:
         row.replacement = new
     session.flush()
+
+
+def copy_terms(session: Session, from_id: str, to_id: str) -> int:
+    """Another flow from the same sources (DECISIONS 81): every name to hide and confidential term,
+    with its replacement and origin, so nothing hidden in one flow shows in the next."""
+    rows = list(
+        session.scalars(
+            select(RedactionTerm)
+            .where(RedactionTerm.engagement_id == from_id)
+            .order_by(RedactionTerm.created_at, RedactionTerm.id)
+        )
+    )
+    for row in rows:
+        session.add(
+            RedactionTerm(
+                engagement_id=to_id, term=row.term, replacement=row.replacement, origin=row.origin
+            )
+        )
+    session.flush()
+    return len(rows)

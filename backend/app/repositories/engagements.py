@@ -45,6 +45,7 @@ SCOPE_COLUMNS = (
     "conventions",
     "trigger_external",
     "end_point_external",
+    "every_flow",
 )
 
 
@@ -74,6 +75,7 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         conventions=MappingConventions.model_validate(row.conventions or {}),
         trigger_external=bool(row.trigger_external),
         end_point_external=bool(row.end_point_external),
+        every_flow=bool(row.every_flow),
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,
@@ -288,3 +290,23 @@ def role_names(session: Session, engagement_id: str) -> frozenset[str]:
         names.add(row.name.casefold())
         names.update(alias.casefold() for alias in row.aliases)
     return frozenset(names)
+
+
+def copy_roles(session: Session, from_id: str, to_id: str) -> dict[str, str]:
+    """Another flow from the same sources (DECISIONS 81): the roles, in lane order, with their
+    aliases. Returns old role ID → new role ID."""
+    mapping: dict[str, str] = {}
+    for row in session.scalars(
+        select(Role).where(Role.engagement_id == from_id).order_by(Role.created_at, Role.id)
+    ):
+        new = Role(
+            engagement_id=to_id,
+            name=row.name,
+            aliases=list(row.aliases),
+            is_system=row.is_system,
+            lane_order=row.lane_order,
+        )
+        session.add(new)
+        session.flush()
+        mapping[row.id] = new.id
+    return mapping

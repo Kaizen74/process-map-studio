@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -22,12 +23,15 @@ from app.config import AppConfig
 from app.db import session_scope
 from app.domain.enums import SourceKind
 from app.domain.models import (
+    ClaimRecord,
     DraftStarted,
     DraftState,
     DraftSummary,
     JobClaims,
     JobStage,
     JobView,
+    OutsideFlowClaim,
+    OutsideFlowClaims,
     RefreshChanges,
     RejectedClaim,
     RejectedClaims,
@@ -350,7 +354,7 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
         # The later stages, each on everything stored so far (PRD §3.7).
         later: list[tuple[str, list[Stage], float]] = [
             ("compare", [s2_canonicalise.canonicalise, s3_calibrate.calibrate], COMPARE_SHARE),
-            ("verify", [s3b_verify.verify], VERIFY_SHARE),
+            ("verify", [s3b_verify.verify, s3_calibrate.ground_in_claims], VERIFY_SHARE),
             (
                 "build",
                 [s3c_sensemaking.sense, s4_assemble.assemble, s4b_translate.translate, _lint],
@@ -426,7 +430,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
     return Ok(
         f"Draft {version.label} is ready: {_plural(summary.steps, 'step')} drafted, "
         f"{summary.needs_check} to check, {_plural(summary.rejected, 'rejected claim')}, "
-        f"{_plural(summary.open_questions, 'open question')}.{kept_note}"
+        f"{_plural(summary.open_questions, 'open question')}.{_aside(summary.outside_flow)}"
+        f"{kept_note}"
     )
 
 
@@ -462,6 +467,13 @@ def last_refresh(session: Session, job: JobView | None, version_id: str) -> Refr
     return None
 
 
+def _aside(count: int) -> str:
+    """The claims about other flows, when there are any (Review → Outside this flow)."""
+    if not count:
+        return ""
+    return f" {_plural(count, 'claim')} about other flows set aside: see Outside this flow."
+
+
 def _summary(session: Session, version_id: str) -> DraftSummary:
     counts = claims.counts(session, version_id)
     steps, needs_check = map_repo.step_counts(session, version_id)
@@ -472,6 +484,7 @@ def _summary(session: Session, version_id: str) -> DraftSummary:
         rejected=counts.get("rejected", 0),
         open_questions=map_repo.open_question_count(session, version_id),
         scrubbed=claims.scrub_count(session, version_id),
+        outside_flow=counts.get("outside_flow", 0),
     )
 
 
@@ -512,6 +525,28 @@ def get_draft(sessions: Sessions, engagement_id: str) -> Result[DraftState]:
         )
 
 
+def _first_passage(
+    cited: dict[str, tuple[Any, str]], record: ClaimRecord
+) -> tuple[str, str | None]:
+    """The anchor and ID of a claim's first cited passage still stored ("", None when gone)."""
+    first = next((cited[s] for s in record.segment_ids if s in cited), None)
+    if first is None:
+        return "", None
+    seg, fmt = first
+    anchor = parsing.segment_anchor(fmt=fmt, seq=seg.seq, page=seg.page, section=seg.section,
+                                    text=seg.text, start_ms=seg.start_ms)  # fmt: skip
+    return anchor, seg.id
+
+
+def _source_names(session: Session, rows: list[tuple[str, ClaimRecord]]) -> dict[str, str]:
+    names: dict[str, str] = {}
+    for _, record in rows:
+        if record.source_id not in names:
+            source = sources_repo.get(session, record.source_id)
+            names[record.source_id] = source.filename if source else ""
+    return names
+
+
 def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaims]:
     with session_scope(sessions) as session:
         version = versions.get(session, version_id)
@@ -522,24 +557,10 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
         cited = sources_repo.segment_rows(
             session, [sid for _, record in rows for sid in record.segment_ids]
         )
-        names: dict[str, str] = {}
+        names = _source_names(session, rows)
         items = []
         for claim_id, record in rows:
-            if record.source_id not in names:
-                source = sources_repo.get(session, record.source_id)
-                names[record.source_id] = source.filename if source else ""
-            first = next((cited[s] for s in record.segment_ids if s in cited), None)
-            anchor = ""
-            if first is not None:
-                seg, fmt = first
-                anchor = parsing.segment_anchor(
-                    fmt=fmt,
-                    seq=seg.seq,
-                    page=seg.page,
-                    section=seg.section,
-                    text=seg.text,
-                    start_ms=seg.start_ms,
-                )
+            anchor, segment_id = _first_passage(cited, record)
             items.append(
                 RejectedClaim(
                     id=claim_id,
@@ -550,8 +571,8 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
                     reason=redaction.hide(record.rejection_reason, terms),
                     guardrail=record.rejection_guardrail,
                     stage=record.stage,
-                    passage_available=first is not None,
-                    segment_id=first[0].id if first else None,
+                    passage_available=segment_id is not None,
+                    segment_id=segment_id,
                 )
             )
         return Ok(
@@ -564,3 +585,34 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
                 ),
             )
         )
+
+
+def outside_flow(sessions: Sessions, version_id: str) -> Result[OutsideFlowClaims]:
+    """Claims that passed every check but describe another flow the documents also cover
+    (DECISIONS 81): kept out of this map, listed so nothing is dropped silently."""
+    with session_scope(sessions) as session:
+        version = versions.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
+        terms = redaction.name_replacements(session, version.engagement_id)
+        rows = claims.outside_flow_rows(session, version_id)
+        cited = sources_repo.segment_rows(
+            session, [sid for _, record in rows for sid in record.segment_ids]
+        )
+        names = _source_names(session, rows)
+        items = []
+        for claim_id, record in rows:
+            anchor, segment_id = _first_passage(cited, record)
+            items.append(
+                OutsideFlowClaim(
+                    id=claim_id,
+                    claim_text=redaction.hide(str(record.payload.get("text", "")), terms),
+                    claim_type=record.claim_type,
+                    source_id=record.source_id,
+                    source_name=redaction.hide(names[record.source_id], terms),
+                    anchor=anchor,
+                    passage_available=segment_id is not None,
+                    segment_id=segment_id,
+                )
+            )
+        return Ok(OutsideFlowClaims(items=items, total=len(items)))

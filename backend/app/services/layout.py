@@ -14,7 +14,8 @@ exactly these numbers.
   cell and the cells between the two lanes are free (an exception step above or below its
   decision). At most one node per cell; a clash pushes the later node right, and everything
   after it follows.
-- Phases span their steps' columns, contiguous and in order. Labels wrap to two lines.
+- Phases span their steps' columns, contiguous and in order; flows side by side from one start
+  each take their own columns, phase by phase (2026-10-28). Labels wrap to two lines.
 - Edges are orthogonal: same lane straight across; another lane via the gutter between columns;
   an exception step straight up or down; back edges dashed along a track 14 px below the top of
   the upper lane, entering the target from the top (±14 px when two share a target).
@@ -138,6 +139,8 @@ class _Placement:
     lane_of: dict[str, int]  # element ID → lane index
     column: dict[str, int] = field(default_factory=dict)
     cells: dict[tuple[int, int], str] = field(default_factory=dict)  # (lane, column) → node
+    order: list[str] = field(default_factory=list)  # nodes in the order they were placed
+    kept_clear: dict[str, list[tuple[int, int]]] = field(default_factory=dict)  # node → cells
 
     def free(self, lane: int, col: int) -> bool:
         return (lane, col) not in self.cells
@@ -233,7 +236,46 @@ def _place(graph: Graph, back: set[str]) -> _Placement:
             waiting[nxt] -= 1
             if waiting[nxt] == 0:
                 heapq.heappush(ready, (index[nxt], nxt))
+    _separate_phases(graph, placement, preds)
     return placement
+
+
+def _separate_phases(graph: Graph, p: _Placement, preds: dict[str, list[GraphEdge]]) -> None:
+    """Each phase takes its own columns, in phase order (2026-10-28, Eric's cargo manual: flows
+    side by side from one start all ranked from column 1, so phase headers overlapped). A phase
+    that starts at or before the previous phase's last column moves right as a block; a node with
+    no phase (the end) follows its predecessors. Maps whose phases already follow each other, or
+    whose phases run against the flow, are left exactly as they were."""
+    rank = {ph.id: i for i, ph in enumerate(sorted(graph.phases, key=lambda ph: ph.order))}
+    phase_of = {e.id: rank[e.phase_id] for e in graph.elements if e.phase_id in rank}
+    if any(phase_of.get(e.from_, -1) > r for node, r in phase_of.items() for e in preds[node]):
+        return  # the phases run against the flow: moving them would send lines backwards
+    spans: dict[int, list[int]] = {}
+    for node, r in phase_of.items():
+        spans.setdefault(r, []).append(p.column[node])
+    shift: dict[int, int] = {}
+    last = -1
+    for r in sorted(spans):
+        shift[r] = max(0, last + 1 - min(spans[r]))
+        last = max(spans[r]) + shift[r]
+    if not any(shift.values()):
+        return
+    column: dict[str, int] = {}
+    cells: dict[tuple[int, int], str] = {}
+    for node in p.order:
+        lane, before = p.lane_of[node], p.column[node]
+        if node in phase_of:
+            col = before + shift[phase_of[node]]
+        else:
+            col = max((column[e.from_] + 1 for e in preds[node] if e.from_ in column),
+                      default=before)  # fmt: skip
+        while (lane, col) in cells:
+            col += 1
+        column[node] = col
+        cells[(lane, col)] = node
+        for x, c in p.kept_clear.get(node, []):
+            cells.setdefault((x, c + col - before), "")
+    p.column, p.cells = column, cells
 
 
 def _place_node(p: _Placement, node: str, preds: list[GraphEdge]) -> None:
@@ -247,11 +289,13 @@ def _place_node(p: _Placement, node: str, preds: list[GraphEdge]) -> None:
         if lane != from_lane and p.free(lane, beside) and all(p.free(x, beside) for x in between):
             for x in between:  # keep the straight line clear of later nodes
                 p.cells[(x, beside)] = ""
+                p.kept_clear.setdefault(node, []).append((x, beside))
             col = beside
     while not p.free(lane, col):
         col += 1
     p.column[node] = col
     p.cells[(lane, col)] = node
+    p.order.append(node)
 
 
 def _phases(graph: Graph, p: _Placement, columns: int) -> list[LayoutPhase]:

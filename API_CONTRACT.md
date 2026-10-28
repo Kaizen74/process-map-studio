@@ -134,7 +134,7 @@ An engagement is one process being mapped. Deleting it removes all its rows **an
  "process_kpi": "Load sheet issued by T-10", "industry": "Aviation ground handling",
  "adjacent_industries": ["Air cargo"], "confidential_terms": ["Acme Ground Services"],
  "conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"},
- "trigger_external": false, "end_point_external": false,
+ "trigger_external": false, "end_point_external": false, "every_flow": false,
  "status": "active", "created_at": "2026-09-26T09:00:00+00:00", "updated_at": "…"}
 ```
 Rules: `name` 1–120 characters (required). Text fields up to 2,000 characters. List fields (`in_scope_roles`, `adjacent_industries`, `confidential_terms`): up to 50 items, each 1–120 characters, duplicates (ignoring case) removed, no line breaks. `confidential_terms` are company, client, site and system names that must never be sent to web research (PRD §3.11); they are **not** redacted from the app or internal exports.
@@ -153,8 +153,15 @@ Used by: Home engagement cards.
 GET → `200` engagement object. PATCH → any scope fields (same rules) → `200` engagement object. DELETE → `204`, removes rows and files.
 **Mapping conventions** (C7a, 2026-10-06; PRD Appendix E tier 2, §5.4 Setup, criterion 58): the engagement object also has `"conventions": {"granularity": "standard", "label_style": "standard", "phase_naming": "sme"}` (these defaults until Eric sets them). `granularity`: `coarse` (8–12 steps) · `standard` (12–20) · `fine` (20–25); `label_style`: `standard` (verb + object, at most 5 words) · `sme` (the SME's own everyday name for the step, where there is one; added to the glossary with a plain meaning); `phase_naming`: `sme` · `standard`. PATCH sends the whole `conventions` object (`422` naming `conventions.<field>` for an unknown value); a change writes the "Edited process scope" audit row. They take effect at the next draft or refresh: S2 (canonicalise) and S4 (assemble) receive `<conventions granularity="…" label_style="…" phase_naming="…"/>` with their data when any setting differs from the defaults (with the defaults nothing extra is sent: the codebook already states them), and follow them, departing only with a stated reason.
 **Outside the organisation** (E1, 2026-10-15; Eric's decision, DECISIONS 51): the engagement object also has `"trigger_external": false, "end_point_external": false` (booleans; `false` until Eric ticks them on the scope card): whether the process starts from, or ends with, something outside the organisation (a customer, a supplier, an authority). PATCH accepts either (`422` naming the field when the value is not `true` or `false`); a change writes the "Edited process scope" audit row. Read by the Reality views' Typical case (RV7), which draws an "Outside the organisation" lane when either is `true` (PRD §3.18.3); nothing else changes.
+**One flow or every flow** (2026-10-28, Eric's cargo manual; DECISIONS 81): the engagement object also has `"every_flow": false` (boolean; `false` until Eric ticks "Map every flow in these documents (overview)" on the scope card). PATCH accepts it (`422` naming the field when the value is not `true` or `false`); a change writes the "Edited process scope" audit row. It takes effect at the next draft or refresh. Unticked, S2 (canonicalise) receives `<flow scope="one_flow" trigger="…" end_point="…" out_of_scope="…"/>` (names hidden, escaped) when the scope card names a trigger or an end point, builds steps only for that flow and lists the claims about other flows in `outside_flow`; those claims get status `outside_flow` (B.18), never reach a step, S3–S5 or the rejected claims, and are listed by GET /versions/{vid}/outside-flow. Ticked, S2 receives `<flow scope="every_flow"/>` and maps every flow in the documents, at `coarse` granularity unless the conventions say otherwise. With neither a trigger nor an end point, nothing extra is sent (the claims are mapped as given, as before).
 Errors: `404 NOT_FOUND` ("That engagement doesn't exist. It may have been deleted."); `422 VALIDATION`.
 Used by: Setup screen (scope card), Home (delete, from P1 UI), top bar (engagement name).
+
+### POST /api/engagements/{id}/another-flow
+Map another flow from these sources (2026-10-28; DECISIONS 81). Request: `{"name": "Export", "trigger": "…", "end_point": "…", "out_of_scope": "…"}` (`name` required; the others optional, default `""`; same rules as the scope card). Response `201`: the new engagement object.
+The new engagement gets the first one's `process_name`, `in_scope_roles`, `industry`, `adjacent_industries` and `conventions`; every role (name, aliases, lane order); every redaction term (names to hide and confidential terms, with their replacements); and every source as already read: the file copied into `data/sources/<new id>/`, the source details, every passage (corrections and speaker mappings included, speakers mapped to the new engagement's roles) and its PDF pictures as suggestions (files copied into `data/images/<new id>/`). No reading job and no AI call. Nothing of the first engagement's map, claims, answers or system records is copied, and the first engagement is not changed. Audit row "Started another flow from these sources" on the new engagement, `after` = the scope sent plus `{from_engagement, sources, roles, names_to_hide}`.
+Errors: `404 NOT_FOUND` (the first engagement); `409 CONFLICT` "<file> is still being read. Try again when every document is ready." (a copy of a document still being read would never be read); `422 VALIDATION` with `details.field` (as POST /engagements).
+Used by: Setup → "Another flow in these documents" → "Map another flow from these sources…".
 
 ### Role object
 ```json
@@ -906,7 +913,7 @@ Response `200`:
 {"job": {"…": "job object as GET /api/jobs/{job_id}"},
  "version": {"id": "…", "label": "v0.1", "state": "draft", "created_at": "…"},
  "summary": {"steps": 8, "needs_check": 0, "verified": 21, "rejected": 0,
-             "open_questions": 5, "scrubbed": 0},
+             "open_questions": 5, "scrubbed": 0, "outside_flow": 0},
  "last_refresh": null}
 ```
 `job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `steps`: activities, decisions and approvals on the draft; `needs_check`: steps the independent verifier found only partly supported; `verified` / `rejected`: claims; `open_questions`: validation questions still open (including every gap Claude raised); `scrubbed`: names replaced by roles in Claude's answers.
@@ -1446,6 +1453,18 @@ Every story fragment the interviews told on this map, in the order told, for the
 
 ### GET /api/versions/{vid}/glossary
 The SME terms the interviews use (2026-10-01, C2b, PRD §3.12.2, A.8): `[{"term": "re-trim", "plain_meaning": "…", "steps": ["Approve deviation"], "source_id": "…", "segment_id": "…", "anchor": "24:10"}]` in the order first heard; each term was found in its passage (C1). Names hidden. Errors: `404`. Used by: the panel and the Registers screen (V3).
+
+### GET /api/versions/{vid}/outside-flow
+Claims about another flow (2026-10-28; DECISIONS 81): claims that passed every check but describe a different flow from the one the engagement maps, so S2 kept them off the map (status `outside_flow`, B.18). Response `200`:
+```json
+{"items": [{"id": "…", "claim_text": "Cargo acceptance verifies pieces, weight and dimensions.",
+            "claim_type": "activity", "source_id": "…", "source_name": "manual.pdf",
+            "anchor": "p. 1", "passage_available": true, "segment_id": "…"}],
+ "total": 1}
+```
+`claim_text` and `source_name` have names on the redaction list replaced by roles; `anchor` and `segment_id` as in the rejected-claims register. Oldest first. A draft that set claims aside ends its job message with " n claims about other flows set aside: see Outside this flow." and its summary has `outside_flow` (count).
+Errors: `404 NOT_FOUND`.
+Used by: Review → workbench tab "Outside this flow (n)", shown only when `total > 0` (Open passage; Add as step from this passage on a draft).
 
 ### GET /api/versions/{vid}/rejected-claims
 The rejected-claims register (PRD §3.8 G12): claims that failed a check and never reach the map.

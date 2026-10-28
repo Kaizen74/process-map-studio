@@ -80,10 +80,15 @@ def matches_baseline(name: str, data: Any, folder: Path = HERE) -> None:
     assert rendered == path.read_text(encoding="utf-8"), f"{name} differs from the baseline"
 
 
-def drafted(config: AppConfig, sources: list[str]) -> Iterator[tuple[TestClient, str]]:
+def drafted(
+    config: AppConfig, sources: list[str], roles: tuple[dict[str, Any], ...] = ()
+) -> Iterator[tuple[TestClient, str]]:
     with TestClient(create_app(config)) as client:
         assert client.put("/api/settings/key", json={"anthropic_api_key": KEY}).status_code == 200
         built = fixture_engagement.build(client, sources)
+        for role in roles:
+            added = client.post(f"/api/engagements/{built.engagement_id}/roles", json=role)
+            assert added.status_code == 201, added.text
         job_id = client.post(f"/api/engagements/{built.engagement_id}/draft").json()["job_id"]
         assert client.app.state.worker.drain(60)  # type: ignore[attr-defined]
         job = client.get(f"/api/jobs/{job_id}").json()
@@ -208,6 +213,24 @@ def test_the_frontend_documents_only_sample_matches_the_backend(settings_config:
             "next_steps": client.get(f"{url}/next-steps").json(),
         }  # fmt: skip
         matches_baseline("documents_only_map.json", bundle, FRONTEND_FIXTURES)
+
+
+def test_the_frontend_diagram_sample_matches_the_backend(settings_config: AppConfig) -> None:
+    """The diagram manual (Eric's cargo manual, 2026-10-28) as Review shows it: one flow drafted
+    from a page that also shows another, whose claims are listed under Outside this flow
+    (DECISIONS 81). Not a PRD baseline; rewritten with PMS_UPDATE_GOLDEN=1 like the baselines."""
+    for client, version_id in drafted(
+        settings_config, make_ai_fixtures.DIAGRAM_SOURCES, (make_ai_fixtures.DIAGRAM_ROLE,)
+    ):
+        url = f"/api/versions/{version_id}"
+        bundle = {
+            "graph": client.get(f"{url}/graph").json(),
+            "views": {v: client.get(f"{url}/layout", params={"view": v}).json()
+                      for v in ("done", "documented")},
+            "next_steps": client.get(f"{url}/next-steps").json(),
+            "outside_flow": client.get(f"{url}/outside-flow").json(),
+        }  # fmt: skip
+        matches_baseline("diagram_map.json", bundle, FRONTEND_FIXTURES)
 
 
 PUBLISHED_AT = "2026-09-28T09:00:00+00:00"

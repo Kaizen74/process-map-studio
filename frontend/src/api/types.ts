@@ -89,6 +89,15 @@ export interface ScopeFields {
   confidential_terms?: string[];
   trigger_external?: boolean;
   end_point_external?: boolean;
+  every_flow?: boolean;
+}
+
+/** POST /engagements/{id}/another-flow (DECISIONS 81): the next flow's own scope. */
+export interface AnotherFlow {
+  name: string;
+  trigger: string;
+  end_point: string;
+  out_of_scope: string;
 }
 
 export interface Engagement {
@@ -108,6 +117,8 @@ export interface Engagement {
   /** E1: the process starts or ends outside the organisation (absent before E1: no). */
   trigger_external?: boolean;
   end_point_external?: boolean;
+  /** DECISIONS 81: an overview of every flow in the documents (absent before: no, one flow). */
+  every_flow?: boolean;
   status: string;
   created_at: string;
   updated_at: string;
@@ -299,6 +310,8 @@ export interface DraftSummary {
   rejected: number;
   open_questions: number;
   scrubbed: number;
+  /** DECISIONS 81: checked claims about another flow, set aside (absent before: 0). */
+  outside_flow?: number;
 }
 
 /** How a draft or refresh was made (API_CONTRACT.md → Run record). */
@@ -397,6 +410,9 @@ export type {
   Question,
   RejectedClaim,
   RejectedClaims,
+  OutsideFlowClaim,
+  OutsideFlowClaims,
+  PassageClaim,
   QualityCard,
   QualityCheck,
   PublishBlocker,

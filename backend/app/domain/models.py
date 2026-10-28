@@ -140,10 +140,20 @@ class ScopeFields(BaseModel):
     conventions: dict[str, str] | None = None  # MappingConventions, checked by the action
     trigger_external: bool | None = None  # E1: the process starts outside the organisation
     end_point_external: bool | None = None  # E1: it ends outside the organisation
+    every_flow: bool | None = None  # 0018: map every flow in the documents (an overview)
 
 
 class EngagementCreate(ScopeFields):
     name: str
+
+
+class AnotherFlow(BaseModel):
+    """Map another flow from the same sources (DECISIONS 81): the new engagement's own scope."""
+
+    name: str
+    trigger: str = ""
+    end_point: str = ""
+    out_of_scope: str = ""
 
 
 class EngagementView(BaseModel):
@@ -161,6 +171,7 @@ class EngagementView(BaseModel):
     conventions: MappingConventions = MappingConventions()
     trigger_external: bool = False
     end_point_external: bool = False
+    every_flow: bool = False
     status: str
     created_at: str
     updated_at: str
@@ -556,6 +567,7 @@ class DraftSummary(BaseModel):
     rejected: int
     open_questions: int
     scrubbed: int
+    outside_flow: int = 0  # checked claims about another flow, set aside (DECISIONS 81)
 
 
 class StepRename(BaseModel):
@@ -614,6 +626,24 @@ class RejectedClaim(BaseModel):
     stage: str
     passage_available: bool
     segment_id: str | None
+
+
+class OutsideFlowClaim(BaseModel):
+    """A checked claim about another flow, kept out of this map (DECISIONS 81)."""
+
+    id: str
+    claim_text: str
+    claim_type: str
+    source_id: str
+    source_name: str
+    anchor: str
+    passage_available: bool
+    segment_id: str | None
+
+
+class OutsideFlowClaims(BaseModel):
+    items: list[OutsideFlowClaim]
+    total: int
 
 
 class RejectedClaims(BaseModel):

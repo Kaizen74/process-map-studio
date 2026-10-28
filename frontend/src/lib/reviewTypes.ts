@@ -15,6 +15,22 @@ export interface RejectedClaim {
   segment_id: string | null;
 }
 
+/** A claim with a passage Eric can open or add a step from (rejected, or about another flow). */
+export type PassageClaim = Pick<
+  RejectedClaim,
+  "id" | "claim_text" | "source_id" | "source_name" | "anchor" | "passage_available" | "segment_id"
+>;
+
+/** GET /versions/{vid}/outside-flow (DECISIONS 81): checked claims about another flow. */
+export interface OutsideFlowClaim extends PassageClaim {
+  claim_type: string;
+}
+
+export interface OutsideFlowClaims {
+  items: OutsideFlowClaim[];
+  total: number;
+}
+
 export interface RejectedClaims {
   items: RejectedClaim[];
   total: number;

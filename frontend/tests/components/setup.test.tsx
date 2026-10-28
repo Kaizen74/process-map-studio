@@ -47,7 +47,7 @@ function setupApi(initialRoles: Role[] = [], extra: Parameters<typeof fakeApi>[0
 
 const scope = () => screen.getByRole("region", { name: "Process scope" });
 const SEVERAL_FLOWS =
-  "One engagement maps one flow, from its trigger to its end point. If a document covers several flows (for example import, export and transhipment), make one engagement for each and upload the same document to each.";
+  "One engagement maps one flow, from its trigger to its end point. If your documents cover several flows (for example import, export and transhipment), use Map another flow from these sources below for each of the others.";
 const rolesCard = () => screen.getByRole("region", { name: "Roles and lanes" });
 
 describe("Setup: process scope", () => {

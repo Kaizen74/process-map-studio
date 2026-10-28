@@ -5,9 +5,10 @@ import {
   getEngagement,
   getReadiness,
   listEngagements,
+  startAnotherFlow,
   updateEngagement,
 } from "../api/engagements";
-import type { Engagement, ScopeFields } from "../api/types";
+import type { AnotherFlow, Engagement, ScopeFields } from "../api/types";
 
 const ENGAGEMENTS = ["engagements"] as const;
 const engagementKey = (id: string) => ["engagements", id] as const;
@@ -64,6 +65,18 @@ export function useDeleteEngagement() {
     onSettled: (_data, _error, id) => {
       client.removeQueries({ queryKey: engagementKey(id), exact: true });
       client.removeQueries({ queryKey: readinessKey(id), exact: true });
+      void client.invalidateQueries({ queryKey: ENGAGEMENTS, exact: true });
+    },
+  });
+}
+
+/** Map another flow from these sources: the new engagement is cached and the list refreshed. */
+export function useAnotherFlow(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (fields: AnotherFlow) => startAnotherFlow(id, fields),
+    onSuccess: (engagement: Engagement) => {
+      client.setQueryData(engagementKey(engagement.id), engagement);
       void client.invalidateQueries({ queryKey: ENGAGEMENTS, exact: true });
     },
   });

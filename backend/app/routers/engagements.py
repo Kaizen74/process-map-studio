@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import engagements
+from app.actions import another_flow, engagements
 from app.domain.models import (
+    AnotherFlow,
     EngagementCreate,
     EngagementSummary,
     EngagementView,
@@ -39,6 +40,12 @@ def get_engagement(request: Request, engagement_id: str) -> EngagementView:
 def update_engagement(request: Request, engagement_id: str, body: ScopeFields) -> EngagementView:
     state = request.app.state
     return unwrap(engagements.update_engagement(state.config, state.sessions, engagement_id, body))
+
+
+@router.post("/engagements/{engagement_id}/another-flow", status_code=201)
+def start_another_flow(request: Request, engagement_id: str, body: AnotherFlow) -> EngagementView:
+    state = request.app.state
+    return unwrap(another_flow.another_flow(state.config, state.sessions, engagement_id, body))
 
 
 @router.delete("/engagements/{engagement_id}", status_code=204)

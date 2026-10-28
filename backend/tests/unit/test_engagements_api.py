@@ -121,3 +121,24 @@ def test_the_scope_card_says_whether_the_process_starts_or_ends_outside(client: 
                                    AuditRow.action == "Edited process scope")
         ))  # fmt: skip
         assert [r.after for r in rows] == [{"trigger_external": True}]
+
+
+def test_the_scope_card_says_whether_to_map_one_flow_or_every_flow(client: TestClient) -> None:
+    """DECISIONS 81: unticked (the default), drafting maps this engagement's own flow; ticked, an
+    overview of every flow in the documents. Audited like the rest of the scope."""
+    created = client.post("/api/engagements", json={"name": "Cargo"}).json()
+    assert created["every_flow"] is False
+    url = f"/api/engagements/{created['id']}"
+    saved = client.patch(url, json={"every_flow": True})
+    assert saved.status_code == 200, saved.text
+    assert client.get(url).json()["every_flow"] is True
+    assert client.patch(url, json={"every_flow": "all"}).status_code == 422
+    refused = client.patch(url, json={"every_flow": None})
+    assert refused.status_code == 422
+    assert refused.json()["error"]["details"]["field"] == "every_flow"
+    with session_scope(client.app.state.sessions) as session:  # type: ignore[attr-defined]
+        rows = list(session.scalars(
+            select(AuditRow).where(AuditRow.engagement_id == created["id"],
+                                   AuditRow.action == "Edited process scope")
+        ))  # fmt: skip
+        assert [r.after for r in rows] == [{"every_flow": True}]

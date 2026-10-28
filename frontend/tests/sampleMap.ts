@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { SegmentPage } from "../src/api/types";
 import type { ExceptionReport } from "../src/lib/exceptions";
-import type { NextSteps } from "../src/lib/reviewTypes";
+import type { NextSteps, OutsideFlowClaims } from "../src/lib/reviewTypes";
 import type {
   CapabilityNote,
   ElementDetail,
@@ -74,3 +74,17 @@ export interface DocumentsOnlyMap {
 export const DOCUMENTS_ONLY: DocumentsOnlyMap = JSON.parse(
   readFileSync(join(__dirname, "fixtures", "documents_only_map.json"), "utf-8"),
 ) as DocumentsOnlyMap;
+
+/** The diagram manual (Eric's cargo manual, 2026-10-28; DECISIONS 81): one flow drafted from a page
+ * that also shows another, whose claims are listed under Outside this flow. Written by the backend
+ * test test_the_frontend_diagram_sample_matches_the_backend. */
+export interface DiagramMap {
+  graph: Graph;
+  views: { done: Layout; documented: Layout };
+  next_steps: NextSteps;
+  outside_flow: OutsideFlowClaims;
+}
+
+export const DIAGRAM: DiagramMap = JSON.parse(
+  readFileSync(join(__dirname, "fixtures", "diagram_map.json"), "utf-8"),
+) as DiagramMap;

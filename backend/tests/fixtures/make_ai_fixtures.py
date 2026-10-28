@@ -1026,15 +1026,22 @@ def run_stage(app: Any, stage: Any, version_id: str) -> None:
 
 def s2_hash(sessions: Any, version_id: str, engagement_id: str) -> str:
     """The input hash of the S2 call for a version, exactly as the stage sends it."""
+    from app.actions import redaction
     from app.db import session_scope
     from app.pipeline import s2_canonicalise as s2
     from app.repositories import engagements
-    from app.services import ai_service
+    from app.services import ai_service, prompts
 
     with session_scope(sessions) as session:
         refs = s2.claim_refs(session, version_id)
         roles = engagements.list_roles(session, engagement_id)
-    return ai_service.input_hash(s2.STAGE_ID, s2.blocks_for(refs, roles))
+        engagement = engagements.get(session, engagement_id)
+        terms = redaction.name_replacements(session, engagement_id)
+    conventions = prompts.render_conventions(
+        engagement.conventions.model_dump() if engagement else None
+    )
+    flow = s2.render_flow(engagement, terms)
+    return ai_service.input_hash(s2.STAGE_ID, s2.blocks_for(refs, roles, conventions, flow))
 
 
 TRAP_SOURCES = ["interview_transcript.txt", "sop_LC-07.docx"]
@@ -1698,6 +1705,7 @@ def write_interview_only() -> None:
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        run_stage(app, s3_calibrate.ground_in_claims, version_id)
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), interview_only_s4(refs))
 
 
@@ -1835,6 +1843,7 @@ def write_documents_only() -> None:
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        run_stage(app, s3_calibrate.ground_in_claims, version_id)
         run_stage(app, s3c_sensemaking.sense, version_id)  # nothing from interviews: the default
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), documents_only_s4(refs))
         run_stage(app, s4_assemble.assemble, version_id)
@@ -1867,6 +1876,12 @@ DIAGRAM_S1: dict[str, Any] = {
         # Planted: no box names Airline ops (G5, role not found in the cited passage).
         claim("activity", "Airline ops verify pieces, weight and dimensions.", ["p6"],
               "Verify pieces, weight and dimensions", responsible="Airline ops"),
+        # Another flow on the same page (export: accept cargo, build ULDs). Both pass the checks;
+        # this engagement maps load control only, so S2 sets them aside (DECISIONS 81).
+        claim("activity", "Cargo acceptance verifies pieces, weight and dimensions.", ["p6"],
+              "Verify pieces, weight and dimensions", responsible="Cargo acceptance"),
+        claim("activity", "The Build-up team secures and nets the ULDs as required.", ["p7"],
+              "Secure and net as required", responsible="Build-up team"),
     ],
     "unknowns": [{"question": "Where does a deviation outside tolerance go next?",
                   "segment_ids": ["p5"]}],
@@ -1882,7 +1897,9 @@ DIAGRAM_S2: dict[str, Any] = {
     ],
     "new_roles": [],
     "merge_proposals": [],
+    "outside_flow": ["c7", "c8"],
 }
+DIAGRAM_UNCOMPARED = "Return loading report"
 DIAGRAM_QUOTES = {
     "Draft load plan": ("p3", "Draft the preliminary load plan by T-90"),
     "Approve load plan": ("p3", "Load Control Lead approves the plan"),
@@ -1950,14 +1967,18 @@ def write_diagram() -> None:
               DIAGRAM_S2)  # fmt: skip
         run_stage(app, s2_canonicalise.canonicalise, version_id)
         refs = step_ref_by_label(sessions, version_id)
+        # As on Eric's cargo manual (2026-10-28), the comparison leaves one step out: its own
+        # checked claims still ground it (S3 `ground_in_claims`).
         stances = [stance(refs[label], "supports", [seg], quote)
-                   for label, (seg, quote) in DIAGRAM_QUOTES.items()]  # fmt: skip
+                   for label, (seg, quote) in DIAGRAM_QUOTES.items()
+                   if label != DIAGRAM_UNCOMPARED]  # fmt: skip
         for _key, digest in s3_hashes(sessions, version_id, built.sources).items():
             write(MOCKS, "S3_calibrate", digest, {"stances": stances})
         run_stage(app, s3_calibrate.calibrate, version_id)
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        run_stage(app, s3_calibrate.ground_in_claims, version_id)
         write(MOCKS, "S4_assemble", s4_hash(sessions, version_id), diagram_s4(refs))
         run_stage(app, s4_assemble.assemble, version_id)
 
@@ -2130,6 +2151,7 @@ def main() -> None:
         for _label, (digest, count) in s3b_hashes(sessions, version_id).items():
             write(MOCKS, "S3b_verify", digest, verdicts(count))
         run_stage(app, s3b_verify.verify, version_id)
+        run_stage(app, s3_calibrate.ground_in_claims, version_id)
         digest, names, items = s3c_call(sessions, version_id)
         write(MOCKS, "S3c_worktype", digest, s3c_answer(names, items))
         run_stage(app, s3c_sensemaking.sense, version_id)

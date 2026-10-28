@@ -87,6 +87,16 @@ def verified_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRec
     return _rows_with_ids(session, version_id, "verified")
 
 
+def outside_flow_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Claims that passed the checks but describe another flow (DECISIONS 81), oldest first."""
+    return _rows_with_ids(session, version_id, "outside_flow")
+
+
+def set_status(session: Session, claim_ids: list[str], status: str) -> None:
+    for row in session.scalars(select(Claim).where(Claim.id.in_(claim_ids))):
+        row.verification_status = status
+
+
 def scrub_count(session: Session, version_id: str) -> int:
     """Names replaced by roles in Claude's answers, across every claim of a version (G10)."""
     payloads: list[dict[str, Any]] = list(

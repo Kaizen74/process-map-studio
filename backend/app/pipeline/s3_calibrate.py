@@ -50,6 +50,7 @@ STAGE = "S3"
 STAGE_ID = "S3_calibrate"
 SOURCE_REF = "s1"
 NO_DIVERGENCE = "none"
+SILENT = Stance.SILENT.value
 FORMAT_FAILED = (
     "Claude's answer for 'Comparing sources' didn't match the expected format twice. Nothing was "
     "saved. Try again, or use Copy details to report it."
@@ -317,3 +318,59 @@ def _with_divergence(step: StepRef, divergence: str) -> StepRef:
         types.append(divergence)
     element = step.element.model_copy(update={"divergence_types": types})
     return StepRef(ref=step.ref, element=element, lane=step.lane, claims=step.claims)
+
+
+def ground_in_claims(
+    _config: AppConfig,
+    sessions: Sessions,
+    _ctx: AiContext,
+    *,
+    version_id: str,
+    job_id: str | None = None,
+) -> Result[int]:
+    """After S3b: a source a step's own checked claims quote is never silent about it.
+
+    The comparison call can leave a step out for a source (2026-10-28, Eric's cargo manual: two
+    steps drafted from the manual came back with no passage, "not assessed" and drawn As done).
+    The passages the step's remaining claims cite then support it, as the claims already passed
+    G3-G5 and the verifier; the step's source state is worked out again. Deterministic, no call.
+    Returns how many steps gained evidence.
+    """
+    with session_scope(sessions) as session:
+        steps = step_refs(session, version_id)
+        passages = map_repo.evidence(session, version_id)
+        speaking: dict[str, set[str]] = {}
+        for p in passages:
+            if p.evidence.element_id and p.evidence.stance != SILENT:
+                speaking.setdefault(p.evidence.element_id, set()).add(p.source_id)
+        cited = [s for step in steps for c in step.claims for s in c.record.segment_ids]
+        owners = sources_repo.segment_owners(session, cited)
+        grounded = 0
+        for step in steps:
+            heard = speaking.get(step.element.id, set())
+            links: dict[str, EvidenceRecord] = {}
+            for claim in step.claims:
+                for segment_id in claim.record.segment_ids:
+                    owner = owners.get(segment_id)
+                    if owner is None or owner[0] in heard or segment_id in links:
+                        continue
+                    links[segment_id] = EvidenceRecord(
+                        element_id=step.element.id, segment_id=segment_id, source_kind=owner[2],
+                        stance=Stance.SUPPORTS.value, verified=True, quote=claim.record.quote,
+                    )  # fmt: skip
+            if not links:
+                continue
+            map_repo.add_evidence(session, list(links.values()))
+            facts: dict[str, StanceFact] = {}
+            for p in map_repo.evidence(session, version_id):
+                if p.evidence.element_id == step.element.id and p.evidence.stance != SILENT:
+                    known = facts.get(p.source_id)
+                    if known is None or p.evidence.stance == Stance.CONTRADICTS.value:
+                        facts[p.source_id] = StanceFact(
+                            source_id=p.source_id, source_kind=p.evidence.source_kind,
+                            stance=p.evidence.stance,
+                        )  # fmt: skip
+            state = calibration.assign_source_state(facts.values(), step.element.provenance)
+            map_repo.update_element(session, step.element.id, {"source_state": state})
+            grounded += 1
+    return Ok(grounded)

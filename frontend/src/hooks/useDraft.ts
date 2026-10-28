@@ -1,11 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { getDraft, getDraftEstimate, getRefreshCheck, getRejectedClaims, startDraft, startRefresh } from "../api/draft";
+import {
+  getDraft,
+  getDraftEstimate,
+  getOutsideFlow,
+  getRefreshCheck,
+  getRejectedClaims,
+  startDraft,
+  startRefresh,
+} from "../api/draft";
 import type { DraftState } from "../api/types";
 
 const draftKey = (engagementId: string) => ["engagements", engagementId, "draft"] as const;
 const estimateKey = (engagementId: string) => ["draft-estimate", engagementId] as const;
 const rejectedKey = (versionId: string) => ["versions", versionId, "rejected-claims"] as const;
+const outsideKey = (versionId: string) => ["versions", versionId, "outside-flow"] as const;
 
 /** How often to look again while a draft is being made in the background. */
 export const DRAFT_POLL_MS = 1000;
@@ -84,6 +93,15 @@ export function useRejectedClaims(versionId: string | null) {
   return useQuery({
     queryKey: rejectedKey(versionId ?? ""),
     queryFn: () => getRejectedClaims(versionId ?? ""),
+    enabled: Boolean(versionId),
+  });
+}
+
+/** Checked claims about another flow (DECISIONS 81), listed so nothing is dropped silently. */
+export function useOutsideFlow(versionId: string | null) {
+  return useQuery({
+    queryKey: outsideKey(versionId ?? ""),
+    queryFn: () => getOutsideFlow(versionId ?? ""),
     enabled: Boolean(versionId),
   });
 }

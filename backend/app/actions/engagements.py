@@ -53,9 +53,10 @@ _LABELS = {
     "confidential_terms": "Confidential terms",
     "trigger_external": "Starts outside the organisation",
     "end_point_external": "Ends outside the organisation",
+    "every_flow": "Map every flow in these documents",
 }
 _LIST_FIELDS = {"in_scope_roles", "adjacent_industries", "confidential_terms"}
-_FLAG_FIELDS = {"trigger_external", "end_point_external"}
+_FLAG_FIELDS = {"trigger_external", "end_point_external", "every_flow"}
 
 
 def _invalid(field: str, message: str) -> Err:

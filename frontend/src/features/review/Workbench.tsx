@@ -19,7 +19,7 @@ import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { ReviewAction } from "../../api/review";
 import type { GapAnalysis } from "../../lib/gap";
 import type { Graph } from "../../lib/mapTypes";
-import type { RejectedClaim } from "../../lib/reviewTypes";
+import type { PassageClaim } from "../../lib/reviewTypes";
 import type { DispositionChoice, ValueOverride } from "../../lib/value";
 import { hiddenWorkStepForm, newStepForm, type AddStepForm } from "../../lib/addStep";
 import { lensesFor, type Lens } from "../../lib/lens";
@@ -321,12 +321,12 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
     event.preventDefault();
   }
 
-  function openClaim(claim: RejectedClaim) {
+  function openClaim(claim: PassageClaim) {
     select(null);
     setViewing({ step: null, card: { ...claim, quote: "" } });
   }
 
-  function addFromClaim(claim: RejectedClaim) {
+  function addFromClaim(claim: PassageClaim) {
     const passage = { id: claim.segment_id ?? "", anchor: claim.anchor, source_name: claim.source_name, text: "" };
     setAdding(newStepForm(g, addAfter(), passage));
   }

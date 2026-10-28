@@ -4,12 +4,13 @@ import { useEngagement } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { AnotherFlowCard } from "./AnotherFlowCard";
 import { RolesCard } from "./RolesCard";
 import { ConventionsCard } from "./ConventionsCard";
 import { ScopeCard } from "./ScopeCard";
 import "./setup.css";
 
-/** Setup (PRD §5.4): mapping conventions, process scope, and roles and lanes. */
+/** Setup (PRD §5.4): mapping conventions, process scope, roles and lanes, and another flow. */
 export function SetupScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
@@ -54,6 +55,7 @@ export function SetupScreen() {
             </div>
           </Card>
         )}
+        {engagement.data && <AnotherFlowCard engagement={engagement.data} />}
       </div>
     </main>
   );

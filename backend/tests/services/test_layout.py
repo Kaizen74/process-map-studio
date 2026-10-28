@@ -431,3 +431,34 @@ def test_crossings_count_only_where_lines_really_cross() -> None:
     assert count_crossings([across, down]) == 1
     assert count_crossings([across, touching, corner]) == 0
     assert count_crossings([across, down, corner]) == 2  # `corner` runs across `down` too
+
+
+def test_flows_side_by_side_get_one_phase_each_in_their_own_columns() -> None:
+    """Eric's cargo manual (2026-10-28): several flows leave one start, each its own phase. Their
+    steps all ranked from column 1, so the phase headers overlapped ("Inbound arrival and
+    breakTranshipment") and a phase's steps sat under another's header. Each phase now takes its
+    own columns, in phase order; the end comes after all of them."""
+    phases = [GraphPhase(id=p, name=p.capitalize(), order=i, time_window="")
+              for i, p in enumerate(("inbound", "transfer", "outbound"))]  # fmt: skip
+    g = graph(
+        [element("s", "start"),
+         element("i1", phase_id="inbound"), element("i2", lane="b", phase_id="inbound"),
+         element("t1", lane="b", phase_id="transfer"), element("t2", phase_id="transfer"),
+         element("t3", lane="c", phase_id="transfer"),
+         element("o1", lane="c", phase_id="outbound"),
+         element("e", "end")],
+        [edge("s", "i1"), edge("i1", "i2"), edge("i2", "e"),
+         edge("s", "t1"), edge("t1", "t2"), edge("t2", "t3"), edge("t3", "e"),
+         edge("s", "o1"), edge("o1", "e")],
+        phases=phases,
+    )  # fmt: skip
+    lay = compute_layout(g)
+    cols = {n.id: column(n) for n in lay.nodes}
+    assert [cols[k] for k in ("i1", "i2", "t1", "t2", "t3", "o1")] == [1, 2, 3, 4, 5, 6]
+    assert cols["s"] == 0 and cols["e"] == 7
+    bands = [(p.label, (p.x - engine.LABEL_COL) // engine.COL_W, p.w // engine.COL_W)
+             for p in lay.phases]  # fmt: skip
+    assert bands == [("Inbound", 0, 3), ("Transfer", 3, 3), ("Outbound", 6, 2)]
+    for a, b in combinations(lay.nodes, 2):
+        assert not overlaps(rect(a), rect(b)), (a.id, b.id)
+    assert compute_layout(g).model_dump_json() == lay.model_dump_json()
