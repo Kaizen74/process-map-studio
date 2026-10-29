@@ -207,6 +207,7 @@ Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the origin
  "text_status": "ready", "error": "", "segment_count": 10, "ocr_pages": [],
  "suggested_images": 0, "created_at": "…"}
 ```
+`suggested_images`: the pictures found in the file and kept as suggestions; the copies a draft suggests on its steps aren't counted again (2026-10-29, DECISIONS 84).
 `kind` is one of PRD B.1 (`interview_transcript`, `sop`, `manual`, `job_description`, `executed_artefact`, `working_spreadsheet`, `email_thread`, `other`; `working_spreadsheet` and `email_thread` since R11). Working spreadsheets and email threads are **artefacts** (criterion 92): like executed artefacts they are a trace of work as done, so they count with them for source state (`trace_contradicted`, PRD §3.7), the alignment matrix's artefact column, the practice side of Analysis A, readiness (a process document) and signal strength (Moderate without an SOP or manual). `text_status`: `pending` (being read) · `ready` · `failed` (with a plain `error`). `ocr_pages` lists PDF pages with almost no text, which will be read by OCR from phase P3. The upload response also carries `job_id` (the reading job); other responses have `job_id: null`. `filename` and `error` are shown with names hidden (G10), so a file called "Priya Nair interview.txt" is listed as "[name] interview.txt" or with the mapped role.
 
 ### POST /api/engagements/{id}/sources (multipart form)

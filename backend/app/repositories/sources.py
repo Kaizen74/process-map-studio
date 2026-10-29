@@ -20,15 +20,21 @@ from app.repositories.tables import Image, Role, Source, SourceSegment, new_id
 EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
 
 
+# The pictures found in a file: its own, not the copies a draft suggests on a step (2026-10-29:
+# Sources said "4 images found in this file" for a file with two, after a draft).
+_FOUND_IN_FILE = (
+    Image.element_id.is_(None),
+    Image.origin == "extracted",
+    Image.status == "suggested",
+)
+
+
 def _counts(session: Session, source_id: str) -> tuple[int, int]:
     segments = session.scalar(
         select(func.count()).select_from(SourceSegment).where(SourceSegment.source_id == source_id)
     )
     images = session.scalar(
-        select(func.count())
-        .select_from(Image)
-        .where(Image.source_id == source_id)
-        .where(Image.status == "suggested")
+        select(func.count()).select_from(Image).where(Image.source_id == source_id, *_FOUND_IN_FILE)
     )
     return segments or 0, images or 0
 
@@ -84,7 +90,7 @@ def get_many(session: Session, source_ids: list[str]) -> list[SourceView]:
         str(sid): n
         for sid, n in session.execute(
             select(Image.source_id, func.count())
-            .where(Image.source_id.in_(source_ids), Image.status == "suggested")
+            .where(Image.source_id.in_(source_ids), *_FOUND_IN_FILE)
             .group_by(Image.source_id)
         )
     }

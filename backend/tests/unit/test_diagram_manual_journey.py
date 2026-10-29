@@ -86,6 +86,12 @@ def test_only_the_icons_are_suggested_each_once(diagram: Drafted) -> None:
     assert len(pictures) == 2  # the logo on every page is never suggested
     assert len({p["element_id"] for p in pictures}) == 1  # both on the first step citing page 1
     assert {p["status"] for p in pictures} == {"suggested"}
+    # The file still counts its own two pictures, not the copies the draft put on a step
+    # (2026-10-29: Sources said "4 images found in this file" after a draft).
+    source = get(d, f"/api/sources/{d.source_id}")  # type: ignore[attr-defined]
+    assert source["suggested_images"] == 2
+    listed = get(d, f"/api/engagements/{d.engagement_id}/sources")
+    assert [s["suggested_images"] for s in listed] == [2]
 
 
 def test_from_a_whole_draft_to_a_published_map(diagram: Drafted) -> None:
