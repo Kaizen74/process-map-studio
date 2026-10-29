@@ -1549,7 +1549,7 @@ The owner is non-technical. Project memory, quality control and documentation li
 24. The workbench supports confirm, edit, reject, restore and add in map and table views, with auto-advance and required-field checks.
 25. Refresh draft from sources never changes confirmed, edited or added elements.
 26. Publishing is blocked, with a clickable blocker list covering every blocker type, until all elements, merges and suggested images are resolved and the quality card is fully green.
-27. Published versions are read-only (no review controls or outlines); reopening creates a new draft version; the change log records confirmations, edits, rejections and additions.
+27. Published versions are read-only (no review controls or outlines); reopening creates a new draft version; the change log records confirmations (including steps accepted in one go), edits, rejections and additions.
 28. Images require caption, type and redaction confirmation; metadata is stripped; images appear only in the app.
 29. Exports exist for published versions only, follow §7.3, use role names only, contain no images, verbatim quotes or redaction terms, and carry the quality card.
 30. The HTML export is a single file that opens offline with no external requests and uses the same tokens as the app.
