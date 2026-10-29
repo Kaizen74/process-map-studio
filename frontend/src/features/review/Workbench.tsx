@@ -433,6 +433,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
               onAddFromPassage={addFromClaim}
               variants={systemOn ? variants.data : undefined}
               onAddHidden={(item, log) => setAdding(hiddenWorkStepForm(g, item, log, addAfter()))}
+              initialTab={params.get("tab")}
             />
           </Card>
           {below}

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ErrorState, Skeleton } from "../../components/common";
 import { useToast } from "../../components/shell";
 import {
@@ -44,7 +44,11 @@ export interface WorkbenchTabsProps {
   variants?: SystemVariants | undefined;
   /** Add as step from hidden work; omitted where the version can't change. */
   onAddHidden?: ((item: HiddenWorkItem, log: LogVariants) => void) | undefined;
+  /** The tab the address asks for (`?tab=outside` from the Draft screen, DECISIONS 85). */
+  initialTab?: string | null | undefined;
 }
+
+const TAB_IDS: readonly TabId[] = ["raci", "questions", "rejected", "outside", "audit", "merges", "lint", "variants"];
 
 /** Loading and error states shared by every tab (PRD §5.3). */
 function Loaded<T>({
@@ -83,8 +87,10 @@ export function WorkbenchTabs({
   onAddFromPassage,
   variants,
   onAddHidden,
+  initialTab,
 }: WorkbenchTabsProps) {
-  const [tab, setTab] = useState<TabId>("raci");
+  const asked = TAB_IDS.find((id) => id === initialTab);
+  const [tab, setTab] = useState<TabId>(asked ?? "raci");
   const toast = useToast();
   const questions = useQuestions(versionId);
   const rejected = useRejectedClaims(versionId);
@@ -119,6 +125,15 @@ export function WorkbenchTabs({
     ...(variants && variants.logs.length > 0 ? [{ id: "variants" as const, label: "Variants" }] : []),
   ];
   const shown = tabs.some((t) => t.id === tab) ? tab : "raci";
+  // Arriving for a tab (from the Draft screen): bring it into view once it is there.
+  const box = useRef<HTMLDivElement>(null);
+  const arrived = useRef(false);
+  useEffect(() => {
+    if (asked && shown === asked && !arrived.current) {
+      arrived.current = true;
+      box.current?.scrollIntoView?.({ block: "start" });
+    }
+  }, [asked, shown]);
 
   const markdown = () => questionsMarkdown(questions.data ?? [], graph.process.name, graph.version.label);
 
@@ -132,80 +147,82 @@ export function WorkbenchTabs({
   }
 
   return (
-    <TabBar label="Review workbench" tabs={tabs} active={shown} onChange={setTab}>
-      {shown === "raci" && <RaciMatrix graph={graph} laneOrder={laneOrder} selectedId={selectedId} onSelect={onSelect} />}
-      {shown === "questions" && (
-        <Loaded query={questions} what="questions">
-          {(data) => (
-            <>
-              <QuestionsTab
-                questions={data}
-                onStatus={
-                  editable ? (questionId, status) => setStatus.mutate({ questionId, status }) : undefined
-                }
-                onGoTo={onSelect}
-                onCopy={() => void copyAll()}
-                onDownload={() => saveText(questionsFileName(graph.version.label), markdown())}
-                packUrl={validationPackUrl(graph.version.id)}
+    <div ref={box}>
+      <TabBar label="Review workbench" tabs={tabs} active={shown} onChange={setTab}>
+        {shown === "raci" && <RaciMatrix graph={graph} laneOrder={laneOrder} selectedId={selectedId} onSelect={onSelect} />}
+        {shown === "questions" && (
+          <Loaded query={questions} what="questions">
+            {(data) => (
+              <>
+                <QuestionsTab
+                  questions={data}
+                  onStatus={
+                    editable ? (questionId, status) => setStatus.mutate({ questionId, status }) : undefined
+                  }
+                  onGoTo={onSelect}
+                  onCopy={() => void copyAll()}
+                  onDownload={() => saveText(questionsFileName(graph.version.label), markdown())}
+                  packUrl={validationPackUrl(graph.version.id)}
+                />
+                {setStatus.error != null && (
+                  <p className="field__error" role="alert">
+                    {messageOf(setStatus.error)}
+                  </p>
+                )}
+              </>
+            )}
+          </Loaded>
+        )}
+        {shown === "rejected" && (
+          <Loaded query={rejected} what="rejected claims">
+            {(data) => (
+              <RejectedClaimsTab
+                data={data}
+                onOpenPassage={onOpenPassage}
+                onAddStep={editable ? onAddFromPassage : undefined}
               />
-              {setStatus.error != null && (
-                <p className="field__error" role="alert">
-                  {messageOf(setStatus.error)}
-                </p>
-              )}
-            </>
-          )}
-        </Loaded>
-      )}
-      {shown === "rejected" && (
-        <Loaded query={rejected} what="rejected claims">
-          {(data) => (
-            <RejectedClaimsTab
-              data={data}
-              onOpenPassage={onOpenPassage}
-              onAddStep={editable ? onAddFromPassage : undefined}
-            />
-          )}
-        </Loaded>
-      )}
-      {shown === "outside" && (
-        <Loaded query={outside} what="claims about other flows">
-          {(data) => (
-            <OutsideFlowTab data={data} onOpenPassage={onOpenPassage} onAddStep={editable ? onAddFromPassage : undefined} />
-          )}
-        </Loaded>
-      )}
-      {shown === "audit" && <Loaded query={audit} what="audit log">{(data) => <AuditTab entries={data} />}</Loaded>}
-      {shown === "merges" && (
-        <Loaded query={merges} what="merge decisions">
-          {(data) => (
-            <>
-              <MergeTab
-                proposals={data}
-                busyId={decide.isPending ? (decide.variables?.proposalId ?? null) : null}
-                onDecide={
-                  editable
-                    ? (proposalId, decision) => {
-                        decide.reset();
-                        decide.mutate({ proposalId, decision });
-                      }
-                    : undefined
-                }
-                onGoTo={onSelect}
-              />
-              {decide.error != null && (
-                <p className="field__error" role="alert">
-                  {messageOf(decide.error)}
-                </p>
-              )}
-            </>
-          )}
-        </Loaded>
-      )}
-      {shown === "lint" && <Loaded query={lint} what="map checks">{(data) => <LintTab report={data} onGoTo={onSelect} />}</Loaded>}
-      {shown === "variants" && variants && (
-        <VariantsTab data={variants} onSelect={onSelect} onAddHidden={editable ? onAddHidden : undefined} />
-      )}
-    </TabBar>
+            )}
+          </Loaded>
+        )}
+        {shown === "outside" && (
+          <Loaded query={outside} what="claims about other flows">
+            {(data) => (
+              <OutsideFlowTab data={data} onOpenPassage={onOpenPassage} onAddStep={editable ? onAddFromPassage : undefined} />
+            )}
+          </Loaded>
+        )}
+        {shown === "audit" && <Loaded query={audit} what="audit log">{(data) => <AuditTab entries={data} />}</Loaded>}
+        {shown === "merges" && (
+          <Loaded query={merges} what="merge decisions">
+            {(data) => (
+              <>
+                <MergeTab
+                  proposals={data}
+                  busyId={decide.isPending ? (decide.variables?.proposalId ?? null) : null}
+                  onDecide={
+                    editable
+                      ? (proposalId, decision) => {
+                          decide.reset();
+                          decide.mutate({ proposalId, decision });
+                        }
+                      : undefined
+                  }
+                  onGoTo={onSelect}
+                />
+                {decide.error != null && (
+                  <p className="field__error" role="alert">
+                    {messageOf(decide.error)}
+                  </p>
+                )}
+              </>
+            )}
+          </Loaded>
+        )}
+        {shown === "lint" && <Loaded query={lint} what="map checks">{(data) => <LintTab report={data} onGoTo={onSelect} />}</Loaded>}
+        {shown === "variants" && variants && (
+          <VariantsTab data={variants} onSelect={onSelect} onAddHidden={editable ? onAddHidden : undefined} />
+        )}
+      </TabBar>
+    </div>
   );
 }

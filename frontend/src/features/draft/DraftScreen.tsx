@@ -175,6 +175,13 @@ function Summary({
 }) {
   const { version, summary } = state;
   if (!version || !summary) return null;
+  // DECISIONS 81, 83, 85: what drafting set aside because it is about another flow.
+  const asideClaims = summary.outside_flow ?? 0;
+  const asideQuestions = summary.outside_flow_questions ?? 0;
+  const aside = [
+    asideClaims ? plural(asideClaims, "claim") : "",
+    asideQuestions ? plural(asideQuestions, "question") : "",
+  ].filter(Boolean);
   return (
     <Card
       title={`Draft ${version.label}`}
@@ -197,7 +204,19 @@ function Summary({
           <dt>Open questions</dt>
           <dd className="mono">{summary.open_questions}</dd>
         </div>
+        {aside.length > 0 && (
+          <div>
+            <dt>Other flows</dt>
+            <dd className="mono">{asideClaims + asideQuestions}</dd>
+          </div>
+        )}
       </dl>
+      {aside.length > 0 && (
+        <p className="draft-note">
+          {aside.join(" and ")} in your documents are about another flow, so they are kept off this map.{" "}
+          <Link to={`${engagementPath(engagementId, "review")}?tab=outside`}>See them under Outside this flow</Link>
+        </p>
+      )}
       {signal && (
         <div className="draft-signal">
           <SignalMeter signal={signal} />

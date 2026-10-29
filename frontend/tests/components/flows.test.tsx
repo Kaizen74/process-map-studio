@@ -66,6 +66,14 @@ describe("Review: Outside this flow", () => {
     expect(within(form).getByRole("list", { name: "Picked passages" })).toHaveTextContent("process_flow_diagram.pdf · p. 1");
   });
 
+  it("opens on Outside this flow when the address asks for it (from the Draft screen)", async () => {
+    review({ [`GET /api/versions/${VID}/outside-flow`]: () => ({ body: DIAGRAM.outside_flow }) });
+    renderApp("/engagements/e1/review?tab=outside");
+    const tab = await within(await tablist()).findByRole("tab", { name: "Outside this flow (3)" });
+    await waitFor(() => expect(tab).toHaveAttribute("aria-selected", "true"));
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("Cargo acceptance verifies pieces");
+  });
+
   it("has no tab when every claim belongs to this flow", async () => {
     review();
     renderApp("/engagements/e1/review");
