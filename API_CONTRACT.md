@@ -913,7 +913,8 @@ Response `200`:
 {"job": {"…": "job object as GET /api/jobs/{job_id}"},
  "version": {"id": "…", "label": "v0.1", "state": "draft", "created_at": "…"},
  "summary": {"steps": 8, "needs_check": 0, "verified": 21, "rejected": 0,
-             "open_questions": 5, "scrubbed": 0, "outside_flow": 0},
+             "open_questions": 5, "scrubbed": 0, "outside_flow": 0,
+             "outside_flow_questions": 0},
  "last_refresh": null}
 ```
 `job` is `null` before the first draft; `version` and `summary` are `null` without a draft. `steps`: activities, decisions and approvals on the draft; `needs_check`: steps the independent verifier found only partly supported; `verified` / `rejected`: claims; `open_questions`: validation questions still open (including every gap Claude raised); `scrubbed`: names replaced by roles in Claude's answers.
@@ -1460,9 +1461,14 @@ Claims about another flow (2026-10-28; DECISIONS 81): claims that passed every c
 {"items": [{"id": "…", "claim_text": "Cargo acceptance verifies pieces, weight and dimensions.",
             "claim_type": "activity", "source_id": "…", "source_name": "manual.pdf",
             "anchor": "p. 1", "passage_available": true, "segment_id": "…"}],
- "total": 1}
+ "questions": [{"question": "What happens to cargo that fails security screening?",
+                "source_id": "…", "source_name": "manual.pdf", "anchor": "p. 1",
+                "passage_available": true, "segment_id": "…"}],
+ "total": 2}
 ```
-`claim_text` and `source_name` have names on the redaction list replaced by roles; `anchor` and `segment_id` as in the rejected-claims register. Oldest first. A draft that set claims aside ends its job message with " n claims about other flows set aside: see Outside this flow." and its summary has `outside_flow` (count).
+`claim_text`, `question` and `source_name` have names on the redaction list replaced by roles; `anchor` and `segment_id` as in the rejected-claims register. Oldest first. `total` counts claims and questions.
+**Questions** (2026-10-29, DECISIONS 83): the reading's open questions (S1 unknowns) cover the whole document. When drafting set claims about other flows aside, S5 sets aside an unknown whose passages are all ones no step of this map uses (its evidence and its claims' passages), deterministically: it is not one of the map's validation questions and is listed here. An unknown with no passage, or one pointing at a passage the map uses, stays a question; with no claims set aside nothing moves.
+A draft that set anything aside ends its job message with " n claims and m questions about other flows set aside: see Outside this flow." (only the parts that aren't zero) and its summary has `outside_flow` and `outside_flow_questions` (counts).
 Errors: `404 NOT_FOUND`.
 Used by: Review → workbench tab "Outside this flow (n)", shown only when `total > 0` (Open passage; Add as step from this passage on a draft).
 

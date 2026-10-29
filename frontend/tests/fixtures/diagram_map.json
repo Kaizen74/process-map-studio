@@ -1362,6 +1362,16 @@
         "segment_id": "id-35"
       }
     ],
-    "total": 2
+    "questions": [
+      {
+        "question": "What happens to cargo that fails security screening?",
+        "source_id": "id-14",
+        "source_name": "process_flow_diagram.pdf",
+        "anchor": "p. 1",
+        "passage_available": true,
+        "segment_id": "id-33"
+      }
+    ],
+    "total": 3
   }
 }

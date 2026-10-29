@@ -32,6 +32,7 @@ from app.domain.models import (
     JobView,
     OutsideFlowClaim,
     OutsideFlowClaims,
+    OutsideFlowQuestion,
     RefreshChanges,
     RejectedClaim,
     RejectedClaims,
@@ -430,7 +431,8 @@ def run_draft(config: AppConfig, sessions: Sessions, job_id: str) -> Result[str]
     return Ok(
         f"Draft {version.label} is ready: {_plural(summary.steps, 'step')} drafted, "
         f"{summary.needs_check} to check, {_plural(summary.rejected, 'rejected claim')}, "
-        f"{_plural(summary.open_questions, 'open question')}.{_aside(summary.outside_flow)}"
+        f"{_plural(summary.open_questions, 'open question')}."
+        f"{_aside(summary.outside_flow, summary.outside_flow_questions)}"
         f"{kept_note}"
     )
 
@@ -467,11 +469,13 @@ def last_refresh(session: Session, job: JobView | None, version_id: str) -> Refr
     return None
 
 
-def _aside(count: int) -> str:
-    """The claims about other flows, when there are any (Review → Outside this flow)."""
-    if not count:
+def _aside(count: int, questions: int = 0) -> str:
+    """The claims and questions about other flows, when there are any (Review → Outside this
+    flow)."""
+    parts = [_plural(n, word) for n, word in ((count, "claim"), (questions, "question")) if n]
+    if not parts:
         return ""
-    return f" {_plural(count, 'claim')} about other flows set aside: see Outside this flow."
+    return f" {' and '.join(parts)} about other flows set aside: see Outside this flow."
 
 
 def _summary(session: Session, version_id: str) -> DraftSummary:
@@ -485,6 +489,7 @@ def _summary(session: Session, version_id: str) -> DraftSummary:
         open_questions=map_repo.open_question_count(session, version_id),
         scrubbed=claims.scrub_count(session, version_id),
         outside_flow=counts.get("outside_flow", 0),
+        outside_flow_questions=claims.unknown_count(session, version_id, outside_flow=True),
     )
 
 
@@ -526,10 +531,10 @@ def get_draft(sessions: Sessions, engagement_id: str) -> Result[DraftState]:
 
 
 def _first_passage(
-    cited: dict[str, tuple[Any, str]], record: ClaimRecord
+    cited: dict[str, tuple[Any, str]], segment_ids: list[str]
 ) -> tuple[str, str | None]:
-    """The anchor and ID of a claim's first cited passage still stored ("", None when gone)."""
-    first = next((cited[s] for s in record.segment_ids if s in cited), None)
+    """The anchor and ID of the first cited passage still stored ("", None when gone)."""
+    first = next((cited[s] for s in segment_ids if s in cited), None)
     if first is None:
         return "", None
     seg, fmt = first
@@ -560,7 +565,7 @@ def rejected_claims(sessions: Sessions, version_id: str) -> Result[RejectedClaim
         names = _source_names(session, rows)
         items = []
         for claim_id, record in rows:
-            anchor, segment_id = _first_passage(cited, record)
+            anchor, segment_id = _first_passage(cited, record.segment_ids)
             items.append(
                 RejectedClaim(
                     id=claim_id,
@@ -596,13 +601,20 @@ def outside_flow(sessions: Sessions, version_id: str) -> Result[OutsideFlowClaim
             return Err(ErrorKind.NOT_FOUND, VERSION_MISSING)
         terms = redaction.name_replacements(session, version.engagement_id)
         rows = claims.outside_flow_rows(session, version_id)
+        asked = claims.list_unknowns(session, version_id, outside_flow=True)
         cited = sources_repo.segment_rows(
-            session, [sid for _, record in rows for sid in record.segment_ids]
+            session,
+            [sid for _, record in rows for sid in record.segment_ids]
+            + [sid for u in asked for sid in u.segment_ids],
         )
         names = _source_names(session, rows)
+        for u in asked:
+            if u.source_id not in names:
+                source = sources_repo.get(session, u.source_id)
+                names[u.source_id] = source.filename if source else ""
         items = []
         for claim_id, record in rows:
-            anchor, segment_id = _first_passage(cited, record)
+            anchor, segment_id = _first_passage(cited, record.segment_ids)
             items.append(
                 OutsideFlowClaim(
                     id=claim_id,
@@ -615,4 +627,19 @@ def outside_flow(sessions: Sessions, version_id: str) -> Result[OutsideFlowClaim
                     segment_id=segment_id,
                 )
             )
-        return Ok(OutsideFlowClaims(items=items, total=len(items)))
+        questions = []
+        for u in asked:
+            anchor, segment_id = _first_passage(cited, u.segment_ids)
+            questions.append(
+                OutsideFlowQuestion(
+                    question=redaction.hide(u.question, terms),
+                    source_id=u.source_id,
+                    source_name=redaction.hide(names[u.source_id], terms),
+                    anchor=anchor,
+                    passage_available=segment_id is not None,
+                    segment_id=segment_id,
+                )
+            )
+        return Ok(
+            OutsideFlowClaims(items=items, questions=questions, total=len(items) + len(questions))
+        )

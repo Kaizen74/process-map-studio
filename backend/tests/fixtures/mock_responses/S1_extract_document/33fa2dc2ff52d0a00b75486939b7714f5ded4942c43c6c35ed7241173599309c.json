@@ -151,6 +151,12 @@
       "segment_ids": [
         "p5"
       ]
+    },
+    {
+      "question": "What happens to cargo that fails security screening?",
+      "segment_ids": [
+        "p6"
+      ]
     }
   ]
 }

@@ -1884,7 +1884,10 @@ DIAGRAM_S1: dict[str, Any] = {
               "Secure and net as required", responsible="Build-up team"),
     ],
     "unknowns": [{"question": "Where does a deviation outside tolerance go next?",
-                  "segment_ids": ["p5"]}],
+                  "segment_ids": ["p5"]},
+                 # About the export flow on the same page: set aside (DECISIONS 83).
+                 {"question": "What happens to cargo that fails security screening?",
+                  "segment_ids": ["p6"]}],
 }  # fmt: skip
 DIAGRAM_S2: dict[str, Any] = {
     "steps": [

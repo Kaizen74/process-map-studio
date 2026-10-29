@@ -26,8 +26,20 @@ export interface OutsideFlowClaim extends PassageClaim {
   claim_type: string;
 }
 
+/** DECISIONS 83: an open question from the reading about another flow, kept off this map. */
+export interface OutsideFlowQuestion {
+  question: string;
+  source_id: string;
+  source_name: string;
+  anchor: string;
+  passage_available: boolean;
+  segment_id: string | null;
+}
+
 export interface OutsideFlowClaims {
   items: OutsideFlowClaim[];
+  questions: OutsideFlowQuestion[];
+  /** Claims and questions. */
   total: number;
 }
 

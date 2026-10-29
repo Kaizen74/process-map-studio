@@ -47,9 +47,13 @@ describe("Review: Outside this flow", () => {
   it("lists the claims about another flow, with their passage, and adds a step from one", async () => {
     review({ [`GET /api/versions/${VID}/outside-flow`]: () => ({ body: DIAGRAM.outside_flow }) });
     const { container } = renderApp("/engagements/e1/review");
-    fireEvent.click(await within(await tablist()).findByRole("tab", { name: "Outside this flow (2)" }));
+    fireEvent.click(await within(await tablist()).findByRole("tab", { name: "Outside this flow (3)" }));
     const tab = screen.getByRole("tabpanel");
-    expect(within(tab).getByText(/2 claims in your documents describe another flow/)).toBeInTheDocument();
+    expect(within(tab).getByText(/2 claims and 1 question in your documents are about another flow/)).toBeInTheDocument();
+    // DECISIONS 83: the reading's question about the export flow is set aside with its claims.
+    const questions = within(tab).getByRole("region", { name: "Questions about another flow" });
+    expect(within(questions).getByText("What happens to cargo that fails security screening?")).toBeInTheDocument();
+    expect(within(questions).queryByRole("button", { name: "Add as step from this passage" })).toBeNull();
     expect(within(tab).getByText("Cargo acceptance verifies pieces, weight and dimensions.")).toBeInTheDocument();
     expect(within(tab).getByText("The Build-up team secures and nets the ULDs as required.")).toBeInTheDocument();
     expect(await seriousViolations(container)).toEqual([]);

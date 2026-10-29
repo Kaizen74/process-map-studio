@@ -181,6 +181,8 @@ class Unknown(Row):
     source_id: Mapped[str] = fk("sources.id")
     question: Mapped[str] = mapped_column(Text)
     segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # 0019: about another flow (DECISIONS 83); not one of the map's questions.
+    outside_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class Phase(Row):

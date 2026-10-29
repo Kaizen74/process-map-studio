@@ -157,7 +157,7 @@ def test_claims_about_another_flow_on_the_page_are_set_aside_and_listed(diagram:
     passage."""
     d = diagram
     aside = get(d, f"/api/versions/{d.version_id}/outside-flow")
-    assert aside["total"] == 2
+    assert len(aside["items"]) == 2
     assert [(c["claim_text"], c["claim_type"], c["source_name"], c["anchor"])
             for c in aside["items"]] == [
         ("Cargo acceptance verifies pieces, weight and dimensions.", "activity",
@@ -172,6 +172,24 @@ def test_claims_about_another_flow_on_the_page_are_set_aside_and_listed(diagram:
     ]
     rejected = get(d, f"/api/versions/{d.version_id}/rejected-claims")
     assert rejected["total"] == 1
+
+
+def test_questions_about_another_flow_are_set_aside_with_its_claims(diagram: Drafted) -> None:
+    """DECISIONS 83: the reading also asked "What happens to cargo that fails security
+    screening?" about the export box. No step of this load control map uses that passage, so the
+    question is listed under Outside this flow, not on this map's open questions. The question
+    about the captain's box, a passage this map uses, stays."""
+    d = diagram
+    aside = get(d, f"/api/versions/{d.version_id}/outside-flow")
+    assert [(q["question"], q["source_name"], q["anchor"]) for q in aside["questions"]] == [
+        ("What happens to cargo that fails security screening?", "process_flow_diagram.pdf",
+         "p. 1"),
+    ]  # fmt: skip
+    assert aside["questions"][0]["passage_available"] and aside["questions"][0]["segment_id"]
+    assert aside["total"] == 3  # two claims and one question
+    asked = [q["question"] for q in get(d, f"/api/versions/{d.version_id}/questions")]
+    assert "Where does a deviation outside tolerance go next?" in asked
+    assert "What happens to cargo that fails security screening?" not in asked
     assert d.job["message"].endswith(  # type: ignore[attr-defined]
-        " 2 claims about other flows set aside: see Outside this flow."
+        " 2 claims and 1 question about other flows set aside: see Outside this flow."
     )

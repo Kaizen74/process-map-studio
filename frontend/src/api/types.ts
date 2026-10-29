@@ -312,6 +312,8 @@ export interface DraftSummary {
   scrubbed: number;
   /** DECISIONS 81: checked claims about another flow, set aside (absent before: 0). */
   outside_flow?: number;
+  /** DECISIONS 83: the reading's questions about another flow, set aside (absent before: 0). */
+  outside_flow_questions?: number;
 }
 
 /** How a draft or refresh was made (API_CONTRACT.md → Run record). */
@@ -412,6 +414,7 @@ export type {
   RejectedClaims,
   OutsideFlowClaim,
   OutsideFlowClaims,
+  OutsideFlowQuestion,
   PassageClaim,
   QualityCard,
   QualityCheck,

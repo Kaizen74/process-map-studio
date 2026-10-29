@@ -4,7 +4,9 @@ Which steps need a question is decided here, deterministically, one question per
 most important reason: contested (or trace contradicted) → documented only → inferred → partial
 support from the verifier (`needs_check`) → low confidence (below 0.50). At most six step
 questions per phase. Every unknown Claude raised in S1 becomes a question with reason `gap` as it
-was asked (G8), however many there are.
+was asked (G8), however many there are, except one about another flow (DECISIONS 83): on a map
+whose drafting set claims about other flows aside, an unknown that points only at passages no
+step of the map uses is set aside with them (`questions_aside`), listed, never dropped.
 
 Claude only words the step questions. A question that names a number the step's claims and
 divergence notes don't state is replaced by a plain template; names are scrubbed (G10). When no
@@ -147,6 +149,16 @@ def blocks_for(items: list[Needed]) -> list[dict[str, object]]:
     return [{"type": "text", "text": render(items)}]
 
 
+def questions_aside(asked: list[list[str]], used: set[str], *, claims_aside: bool) -> list[int]:
+    """Which of the reading's open questions are about another flow (their indexes): only when
+    drafting set claims about other flows aside (the documents describe more than this flow), and
+    only a question whose passages are all ones no step of this map uses. A question with no
+    passage stays: nothing says where it belongs."""
+    if not claims_aside:
+        return []
+    return [n for n, segments in enumerate(asked) if segments and not set(segments) & used]
+
+
 def ask(
     config: AppConfig,
     sessions: Sessions,
@@ -161,7 +173,14 @@ def ask(
         if version is None:
             return Err(ErrorKind.NOT_FOUND, "That version doesn't exist.")
         items = needed(session, version_id)
-        unknowns = claims_repo.list_unknowns(session, version_id)
+        rows = claims_repo.unknown_rows(session, version_id)
+        claims_aside = bool(claims_repo.outside_flow_rows(session, version_id))
+        on_map = {p.evidence.segment_id for p in map_repo.evidence(session, version_id)}
+        on_map |= {s for step in step_refs(session, version_id) for c in step.claims
+                   for s in c.record.segment_ids}  # fmt: skip
+        aside = questions_aside([r.segment_ids for _, r in rows], on_map, claims_aside=claims_aside)
+        claims_repo.set_unknowns_outside_flow(session, [rows[i][0] for i in aside])
+        unknowns = [r for i, (_, r) in enumerate(rows) if i not in set(aside)]
         terms = redaction.name_replacements(session, version.engagement_id)
         interviewed = SourceKind.INTERVIEW_TRANSCRIPT.value in versions_repo.source_kinds(
             session, version_id

@@ -117,7 +117,7 @@ export function fakeApi(routes: Record<string, Handler>) {
         : NEXT_STEPS.test(key)
           ? { body: SAMPLE.next_steps }
           : OUTSIDE_FLOW.test(key)
-            ? { body: { items: [], total: 0 } }
+            ? { body: { items: [], questions: [], total: 0 } }
             : key === PLANS
               ? { body: TEMPLATE_PLANS }
               : {

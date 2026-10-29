@@ -48,14 +48,31 @@ def list_claims(session: Session, version_id: str, status: str | None = None) ->
     return [_record(row) for row in rows]
 
 
-def list_unknowns(session: Session, version_id: str) -> list[UnknownRecord]:
+def list_unknowns(
+    session: Session, version_id: str, *, outside_flow: bool = False
+) -> list[UnknownRecord]:
+    """The reading's open questions: the map's own, or those about another flow (DECISIONS 83)."""
+    return [record for _, record in unknown_rows(session, version_id, outside_flow=outside_flow)]
+
+
+def unknown_rows(
+    session: Session, version_id: str, *, outside_flow: bool = False
+) -> list[tuple[str, UnknownRecord]]:
     rows = session.scalars(
-        select(Unknown).where(Unknown.version_id == version_id).order_by(Unknown.created_at)
+        select(Unknown)
+        .where(Unknown.version_id == version_id, Unknown.outside_flow.is_(outside_flow))
+        .order_by(Unknown.created_at, Unknown.id)
     )
     return [
-        UnknownRecord(source_id=r.source_id, question=r.question, segment_ids=list(r.segment_ids))
+        (r.id, UnknownRecord(source_id=r.source_id, question=r.question,
+                             segment_ids=list(r.segment_ids)))
         for r in rows
-    ]
+    ]  # fmt: skip
+
+
+def set_unknowns_outside_flow(session: Session, unknown_ids: list[str]) -> None:
+    for row in session.scalars(select(Unknown).where(Unknown.id.in_(unknown_ids))):
+        row.outside_flow = True
 
 
 def counts(session: Session, version_id: str) -> dict[str, int]:
@@ -105,10 +122,12 @@ def scrub_count(session: Session, version_id: str) -> int:
     return sum(int(payload.get("scrubbed", 0) or 0) for payload in payloads)
 
 
-def unknown_count(session: Session, version_id: str) -> int:
+def unknown_count(session: Session, version_id: str, *, outside_flow: bool = False) -> int:
     return (
         session.scalar(
-            select(func.count()).select_from(Unknown).where(Unknown.version_id == version_id)
+            select(func.count())
+            .select_from(Unknown)
+            .where(Unknown.version_id == version_id, Unknown.outside_flow.is_(outside_flow))
         )
         or 0
     )

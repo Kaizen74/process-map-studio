@@ -568,6 +568,7 @@ class DraftSummary(BaseModel):
     open_questions: int
     scrubbed: int
     outside_flow: int = 0  # checked claims about another flow, set aside (DECISIONS 81)
+    outside_flow_questions: int = 0  # the reading's questions about another flow (DECISIONS 83)
 
 
 class StepRename(BaseModel):
@@ -641,9 +642,21 @@ class OutsideFlowClaim(BaseModel):
     segment_id: str | None
 
 
+class OutsideFlowQuestion(BaseModel):
+    """An open question from the reading about another flow, kept off this map (DECISIONS 83)."""
+
+    question: str
+    source_id: str
+    source_name: str
+    anchor: str
+    passage_available: bool
+    segment_id: str | None
+
+
 class OutsideFlowClaims(BaseModel):
     items: list[OutsideFlowClaim]
-    total: int
+    questions: list[OutsideFlowQuestion] = []
+    total: int  # claims and questions
 
 
 class RejectedClaims(BaseModel):
