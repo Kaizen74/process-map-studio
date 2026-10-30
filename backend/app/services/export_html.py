@@ -45,6 +45,7 @@ DRAFT_STAMP = (
     "validated yet."
 )
 LETTERS = {"R": "Responsible", "A": "Accountable", "C": "Consulted", "I": "Informed"}
+BACK = "Back to the map"  # each step card links back up (2026-10-30)
 
 # The self-hosted font files (frontend/public/fonts) and the characters each one covers.
 LATIN = (
@@ -338,11 +339,11 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
         rows.append(("Exits", "; ".join(exits) or "none"))
     if el.handoff.in_ or el.handoff.out:
         rows.append(("Data in → out", f"{el.handoff.in_ or '—'} → {el.handoff.out or '—'}"))
-    raci = [
-        f"{roles.get(r.role_id, '')}: {LETTERS.get(r.letter, r.letter)}"
-        + (" (contested)" if r.contested else "")
-        for r in el.raci
-    ]
+    letters: dict[str, list[str]] = {}  # each role once, its letters in order (2026-10-30)
+    for r in el.raci:
+        word = LETTERS.get(r.letter, r.letter) + (" (contested)" if r.contested else "")
+        letters.setdefault(r.role_id, []).append(word)
+    raci = [f"{roles.get(role_id, '')}: {_and(words)}" for role_id, words in letters.items()]
     if raci:
         rows.append(("Roles", "; ".join(raci)))
     for c in el.constraints:
@@ -362,8 +363,14 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
     body = "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in rows)
     return (
         f'<article class="card step" id="step-{e(el.id)}" aria-labelledby="h-{e(el.id)}">'
-        f'<h3 id="h-{e(el.id)}">[{e(el.provenance)}] {e(el.label)}</h3><dl>{body}</dl></article>'
+        f'<h3 id="h-{e(el.id)}">[{e(el.provenance)}] {e(el.label)}</h3><dl>{body}</dl>'
+        f'<p class="step__back"><a href="#interpretation">{BACK}</a></p></article>'
     )
+
+
+def _and(words: list[str]) -> str:
+    """Words joined as in a sentence: a; a and b; a, b and c."""
+    return words[0] if len(words) == 1 else f"{', '.join(words[:-1])} and {words[-1]}"
 
 
 def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:

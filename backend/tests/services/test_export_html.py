@@ -200,3 +200,30 @@ def test_facts_say_how_much_of_the_sources_is_about_other_flows() -> None:
         "this map.</p>"
     ) in facts
     assert "another flow" not in render()
+
+
+def test_a_role_with_several_letters_is_named_once() -> None:
+    # Eric, 2026-10-30: "Cargo acceptance: Responsible; Cargo acceptance: Accountable" read twice.
+    html = render()
+    assert "<dt>Roles</dt><dd>Load controller: Responsible and Accountable</dd>" in html
+    assert "Load controller: Responsible; Load controller: Accountable" not in html
+    # A contested letter stays marked; each role still gets its own entry.
+    assert (
+        "<dd>Load controller: Responsible; Captain: Accountable (contested); "
+        "Load control lead: Accountable (contested)</dd>"
+    ) in html
+    graph = sample_graph()
+    step = next(el for el in graph.elements if el.label == "Draft load plan")
+    step.raci = [*step.raci, step.raci[0].model_copy(update={"letter": "C"})]
+    assert "Load controller: Responsible, Accountable and Consulted" in render(graph=graph)
+
+
+def test_every_step_card_leads_back_to_the_map() -> None:
+    # Eric, 2026-10-30: after clicking a step there was no way back up but scrolling.
+    html = render()
+    cards = re.findall(r'<article class="card step".*?</article>', html)
+    assert len(cards) == len(md.steps(sample_graph()))
+    back = '<p class="step__back"><a href="#interpretation">Back to the map</a></p>'
+    assert all(card.endswith(back + "</article>") for card in cards)
+    assert '<h2 id="interpretation">' in html
+    assert ".step__back a { color: inherit;" in html  # the app's link style, no browser blue

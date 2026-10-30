@@ -1715,6 +1715,8 @@ Glossary of SME terms
 ```
 Every element line carries its provenance tag. Role names only. No images, no verbatim quotes.
 
+The single-file HTML map follows the same template. Each step on its map links to that step's card; each card ends with a "Back to the map" link, and lists each role once with its letters ("Cargo acceptance: Responsible and Accountable", a contested letter marked "(contested)") (2026-10-30, DECISIONS 89).
+
 ### 7.4 Reality pack structure (fixed template; single HTML file)
 ```
 Cover: [Process] — Reality views · Version vX.Y · validated by [owner] on [date] · signal strength · data label · evidence summary
