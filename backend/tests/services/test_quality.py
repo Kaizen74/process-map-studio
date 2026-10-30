@@ -165,6 +165,14 @@ def test_the_hidden_name_is_never_repeated_in_the_card() -> None:
     assert q8.status == "fail"  # the KPI is in the JSON and HTML exports (not in the md template)
     assert "in the json, html export" in q8.detail
     assert "Priya" not in card.model_dump_json()
+    # Eric, 2026-10-30: the card travels in the exports others read, so "the list", not "your".
+    assert q8.detail.startswith("A name from the list of names to hide appears")
+
+
+def test_q8_speaks_of_the_list_not_yours_in_a_shared_export() -> None:
+    q8 = quality.build_quality_card(card_input(reviewed())).checks[7]
+    assert q8.status == "pass"
+    assert q8.detail == "No name from the list of names to hide appears in any export."
 
 
 def test_q10_is_a_warning_and_never_blocks() -> None:
