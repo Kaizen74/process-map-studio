@@ -199,3 +199,9 @@ def test_questions_about_another_flow_are_set_aside_with_its_claims(diagram: Dra
     assert d.job["message"].endswith(  # type: ignore[attr-defined]
         " 2 claims and 1 question about other flows set aside: see Outside this flow."
     )
+    # Eric, 2026-10-30: the download says so too, under the source registry.
+    page = d.client.get(f"/api/versions/{d.version_id}/export/html").text
+    assert (
+        "<p>2 claims and 1 question in these sources are about another flow, so they are kept off "
+        "this map.</p>"
+    ) in page

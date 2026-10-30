@@ -342,3 +342,16 @@ def test_every_new_heading_is_printed_even_when_empty() -> None:
         assert md.count(heading) == 1, heading
     assert "No stories recorded." in md and "No SME terms recorded." in md
     assert "This map was drafted before the two views; it has one view." in md
+
+
+def test_facts_say_how_much_of_the_sources_is_about_other_flows() -> None:
+    # Eric, 2026-10-30: someone reading only the download should know the documents also describe
+    # other flows (DECISIONS 81, 83). One line under the source registry, counts only, no quotes.
+    text = exports.render_master_map_md(data(outside_flow_claims=6, outside_flow_questions=1))
+    facts = text[text.index(exports.FACTS) : text.index("### Pain points as stated")]
+    line = ("6 claims and 1 question in these sources are about another flow, so they are kept "
+            "off this map.")  # fmt: skip
+    assert line in facts
+    one = exports.render_master_map_md(data(outside_flow_claims=1))
+    assert "1 claim in these sources is about another flow, so it is kept off this map." in one
+    assert "another flow" not in exports.render_master_map_md(data())

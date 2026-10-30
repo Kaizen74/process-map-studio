@@ -189,3 +189,14 @@ def test_with_equal_views_as_done_comes_first_and_no_view_is_called_empty() -> N
     html = export_html.render_map_html(inp, TOKENS, FONTS)
     assert html.index("<h3>Map as done") < html.index("<h3>Map as documented")
     assert "so this view has none" not in html
+
+
+def test_facts_say_how_much_of_the_sources_is_about_other_flows() -> None:
+    page = render(outside_flow_claims=6, outside_flow_questions=1)
+    start = page.index('<section aria-labelledby="facts">')
+    facts = page[start : page.index("Pain points as stated")]
+    assert (
+        "<p>6 claims and 1 question in these sources are about another flow, so they are kept off "
+        "this map.</p>"
+    ) in facts
+    assert "another flow" not in render()

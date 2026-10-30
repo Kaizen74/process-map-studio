@@ -1682,6 +1682,7 @@ Version vX.Y · published [date] · validated by [owner name from Settings]
 
 ## 1. Facts: what the sources tell us
 - Source registry (kind, version date, owner, controlled copy) — no verbatim quotes
+- When claims or questions were set aside as about another flow: one line with their counts ("n claims and m questions in these sources are about another flow, so they are kept off this map"); never the claims themselves
 - Pain points as stated in the sources [O] only, each with source and anchor
 - Source-state counts (corroborated, documented-only, practiced-only, contested, trace-contradicted, not assessed)
 - Stories: SME-worded labels with story type and anchor (no verbatim quotes)

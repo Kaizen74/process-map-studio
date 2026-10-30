@@ -186,6 +186,18 @@ def plural(count: int, one: str, many: str | None = None) -> str:
     return f"{count} {one if count == 1 else (many or one + 's')}"
 
 
+def other_flows_line(data: ExportInput) -> str:
+    """How much of the sources is about another flow, or "" when nothing was set aside."""
+    claims, questions = data.outside_flow_claims, data.outside_flow_questions
+    parts = [p for p in (plural(claims, "claim") if claims else "",
+                         plural(questions, "question") if questions else "") if p]  # fmt: skip
+    if not parts:
+        return ""
+    one = claims + questions == 1
+    return (f"{' and '.join(parts)} in these sources {'is' if one else 'are'} about another flow, "
+            f"so {'it is' if one else 'they are'} kept off this map.")  # fmt: skip
+
+
 def role_order(graph: Graph) -> list[str]:
     """Role IDs used by the steps' RACI, in lane order and then by name."""
     used = {r.role_id for e in graph.elements for r in e.raci}
@@ -377,6 +389,8 @@ def _facts(data: ExportInput, graph: Graph) -> list[str]:
         ]
     else:
         lines.append("No sources recorded.")
+    if other := other_flows_line(data):
+        lines += ["", other]
 
     lines += ["", "### Pain points as stated in the sources", ""]
     pains = []

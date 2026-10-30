@@ -115,3 +115,7 @@ class ExportInput(BaseModel):
     #: Optional modules in use (§3.13-3.15; decision A: off until Eric turns them on in P10b).
     value_calculator_on: bool = False
     system_records_on: bool = False
+    #: Checked claims and questions of the sources set aside as about another flow (DECISIONS 81,
+    #: 83); counted in the Facts, never listed (Eric, 2026-10-30).
+    outside_flow_claims: int = 0
+    outside_flow_questions: int = 0

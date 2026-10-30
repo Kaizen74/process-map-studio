@@ -222,6 +222,8 @@ def export_input(
         open_questions=open_questions,
         causes=causes,
         gap_reports=gap_reports,
+        outside_flow_claims=claims_repo.counts(session, version_id).get("outside_flow", 0),
+        outside_flow_questions=claims_repo.unknown_count(session, version_id, outside_flow=True),
     )
 
 

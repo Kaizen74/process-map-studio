@@ -265,6 +265,8 @@ def _facts(data: ExportInput, graph: Graph) -> str:
     ]
     head = ["Source", "Kind", "Version date", "Owner", "Controlled copy"]
     parts.append(_table(head, registry) if registry else "<p>No sources recorded.</p>")
+    if other := md.other_flows_line(data):
+        parts.append(f"<p>{e(other)}</p>")
     parts.append("<h3>Pain points as stated in the sources</h3>")
     pains = []
     for el in md.steps(graph):
