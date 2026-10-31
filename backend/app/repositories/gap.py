@@ -14,6 +14,7 @@ from app.domain.gap import (
     NewGapFinding,
     StoredGapFinding,
 )
+from app.repositories.read_memo import remembered
 from app.repositories.tables import (
     Element,
     ExternalCitation,
@@ -80,6 +81,7 @@ def get(session: Session, analysis_id: str) -> GapAnalysisRecord | None:
     return _record(row) if row else None
 
 
+@remembered
 def for_version(session: Session, version_id: str) -> list[GapAnalysisRecord]:
     """Newest first."""
     rows = session.scalars(

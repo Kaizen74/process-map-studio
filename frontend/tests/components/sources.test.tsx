@@ -394,6 +394,42 @@ describe("Sources: coverage (PRD §3.8 G11)", () => {
     expect(await seriousViolations(viewer)).toEqual([]);
   });
 
+  it("tags a passage only another flow cites as Other flow, not Uncited (DECISIONS 94)", async () => {
+    sourcesApi([MEASURED], {
+      "GET /api/sources/s1/segments": () => ({
+        body: {
+          segments: [
+            cited(1, "p. 1", "LOAD CONTROL TEAM: 1. PLAN THE LOAD"),
+            { ...segment(2, "p. 1", "CARGO ACCEPTANCE: A. ACCEPT CARGO"), other_flow: true },
+            segment(3, "p. 2", "Term Meaning"),
+          ],
+          total: 3,
+          page: 1,
+          pages: 1,
+          coverage_pct: 33.3,
+          other_flow: 1,
+        },
+      }),
+    });
+    renderApp(PATH);
+    fireEvent.click(await screen.findByRole("button", { name: "sop_LC-07.docx" }));
+    const viewer = await screen.findByRole("region", { name: "sop_LC-07.docx" });
+    const [, other, plain] = within(await within(viewer).findByRole("list", { name: "Passages" })).getAllByRole(
+      "listitem",
+    );
+    expect(within(other as HTMLElement).getByText("Other flow")).toBeInTheDocument();
+    expect(other).not.toHaveTextContent("Uncited");
+    expect(within(plain as HTMLElement).getByText("Uncited")).toHaveClass("chip--dashed");
+    expect(viewer).toHaveTextContent(
+      "1 passage in this file is about another flow, so this map leaves it out. See them under Outside this flow",
+    );
+    expect(within(viewer).getByRole("link", { name: "See them under Outside this flow" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/review?tab=outside",
+    );
+    expect(await seriousViolations(viewer)).toEqual([]);
+  });
+
   it("before a draft the viewer says coverage comes later, with no toggle", async () => {
     sourcesApi([SOP], {
       "GET /api/sources/s1/segments": () => ({

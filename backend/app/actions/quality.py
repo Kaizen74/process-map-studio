@@ -41,6 +41,7 @@ from app.repositories import causes as causes_repo
 from app.repositories import claims as claims_repo
 from app.repositories import elements as map_repo
 from app.repositories import gap as gap_repo
+from app.repositories import read_memo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import export_html, exports, quality, sensemaking, views
@@ -222,6 +223,8 @@ def export_input(
         open_questions=open_questions,
         causes=causes,
         gap_reports=gap_reports,
+        outside_flow_claims=claims_repo.counts(session, version_id).get("outside_flow", 0),
+        outside_flow_questions=claims_repo.unknown_count(session, version_id, outside_flow=True),
     )
 
 
@@ -236,7 +239,13 @@ def render_exports(data: ExportInput) -> dict[str, str]:
 
 
 def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCard | None:
-    """Work out the quality card of a version as it is now (not stored)."""
+    """Work out the quality card of a version as it is now (not stored). Read-only: the rows it
+    reads several times are read once (DECISIONS 91)."""
+    with read_memo.read_only(session):
+        return _card_for(config, session, version_id)
+
+
+def _card_for(config: AppConfig, session: Session, version_id: str) -> QualityCard | None:
     every = versions_action.build_graph(session, version_id, every_line=True)
     if every is None:
         return None

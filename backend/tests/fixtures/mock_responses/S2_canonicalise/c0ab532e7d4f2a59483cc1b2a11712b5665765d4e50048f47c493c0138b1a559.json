@@ -56,5 +56,9 @@
     }
   ],
   "new_roles": [],
-  "merge_proposals": []
+  "merge_proposals": [],
+  "outside_flow": [
+    "c7",
+    "c8"
+  ]
 }

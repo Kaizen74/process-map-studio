@@ -111,6 +111,38 @@
       "quote": "Verify pieces, weight and dimensions",
       "provenance": "O",
       "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "Cargo acceptance verifies pieces, weight and dimensions.",
+      "responsible_role": "Cargo acceptance",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p6"
+      ],
+      "quote": "Verify pieces, weight and dimensions",
+      "provenance": "O",
+      "basis": ""
+    },
+    {
+      "claim_type": "activity",
+      "text": "The Build-up team secures and nets the ULDs as required.",
+      "responsible_role": "Build-up team",
+      "accountable_role": "",
+      "decider_role": "",
+      "mechanism": "none",
+      "duration_text": "",
+      "threshold": "",
+      "segment_ids": [
+        "p7"
+      ],
+      "quote": "Secure and net as required",
+      "provenance": "O",
+      "basis": ""
     }
   ],
   "unknowns": [
@@ -118,6 +150,12 @@
       "question": "Where does a deviation outside tolerance go next?",
       "segment_ids": [
         "p5"
+      ]
+    },
+    {
+      "question": "What happens to cargo that fails security screening?",
+      "segment_ids": [
+        "p6"
       ]
     }
   ]

@@ -15,7 +15,7 @@ Signal strength: Strong (3 of 3). Built from interviews and a written procedure 
 | Q5 Flags executable | Pass | Every AI flag is complete, and none is on a judgment step. |
 | Q6 Fully reviewed | Pass | Every step, merge and suggested image has been reviewed. |
 | Q7 Facts, interpretation and recommendation separated | Pass | The exports keep facts, interpretation and recommendation in their own sections. |
-| Q8 Anonymised | Pass | No name from your list of names to hide appears in any export. |
+| Q8 Anonymised | Pass | No name from the list of names to hide appears in any export. |
 | Q9 Images contained | Pass | No image or image reference in any export. |
 | Q10 60-minute validatable | Pass | 10 steps and 5 lanes: fits a one-hour session. |
 | Q11 Work types confirmed | Warning | 5 decisions, approvals or judgment steps without a confirmed work type: “Approve load plan”, “Special loads OK?”, “Busy wave?” and 2 more. |

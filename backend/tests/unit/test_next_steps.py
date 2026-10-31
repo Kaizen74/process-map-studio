@@ -136,3 +136,21 @@ def test_a_published_version_has_no_steps_left_and_changes_nothing(drafted: Draf
     for path in ("next-steps", "accept-remaining"):
         method = drafted.client.get if path == "next-steps" else drafted.client.post
         assert method(f"/api/versions/nope/{path}").status_code == 404
+
+
+def test_steps_accepted_in_one_go_show_as_confirmed_in_the_change_log(drafted: Drafted) -> None:
+    # Eric's Export cargo screenshot, 2026-10-29: "you kept 4 as drafted" above "No steps were
+    # changed while this version was the draft." A step edited afterwards shows its last change.
+    plan = drafted.client.get("/api/versions/" + drafted.version_id).json()
+    assert plan["change_log"] == []
+    assert accept(drafted).status_code == 200
+    edited = drafted.client.patch(f"/api/elements/{drafted.ids['Issue load sheet']}",
+                                  json={"kpi": "Issued by T-10"})  # fmt: skip
+    assert edited.status_code == 200, edited.text
+    assert publish(drafted).status_code == 200
+    body = drafted.client.get("/api/versions/" + drafted.version_id).json()
+    changes = {e["step"]: e["change"] for e in body["change_log"]}
+    assert len(changes) == 10
+    assert changes["Issue load sheet"] == "edited"
+    assert Counter(changes.values()) == {"confirmed": 9, "edited": 1}
+    assert body["acceptance"]["confirmed"] == 9 and body["acceptance"]["edited"] == 1

@@ -73,6 +73,8 @@ th { font-weight: var(--weight-medium); color: var(--ink-3); }
   color: var(--ink-3); font-size: var(--text-label); }
 .step { scroll-margin-top: var(--space-16); }
 .step:target { box-shadow: var(--shadow-selection); }
+.step__back { margin: var(--space-10) 0 0; font-size: var(--text-label); }
+.step__back a { color: inherit; text-underline-offset: 2px; }  /* as links in the app */
 dl { display: grid; grid-template-columns: 180px 1fr; gap: var(--space-4) var(--space-12); margin: 0; }
 dt { color: var(--ink-3); }
 dd { margin: 0; }

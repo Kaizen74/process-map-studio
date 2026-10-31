@@ -70,6 +70,8 @@ class Engagement(Row):
     # E1 (0017): the process starts or ends outside the organisation (scope card, Eric ticks it).
     trigger_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     end_point_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # 0018: an overview of every flow in the documents; unticked, drafting maps only this flow.
+    every_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class Source(Row):
@@ -179,6 +181,8 @@ class Unknown(Row):
     source_id: Mapped[str] = fk("sources.id")
     question: Mapped[str] = mapped_column(Text)
     segment_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # 0019: about another flow (DECISIONS 83); not one of the map's questions.
+    outside_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class Phase(Row):

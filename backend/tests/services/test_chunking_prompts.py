@@ -103,7 +103,7 @@ STAGES = [
 VERSIONS = {
     "S1_extract_interview": "5",  # X1: frequency of exceptions, variations and workarounds
     "S1_extract_jd": "2",
-    "S2_canonicalise": "3",  # C7a: the mapping conventions
+    "S2_canonicalise": "4",  # C7a: the mapping conventions; DECISIONS 81: one flow or every flow
     "S4_assemble": "3",  # C7a: the mapping conventions
     "GA_internal": "2",  # C4b: reality gaps, accounts and work types
     "S3c_worktype": "2",  # C7b: emerging themes
@@ -231,7 +231,7 @@ def test_the_canonicalise_prompt_defines_the_three_step_kinds() -> None:
     # P12 live run: without definitions, Claude drafted approvals as decisions and the content
     # of a piece of work ("what to offload") as a routing decision (PRD B.2, B.8, constraint 6).
     result = prompts.load_prompt("S2_canonicalise")
-    assert isinstance(result, Ok) and result.value.version == "3"
+    assert isinstance(result, Ok) and result.value.version == "4"
     text = result.value.text.lower()
     assert "an approval is" in text and "accepts or rejects" in text
     assert "a decision is a routing call" in text

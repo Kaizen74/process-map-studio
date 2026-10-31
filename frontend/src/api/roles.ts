@@ -9,3 +9,7 @@ export const createRole = (engagementId: string, role: RoleCreate) =>
 
 export const updateRole = (roleId: string, patch: RolePatch) =>
   request<Role>(`/roles/${encodeURIComponent(roleId)}`, { method: "PATCH", body: patch });
+
+/** DELETE /roles/{rid} (DECISIONS 93): only a role nothing uses; otherwise a 409 says why. */
+export const deleteRole = (roleId: string) =>
+  request<null>(`/roles/${encodeURIComponent(roleId)}`, { method: "DELETE" });

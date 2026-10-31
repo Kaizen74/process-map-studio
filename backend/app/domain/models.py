@@ -140,10 +140,22 @@ class ScopeFields(BaseModel):
     conventions: dict[str, str] | None = None  # MappingConventions, checked by the action
     trigger_external: bool | None = None  # E1: the process starts outside the organisation
     end_point_external: bool | None = None  # E1: it ends outside the organisation
+    every_flow: bool | None = None  # 0018: map every flow in the documents (an overview)
 
 
 class EngagementCreate(ScopeFields):
     name: str
+
+
+class AnotherFlow(BaseModel):
+    """Map another flow from the same sources (DECISIONS 81): the new engagement's own scope."""
+
+    name: str
+    trigger: str = ""
+    end_point: str = ""
+    out_of_scope: str = ""
+    # The first engagement's roles to bring along (DECISIONS 93); None: every role.
+    role_ids: list[str] | None = None
 
 
 class EngagementView(BaseModel):
@@ -161,6 +173,7 @@ class EngagementView(BaseModel):
     conventions: MappingConventions = MappingConventions()
     trigger_external: bool = False
     end_point_external: bool = False
+    every_flow: bool = False
     status: str
     created_at: str
     updated_at: str
@@ -214,6 +227,19 @@ class RoleView(BaseModel):
     aliases: list[str]
     is_system: bool
     lane_order: int | None
+
+
+class RoleUses(BaseModel):
+    """What still uses a role, so it can't be removed (DECISIONS 93). `steps`: the labels of the
+    steps in any version (published ones included) that have it as lane, RACI or decider."""
+
+    steps: list[str] = []
+    speakers: int = 0
+    profiles: int = 0
+    events: int = 0
+    costs: int = 0
+    intents: int = 0
+    discrepancies: int = 0
 
 
 # --- Parsed documents (services/parsing.py) ---------------------------------------------------
@@ -311,6 +337,8 @@ class SegmentView(BaseModel):
     corrected: bool = False
     # Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted.
     question_id: str | None = None
+    # Not cited, but a claim or question set aside as another flow's cites it (DECISIONS 94).
+    other_flow: bool = False
 
 
 class SegmentPatch(BaseModel):
@@ -330,6 +358,7 @@ class SegmentPage(BaseModel):
     page: int
     pages: int
     coverage_pct: float | None
+    other_flow: int = 0  # the source's passages tagged other_flow, across every page
 
 
 # --- Readiness (guided navigation) -----------------------------------------------------------
@@ -556,6 +585,8 @@ class DraftSummary(BaseModel):
     rejected: int
     open_questions: int
     scrubbed: int
+    outside_flow: int = 0  # checked claims about another flow, set aside (DECISIONS 81)
+    outside_flow_questions: int = 0  # the reading's questions about another flow (DECISIONS 83)
 
 
 class StepRename(BaseModel):
@@ -614,6 +645,36 @@ class RejectedClaim(BaseModel):
     stage: str
     passage_available: bool
     segment_id: str | None
+
+
+class OutsideFlowClaim(BaseModel):
+    """A checked claim about another flow, kept out of this map (DECISIONS 81)."""
+
+    id: str
+    claim_text: str
+    claim_type: str
+    source_id: str
+    source_name: str
+    anchor: str
+    passage_available: bool
+    segment_id: str | None
+
+
+class OutsideFlowQuestion(BaseModel):
+    """An open question from the reading about another flow, kept off this map (DECISIONS 83)."""
+
+    question: str
+    source_id: str
+    source_name: str
+    anchor: str
+    passage_available: bool
+    segment_id: str | None
+
+
+class OutsideFlowClaims(BaseModel):
+    items: list[OutsideFlowClaim]
+    questions: list[OutsideFlowQuestion] = []
+    total: int  # claims and questions
 
 
 class RejectedClaims(BaseModel):

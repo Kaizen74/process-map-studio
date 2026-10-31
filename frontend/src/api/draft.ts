@@ -1,5 +1,14 @@
 import { request } from "./request";
-import type { DraftEstimate, DraftState, Graph, Job, LintReport, RefreshCheck, RejectedClaims } from "./types";
+import type {
+  DraftEstimate,
+  DraftState,
+  Graph,
+  Job,
+  LintReport,
+  OutsideFlowClaims,
+  RefreshCheck,
+  RejectedClaims,
+} from "./types";
 import type { AsView } from "../lib/views";
 
 const enc = encodeURIComponent;
@@ -19,6 +28,10 @@ export const getJob = (jobId: string) => request<Job>(`/jobs/${enc(jobId)}`);
 
 export const getRejectedClaims = (versionId: string) =>
   request<RejectedClaims>(`/versions/${enc(versionId)}/rejected-claims`);
+
+/** Checked claims about another flow, kept off this map (DECISIONS 81). */
+export const getOutsideFlow = (versionId: string) =>
+  request<OutsideFlowClaims>(`/versions/${enc(versionId)}/outside-flow`);
 
 /** Every step and line; with a view (§3.12.11) only its steps and lines, and its cycle time. */
 export const getGraph = (versionId: string, view?: AsView) =>

@@ -215,8 +215,8 @@ def build_quality_card(inp: QualityInput) -> QualityCard:
             "Q8",
             "Anonymised",
             bool(leaks),
-            "No name from your list of names to hide appears in any export.",
-            f"A name from your list of names to hide appears in the {', '.join(leaks)} "
+            "No name from the list of names to hide appears in any export.",
+            f"A name from the list of names to hide appears in the {', '.join(leaks)} "
             "export. Replace it with the role in the step's text.",
         )
     )

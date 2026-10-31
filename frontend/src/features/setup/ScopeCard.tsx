@@ -8,12 +8,13 @@ import { validateEngagementName, validateScopeList, validateScopeText } from "..
 
 type TextKey = "name" | "process_name" | "trigger" | "end_point" | "out_of_scope" | "process_kpi" | "industry";
 type ListKey = "in_scope_roles" | "adjacent_industries" | "confidential_terms";
-type FlagKey = "trigger_external" | "end_point_external";
+type FlagKey = "trigger_external" | "end_point_external" | "every_flow";
 type Form = Record<TextKey, string> & Record<ListKey, string[]> & Record<FlagKey, boolean>;
 
 const LABELS: Record<TextKey | ListKey | FlagKey, string> = {
   trigger_external: "Starts outside the organisation",
   end_point_external: "Ends outside the organisation",
+  every_flow: "Map every flow in these documents (overview)",
   name: "Engagement name",
   process_name: "Process name",
   trigger: "Trigger",
@@ -42,6 +43,7 @@ function formOf(e: Engagement): Form {
     confidential_terms: [...e.confidential_terms],
     trigger_external: e.trigger_external ?? false,
     end_point_external: e.end_point_external ?? false,
+    every_flow: e.every_flow ?? false,
   };
 }
 
@@ -62,8 +64,9 @@ function validate(form: Form): Partial<Record<keyof Form, string>> {
 
 /** Process scope (PRD §5.4 Setup): what the map covers, plus terms never sent to web research. */
 // 2026-10-28 (Eric's cargo manual describes import, export and transhipment on one page).
+// DECISIONS 81: drafting keeps to this flow; "Map another flow from these sources" starts the next.
 const SEVERAL_FLOWS =
-  "One engagement maps one flow, from its trigger to its end point. If a document covers several flows (for example import, export and transhipment), make one engagement for each and upload the same document to each.";
+  "One engagement maps one flow, from its trigger to its end point. If your documents cover several flows (for example import, export and transhipment), use Map another flow from these sources below for each of the others.";
 
 export function ScopeCard({ engagement }: { engagement: Engagement }) {
   const [form, setForm] = useState<Form>(() => formOf(engagement));
@@ -114,6 +117,13 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
           {text("end_point", "What marks it as finished.")}
         </div>
         <p className="setup-form__note">{SEVERAL_FLOWS}</p>
+        <CheckboxField
+          label={LABELS.every_flow}
+          checked={form.every_flow}
+          onChange={set("every_flow")}
+          error={errors.every_flow ?? null}
+          help="Leave unticked to draft only this flow; passages about other flows are listed under Review, Outside this flow. Tick for one map of every flow in the documents, in less detail."
+        />
         <div className="setup-form__pair">
           <CheckboxField
             label={LABELS.trigger_external}

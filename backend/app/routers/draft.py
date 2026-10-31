@@ -9,6 +9,7 @@ from app.domain.models import (
     DraftEstimate,
     DraftStarted,
     DraftState,
+    OutsideFlowClaims,
     RefreshCheck,
     RejectedClaims,
 )
@@ -53,3 +54,8 @@ def get_draft(request: Request, engagement_id: str) -> DraftState:
 @router.get("/versions/{version_id}/rejected-claims")
 def rejected_claims(request: Request, version_id: str) -> RejectedClaims:
     return unwrap(draft.rejected_claims(request.app.state.sessions, version_id))
+
+
+@router.get("/versions/{version_id}/outside-flow")
+def outside_flow(request: Request, version_id: str) -> OutsideFlowClaims:
+    return unwrap(draft.outside_flow(request.app.state.sessions, version_id))

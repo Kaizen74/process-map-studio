@@ -17,6 +17,8 @@ export type Handler = (body: unknown, url: string) => FakeResponse;
 const NO_PICTURES = /^GET \/api\/(elements|versions)\/[^/]+\/images$/;
 // A draft's Review asks what is left before publishing (2026-10-28): the sample's, from the backend.
 const NEXT_STEPS = /^GET \/api\/versions\/[^/]+\/next-steps$/;
+// DECISIONS 81: drafting set nothing aside unless a test says so.
+const OUTSIDE_FLOW = /^GET \/api\/versions\/[^/]+\/outside-flow$/;
 const PLANS = "GET /api/templates/interview/plans";
 
 /** The standard interview templates (always available; PRD v1.10 F.9), as the backend lists them. */
@@ -114,18 +116,20 @@ export function fakeApi(routes: Record<string, Handler>) {
         ? { body: [] }
         : NEXT_STEPS.test(key)
           ? { body: SAMPLE.next_steps }
-          : key === PLANS
-            ? { body: TEMPLATE_PLANS }
-            : {
-                status: 404,
-                body: {
-                  error: {
-                    code: "NOT_FOUND",
-                    message: "Not found.",
-                    details: {},
+          : OUTSIDE_FLOW.test(key)
+            ? { body: { items: [], questions: [], total: 0 } }
+            : key === PLANS
+              ? { body: TEMPLATE_PLANS }
+              : {
+                  status: 404,
+                  body: {
+                    error: {
+                      code: "NOT_FOUND",
+                      message: "Not found.",
+                      details: {},
+                    },
                   },
-                },
-              };
+                };
     if (result.status === 204)
       return new Response(null, {
         status: 204,

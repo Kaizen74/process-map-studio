@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { Link, useParams } from "react-router";
 import { Button, Chip, ErrorState, Skeleton } from "../../components/common";
 import type { Segment } from "../../api/types";
 import { useSegments, useSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
+import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
 import { coverageText, kindLabel, sourceStatus } from "../../lib/sources";
 import { CorrectionEditor } from "./CorrectionEditor";
@@ -11,6 +13,7 @@ const INSTRUCTION_LIKE = "Instruction-like text. Treated as data and ignored.";
 
 /** Full-width source viewer (PRD §5.4 Sources, §5.7.8): anchored passages, roles never names. */
 export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose: () => void }) {
+  const { engagementId = "" } = useParams();
   const source = useSource(sourceId);
   const [uncitedOnly, setUncitedOnly] = useState(false);
   const segments = useSegments(sourceId, uncitedOnly);
@@ -30,6 +33,8 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
   const coverage = data?.coverage_pct ?? null;
   // Once coverage is measured, a passage the map doesn't cite says so (interviewer turns aside).
   const uncited = (segment: Segment) => coverage !== null && !segment.cited && segment.speaker_role !== "Interviewer";
+  // Passages only another flow's claims or questions cite (DECISIONS 94): not missed, set aside.
+  const otherFlow = pages[0]?.other_flow ?? 0;
 
   return (
     <section ref={region} className="viewer" aria-labelledby={titleId}>
@@ -86,6 +91,13 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
           </Button>
         </div>
       )}
+      {data && !correcting && coverage !== null && otherFlow > 0 && (
+        <p className="viewer__note">
+          {plural(otherFlow, "passage")} in this file {otherFlow === 1 ? "is" : "are"} about another flow, so this
+          map leaves {otherFlow === 1 ? "it" : "them"} out.{" "}
+          <Link to={`${engagementPath(engagementId, "review")}?tab=outside`}>See them under Outside this flow</Link>
+        </p>
+      )}
       {data && !correcting && coverage === null && data.text_status === "ready" && (
         <p className="viewer__note">How much of this file the map uses is measured after a draft map is made from it.</p>
       )}
@@ -126,7 +138,7 @@ export function SourceViewer({ sourceId, onClose }: { sourceId: string; onClose:
                 <p className="passage__text">{segment.text}</p>
                 {(segment.instruction_like || segment.corrected || uncited(segment)) && (
                   <div className="passage__tags">
-                    {uncited(segment) && <Chip dashed>Uncited</Chip>}
+                    {uncited(segment) && (segment.other_flow ? <Chip>Other flow</Chip> : <Chip dashed>Uncited</Chip>)}
                     {segment.instruction_like && <Chip dashed>{INSTRUCTION_LIKE}</Chip>}
                     {segment.corrected && <Chip>Corrected</Chip>}
                   </div>

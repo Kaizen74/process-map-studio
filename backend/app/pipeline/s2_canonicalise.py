@@ -23,9 +23,16 @@ from app.actions import redaction
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
-from app.domain.enums import MergeDecision, Provenance
+from app.domain.enums import MergeDecision, Provenance, VerificationStatus
 from app.domain.graph import ElementRecord, MergeGroup, MergeProposalRecord
-from app.domain.models import AiCallRecord, CheckOutcome, ClaimRecord, NameReplacement, RoleView
+from app.domain.models import (
+    AiCallRecord,
+    CheckOutcome,
+    ClaimRecord,
+    EngagementView,
+    NameReplacement,
+    RoleView,
+)
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import SENSE_CLAIM_TYPES
 from app.pipeline.context import AiContext, ai_failure, calls_in, record_calls, role_groups
@@ -55,6 +62,7 @@ class S2Tally:
     pending_merges: int = 0
     roles_created: int = 0
     scrubbed: int = 0
+    outside_flow: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,12 +138,51 @@ def render(refs: list[ClaimRef], roles: list[RoleView]) -> str:
     return "\n".join(lines)
 
 
+def render_flow(engagement: EngagementView | None, terms: list[NameReplacement]) -> str:
+    """Which flow the map covers (2026-10-28, DECISIONS 81), as a data line, or "" when the scope
+    card names no trigger or end point (the claims are mapped as given, as before).
+
+    `one_flow`: only the work from the trigger to the end point, without what Out of scope names;
+    claims about other flows are set aside. `every_flow`: Eric's overview of every flow."""
+    if engagement is None:
+        return ""
+    if engagement.every_flow:
+        return '<flow scope="every_flow"/>'
+    if not (engagement.trigger.strip() or engagement.end_point.strip()):
+        return ""
+    esc = prompts.escape
+    attrs = {
+        "trigger": engagement.trigger,
+        "end_point": engagement.end_point,
+        "out_of_scope": engagement.out_of_scope,
+    }
+    rendered = " ".join(f'{k}="{esc(redaction.hide(v.strip(), terms))}"' for k, v in attrs.items())
+    return f'<flow scope="one_flow" {rendered}/>'
+
+
 def blocks_for(
-    refs: list[ClaimRef], roles: list[RoleView], conventions: str = ""
+    refs: list[ClaimRef], roles: list[RoleView], conventions: str = "", flow: str = ""
 ) -> list[dict[str, object]]:
-    """The data sent; Eric's mapping conventions first when he changed them (C7a)."""
-    text = render(refs, roles)
-    return [{"type": "text", "text": f"{conventions}\n{text}" if conventions else text}]
+    """The data sent; Eric's mapping conventions first when he changed them (C7a), then the flow
+    the map covers."""
+    text = "\n".join(part for part in (conventions, flow, render(refs, roles)) if part)
+    return [{"type": "text", "text": text}]
+
+
+def set_aside(
+    output: ai_schemas.S2Output, kept: dict[str, ai_schemas.S2Step], by_ref: dict[str, ClaimRef],
+    flow: str,
+) -> list[str]:  # fmt: skip
+    """The claims about another flow (IDs): only for one flow, only claims supplied, and never a
+    claim a kept step is built from (the step wins)."""
+    if 'scope="one_flow"' not in flow:
+        return []
+    in_steps = {r for step in kept.values() for r in step.claim_refs}
+    return [
+        by_ref[r].claim_id
+        for r in dict.fromkeys(output.outside_flow)
+        if r in by_ref and r not in in_steps
+    ]
 
 
 def claims_text(claims: list[ClaimRef]) -> str:
@@ -239,6 +286,7 @@ def canonicalise(
         conventions = prompts.render_conventions(
             engagement.conventions.model_dump() if engagement else None
         )
+        flow = render_flow(engagement, terms)
     if not refs:
         return Ok(tally)  # nothing verified, nothing to map
     match prompts.load_prompt(STAGE_ID):
@@ -255,7 +303,7 @@ def canonicalise(
         stage_id=STAGE_ID,
         prompt_version=prompt.version,
         system=prompt.text,
-        blocks=blocks_for(refs, roles, conventions),
+        blocks=blocks_for(refs, roles, conventions, flow),
         output_model=ai_schemas.S2Output,
         model=ctx.model,
         repair_prompt=repair.text,
@@ -379,6 +427,9 @@ def canonicalise(
             )
             map_repo.link_claims(session, element.id, claim_ids)
             tally.steps += 1
+        aside = set_aside(output, kept, by_ref, flow)
+        claims_repo.set_status(session, aside, VerificationStatus.OUTSIDE_FLOW.value)
+        tally.outside_flow = len(aside)
 
         def group_of(ref: str) -> MergeGroup:
             """One merged step as drafted, so the Merge tab can show it and Split restore it."""

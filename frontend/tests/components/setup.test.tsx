@@ -47,7 +47,7 @@ function setupApi(initialRoles: Role[] = [], extra: Parameters<typeof fakeApi>[0
 
 const scope = () => screen.getByRole("region", { name: "Process scope" });
 const SEVERAL_FLOWS =
-  "One engagement maps one flow, from its trigger to its end point. If a document covers several flows (for example import, export and transhipment), make one engagement for each and upload the same document to each.";
+  "One engagement maps one flow, from its trigger to its end point. If your documents cover several flows (for example import, export and transhipment), use Map another flow from these sources below for each of the others.";
 const rolesCard = () => screen.getByRole("region", { name: "Roles and lanes" });
 
 describe("Setup: process scope", () => {
@@ -273,6 +273,51 @@ describe("Setup: roles and lanes", () => {
       name: "Load control agent",
       aliases: ["LC", "LCA"],
     });
+  });
+
+  it("removes a role nothing uses after asking, and the lanes close up (DECISIONS 93)", async () => {
+    let gone = false;
+    const { calls } = setupApi(ROLES, {
+      "DELETE /api/roles/r2": () => {
+        gone = true;
+        return { status: 204, body: null };
+      },
+    });
+    const { container } = renderApp(PATH);
+    const list = await screen.findByRole("list", { name: "Roles in lane order" });
+    fireEvent.click(within(list).getByRole("button", { name: "Remove Ramp agent" }));
+    const dialog = screen.getByRole("dialog", { name: "Remove Ramp agent?" });
+    expect(dialog).toHaveTextContent(
+      "Its lane leaves this engagement and the roles below it move up. You can add it again later.",
+    );
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    expect(await screen.findByText("Ramp agent removed. The lanes below it moved up.")).toBeInTheDocument();
+    expect(gone).toBe(true);
+    expect(calls.some((c) => c.key === "DELETE /api/roles/r2")).toBe(true);
+    expect(screen.queryByRole("dialog", { name: "Remove Ramp agent?" })).toBeNull();
+  });
+
+  it("keeps a role still in use and says why, in the box", async () => {
+    const why = "Load controller can't be removed: 3 steps use it (“Draft load plan”, “Busy wave?” and 1 more).";
+    setupApi(ROLES, {
+      "DELETE /api/roles/r1": () => ({
+        status: 409,
+        body: { error: { code: "CONFLICT", message: why, details: {} } },
+      }),
+    });
+    renderApp(PATH);
+    const list = await screen.findByRole("list", { name: "Roles in lane order" });
+    fireEvent.click(within(list).getByRole("button", { name: "Remove Load controller" }));
+    const dialog = screen.getByRole("dialog", { name: "Remove Load controller?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    const refused = await screen.findByRole("dialog", { name: "Load controller stays" });
+    expect(within(refused).getByRole("alert")).toHaveTextContent(why);
+    // No Remove that would only be refused again.
+    expect(within(refused).queryByRole("button", { name: "Remove" })).toBeNull();
+    fireEvent.click(within(refused).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(within(list).getByText("Load controller")).toBeInTheDocument();
   });
 
   it("has no serious or critical accessibility violations", async () => {

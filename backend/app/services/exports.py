@@ -39,6 +39,9 @@ from app.domain.sensemaking import ExceptionSummary, RouteExit
 from app.services import signal
 
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+# The words every export uses for a kind (the RACI CSV since 2026-10-30, as the HTML map).
+KINDS = {"activity": "Activity", "decision": "Decision", "approval": "Approval", "start": "Start",
+         "end": "End"}  # fmt: skip
 DECIDING = {ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -184,6 +187,18 @@ def tag(element: GraphElement) -> str:
 
 def plural(count: int, one: str, many: str | None = None) -> str:
     return f"{count} {one if count == 1 else (many or one + 's')}"
+
+
+def other_flows_line(data: ExportInput) -> str:
+    """How much of the sources is about another flow, or "" when nothing was set aside."""
+    claims, questions = data.outside_flow_claims, data.outside_flow_questions
+    parts = [p for p in (plural(claims, "claim") if claims else "",
+                         plural(questions, "question") if questions else "") if p]  # fmt: skip
+    if not parts:
+        return ""
+    one = claims + questions == 1
+    return (f"{' and '.join(parts)} in these sources {'is' if one else 'are'} about another flow, "
+            f"so {'it is' if one else 'they are'} kept off this map.")  # fmt: skip
 
 
 def role_order(graph: Graph) -> list[str]:
@@ -377,6 +392,8 @@ def _facts(data: ExportInput, graph: Graph) -> list[str]:
         ]
     else:
         lines.append("No sources recorded.")
+    if other := other_flows_line(data):
+        lines += ["", other]
 
     lines += ["", "### Pain points as stated in the sources", ""]
     pains = []
@@ -644,11 +661,23 @@ def render_master_map_md(data: ExportInput) -> str:
 # --- Graph JSON and RACI CSV -------------------------------------------------------------------
 
 
+def roles_used(graph: Graph) -> set[str]:
+    """The roles a step sits in the lane of, names in its RACI or has make the decision."""
+    used = {e.lane_role_id for e in graph.elements if e.lane_role_id}
+    used |= {r.role_id for e in graph.elements for r in e.raci}
+    used |= {e.decision.decider_role_id for e in graph.elements if e.decision.decider_role_id}
+    return used
+
+
 def render_graph_json(data: ExportInput) -> str:
     graph = on_the_map(data.graph)
     card = data.quality_card.model_dump(mode="json") if data.quality_card else None
+    used = roles_used(graph)  # a copied setup's other roles stay out (2026-10-31, DECISIONS 92)
     graph = graph.model_copy(
-        update={"version": graph.version.model_copy(update={"quality_card": card})}
+        update={
+            "version": graph.version.model_copy(update={"quality_card": card}),
+            "roles": [r for r in graph.roles if r.id in used],
+        }
     )
     return json.dumps(graph.model_dump(mode="json"), indent=2, ensure_ascii=False) + "\n"
 
@@ -663,7 +692,7 @@ def render_raci_csv(data: ExportInput) -> str:
     writer.writerow(["Step", "Kind", "Lane", "Provenance", *(roles[r] for r in order)])
     for e in steps(graph):
         writer.writerow(
-            [e.label, e.kind, roles.get(e.lane_role_id or "", ""), e.provenance]
+            [e.label, KINDS.get(e.kind, e.kind), roles.get(e.lane_role_id or "", ""), e.provenance]
             + [raci_cell(e, r) for r in order]
         )
     return "﻿" + buffer.getvalue()

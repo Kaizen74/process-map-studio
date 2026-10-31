@@ -98,7 +98,7 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
     assert state["summary"] == {
         "steps": 10, "needs_check": 0, "verified": 40, "rejected": 0, "open_questions": 10,
-        "scrubbed": 0,
+        "scrubbed": 0, "outside_flow": 0, "outside_flow_questions": 0,  # DECISIONS 81, 83
     }  # fmt: skip
     assert state["job"]["id"] == job["id"]
     readiness = client.get(f"/api/engagements/{built.engagement_id}/readiness").json()

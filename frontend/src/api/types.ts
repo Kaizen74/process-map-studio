@@ -89,6 +89,17 @@ export interface ScopeFields {
   confidential_terms?: string[];
   trigger_external?: boolean;
   end_point_external?: boolean;
+  every_flow?: boolean;
+}
+
+/** POST /engagements/{id}/another-flow (DECISIONS 81): the next flow's own scope. */
+export interface AnotherFlow {
+  name: string;
+  trigger: string;
+  end_point: string;
+  out_of_scope: string;
+  /** The roles to bring along (DECISIONS 93); left out, every role comes along. */
+  role_ids?: string[];
 }
 
 export interface Engagement {
@@ -108,6 +119,8 @@ export interface Engagement {
   /** E1: the process starts or ends outside the organisation (absent before E1: no). */
   trigger_external?: boolean;
   end_point_external?: boolean;
+  /** DECISIONS 81: an overview of every flow in the documents (absent before: no, one flow). */
+  every_flow?: boolean;
   status: string;
   created_at: string;
   updated_at: string;
@@ -217,6 +230,8 @@ export interface Segment {
   corrected?: boolean;
   /** Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted. */
   question_id?: string | null;
+  /** Not cited, but a claim or question set aside as another flow's cites it (DECISIONS 94). */
+  other_flow?: boolean;
 }
 
 export interface SegmentPage {
@@ -225,6 +240,8 @@ export interface SegmentPage {
   page: number;
   pages: number;
   coverage_pct: number | null;
+  /** The source's passages tagged other_flow, across every page (DECISIONS 94). */
+  other_flow?: number;
 }
 
 export interface Speaker {
@@ -299,6 +316,10 @@ export interface DraftSummary {
   rejected: number;
   open_questions: number;
   scrubbed: number;
+  /** DECISIONS 81: checked claims about another flow, set aside (absent before: 0). */
+  outside_flow?: number;
+  /** DECISIONS 83: the reading's questions about another flow, set aside (absent before: 0). */
+  outside_flow_questions?: number;
 }
 
 /** How a draft or refresh was made (API_CONTRACT.md → Run record). */
@@ -397,6 +418,10 @@ export type {
   Question,
   RejectedClaim,
   RejectedClaims,
+  OutsideFlowClaim,
+  OutsideFlowClaims,
+  OutsideFlowQuestion,
+  PassageClaim,
   QualityCard,
   QualityCheck,
   PublishBlocker,

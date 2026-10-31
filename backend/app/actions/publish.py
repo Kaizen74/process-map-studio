@@ -55,6 +55,7 @@ CHANGES = {
     "Added step": "added",
     "Restored step": "",
 }
+ACCEPTED_IN_ONE_GO = "Accepted remaining steps as drafted"  # POST …/accept-remaining
 FILES = {
     "md": ("master-map.md", "text/markdown; charset=utf-8"),
     "json": ("graph.json", "application/json"),
@@ -152,6 +153,9 @@ def _change_log(session: Session, version_id: str) -> list[dict[str, Any]]:
         change = CHANGES.get(row["action"])
         if change is not None and row["target_type"] == "element":
             last[row["target_id"]] = change
+        elif row["action"] == ACCEPTED_IN_ONE_GO:  # one row for every step it confirmed
+            for element_id in (row.get("after") or {}).get("element_ids", []):
+                last[element_id] = "confirmed"
     entries = []
     for element in map_repo.elements(session, version_id):
         change = last.get(element.id, "")

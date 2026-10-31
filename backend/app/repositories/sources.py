@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import func, select
@@ -14,9 +15,19 @@ from app.domain.models import (
     SpeakerView,
     StoredSegment,
 )
-from app.repositories.tables import Image, Role, Source, SourceSegment
+from app.repositories.read_memo import remembered
+from app.repositories.tables import Image, Role, Source, SourceSegment, new_id
 
 EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
+
+
+# The pictures found in a file: its own, not the copies a draft suggests on a step (2026-10-29:
+# Sources said "4 images found in this file" for a file with two, after a draft).
+_FOUND_IN_FILE = (
+    Image.element_id.is_(None),
+    Image.origin == "extracted",
+    Image.status == "suggested",
+)
 
 
 def _counts(session: Session, source_id: str) -> tuple[int, int]:
@@ -24,10 +35,7 @@ def _counts(session: Session, source_id: str) -> tuple[int, int]:
         select(func.count()).select_from(SourceSegment).where(SourceSegment.source_id == source_id)
     )
     images = session.scalar(
-        select(func.count())
-        .select_from(Image)
-        .where(Image.source_id == source_id)
-        .where(Image.status == "suggested")
+        select(func.count()).select_from(Image).where(Image.source_id == source_id, *_FOUND_IN_FILE)
     )
     return segments or 0, images or 0
 
@@ -65,6 +73,7 @@ def get(session: Session, source_id: str) -> SourceView | None:
     return _view(session, row) if row else None
 
 
+@remembered
 def get_many(session: Session, source_ids: list[str]) -> list[SourceView]:
     """The sources with these IDs, in the order given (missing ones left out); three queries in
     all, however many sources (the quality card and graph read every source of a version)."""
@@ -83,7 +92,7 @@ def get_many(session: Session, source_ids: list[str]) -> list[SourceView]:
         str(sid): n
         for sid, n in session.execute(
             select(Image.source_id, func.count())
-            .where(Image.source_id.in_(source_ids), Image.status == "suggested")
+            .where(Image.source_id.in_(source_ids), *_FOUND_IN_FILE)
             .group_by(Image.source_id)
         )
     }
@@ -469,6 +478,7 @@ def instruction_like_count(session: Session, engagement_id: str) -> int:
     )
 
 
+@remembered
 def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
     """Passage ID → the role its speaker is mapped to (passages without a mapped speaker are
     left out)."""
@@ -480,6 +490,16 @@ def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
         .where(SourceSegment.id.in_(segment_ids))
     )
     return {segment_id: name for segment_id, name in rows}
+
+
+def count_among(session: Session, source_id: str, segment_ids: set[str]) -> int:
+    """How many of the source's passages are among `segment_ids`."""
+    if not segment_ids:
+        return 0
+    query = select(func.count()).where(
+        SourceSegment.source_id == source_id, SourceSegment.id.in_(segment_ids)
+    )
+    return int(session.scalar(query) or 0)
 
 
 def coverage_counts(
@@ -528,3 +548,98 @@ def text_characters(session: Session, source_ids: list[str]) -> int:
         )
     )
     return int(total or 0)
+
+
+@dataclass(frozen=True, slots=True)
+class CopiedSource:
+    old_path: str
+    new_id: str
+    format: str
+    pictures: list[tuple[str, int, str]]  # (stored path, page, caption) of the source's own
+
+
+def copy_source(
+    session: Session, source_id: str, copy: tuple[str, str, str], roles: dict[str, str]
+) -> CopiedSource | None:
+    """Another flow from the same sources (DECISIONS 81): the source row and every passage as
+    read (corrections and speaker mappings included, roles mapped to the new engagement's), so
+    nothing is read or sent again. The file and pictures are copied by the caller."""
+    row = session.get(Source, source_id)
+    if row is None:
+        return None
+    copy_id, engagement_id, new_path = copy  # the copy's ID, engagement and stored file
+    new = Source(
+        id=copy_id,
+        engagement_id=engagement_id,
+        kind=row.kind,
+        filename=row.filename,
+        stored_path=new_path,
+        mime=row.mime,
+        format=row.format,
+        version_date=row.version_date,
+        owner=row.owner,
+        controlled_copy=row.controlled_copy,
+        text_status=row.text_status,
+        error=row.error,
+        ocr_pages=list(row.ocr_pages),
+    )
+    session.add(new)
+    session.flush()
+    segments = list(
+        session.scalars(
+            select(SourceSegment)
+            .where(SourceSegment.source_id == source_id)
+            .order_by(SourceSegment.seq)
+        )
+    )
+    copies = {s.id: new_id() for s in segments}
+    for s in segments:
+        session.add(
+            SourceSegment(
+                id=copies[s.id],
+                source_id=new.id,
+                seq=s.seq,
+                speaker_label=s.speaker_label,
+                speaker_role_id=roles.get(s.speaker_role_id or ""),
+                start_ms=s.start_ms,
+                end_ms=s.end_ms,
+                page=s.page,
+                section=s.section,
+                text=s.text,
+                corrected=s.corrected,
+                instruction_like=s.instruction_like,
+                is_interviewer=s.is_interviewer,
+                question_id=s.question_id,
+                answer_block_id=(
+                    copies.get(s.answer_block_id, s.answer_block_id) if s.answer_block_id else None
+                ),
+                marker_tags=s.marker_tags,
+            )
+        )
+    session.flush()
+    pictures = [
+        (img.stored_path, img.page or 0, img.caption)
+        for img in session.scalars(
+            select(Image)
+            .where(
+                Image.source_id == source_id,
+                Image.element_id.is_(None),
+                Image.origin == "extracted",
+            )
+            .order_by(Image.created_at, Image.id)
+        )
+    ]
+    return CopiedSource(
+        old_path=row.stored_path, new_id=new.id, format=row.format, pictures=pictures
+    )
+
+
+def files_for_engagement(session: Session, engagement_id: str) -> list[tuple[str, str, str, str]]:
+    """(source ID, format, file name, reading status) of every source of an engagement, oldest
+    first."""
+    rows = session.execute(
+        select(Source.id, Source.format, Source.filename, Source.text_status)
+        .where(Source.engagement_id == engagement_id)
+        .order_by(Source.created_at, Source.id)
+    )
+    return [(sid, fmt, name, status) for sid, fmt, name, status in rows]

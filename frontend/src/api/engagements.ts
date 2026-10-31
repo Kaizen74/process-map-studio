@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { Engagement, EngagementSummary, Readiness, ScopeFields } from "./types";
+import type { AnotherFlow, Engagement, EngagementSummary, Readiness, ScopeFields } from "./types";
 
 export const listEngagements = () => request<EngagementSummary[]>("/engagements");
 
@@ -16,3 +16,7 @@ export const deleteEngagement = (id: string) =>
 
 export const getReadiness = (id: string) =>
   request<Readiness>(`/engagements/${encodeURIComponent(id)}/readiness`);
+
+/** Map another flow from these sources (DECISIONS 81): a new engagement, same documents and roles. */
+export const startAnotherFlow = (id: string, fields: AnotherFlow) =>
+  request<Engagement>(`/engagements/${encodeURIComponent(id)}/another-flow`, { method: "POST", body: fields });

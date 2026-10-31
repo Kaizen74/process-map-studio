@@ -8,6 +8,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
+from app.repositories.read_memo import remembered
 from app.repositories.tables import Claim, Element, ElementClaim, Unknown
 
 
@@ -48,14 +49,31 @@ def list_claims(session: Session, version_id: str, status: str | None = None) ->
     return [_record(row) for row in rows]
 
 
-def list_unknowns(session: Session, version_id: str) -> list[UnknownRecord]:
+def list_unknowns(
+    session: Session, version_id: str, *, outside_flow: bool = False
+) -> list[UnknownRecord]:
+    """The reading's open questions: the map's own, or those about another flow (DECISIONS 83)."""
+    return [record for _, record in unknown_rows(session, version_id, outside_flow=outside_flow)]
+
+
+def unknown_rows(
+    session: Session, version_id: str, *, outside_flow: bool = False
+) -> list[tuple[str, UnknownRecord]]:
     rows = session.scalars(
-        select(Unknown).where(Unknown.version_id == version_id).order_by(Unknown.created_at)
+        select(Unknown)
+        .where(Unknown.version_id == version_id, Unknown.outside_flow.is_(outside_flow))
+        .order_by(Unknown.created_at, Unknown.id)
     )
     return [
-        UnknownRecord(source_id=r.source_id, question=r.question, segment_ids=list(r.segment_ids))
+        (r.id, UnknownRecord(source_id=r.source_id, question=r.question,
+                             segment_ids=list(r.segment_ids)))
         for r in rows
-    ]
+    ]  # fmt: skip
+
+
+def set_unknowns_outside_flow(session: Session, unknown_ids: list[str]) -> None:
+    for row in session.scalars(select(Unknown).where(Unknown.id.in_(unknown_ids))):
+        row.outside_flow = True
 
 
 def counts(session: Session, version_id: str) -> dict[str, int]:
@@ -68,6 +86,7 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
     return {status: count for status, count in rows}
 
 
+@remembered
 def _rows_with_ids(session: Session, version_id: str, status: str) -> list[tuple[str, ClaimRecord]]:
     rows = session.scalars(
         select(Claim)
@@ -87,6 +106,16 @@ def verified_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRec
     return _rows_with_ids(session, version_id, "verified")
 
 
+def outside_flow_rows(session: Session, version_id: str) -> list[tuple[str, ClaimRecord]]:
+    """Claims that passed the checks but describe another flow (DECISIONS 81), oldest first."""
+    return _rows_with_ids(session, version_id, "outside_flow")
+
+
+def set_status(session: Session, claim_ids: list[str], status: str) -> None:
+    for row in session.scalars(select(Claim).where(Claim.id.in_(claim_ids))):
+        row.verification_status = status
+
+
 def scrub_count(session: Session, version_id: str) -> int:
     """Names replaced by roles in Claude's answers, across every claim of a version (G10)."""
     payloads: list[dict[str, Any]] = list(
@@ -95,10 +124,12 @@ def scrub_count(session: Session, version_id: str) -> int:
     return sum(int(payload.get("scrubbed", 0) or 0) for payload in payloads)
 
 
-def unknown_count(session: Session, version_id: str) -> int:
+def unknown_count(session: Session, version_id: str, *, outside_flow: bool = False) -> int:
     return (
         session.scalar(
-            select(func.count()).select_from(Unknown).where(Unknown.version_id == version_id)
+            select(func.count())
+            .select_from(Unknown)
+            .where(Unknown.version_id == version_id, Unknown.outside_flow.is_(outside_flow))
         )
         or 0
     )
@@ -181,6 +212,7 @@ def verified_with_steps(session: Session, version_id: str) -> list[ClaimRecord]:
     return [_record(row) for row in rows]
 
 
+@remembered
 def by_ids(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
     """Claim ID → claim, for the IDs given."""
     if not claim_ids:

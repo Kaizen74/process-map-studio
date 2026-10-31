@@ -187,6 +187,30 @@ describe("Draft screen", () => {
     );
   });
 
+  it("counts what was set aside for other flows and links to it (DECISIONS 85)", async () => {
+    draftApi({ ...DONE, summary: { steps: 8, needs_check: 1, verified: 21, rejected: 2, open_questions: 5, scrubbed: 1,
+      outside_flow: 6, outside_flow_questions: 1 } }); // prettier-ignore
+    const { container } = renderApp(PATH);
+    const summary = await screen.findByRole("region", { name: "Draft v0.1" });
+    expect(within(summary).getByText("Other flows").nextElementSibling).toHaveTextContent("7");
+    expect(
+      within(summary).getByText(/6 claims and 1 question in your documents are about another flow/),
+    ).toBeInTheDocument();
+    expect(within(summary).getByRole("link", { name: "See them under Outside this flow" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/review?tab=outside",
+    );
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("shows no Other flows figure when nothing was set aside", async () => {
+    draftApi(DONE);
+    renderApp(PATH);
+    const summary = await screen.findByRole("region", { name: "Draft v0.1" });
+    await within(summary).findByText("Open questions");
+    expect(within(summary).queryByText("Other flows")).toBeNull();
+  });
+
   it("summarises a finished draft and lists the rejected claims", async () => {
     draftApi(DONE);
     renderApp(PATH);

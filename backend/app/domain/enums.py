@@ -179,6 +179,7 @@ class VerificationStatus(StrEnum):
     PENDING = "pending"
     VERIFIED = "verified"
     REJECTED = "rejected"
+    OUTSIDE_FLOW = "outside_flow"  # passed the checks, about another flow (DECISIONS 81)
 
 
 class VerifierVerdict(StrEnum):

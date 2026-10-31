@@ -44,6 +44,7 @@ def diagram(settings_config: AppConfig) -> Iterator[Drafted]:
         ids = {e["label"]: e["id"] for e in graph["elements"]}
         drafted = Drafted(client, built.engagement_id, job["target_id"], ids)
         drafted.source_id = built.sources[DIAGRAM_SOURCES[0]]  # type: ignore[attr-defined]
+        drafted.job = job  # type: ignore[attr-defined]
         yield drafted
 
 
@@ -85,6 +86,12 @@ def test_only_the_icons_are_suggested_each_once(diagram: Drafted) -> None:
     assert len(pictures) == 2  # the logo on every page is never suggested
     assert len({p["element_id"] for p in pictures}) == 1  # both on the first step citing page 1
     assert {p["status"] for p in pictures} == {"suggested"}
+    # The file still counts its own two pictures, not the copies the draft put on a step
+    # (2026-10-29: Sources said "4 images found in this file" after a draft).
+    source = get(d, f"/api/sources/{d.source_id}")  # type: ignore[attr-defined]
+    assert source["suggested_images"] == 2
+    listed = get(d, f"/api/engagements/{d.engagement_id}/sources")
+    assert [s["suggested_images"] for s in listed] == [2]
 
 
 def test_from_a_whole_draft_to_a_published_map(diagram: Drafted) -> None:
@@ -130,3 +137,90 @@ def test_from_a_whole_draft_to_a_published_map(diagram: Drafted) -> None:
     assert published.json()["signal"]["detail"] == signal.DOCUMENTS_ONLY.detail
     md = d.client.get(f"/api/versions/{d.version_id}/export/md").text
     assert "Built from documents only." in md
+
+
+def test_a_step_the_comparison_left_out_is_still_grounded_in_its_own_claims(
+    diagram: Drafted,
+) -> None:
+    """Eric's cargo manual (2026-10-28): two steps came back with no passage, "not assessed" and
+    drawn As done, because the comparison call left them out. A step's own checked claims ground
+    it: the passage they quote supports it, so it is documented only, drawn As documented only,
+    and passes L2."""
+    d = diagram
+    step = get(d, f"/api/elements/{d.ids['Return loading report']}")
+    passages = [e for e in step["evidence"] if e["stance"] == "supports"]
+    assert passages and all(e["verified"] for e in passages)
+    assert step["source_state"] == "documented_only"
+    assert step["view_membership"] == "documented_only"
+    report = get(d, f"/api/versions/{d.version_id}/lint")
+    assert not [f for f in report["failures"] if f["rule"] == "L2"], report
+
+
+def test_claims_about_another_flow_on_the_page_are_set_aside_and_listed(diagram: Drafted) -> None:
+    """DECISIONS 81: the page also shows the export flow (accept cargo, build ULDs). This
+    engagement maps load control from "Flight scheduled" to "Final load sheet issued", so those
+    checked claims are kept off the map, out of the rejected claims, and listed, each with its
+    passage."""
+    d = diagram
+    aside = get(d, f"/api/versions/{d.version_id}/outside-flow")
+    assert len(aside["items"]) == 2
+    assert [(c["claim_text"], c["claim_type"], c["source_name"], c["anchor"])
+            for c in aside["items"]] == [
+        ("Cargo acceptance verifies pieces, weight and dimensions.", "activity",
+         "process_flow_diagram.pdf", "p. 1"),
+        ("The Build-up team secures and nets the ULDs as required.", "activity",
+         "process_flow_diagram.pdf", "p. 1"),
+    ]  # fmt: skip
+    assert all(c["passage_available"] and c["segment_id"] for c in aside["items"])
+    graph = get(d, f"/api/versions/{d.version_id}/graph")
+    assert [e["label"] for e in graph["elements"] if e["kind"] not in STRUCTURAL] == [
+        label for label, _kind, _lane in STEPS
+    ]
+    rejected = get(d, f"/api/versions/{d.version_id}/rejected-claims")
+    assert rejected["total"] == 1
+
+
+def test_questions_about_another_flow_are_set_aside_with_its_claims(diagram: Drafted) -> None:
+    """DECISIONS 83: the reading also asked "What happens to cargo that fails security
+    screening?" about the export box. No step of this load control map uses that passage, so the
+    question is listed under Outside this flow, not on this map's open questions. The question
+    about the captain's box, a passage this map uses, stays."""
+    d = diagram
+    aside = get(d, f"/api/versions/{d.version_id}/outside-flow")
+    assert [(q["question"], q["source_name"], q["anchor"]) for q in aside["questions"]] == [
+        ("What happens to cargo that fails security screening?", "process_flow_diagram.pdf",
+         "p. 1"),
+    ]  # fmt: skip
+    assert aside["questions"][0]["passage_available"] and aside["questions"][0]["segment_id"]
+    assert aside["total"] == 3  # two claims and one question
+    asked = [q["question"] for q in get(d, f"/api/versions/{d.version_id}/questions")]
+    assert "Where does a deviation outside tolerance go next?" in asked
+    assert "What happens to cargo that fails security screening?" not in asked
+    assert d.job["message"].endswith(  # type: ignore[attr-defined]
+        " 2 claims and 1 question about other flows set aside: see Outside this flow."
+    )
+    # Eric, 2026-10-30: the download says so too, under the source registry.
+    page = d.client.get(f"/api/versions/{d.version_id}/export/html").text
+    assert (
+        "<p>2 claims and 1 question in these sources are about another flow, so they are kept off "
+        "this map.</p>"
+    ) in page
+
+
+def test_passages_about_another_flow_are_tagged_on_sources(diagram: Drafted) -> None:
+    """DECISIONS 94 (Eric, 2026-10-31): in the source viewer, a passage only another flow's claims
+    or questions cite says "Other flow", not "Uncited"; coverage is unchanged."""
+    d = diagram
+    [pdf] = get(d, f"/api/engagements/{d.engagement_id}/sources")
+    page = get(d, f"/api/sources/{pdf['id']}/segments")
+    tagged = [s["text"] for s in page["segments"] if s["other_flow"]]
+    assert tagged == [
+        "CARGO ACCEPTANCE: A. ACCEPT CARGO • Verify pieces, weight and dimensions • Cargo security "
+        "screening",
+        "BUILD-UP TEAM: B. BUILD ULDS • Allocate serviceable ULDs • Secure and net as required",
+    ]
+    assert page["other_flow"] == 2
+    assert all(not s["cited"] for s in page["segments"] if s["other_flow"])
+    assert page["coverage_pct"] == pdf["coverage_pct"]  # the figure itself doesn't change
+    uncited = get(d, f"/api/sources/{pdf['id']}/segments?uncited_only=1")
+    assert uncited["other_flow"] == 2 and sum(s["other_flow"] for s in uncited["segments"]) == 2

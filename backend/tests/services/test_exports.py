@@ -184,9 +184,10 @@ def test_raci_csv_is_steps_by_roles() -> None:
     assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
                        "Ramp", "Airline ops", "Captain"]  # fmt: skip
     assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
+    assert {row[1] for row in rows[1:]} == {"Activity", "Decision", "Approval"}
     assert rows[8] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
         "Deviation in limits?",
-        "decision",
+        "Decision",  # Eric, 2026-10-30: the words the HTML map uses, not the stored value
         "Load controller",
         "O",
         "R",
@@ -342,3 +343,36 @@ def test_every_new_heading_is_printed_even_when_empty() -> None:
         assert md.count(heading) == 1, heading
     assert "No stories recorded." in md and "No SME terms recorded." in md
     assert "This map was drafted before the two views; it has one view." in md
+
+
+def test_facts_say_how_much_of_the_sources_is_about_other_flows() -> None:
+    # Eric, 2026-10-30: someone reading only the download should know the documents also describe
+    # other flows (DECISIONS 81, 83). One line under the source registry, counts only, no quotes.
+    text = exports.render_master_map_md(data(outside_flow_claims=6, outside_flow_questions=1))
+    facts = text[text.index(exports.FACTS) : text.index("### Pain points as stated")]
+    line = ("6 claims and 1 question in these sources are about another flow, so they are kept "
+            "off this map.")  # fmt: skip
+    assert line in facts
+    one = exports.render_master_map_md(data(outside_flow_claims=1))
+    assert "1 claim in these sources is about another flow, so it is kept off this map." in one
+    assert "another flow" not in exports.render_master_map_md(data())
+
+
+def test_graph_json_lists_only_the_roles_the_map_uses() -> None:
+    # Eric, 2026-10-31: "Map another flow" copies the setup's roles, so the Export cargo file
+    # listed Load control's roles too. A role is used when a step sits in its lane, names it in its
+    # RACI, or has it make the decision; the others are left out, in the same order as before.
+    graph = sample_graph()
+    used = [r.id for r in graph.roles]
+    extra = graph.roles[0].model_copy(update={"id": "unused", "name": "Captain of another flow"})
+    graph.roles.append(extra)
+    rendered = json.loads(exports.render_graph_json(data(graph)))
+    assert [r["id"] for r in rendered["roles"]] == used  # every sample role is used, none added
+    assert "Captain of another flow" not in json.dumps(rendered)
+    # A role that only makes a decision still counts.
+    decider = graph.roles[0].model_copy(update={"id": "decider", "name": "Duty manager"})
+    graph.roles.append(decider)
+    step = next(e for e in graph.elements if e.kind == "decision")
+    step.decision = step.decision.model_copy(update={"decider_role_id": "decider"})
+    names = [r["name"] for r in json.loads(exports.render_graph_json(data(graph)))["roles"]]
+    assert "Duty manager" in names and "Captain of another flow" not in names

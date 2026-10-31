@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import RedactionTermView
+from app.repositories.read_memo import remembered
 from app.repositories.tables import RedactionTerm
 
 # Origins of terms that hide names; `confidential_term` only restricts web research.
@@ -24,6 +25,7 @@ def _view(row: RedactionTerm) -> RedactionTermView:
     )
 
 
+@remembered
 def list_terms(
     session: Session, engagement_id: str, origins: Iterable[str]
 ) -> list[RedactionTermView]:
@@ -94,3 +96,23 @@ def replace_replacement(
     for row in rows:
         row.replacement = new
     session.flush()
+
+
+def copy_terms(session: Session, from_id: str, to_id: str) -> int:
+    """Another flow from the same sources (DECISIONS 81): every name to hide and confidential term,
+    with its replacement and origin, so nothing hidden in one flow shows in the next."""
+    rows = list(
+        session.scalars(
+            select(RedactionTerm)
+            .where(RedactionTerm.engagement_id == from_id)
+            .order_by(RedactionTerm.created_at, RedactionTerm.id)
+        )
+    )
+    for row in rows:
+        session.add(
+            RedactionTerm(
+                engagement_id=to_id, term=row.term, replacement=row.replacement, origin=row.origin
+            )
+        )
+    session.flush()
+    return len(rows)

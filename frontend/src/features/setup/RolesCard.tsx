@@ -1,8 +1,8 @@
 import { useId, useState, type DragEvent, type FormEvent } from "react";
 import type { Role } from "../../api/types";
-import { Button, Card, CheckboxField, Chip, ChipField, EmptyState, TextField } from "../../components/common";
+import { Button, Card, CheckboxField, Chip, ChipField, Dialog, EmptyState, TextField } from "../../components/common";
 import { useToast } from "../../components/shell";
-import { useCreateRole, useUpdateRole } from "../../hooks/useRoles";
+import { useCreateRole, useDeleteRole, useUpdateRole } from "../../hooks/useRoles";
 import { messageOf } from "../../lib/errors";
 import { validateRoleName } from "../../lib/validation";
 
@@ -52,7 +52,11 @@ function RoleForm({ initial, submitLabel, pending, serverError, onSubmit, onCanc
 export function RolesCard({ engagementId, roles }: { engagementId: string; roles: readonly Role[] }) {
   const create = useCreateRole(engagementId);
   const update = useUpdateRole(engagementId);
+  const remove = useDeleteRole(engagementId);
   const toast = useToast();
+  // Remove (DECISIONS 93): asked first; a role still in use stays and the box says why.
+  const [removing, setRemoving] = useState<Role | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
@@ -187,6 +191,16 @@ export function RolesCard({ engagementId, roles }: { engagementId: string; roles
                       >
                         Edit
                       </Button>
+                      <Button
+                        variant="link"
+                        aria-label={`Remove ${role.name}`}
+                        onClick={() => {
+                          setRemoveError(null);
+                          setRemoving(role);
+                        }}
+                      >
+                        Remove
+                      </Button>
                     </div>
                   </>
                 )}
@@ -220,6 +234,49 @@ export function RolesCard({ engagementId, roles }: { engagementId: string; roles
         </div>
         {roles.length > 0 && <LanePreview roles={roles} />}
       </div>
+      <Dialog
+        open={removing !== null}
+        title={removeError ? `${removing?.name ?? "This role"} stays` : `Remove ${removing?.name ?? "role"}?`}
+        description={
+          removeError
+            ? undefined
+            : "Its lane leaves this engagement and the roles below it move up. You can add it again later."
+        }
+        onClose={() => setRemoving(null)}
+        actions={
+          removeError ? (
+            // Refused: say why and offer no Remove that would only be refused again.
+            <Button onClick={() => setRemoving(null)}>Close</Button>
+          ) : (
+          <>
+            <Button onClick={() => setRemoving(null)}>Keep it</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (!removing || remove.isPending) return;
+                const name = removing.name;
+                setRemoveError(null);
+                remove.mutate(removing.id, {
+                  onSuccess: () => {
+                    setRemoving(null);
+                    toast(`${name} removed. The lanes below it moved up.`);
+                  },
+                  onError: (e) => setRemoveError(messageOf(e)),
+                });
+              }}
+            >
+              {remove.isPending ? "Removing…" : "Remove"}
+            </Button>
+          </>
+          )
+        }
+      >
+        {removeError && (
+          <p className="field__error" role="alert">
+            {removeError}
+          </p>
+        )}
+      </Dialog>
     </Card>
   );
 }

@@ -197,5 +197,10 @@ describe("review actions (PRD §5.7.5)", () => {
   it("says when every step is reviewed", () => {
     render(<AllReviewed />);
     expect(screen.getByText("All steps reviewed")).toBeInTheDocument();
+    // The quality card and Publish are here now (Eric's Export cargo screenshot, 2026-10-29).
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Every step is confirmed, edited, added or rejected. Check the quality card at the top, then publish.",
+    );
+    expect(screen.queryByText(/build phase/)).toBeNull();
   });
 });

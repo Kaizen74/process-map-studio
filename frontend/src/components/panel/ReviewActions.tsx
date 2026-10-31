@@ -79,7 +79,7 @@ export function AllReviewed() {
     <div className="review-well review-well--done" role="status">
       <p className="review-well__title">All steps reviewed</p>
       <p className="review-well__note">
-        Every step is confirmed, edited, added or rejected. The quality card and Publish arrive in build phase P7.
+        Every step is confirmed, edited, added or rejected. Check the quality card at the top, then publish.
       </p>
     </div>
   );
