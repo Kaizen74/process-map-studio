@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import RedactionTermView
+from app.repositories.read_memo import remembered
 from app.repositories.tables import RedactionTerm
 
 # Origins of terms that hide names; `confidential_term` only restricts web research.
@@ -24,6 +25,7 @@ def _view(row: RedactionTerm) -> RedactionTermView:
     )
 
 
+@remembered
 def list_terms(
     session: Session, engagement_id: str, origins: Iterable[str]
 ) -> list[RedactionTermView]:

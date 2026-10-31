@@ -15,6 +15,7 @@ from app.domain.models import (
     SpeakerView,
     StoredSegment,
 )
+from app.repositories.read_memo import remembered
 from app.repositories.tables import Image, Role, Source, SourceSegment, new_id
 
 EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
@@ -72,6 +73,7 @@ def get(session: Session, source_id: str) -> SourceView | None:
     return _view(session, row) if row else None
 
 
+@remembered
 def get_many(session: Session, source_ids: list[str]) -> list[SourceView]:
     """The sources with these IDs, in the order given (missing ones left out); three queries in
     all, however many sources (the quality card and graph read every source of a version)."""
@@ -476,6 +478,7 @@ def instruction_like_count(session: Session, engagement_id: str) -> int:
     )
 
 
+@remembered
 def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
     """Passage ID → the role its speaker is mapped to (passages without a mapped speaker are
     left out)."""

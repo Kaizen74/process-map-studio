@@ -444,12 +444,24 @@ def _overlaps(a: Rect, b: Rect) -> bool:
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
-def _hits_line(r: Rect, points: list[Point]) -> bool:
-    for (x1, y1), (x2, y2) in pairwise(points):
-        seg = (min(x1, x2), min(y1, y2), max(x1, x2) + 1, max(y1, y2) + 1)
-        if _overlaps(r, seg):
-            return True
-    return False
+def _segments(points: list[Point]) -> list[Rect]:
+    """A line's runs as thin boxes (one pixel wide), the test a label must not cross."""
+    return [(min(x1, x2), min(y1, y2), max(x1, x2) + 1, max(y1, y2) + 1)
+            for (x1, y1), (x2, y2) in pairwise(points)]  # fmt: skip
+
+
+def _around(segments: list[Rect]) -> Rect | None:
+    """The box around every run of a line: a label clear of it is clear of each run."""
+    if not segments:
+        return None
+    return (min(s[0] for s in segments), min(s[1] for s in segments),
+            max(s[2] for s in segments), max(s[3] for s in segments))  # fmt: skip
+
+
+def _hits_line(r: Rect, segments: list[Rect], box: Rect | None) -> bool:
+    if box is None or not _overlaps(r, box):
+        return False
+    return any(_overlaps(r, seg) for seg in segments)
 
 
 def _extra_spots(points: list[Point], spots: list[TextPos]) -> list[TextPos]:
@@ -485,20 +497,25 @@ def _place_labels(
     line is better than covering a label, and covering a label is better than covering a step."""
     placed: list[Rect] = []
     out: list[TextPos | None] = []
+    # Each line's runs, worked out once per map rather than for every spot tried (2026-10-31).
+    runs = [_segments(points) for points, _ in routes]
+    around = [_around(r) for r in runs]
     for i, edge in enumerate(edges):
         text = edge.label.strip()
         if not text:
             out.append(None)
             continue
         points, spots = routes[i]
-        others = [pts for j, (pts, _) in enumerate(routes) if j != i]
+        others = [(runs[j], around[j]) for j in range(len(routes)) if j != i]
 
-        def cost(pos: TextPos, text: str = text, others: list[list[Point]] = others) -> int:
+        def cost(
+            pos: TextPos, text: str = text, others: list[tuple[list[Rect], Rect | None]] = others
+        ) -> int:
             r = label_rect(text, pos)
             return (
                 100 * sum(_overlaps(r, n) for n in nodes)
                 + 10 * sum(_overlaps(r, q) for q in placed)
-                + sum(_hits_line(r, pts) for pts in others)
+                + sum(_hits_line(r, segs, box) for segs, box in others)
             )
 
         pos = min(spots, key=cost)  # the first of equals: spots are listed best first

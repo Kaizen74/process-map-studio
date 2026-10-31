@@ -26,6 +26,7 @@ from app.domain.graph import (
     RaciRecord,
     Record,
 )
+from app.repositories.read_memo import remembered
 from app.repositories.tables import (
     AiFlag,
     Constraint,
@@ -155,6 +156,7 @@ def add_version_sources(session: Session, version_id: str, source_ids: Sequence[
 # --- Reading -----------------------------------------------------------------------------------
 
 
+@remembered
 def phases(session: Session, version_id: str) -> list[PhaseRecord]:
     rows = session.scalars(
         select(Phase).where(Phase.version_id == version_id).order_by(Phase.sort_order, Phase.id)
@@ -162,6 +164,7 @@ def phases(session: Session, version_id: str) -> list[PhaseRecord]:
     return [PhaseRecord.model_validate(r) for r in rows]
 
 
+@remembered
 def elements(session: Session, version_id: str) -> list[ElementRecord]:
     """In the order they were created (the pipeline creates them in process order)."""
     rows = session.scalars(
@@ -172,6 +175,7 @@ def elements(session: Session, version_id: str) -> list[ElementRecord]:
     return [ElementRecord.model_validate(r) for r in rows]
 
 
+@remembered
 def element_claims(session: Session, version_id: str) -> dict[str, list[str]]:
     """Element ID → the IDs of the verified claims it is built from."""
     rows = session.execute(
@@ -185,6 +189,7 @@ def element_claims(session: Session, version_id: str) -> dict[str, list[str]]:
     return out
 
 
+@remembered
 def edges(session: Session, version_id: str) -> list[EdgeRecord]:
     rows = session.scalars(
         select(Edge).where(Edge.version_id == version_id).order_by(Edge.created_at, Edge.id)
@@ -237,6 +242,7 @@ def questions(session: Session, version_id: str) -> list[QuestionRecord]:
     return [QuestionRecord.model_validate(r) for r in rows]
 
 
+@remembered
 def version_source_ids(session: Session, version_id: str) -> list[str]:
     rows = session.scalars(
         select(VersionSource.source_id)

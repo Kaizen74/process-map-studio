@@ -8,6 +8,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import ClaimRecord, UnknownRecord
+from app.repositories.read_memo import remembered
 from app.repositories.tables import Claim, Element, ElementClaim, Unknown
 
 
@@ -85,6 +86,7 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
     return {status: count for status, count in rows}
 
 
+@remembered
 def _rows_with_ids(session: Session, version_id: str, status: str) -> list[tuple[str, ClaimRecord]]:
     rows = session.scalars(
         select(Claim)
@@ -210,6 +212,7 @@ def verified_with_steps(session: Session, version_id: str) -> list[ClaimRecord]:
     return [_record(row) for row in rows]
 
 
+@remembered
 def by_ids(session: Session, claim_ids: list[str]) -> dict[str, ClaimRecord]:
     """Claim ID → claim, for the IDs given."""
     if not claim_ids:

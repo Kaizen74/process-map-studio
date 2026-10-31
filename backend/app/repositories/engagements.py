@@ -19,6 +19,7 @@ from app.domain.models import (
     RoleView,
     VersionLabel,
 )
+from app.repositories.read_memo import remembered
 from app.repositories.tables import (
     Element,
     Engagement,
@@ -91,6 +92,7 @@ def create(session: Session, fields: dict[str, Any]) -> EngagementView:
     return _view(session, row)
 
 
+@remembered
 def get(session: Session, engagement_id: str) -> EngagementView | None:
     row = session.get(Engagement, engagement_id)
     return _view(session, row) if row else None

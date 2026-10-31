@@ -39,6 +39,9 @@ from app.domain.sensemaking import ExceptionSummary, RouteExit
 from app.services import signal
 
 STEP_KINDS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
+# The words every export uses for a kind (the RACI CSV since 2026-10-30, as the HTML map).
+KINDS = {"activity": "Activity", "decision": "Decision", "approval": "Approval", "start": "Start",
+         "end": "End"}  # fmt: skip
 DECIDING = {ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -677,7 +680,7 @@ def render_raci_csv(data: ExportInput) -> str:
     writer.writerow(["Step", "Kind", "Lane", "Provenance", *(roles[r] for r in order)])
     for e in steps(graph):
         writer.writerow(
-            [e.label, e.kind, roles.get(e.lane_role_id or "", ""), e.provenance]
+            [e.label, KINDS.get(e.kind, e.kind), roles.get(e.lane_role_id or "", ""), e.provenance]
             + [raci_cell(e, r) for r in order]
         )
     return "﻿" + buffer.getvalue()

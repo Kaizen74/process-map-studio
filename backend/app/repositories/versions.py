@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.models import VersionView
 from app.domain.sensemaking import SENSE_CLAIM_TYPES
+from app.repositories.read_memo import remembered
 from app.repositories.tables import (
     AiFlag,
     Base,
@@ -52,6 +53,7 @@ def create(session: Session, *, engagement_id: str, label: str, state: str) -> V
     return _view(row)
 
 
+@remembered
 def get(session: Session, version_id: str) -> VersionView | None:
     row = session.get(MapVersion, version_id)
     return _view(row) if row else None

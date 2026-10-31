@@ -10,6 +10,7 @@ from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
 from app.domain.system_records import AlignmentStored, EventLogView, MetricRow, ValidationReport
+from app.repositories.read_memo import remembered
 from app.repositories.tables import ActivityAlignment, Element, Event, EventLog, MiningMetric
 
 
@@ -44,6 +45,7 @@ def get(session: Session, log_id: str) -> EventLogView | None:
     return _view(row) if row else None
 
 
+@remembered
 def list_for(session: Session, engagement_id: str) -> list[EventLogView]:
     rows = session.scalars(
         select(EventLog)
@@ -144,6 +146,7 @@ def add_metrics(session: Session, log_id: str, rows: list[MetricRow]) -> None:
         ])  # fmt: skip
 
 
+@remembered
 def metrics(session: Session, log_id: str, scope: str) -> list[MetricRow]:
     rows = session.scalars(
         select(MiningMetric).where(MiningMetric.log_id == log_id, MiningMetric.scope == scope)
@@ -213,6 +216,7 @@ def replace_alignment(session: Session, log_id: str, activities: set[str], step_
     session.flush()
 
 
+@remembered
 def confirmed_matches(
     session: Session, engagement_id: str
 ) -> list[tuple[EventLogView, dict[str, str]]]:
@@ -234,6 +238,7 @@ def confirmed_matches(
     return out
 
 
+@remembered
 def step_figures(session: Session, log_id: str, activities: set[str]) -> dict[str, int]:
     """Cases and events of a step's activities, and the cases where they occur more than once."""
     where = (Event.log_id == log_id, Event.activity.in_(activities))

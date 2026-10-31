@@ -26,8 +26,7 @@ from app.services import exports as md
 from app.services.layout import compute_layout
 
 TIMED = {ElementKind.ACTIVITY.value, ElementKind.APPROVAL.value}
-KINDS = {"activity": "Activity", "decision": "Decision", "approval": "Approval", "start": "Start",
-         "end": "End"}  # fmt: skip
+KINDS = md.KINDS
 STANCES = {"supports": "supports", "contradicts": "contradicts", "silent": "silent"}
 PROVENANCE = {"O": "Observed (O)", "I": "Inferred (I)", "R": "Recommended (R)"}
 # A draft's map (2026-10-28): each step says how far its review has got.
@@ -373,14 +372,14 @@ def _and(words: list[str]) -> str:
     return words[0] if len(words) == 1 else f"{', '.join(words[:-1])} and {words[-1]}"
 
 
-def _interpretation(data: ExportInput, graph: Graph, layout: Layout) -> str:
+def _interpretation(data: ExportInput, graph: Graph) -> str:
     roles = {r.id: r.name for r in graph.roles}
     order = md.role_order(graph)
     parts = [
         '<section aria-labelledby="interpretation">',
         f'<h2 id="interpretation">{e(md.INTERPRETATION[3:])}</h2>',
         '<p class="note">Select a step to read its details below.</p>',
-        *_maps(data, graph, layout),
+        *_maps(data, graph),
         "<h3>Steps</h3>",
     ]
     parts += [_details(data, graph, el) for el in md.steps(graph)]
@@ -451,11 +450,11 @@ VIEW_EMPTY = {
 }
 
 
-def _maps(data: ExportInput, graph: Graph, layout: Layout) -> list[str]:
+def _maps(data: ExportInput, graph: Graph) -> list[str]:
     """Both views, each drawn from its own backend layout (§3.12.11); the one map before v1.10.
     As in the app, the view that draws more steps comes first, As done on a tie (2026-10-28)."""
-    if not data.view_graphs:
-        return [_map(graph, layout)]
+    if not data.view_graphs:  # laid out only here: with both views it would go unused
+        return [_map(graph, compute_layout(graph))]
     drawn = {view: md.on_the_map(data.view_graphs[view]) for view in VIEW_TITLES}
     counts = {view: len(md.steps(g)) for view, g in drawn.items()}
     order = ["documented", "done"] if counts["documented"] > counts["done"] else list(VIEW_TITLES)
@@ -537,7 +536,6 @@ def _recommendation(data: ExportInput, graph: Graph) -> str:
 
 def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[str, bytes]) -> str:
     graph = md.on_the_map(data.graph)
-    layout = compute_layout(graph)
     published = md.display_date(data.published_at)
     title = f"{graph.process.name} — Master Process Map {graph.version.label}"
     meta = (
@@ -582,7 +580,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
             + "</header>",
             f'<div class="card">{_card(data.quality_card)}</div>',
             _facts(data, graph),
-            _interpretation(data, graph, layout),
+            _interpretation(data, graph),
             _recommendation(data, graph),
             "<footer>Role names only. No images, verbatim quotes or names. "
             "Made with Process Map Studio.</footer>",

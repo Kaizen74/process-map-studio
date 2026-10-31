@@ -184,9 +184,10 @@ def test_raci_csv_is_steps_by_roles() -> None:
     assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
                        "Ramp", "Airline ops", "Captain"]  # fmt: skip
     assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
+    assert {row[1] for row in rows[1:]} == {"Activity", "Decision", "Approval"}
     assert rows[8] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
         "Deviation in limits?",
-        "decision",
+        "Decision",  # Eric, 2026-10-30: the words the HTML map uses, not the stored value
         "Load controller",
         "O",
         "R",
