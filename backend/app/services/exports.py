@@ -661,11 +661,23 @@ def render_master_map_md(data: ExportInput) -> str:
 # --- Graph JSON and RACI CSV -------------------------------------------------------------------
 
 
+def roles_used(graph: Graph) -> set[str]:
+    """The roles a step sits in the lane of, names in its RACI or has make the decision."""
+    used = {e.lane_role_id for e in graph.elements if e.lane_role_id}
+    used |= {r.role_id for e in graph.elements for r in e.raci}
+    used |= {e.decision.decider_role_id for e in graph.elements if e.decision.decider_role_id}
+    return used
+
+
 def render_graph_json(data: ExportInput) -> str:
     graph = on_the_map(data.graph)
     card = data.quality_card.model_dump(mode="json") if data.quality_card else None
+    used = roles_used(graph)  # a copied setup's other roles stay out (2026-10-31, DECISIONS 92)
     graph = graph.model_copy(
-        update={"version": graph.version.model_copy(update={"quality_card": card})}
+        update={
+            "version": graph.version.model_copy(update={"quality_card": card}),
+            "roles": [r for r in graph.roles if r.id in used],
+        }
     )
     return json.dumps(graph.model_dump(mode="json"), indent=2, ensure_ascii=False) + "\n"
 
