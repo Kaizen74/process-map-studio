@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Engagement } from "../../src/api/types";
+import type { Engagement, Role } from "../../src/api/types";
 import { seriousViolations } from "../axe";
 import { ENGAGEMENT, READINESS, fakeApi, renderApp, type Handler } from "../renderApp";
 import { DIAGRAM, SAMPLE, graphFor, layoutFor } from "../sampleMap";
@@ -149,6 +149,43 @@ describe("Setup: one flow or every flow", () => {
     expect(await screen.findByDisplayValue("Cargo received for export")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("heading", { level: 1, name: "Setup" })).toHaveFocus());
     expect(screen.queryByRole("dialog", { name: "Map another flow" })).toBeNull();
+  });
+
+  it("brings along only the roles left ticked (DECISIONS 93)", async () => {
+    const roles: Role[] = [
+      { id: "r1", engagement_id: "e1", name: "Load controller", aliases: [], is_system: false, lane_order: 1 },
+      { id: "r2", engagement_id: "e1", name: "Captain", aliases: [], is_system: false, lane_order: 2 },
+      { id: "r3", engagement_id: "e1", name: "Cargo acceptance", aliases: [], is_system: false, lane_order: 3 },
+    ]; // prettier-ignore
+    const made: Engagement = { ...ENGAGEMENT, id: "e2", name: "Export" };
+    const { calls } = setup({
+      "GET /api/engagements/e1/roles": () => ({ body: roles }),
+      "POST /api/engagements/e1/another-flow": () => ({ status: 201, body: made }),
+      "GET /api/engagements/e2": () => ({ body: made }),
+      "GET /api/engagements/e2/readiness": () => ({ body: READINESS }),
+      "GET /api/engagements/e2/roles": () => ({ body: [] }),
+    });
+    const { container } = renderApp("/engagements/e1/setup");
+    await screen.findByLabelText("Engagement name");
+    fireEvent.click(within(another()).getByRole("button", { name: "Map another flow from these sources…" }));
+    const dialog = screen.getByRole("dialog", { name: "Map another flow" });
+    const group = within(dialog).getByRole("group", { name: "Roles to bring along" });
+    const boxes = within(group).getAllByRole("checkbox");
+    expect(boxes.map((b) => (b as HTMLInputElement).checked)).toEqual([true, true, true]);
+    expect(within(group).getByText(/A speaker mapped to a role you leave behind/)).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(group).getByRole("checkbox", { name: "Load controller" }));
+    fireEvent.click(within(group).getByRole("checkbox", { name: "Captain" }));
+    expect(group).toHaveTextContent("1 of 3 roles");
+    fireEvent.change(within(dialog).getByLabelText("Engagement name"), { target: { value: "Export" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Start this flow" }));
+    expect(
+      await screen.findByText(
+        "Started Export with the same documents, 1 of 3 roles and names to hide. Check its scope, then draft it.",
+      ),
+    ).toBeInTheDocument();
+    const sent = calls.find((c) => c.key === "POST /api/engagements/e1/another-flow");
+    expect(sent?.body).toMatchObject({ name: "Export", role_ids: ["r3"] });
   });
 
   it("says plainly when the next flow couldn't be started", async () => {

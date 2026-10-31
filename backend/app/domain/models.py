@@ -154,6 +154,8 @@ class AnotherFlow(BaseModel):
     trigger: str = ""
     end_point: str = ""
     out_of_scope: str = ""
+    # The first engagement's roles to bring along (DECISIONS 93); None: every role.
+    role_ids: list[str] | None = None
 
 
 class EngagementView(BaseModel):
@@ -225,6 +227,19 @@ class RoleView(BaseModel):
     aliases: list[str]
     is_system: bool
     lane_order: int | None
+
+
+class RoleUses(BaseModel):
+    """What still uses a role, so it can't be removed (DECISIONS 93). `steps`: the labels of the
+    steps in any version (published ones included) that have it as lane, RACI or decider."""
+
+    steps: list[str] = []
+    speakers: int = 0
+    profiles: int = 0
+    events: int = 0
+    costs: int = 0
+    intents: int = 0
+    discrepancies: int = 0
 
 
 # --- Parsed documents (services/parsing.py) ---------------------------------------------------

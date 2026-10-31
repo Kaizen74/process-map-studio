@@ -30,6 +30,7 @@ Sessions = sessionmaker[Session]
 
 CARRIED = ("process_name", "in_scope_roles", "industry", "adjacent_industries")
 STILL_READING = "{name} is still being read. Try again when every document is ready."
+NOT_THESE_ROLES = "Choose roles of this engagement."
 
 
 def _copy_file(old: str, new: Path, data_root: Path) -> None:
@@ -52,10 +53,15 @@ def another_flow(
     reading = next((name for _, _, name, status in files if status == "pending"), None)
     if reading is not None:
         return Err(ErrorKind.CONFLICT, STILL_READING.format(name=reading))
+    if data.role_ids is not None:
+        with session_scope(sessions) as session:
+            known = repo.role_ids(session, engagement_id)
+        if not set(data.role_ids) <= known:
+            return Err(ErrorKind.VALIDATION, NOT_THESE_ROLES, {"field": "role_ids"})
     carried = {k: getattr(first, k) for k in CARRIED}
     scope = EngagementCreate(
         **{**carried, "conventions": first.conventions.model_dump()},
-        **data.model_dump(exclude_unset=True),
+        **data.model_dump(exclude_unset=True, exclude={"role_ids"}),
     )
     match clean_scope(scope, require_name=True):
         case Err() as err:
@@ -66,7 +72,7 @@ def another_flow(
     data_root = config.data_dir.resolve()
     with session_scope(sessions) as session:
         view = repo.create(session, fields)
-        roles = repo.copy_roles(session, engagement_id, view.id)
+        roles = repo.copy_roles(session, engagement_id, view.id, data.role_ids)
         terms = redaction_repo.copy_terms(session, engagement_id, view.id)
         copied = 0
         for source_id, fmt, _name, _status in sources_repo.files_for_engagement(

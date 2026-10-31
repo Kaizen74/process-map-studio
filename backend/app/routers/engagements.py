@@ -70,3 +70,10 @@ def create_role(request: Request, engagement_id: str, body: RoleCreate) -> RoleV
 def update_role(request: Request, role_id: str, body: RolePatch) -> RoleView:
     state = request.app.state
     return unwrap(engagements.update_role(state.config, state.sessions, role_id, body))
+
+
+@router.delete("/roles/{role_id}", status_code=204)
+def delete_role(request: Request, role_id: str) -> Response:
+    state = request.app.state
+    unwrap(engagements.delete_role(state.config, state.sessions, role_id))
+    return Response(status_code=204)

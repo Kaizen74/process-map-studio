@@ -145,3 +145,17 @@
   font-size: var(--text-label);
   color: var(--ink-3);
 }
+
+/* Map another flow: the roles to bring along (DECISIONS 93). */
+.role-picks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.role-picks legend {
+  margin-bottom: var(--space-6);
+  font-weight: var(--weight-medium);
+}

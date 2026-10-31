@@ -162,6 +162,7 @@ Map another flow from these sources (2026-10-28; DECISIONS 81). Request: `{"name
 The new engagement gets the first one's `process_name`, `in_scope_roles`, `industry`, `adjacent_industries` and `conventions`; every role (name, aliases, lane order); every redaction term (names to hide and confidential terms, with their replacements); and every source as already read: the file copied into `data/sources/<new id>/`, the source details, every passage (corrections and speaker mappings included, speakers mapped to the new engagement's roles) and its PDF pictures as suggestions (files copied into `data/images/<new id>/`). No reading job and no AI call. Nothing of the first engagement's map, claims, answers or system records is copied, and the first engagement is not changed. Audit row "Started another flow from these sources" on the new engagement, `after` = the scope sent plus `{from_engagement, sources, roles, names_to_hide}`.
 Errors: `404 NOT_FOUND` (the first engagement); `409 CONFLICT` "<file> is still being read. Try again when every document is ready." (a copy of a document still being read would never be read); `422 VALIDATION` with `details.field` (as POST /engagements).
 Used by: Setup → "Another flow in these documents" → "Map another flow from these sources…".
+**Roles to bring along (2026-10-31, Eric; DECISIONS 93):** the request may also carry `"role_ids": ["…"]`, the first engagement's roles to copy; left out (or `null`), every role is copied as before. The copied roles keep their order, numbered 1…N without gaps. A speaker mapped to a role left behind is copied unmapped (Eric maps it again on Sources). `422` "Choose roles of this engagement." (`details.field: "role_ids"`) when an ID isn't one of the first engagement's roles. The audit row's `roles` is the number copied.
 
 ### Role object
 ```json
@@ -180,6 +181,11 @@ Response `201`: role. Errors: `404`, `409 CONFLICT` ("There is already a role ca
 Request: any of `{"name", "aliases", "is_system", "lane_order"}`. Setting `lane_order` to *n* moves the role to lane *n* and renumbers the others (1…N, no gaps).
 Response `200`: role. Errors: `404`, `409`, `422`.
 Used by: Setup screen (rename, aliases, system toggle, reorder).
+
+### DELETE /api/roles/{rid} (2026-10-31; DECISIONS 93)
+Remove a role nothing uses. Response `204`. The roles below it move up a lane (1…N, no gaps). Audit row "Removed role" (`before`: name, aliases, system role, lane).
+A role in use stays: `409 CONFLICT` "<Role> can't be removed: <reasons>." with the reasons joined by "; ", each only when it applies: "n steps use it (“…”, “…” and n more)" (its lane, a RACI letter or a decision's decider, in any version, published ones included, since a published map never changes) · "a speaker in an interview is mapped to it" · "an interviewee profile names it" · "a system log's events are mapped to it" · "it has an hourly cost" · "an intent statement names it as owner" · "a discrepancy names it as decision owner". Errors: `404` ("That role doesn't exist. It may have been removed.").
+Used by: Setup → Roles and lanes → Remove.
 
 ### PUT /api/settings/model (change)
 Now also writes an audit row (`target_type: "settings"`, before/after model, effort, verifier).

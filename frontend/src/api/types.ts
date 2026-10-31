@@ -98,6 +98,8 @@ export interface AnotherFlow {
   trigger: string;
   end_point: string;
   out_of_scope: string;
+  /** The roles to bring along (DECISIONS 93); left out, every role comes along. */
+  role_ids?: string[];
 }
 
 export interface Engagement {

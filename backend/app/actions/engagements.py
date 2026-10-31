@@ -23,6 +23,7 @@ from app.domain.models import (
     MappingConventions,
     RoleCreate,
     RolePatch,
+    RoleUses,
     RoleView,
     ScopeFields,
 )
@@ -382,5 +383,53 @@ def update_role(
             after=role.model_dump(exclude={"id", "engagement_id"}),
         )
         return Ok(role)
+
+    return _in_session(sessions, work)
+
+
+def role_in_use(name: str, uses: RoleUses) -> str:
+    """Why a role can't be removed, in plain words, or "" when nothing uses it (DECISIONS 93)."""
+    reasons = []
+    if uses.steps:
+        n = len(uses.steps)
+        shown = [f"“{label}”" for label in uses.steps[:2]]
+        listed = ", ".join(shown) + (f" and {n - 2} more" if n > 2 else "")
+        reasons.append(f"{n} {'step uses' if n == 1 else 'steps use'} it ({listed})")
+    for count, words in (
+        (uses.speakers, "a speaker in an interview is mapped to it"),
+        (uses.profiles, "an interviewee profile names it"),
+        (uses.events, "a system log's events are mapped to it"),
+        (uses.costs, "it has an hourly cost"),
+        (uses.intents, "an intent statement names it as owner"),
+        (uses.discrepancies, "a discrepancy names it as decision owner"),
+    ):
+        if count:
+            reasons.append(words)
+    return f"{name} can't be removed: {'; '.join(reasons)}." if reasons else ""
+
+
+def delete_role(config: AppConfig, sessions: Sessions, role_id: str) -> Result[None]:
+    """Remove a role nothing uses; the lanes below move up (DECISIONS 93)."""
+    actor = actor_name(config)
+
+    def work(session: Session) -> Result[None]:
+        role = repo.get_role(session, role_id)
+        if role is None:
+            return Err(ErrorKind.NOT_FOUND, ROLE_MISSING)
+        if why := role_in_use(role.name, repo.role_uses(session, role_id)):
+            return Err(ErrorKind.CONFLICT, why)
+        repo.delete_role(session, role_id)
+        repo.touch(session, role.engagement_id)
+        audit.record(
+            session,
+            actor=actor,
+            action="Removed role",
+            target_type="role",
+            target_id=role_id,
+            engagement_id=role.engagement_id,
+            before=role.model_dump(exclude={"id", "engagement_id"}),
+            after=None,
+        )
+        return Ok(None)
 
     return _in_session(sessions, work)
