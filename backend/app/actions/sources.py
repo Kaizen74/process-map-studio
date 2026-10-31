@@ -442,7 +442,11 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
 
 
 def _segment_view(
-    fmt: str, item: dict[str, Any], terms: list[NameReplacement] | None, cited: set[str]
+    fmt: str,
+    item: dict[str, Any],
+    terms: list[NameReplacement] | None,
+    cited: set[str],
+    other_flow: frozenset[str] = frozenset(),
 ) -> SegmentView:
     """One passage; `terms` hides names, `None` means raw (owner-only correction editor)."""
     role = item["speaker_role"] or ("Interviewer" if item["is_interviewer"] else None)
@@ -462,6 +466,7 @@ def _segment_view(
         speaker_role=role,
         text=item["text"] if terms is None else redaction.hide(item["text"], terms),
         cited=item["id"] in cited,
+        other_flow=item["id"] in other_flow,
         instruction_like=item["instruction_like"],
         question_id=item["question_id"],
         speaker_label=item["speaker_label"] if terms is None else None,
@@ -485,6 +490,19 @@ def _current_map_citations(
         return None
     drafted_from = set(map_repo.version_source_ids(session, map_id))
     return claims_repo.cited_segment_ids(session, map_id), drafted_from
+
+
+def _other_flow(session: Session, engagement_id: str, cited: set[str]) -> frozenset[str]:
+    """Passages the current map doesn't cite that a claim or question it set aside as another
+    flow's does (DECISIONS 94): the viewer says "Other flow" for them, not "Uncited"."""
+    map_id = versions_repo.current_map_id(session, engagement_id)
+    if map_id is None:
+        return frozenset()
+    claims = claims_repo.outside_flow_rows(session, map_id)
+    questions = claims_repo.list_unknowns(session, map_id, outside_flow=True)
+    ids = {sid for _, record in claims for sid in record.segment_ids}
+    ids |= {sid for question in questions for sid in question.segment_ids}
+    return frozenset(ids - cited)
 
 
 def _coverage(
@@ -540,12 +558,20 @@ def list_segments(
             session, source_id, page, page_size, uncited_besides=cited if uncited_only else None
         )
         coverage = _coverage(session, [source_id], found).get(source_id)
+        other = _other_flow(session, source.engagement_id, cited)
+        elsewhere = repo.count_among(session, source_id, set(other))
         terms = None if raw else redaction.name_replacements(session, source.engagement_id)
-    segments = [_segment_view(source.format, item, terms, cited) for item in items]
+    segments = [_segment_view(source.format, item, terms, cited, other) for item in items]
     pages = max(1, math.ceil(total / page_size))
-    return Ok(
-        SegmentPage(segments=segments, total=total, page=page, pages=pages, coverage_pct=coverage)
+    found_page = SegmentPage(
+        segments=segments,
+        total=total,
+        page=page,
+        pages=pages,
+        coverage_pct=coverage,
+        other_flow=elsewhere,
     )
+    return Ok(found_page)
 
 
 # --- Speakers and corrections (owner-only places, PRD §3.8 G10) ------------------------------

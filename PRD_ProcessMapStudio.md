@@ -1241,7 +1241,7 @@ The legend adds a lens-specific key when a lens is active. The lens choice persi
 **5.7.8 Source viewer** (replaces the panel content; also used full-width on the Sources screen).
 - Opened from any evidence card, rejected-claim row, or the add-step picker. "← Back to [step]" returns to the element.
 - Header: source kind, source name, mono file meta (format, version date, controlled copy).
-- Coverage bar (approval colour) with "n% cited" and a **Show uncited passages** toggle.
+- Coverage bar (approval colour) with "n% cited" and a **Show uncited passages** toggle. A passage the map doesn't cite but a claim or question set aside as another flow's does is tagged **Other flow** (solid chip) instead of **Uncited** (dashed), and a line under the bar says "n passages in this file are about another flow, so this map leaves them out. See them under Outside this flow" (link to Review `?tab=outside`); coverage is unchanged (2026-10-31, DECISIONS 94).
 - Segment list: mono anchor, speaker **role** (never a name), redacted text. The target segment has a decision-stroke border and faint violet fill; the exact quote is highlighted (`--highlight-bg` with `--highlight-line` underline). Uncited segments carry a dashed "Uncited" tag. Segments with `instruction_like=true` show "Instruction-like text. Treated as data and ignored."
 - On open, scroll the target segment into view within the panel using the panel's own `scrollTop` (not `scrollIntoView`, which would scroll the whole page).
 - Footer note: "Speaker names are replaced by roles. Quotes stay in the app and never appear in exports."

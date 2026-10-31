@@ -230,6 +230,8 @@ export interface Segment {
   corrected?: boolean;
   /** Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted. */
   question_id?: string | null;
+  /** Not cited, but a claim or question set aside as another flow's cites it (DECISIONS 94). */
+  other_flow?: boolean;
 }
 
 export interface SegmentPage {
@@ -238,6 +240,8 @@ export interface SegmentPage {
   page: number;
   pages: number;
   coverage_pct: number | null;
+  /** The source's passages tagged other_flow, across every page (DECISIONS 94). */
+  other_flow?: number;
 }
 
 export interface Speaker {

@@ -492,6 +492,16 @@ def speaker_roles(session: Session, segment_ids: list[str]) -> dict[str, str]:
     return {segment_id: name for segment_id, name in rows}
 
 
+def count_among(session: Session, source_id: str, segment_ids: set[str]) -> int:
+    """How many of the source's passages are among `segment_ids`."""
+    if not segment_ids:
+        return 0
+    query = select(func.count()).where(
+        SourceSegment.source_id == source_id, SourceSegment.id.in_(segment_ids)
+    )
+    return int(session.scalar(query) or 0)
+
+
 def coverage_counts(
     session: Session, source_ids: list[str], cited: set[str]
 ) -> dict[str, tuple[int, int]]:

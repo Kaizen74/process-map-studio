@@ -205,3 +205,22 @@ def test_questions_about_another_flow_are_set_aside_with_its_claims(diagram: Dra
         "<p>2 claims and 1 question in these sources are about another flow, so they are kept off "
         "this map.</p>"
     ) in page
+
+
+def test_passages_about_another_flow_are_tagged_on_sources(diagram: Drafted) -> None:
+    """DECISIONS 94 (Eric, 2026-10-31): in the source viewer, a passage only another flow's claims
+    or questions cite says "Other flow", not "Uncited"; coverage is unchanged."""
+    d = diagram
+    [pdf] = get(d, f"/api/engagements/{d.engagement_id}/sources")
+    page = get(d, f"/api/sources/{pdf['id']}/segments")
+    tagged = [s["text"] for s in page["segments"] if s["other_flow"]]
+    assert tagged == [
+        "CARGO ACCEPTANCE: A. ACCEPT CARGO • Verify pieces, weight and dimensions • Cargo security "
+        "screening",
+        "BUILD-UP TEAM: B. BUILD ULDS • Allocate serviceable ULDs • Secure and net as required",
+    ]
+    assert page["other_flow"] == 2
+    assert all(not s["cited"] for s in page["segments"] if s["other_flow"])
+    assert page["coverage_pct"] == pdf["coverage_pct"]  # the figure itself doesn't change
+    uncited = get(d, f"/api/sources/{pdf['id']}/segments?uncited_only=1")
+    assert uncited["other_flow"] == 2 and sum(s["other_flow"] for s in uncited["segments"]) == 2

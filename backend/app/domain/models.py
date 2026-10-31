@@ -337,6 +337,8 @@ class SegmentView(BaseModel):
     corrected: bool = False
     # Interviews: the guide question this turn asks or answers (§3.12.10 step A), once drafted.
     question_id: str | None = None
+    # Not cited, but a claim or question set aside as another flow's cites it (DECISIONS 94).
+    other_flow: bool = False
 
 
 class SegmentPatch(BaseModel):
@@ -356,6 +358,7 @@ class SegmentPage(BaseModel):
     page: int
     pages: int
     coverage_pct: float | None
+    other_flow: int = 0  # the source's passages tagged other_flow, across every page
 
 
 # --- Readiness (guided navigation) -----------------------------------------------------------
