@@ -146,16 +146,58 @@
   color: var(--ink-3);
 }
 
-/* Map another flow: the roles to bring along (DECISIONS 93). */
-.role-picks {
+/* Capability Compass hand-off and What we are testing (DECISIONS 95). */
+.compass-ids {
   display: flex;
   flex-direction: column;
+  gap: var(--space-8);
+  margin: 0 0 var(--space-10);
+}
+.compass-ids dt {
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
+.compass-ids dd {
+  margin: 0;
+}
+.compass-ids__cells {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-6);
+}
+.testing-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
   margin: 0;
   padding: 0;
-  border: 0;
+  list-style: none;
 }
-.role-picks legend {
-  margin-bottom: var(--space-6);
+.testing-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: var(--space-12);
+  border-bottom: var(--line-hairline) solid var(--border-soft);
+}
+.testing-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.testing-item__ref {
   font-weight: var(--weight-medium);
+}
+.testing-item__verdict {
+  margin-left: auto;
+  font-weight: var(--weight-medium);
+}
+.testing-item__text {
+  margin: 0;
+}
+.testing-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 }

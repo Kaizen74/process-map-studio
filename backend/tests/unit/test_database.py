@@ -30,6 +30,8 @@ PRD_TABLES = {
     "role_costs", "value_assumptions",
     # PRD v1.12 §3.16-3.18 (migration 0015), filled from phase P13a.
     "intent_statements", "intent_conflicts", "discrepancy_items", "reality_snapshots",
+    # Capability Compass hand-off (migration 0020, DECISIONS 95).
+    "testing_items",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.

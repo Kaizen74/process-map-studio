@@ -1,0 +1,141 @@
+{
+  "preview": {
+    "key": "MERIDIAN",
+    "organisation": "Meridian Group (fictional demo)",
+    "generated_at": "2026-11-12T00:00:00.000Z",
+    "ready": true,
+    "verdict": "Ready to hand off",
+    "open": [],
+    "pilots": [
+      {
+        "ref": "VS-02",
+        "cluster_ref": "CAP-03",
+        "cluster_name": "Technology, Data & AI",
+        "name": "MERIDIAN VS-02 Roster to shift cover",
+        "process_name": "Roster to shift cover",
+        "process_kpi": "Overtime and agency hours per 1,000 handled units",
+        "industry": "Aviation, Logistics & Transportation",
+        "in_scope_roles": [
+          "Head, Analytics & AI",
+          "Head, Data Engineering & Platform",
+          "Core-system super-user",
+          "People Analytics & Workforce Planning Lead"
+        ],
+        "interview_prompts": [],
+        "cell_refs": [
+          "CAP-03.Structure",
+          "CAP-03.People",
+          "CAP-03.Process",
+          "CAP-03.Culture"
+        ]
+      },
+      {
+        "ref": "VS-01",
+        "cluster_ref": "CAP-04",
+        "cluster_name": "Commercial Leadership",
+        "name": "MERIDIAN VS-01 Bid to contract renewal",
+        "process_name": "Bid to contract renewal",
+        "process_kpi": "Win rate on renewals; days from bid request to signed contract",
+        "industry": "Aviation, Logistics & Transportation",
+        "in_scope_roles": [
+          "Head of Pricing / Revenue Management",
+          "Global Head, Commercial Excellence",
+          "Bid & Solutions Architect",
+          "VP Global Account Management"
+        ],
+        "interview_prompts": [
+          "CAP-04.People People is Early: Structure defined but pricing, revenue management, and bid-solution architect roles not yet visibly staffed. Watch: Fewer than 3 specialist offers accepted by end of quarter → bench gap persists, hold L2 and flag to board",
+          "CAP-04.Process Process is Emerging: CRM programme commenced; contract-lifecycle system underway; multi-year EBITDA uplift targeted. Watch: CRM adoption below 60% at 90 days post-launch → flip trajectory down (adoption gap predicts stall)"
+        ],
+        "cell_refs": [
+          "CAP-04.Structure",
+          "CAP-04.People",
+          "CAP-04.Process",
+          "CAP-04.Culture"
+        ]
+      }
+    ],
+    "principles": [
+      {
+        "ref": "P1",
+        "text": "Decisions are made at the station, by one named role.",
+        "refuted_by": "Event records showing a different role deciding in more than one case in five."
+      },
+      {
+        "ref": "P2",
+        "text": "Standard work is written once and run everywhere.",
+        "refuted_by": "Three or more routes for the same step across shifts."
+      },
+      {
+        "ref": "P3",
+        "text": "AI takes the rule-based work; people keep the judgement.",
+        "refuted_by": "An automated step that still needs a person to correct it most days."
+      },
+      {
+        "ref": "P4",
+        "text": "Capability is built ahead of growth, not after it.",
+        "refuted_by": "Anchor seats still absent two cycles after a growth decision."
+      }
+    ]
+  },
+  "link": {
+    "key": "MERIDIAN",
+    "pilot_ref": "VS-01",
+    "cluster_ref": "CAP-04",
+    "cluster_name": "Commercial Leadership",
+    "cell_refs": [
+      "CAP-04.Structure",
+      "CAP-04.People",
+      "CAP-04.Process",
+      "CAP-04.Culture"
+    ],
+    "interview_prompts": [
+      "CAP-04.People People is Early: Structure defined but pricing, revenue management, and bid-solution architect roles not yet visibly staffed. Watch: Fewer than 3 specialist offers accepted by end of quarter → bench gap persists, hold L2 and flag to board",
+      "CAP-04.Process Process is Emerging: CRM programme commenced; contract-lifecycle system underway; multi-year EBITDA uplift targeted. Watch: CRM adoption below 60% at 90 days post-launch → flip trajectory down (adoption gap predicts stall)"
+    ],
+    "ready": true,
+    "generated_at": "2026-11-12T00:00:00.000Z"
+  },
+  "testing": [
+    {
+      "id": "t1",
+      "ref": "P1",
+      "text": "Decisions are made at the station, by one named role.",
+      "refuted_by": "Event records showing a different role deciding in more than one case in five.",
+      "origin": "compass",
+      "verdict": "open",
+      "evidence_refs": [],
+      "note": ""
+    },
+    {
+      "id": "t2",
+      "ref": "P2",
+      "text": "Standard work is written once and run everywhere.",
+      "refuted_by": "Three or more routes for the same step across shifts.",
+      "origin": "compass",
+      "verdict": "open",
+      "evidence_refs": [],
+      "note": ""
+    },
+    {
+      "id": "t3",
+      "ref": "P3",
+      "text": "AI takes the rule-based work; people keep the judgement.",
+      "refuted_by": "An automated step that still needs a person to correct it most days.",
+      "origin": "compass",
+      "verdict": "open",
+      "evidence_refs": [],
+      "note": ""
+    },
+    {
+      "id": "t4",
+      "ref": "P4",
+      "text": "Capability is built ahead of growth, not after it.",
+      "refuted_by": "Anchor seats still absent two cycles after a growth decision.",
+      "origin": "compass",
+      "verdict": "open",
+      "evidence_refs": [],
+      "note": ""
+    }
+  ]
+}

@@ -14,6 +14,8 @@ export interface FakeResponse {
 export type Handler = (body: unknown, url: string) => FakeResponse;
 
 /** Steps and versions have no pictures unless a test gives them some (phase P8). */
+// An engagement made without a hand-off has nothing to test (DECISIONS 95).
+const NO_TESTING = /^GET \/api\/engagements\/[^/]+\/testing$/;
 const NO_PICTURES = /^GET \/api\/(elements|versions)\/[^/]+\/images$/;
 // A draft's Review asks what is left before publishing (2026-10-28): the sample's, from the backend.
 const NEXT_STEPS = /^GET \/api\/versions\/[^/]+\/next-steps$/;
@@ -112,7 +114,7 @@ export function fakeApi(routes: Record<string, Handler>) {
     const handler = routes[key];
     const result = handler
       ? handler(body, url)
-      : NO_PICTURES.test(key)
+      : NO_PICTURES.test(key) || NO_TESTING.test(key)
         ? { body: [] }
         : NEXT_STEPS.test(key)
           ? { body: SAMPLE.next_steps }

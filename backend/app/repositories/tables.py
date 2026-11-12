@@ -72,6 +72,8 @@ class Engagement(Row):
     end_point_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # 0018: an overview of every flow in the documents; unticked, drafting maps only this flow.
     every_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # 0020: the Capability Compass hand-off this engagement started from (CompassLink), or null.
+    compass: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class Source(Row):
@@ -118,6 +120,21 @@ class RedactionTerm(Row):
     term: Mapped[str] = mapped_column(Text)
     replacement: Mapped[str] = mapped_column(Text, default="[name]")
     origin: Mapped[str] = mapped_column(String(32))
+
+
+class TestingItem(Row):
+    """What we are testing (0020): a design principle from the hand-off or a hypothesis Eric
+    added, with the verdict he sets and the step or discrepancy codes behind it."""
+
+    __tablename__ = "testing_items"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    ref: Mapped[str] = mapped_column(String(16))
+    text: Mapped[str] = mapped_column(Text)
+    refuted_by: Mapped[str] = mapped_column(Text, default="")
+    origin: Mapped[str] = mapped_column(String(16), default="owner")  # compass · owner
+    verdict: Mapped[str] = mapped_column(String(16), default="open")
+    evidence_refs: Mapped[list[str]] = mapped_column(JSON, default=list)
+    note: Mapped[str] = mapped_column(Text, default="")
 
 
 class Role(Row):

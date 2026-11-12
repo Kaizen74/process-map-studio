@@ -190,6 +190,48 @@ Used by: Setup → Roles and lanes → Remove.
 ### PUT /api/settings/model (change)
 Now also writes an audit row (`target_type: "settings"`, before/after model, effort, verifier).
 
+## Capability Compass hand-off (2026-11-12, Eric's brief "shared language and hand-off"; DECISIONS 95)
+
+Optional: every endpoint here is extra. An engagement made without a hand-off has `"compass": null` and works exactly as before.
+
+### POST /api/compass/preview
+Read a `compass-handoff` file and say what it would create. Applies nothing. Request: `{"handoff": { …the file's JSON… }}`.
+Response `200`:
+```json
+{"key": "MERIDIAN", "organisation": "Meridian Group (fictional demo)", "generated_at": "2026-11-12T00:00:00.000Z",
+ "ready": true, "verdict": "Ready to hand off", "open": [],
+ "pilots": [{"ref": "VS-01", "cluster_ref": "CAP-04", "cluster_name": "Commercial Leadership",
+             "name": "MERIDIAN VS-01 Bid to contract renewal", "process_name": "Bid to contract renewal",
+             "process_kpi": "Win rate on renewals; …", "industry": "Aviation, Logistics & Transportation",
+             "in_scope_roles": ["Head of Pricing / Revenue Management", "…"],
+             "interview_prompts": ["CAP-04.People People is Early: …"],
+             "cell_refs": ["CAP-04.Structure", "CAP-04.People", "CAP-04.Process", "CAP-04.Culture"]}],
+ "principles": [{"ref": "P1", "text": "Decisions are made at the station, by one named role.",
+                 "refuted_by": "Event records showing a different role deciding in more than one case in five."}]}
+```
+- Pilots are in the file's `pilots[]` order; each is matched to its `for_apps.process_map_studio.engagements[]` entry by process name (else by the pilot ref in the entry's name); a pilot without an entry is offered with its own name and KPI and no roles or prompts.
+- Every ID (`key`, `ref`, `cluster_ref`, `cell_refs`, principle `ref`) is returned exactly as written in the file. Unknown fields are ignored; any `format_version` `1.x` is accepted.
+- `ready: false` is a warning for the screen (with `verdict` and `open`), never a refusal.
+- Errors `422 VALIDATION` (`details.field: "handoff"`), each in plain language: "This isn't a Capability Compass hand-off file (its format is “…”, not “compass-handoff”)." · "This hand-off is version … . This app reads version 1 files." · "This hand-off has no engagement key, so its IDs can't be kept. Export it again from Capability Compass." · "This hand-off names no pilot for Process Map Studio." · "Pilot VS-01 points to cluster CAP-99, which isn't in this file. Export it again from Capability Compass."
+
+### POST /api/engagements with a hand-off
+The create request may also carry `"compass": {"handoff": { …the file… }, "pilot_ref": "VS-01"}` and `"role_names": ["…"]`. The scope fields are whatever Eric left in the form (pre-filled from the preview; his edits win). The file is read again on the server with the same rules and errors as the preview (`422` also for "Pilot VS-09 isn't in this hand-off.", `details.field: "compass"`).
+- The engagement stores, exactly as received: `{"key", "pilot_ref", "cluster_ref", "cluster_name", "cell_refs", "interview_prompts", "ready", "generated_at"}`, returned on the engagement object as `"compass"` (else `null`). Nothing else of the file is stored: no charter text beyond the principles below, no value figures.
+- `role_names`: a role (lane) is created for each, in order (names as for `POST …/roles`; duplicates ignored). Without `role_names` no role is created.
+- `charter.principles[]` become the engagement's "What we are testing" items (below), verdict `open`.
+- `interview_prompts` are kept only as suggested probes for interview guides. They are never a claim, a step or a source.
+- Audit row "Created engagement" with `after` also holding `{"compass": {"key", "pilot_ref", "cluster_ref"}, "roles": n, "testing": n}`.
+- `PATCH /api/engagements/{id}` never changes `compass`.
+
+### What we are testing: GET · POST /api/engagements/{id}/testing · PATCH · DELETE /api/testing/{tid}
+The design principles from the hand-off and any operating-model hypothesis Eric adds by hand, each with the verdict he sets.
+Item: `{"id", "ref": "P1", "text", "refuted_by", "origin": "compass" | "owner", "verdict": "open" | "supported" | "refuted", "evidence_refs": ["X2", "S-04"], "note": ""}`. `GET` → items in the order added.
+- `POST` `{"ref": "H2", "text": "…", "refuted_by": "…"}`: `ref` is typed, never minted here: `P` or `H` and a number (`422` "Give the ID as written in the other app, for example H2 or P5.", field `ref`); unique in the engagement ignoring case (`409` "There is already an item H2."); `text` one line of 1–300 characters; `refuted_by` up to 300. Response `201`, origin `owner`.
+- `PATCH` any of `{"verdict", "evidence_refs", "note", "text", "refuted_by"}`: `verdict` one of the three (`422` "Choose open, supported or refuted."); `evidence_refs` up to 20 codes, each a step (`S-04`), discrepancy (`X2`) or intent (`I1`) code (`422` "Use step, discrepancy or intent codes, for example S-04, X2 or I1.", field `evidence_refs`); `note` one line up to 300. `text` and `refuted_by` of a `compass` item can't be changed (`409` "This principle came from the hand-off, so its wording stays as received."). A verdict other than `open` needs at least one code (`422` "Add the step or discrepancy codes this verdict rests on.").
+- `DELETE` → `204`; a `compass` item can't be deleted (`409` "This principle came from the hand-off. Leave its verdict open if it wasn't tested.").
+- No text may contain a name on the hidden-names list ("… contains a name from your list of names to hide. Use the role instead."). Audit rows "Added testing item" · "Set testing verdict" · "Edited testing item" · "Removed testing item". Errors `404` ("That engagement doesn't exist…", "That item doesn't exist.").
+Used by: Home → New engagement → "Start from a Capability Compass hand-off"; Setup → Capability Compass card and What we are testing card.
+
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
 Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, and since P10b R11 (2026-10-13) `.xlsx`, `.csv` and `.eml`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:

@@ -1,11 +1,11 @@
 import { request } from "./request";
-import type { AnotherFlow, Engagement, EngagementSummary, Readiness, ScopeFields } from "./types";
+import type { AnotherFlow, Engagement, EngagementCreate, EngagementSummary, Readiness, ScopeFields } from "./types";
 
 export const listEngagements = () => request<EngagementSummary[]>("/engagements");
 
 export const getEngagement = (id: string) => request<Engagement>(`/engagements/${encodeURIComponent(id)}`);
 
-export const createEngagement = (fields: ScopeFields & { name: string }) =>
+export const createEngagement = (fields: EngagementCreate) =>
   request<Engagement>("/engagements", { method: "POST", body: fields });
 
 export const updateEngagement = (id: string, fields: ScopeFields) =>
