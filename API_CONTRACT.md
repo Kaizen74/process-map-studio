@@ -256,6 +256,34 @@ Downloads: the Master Process Map and the interactive map show the step code bef
 
 Used by: Review (step panel overline, banner chip for key and pilot), Reality → Intent and Discrepancies cards, Gap analysis finding cards.
 
+### Capability Compass return file and suggested probes (2026-11-12, DECISIONS 97)
+
+#### GET /api/versions/{vid}/compass-return?fmt=json|md&cells=
+
+What a **published** version found, in the `compass-return` 1.0 shape the other apps read, as a download. `fmt=json` (default) is the file; `fmt=md` is the same content as readable text. `cells` is a comma-separated list of cell IDs **from the engagement's hand-off** (`compass.cell_refs`) to add to every finding's `relates_to`.
+
+```
+{ "format": "compass-return", "format_version": "1.0", "generated_at": "2026-11-12T09:00:00+00:00",
+  "source_app": "process-map-studio", "engagement_key": "MERIDIAN",
+  "findings": [ { "ref": "S-03", "kind": "step", "title": "Special loads OK?",
+                  "detail": "Decision in the Load controller lane. Work type: clear. Decided by rule-based.",
+                  "grade": "indicated", "figure": "", "relates_to": ["VS-01", "CAP-04"],
+                  "source_note": "Observed in 2 documents, 1 interview." } ] }
+```
+
+- `kind` and `ref`: `step` (`S-nn`; work type and rule-based or judgment in `detail`) · `discrepancy` (`Xn`; its figure with the evidence label, e.g. "38% of cases (measured)"; the grade the Reality view shows) · `intent` (`In`; Met, Not met or Not yet known; the target in `figure`) · `knowledge_risk` (the step's `S-nn`) · `hypothesis_verdict` (the `P`/`H` ID exactly as received or typed; Supported, Refuted or Open and the codes behind it). No ID is made here.
+- `grade`: `confirmed` · `indicated` · `hypothesis`. A step observed in a checked source is Indicated, otherwise Hypothesis; an intent result that is known is Indicated; a verdict is as sure as the findings it rests on, and Open is a Hypothesis.
+- `relates_to`: the pilot ref and its cluster, then the cells Eric added, exactly as received.
+- Discrepancies and intent come from the version's frozen Reality snapshot, so every figure is the one the Reality views show; they are included while the Reality views are switched on.
+- Never in the file: quotes, source or transcript text, source file names, people's names, names on the redaction list, images, the API key. Names are hidden first; a file that would still hold a hidden name or anything shaped like a key is not handed out.
+- Errors: `404 NOT_FOUND` unknown version · `409 CONFLICT` "Publish a version first: the return file is made from a published map." · `409 CONFLICT` "This engagement didn't start from a Capability Compass hand-off, so there is no engagement key to return findings under." · `422 VALIDATION` "Choose cells from this engagement's hand-off." (`details.field: "cells"`) · `422 VALIDATION` "Choose JSON or readable text." (`details.field: "fmt"`) · `409 CONFLICT` when a hidden name would have been in the file. Audit row "Exported compass-return".
+
+#### Suggested probes
+
+`GET /api/engagements/{id}/interview-guide?profile_id=` also returns `suggested_probes`: the hand-off's interview prompts for the pilot (a prompt holding a hidden name is left out); `[]` for an engagement made without a hand-off. They are shown beside the guide and are never questions of the guide, sources, claims or steps: nothing from the hand-off passes the grounding checks or reaches the map.
+
+Used by: Exports → Capability Compass return file card (shown only for an engagement from a hand-off); Interview → guide editor.
+
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
 Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, and since P10b R11 (2026-10-13) `.xlsx`, `.csv` and `.eml`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:

@@ -338,3 +338,6 @@ class GuideView(BaseModel):
     edited: bool
     created_at: str
     document: InterviewDocument
+    # DECISIONS 97: prompts from the Capability Compass hand-off, offered beside the guide as
+    # suggested probes. Never a question of the guide, a source, a claim or a step.
+    suggested_probes: list[str] = []

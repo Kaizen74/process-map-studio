@@ -34,6 +34,15 @@ export const EXPORTS: readonly ExportKind[] = [
 
 export const EXCLUDED = "No images, verbatim quotes or names.";
 
+/** The Capability Compass return file of a published version, with the cells Eric added. */
+export function compassReturnUrl(versionId: string, format: "json" | "md", cells: readonly string[]): string {
+  const extra = cells.length ? `&cells=${cells.map(encodeURIComponent).join(",")}` : "";
+  return `/api/versions/${encodeURIComponent(versionId)}/compass-return?fmt=${format}${extra}`;
+}
+
+export const RETURN_EXCLUDED =
+  "Role names only. No quotes, no source text, no names on your list of names to hide and no API key.";
+
 export function exportUrl(versionId: string, format: ExportFormat): string {
   return `/api/versions/${encodeURIComponent(versionId)}/export/${format}`;
 }

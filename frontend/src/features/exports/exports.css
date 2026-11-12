@@ -36,3 +36,19 @@
   padding: 0;
   list-style: none;
 }
+
+/* Capability Compass return file: the cells Eric may add, and its two downloads. */
+.export-card__cells {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.export-card__downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: auto;
+}

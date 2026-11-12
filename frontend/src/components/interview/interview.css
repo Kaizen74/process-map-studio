@@ -95,7 +95,7 @@
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-button);
   background: var(--surface);
 }
 .profile-list__name {
@@ -130,7 +130,7 @@
   gap: var(--space-8);
   padding: var(--space-12) var(--space-16);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-button);
   background: var(--surface);
 }
 .guide-editor__title {
@@ -196,4 +196,16 @@
   flex-direction: column;
   gap: var(--space-4);
   font-size: var(--text-label);
+}
+
+/* Suggested probes from a Capability Compass hand-off: beside the guide, never part of it. */
+.guide-probes {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-button);
+  padding: var(--space-12);
+}
+
+.guide-probes ul {
+  margin: 0;
+  padding-left: var(--space-16);
 }

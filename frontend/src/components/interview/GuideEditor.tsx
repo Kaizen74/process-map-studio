@@ -139,6 +139,18 @@ export function GuideEditor({ guide, busy, error, saved, onSave, onClose }: Guid
         the template and keeps this one.
       </p>
       {guide.document.generation_note && <p className="interview-note">{guide.document.generation_note}</p>}
+      {(guide.suggested_probes?.length ?? 0) > 0 && (
+        <section className="guide-probes" aria-labelledby="guide-probes-title">
+          <h3 id="guide-probes-title">Suggested probes from Capability Compass</h3>
+          <p className="interview-tip">
+            Prompts only, to use if they help in the interview. They are not questions of this guide and nothing here
+            is evidence: only what the SME says, once checked against the transcript, reaches the map.
+          </p>
+          <ul>
+            {guide.suggested_probes?.map((probe) => <li key={probe}>{probe}</li>)}
+          </ul>
+        </section>
+      )}
       {guide.document.tables.map((table, ti) => (
         <TableCard
           key={table.label}

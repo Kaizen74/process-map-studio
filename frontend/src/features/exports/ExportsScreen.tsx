@@ -1,5 +1,14 @@
+import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { Card, EmptyState, ErrorState, SelectField, SignalMeter, Skeleton } from "../../components/common";
+import {
+  Card,
+  CheckboxField,
+  EmptyState,
+  ErrorState,
+  SelectField,
+  SignalMeter,
+  Skeleton,
+} from "../../components/common";
 import { CheckGlyph } from "../../components/quality";
 import { PackDownloads } from "../../components/reality";
 import { useEngagement } from "../../hooks/useEngagements";
@@ -8,7 +17,8 @@ import { useSettings } from "../../hooks/useSettings";
 import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import { EXCLUDED, EXPORTS, PACK_EXCLUDED, exportUrl } from "../../lib/exports";
+import type { CompassLink } from "../../api/types";
+import { EXCLUDED, EXPORTS, PACK_EXCLUDED, RETURN_EXCLUDED, compassReturnUrl, exportUrl } from "../../lib/exports";
 import { formatDate } from "../../lib/format";
 import { MODE_LABELS, exportUrl as gapExportUrl } from "../../lib/gap";
 import { greenCount } from "../../lib/quality";
@@ -55,6 +65,64 @@ function GapReportsCard({ versionId, versionLabel, engagementId }: { versionId: 
           ))}
         </ul>
       )}
+    </Card>
+  );
+}
+
+/**
+ * The Capability Compass return file (DECISIONS 97), offered for an engagement that started from
+ * a hand-off: what the published map found, under the hand-off's key, as JSON for the other apps
+ * and as the same content in readable text. Eric may add the cells the findings bear on.
+ */
+function CompassReturnCard({
+  versionId,
+  versionLabel,
+  link,
+}: {
+  versionId: string;
+  versionLabel: string;
+  link: CompassLink;
+}) {
+  const [cells, setCells] = useState<string[]>([]);
+  const toggle = (cell: string, on: boolean) =>
+    setCells((chosen) => (on ? [...chosen.filter((c) => c !== cell), cell] : chosen.filter((c) => c !== cell)));
+  const chosen = link.cell_refs.filter((c) => cells.includes(c)); // in the hand-off's order
+  const relates = [link.pilot_ref, link.cluster_ref, ...chosen];
+  return (
+    <Card title="Capability Compass return file" className="export-card">
+      <p>
+        What this version found, under engagement key <span className="mono">{link.key}</span>: each step with its
+        work type, each discrepancy with its figure, each intent statement, the knowledge risks and your verdicts on
+        what is being tested, each with its grade.
+      </p>
+      <p className="export-card__excluded">{RETURN_EXCLUDED}</p>
+      <p>
+        Relates to: <span className="mono">{relates.join(", ")}</span>
+      </p>
+      {link.cell_refs.length > 0 && (
+        <fieldset className="export-card__cells">
+          <legend>Add the cells these findings bear on</legend>
+          {link.cell_refs.map((cell) => (
+            <CheckboxField key={cell} label={cell} checked={cells.includes(cell)} onChange={(on) => toggle(cell, on)} />
+          ))}
+        </fieldset>
+      )}
+      <p className="export-card__downloads">
+        <a
+          className="btn btn--primary"
+          href={compassReturnUrl(versionId, "json", chosen)}
+          download
+        >
+          Download JSON <span className="visually-hidden">return file of {versionLabel}</span>
+        </a>{" "}
+        <a
+          className="btn btn--secondary"
+          href={compassReturnUrl(versionId, "md", chosen)}
+          download
+        >
+          Download readable text <span className="visually-hidden">return file of {versionLabel}</span>
+        </a>
+      </p>
     </Card>
   );
 }
@@ -161,6 +229,9 @@ export function ExportsScreen() {
             <GapReportsCard versionId={chosen.id} versionLabel={chosen.label} engagementId={engagementId} />
             {settings.data?.reality_views_enabled === true && (
               <RealityPackCard versionId={chosen.id} versionLabel={chosen.label} />
+            )}
+            {engagement.data?.compass && (
+              <CompassReturnCard versionId={chosen.id} versionLabel={chosen.label} link={engagement.data.compass} />
             )}
           </div>
         </>

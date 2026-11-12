@@ -97,6 +97,8 @@ export interface GuideView {
   edited: boolean;
   created_at: string;
   document: GuideDocument;
+  /** Prompts from the Capability Compass hand-off, offered beside the guide; never evidence. */
+  suggested_probes?: string[];
 }
 
 export interface RowEdit {
