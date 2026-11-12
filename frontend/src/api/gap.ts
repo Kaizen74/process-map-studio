@@ -1,3 +1,4 @@
+import type { GradeKey } from "../lib/grade";
 import { request } from "./request";
 import type {
   Brief,
@@ -34,6 +35,9 @@ export const runResearch = (analysisId: string) =>
 
 export const decideFinding = (findingId: string, decision: FindingDecision) =>
   request<GapFinding>(`/gap-findings/${enc(findingId)}`, { method: "PATCH", body: decision });
+
+export const setFindingGrade = (findingId: string, grade: GradeKey | null) =>
+  request<GapFinding>(`/gap-findings/${enc(findingId)}/grade`, { method: "PUT", body: { grade } });
 
 export const finaliseReport = (analysisId: string) =>
   request<GapReport>(`/gap-analyses/${enc(analysisId)}/finalise`, { method: "POST" });

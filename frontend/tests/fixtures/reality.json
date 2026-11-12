@@ -773,7 +773,13 @@
         },
         "control": true,
         "shown": true,
-        "rank": 1
+        "rank": 1,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X2",
@@ -842,7 +848,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 2
+        "rank": 2,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X3",
@@ -903,7 +915,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 3
+        "rank": 3,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X4",
@@ -971,7 +989,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 4
+        "rank": 4,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X5",
@@ -1037,7 +1061,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 5
+        "rank": 5,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X6",
@@ -1105,7 +1135,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 6
+        "rank": 6,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X7",
@@ -1169,7 +1205,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 7
+        "rank": 7,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X8",
@@ -1230,7 +1272,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 8
+        "rank": 8,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X9",
@@ -1298,7 +1346,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 9
+        "rank": 9,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       }
     ],
     "intents": [
@@ -7863,7 +7917,13 @@
         },
         "control": true,
         "shown": true,
-        "rank": 1
+        "rank": 1,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X2",
@@ -7932,7 +7992,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 2
+        "rank": 2,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X3",
@@ -7993,7 +8059,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 3
+        "rank": 3,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X4",
@@ -8061,7 +8133,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 4
+        "rank": 4,
+        "grade": {
+          "grade": "confirmed",
+          "suggested": "confirmed",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X5",
@@ -8127,7 +8205,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 5
+        "rank": 5,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X6",
@@ -8195,7 +8279,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 6
+        "rank": 6,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X7",
@@ -8259,7 +8349,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 7
+        "rank": 7,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X8",
@@ -8320,7 +8416,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 8
+        "rank": 8,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       },
       {
         "code": "X9",
@@ -8388,7 +8490,13 @@
         },
         "control": false,
         "shown": true,
-        "rank": 9
+        "rank": 9,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        }
       }
     ],
     "intents": [
@@ -14181,6 +14289,7 @@
   "intent": [
     {
       "id": "id-22",
+      "code": "I1",
       "engagement_id": "id-27",
       "scope": "step",
       "element_stable_key": "draft-load-plan",
@@ -14209,6 +14318,7 @@
     },
     {
       "id": "id-23",
+      "code": "I2",
       "engagement_id": "id-27",
       "scope": "step",
       "element_stable_key": "approve-load-plan",
@@ -14237,6 +14347,7 @@
     },
     {
       "id": "id-24",
+      "code": "I3",
       "engagement_id": "id-27",
       "scope": "step",
       "element_stable_key": "load-and-return-lir",
@@ -14265,6 +14376,7 @@
     },
     {
       "id": "id-25",
+      "code": "I4",
       "engagement_id": "id-27",
       "scope": "process",
       "element_stable_key": null,
@@ -14293,6 +14405,7 @@
     },
     {
       "id": "id-29",
+      "code": null,
       "engagement_id": "id-27",
       "scope": "process",
       "element_stable_key": null,
@@ -14321,6 +14434,7 @@
     },
     {
       "id": "id-30",
+      "code": null,
       "engagement_id": "id-27",
       "scope": "step",
       "element_stable_key": "load-and-return-lir",
@@ -14349,6 +14463,7 @@
     },
     {
       "id": "id-26",
+      "code": "I5",
       "engagement_id": "id-27",
       "scope": "step",
       "element_stable_key": "deviation-in-limits",

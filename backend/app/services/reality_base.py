@@ -10,6 +10,7 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from app.domain.compass import GradeView
 from app.domain.reality import Figure
 from app.services import discrepancies as rules
 from app.services.discrepancies import Facts, StepFacts
@@ -67,6 +68,7 @@ class ItemIn:
     title: str
     verdict_decided: str | None
     verdict_note: str
+    grade: GradeView | None = None  # the shared grade (DECISIONS 96)
 
 
 @dataclass(frozen=True, slots=True)

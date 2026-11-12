@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
+from app.domain.compass import GradeView
+
 
 class IntentRecord(BaseModel):
     """An `intent_statements` row as stored (§3.5)."""
@@ -38,6 +40,8 @@ class IntentView(BaseModel):
     """An intent statement as the API returns it (API_CONTRACT.md → Intent): names hidden."""
 
     id: str
+    # DECISIONS 96: I1, I2 … given when the statement is confirmed; never reused.
+    code: str | None = None
     engagement_id: str
     scope: str
     element_stable_key: str | None
@@ -206,6 +210,7 @@ class DiscrepancyItemRecord(BaseModel):
     verdict_note: str
     decision_owner_role_id: str | None
     retired: bool
+    grade: str | None = None
 
 
 class LocationView(BaseModel):
@@ -259,6 +264,8 @@ class DiscrepancyView(BaseModel):
     evidence: EvidenceCounts
     element_ids: list[str]
     intent_ids: list[str]
+    # DECISIONS 96: the shared grade; null on a discrepancy no longer seen.
+    grade: GradeView | None = None
 
 
 class DiscrepanciesView(BaseModel):
@@ -362,6 +369,8 @@ class CodeView(BaseModel):
     control: bool
     shown: bool
     rank: int
+    # DECISIONS 96: the shared grade (suggested by rule, or Eric's own), frozen on publish.
+    grade: GradeView | None = None
 
 
 class Callout(BaseModel):

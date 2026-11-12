@@ -1,3 +1,4 @@
+import type { GradeKey } from "../lib/grade";
 import type { IntentFields, IntentStatement, RealitySnapshot, VerdictDecided } from "../lib/reality";
 import { request } from "./request";
 
@@ -18,6 +19,12 @@ export const updateIntent = (intentId: string, body: { status?: string; note?: s
 
 export const extractIntent = (engagementId: string) =>
   request<{ job_id: string }>(`/engagements/${enc(engagementId)}/intent/extract`, { method: "POST" });
+
+export const setDiscrepancyGrade = (itemId: string, grade: GradeKey | null) =>
+  request<{ item_id: string; code: string; grade_chosen: GradeKey | null }>(
+    `/discrepancy-items/${enc(itemId)}/grade`,
+    { method: "PUT", body: { grade } },
+  );
 
 export const decideVerdict = (
   itemId: string,

@@ -470,7 +470,7 @@ def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
                     if present
                 ]
                 lines.append(
-                    f"| {cell(e.label)} | {view_word(e)} "
+                    f"| {cell(coded(e))} | {view_word(e)} "
                     f"| {cell(roles.get(e.lane_role_id or '', ''))} | {tag(e)} "
                     f"| {STATES.get(e.source_state, e.source_state)} | {time} "
                     f"| {e.complexity or '—'} | {cell(flow)} | {', '.join(flags) or '—'} |"
@@ -487,7 +487,7 @@ def _interpretation(data: ExportInput, graph: Graph) -> list[str]:
                 who = roles.get(e.decision.decider_role_id or e.lane_role_id or "", "not stated")
                 decider = "approver" if e.kind == ElementKind.APPROVAL.value else "decider"
                 lines.append(
-                    f"- {tag(e)} {e.label} ({e.kind}, "
+                    f"- {tag(e)} {coded(e)} ({e.kind}, "
                     f"{MECHANISMS.get(e.decision.mechanism, e.decision.mechanism)}, "
                     f"{decider}: {who}). Exits: {'; '.join(exits) or 'none'}."
                 )
@@ -628,6 +628,17 @@ def signal_text(data: ExportInput) -> str:
     return f"Signal strength: {strength.label} ({strength.score} of 3). {strength.detail}"
 
 
+def coded(e: GraphElement) -> str:
+    """A step's label after its shared code (S-01), when it has one (DECISIONS 96)."""
+    return f"{e.code} {e.label}" if e.code else e.label
+
+
+def handoff_text(graph: Graph) -> str:
+    """The Capability Compass key and pilot the map belongs to; "" for a map made without."""
+    p = graph.process
+    return f"Engagement key {p.engagement_key} · pilot {p.pilot_ref}" if p.engagement_key else ""
+
+
 def signal_lines(data: ExportInput) -> list[str]:
     text = signal_text(data)
     return [text, ""] if text else []
@@ -643,6 +654,7 @@ def render_master_map_md(data: ExportInput) -> str:
         + (f"published {published}" if published else "not published yet")
         + f" · validated by {data.validated_by or 'not recorded'}",
         "",
+        *([handoff_text(graph), ""] if handoff_text(graph) else []),
         *signal_lines(data),
     ]
     body = (
@@ -689,10 +701,12 @@ def render_raci_csv(data: ExportInput) -> str:
     order = role_order(graph)
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\r\n")
-    writer.writerow(["Step", "Kind", "Lane", "Provenance", *(roles[r] for r in order)])
+    head = ["Code", "Step", "Kind", "Lane", "Provenance", *(roles[r] for r in order)]
+    writer.writerow(head)
     for e in steps(graph):
         writer.writerow(
-            [e.label, KINDS.get(e.kind, e.kind), roles.get(e.lane_role_id or "", ""), e.provenance]
+            [e.code or "", e.label, KINDS.get(e.kind, e.kind)]
+            + [roles.get(e.lane_role_id or "", ""), e.provenance]
             + [raci_cell(e, r) for r in order]
         )
     return "﻿" + buffer.getvalue()

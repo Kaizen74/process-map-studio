@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 
 from app.actions import discrepancies, intent, intent_ai, reality, reality_pack
+from app.domain.compass import GradeBody, GradeChosen
 from app.domain.reality import (
     ConflictPatch,
     DiscrepanciesView,
@@ -78,6 +79,12 @@ def list_discrepancies(request: Request, version_id: str, view: str = "done") ->
 def decide_verdict(request: Request, item_id: str, body: VerdictBody) -> VerdictDecided:
     state = request.app.state
     return unwrap(discrepancies.decide_verdict(state.config, state.sessions, item_id, body))
+
+
+@router.put("/discrepancy-items/{item_id}/grade")
+def set_grade(request: Request, item_id: str, body: GradeBody) -> GradeChosen:
+    state = request.app.state
+    return unwrap(discrepancies.set_grade(state.config, state.sessions, item_id, body))
 
 
 @router.get("/versions/{version_id}/reality")

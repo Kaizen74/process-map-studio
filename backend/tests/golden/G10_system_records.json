@@ -812,6 +812,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     },
@@ -862,6 +868,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "hypothesis",
+        "suggested": "hypothesis",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     },
@@ -912,6 +924,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "hypothesis",
+        "suggested": "hypothesis",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     },
@@ -962,6 +980,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     },
@@ -1012,6 +1036,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "hypothesis",
+        "suggested": "hypothesis",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     },
@@ -1062,6 +1092,12 @@
       "disposition_note": "",
       "created_item_ref": "",
       "gap_class": null,
+      "grade": {
+        "grade": "hypothesis",
+        "suggested": "hypothesis",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      },
       "stated_reason": "",
       "cause_type": null
     }

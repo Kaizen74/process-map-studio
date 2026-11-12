@@ -128,7 +128,8 @@ describe("panel sections", () => {
   it("the header chips follow the PRD order and mark contested and unreviewed", () => {
     const deviation = elementByLabel("Deviation in limits?");
     render(<PanelHeader element={deviation} laneName="Load controller" phaseName="Close out" />);
-    expect(screen.getByText("Decision · Close out")).toBeInTheDocument();
+    // The step's shared code comes first (DECISIONS 96): the same code in every version.
+    expect(screen.getByText("S-08 · Decision · Close out")).toBeInTheDocument();
     expect(screen.getByText("Contested")).toHaveClass("chip--danger");
     expect(screen.getByText("Divergence · ownership")).toHaveClass("chip--danger");
     expect(screen.getByText("Unreviewed")).toHaveClass("chip--dashed");

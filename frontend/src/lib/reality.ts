@@ -2,6 +2,7 @@
 // §5.12; P13b, P13c). Formatting only: every number, word, headline and position comes from the
 // backend; nothing here computes a figure or a layout (constraints 20 and 26).
 
+import type { Grade } from "./grade";
 import type { CSSProperties } from "react";
 
 export type ImpactClass = "control_exposure" | "time_impact" | "capacity_drain" | "workaround";
@@ -84,6 +85,8 @@ export interface CodeView {
   control: boolean;
   shown: boolean;
   rank: number;
+  /** The shared grade (DECISIONS 96); absent on snapshots frozen before it. */
+  grade?: Grade | null;
 }
 
 export interface SnapshotIntent {
@@ -525,6 +528,8 @@ export type IntentKind = "promise" | "target" | "control_objective" | "policy_ru
 
 export interface IntentStatement {
   id: string;
+  /** I1, I2 … once the statement is confirmed; never reused. */
+  code?: string | null;
   engagement_id: string;
   scope: string;
   element_stable_key: string | null;

@@ -82,6 +82,11 @@ export function ReviewScreen() {
         return (
           <VersionBanner
             label={g.version.label}
+            handoff={
+              g.process.engagement_key
+                ? { key: g.process.engagement_key, pilot: g.process.pilot_ref ?? "" }
+                : undefined
+            }
             sources={sources}
             steps={steps}
             selectedId={selectedId}

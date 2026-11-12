@@ -19,6 +19,7 @@ from app.domain.models import NameReplacement
 from app.domain.reality import IntentFields, IntentPatch, IntentRecord, IntentView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
+from app.repositories import codes as codes_repo
 from app.repositories import elements as elements_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import intent as repo
@@ -96,6 +97,9 @@ def views(session: Session, engagement_id: str, rows: list[IntentRecord]) -> lis
     def hide(text: str) -> str:
         return redaction.hide(text, terms)
 
+    # A statement gets its code (I1 …) once it is confirmed, in the order they were made.
+    codes = codes_repo.ensure(session, engagement_id, codes_repo.INTENT,
+                              [r.id for r in rows if r.status == "confirmed"])  # fmt: skip
     out = []
     for r in rows:
         anchor = anchors.get(r.segment_ids[0], "") if r.segment_ids else ""
@@ -106,7 +110,7 @@ def views(session: Session, engagement_id: str, rows: list[IntentRecord]) -> lis
         else:
             label = f"Quoted from {source} {anchor}".strip()
         out.append(IntentView(
-            id=r.id, engagement_id=r.engagement_id, scope=r.scope,
+            id=r.id, code=codes.get(r.id), engagement_id=r.engagement_id, scope=r.scope,
             element_stable_key=r.element_stable_key,
             element_label=steps.get(r.element_stable_key or "", ""), phase_name=r.phase_name,
             kind=r.kind, origin=r.origin, text=hide(r.text), metric=r.metric,

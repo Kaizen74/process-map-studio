@@ -22,6 +22,7 @@ from app.actions.settings import effective_settings
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain import ai_schemas
+from app.domain.compass import GradeBody, GradeView
 from app.domain.gap import (
     Brief,
     BriefPatch,
@@ -55,6 +56,7 @@ from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
 from app.services import gap as gap_rules
 from app.services import gap_report, grounding
+from app.services import grade as grade_rules
 
 Sessions = sessionmaker[Session]
 Enqueue = Callable[[str], None]
@@ -531,12 +533,52 @@ def list_analyses(sessions: Sessions, version_id: str) -> Result[list[GapAnalysi
 
 
 def _finding_view(f: StoredGapFinding, labels: dict[str, str]) -> GapFindingView:
+    needs_check = f.verifier_verdict == "partial"
+    speaking = [e for e in f.evidence if e.stance != "silent"]
+    suggested = grade_rules.for_gap_finding(
+        provenance=f.provenance, verification_status=f.verification_status,
+        needs_check=needs_check, system=any(e.side == "system" for e in speaking),
+        others=len({e.source_id or e.url for e in speaking if e.side != "system"}),
+    )  # fmt: skip
     return GapFindingView(
-        **f.model_dump(exclude={"evidence"}),
+        **f.model_dump(exclude={"evidence", "grade_chosen"}),
         evidence=f.evidence,
         elements=[GapElementRef(id=e, label=labels.get(e, "")) for e in f.element_ids],
-        needs_check=f.verifier_verdict == "partial",
-    )
+        needs_check=needs_check,
+        grade=GradeView(grade=f.grade_chosen or suggested, suggested=suggested,
+                        chosen_by_owner=f.grade_chosen is not None,
+                        rules_version=grade_rules.GRADE_RULES_VERSION),
+    )  # fmt: skip
+
+
+BAD_GRADE = "Choose Confirmed, Indicated or Hypothesis."
+
+
+def set_grade(config: AppConfig, sessions: Sessions, finding_id: str,
+              body: GradeBody) -> Result[GapFindingView]:  # fmt: skip
+    """Eric's own grade for a gap finding, or back to the suggested grade with null. The grade
+    changes nothing else: provenance, checks and the map stay as they are."""
+    if body.grade is not None and body.grade not in grade_rules.GRADES:
+        return Err(ErrorKind.VALIDATION, BAD_GRADE, {"field": "grade"})
+    with session_scope(sessions) as session:
+        found = repo.finding(session, finding_id)
+        if found is None:
+            return Err(ErrorKind.NOT_FOUND, FINDING_MISSING)
+        analysis_id, f = found
+        analysis = repo.get(session, analysis_id)
+        version = versions_repo.get(session, analysis.version_id) if analysis else None
+        if analysis is not None and analysis.status == "finalised":
+            return Err(ErrorKind.CONFLICT, FINALISED)
+        if f.grade_chosen != body.grade:
+            updated = repo.set_grade(session, finding_id, body.grade)
+            audit.record(session, actor=actor_name(config), action="Set gap finding grade",
+                         target_type="gap_finding", target_id=finding_id,
+                         engagement_id=version.engagement_id if version else None,
+                         before={"grade": f.grade_chosen}, after={"grade": body.grade})  # fmt: skip
+            f = updated
+        labels = ({e.id: e.label for e in map_repo.elements(session, version.id)}
+                  if version else {})  # fmt: skip
+        return Ok(_finding_view(f, labels))
 
 
 def get_report(sessions: Sessions, analysis_id: str) -> Result[GapReport]:

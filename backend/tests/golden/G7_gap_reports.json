@@ -109,6 +109,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -173,6 +179,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -237,6 +249,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -343,6 +361,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -412,6 +436,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": "effective_adaptation",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "otherwise we'd miss the slot",
         "cause_type": "capacity_mismatch"
       },
@@ -476,6 +506,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": "unexplained",
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       }
@@ -514,6 +550,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -549,6 +591,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       }
@@ -649,6 +697,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -702,6 +756,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -745,6 +805,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -795,6 +861,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       }
@@ -847,6 +919,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -875,6 +953,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -925,6 +1009,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       },
@@ -968,6 +1058,12 @@
         "disposition_note": "",
         "created_item_ref": "",
         "gap_class": null,
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
         "stated_reason": "",
         "cause_type": null
       }

@@ -360,9 +360,10 @@ def _details(data: ExportInput, graph: Graph, el: GraphElement) -> str:
     if not data.published_at and el.kind in STEP_KINDS:
         rows.append(("Review", REVIEW_WORDS.get(el.review_status, el.review_status)))
     body = "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in rows)
+    code = f"{el.code} · " if el.code else ""
     return (
         f'<article class="card step" id="step-{e(el.id)}" aria-labelledby="h-{e(el.id)}">'
-        f'<h3 id="h-{e(el.id)}">[{e(el.provenance)}] {e(el.label)}</h3><dl>{body}</dl>'
+        f'<h3 id="h-{e(el.id)}">[{e(el.provenance)}] {e(code)}{e(el.label)}</h3><dl>{body}</dl>'
         f'<p class="step__back"><a href="#interpretation">{BACK}</a></p></article>'
     )
 
@@ -548,6 +549,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
         )
     )
     signal_line = md.signal_text(data)
+    handoff = md.handoff_text(graph)
     steps = [el for el in graph.elements if el.kind in STEP_KINDS]
     reviewed = sum(1 for el in steps if el.review_status != "draft")
     stamp = (
@@ -575,6 +577,7 @@ def render_map_html(data: ExportInput, tokens: dict[str, object], fonts: dict[st
             "<main>",
             f"<header><h1>{e(graph.process.name)} — Master Process Map</h1>"
             f'<p class="meta">{e(meta)}</p>'
+            + (f'<p class="meta">{e(handoff)}</p>' if handoff else "")
             + (f'<p class="meta signal">{e(signal_line)}</p>' if signal_line else "")
             + stamp
             + "</header>",

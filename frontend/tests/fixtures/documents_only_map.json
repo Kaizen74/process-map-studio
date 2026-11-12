@@ -15,7 +15,9 @@
         "elapsed_min": 0.0,
         "work_min": 0.0,
         "incomplete_steps": 0
-      }
+      },
+      "engagement_key": null,
+      "pilot_ref": null
     },
     "roles": [
       {
@@ -73,6 +75,7 @@
       {
         "id": "id-10",
         "stable_key": "start",
+        "code": null,
         "kind": "start",
         "label": "Flight scheduled",
         "lane_role_id": null,
@@ -125,6 +128,7 @@
       {
         "id": "id-11",
         "stable_key": "draft-load-plan",
+        "code": "S-01",
         "kind": "activity",
         "label": "Draft load plan",
         "lane_role_id": "id-2",
@@ -234,6 +238,7 @@
       {
         "id": "id-18",
         "stable_key": "approve-load-plan",
+        "code": "S-02",
         "kind": "approval",
         "label": "Approve load plan",
         "lane_role_id": "id-3",
@@ -343,6 +348,7 @@
       {
         "id": "id-21",
         "stable_key": "special-loads-ok",
+        "code": "S-03",
         "kind": "decision",
         "label": "Special loads OK?",
         "lane_role_id": "id-2",
@@ -452,6 +458,7 @@
       {
         "id": "id-23",
         "stable_key": "return-loading-report",
+        "code": "S-04",
         "kind": "activity",
         "label": "Return loading report",
         "lane_role_id": "id-4",
@@ -561,6 +568,7 @@
       {
         "id": "id-25",
         "stable_key": "deviation-in-limits",
+        "code": "S-05",
         "kind": "decision",
         "label": "Deviation in limits?",
         "lane_role_id": "id-3",
@@ -670,6 +678,7 @@
       {
         "id": "id-27",
         "stable_key": "issue-load-sheet",
+        "code": "S-06",
         "kind": "activity",
         "label": "Issue load sheet",
         "lane_role_id": "id-2",
@@ -779,6 +788,7 @@
       {
         "id": "id-29",
         "stable_key": "end",
+        "code": null,
         "kind": "end",
         "label": "Final load sheet issued",
         "lane_role_id": null,
@@ -1483,7 +1493,9 @@
           "elapsed_min": 0.0,
           "work_min": 0.0,
           "incomplete_steps": 0
-        }
+        },
+        "engagement_key": null,
+        "pilot_ref": null
       },
       "roles": [
         {
@@ -1541,6 +1553,7 @@
         {
           "id": "id-10",
           "stable_key": "start",
+          "code": null,
           "kind": "start",
           "label": "Flight scheduled",
           "lane_role_id": null,
@@ -1593,6 +1606,7 @@
         {
           "id": "id-29",
           "stable_key": "end",
+          "code": null,
           "kind": "end",
           "label": "Final load sheet issued",
           "lane_role_id": null,
@@ -1674,7 +1688,9 @@
           "elapsed_min": 0.0,
           "work_min": 0.0,
           "incomplete_steps": 4
-        }
+        },
+        "engagement_key": null,
+        "pilot_ref": null
       },
       "roles": [
         {
@@ -1732,6 +1748,7 @@
         {
           "id": "id-10",
           "stable_key": "start",
+          "code": null,
           "kind": "start",
           "label": "Flight scheduled",
           "lane_role_id": null,
@@ -1784,6 +1801,7 @@
         {
           "id": "id-11",
           "stable_key": "draft-load-plan",
+          "code": "S-01",
           "kind": "activity",
           "label": "Draft load plan",
           "lane_role_id": "id-2",
@@ -1893,6 +1911,7 @@
         {
           "id": "id-18",
           "stable_key": "approve-load-plan",
+          "code": "S-02",
           "kind": "approval",
           "label": "Approve load plan",
           "lane_role_id": "id-3",
@@ -2002,6 +2021,7 @@
         {
           "id": "id-21",
           "stable_key": "special-loads-ok",
+          "code": "S-03",
           "kind": "decision",
           "label": "Special loads OK?",
           "lane_role_id": "id-2",
@@ -2111,6 +2131,7 @@
         {
           "id": "id-23",
           "stable_key": "return-loading-report",
+          "code": "S-04",
           "kind": "activity",
           "label": "Return loading report",
           "lane_role_id": "id-4",
@@ -2220,6 +2241,7 @@
         {
           "id": "id-25",
           "stable_key": "deviation-in-limits",
+          "code": "S-05",
           "kind": "decision",
           "label": "Deviation in limits?",
           "lane_role_id": "id-3",
@@ -2329,6 +2351,7 @@
         {
           "id": "id-27",
           "stable_key": "issue-load-sheet",
+          "code": "S-06",
           "kind": "activity",
           "label": "Issue load sheet",
           "lane_role_id": "id-2",
@@ -2438,6 +2461,7 @@
         {
           "id": "id-29",
           "stable_key": "end",
+          "code": null,
           "kind": "end",
           "label": "Final load sheet issued",
           "lane_role_id": null,

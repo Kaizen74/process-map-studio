@@ -800,7 +800,7 @@ def _codes(inputs: Inputs, coded: Sequence[Coded], place: Mapping[str, str],
             minutes=_code_minutes(c, inputs, figures), hours=hours,
             verdict=_verdict(c, facts), evidence=_evidence(c, facts),
             control=c.impact == verdict_rules.CONTROL, shown=c.group.shown,
-            rank=ranks[c.item.code],
+            rank=ranks[c.item.code], grade=c.item.grade,
         ))  # fmt: skip
     return out
 

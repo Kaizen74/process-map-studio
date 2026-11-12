@@ -232,6 +232,30 @@ Item: `{"id", "ref": "P1", "text", "refuted_by", "origin": "compass" | "owner", 
 - No text may contain a name on the hidden-names list ("… contains a name from your list of names to hide. Use the role instead."). Audit rows "Added testing item" · "Set testing verdict" · "Edited testing item" · "Removed testing item". Errors `404` ("That engagement doesn't exist…", "That item doesn't exist.").
 Used by: Home → New engagement → "Start from a Capability Compass hand-off"; Setup → Capability Compass card and What we are testing card.
 
+### Shared codes and the shared grade (2026-11-12, DECISIONS 96)
+
+Additions to existing responses; nothing is removed.
+
+- **Step code.** Every element in `GET /api/versions/{vid}/graph` (and `GET /api/elements/{eid}`, and the Graph JSON download) has `code`: `"S-01"`, `"S-02"` … for an activity, decision or approval, `null` for start and end. A code belongs to the engagement and the step's `stable_key`: it is given once, in process order, the first time the map is read; it is the same in every later version, after a refresh, a reopen and a republish; a step added later takes the next number; a code is never given to another step.
+- **Intent code.** Every statement in `GET /api/engagements/{id}/intent` has `code`: `"I1"`, `"I2"` … once it is confirmed, `null` before. Never reused, also after a statement is deleted.
+- **Hand-off key and pilot.** `graph.process` has `engagement_key` and `pilot_ref`, exactly as received from the hand-off; both `null` for an engagement made without one.
+- **Grade.** Every discrepancy (`GET /api/versions/{vid}/discrepancies` items, and `codes[]` of `GET /api/versions/{vid}/reality`) and every gap finding (`GET /api/gap-analyses/{aid}`) has `grade`: `{"grade": "confirmed" | "indicated" | "hypothesis", "suggested": …, "chosen_by_owner": bool, "rules_version": "1"}`. The suggestion is a rule, not an AI call: a system record and at least one other source → `confirmed`; at least one verified source → `indicated`; inferred, recommended from outside practice, needing a check, or unverified → `hypothesis`. The grade is a label: provenance (O / I / R), the grounding checks, verdicts and the map are unchanged by it. A discrepancy no longer seen has `grade: null`. A published version's Reality snapshot keeps the grades it was published with.
+
+#### PUT /api/discrepancy-items/{item_id}/grade
+
+- Request `{"grade": "confirmed" | "indicated" | "hypothesis" | null}` (`null`: back to the suggested grade).
+- Response `200`: `{"item_id", "code", "grade_chosen"}`. Audit row "Set discrepancy grade" when it changed.
+- Errors: `422 VALIDATION` "Choose Confirmed, Indicated or Hypothesis." (`details.field: "grade"`); `404 NOT_FOUND` "That discrepancy doesn't exist."
+
+#### PUT /api/gap-findings/{fid}/grade
+
+- Request as above. Response `200`: the finding (as in `GET /api/gap-analyses/{aid}`) with its new `grade`. Audit row "Set gap finding grade" when it changed.
+- Errors: `422 VALIDATION` as above; `404 NOT_FOUND` "That finding doesn't exist.; `409 CONFLICT` "This report is finalised and can't be changed."
+
+Downloads: the Master Process Map and the interactive map show the step code before each step's name and, for a map from a hand-off, a line "Engagement key … · pilot …"; the RACI CSV has a first column `Code`.
+
+Used by: Review (step panel overline, banner chip for key and pilot), Reality → Intent and Discrepancies cards, Gap analysis finding cards.
+
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
 Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, and since P10b R11 (2026-10-13) `.xlsx`, `.csv` and `.eml`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:

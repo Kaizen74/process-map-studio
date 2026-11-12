@@ -80,11 +80,11 @@ Purpose: covers 2 steps, from “Draft load plan” to “Approve load plan”.
 
 | Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
 |---|---|---|---|---|---|---|---|---|
-| Draft load plan | both | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
+| S-01 Draft load plan | both | Load controller | [O] | Corroborated | 20 min / not stated | M | — → Preliminary load plan | knowledge risk |
 
 Decisions and approvals:
 
-- [O] Approve load plan (approval, judgment, approver: Load control lead). Exits: Approve → Special loads OK?; Rework → Draft load plan.
+- [O] S-02 Approve load plan (approval, judgment, approver: Load control lead). Exits: Approve → Special loads OK?; Rework → Draft load plan.
 
 This phase has 1 activity and 1 decision or approval, involving Load controller, Load control lead.
 
@@ -95,14 +95,14 @@ Purpose: covers 5 steps, from “Special loads OK?” to “Read report at aircr
 
 | Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
 |---|---|---|---|---|---|---|---|---|
-| Resolve or offload | as done | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
-| Load and return LIR | both | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
-| Read report at aircraft | as done | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
+| S-04 Resolve or offload | as done | Airline ops | [O] | Practiced only | 40 min / not stated | — | — | — |
+| S-05 Load and return LIR | both | Ramp | [O] | Contested | 40 min / 15 min | — | — → Loading report to the Load controller | key constraint, AI flag |
+| S-07 Read report at aircraft | as done | Load controller | [O] | Practiced only | not stated / not stated | — | Loading report on the ramp's sheet → — | — |
 
 Decisions and approvals:
 
-- [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: Yes → Load and return LIR; No → Resolve or offload.
-- [O] Busy wave? (decision, rule-based, decider: Load controller). Exits: Yes → Read report at aircraft; No → Deviation in limits?.
+- [O] S-03 Special loads OK? (decision, rule-based, decider: Load controller). Exits: Yes → Load and return LIR; No → Resolve or offload.
+- [O] S-06 Busy wave? (decision, rule-based, decider: Load controller). Exits: Yes → Read report at aircraft; No → Deviation in limits?.
 
 This phase has 3 activities and 2 decisions or approvals, involving Load controller, Airline ops, Ramp.
 
@@ -113,12 +113,12 @@ Purpose: covers 3 steps, from “Deviation in limits?” to “Issue load sheet�
 
 | Step | View | Lane | Prov | Source state | Time (work/wait) | Complexity | Data in → out | Flags |
 |---|---|---|---|---|---|---|---|---|
-| Issue load sheet | both | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
+| S-10 Issue load sheet | both | Load controller | [O] | Corroborated | not stated / not stated | — | — | AI flag |
 
 Decisions and approvals:
 
-- [O] Deviation in limits? (decision, judgment, decider: Load controller). Exits: Within limits → Issue load sheet; Outside limits → Approve deviation.
-- [O] Approve deviation (approval, judgment, approver: Captain). Exits: Accept → Issue load sheet; Re-trim → Load and return LIR.
+- [O] S-08 Deviation in limits? (decision, judgment, decider: Load controller). Exits: Within limits → Issue load sheet; Outside limits → Approve deviation.
+- [O] S-09 Approve deviation (approval, judgment, approver: Captain). Exits: Accept → Issue load sheet; Re-trim → Load and return LIR.
 
 This phase has 1 activity and 2 decisions or approvals, involving Load controller, Captain.
 

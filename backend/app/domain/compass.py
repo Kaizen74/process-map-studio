@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 HANDOFF_FORMAT = "compass-handoff"
 VERDICTS = ("open", "supported", "refuted")
@@ -64,6 +64,30 @@ class CompassStart(BaseModel):
 
     handoff: Any = None
     pilot_ref: str = ""
+
+
+class GradeView(BaseModel):
+    """The shared grade of a finding (DECISIONS 96): the one in force, the one the rules
+    suggest, and whether Eric chose it himself."""
+
+    grade: str  # confirmed · indicated · hypothesis
+    suggested: str
+    chosen_by_owner: bool
+    rules_version: str
+
+
+class GradeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    grade: str | None = None  # null: back to the suggested grade
+
+
+class GradeChosen(BaseModel):
+    """A discrepancy after Eric chose its grade (null: the suggested grade stands)."""
+
+    item_id: str
+    code: str
+    grade_chosen: str | None
 
 
 class TestingItem(BaseModel):

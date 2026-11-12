@@ -27,6 +27,8 @@ export interface GraphEvidence {
 export interface GraphElement {
   id: string;
   stable_key: string;
+  /** The step's shared code (S-01), the same in every version; null on start and end. */
+  code?: string | null;
   kind: "activity" | "decision" | "approval" | "start" | "end";
   label: string;
   lane_role_id: string | null;
@@ -105,6 +107,9 @@ export interface Graph {
     end_point: string;
     kpi: string;
     cycle_time: { elapsed_min: number; work_min: number; incomplete_steps: number };
+    /** The Capability Compass key and pilot the engagement started from; null without one. */
+    engagement_key?: string | null;
+    pilot_ref?: string | null;
   };
   roles: { id: string; name: string; is_system: boolean; lane_order: number | null }[];
   phases: { id: string; name: string; time_window: string; order: number }[];

@@ -165,7 +165,10 @@ interface RowProps {
 function IntentRow({ statement: s, result, busy, onStatus }: RowProps) {
   return (
     <li className="intent-row">
-      <span className="intent-row__kind">{KIND_LABELS[s.kind] ?? s.kind}</span>
+      <span className="intent-row__kind">
+        {s.code && <span className="mono">{s.code} </span>}
+        {KIND_LABELS[s.kind] ?? s.kind}
+      </span>
       <span className="intent-row__text">{s.text}</span>
       <span className="intent-row__meta">
         {s.origin === "owner_stated" ? `Stated by ${s.owner_role_name || "the owner"}` : `${s.source_name} ${s.anchor}`}

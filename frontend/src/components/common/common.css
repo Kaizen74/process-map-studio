@@ -432,3 +432,16 @@
   margin-bottom: var(--space-6);
   font-weight: var(--weight-medium);
 }
+
+/* The shared grade (DECISIONS 96): a word in a chip, where it came from, and the list to change it. */
+.grade {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.grade__origin {
+  color: var(--ink-2);
+  font-size: var(--text-label);
+}
