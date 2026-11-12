@@ -20,6 +20,8 @@ export interface VersionBannerProps {
   actions?: ReactNode;
   /** How well the sources support the map (P12); shown after the version chip when known. */
   signal?: SignalStrength | null | undefined;
+  /** The Capability Compass key and pilot, for a map that started from a hand-off. */
+  handoff?: { key: string; pilot: string } | undefined;
 }
 
 const REVIEWED = new Set(["confirmed", "edited", "added"]);
@@ -35,13 +37,27 @@ const SEGMENT_WORDS = { reviewed: "reviewed", rejected: "rejected", open: "not r
  * The draft's banner (PRD §5.7.1): version chip, what it means, and one progress segment per step
  * in process order. Clicking a segment selects that step. Quality card and Publish come in `actions`.
  */
-export function VersionBanner({ label, sources, steps, selectedId, onSelect, actions, signal }: VersionBannerProps) {
+export function VersionBanner({
+  label,
+  sources,
+  steps,
+  selectedId,
+  onSelect,
+  actions,
+  signal,
+  handoff,
+}: VersionBannerProps) {
   const reviewed = steps.filter((s) => REVIEWED.has(s.review_status)).length;
   return (
     <div className="version-banner">
       <Chip dashed mono>
         Draft {label}
       </Chip>
+      {handoff && (
+        <Chip mono title="The Capability Compass engagement key and pilot this map belongs to">
+          {handoff.key} · {handoff.pilot}
+        </Chip>
+      )}
       {signal && <SignalMeter signal={signal} compact />}
       <p className="version-banner__text">
         Generated from {sources} {sources === 1 ? "source" : "sources"}. Nothing is published until every step is

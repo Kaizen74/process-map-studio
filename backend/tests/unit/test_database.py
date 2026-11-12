@@ -30,6 +30,9 @@ PRD_TABLES = {
     "role_costs", "value_assumptions",
     # PRD v1.12 §3.16-3.18 (migration 0015), filled from phase P13a.
     "intent_statements", "intent_conflicts", "discrepancy_items", "reality_snapshots",
+    # Capability Compass hand-off (migration 0020, DECISIONS 95).
+    "testing_items",
+    "shared_codes",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -319,7 +322,8 @@ def test_downgrade_of_0011_removes_only_the_stated_reason_and_cause_type(migrate
 
     before = finding_columns()
     db.downgrade(migrated, "0010")
-    assert before - finding_columns() == {"stated_reason", "cause_type"}
+    # On the way down, 0021 takes its own `grade` column with it (DECISIONS 96).
+    assert before - finding_columns() == {"stated_reason", "cause_type", "grade"}
     assert "gap_class" in finding_columns()
     db.upgrade(migrated)
     assert db.pending_migrations(migrated) == 0

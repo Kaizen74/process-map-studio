@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.actions.settings import effective_settings
 from app.config import AppConfig
 from app.db import session_scope
+from app.domain.compass import CompassLink, HandoffPrinciple
 from app.domain.models import (
     CONVENTION_CHOICES,
     EngagementCreate,
@@ -31,10 +32,13 @@ from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import engagements as repo
 from app.repositories import redaction as redaction_repo
+from app.repositories import testing as testing_repo
+from app.services import compass as compass_service
 
 Sessions = sessionmaker[Session]
 
 ENGAGEMENT_MISSING = "That engagement doesn't exist. It may have been deleted."
+NOT_SCOPE = {"compass", "role_names"}  # on the create request, not the scope card
 ROLE_MISSING = "That role doesn't exist. It may have been removed."
 TEXT_LIMIT = 2000
 LIST_LIMIT = 50
@@ -105,7 +109,7 @@ def _clean_conventions(value: dict[str, str]) -> Result[dict[str, str]]:
 
 def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, Any]]:
     """Validate and tidy the scope-card fields that were sent."""
-    sent = fields.model_dump(exclude_unset=True)
+    sent = fields.model_dump(exclude_unset=True, exclude=NOT_SCOPE)
     cleaned: dict[str, Any] = {}
     for field, value in sent.items():
         if value is None:
@@ -162,6 +166,45 @@ def _in_session[T](sessions: Sessions, work: Callable[[Session], Result[T]]) -> 
 # --- Engagements ------------------------------------------------------------------------------
 
 
+def _from_handoff(
+    data: EngagementCreate,
+) -> Result[tuple[CompassLink | None, list[HandoffPrinciple]]]:
+    """The link to keep and the principles to test, read again from the file (DECISIONS 95)."""
+    if data.compass is None:
+        return Ok((None, []))
+    match compass_service.read_handoff(data.compass.handoff):
+        case Err(kind=kind, message=message):
+            return Err(kind, message, {"field": "compass"})
+        case Ok(value=preview):
+            pass
+    match compass_service.choose_pilot(preview, data.compass.pilot_ref):
+        case Err() as err:
+            return err
+        case Ok(value=pilot):
+            pass
+    link = CompassLink(
+        key=preview.key, pilot_ref=pilot.ref, cluster_ref=pilot.cluster_ref,
+        cluster_name=pilot.cluster_name, cell_refs=pilot.cell_refs,
+        interview_prompts=pilot.interview_prompts, ready=preview.ready,
+        generated_at=preview.generated_at,
+    )  # fmt: skip
+    return Ok((link, preview.principles))
+
+
+def _lane_names(names: list[str] | None) -> Result[list[str]]:
+    cleaned: list[str] = []
+    for raw in names or []:
+        if not raw.strip():
+            continue
+        match _clean_role_name(raw):
+            case Err() as err:
+                return err
+            case Ok(value=name):
+                if name.casefold() not in {n.casefold() for n in cleaned}:
+                    cleaned.append(name)
+    return Ok(cleaned)
+
+
 def create_engagement(
     config: AppConfig, sessions: Sessions, data: EngagementCreate
 ) -> Result[EngagementView]:
@@ -170,10 +213,32 @@ def create_engagement(
             return err
         case Ok(value=fields):
             pass
+    match _from_handoff(data):
+        case Err() as err:
+            return err
+        case Ok(value=(link, principles)):
+            pass
+    match _lane_names(data.role_names):
+        case Err() as err:
+            return err
+        case Ok(value=lanes):
+            pass
     actor = actor_name(config)
 
     def work(session: Session) -> Result[EngagementView]:
-        view = repo.create(session, fields)
+        view = repo.create(session, fields, link)
+        for name in lanes:
+            repo.create_role(session, view.id, name, [], False)
+        for principle in principles:
+            testing_repo.add(session, view.id, ref=principle.ref, text=principle.text,
+                             refuted_by=principle.refuted_by, origin="compass")  # fmt: skip
+        after: dict[str, Any] = dict(fields)
+        if link is not None:
+            after["compass"] = {"key": link.key, "pilot_ref": link.pilot_ref,
+                                "cluster_ref": link.cluster_ref}  # fmt: skip
+            after["roles"], after["testing"] = len(lanes), len(principles)
+        elif lanes:
+            after["roles"] = len(lanes)
         audit.record(
             session,
             actor=actor,
@@ -181,7 +246,7 @@ def create_engagement(
             target_type="engagement",
             target_id=view.id,
             engagement_id=view.id,
-            after=fields,
+            after=after,
         )
         return Ok(view)
 

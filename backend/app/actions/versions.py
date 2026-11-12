@@ -9,7 +9,7 @@ images are never part of the graph.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -56,6 +56,7 @@ from app.domain.models import ClaimRecord
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.domain.sensemaking import ExceptionEdgeInput, ExceptionStepInput, View
 from app.repositories import claims as claims_repo
+from app.repositories import codes as codes_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as gap_repo
@@ -170,6 +171,21 @@ def build_graph(
     return graph
 
 
+def coded_keys(elements: Sequence[ElementRecord]) -> list[str]:
+    """The stable keys of the steps that carry a code (S-01 …), in process order: start and end
+    carry none (DECISIONS 96)."""
+    return [e.stable_key for e in elements if e.kind not in (ElementKind.START.value,
+                                                             ElementKind.END.value)]  # fmt: skip
+
+
+def give_step_codes(session: Session, version_id: str) -> None:
+    """Give every step of the version its code before a read-only request reads the graph."""
+    version = versions_repo.get(session, version_id)
+    if version is not None:
+        codes_repo.ensure(session, version.engagement_id, codes_repo.STEP,
+                          coded_keys(map_repo.elements(session, version_id)))  # fmt: skip
+
+
 def _loaded[T](session: Session, name: str, version_id: str, load: Callable[[], T]) -> T:
     """A read shared by every graph of one version within a memo'd request (the As done and As
     documented graphs read the same rows, then keep their own view's)."""
@@ -209,6 +225,7 @@ def _build_graph(
         map_repo.elements(session, version_id),
         map_repo.edges(session, version_id),
     ))  # fmt: skip
+    step_codes = codes_repo.ensure(session, engagement.id, codes_repo.STEP, coded_keys(elements))
     # The combined map's cycle time is the As done view's: the time the work takes as done (X5).
     timed_view: View = view or "done"
     timed_elements = [e for e in elements if views.in_view(e.view_membership, timed_view)]
@@ -285,6 +302,7 @@ def _build_graph(
     rank = {ElementKind.START.value: 0, ElementKind.END.value: 2}
     elements = sorted(elements, key=lambda e: rank.get(e.kind, 1))
     graph_elements = []
+    coded = set(coded_keys(elements))
     for e in elements:
         flag = next((f for f in flags if f.element_id == e.id), None)
         accounts = translation.account_summary(
@@ -294,6 +312,7 @@ def _build_graph(
             GraphElement(
                 id=e.id,
                 stable_key=e.stable_key,
+                code=step_codes.get(e.stable_key) if e.stable_key in coded else None,
                 kind=e.kind,
                 label=hide(e.label),
                 lane_role_id=e.lane_role_id,
@@ -365,6 +384,8 @@ def _build_graph(
             cycle_time=cycle_time(
                 timed_elements, timed_edges, lived_conditions(claims_of, claim_records)
             ),
+            engagement_key=engagement.compass.key if engagement.compass else None,
+            pilot_ref=engagement.compass.pilot_ref if engagement.compass else None,
         ),
         roles=[
             GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)

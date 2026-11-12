@@ -120,9 +120,11 @@ def _gather(session: Session, version: VersionView) -> reality.Inputs:
     facts, confirmed = discrepancies_action.gather(session, version)
     view = discrepancies_action.discrepancies_of(session, version, facts)  # gives new codes
     evaluations = {e.intent_id: e.result for e in view.intents}
+    grades = {v.item_id: v.grade for v in view.items if v.item_id}
     items = {i.location_key: reality.ItemIn(item_id=i.id, code=i.code, title=i.title,
                                             verdict_decided=i.verdict_decided,
-                                            verdict_note=i.verdict_note)
+                                            verdict_note=i.verdict_note,
+                                            grade=grades.get(i.id))
              for i in items_repo.for_engagement(session, version.engagement_id)}  # fmt: skip
     elements = map_repo.elements(session, version.id)
     keys = {e.id: e.stable_key for e in elements}

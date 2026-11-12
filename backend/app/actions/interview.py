@@ -413,7 +413,19 @@ def get_guide(sessions: Sessions, engagement_id: str, profile_id: str) -> Result
         guide = interview_repo.latest_guide(session, profile_id)
         if guide is None or guide.engagement_id != engagement_id:
             return Err(ErrorKind.NOT_FOUND, NO_GUIDE)
-        return Ok(guide)
+        return Ok(guide.model_copy(update={"suggested_probes": suggested_probes(
+            session, engagement_id)}))  # fmt: skip
+
+
+def suggested_probes(session: Session, engagement_id: str) -> list[str]:
+    """The hand-off's interview prompts, offered beside a guide (DECISIONS 97). A prompt that
+    holds a hidden name is left out. An engagement made without a hand-off has none."""
+    engagement = engagements_repo.get(session, engagement_id)
+    if engagement is None or engagement.compass is None:
+        return []
+    hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
+    return [p for p in engagement.compass.interview_prompts
+            if not grounding.scan_redaction_terms(p, hidden)]  # fmt: skip
 
 
 def edit_guide(

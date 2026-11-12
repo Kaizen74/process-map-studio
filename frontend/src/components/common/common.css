@@ -418,3 +418,30 @@
   background: var(--surface);
   color: var(--ink);
 }
+
+/* A group of tick boxes under one legend (roles to bring along, DECISIONS 93 and 95). */
+.role-picks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.role-picks legend {
+  margin-bottom: var(--space-6);
+  font-weight: var(--weight-medium);
+}
+
+/* The shared grade (DECISIONS 96): a word in a chip, where it came from, and the list to change it. */
+.grade {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.grade__origin {
+  color: var(--ink-2);
+  font-size: var(--text-label);
+}

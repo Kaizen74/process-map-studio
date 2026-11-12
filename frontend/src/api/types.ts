@@ -92,6 +92,73 @@ export interface ScopeFields {
   every_flow?: boolean;
 }
 
+/** What an engagement keeps of the Capability Compass hand-off it started from (DECISIONS 95). */
+export interface CompassLink {
+  key: string;
+  pilot_ref: string;
+  cluster_ref: string;
+  cluster_name: string;
+  cell_refs: string[];
+  /** Suggested probes for interview guides: never a claim, a step or a source. */
+  interview_prompts: string[];
+  ready: boolean;
+  generated_at: string;
+}
+
+export interface HandoffPilot {
+  ref: string;
+  cluster_ref: string;
+  cluster_name: string;
+  name: string;
+  process_name: string;
+  process_kpi: string;
+  industry: string;
+  in_scope_roles: string[];
+  interview_prompts: string[];
+  cell_refs: string[];
+}
+
+/** POST /compass/preview: what a hand-off file would create; nothing is applied. */
+export interface HandoffPreview {
+  key: string;
+  organisation: string;
+  generated_at: string;
+  ready: boolean;
+  verdict: string;
+  open: string[];
+  pilots: HandoffPilot[];
+  principles: { ref: string; text: string; refuted_by: string }[];
+}
+
+/** POST /engagements: the scope fields plus, optionally, the hand-off and the lanes to create. */
+export interface EngagementCreate extends ScopeFields {
+  name: string;
+  compass?: { handoff: unknown; pilot_ref: string };
+  role_names?: string[];
+}
+
+export type TestingVerdict = "open" | "supported" | "refuted";
+
+/** What we are testing: a principle from the hand-off or a hypothesis Eric added. */
+export interface TestingItem {
+  id: string;
+  ref: string;
+  text: string;
+  refuted_by: string;
+  origin: "compass" | "owner";
+  verdict: TestingVerdict;
+  evidence_refs: string[];
+  note: string;
+}
+
+export interface TestingPatch {
+  verdict?: TestingVerdict;
+  evidence_refs?: string[];
+  note?: string;
+  text?: string;
+  refuted_by?: string;
+}
+
 /** POST /engagements/{id}/another-flow (DECISIONS 81): the next flow's own scope. */
 export interface AnotherFlow {
   name: string;
@@ -121,6 +188,8 @@ export interface Engagement {
   end_point_external?: boolean;
   /** DECISIONS 81: an overview of every flow in the documents (absent before: no, one flow). */
   every_flow?: boolean;
+  /** The hand-off it started from, or null (absent before DECISIONS 95: none). */
+  compass?: CompassLink | null;
   status: string;
   created_at: string;
   updated_at: string;

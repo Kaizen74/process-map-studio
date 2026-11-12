@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.compass import GradeView
 from app.domain.enums import GapClass
 from app.domain.models import CheckOutcome
 
@@ -117,6 +118,7 @@ class GapFindingView(BaseModel):
     disposition_note: str
     created_item_ref: str
     gap_class: str | None = None  # B.32; proposed while the finding is open
+    grade: GradeView | None = None  # DECISIONS 96: the shared grade
     stated_reason: str = ""
     cause_type: str | None = None
 
@@ -230,6 +232,7 @@ class NewGapFinding(BaseModel):
 
 class StoredGapFinding(NewGapFinding):
     id: str
+    grade_chosen: str | None = None  # Eric's own grade; null while the suggested one stands
     disposition: str = "open"
     disposition_note: str = ""
     created_item_ref: str = ""

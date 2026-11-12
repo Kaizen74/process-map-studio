@@ -1,3 +1,4 @@
+import type { Grade } from "./grade";
 // Gap analysis (PRD §3.11, §5.4; API_CONTRACT.md → Gap analysis): report shapes, plain labels and
 // pure helpers. Advisory only: nothing here changes the map.
 
@@ -64,6 +65,8 @@ export interface GapEvidence {
 
 export interface GapFinding {
   id: string;
+  /** The shared grade (DECISIONS 96). */
+  grade?: Grade | null;
   section: Section;
   finding_type: string;
   title: string;

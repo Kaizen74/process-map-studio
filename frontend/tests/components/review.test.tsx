@@ -82,7 +82,8 @@ describe("Review screen (PRD §5.6)", () => {
     fireEvent.click(await screen.findByRole("button", { name: /^Activity, Load and return LIR/ }));
     const panel = screen.getByRole("complementary", { name: "Step details" });
     expect(within(panel).getByRole("heading", { name: "Load and return LIR" })).toBeInTheDocument();
-    expect(within(panel).getByText("Activity · Check and load")).toBeInTheDocument();
+    // The step's shared code comes first (DECISIONS 96).
+    expect(within(panel).getByText("S-05 · Activity · Check and load")).toBeInTheDocument();
     expect(within(panel).getByText("Lane · Ramp")).toBeInTheDocument();
     expect(within(panel).getByText("Contested")).toHaveClass("chip--danger");
     expect(within(panel).getByText("Divergence · threshold")).toHaveClass("chip--danger");

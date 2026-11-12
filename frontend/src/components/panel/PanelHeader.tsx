@@ -42,7 +42,7 @@ export function PanelHeader({ element, laneName, phaseName, partOf }: PanelHeade
   const contested = element.source_state === "contested" || element.source_state === "trace_contradicted";
   return (
     <header className="panel-header">
-      <p className="panel-header__overline">{[kind, phaseName].filter(Boolean).join(" · ")}</p>
+      <p className="panel-header__overline">{[element.code, kind, phaseName].filter(Boolean).join(" · ")}</p>
       <h2 className="panel-header__title" id="panel-title">
         {element.label}
       </h2>

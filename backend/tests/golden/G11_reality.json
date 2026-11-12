@@ -772,7 +772,13 @@
       },
       "control": true,
       "shown": true,
-      "rank": 1
+      "rank": 1,
+      "grade": {
+        "grade": "confirmed",
+        "suggested": "confirmed",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X2",
@@ -841,7 +847,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 2
+      "rank": 2,
+      "grade": {
+        "grade": "confirmed",
+        "suggested": "confirmed",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X3",
@@ -902,7 +914,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 3
+      "rank": 3,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X4",
@@ -970,7 +988,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 4
+      "rank": 4,
+      "grade": {
+        "grade": "confirmed",
+        "suggested": "confirmed",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X5",
@@ -1036,7 +1060,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 5
+      "rank": 5,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X6",
@@ -1104,7 +1134,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 6
+      "rank": 6,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X7",
@@ -1168,7 +1204,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 7
+      "rank": 7,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X8",
@@ -1229,7 +1271,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 8
+      "rank": 8,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     },
     {
       "code": "X9",
@@ -1297,7 +1345,13 @@
       },
       "control": false,
       "shown": true,
-      "rank": 9
+      "rank": 9,
+      "grade": {
+        "grade": "indicated",
+        "suggested": "indicated",
+        "chosen_by_owner": false,
+        "rules_version": "1"
+      }
     }
   ],
   "intents": [

@@ -195,6 +195,10 @@ class GraphProcess(Out):
     end_point: str
     kpi: str
     cycle_time: CycleTime
+    # DECISIONS 96: the Capability Compass key and pilot the engagement started from, exactly as
+    # received; both null for an engagement made without a hand-off.
+    engagement_key: str | None = None
+    pilot_ref: str | None = None
 
 
 class GraphRole(Out):
@@ -273,6 +277,9 @@ class AccountSummary(Out):
 class GraphElement(Out):
     id: str
     stable_key: str
+    # DECISIONS 96: the code a step is shown with (S-01), the same in every version; null on
+    # start and end, and on a step read before its code was given.
+    code: str | None = None
     kind: str
     label: str
     lane_role_id: str | None
@@ -487,6 +494,7 @@ class ElementDetail(Out):
     id: str
     version_id: str
     stable_key: str
+    code: str | None = None  # the step's shared code (S-01); null on start and end
     kind: str
     label: str
     lane_role_id: str | None

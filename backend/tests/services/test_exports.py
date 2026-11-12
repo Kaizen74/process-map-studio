@@ -102,6 +102,8 @@ def test_no_verbatim_passage_reaches_any_export() -> None:
         assert not [p for p in passages if p in text]
 
 
+# Since 2026-11-12 (DECISIONS 96) a step's shared code (S-01 …) comes before its name in the
+# step tables and the decisions list.
 def test_every_element_line_carries_its_provenance() -> None:
     md = exports.render_master_map_md(data())
     interpretation = md.split(exports.INTERPRETATION)[1].split("### RACI")[0]
@@ -114,13 +116,16 @@ def test_every_element_line_carries_its_provenance() -> None:
     decisions = [line for line in interpretation.splitlines() if line.startswith("- ")]
     # v1.10 A.5: + Busy wave?
     assert len(decisions) == 5 and all(line.startswith("- [O] ") for line in decisions)
-    assert "- [O] Special loads OK? (decision, rule-based, decider: Load controller). Exits: " in md
+    assert (
+        "- [O] S-03 Special loads OK? (decision, rule-based, decider: Load controller). Exits: "
+        in md
+    )
 
 
 def test_decisions_list_every_labelled_exit_and_raci_marks_a_contest() -> None:
     md = exports.render_master_map_md(data())
     deviation = next(
-        line for line in md.splitlines() if line.startswith("- [O] Deviation in limits?")
+        line for line in md.splitlines() if line.startswith("- [O] S-08 Deviation in limits?")
     )
     assert (
         "Within limits → Issue load sheet" in deviation
@@ -181,11 +186,12 @@ def test_raci_csv_is_steps_by_roles() -> None:
     text = exports.render_raci_csv(data())
     assert text.startswith("﻿")
     rows = list(csv.reader(io.StringIO(text.removeprefix("﻿"))))
-    assert rows[0] == ["Step", "Kind", "Lane", "Provenance", "Load controller", "Load control lead",
-                       "Ramp", "Airline ops", "Captain"]  # fmt: skip
+    # Eric, 2026-11-12 (DECISIONS 96): the step's shared code comes first.
+    assert rows[0] == ["Code", "Step", "Kind", "Lane", "Provenance", "Load controller",
+                       "Load control lead", "Ramp", "Airline ops", "Captain"]  # fmt: skip
     assert len(rows) == 11  # header + 10 steps (v1.10 A.5); start and end are not steps
-    assert {row[1] for row in rows[1:]} == {"Activity", "Decision", "Approval"}
-    assert rows[8] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
+    assert {row[2] for row in rows[1:]} == {"Activity", "Decision", "Approval"}
+    assert rows[8][1:] == [  # after Busy wave? and Read report at aircraft (v1.10 A.5)
         "Deviation in limits?",
         "Decision",  # Eric, 2026-10-30: the words the HTML map uses, not the stored value
         "Load controller",
@@ -317,7 +323,7 @@ def test_the_master_map_carries_the_v1_11_template() -> None:
     assert "### Strengths as stated (preserve)" in facts
     assert "- [O] Skillset: Supervisors know the aircraft types." in facts
     assert "| Step | View | Lane |" in interpretation
-    assert "| Read report at aircraft | as done |" in interpretation
+    assert "| S-07 Read report at aircraft | as done |" in interpretation
     assert "- As done: 9 steps; only here: " in interpretation
     assert "- As documented: 6 steps; only here: Approve load plan." in interpretation
     assert "| [O] Deviation in limits? | Complex (proposed) | high · heuristics |" in interpretation

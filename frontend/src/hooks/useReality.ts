@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getJob } from "../api/draft";
-import { addIntent, decideVerdict, extractIntent, getReality, listIntent, updateIntent } from "../api/reality";
+import {
+  addIntent,
+  decideVerdict,
+  extractIntent,
+  getReality,
+  listIntent,
+  setDiscrepancyGrade,
+  updateIntent,
+} from "../api/reality";
+import type { GradeKey } from "../lib/grade";
 import type { IntentFields } from "../lib/reality";
 
 const POLL_MS = 1000;
@@ -85,6 +94,14 @@ export function useExtractIntent(engagementId: string) {
     outcome: finished && job.data ? { failed: status === "failed", message: status === "failed" ? job.data.error : job.data.message } : null,
     error: start.error,
   };
+}
+
+export function useSetDiscrepancyGrade(engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, grade }: { itemId: string; grade: GradeKey | null }) => setDiscrepancyGrade(itemId, grade),
+    onSuccess: () => refresh(client, engagementId),
+  });
 }
 
 export function useDecideVerdict(engagementId: string) {

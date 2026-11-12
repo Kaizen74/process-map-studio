@@ -56,6 +56,7 @@ def _finding(row: GapFinding) -> StoredGapFinding:
         gap_class=row.gap_class,
         stated_reason=row.stated_reason or "",
         cause_type=row.cause_type,
+        grade_chosen=row.grade,
     )
 
 
@@ -227,6 +228,14 @@ def set_disposition(
     row.disposition = disposition
     row.disposition_note = note
     row.created_item_ref = created_item_ref
+    session.flush()
+    return _finding(row)
+
+
+def set_grade(session: Session, finding_id: str, grade: str | None) -> StoredGapFinding:
+    row = session.get(GapFinding, finding_id)
+    assert row is not None
+    row.grade = grade
     session.flush()
     return _finding(row)
 

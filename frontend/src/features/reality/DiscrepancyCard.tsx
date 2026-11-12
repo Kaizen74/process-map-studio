@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Card, SelectField, TextField } from "../../components/common";
+import { Button, Card, GradeControl, SelectField, TextField } from "../../components/common";
 import { EvidenceChips, ImpactWord } from "../../components/reality";
-import { useDecideVerdict } from "../../hooks/useReality";
+import { useDecideVerdict, useSetDiscrepancyGrade } from "../../hooks/useReality";
 import { messageOf } from "../../lib/errors";
 import { VERDICT_LABELS, verdictText, type CodeView, type RealitySnapshot } from "../../lib/reality";
 
@@ -61,6 +61,7 @@ interface RowProps {
 
 function DiscrepancyRow({ code: c, engagementId, editable, selected, dimmed, onSelect }: RowProps) {
   const decide = useDecideVerdict(engagementId);
+  const grade = useSetDiscrepancyGrade(engagementId);
   const [open, setOpen] = useState<"confirm" | "change" | null>(null);
   const [verdict, setVerdict] = useState(c.verdict?.shown ?? "ask");
   const [note, setNote] = useState("");
@@ -94,6 +95,16 @@ function DiscrepancyRow({ code: c, engagementId, editable, selected, dimmed, onS
         <span className="discrepancy-row__verdict">
           Verdict: {verdictText(c.verdict)}. {c.verdict.reason}
           {c.verdict.note && ` Your note: ${c.verdict.note}`}
+        </span>
+      )}
+      {c.grade && (
+        <span className="discrepancy-row__grade">
+          <GradeControl
+            grade={c.grade}
+            subject={c.code}
+            onChange={editable ? (chosen) => grade.mutate({ itemId: c.item_id, grade: chosen }) : undefined}
+          />
+          {grade.isError && <span className="danger-note">{messageOf(grade.error)}</span>}
         </span>
       )}
       {editable && c.verdict && open === null && (

@@ -1,3 +1,4 @@
+import type { GradeKey } from "../../lib/grade";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -20,6 +21,7 @@ import {
 import { useToast } from "../../components/shell";
 import {
   useDecideFinding,
+  useSetFindingGrade,
   useFinaliseReport,
   useGapJob,
   useGapReport,
@@ -169,6 +171,7 @@ export function GapAnalysisView({
   const graph = useGraph(draft?.id ?? null);
   const roles = useRoles(engagementId);
   const decide = useDecideFinding(analysisId, engagementId);
+  const grade = useSetFindingGrade(analysisId);
   const finalise = useFinaliseReport(analysisId, engagementId);
   const saveBrief = useUpdateBrief(analysisId);
   const run = useRunResearch(analysisId, data?.analysis.version_id ?? "");
@@ -244,6 +247,8 @@ export function GapAnalysisView({
     onDecide,
     onChooseClass: (finding: GapFinding, gapClass: GapClass) =>
       setClassFor((chosen) => ({ ...chosen, [finding.id]: gapClass })),
+    onGrade: (finding: GapFinding, chosen: GradeKey | null) =>
+      grade.mutate({ findingId: finding.id, grade: chosen }),
   };
 
   const saveThen = (brief: Brief, confirmed: boolean, then?: () => void) =>

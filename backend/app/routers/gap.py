@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 
 from app.actions import gap
+from app.domain.compass import GradeBody
 from app.domain.gap import (
     BriefPatch,
     FindingDecision,
@@ -55,6 +56,12 @@ def get_report(request: Request, analysis_id: str) -> GapReport:
 def decide(request: Request, finding_id: str, body: FindingDecision) -> GapFindingView:
     state = request.app.state
     return unwrap(gap.decide(state.config, state.sessions, finding_id, body))
+
+
+@router.put("/gap-findings/{finding_id}/grade")
+def set_grade(request: Request, finding_id: str, body: GradeBody) -> GapFindingView:
+    state = request.app.state
+    return unwrap(gap.set_grade(state.config, state.sessions, finding_id, body))
 
 
 @router.post("/gap-analyses/{analysis_id}/finalise")

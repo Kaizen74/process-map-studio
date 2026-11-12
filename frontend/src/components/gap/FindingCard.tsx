@@ -17,7 +17,8 @@ import {
   typeLabel,
 } from "../../lib/gap";
 import type { EvidenceCard as EvidenceCardData } from "../../lib/mapTypes";
-import { Button, Chip, SelectField } from "../common";
+import type { GradeKey } from "../../lib/grade";
+import { Button, Chip, GradeControl, SelectField } from "../common";
 import { EvidenceCard } from "../panel";
 import "./gap.css";
 
@@ -154,6 +155,8 @@ export interface FindingCardProps {
   /** A reality gap's class as Eric has chosen it so far (the proposed one until he changes it). */
   chosenClass?: GapClass | undefined;
   onChooseClass?: (finding: GapFinding, gapClass: GapClass) => void;
+  /** Eric's own grade for the finding (null: back to the suggested grade). */
+  onGrade?: (finding: GapFinding, grade: GradeKey | null) => void;
 }
 
 const CLASS_OPTIONS = (Object.keys(GAP_CLASS_LABELS) as GapClass[]).map(
@@ -213,6 +216,7 @@ export function FindingCard({
   onDecide,
   chosenClass,
   onChooseClass,
+  onGrade,
 }: FindingCardProps) {
   const quoted = f.evidence.filter(
     (e) => e.side !== "external" && e.side !== "system",
@@ -241,6 +245,15 @@ export function FindingCard({
         )}
       </header>
       <h3 className="finding__title">{f.title}</h3>
+      {f.grade && (
+        <p className="finding__grade">
+          <GradeControl
+            grade={f.grade}
+            subject={f.title}
+            onChange={onGrade && !locked ? (chosen) => onGrade(f, chosen) : undefined}
+          />
+        </p>
+      )}
       <p>{f.text}</p>
       {f.elements.length > 0 && (
         <p className="finding__steps">

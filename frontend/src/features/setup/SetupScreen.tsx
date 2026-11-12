@@ -5,12 +5,15 @@ import { useRoles } from "../../hooks/useRoles";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { AnotherFlowCard } from "./AnotherFlowCard";
+import { CompassCard } from "./CompassCard";
+import { TestingCard } from "./TestingCard";
 import { RolesCard } from "./RolesCard";
 import { ConventionsCard } from "./ConventionsCard";
 import { ScopeCard } from "./ScopeCard";
 import "./setup.css";
 
-/** Setup (PRD §5.4): mapping conventions, process scope, roles and lanes, and another flow. */
+/** Setup (PRD §5.4): mapping conventions, process scope, roles and lanes, another flow, what we
+ * are testing and, when the engagement started from one, its Capability Compass hand-off. */
 export function SetupScreen() {
   const { engagementId = "" } = useParams();
   const engagement = useEngagement(engagementId);
@@ -56,6 +59,8 @@ export function SetupScreen() {
           </Card>
         )}
         {engagement.data && <AnotherFlowCard engagement={engagement.data} />}
+        {engagement.data && <TestingCard engagementId={engagementId} />}
+        {engagement.data?.compass && <CompassCard link={engagement.data.compass} />}
       </div>
     </main>
   );

@@ -72,6 +72,8 @@ class Engagement(Row):
     end_point_external: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # 0018: an overview of every flow in the documents; unticked, drafting maps only this flow.
     every_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # 0020: the Capability Compass hand-off this engagement started from (CompassLink), or null.
+    compass: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class Source(Row):
@@ -118,6 +120,32 @@ class RedactionTerm(Row):
     term: Mapped[str] = mapped_column(Text)
     replacement: Mapped[str] = mapped_column(Text, default="[name]")
     origin: Mapped[str] = mapped_column(String(32))
+
+
+class TestingItem(Row):
+    """What we are testing (0020): a design principle from the hand-off or a hypothesis Eric
+    added, with the verdict he sets and the step or discrepancy codes behind it."""
+
+    __tablename__ = "testing_items"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    ref: Mapped[str] = mapped_column(String(16))
+    text: Mapped[str] = mapped_column(Text)
+    refuted_by: Mapped[str] = mapped_column(Text, default="")
+    origin: Mapped[str] = mapped_column(String(16), default="owner")  # compass · owner
+    verdict: Mapped[str] = mapped_column(String(16), default="open")
+    evidence_refs: Mapped[list[str]] = mapped_column(JSON, default=list)
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class SharedCode(Row):
+    """A step's or intent statement's displayed code (0021; DECISIONS 96): S-01, I1. Kept for
+    the engagement and never deleted, so a code is never reused and survives every refresh."""
+
+    __tablename__ = "shared_codes"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    kind: Mapped[str] = mapped_column(String(8))  # step · intent
+    ref_key: Mapped[str] = mapped_column(Text)  # a step's stable key, an intent statement's ID
+    code: Mapped[str] = mapped_column(String(12))
 
 
 class Role(Row):
@@ -444,6 +472,7 @@ class GapFinding(Row):
     notes: Mapped[list[str]] = mapped_column(JSON, default=list)  # flags on the finding (0007)
     stated_reason: Mapped[str] = mapped_column(Text, default="")  # the SME's own words (0011)
     cause_type: Mapped[str | None] = mapped_column(String(32), nullable=True)  # B.9 (0011)
+    grade: Mapped[str | None] = mapped_column(String(12), nullable=True)  # Eric's own (0021)
 
 
 class ExternalSource(Row):
@@ -703,6 +732,7 @@ class DiscrepancyItem(Row):
     verdict_note: Mapped[str] = mapped_column(Text, default="")
     decision_owner_role_id: Mapped[str | None] = opt_fk("roles.id")
     retired: Mapped[bool] = mapped_column(Boolean, default=False)
+    grade: Mapped[str | None] = mapped_column(String(12), nullable=True)  # Eric's own (0021)
 
 
 class RealitySnapshot(Row):

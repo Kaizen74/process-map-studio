@@ -241,6 +241,7 @@ def render_exports(data: ExportInput) -> dict[str, str]:
 def card_for(config: AppConfig, session: Session, version_id: str) -> QualityCard | None:
     """Work out the quality card of a version as it is now (not stored). Read-only: the rows it
     reads several times are read once (DECISIONS 91)."""
+    versions_action.give_step_codes(session, version_id)  # a read-only request gives none
     with read_memo.read_only(session):
         return _card_for(config, session, version_id)
 

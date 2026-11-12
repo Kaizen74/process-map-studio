@@ -6,11 +6,13 @@ import {
   getReport,
   listAnalyses,
   runResearch,
+  setFindingGrade,
   startExternal,
   startInternal,
   updateBrief,
 } from "../api/gap";
 import { getJob } from "../api/draft";
+import type { GradeKey } from "../lib/grade";
 import { isRunning, type Brief, type FindingDecision, type GapReport } from "../lib/gap";
 
 /** How often to look again while an analysis runs in the background. */
@@ -93,6 +95,15 @@ export function useRunResearch(analysisId: string, versionId: string) {
 }
 
 /** A decision may add a question, a cause-library entry or a step: those views change too. */
+export function useSetFindingGrade(analysisId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ findingId, grade }: { findingId: string; grade: GradeKey | null }) =>
+      setFindingGrade(findingId, grade),
+    onSuccess: () => void client.invalidateQueries({ queryKey: reportKey(analysisId) }),
+  });
+}
+
 export function useDecideFinding(analysisId: string, engagementId: string) {
   const client = useQueryClient();
   return useMutation({

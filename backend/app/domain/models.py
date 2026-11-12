@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
+from app.domain.compass import CompassLink, CompassStart
+
 
 class HealthInfo(BaseModel):
     """GET /api/health response (API_CONTRACT.md)."""
@@ -145,6 +147,10 @@ class ScopeFields(BaseModel):
 
 class EngagementCreate(ScopeFields):
     name: str
+    # Starting from a Capability Compass hand-off (DECISIONS 95): the file and the chosen pilot,
+    # and the roles to create as lanes. Both optional: without them, as before.
+    compass: CompassStart | None = None
+    role_names: list[str] | None = None
 
 
 class AnotherFlow(BaseModel):
@@ -174,6 +180,7 @@ class EngagementView(BaseModel):
     trigger_external: bool = False
     end_point_external: bool = False
     every_flow: bool = False
+    compass: CompassLink | None = None  # the hand-off it started from (DECISIONS 95)
     status: str
     created_at: str
     updated_at: str

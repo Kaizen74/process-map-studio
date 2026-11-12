@@ -23,6 +23,7 @@ from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import AppConfig
 from app.db import session_scope
+from app.domain.compass import GradeBody, GradeChosen, GradeView
 from app.domain.enums import ReviewStatus, SourceKind
 from app.domain.graph import Graph, GraphElement
 from app.domain.models import ClaimRecord, VersionView
@@ -56,6 +57,7 @@ from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import discrepancies as rules
 from app.services import exceptions, grounding
+from app.services import grade as grade_rules
 from app.services import intent as evaluation
 from app.services import verdicts as verdict_rules
 from app.services.system_findings import LogFacts, stated_minutes
@@ -468,6 +470,13 @@ def _title(g: verdict_rules.Group, labels: Mapping[str, str]) -> str:
     return " → ".join(names)
 
 
+def grade_view(suggested: str, chosen: str | None) -> GradeView:
+    """The grade in force: Eric's own when he chose one, the suggested one otherwise."""
+    return GradeView(grade=chosen or suggested, suggested=suggested,
+                     chosen_by_owner=chosen is not None,
+                     rules_version=grade_rules.GRADE_RULES_VERSION)  # fmt: skip
+
+
 def _code_number(code: str) -> int:
     return int(code[1:]) if code[1:].isdigit() else 0
 
@@ -483,6 +492,14 @@ def _item_view(g: verdict_rules.Group, facts: rules.Facts, item: DiscrepancyItem
     deltas.sort(key=lambda d: verdict_rules.TYPE_ORDER.index(d.type))
     cases = [f.cases for f in g.found if f.cases is not None]
     incidences = [f.incidence for f in g.found if f.incidence is not None]
+    evidence = EvidenceCounts(
+        documents=max((s.documents for s in steps), default=0),
+        interviews=max((s.described_in for s in steps), default=0),
+        system_cases=max(cases) if cases and any(
+            f.delta.label == "measured" for f in g.found) else None)  # fmt: skip
+    suggested_grade = grade_rules.for_discrepancy(
+        documents=evidence.documents, interviews=evidence.interviews,
+        system_cases=evidence.system_cases)  # fmt: skip
     return DiscrepancyView(
         item_id=item.id if item else None, code=item.code if item else None, status="seen",
         types=g.types, location=LocationView(kind=g.kind, keys=list(g.keys)),
@@ -498,12 +515,9 @@ def _item_view(g: verdict_rules.Group, facts: rules.Facts, item: DiscrepancyItem
             decided=item.verdict_decided if item else None,
             note=item.verdict_note if item else "",
             decision_owner_role_id=item.decision_owner_role_id if item else None),
-        evidence=EvidenceCounts(
-            documents=max((s.documents for s in steps), default=0),
-            interviews=max((s.described_in for s in steps), default=0),
-            system_cases=max(cases) if cases and any(
-                f.delta.label == "measured" for f in g.found) else None),
+        evidence=evidence,
         element_ids=[ids[k] for k in g.keys if k in ids], intent_ids=g.intent_ids,
+        grade=grade_view(suggested_grade, item.grade if item else None),
     )  # fmt: skip
 
 
@@ -601,3 +615,25 @@ def decide_verdict(config: AppConfig, sessions: Sessions, item_id: str,
                 decision_owner_role_id=updated.decision_owner_role_id,
             )
         )
+
+
+BAD_GRADE = "Choose Confirmed, Indicated or Hypothesis."
+
+
+def set_grade(config: AppConfig, sessions: Sessions, item_id: str,
+              body: GradeBody) -> Result[GradeChosen]:  # fmt: skip
+    """Eric's own grade for a discrepancy (it wins over the suggested one), or back to the
+    suggested grade with null. Nothing else about the discrepancy changes."""
+    if body.grade is not None and body.grade not in grade_rules.GRADES:
+        return Err(ErrorKind.VALIDATION, BAD_GRADE, {"field": "grade"})
+    with session_scope(sessions) as session:
+        item = items_repo.get(session, item_id)
+        if item is None:
+            return Err(ErrorKind.NOT_FOUND, ITEM_MISSING)
+        if item.grade != body.grade:
+            items_repo.update(session, item_id, {"grade": body.grade})
+            audit.record(session, actor=actor_name(config), action="Set discrepancy grade",
+                         target_type="discrepancy", target_id=item_id,
+                         engagement_id=item.engagement_id, before={"grade": item.grade},
+                         after={"grade": body.grade})  # fmt: skip
+        return Ok(GradeChosen(item_id=item_id, code=item.code, grade_chosen=body.grade))

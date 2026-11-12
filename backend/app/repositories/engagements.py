@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.domain.compass import CompassLink
 from app.domain.enums import ElementKind, ReviewStatus
 from app.domain.models import (
     EngagementSummary,
@@ -86,14 +87,18 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         trigger_external=bool(row.trigger_external),
         end_point_external=bool(row.end_point_external),
         every_flow=bool(row.every_flow),
+        compass=CompassLink.model_validate(row.compass) if row.compass else None,
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
 
 
-def create(session: Session, fields: dict[str, Any]) -> EngagementView:
+def create(
+    session: Session, fields: dict[str, Any], compass: CompassLink | None = None
+) -> EngagementView:
     row = Engagement(**{k: v for k, v in fields.items() if k in SCOPE_COLUMNS})
+    row.compass = compass.model_dump() if compass else None  # set once, never by a scope edit
     session.add(row)
     session.flush()
     if "confidential_terms" in fields:

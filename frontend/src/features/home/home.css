@@ -127,3 +127,27 @@
   font-size: var(--text-label);
   color: var(--ink-3);
 }
+
+/* New engagement from a Capability Compass hand-off (DECISIONS 95). */
+.new-engagement,
+.handoff-start,
+.handoff-found {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.handoff-start {
+  align-items: flex-start;
+}
+.handoff-found__from {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+.handoff-found__warning {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: var(--line-hairline) dashed var(--danger-text);
+  border-radius: var(--radius-control);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
