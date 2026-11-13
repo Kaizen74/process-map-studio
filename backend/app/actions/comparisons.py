@@ -301,6 +301,27 @@ def _pairs(
         )
         for p in proposals
     ]
+    # In process order (Eric, 2026-11-13): by the reference map's step, and a step only the
+    # other country has just after the step before it on its own map.
+    ref_order = {st.key: st.order for st in m.reference.steps}
+    oth_order = {st.key: st.order for st in m.other.steps}
+    paired_at = {
+        p.other_key: ref_order[p.reference_key]
+        for p in views
+        if p.reference_key in ref_order and p.other_key
+    }
+
+    def place(p: PairView) -> tuple[float, int]:
+        if p.reference_key in ref_order:
+            return (float(ref_order[p.reference_key]), 0)
+        earlier = [
+            paired_at[k]
+            for k, o in oth_order.items()
+            if o < oth_order.get(p.other_key or "", 0) and k in paired_at
+        ]
+        return (max(earlier, default=0) + 0.5, oth_order.get(p.other_key or "", 0))
+
+    views.sort(key=place)
     return views, [(p.reference_key, p.other_key, p.status) for p in decided]
 
 

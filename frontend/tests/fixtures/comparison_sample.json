@@ -164,15 +164,15 @@
         "why": ""
       },
       {
-        "reference_key": "send-the-renewal-offer",
-        "other_key": "send-the-renewal-offer",
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
         "status": "confirmed",
         "why": ""
       },
       {
-        "reference_key": "approve-the-renewal-price",
-        "other_key": "approve-the-renewal-price",
-        "status": "confirmed",
+        "reference_key": null,
+        "other_key": "check-the-credit-limit",
+        "status": "only_other",
         "why": ""
       },
       {
@@ -182,9 +182,9 @@
         "why": ""
       },
       {
-        "reference_key": null,
-        "other_key": "check-the-credit-limit",
-        "status": "only_other",
+        "reference_key": "send-the-renewal-offer",
+        "other_key": "send-the-renewal-offer",
+        "status": "confirmed",
         "why": ""
       }
     ],

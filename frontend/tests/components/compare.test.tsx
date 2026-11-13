@@ -35,6 +35,47 @@ function rowOf(title: string): HTMLElement {
 }
 
 describe("Compare countries", () => {
+  it("lists the pairs in process order, each code with its country, and slims the buttons once decided", async () => {
+    backend();
+    renderApp(`${PATH}?comparison=id-3`);
+    const table = await screen.findByRole("table", { name: "Step pairs between Arden and Belmar" });
+    const rows = within(table).getAllByRole("row").slice(1);
+    // Eric, 2026-11-13: process order, not the order the pairs were confirmed in.
+    expect(rows.map((r) => r.querySelector("td")?.textContent)).toEqual([
+      "Arden S-01 Receive the renewal request",
+      "Arden S-02 Build the bid solution",
+      "Arden S-03 Draft the renewal price",
+      "Arden S-04 Approve the renewal price",
+      "Not in Arden",
+      "Arden S-05 Legal review of terms",
+      "Arden S-06 Send the renewal offer",
+    ]);
+    // The same code names different steps in each country, so the country is always shown.
+    const credit = rows[4] as HTMLElement;
+    expect(within(credit).getByText("Belmar S-05 Check the credit limit")).toBeInTheDocument();
+    // A decided pair offers only Clear and Choose another step.
+    const approve = rows[3] as HTMLElement;
+    expect(within(approve).queryByRole("button", { name: /^Only in/ })).toBeNull();
+    expect(within(approve).getByRole("button", { name: /^Clear/ })).toBeInTheDocument();
+    expect(within(approve).getByLabelText("Pair Arden S-04 Approve the renewal price with")).toBeInTheDocument();
+    expect(within(credit).queryByRole("button", { name: /^Only in/ })).toBeNull();
+  });
+
+  it("an undecided proposal still offers Confirm and Only in each country", async () => {
+    const proposed = {
+      ...VIEW,
+      pairs: VIEW.pairs.map((p, i) => (i === 0 ? { ...p, status: "proposed" as const } : p)),
+    };
+    backend({ "GET /api/comparisons/id-3": () => ({ body: proposed }) });
+    renderApp(`${PATH}?comparison=id-3`);
+    const table = await screen.findByRole("table", { name: "Step pairs between Arden and Belmar" });
+    const first = within(table).getAllByRole("row")[1] as HTMLElement;
+    for (const name of [/^Confirm/, /^Only in Arden/, /^Only in Belmar/]) {
+      expect(within(first).getByRole("button", { name })).toBeInTheDocument();
+    }
+    expect(within(first).queryByRole("button", { name: /^Clear/ })).toBeNull();
+  });
+
   it("offers only the same process, published, and starts the comparison with Belmar compared with Arden", async () => {
     const { calls } = backend({ "POST /api/comparisons": () => ({ status: 201, body: VIEW }) });
     const { container } = renderApp(PATH);
@@ -63,7 +104,7 @@ describe("Compare countries", () => {
     const { container } = renderApp(`${PATH}?comparison=id-3`);
     const table = await screen.findByRole("table", { name: "Step pairs between Arden and Belmar" });
     expect(within(table).getAllByText("Confirmed").length).toBeGreaterThan(0);
-    const legal = within(table).getByText("S-05 Legal review of terms").closest("tr") as HTMLElement;
+    const legal = within(table).getByText("Arden S-05 Legal review of terms").closest("tr") as HTMLElement;
     expect(within(legal).getByText("Not in Belmar")).toBeInTheDocument();
     fireEvent.click(within(legal).getByRole("button", { name: /Clear/ }));
     await vi.waitFor(() => expect(calls.some((c) => c.key === "PUT /api/comparisons/id-3/pairs")).toBe(true));

@@ -235,8 +235,13 @@ function ComparisonPanel({ id }: { id: string }) {
   );
 }
 
-function stepName(s: ComparedStep | undefined): string {
-  return s ? `${s.code ? `${s.code} ` : ""}${s.label}` : "";
+/**
+ * A step with its code and the country that numbered it ("Arden S-05 Legal review of terms"): each
+ * country numbers its own steps, so the same code can name different steps (Eric, 2026-11-13).
+ */
+function stepName(s: ComparedStep | undefined, country: string): string {
+  if (!s) return "";
+  return s.code ? `${country} ${s.code} ${s.label}` : `${country}: ${s.label}`;
 }
 
 function PairsCard({ comparison: c }: { comparison: Comparison }) {
@@ -289,40 +294,43 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
           {c.pairs.map((p) => {
             const r = p.reference_key ? ref.get(p.reference_key) : undefined;
             const o = p.other_key ? other.get(p.other_key) : undefined;
-            const name = stepName(r ?? o);
+            const name = r ? stepName(r, R) : stepName(o, O);
+            const open = p.status === "proposed" || p.status === "suggested";
             return (
               <tr key={`${p.reference_key ?? ""}|${p.other_key ?? ""}`}>
-                <td>{r ? stepName(r) : <span className="compare-none">Not in {R}</span>}</td>
-                <td>{o ? stepName(o) : <span className="compare-none">Not in {O}</span>}</td>
+                <td>{r ? stepName(r, R) : <span className="compare-none">Not in {R}</span>}</td>
+                <td>{o ? stepName(o, O) : <span className="compare-none">Not in {O}</span>}</td>
                 <td>
                   <Chip dashed={p.status === "proposed" || p.status === "suggested"}>{PAIR_LABELS[p.status]}</Chip>
                   {p.why && <span className="compare-why">{p.why}</span>}
                 </td>
                 <td className="compare-actions">
-                  {(p.status === "proposed" || p.status === "suggested") && (
+                  {open && (
                     <Button onClick={() => send(p.reference_key, p.other_key, "confirmed")}>
                       Confirm <span className="visually-hidden">the pair for {name}</span>
                     </Button>
                   )}
-                  {r && p.status !== "only_reference" && (
+                  {/* Once decided, only Clear and Choose another step (Eric, 2026-11-13). */}
+                  {open && r && (
                     <Button onClick={() => send(r.key, null, "only_reference")}>
-                      Only in {R} <span className="visually-hidden">: {stepName(r)}</span>
+                      Only in {R} <span className="visually-hidden">: {stepName(r, R)}</span>
                     </Button>
                   )}
-                  {o && p.status !== "only_other" && (
+                  {open && o && (
                     <Button onClick={() => send(null, o.key, "only_other")}>
-                      Only in {O} <span className="visually-hidden">: {stepName(o)}</span>
+                      Only in {O} <span className="visually-hidden">: {stepName(o, O)}</span>
                     </Button>
                   )}
-                  {(p.status === "confirmed" || p.status === "only_reference" || p.status === "only_other") && (
+                  {!open && (
                     <Button variant="link" onClick={() => send(p.reference_key, p.other_key, "clear")}>
                       Clear <span className="visually-hidden">the decision for {name}</span>
                     </Button>
                   )}
                   {r && (
                     <ChooseAnother
-                      label={`Pair ${stepName(r)} with`}
+                      label={`Pair ${stepName(r, R)} with`}
                       steps={c.steps.other}
+                      country={O}
                       onChoose={(key) => send(r.key, key, "confirmed")}
                     />
                   )}
@@ -332,7 +340,7 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
           })}
           {loneRef.map((s) => (
             <tr key={`r-${s.key}`}>
-              <td>{stepName(s)}</td>
+              <td>{stepName(s, R)}</td>
               <td>
                 <span className="compare-none">Not paired</span>
               </td>
@@ -341,9 +349,14 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
               </td>
               <td className="compare-actions">
                 <Button onClick={() => send(s.key, null, "only_reference")}>
-                  Only in {R} <span className="visually-hidden">: {stepName(s)}</span>
+                  Only in {R} <span className="visually-hidden">: {stepName(s, R)}</span>
                 </Button>
-                <ChooseAnother label={`Pair ${stepName(s)} with`} steps={c.steps.other} onChoose={(key) => send(s.key, key, "confirmed")} />
+                <ChooseAnother
+                  label={`Pair ${stepName(s, R)} with`}
+                  steps={c.steps.other}
+                  country={O}
+                  onChoose={(key) => send(s.key, key, "confirmed")}
+                />
               </td>
             </tr>
           ))}
@@ -352,13 +365,13 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
               <td>
                 <span className="compare-none">Not paired</span>
               </td>
-              <td>{stepName(s)}</td>
+              <td>{stepName(s, O)}</td>
               <td>
                 <Chip dashed>Undecided</Chip>
               </td>
               <td className="compare-actions">
                 <Button onClick={() => send(null, s.key, "only_other")}>
-                  Only in {O} <span className="visually-hidden">: {stepName(s)}</span>
+                  Only in {O} <span className="visually-hidden">: {stepName(s, O)}</span>
                 </Button>
               </td>
             </tr>
@@ -369,14 +382,24 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
   );
 }
 
-function ChooseAnother({ label, steps, onChoose }: { label: string; steps: ComparedStep[]; onChoose: (key: string) => void }) {
+function ChooseAnother({
+  label,
+  steps,
+  country,
+  onChoose,
+}: {
+  label: string;
+  steps: ComparedStep[];
+  country: string;
+  onChoose: (key: string) => void;
+}) {
   const [value, setValue] = useState("");
   return (
     <span className="compare-choose">
       <SelectField
         label={label}
         value={value}
-        options={[{ value: "", label: "Choose another step…" }, ...steps.map((s) => ({ value: s.key, label: stepName(s) }))]}
+        options={[{ value: "", label: "Choose another step…" }, ...steps.map((s) => ({ value: s.key, label: stepName(s, country) }))]}
         onChange={(key) => {
           setValue("");
           if (key) onChoose(key);

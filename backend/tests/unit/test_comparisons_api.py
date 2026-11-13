@@ -222,6 +222,22 @@ def test_pair_decisions_are_checked_and_audited(countries: Countries) -> None:
     } <= set(actions)
 
 
+def test_pairs_are_listed_in_process_order(countries: Countries) -> None:
+    """Eric, 2026-11-13: the pairs follow the process, not the order they were confirmed in. A
+    step only Belmar has sits after the step before it on Belmar's map."""
+    c = countries
+    view = paired(c)
+    assert [(p["reference_key"], p["other_key"]) for p in view["pairs"]] == [
+        (RECEIVE, RECEIVE),
+        (key_of("Build the bid solution"), key_of("Build the bid solution")),
+        (DRAFT_PRICE, DRAFT_PRICE),
+        (APPROVE, APPROVE),
+        (None, CREDIT),  # after Approve on Belmar's map
+        (LEGAL, None),
+        (key_of("Send the renewal offer"), key_of("Send the renewal offer")),
+    ]
+
+
 def test_confirmed_pairs_survive_a_republish_of_either_side(countries: Countries) -> None:
     c = countries
     view = paired(c)
