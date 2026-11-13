@@ -96,6 +96,38 @@ def _count_table(caption: str, head: str, counts: Sequence[tuple[str, int]]) -> 
     )
 
 
+# Rows that fit on one page with every cell wrapping to three lines (a difference title or reason
+# of up to 300 characters): checked in a real browser with 40 long differences (Eric, 2026-11-13).
+ROWS = {"a3": 11, "slide": 13}  # 11 A3 rows use about 85% of the page, 13 slide rows 65%
+
+
+def _listed(
+    layout: str,
+    section: str,
+    kicker: str,
+    title: str,
+    found: Sequence[DifferenceView],
+    empty: str,
+    footer: str,
+) -> list[str]:
+    """One table, carried onto further pages when it is long: "Who decides (continued, 2 of 3)"."""
+    size = ROWS[layout]
+    chunks = [found[i : i + size] for i in range(0, len(found), size)] or [[]]
+    pages = []
+    for n, chunk in enumerate(chunks, start=1):
+        heading = (
+            title
+            if len(chunks) == 1
+            else (
+                f"{title} ({n} of {len(chunks)})"
+                if n == 1
+                else f"{title} (continued, {n} of {len(chunks)})"
+            )
+        )
+        pages.append(_page(section, kicker, heading, _table(chunk, empty), footer))
+    return pages
+
+
 def render(
     view: ComparisonView,
     layout: str,
@@ -133,25 +165,31 @@ def render(
     pages = "".join(
         [
             _page("summary", "Summary", title, summary, footer),
-            _page(
+            *_listed(
+                layout,
                 "decides",
                 "Who decides",
                 f"Who decides: {other} and {ref}",
-                _table(decides, "No difference in who decides is classed or kept."),
+                decides,
+                "No difference in who decides is classed or kept.",
                 footer,
             ),
-            _page(
+            *_listed(
+                layout,
                 "work",
                 "How the work differs",
                 f"How the work differs: {other} and {ref}",
-                _table(works, "No difference in how the work runs is classed or kept."),
+                works,
+                "No difference in how the work runs is classed or kept.",
                 footer,
             ),
-            _page(
+            *_listed(
+                layout,
                 "only",
                 "Only in one country",
                 f"Only in one country: {other} and {ref}",
-                _table(only, "Every step is in both countries."),
+                only,
+                "Every step is in both countries.",
                 footer,
             ),
         ]

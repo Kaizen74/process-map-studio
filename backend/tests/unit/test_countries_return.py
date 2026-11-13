@@ -245,3 +245,111 @@ def test_the_summary_line_is_singular_or_plural_as_the_counts_need() -> None:
         "2 differences classed or kept; 3 not classed yet (not printed); 2 dismissed as not real "
         "differences (not printed)."
     )
+
+
+def long_comparison() -> Any:
+    """40 classed differences with long titles and reasons: 20 about who decides, 12 about how
+    the work runs, 8 steps in one country only. Fictional, built for the page check."""
+    from app.domain.comparisons import (
+        ComparisonView,
+        DifferenceCounts,
+        DifferenceView,
+        SideView,
+    )
+    from app.domain.compass import GradeView
+
+    grade = GradeView(
+        grade="indicated", suggested="indicated", chosen_by_owner=False, rules_version="1"
+    )
+    reason = (
+        "Belmar kept the delegation of authority it had before the merger, and the "
+        "regional finance controller role was never set up there; the country manager "
+        "signs off every renewal price above the standard discount band, which the "
+        "regional board reviews each quarter against the group policy on approvals."
+    )
+
+    def diff(n: int, kind: str, topic: str) -> DifferenceView:
+        title = (
+            f"Step {n} of the renewal: approved by Country manager and the Bid & Solutions "
+            f"Architect in Belmar, by Regional finance controller and the Head of Pricing / "
+            f"Revenue Management in Arden"
+        )
+        return DifferenceView(
+            key=f"{kind}|k{n}|k{n}",
+            kind=kind,
+            topic=topic,
+            title=title,
+            reference_value="a",
+            other_value="b",
+            figure="120 min in Belmar vs 45 min in Arden (stated)",
+            reference_key=f"k{n}",
+            other_key=f"k{n}",
+            status="classed",
+            code=f"V{n}",
+            reason_class="inherited",
+            reason_note=reason[:300],
+            note="",
+            grade=grade,
+            grade_reason="",
+        )
+
+    found = (
+        [diff(n, "who_decides", "decision_right") for n in range(1, 21)]
+        + [diff(n, "work_time", "way_of_working") for n in range(21, 33)]
+        + [diff(n, "only_other", "role_presence") for n in range(33, 41)]
+    )
+    side = {
+        "engagement_id": "e",
+        "name": "n",
+        "version_id": "v",
+        "version_label": "v1.0",
+        "newer_version_label": None,
+    }
+    return ComparisonView(
+        id="c",
+        rules_version="1",
+        reference=SideView(**side, country="Arden"),
+        other=SideView(**side, country="Belmar"),
+        same_process="same pilot VS-01",
+        steps={"reference": [], "other": []},
+        pairs=[],
+        differences=found,
+        no_longer_found=[],
+        counts=DifferenceCounts(classed=40),
+        suggest_job=None,
+    )
+
+
+def test_long_tables_are_carried_onto_further_pages() -> None:
+    """Eric, 2026-11-13: a long list continues on the next page instead of being cut off."""
+    from app.actions.quality import html_assets
+    from app.actions.reality_pack import reality_css
+    from app.services import export_comparison
+
+    view = long_comparison()
+    tokens, fonts = html_assets()
+    expected = {
+        "a3": {"decides": 2, "work": 2, "only": 1},
+        "slide": {"decides": 2, "work": 1, "only": 1},
+    }
+    for layout, counts in expected.items():
+        html = export_comparison.render(
+            view,
+            layout,
+            process="Bid to contract renewal",
+            tokens=tokens,
+            fonts=fonts,
+            reality_css=reality_css(),
+        )
+        sections = [s.split('"')[0] for s in html.split('data-section="')[1:]]
+        assert sections.count("summary") == 1
+        for section, pages in counts.items():
+            assert sections.count(section) == pages, (layout, section)
+        for n in range(1, 41):  # every difference printed exactly once
+            assert html.count(f'<td class="mono">V{n}</td>') == 1, (layout, n)
+        assert "Who decides: Belmar and Arden (1 of 2)" in html
+        assert "Who decides: Belmar and Arden (continued, 2 of 2)" in html
+        assert "Only in one country: Belmar and Arden<" in html  # one page: no numbering
+        if os.environ.get("PMS_UPDATE_GOLDEN") == "1":  # for the browser check (print, axe)
+            (FRONTEND / f"comparison_pages_long_{layout}.html").write_text(html, encoding="utf-8")
+        assert (FRONTEND / f"comparison_pages_long_{layout}.html").read_text("utf-8") == html

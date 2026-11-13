@@ -325,7 +325,7 @@ A comparison is one **reference** engagement and one **other** engagement mappin
 
 ### Printable pages (increment 5)
 
-- `GET /api/comparisons/{cid}/export?layout=a3|slide` → one HTML file: Summary, Who decides, How the work differs, Only in one country. Fixed templates, role names only, no quote, name, source text or file name; dismissed and open differences are left out (open ones are counted on the summary). `409 CONFLICT` when a hidden name or anything shaped like a key would be in the file. Audit "Exported country comparison".
+- `GET /api/comparisons/{cid}/export?layout=a3|slide` → one HTML file: Summary, Who decides, How the work differs, Only in one country. Fixed templates, role names only, no quote, name, source text or file name; dismissed and open differences are left out (open ones are counted on the summary). A long list continues on further pages (at most 11 rows per A3 page, 13 per 16:9 page), headed "(1 of 2)", "(continued, 2 of 2)" (DECISIONS 101). `409 CONFLICT` when a hidden name or anything shaped like a key would be in the file. Audit "Exported country comparison".
 
 ### Return file (increment 6)
 
