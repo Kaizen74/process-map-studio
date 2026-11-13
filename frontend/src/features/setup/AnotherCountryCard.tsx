@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { Engagement } from "../../api/types";
 import {
   Button,
@@ -12,6 +12,7 @@ import { useToast } from "../../components/shell";
 import { useAnotherCountry } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
 import { useVersions } from "../../hooks/useVersions";
+import { engagementPath } from "../../lib/engagementSteps";
 import { fieldOf, messageOf } from "../../lib/errors";
 
 /**
@@ -102,6 +103,10 @@ export function AnotherCountryCard({ engagement }: { engagement: Engagement }) {
           published map.
         </p>
       )}
+      <p className="field__help">
+        Once both countries have a published map, compare them on{" "}
+        <Link to={engagementPath(engagement.id, "compare")}>Compare countries</Link>.
+      </p>
       <Dialog
         open={open}
         title="Map this process in another country"

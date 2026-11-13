@@ -385,7 +385,8 @@ export interface Job {
     | "event_log_import"
     | "event_log_alignment"
     | "intent_extract"
-    | "intent_compare";
+    | "intent_compare"
+    | "country_match";
   target_id: string | null;
   status: JobStatus;
   stage: string;

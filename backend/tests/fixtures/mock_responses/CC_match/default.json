@@ -1,0 +1,14 @@
+{
+  "pairs": [
+    {
+      "reference_key": "legal-review-of-terms",
+      "other_key": "check-the-credit-limit",
+      "reason": "Both are the control check before the offer is sent."
+    },
+    {
+      "reference_key": "not-on-either-map",
+      "other_key": "send-the-renewal-offer",
+      "reason": "A planted trap: the first key is not on the reference map, so the app leaves it out."
+    }
+  ]
+}

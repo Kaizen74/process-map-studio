@@ -3,7 +3,7 @@
 import type { NavKey, Settings } from "../api/types";
 
 /** Steps of optional modules (decision A) are not in the readiness endpoint's nav. */
-export type StepKey = NavKey | "system_records" | "reality";
+export type StepKey = NavKey | "system_records" | "reality" | "compare";
 
 export interface EngagementStep {
   key: StepKey;
@@ -55,6 +55,8 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
     more: true,
   },
   { key: "leadership", label: "Leadership", slug: "leadership", more: true },
+  // DECISIONS 98: the same process in another country; optional, needs two published maps.
+  { key: "compare", label: "Compare countries", slug: "compare", optional: true, more: true },
   { key: "exports", label: "Exports", slug: "exports" },
 ];
 

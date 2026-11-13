@@ -11,7 +11,16 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import draft, event_logs, gap, intent_ai, interview, log_alignment, sources
+from app.actions import (
+    comparisons,
+    draft,
+    event_logs,
+    gap,
+    intent_ai,
+    interview,
+    log_alignment,
+    sources,
+)
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.models import JobView
@@ -127,6 +136,15 @@ def _run_align(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     _record(sessions, job.id, result)
 
 
+def _run_country_match(config: AppConfig, sessions: Sessions, job: JobView) -> None:
+    try:
+        result = comparisons.run_suggest(config, sessions, job.id)
+    except Exception as exc:  # suggestions are stored only at the very end
+        log.exception("Country matching job %s failed", job.id)
+        result = Err(ErrorKind.IO, comparisons.UNEXPECTED, {"type": type(exc).__name__})
+    _record(sessions, job.id, result)
+
+
 def _run_intent(config: AppConfig, sessions: Sessions, job: JobView) -> None:
     run = intent_ai.run_extract if job.type == intent_ai.EXTRACT_JOB else intent_ai.run_compare
     try:
@@ -168,6 +186,8 @@ def run_job(config: AppConfig, sessions: Sessions, job_id: str) -> None:
         _run_align(config, sessions, job)
     elif job.type in intent_ai.INTENT_JOBS:
         _run_intent(config, sessions, job)
+    elif job.type == comparisons.MATCH_JOB:
+        _run_country_match(config, sessions, job)
     else:
         _finish(sessions, job_id, Err(ErrorKind.VALIDATION, f"Unknown job type: {job.type}."))
 
