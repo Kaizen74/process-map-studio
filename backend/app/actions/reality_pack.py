@@ -29,7 +29,7 @@ MEDIA = "text/html; charset=utf-8"
 
 
 @cache
-def _reality_css() -> str:
+def reality_css() -> str:
     return REALITY_CSS_FILE.read_text(encoding="utf-8")
 
 
@@ -53,7 +53,7 @@ def export_pack(config: AppConfig, sessions: Sessions, version_id: str,
         content = export_reality.render_pack(
             snapshot, layout,
             signal=strength.label if strength else "", tokens=tokens, fonts=fonts,
-            reality_css=_reality_css(),
+            reality_css=reality_css(),
         )  # fmt: skip
         audit.record(
             session, actor=actor, action="Exported Reality pack", target_type="version",

@@ -74,3 +74,14 @@ def decide(
 ) -> DifferenceView:
     state = request.app.state
     return unwrap(comparisons.decide(state.config, state.sessions, comparison_id, diff_key, body))
+
+
+@router.get("/comparisons/{comparison_id}/export")
+def export_pages(request: Request, comparison_id: str, layout: str = "a3") -> Response:
+    state = request.app.state
+    file = unwrap(comparisons.export_pages(state.config, state.sessions, comparison_id, layout))
+    return Response(
+        content=file.content.encode("utf-8"),
+        media_type=file.media_type,
+        headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
+    )

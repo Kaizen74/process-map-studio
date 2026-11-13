@@ -93,7 +93,8 @@ function CompassReturnCard({
       <p>
         What this version found, under engagement key <span className="mono">{link.key}</span>: each step with its
         work type, each discrepancy with its figure, each intent statement, the knowledge risks and your verdicts on
-        what is being tested, each with its grade.
+        what is being tested, each with its grade. When this country was compared with another on Compare countries,
+        the differences you classed or kept are added, with your reasons.
       </p>
       <p className="export-card__excluded">{RETURN_EXCLUDED}</p>
       <p>

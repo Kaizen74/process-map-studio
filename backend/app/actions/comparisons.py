@@ -17,8 +17,9 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import discrepancies as discrepancies_action
+from app.actions import publish, reality_pack, redaction
+from app.actions import quality as quality_action
 from app.actions import reality as reality_action
-from app.actions import redaction
 from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
@@ -48,7 +49,7 @@ from app.domain.enums import (
     VersionState,
 )
 from app.domain.graph import GraphEvidence
-from app.domain.models import EngagementView, VersionView
+from app.domain.models import EngagementView, ExportFile, VersionView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.pipeline import cc_match
 from app.pipeline.context import ai_context
@@ -59,8 +60,8 @@ from app.repositories import engagements as engagements_repo
 from app.repositories import jobs as jobs_repo
 from app.repositories import versions as versions_repo
 from app.services import compass as compass_service
+from app.services import compass_return, export_comparison, exports, grounding
 from app.services import country_compare as rules
-from app.services import exports, grounding
 from app.services import grade as grade_rules
 
 Sessions = sessionmaker[Session]
@@ -839,3 +840,122 @@ def run_suggest(config: AppConfig, sessions: Sessions, job_id: str) -> Result[st
             it="it" if left_out == 1 else "they",
         )
     return Ok(message)
+
+
+# --- Printable pages (PRD §3.19) --------------------------------------------------------------
+
+LEAK = (
+    "The pages would have held a name on a list of names to hide, so nothing was downloaded. "
+    "Check both engagements' lists of names to hide and the wording of the reasons, then try again."
+)
+
+
+def export_pages(
+    config: AppConfig, sessions: Sessions, comparison_id: str, layout: str
+) -> Result[ExportFile]:
+    """The summary, Who decides, How the work differs and Only in one country, as one HTML file."""
+    if layout not in export_comparison.LAYOUTS:
+        return _invalid("layout", reality_pack.BAD_LAYOUT)
+    with session_scope(sessions) as session:
+        match _load(config, session, comparison_id):
+            case Err() as err:
+                return err
+            case Ok(value=m):
+                pass
+        view = _view(session, m)
+        process = m.other.engagement.process_name or m.other.engagement.name
+        tokens, fonts = quality_action.html_assets()
+        content = export_comparison.render(
+            view,
+            layout,
+            process=process,
+            tokens=tokens,
+            fonts=fonts,
+            reality_css=reality_pack.reality_css(),
+        )
+        hidden = [*m.reference.hidden, *m.other.hidden]
+        if compass_return.leaks(content, hidden, compass_return.SECRET_MARKERS):
+            return Err(ErrorKind.CONFLICT, LEAK)
+        audit.record(
+            session,
+            actor=actor_name(config),
+            action="Exported country comparison",
+            target_type="comparison",
+            target_id=comparison_id,
+            engagement_id=m.other.engagement.id,
+            after={"layout": layout},
+        )
+        name = (
+            f"{publish.slug(process)}-{publish.slug(view.other.country)}-vs-"
+            f"{publish.slug(view.reference.country)}-{layout}.html"
+        )
+        return Ok(ExportFile(filename=name, media_type=reality_pack.MEDIA, content=content))
+
+
+# --- Findings for the Compass (PRD §3.19) -----------------------------------------------------
+
+
+def _rests(country: str, step: rules.Step | None) -> str:
+    if step is None:
+        return f"{country} has no such step"
+    parts = (
+        [f"{step.interviews} interview{'s' if step.interviews != 1 else ''}"]
+        if step.interviews
+        else []
+    )
+    parts += (
+        [f"{step.documents} document{'s' if step.documents != 1 else ''}"] if step.documents else []
+    )
+    return f"{country}'s step rests on {' and '.join(parts) or 'no checked source'}"
+
+
+def variations_for(
+    config: AppConfig, session: Session, engagement_id: str, version_id: str
+) -> tuple[list[compass_return.Variation], list[str]]:
+    """The classed or kept differences of the comparisons where this engagement, at this version,
+    is the other country (each difference reported once, by the country compared), and the
+    reference engagements' names to hide, for the leaks check."""
+    out: list[compass_return.Variation] = []
+    hidden: list[str] = []
+    for record in repo.as_other(session, engagement_id, version_id):
+        match _load(config, session, record.id):
+            case Err():
+                continue
+            case Ok(value=m):
+                pass
+        hidden += m.reference.hidden
+        ref_steps = {s.key: s for s in m.reference.steps}
+        oth_steps = {s.key: s for s in m.other.steps}
+        process = _process_of(m.other.engagement)
+        for d in _view(session, m).differences:
+            if d.status not in (DifferenceStatus.CLASSED.value, DifferenceStatus.KEPT.value):
+                continue
+            if not d.code:
+                continue
+            here = oth_steps.get(d.other_key or "")
+            there = ref_steps.get(d.reference_key or "")
+            note = (
+                f"Compared between the two published maps of {process}; "
+                f"{_rests(m.countries.other, here)}; {_rests(m.countries.reference, there)}."
+            )
+            out.append(
+                compass_return.Variation(
+                    code=d.code,
+                    kind=d.kind,
+                    title=d.title,
+                    topic=d.topic,
+                    step_code=here.code if here else "",
+                    step_label=here.label if here else (there.label if there else ""),
+                    reason_class=d.reason_class
+                    if d.status == DifferenceStatus.CLASSED.value
+                    else None,
+                    reason_note=d.reason_note,
+                    grade=d.grade.grade,
+                    figure=d.figure,
+                    country=m.countries.other,
+                    compared_with=m.countries.reference,
+                    source_note=note,
+                )
+            )
+    out.sort(key=lambda v: int(v.code[1:]) if v.code[1:].isdigit() else 0)
+    return out, hidden
