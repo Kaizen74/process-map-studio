@@ -212,7 +212,11 @@ def test_the_printable_pages_hold_only_what_eric_classed_or_kept(
         only = html.split('data-section="only"')[1]
         assert "Check the credit limit" in only and "Legal review of terms" not in only  # open
         assert "done by Country manager in Belmar" not in html  # dismissed: left out
-        assert "1 not classed yet (not printed); 1 dismissed" in html
+        # Singular when there is one (Eric, 2026-11-13).
+        assert (
+            "3 differences classed or kept; 1 not classed yet (not printed); 1 dismissed as not a "
+            "real difference (not printed)."
+        ) in html
         assert not [p for p in PERSON.values() if p in html]
         assert "said the" not in html and "interview_" not in html
         assert "http://" not in html.replace("http://www.w3.org", "")
@@ -222,3 +226,22 @@ def test_the_printable_pages_hold_only_what_eric_classed_or_kept(
     bad = c.client.get(f"/api/comparisons/{view['id']}/export?layout=poster")
     assert bad.status_code == 422
     assert "Exported country comparison" in [r["action"] for r in audit_actions(c.client, c.belmar)]
+
+
+def test_the_summary_line_is_singular_or_plural_as_the_counts_need() -> None:
+    from app.domain.comparisons import ComparisonView, DifferenceCounts
+    from app.services.export_comparison import _counted
+
+    def line(printed: int, opened: int, dismissed: int) -> str:
+        counts = DifferenceCounts(open=opened, dismissed=dismissed)
+        view = ComparisonView.model_construct(counts=counts)
+        return _counted(view, printed)
+
+    assert line(1, 0, 1) == (
+        "1 difference classed or kept; 0 not classed yet (not printed); 1 dismissed as not a "
+        "real difference (not printed)."
+    )
+    assert line(2, 3, 2) == (
+        "2 differences classed or kept; 3 not classed yet (not printed); 2 dismissed as not real "
+        "differences (not printed)."
+    )

@@ -65,6 +65,19 @@ def _table(found: Sequence[DifferenceView], empty: str) -> str:
     )
 
 
+def _counted(view: ComparisonView, printed: int) -> str:
+    """The summary's opening line, singular or plural as the counts need (Eric, 2026-11-13)."""
+    opened, dismissed = view.counts.open, view.counts.dismissed
+    kept = f"{printed} difference{'' if printed == 1 else 's'} classed or kept"
+    not_yet = f"{opened} not classed yet (not printed)"
+    gone = (
+        f"{dismissed} dismissed as not a real difference (not printed)"
+        if dismissed == 1
+        else f"{dismissed} dismissed as not real differences (not printed)"
+    )
+    return f"{kept}; {not_yet}; {gone}."
+
+
 def _page(section: str, kicker: str, title: str, body: str, footer: str) -> str:
     return (
         f'<section class="page" data-section="{e(section)}">'
@@ -112,9 +125,7 @@ def render(
         "only. Nothing here is written by AI."
     )
     summary = (
-        f'<p class="pack-strong">{len(printed)} differences classed or kept; '
-        f"{view.counts.open} not classed yet (not printed); {view.counts.dismissed} dismissed as "
-        "not real differences (not printed).</p>"
+        f'<p class="pack-strong">{_counted(view, len(printed))}</p>'
         + _count_table("By reason", "Reason", by_reason)
         + _count_table("By topic", "Topic", by_topic)
     )
