@@ -238,6 +238,19 @@ def test_pairs_are_listed_in_process_order(countries: Countries) -> None:
     ]
 
 
+def test_differences_are_listed_in_process_order(countries: Countries) -> None:
+    """Eric, 2026-11-13: the differences follow the same process order as the pairs, so
+    Belmar's credit check sits after the price approval, before Arden's legal review."""
+    view = paired(countries)
+    assert [(d["kind"], d["reference_key"], d["other_key"]) for d in view["differences"]] == [
+        ("work_time", DRAFT_PRICE, DRAFT_PRICE),
+        ("who_does", APPROVE, APPROVE),
+        ("who_decides", APPROVE, APPROVE),
+        ("only_other", None, CREDIT),
+        ("only_reference", LEGAL, None),
+    ]
+
+
 def test_confirmed_pairs_survive_a_republish_of_either_side(countries: Countries) -> None:
     c = countries
     view = paired(c)

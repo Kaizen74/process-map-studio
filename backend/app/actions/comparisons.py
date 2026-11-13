@@ -365,6 +365,9 @@ def _view(session: Session, m: _Loaded) -> ComparisonView:
                 grade_reason=d.grade_reason,
             )
         )
+    # In the pairs' process order (Eric, 2026-11-13); the rules' own order stands within a pair.
+    at = {(p.reference_key, p.other_key): n for n, p in enumerate(pairs)}
+    views.sort(key=lambda v: at.get((v.reference_key, v.other_key), len(at)))
     current = {d.key for d in found}
     gone = [
         DifferenceView(
