@@ -529,3 +529,69 @@ class FigureLabel(StrEnum):
     DOCUMENTED = "documented"
     TARGET = "target"
     MIXED = "mixed"
+
+
+# --- Comparing countries (PRD §3.19; DECISIONS 98) ------------------------------------------------
+
+
+class ReasonClass(StrEnum):
+    """B.51 reason class: why two countries differ (Eric's choice, never the app's)."""
+
+    REQUIRED = "required"
+    CHOSEN = "chosen"
+    INHERITED = "inherited"
+    UNKNOWN = "unknown"
+
+
+class FindingTopic(StrEnum):
+    """B.52 finding topic: which Compass readout page a finding belongs on."""
+
+    DECISION_RIGHT = "decision_right"
+    ROLE_PRESENCE = "role_presence"
+    ROLE_REASON = "role_reason"
+    WAY_OF_WORKING = "way_of_working"
+
+
+class DifferenceKind(StrEnum):
+    """B.53 country difference kind."""
+
+    WHO_DOES = "who_does"
+    WHO_DECIDES = "who_decides"
+    HOW_DECIDED = "how_decided"
+    STEP_KIND = "step_kind"
+    WORK_TYPE = "work_type"
+    WORK_TIME = "work_time"
+    WAIT_TIME = "wait_time"
+    DOCUMENTED_VS_DONE = "documented_vs_done"
+    ONLY_REFERENCE = "only_reference"
+    ONLY_OTHER = "only_other"
+
+
+class PairStatus(StrEnum):
+    """B.54 step pair status: proposed by rule, suggested by Claude, or Eric's decision."""
+
+    PROPOSED = "proposed"
+    SUGGESTED = "suggested"
+    CONFIRMED = "confirmed"
+    ONLY_REFERENCE = "only_reference"
+    ONLY_OTHER = "only_other"
+
+
+class DifferenceStatus(StrEnum):
+    """B.55 difference status."""
+
+    OPEN = "open"
+    KEPT = "kept"
+    CLASSED = "classed"
+    DISMISSED = "dismissed"
+
+
+class ReturnKind(StrEnum):
+    """B.56 return finding kind (compass-return 1.0)."""
+
+    STEP = "step"
+    DISCREPANCY = "discrepancy"
+    INTENT = "intent"
+    KNOWLEDGE_RISK = "knowledge_risk"
+    HYPOTHESIS_VERDICT = "hypothesis_verdict"
+    VARIATION = "variation"

@@ -113,7 +113,7 @@ Single user in v1: Eric, as process designer and sole validator, on a desktop or
 - Live connectors to SAP, Salesforce, Workday or other systems; background agents in client systems; real-time process mining; any person-level analytics from system data.
 - Outlook `.msg` files (save as `.eml` or PDF instead; the common `.msg` parser is GPL-licensed).
 - AI-opportunity scoring and prioritisation (Eric's existing skills handle this from the exports).
-- BPMN export, "ask the map", role-network metrics, cross-engagement pattern suggestions (§10).
+- BPMN export, "ask the map", role-network metrics, cross-engagement pattern suggestions from the cause library (§10). Comparing two published maps of the same process in different countries is in scope (§3.19; owner decision 2026-11-13, DECISIONS 98).
 - Designing the future-state (to-be) process. Verdicts and dispositions say where a fix lies; they never draw a redesigned map.
 - AI-written narrative on executive views (headlines and callouts come only from fixed templates, §3.18.4); slide files in `.pptx` format (the Reality pack prints to 16:9 pages instead); animated presentations beyond the 600 ms reveal in §5.12.6.
 - Any Reality figure for a single real case or a single named person (the typical case is a composite of at least 5 cases, §3.18.3).
@@ -347,6 +347,9 @@ All tables have `id` (UUID string) and `created_at`. Migration 0001 created the 
 | `discrepancy_items` | (planned, P13a migration 0015) engagement_id, code (`X1`, `X2` …; never reused), location_key (deterministic: D-type family + step stable key, edge stable keys or log activity name), title (from the copy template; Eric may rename), first_version_id, verdict_decided (B.47, nullable), verdict_note, decision_owner_role_id (nullable), retired (bool) |
 | `testing_items` | engagement_id, ref (`P1`, `H2` …; as received or typed, never minted here), text, refuted_by, origin (compass/owner), verdict (open/supported/refuted), evidence_refs (json: step, discrepancy or intent codes), note |
 | `shared_codes` | engagement_id, kind (step/intent), ref_key (a step's stable key or an intent statement's ID), code (`S-01`, `I1`); never deleted, so a code is never reused (DECISIONS 96). Also: `discrepancy_items.grade` and `gap_findings.grade` (confirmed/indicated/hypothesis; null while the suggested grade stands) |
+| `country_comparisons` | reference_engagement_id, other_engagement_id, reference_version_id, other_version_id (published only), suggest_job_id; also `engagements.country` and `engagements.reference_engagement_id` (§3.19, DECISIONS 98) |
+| `country_pairs` | comparison_id, reference_key, other_key (stable keys; null for "only in"), status (B.54: suggested, confirmed, only_reference, only_other), why |
+| `country_differences` | comparison_id, diff_key, title (as last seen), status (B.55), reason_class (B.51), reason_note, grade, note; the `Vn` code is in `shared_codes` (kind `diff`) |
 | `intent_conflicts` | (P13a migration 0015) version_id, intent_id, documented segment_ids (json) and quote, intent quote, conflict text (≤ 25 words), verifier_verdict (B.19), verification_status (B.18), rejection_guardrail (B.20, nullable; migration 0016), status (proposed/confirmed/dismissed), note |
 | `reality_snapshots` | (planned, P13a migration 0015) version_id, view (done), payload (json: discrepancies, view models, geometry, copy, legend, data label), inputs_hash, rules_version, app_version, frozen (bool; true once the version is published) |
 
@@ -928,6 +931,28 @@ At most five, taken in this order from those the snapshot can compute (each with
 
 #### 3.18.6 Reality pack (export)
 One self-contained HTML file per published version with a green quality card (the same rule as other exports), built from the frozen snapshot with the shared design tokens, no external requests and no images. A print stylesheet gives one view per page in **A3 landscape** (legend and data label on every page, text at least 11 px) or **16:9** (`?layout=slide`, 1920 × 1080 pages, at most 2 callouts each); Eric prints or saves either as PDF from his browser, so no PDF library is added. Sections follow constraint 9: **Facts** (Glance, Reality stack, Redline, Where the time goes, Belief vs evidence, Typical case, each with its factual headline), **Interpretation** (impact classes and where the gaps concentrate, with control exposures hedged as potential) and **Recommendation** (Fix or keep and its decide-first list, verdicts marked suggested or confirmed); a structural check keeps verdict fields out of the first two sections (as Q7). Role names only; no verbatim quotes (the in-app voice chips are not exported); redaction scan 0 hits (Q8 rules apply).
+
+### 3.19 Comparing countries (optional; owner decision 2026-11-13, DECISIONS 98)
+
+The Capability Compass keeps one workspace per country, copied from one frame, so a value stream keeps its `VS-nn` in every country. This app compares **two published maps of the same process in two countries** and sends the differences back. It is the only cross-engagement work in scope; pattern suggestions from the cause library stay in §10.
+
+**Country.** Every engagement has a `country` (empty for group-wide or unknown). An engagement started from a hand-off takes it from the packet's `engagement.country` (kept in `compass.country` exactly as received, and locked on the scope card); any other engagement has an editable Country field on the scope card. Engagement cards show it next to the name.
+
+**Same process.** Two engagements map the same process when one started from the other (`reference_engagement_id`, either way, or both from the same reference), or when both started from hand-offs with the same `pilot_ref` and the same frame: one key is the frame key and the other the frame key plus two or three letters (`MERIDIAN`, `MERIDIANBE`), or the cluster refs are the same. Anything else is a different process and is never compared.
+
+**Start a country from another country.** When a hand-off's pilot is already mapped by an engagement of the same frame in another country (a different key), the preview asks: "Arden already maps VS-01 Bid to contract renewal. Start from its scope card, conventions and lanes?" Yes copies the process name, trigger, end point, process KPI and in-scope roles (what Eric typed wins), the mapping conventions, and the lane names he ticks; and records `reference_engagement_id`. It copies **no document, transcript, map, code, role alias or name to hide**: the new country has its own sources. "Map this process in another country…" does the same for any engagement with a published version, Eric typing the country.
+
+**Lining up steps.** A comparison has a **reference** (e.g. Arden) and an **other** country (e.g. Belmar) and reads only **published** versions (a draft is refused in plain words). Pairs are proposed by fixed rules (shared words in the label, the same lane role name, the same step kind, the same phase name, then order), each with its reason; an optional Claude suggestion job (`CC_match`, mocked in tests) may only pair existing step keys of unpaired steps and is never applied without Eric. Eric decides each pair: Confirm, Choose another step, Only in Arden, Only in Belmar. Decisions are stored by stable key and audited, so they carry through a republish; when either side has a newer published version, the screen says so and **Refresh** moves to it, keeping the decisions.
+
+**Differences** (deterministic, rule set `COUNTRY_RULES_VERSION` 1), each a separate line with both values in words, for each confirmed pair: who does it (lane role names differ; `way_of_working`); who decides (decider role names differ, or only one side names a decider; `decision_right`); how it is decided (rule-based vs judgment; `decision_right`); what kind of step (`decision_right` when either side is a decision or approval, else `way_of_working`); work type (both confirmed, and different; `way_of_working`); work time and wait time (both stated, and one at least 1.5 times the other; `way_of_working`; a system figure only from 5 or more cases); documented vs done (an `Xn` sits on the step in one country only, while the Reality views are on; the discrepancy's own topic). A step marked "Only in …" is a difference: `role_presence` when its lane role exists in that country only, else `way_of_working`.
+
+**Classing.** Eric gives each difference a reason class (**Required**, **Chosen**, **Inherited**, **Not known yet**) and one line of reason, or keeps it without a reason, or dismisses it ("not a real difference") with a note. The app never classes a difference. The grade is Eric's; the suggestion is Indicated when both steps are Observed with at least one checked source each, otherwise Hypothesis (a step in one country only is a Hypothesis: the other map may simply be silent, constraint 4). A difference gets its **`Vn`** code the first time it is classed or kept; the code belongs to the other engagement, is stored in `shared_codes` and never reused. Dismissed differences get no code and are never exported. A reason class is not a verdict: a verdict compares documented with done inside one country, a reason explains why two countries differ.
+
+**Printable pages.** A summary (counts by reason and by topic), "Who decides" (every `decision_right` difference), "How the work differs" (the rest) and "Only in one country", in the Reality pack style, A3 or 16:9. Fixed templates, no AI narrative, the 5-case rule for any system figure, role names only: no quote, name, source text or source file name. The leaks check runs on every comparison export.
+
+**Return file.** The other country's `compass-return` file gains the header `country` and one `variation` finding (`ref` `Vn`, `topic`, `reason_class` only when classed, `compared_with` the reference country) per coded, not-dismissed difference of comparisons where it is the other country and its compared version is the one exported. The reference country's file never repeats them. Existing findings gain `topic`: a discrepancy with D12 on a decision or approval step, and a decision or approval step, are `decision_right`; other discrepancies and steps are `way_of_working`; intent, verdicts and knowledge risks carry none.
+
+**Nothing moves between engagements** except the scope card fields, conventions and lane names above. No source, quote, name, transcript passage or claim crosses; each side's labels are shown with its own names hidden. The app works on its own with no packet and no comparison.
 
 ---
 
@@ -1884,7 +1909,7 @@ There is a bug in Process Map Studio. What I did: [describe the clicks]. What I 
 - BPMN 2.0 export.
 - "Ask the map": questions answered from the graph, with citations.
 - Role-network metrics (handoff centrality as ranks) in the leadership view.
-- Cross-engagement pattern suggestions from the cause library (only if confidentiality permits).
+- Cross-engagement pattern suggestions from the cause library (only if confidentiality permits). Comparing two published maps of the same process in two countries is built (§3.19); pattern suggestions stay here.
 - Photo of a whiteboard or hand-drawn sketch → draft map.
 - Direct hand-off to the ai-opportunity scoring skill.
 - Multi-user access, hosting and data-residency controls for client use.
@@ -2126,6 +2151,12 @@ Owner-stated target (entered in the test): "Weight deviations outside tolerance 
 | B.48 | discrepancy type | D1 (skipped step) · D2 (added step) · D3 (reordered) · D4 (rework loop) · D5 (control bypassed) · D6 (off-system) · D7 (takes longer) · D8 (waiting) · D9 (parallel routes) · D10 (belief gap) · D11 (no record) · D12 (different role) · D13 (design gap) · D14 (promise missed) |
 | B.49 | intent metric | cycle_time_min · step_time_min · wait_min · lead_time_min (minutes before a reference event) · straight_through_pct · recorded_pct · other |
 | B.50 | figure label (Reality views) | measured · stated · documented · target · mixed |
+| B.51 | reason class (§3.19) | required · chosen · inherited · unknown |
+| B.52 | finding topic (§3.19) | decision_right · role_presence · role_reason · way_of_working |
+| B.53 | country difference kind (§3.19) | who_does · who_decides · how_decided · step_kind · work_type · work_time · wait_time · documented_vs_done · only_reference · only_other |
+| B.54 | step pair status (§3.19) | proposed · suggested · confirmed · only_reference · only_other |
+| B.55 | difference status (§3.19) | open · kept · classed · dismissed |
+| B.56 | return finding kind (§3.19) | step · discrepancy · intent · knowledge_risk · hypothesis_verdict · variation |
 
 ---
 

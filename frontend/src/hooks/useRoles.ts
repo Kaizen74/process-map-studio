@@ -5,7 +5,11 @@ import type { RoleCreate, RolePatch } from "../api/types";
 const rolesKey = (engagementId: string) => ["engagements", engagementId, "roles"] as const;
 
 export function useRoles(engagementId: string) {
-  return useQuery({ queryKey: rolesKey(engagementId), queryFn: () => listRoles(engagementId) });
+  return useQuery({
+    queryKey: rolesKey(engagementId),
+    queryFn: () => listRoles(engagementId),
+    enabled: Boolean(engagementId),
+  });
 }
 
 export function useCreateRole(engagementId: string) {

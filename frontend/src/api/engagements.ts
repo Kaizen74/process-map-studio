@@ -1,5 +1,13 @@
 import { request } from "./request";
-import type { AnotherFlow, Engagement, EngagementCreate, EngagementSummary, Readiness, ScopeFields } from "./types";
+import type {
+  AnotherCountry,
+  AnotherFlow,
+  Engagement,
+  EngagementCreate,
+  EngagementSummary,
+  Readiness,
+  ScopeFields,
+} from "./types";
 
 export const listEngagements = () => request<EngagementSummary[]>("/engagements");
 
@@ -16,6 +24,10 @@ export const deleteEngagement = (id: string) =>
 
 export const getReadiness = (id: string) =>
   request<Readiness>(`/engagements/${encodeURIComponent(id)}/readiness`);
+
+/** Map this process in another country (DECISIONS 98): scope card, conventions and lane names only. */
+export const startAnotherCountry = (id: string, fields: AnotherCountry) =>
+  request<Engagement>(`/engagements/${encodeURIComponent(id)}/another-country`, { method: "POST", body: fields });
 
 /** Map another flow from these sources (DECISIONS 81): a new engagement, same documents and roles. */
 export const startAnotherFlow = (id: string, fields: AnotherFlow) =>

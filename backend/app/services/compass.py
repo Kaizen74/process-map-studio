@@ -111,8 +111,30 @@ def read_handoff(raw: Any) -> Result[HandoffPreview]:
             open=_texts(readiness.get("open")),
             pilots=pilots,
             principles=principles,
+            country=_text(engagement.get("country")),
         )
     )
+
+
+def _frame_of(key: str, other: str) -> bool:
+    """`key` is the frame key `other` was made from, or both share one: a country's key is the
+    frame key plus two or three letters (HANDOFF_FORMAT §5a: MERIDIAN, MERIDIANBE)."""
+    a, b = key.upper(), other.upper()
+    for size in range(3, min(len(a), len(b)) + 1):
+        frame = a[:size]
+        if b[:size] != frame:
+            break
+        if all(k == frame or (k.startswith(frame) and 2 <= len(k) - size <= 3 and
+                                k[size:].isalpha()) for k in (a, b)):  # fmt: skip
+            return True
+    return False
+
+
+def same_frame(key: str, cluster_ref: str, other_key: str, other_cluster: str) -> bool:
+    """Two hand-offs come from one frame (PRD §3.19): by their keys, or by the same cluster."""
+    if not key or not other_key or key.upper() == other_key.upper():
+        return False  # the same workspace is not another country
+    return _frame_of(key, other_key) or (bool(cluster_ref) and cluster_ref == other_cluster)
 
 
 def choose_pilot(preview: HandoffPreview, pilot_ref: str) -> Result[HandoffPilot]:

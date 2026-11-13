@@ -151,3 +151,16 @@
   background: var(--danger-bg);
   color: var(--danger-text);
 }
+
+/* The country next to the engagement's name (DECISIONS 98). */
+.engagement-card__country {
+  color: var(--ink-2);
+  font-weight: 400;
+}
+
+/* One choice per line in the "start from another country" question (DECISIONS 98). */
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}

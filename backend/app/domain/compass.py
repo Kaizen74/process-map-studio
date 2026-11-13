@@ -23,6 +23,18 @@ class CompassLink(BaseModel):
     interview_prompts: list[str] = []  # suggested probes only: never a claim, step or source
     ready: bool = True
     generated_at: str = ""
+    country: str = ""  # the packet's engagement.country, as received (DECISIONS 98)
+
+
+class SameProcess(BaseModel):
+    """An engagement on this machine mapping the same pilot of the same frame in another country
+    (PRD §3.19): offered as the one to start from."""
+
+    engagement_id: str
+    name: str
+    country: str
+    process_name: str
+    has_published: bool
 
 
 class HandoffPilot(BaseModel):
@@ -36,6 +48,7 @@ class HandoffPilot(BaseModel):
     in_scope_roles: list[str]
     interview_prompts: list[str]
     cell_refs: list[str]
+    same_process: list[SameProcess] = []
 
 
 class HandoffPrinciple(BaseModel):
@@ -53,6 +66,7 @@ class HandoffPreview(BaseModel):
     open: list[str]
     pilots: list[HandoffPilot]
     principles: list[HandoffPrinciple]
+    country: str = ""
 
 
 class HandoffIn(BaseModel):

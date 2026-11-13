@@ -12,7 +12,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import redaction
+from app.actions import countries, redaction
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.config import AppConfig
 from app.db import session_scope
@@ -52,8 +52,16 @@ def _invalid(field: str, message: str) -> Err:
     return Err(ErrorKind.VALIDATION, message, {"field": field})
 
 
-def preview(body: Any) -> Result[HandoffPreview]:
-    return compass.read_handoff(body)
+def preview(sessions: Sessions, body: Any) -> Result[HandoffPreview]:
+    """What the file would create, and for each pilot the engagements mapping the same process
+    in another country (DECISIONS 98). Applies nothing."""
+    match compass.read_handoff(body):
+        case Err() as err:
+            return err
+        case Ok(value=found):
+            pass
+    with session_scope(sessions) as session:
+        return Ok(countries.with_same_process(session, found))
 
 
 def _line(field: str, value: str, *, required: bool = False) -> Result[str]:

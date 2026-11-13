@@ -33,6 +33,9 @@ PRD_TABLES = {
     # Capability Compass hand-off (migration 0020, DECISIONS 95).
     "testing_items",
     "shared_codes",
+    "country_comparisons",
+    "country_pairs",
+    "country_differences",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -396,7 +399,7 @@ def test_enums_match_appendix_b() -> None:
         for cls in vars(enums).values()
         if isinstance(cls, type) and issubclass(cls, enums.StrEnum) and cls is not enums.StrEnum
     }
-    assert len(rows) == 50 == len(by_id)
+    assert len(rows) == 56 == len(by_id)  # B.51-B.56: comparing countries (DECISIONS 98)
     for bid, values in rows:
         expected = [re.sub(r"\s*\(.*?\)", "", v).strip().split()[0] for v in values.split("·")]
         pending = PENDING_VALUES.get(bid, set())
