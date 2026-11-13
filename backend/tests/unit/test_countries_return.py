@@ -217,6 +217,9 @@ def test_the_printable_pages_hold_only_what_eric_classed_or_kept(
             "3 differences classed or kept; 1 not classed yet (not printed); 1 dismissed as not a "
             "real difference (not printed)."
         ) in html
+        # Both count tables share one column grid, so their numbers line up (Eric, 2026-11-13).
+        assert html.count('<table class="reality-table comparison-counts">') == 2
+        assert ".comparison-counts" in html
         assert not [p for p in PERSON.values() if p in html]
         assert "said the" not in html and "interview_" not in html
         assert "http://" not in html.replace("http://www.w3.org", "")

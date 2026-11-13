@@ -32,6 +32,12 @@ TOPICS = {
 GRADES = {"confirmed": "Confirmed", "indicated": "Indicated", "hypothesis": "Hypothesis"}
 ONLY = ("only_reference", "only_other")
 PRINTED = ("classed", "kept")
+# The summary's two count tables share one column grid, so their numbers sit in one line down the
+# page (Eric, 2026-11-13).
+COUNTS_CSS = (
+    ".pack .comparison-counts { table-layout: fixed; width: 100%; }\n"
+    ".pack .comparison-counts th:first-child { width: 60%; }"
+)
 
 
 def e(text: object) -> str:
@@ -90,7 +96,8 @@ def _page(section: str, kicker: str, title: str, body: str, footer: str) -> str:
 def _count_table(caption: str, head: str, counts: Sequence[tuple[str, int]]) -> str:
     rows = "".join(f'<tr><td>{e(k)}</td><td class="mono">{v}</td></tr>' for k, v in counts)
     return (
-        f'<table class="reality-table"><caption>{e(caption)}</caption><thead><tr>'
+        f'<table class="reality-table comparison-counts"><caption>{e(caption)}</caption>'
+        "<thead><tr>"
         f'<th scope="col">{e(head)}</th><th scope="col">Differences</th></tr></thead>'
         f"<tbody>{rows}</tbody></table>"
     )
@@ -195,7 +202,14 @@ def render(
         ]
     )
     css = "\n".join(
-        [fonts_css(fonts), tokens_css(tokens, reality=True), reality_css, STYLE, PAGE[layout]]
+        [
+            fonts_css(fonts),
+            tokens_css(tokens, reality=True),
+            reality_css,
+            STYLE,
+            COUNTS_CSS,
+            PAGE[layout],
+        ]
     )
     return (
         "<!doctype html>\n"
