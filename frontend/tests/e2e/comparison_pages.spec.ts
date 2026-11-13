@@ -46,7 +46,8 @@ for (const layout of ["a3", "slide"] as const) {
       expect(p.smallest, `${layout} page ${p.page}: "${p.where}" under 11 px`).toBeGreaterThanOrEqual(11);
     }
     // Visual baselines (Eric approved the 16:9 summary and Who decides pages, 2026-11-13, with the
-    // singular wording fix). Soft, as for the Reality pack: the rest of the check keeps running.
+    // singular wording fix; the summary again with its count tables lined up, DECISIONS 102). Soft,
+    // as for the Reality pack: the rest of the check keeps running.
     if (layout === "slide") {
       for (const section of ["summary", "decides"]) {
         await expect
