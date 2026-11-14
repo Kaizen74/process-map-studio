@@ -5,7 +5,9 @@ import { GuideEditor } from "../../src/components/interview";
 import type { GuideView } from "../../src/lib/interview";
 import type { QualityCard, VersionDetail, VersionSummary } from "../../src/lib/reviewTypes";
 import { seriousViolations } from "../axe";
+import comparisons from "../fixtures/comparison_sample.json";
 import sample from "../fixtures/compass_sample.json";
+import { referenceNote, type ComparisonSummary } from "../../src/lib/comparisons";
 import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp, type Handler } from "../renderApp";
 
 // The return file and the suggested probes (2026-11-12, Eric's brief; DECISIONS 97).
@@ -35,7 +37,7 @@ const V1: VersionSummary = {
   parent_version_id: null,
 };
 
-function backend(engagement: Engagement) {
+function backend(engagement: Engagement, extra: Record<string, Handler> = {}) {
   const detail: VersionDetail = {
     ...V1,
     review: { reviewed: 8, total: 8 },
@@ -50,6 +52,7 @@ function backend(engagement: Engagement) {
     "GET /api/engagements/e1/versions": () => ({ body: [V1] }),
     "GET /api/versions/v1": () => ({ body: detail }),
     "GET /api/versions/v1/gap-analyses": () => ({ body: [] }),
+    ...extra,
   };
   return fakeApi(routes);
 }
@@ -81,6 +84,43 @@ describe("the Capability Compass return file on Exports", () => {
     expect(json).toHaveAttribute("href", `/api/versions/v1/compass-return?fmt=json&cells=${encodeURIComponent(cell)}`);
     expect(text).toHaveAttribute("href", `/api/versions/v1/compass-return?fmt=md&cells=${encodeURIComponent(cell)}`);
     expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  // Eric, 2026-11-14: a country that is the reference reads where its differences go instead.
+  const SUMMARY = (comparisons.comparisons as ComparisonSummary[])[0] as ComparisonSummary;
+  const asSide = (side: "reference" | "other"): ComparisonSummary[] => [
+    { ...SUMMARY, [side]: { ...SUMMARY[side], engagement_id: "e1" } },
+  ];
+
+  it("tells the reference country that the differences are in the other country's file", async () => {
+    backend({ ...ENGAGEMENT, compass: LINK }, { "GET /api/engagements/e1/comparisons": () => ({ body: asSide("reference") }) });
+    renderApp(PATH);
+    const card = (await screen.findByRole("heading", { name: "Capability Compass return file" })).closest(".card") as HTMLElement;
+    expect(
+      await within(card).findByText(
+        "Arden is the reference in its comparison with Belmar, so those differences are in Belmar's return file.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("names every country it is the reference for", () => {
+    const with_ = (country: string): ComparisonSummary => ({
+      ...SUMMARY,
+      reference: { ...SUMMARY.reference, engagement_id: "e1" },
+      other: { ...SUMMARY.other, country },
+    });
+    expect(referenceNote("e1", [with_("Belmar"), with_("Corland")])).toBe(
+      "Arden is the reference in its comparisons with Belmar and Corland, so those differences are in Belmar's and Corland's return files.",
+    );
+    expect(referenceNote("e1", [])).toBeNull();
+  });
+
+  it("says nothing more for the country whose file carries the differences", async () => {
+    backend({ ...ENGAGEMENT, compass: LINK }, { "GET /api/engagements/e1/comparisons": () => ({ body: asSide("other") }) });
+    renderApp(PATH);
+    const card = (await screen.findByRole("heading", { name: "Capability Compass return file" })).closest(".card") as HTMLElement;
+    await within(card).findByRole("link", { name: /Download JSON/ });
+    expect(within(card).queryByText(/is the reference in its comparison/)).toBeNull();
   });
 
   it("is not shown for an engagement made without a hand-off, and the other downloads are", async () => {

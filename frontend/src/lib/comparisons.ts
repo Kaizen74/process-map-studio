@@ -136,3 +136,24 @@ export const PAIR_LABELS: Record<PairStatus, string> = {
   only_reference: "Only in one country",
   only_other: "Only in one country",
 };
+
+function joined(names: string[]): string {
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/**
+ * For the return file on Exports (Eric, 2026-11-14): a country that is the reference in a
+ * comparison reads where those differences go (the other country's file). Null when it is never
+ * the reference.
+ */
+export function referenceNote(engagementId: string, list: ComparisonSummary[]): string | null {
+  const mine = list.filter((c) => c.reference.engagement_id === engagementId);
+  const first = mine[0];
+  if (!first) return null;
+  const me = first.reference.country || first.reference.name;
+  const others = [...new Set(mine.map((c) => c.other.country || c.other.name))];
+  const files =
+    others.length === 1 ? `${others[0]}'s return file` : `${joined(others.map((o) => `${o}'s`))} return files`;
+  const what = others.length === 1 ? "its comparison" : "its comparisons";
+  return `${me} is the reference in ${what} with ${joined(others)}, so those differences are in ${files}.`;
+}
