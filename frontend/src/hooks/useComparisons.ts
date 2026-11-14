@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   decideDifference,
   getComparison,
@@ -51,12 +51,25 @@ export function useStartComparison(engagementId: string) {
   });
 }
 
+/**
+ * The lists of comparisons, on both countries' screens, carry each comparison's counts: asked again
+ * after every change so they keep up with the comparison shown (Eric, 2026-11-14).
+ */
+function refreshLists(client: QueryClient) {
+  void client.invalidateQueries({
+    predicate: (q) => q.queryKey[0] === "engagements" && q.queryKey[2] === "comparisons",
+  });
+}
+
 /** Every change answers with the whole comparison, which replaces the one shown. */
 function useReplacing<T>(id: string, fn: (arg: T) => Promise<Comparison>) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: fn,
-    onSuccess: (view: Comparison) => client.setQueryData(comparisonKey(id), view),
+    onSuccess: (view: Comparison) => {
+      client.setQueryData(comparisonKey(id), view);
+      refreshLists(client);
+    },
   });
 }
 
@@ -76,7 +89,10 @@ export function useDecideDifference(id: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ key, body }: { key: string; body: DifferenceDecision }) => decideDifference(id, key, body),
-    onSuccess: () => void client.invalidateQueries({ queryKey: comparisonKey(id) }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: comparisonKey(id) });
+      refreshLists(client);
+    },
   });
 }
 
@@ -95,7 +111,9 @@ export function useSuggestPairs(id: string) {
   const status = job.data?.status;
   const finished = status === "done" || status === "failed";
   useEffect(() => {
-    if (finished) void client.invalidateQueries({ queryKey: comparisonKey(id) });
+    if (!finished) return;
+    void client.invalidateQueries({ queryKey: comparisonKey(id) });
+    refreshLists(client);
   }, [client, id, finished]);
   return {
     start: () => {

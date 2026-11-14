@@ -214,6 +214,44 @@ describe("Compare countries", () => {
     expect(sent?.body).toEqual({ action: "class", reason_class: "chosen", reason_note: "Agreed locally." });
   });
 
+  it("updates the list of comparisons after a difference is classed or a pair changes", async () => {
+    // Eric, 2026-11-14: the list line keeps up with the comparison card, with no reload.
+    const open = VIEW.differences.find((d) => d.status === "open");
+    const before = LIST[0] as ComparisonSummary;
+    let decided = 0;
+    const after = (): ComparisonSummary => ({
+      ...before,
+      differences: { ...before.differences, open: before.differences.open - decided, classed: before.differences.classed + decided },
+    });
+    backend({
+      "GET /api/engagements/id-4/comparisons": () => ({ body: [after()] }),
+      [`PUT /api/comparisons/id-3/differences/${encodeURIComponent(open?.key ?? "")}`]: () => {
+        decided = 1;
+        return { body: open };
+      },
+      "PUT /api/comparisons/id-3/pairs": () => {
+        decided = 2;
+        return { body: VIEW };
+      },
+    });
+    renderApp(`${PATH}?comparison=id-3`);
+    const line = async (n: number) =>
+      screen.findByText(
+        new RegExp(`: ${before.differences.open - n} not classed yet, ${before.differences.classed + n} classed,`),
+      );
+    await line(0);
+    await screen.findByRole("heading", { name: "Differences" });
+    const row = rowOf(open?.title ?? "");
+    fireEvent.click(within(row).getByRole("button", { name: /^Class/ }));
+    fireEvent.click(within(row).getByRole("radio", { name: /^Chosen:/ }));
+    fireEvent.change(within(row).getByLabelText("One line of reason"), { target: { value: "Agreed locally." } });
+    fireEvent.click(within(row).getByRole("button", { name: "Save the reason" }));
+    expect(await line(1)).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: "Step pairs between Arden and Belmar" });
+    fireEvent.click(within(table).getAllByRole("button", { name: /^Clear/ })[0] as HTMLElement);
+    expect(await line(2)).toBeInTheDocument();
+  });
+
   it("says when a newer version exists and refreshes keeping the decisions", async () => {
     const stale: Comparison = { ...VIEW, other: { ...VIEW.other, newer_version_label: "v2.0" } };
     const { calls } = backend({
