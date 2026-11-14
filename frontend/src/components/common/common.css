@@ -40,6 +40,10 @@
   text-decoration: underline;
   font-weight: var(--weight-regular);
 }
+/* A link drawn as a button looks like every other button: no underline (Eric, 2026-11-14). */
+a.btn:not(.btn--link) {
+  text-decoration: none;
+}
 .btn[aria-disabled="true"] {
   cursor: default;
 }
