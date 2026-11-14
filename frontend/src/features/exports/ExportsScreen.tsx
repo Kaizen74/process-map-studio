@@ -17,7 +17,7 @@ import { useGapAnalyses } from "../../hooks/useGap";
 import { useSettings } from "../../hooks/useSettings";
 import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
-import { referenceNote } from "../../lib/comparisons";
+import { referenceNote, versionNotes } from "../../lib/comparisons";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { CompassLink } from "../../api/types";
 import { EXCLUDED, EXPORTS, PACK_EXCLUDED, RETURN_EXCLUDED, compassReturnUrl, exportUrl } from "../../lib/exports";
@@ -90,6 +90,7 @@ function CompassReturnCard({
   const [cells, setCells] = useState<string[]>([]);
   const comparisons = useComparisons(engagementId);
   const asReference = referenceNote(engagementId, comparisons.data ?? []);
+  const elsewhere = versionNotes(engagementId, versionId, comparisons.data ?? []);
   const toggle = (cell: string, on: boolean) =>
     setCells((chosen) => (on ? [...chosen.filter((c) => c !== cell), cell] : chosen.filter((c) => c !== cell)));
   const chosen = link.cell_refs.filter((c) => cells.includes(c)); // in the hand-off's order
@@ -103,6 +104,19 @@ function CompassReturnCard({
         the differences you classed or kept are added, with your reasons.
       </p>
       {asReference && <p>{asReference}</p>}
+      {elsewhere.map((n) =>
+        n.kind === "refresh" ? (
+          <p key={`${n.reference}-${n.label}`}>
+            The comparison with {n.reference} is on {n.label}. Refresh it on{" "}
+            <Link to={engagementPath(engagementId, "compare")}>Compare countries</Link> to add its differences to this
+            file.
+          </p>
+        ) : (
+          <p key={`${n.reference}-${n.label}`}>
+            The comparison with {n.reference} is on {n.label}, so its differences are in that version&apos;s return file.
+          </p>
+        ),
+      )}
       <p className="export-card__excluded">{RETURN_EXCLUDED}</p>
       <p>
         Relates to: <span className="mono">{relates.join(", ")}</span>

@@ -157,3 +157,25 @@ export function referenceNote(engagementId: string, list: ComparisonSummary[]): 
   const what = others.length === 1 ? "its comparison" : "its comparisons";
   return `${me} is the reference in ${what} with ${joined(others)}, so those differences are in ${files}.`;
 }
+
+/** A comparison of this country on another version than the one chosen on Exports (Eric, 2026-11-14). */
+export interface VersionNote {
+  /** "refresh": the comparison is on an older version; "elsewhere": on a newer one. */
+  kind: "refresh" | "elsewhere";
+  reference: string;
+  label: string;
+}
+
+/**
+ * The differences go with the version compared, so on Exports the return file card says when a
+ * comparison where this engagement is the other country is not on the chosen version.
+ */
+export function versionNotes(engagementId: string, versionId: string, list: ComparisonSummary[]): VersionNote[] {
+  return list
+    .filter((c) => c.other.engagement_id === engagementId && c.other.version_id !== versionId)
+    .map((c) => ({
+      kind: c.other.newer_version_label ? "refresh" : "elsewhere",
+      reference: c.reference.country || c.reference.name,
+      label: c.other.version_label,
+    }));
+}

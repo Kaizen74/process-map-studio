@@ -103,6 +103,57 @@ describe("the Capability Compass return file on Exports", () => {
     ).toBeInTheDocument();
   });
 
+  // Eric, 2026-11-14: the differences go with the version compared, so the card says when they
+  // are not in the file of the version chosen here (v1 on this screen).
+  const asOther = (version_id: string, version_label: string, newer: string | null): ComparisonSummary[] => [
+    {
+      ...SUMMARY,
+      other: { ...SUMMARY.other, engagement_id: "e1", version_id, version_label, newer_version_label: newer },
+    },
+  ];
+  const card = async () =>
+    (await screen.findByRole("heading", { name: "Capability Compass return file" })).closest(".card") as HTMLElement;
+
+  it("warns when the comparison is still on an older version, with the way to refresh it", async () => {
+    backend(
+      { ...ENGAGEMENT, compass: LINK },
+      { "GET /api/engagements/e1/comparisons": () => ({ body: asOther("v0", "v0.9", "v1.0") }) },
+    );
+    renderApp(PATH);
+    const note = await within(await card()).findByText(/The comparison with Arden is on v0\.9\./);
+    expect(note).toHaveTextContent(
+      "The comparison with Arden is on v0.9. Refresh it on Compare countries to add its differences to this file.",
+    );
+    expect(within(note).getByRole("link", { name: "Compare countries" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/compare",
+    );
+  });
+
+  it("says where the differences are when the comparison is on a newer version", async () => {
+    backend(
+      { ...ENGAGEMENT, compass: LINK },
+      { "GET /api/engagements/e1/comparisons": () => ({ body: asOther("v2", "v2.0", null) }) },
+    );
+    renderApp(PATH);
+    expect(
+      await within(await card()).findByText(
+        "The comparison with Arden is on v2.0, so its differences are in that version's return file.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing when the comparison is on this version", async () => {
+    backend(
+      { ...ENGAGEMENT, compass: LINK },
+      { "GET /api/engagements/e1/comparisons": () => ({ body: asOther("v1", "v1.0", null) }) },
+    );
+    renderApp(PATH);
+    const c = await card();
+    await within(c).findByRole("link", { name: /Download JSON/ });
+    expect(within(c).queryByText(/The comparison with Arden is on/)).toBeNull();
+  });
+
   it("names every country it is the reference for", () => {
     const with_ = (country: string): ComparisonSummary => ({
       ...SUMMARY,
