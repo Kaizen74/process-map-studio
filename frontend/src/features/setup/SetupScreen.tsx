@@ -4,6 +4,7 @@ import { useEngagement } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { AnotherCountryCard } from "./AnotherCountryCard";
 import { AnotherFlowCard } from "./AnotherFlowCard";
 import { CompassCard } from "./CompassCard";
 import { TestingCard } from "./TestingCard";
@@ -59,6 +60,7 @@ export function SetupScreen() {
           </Card>
         )}
         {engagement.data && <AnotherFlowCard engagement={engagement.data} />}
+        {engagement.data && <AnotherCountryCard engagement={engagement.data} />}
         {engagement.data && <TestingCard engagementId={engagementId} />}
         {engagement.data?.compass && <CompassCard link={engagement.data.compass} />}
       </div>

@@ -74,6 +74,10 @@ class Engagement(Row):
     every_flow: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # 0020: the Capability Compass hand-off this engagement started from (CompassLink), or null.
     compass: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    # 0022 (DECISIONS 98): the country it covers, and the other country's engagement it started
+    # from (only its scope card, conventions and lane names were copied).
+    country: Mapped[str] = mapped_column(Text, default="", server_default="")
+    reference_engagement_id: Mapped[str | None] = opt_fk("engagements.id")
 
 
 class Source(Row):
@@ -146,6 +150,42 @@ class SharedCode(Row):
     kind: Mapped[str] = mapped_column(String(8))  # step · intent
     ref_key: Mapped[str] = mapped_column(Text)  # a step's stable key, an intent statement's ID
     code: Mapped[str] = mapped_column(String(12))
+
+
+class CountryComparison(Row):
+    """Two published maps of the same process in two countries (0022; PRD §3.19)."""
+
+    __tablename__ = "country_comparisons"
+    reference_engagement_id: Mapped[str] = fk("engagements.id")
+    other_engagement_id: Mapped[str] = fk("engagements.id")
+    reference_version_id: Mapped[str] = fk("map_versions.id")
+    other_version_id: Mapped[str] = fk("map_versions.id")
+    suggest_job_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+
+
+class CountryPair(Row):
+    """A step pair: Claude's suggestion or Eric's decision, by stable keys (0022)."""
+
+    __tablename__ = "country_pairs"
+    comparison_id: Mapped[str] = fk("country_comparisons.id")
+    reference_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    other_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16))  # B.54, never "proposed" (worked out)
+    why: Mapped[str] = mapped_column(Text, default="")
+
+
+class CountryDifference(Row):
+    """Eric's decision on one difference: its reason, grade, or dismissal (0022)."""
+
+    __tablename__ = "country_differences"
+    comparison_id: Mapped[str] = fk("country_comparisons.id")
+    diff_key: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text, default="")  # as last seen, for "no longer found"
+    status: Mapped[str] = mapped_column(String(16), default="open")  # B.55
+    reason_class: Mapped[str | None] = mapped_column(String(16), nullable=True)  # B.51
+    reason_note: Mapped[str] = mapped_column(Text, default="")
+    grade: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    note: Mapped[str] = mapped_column(Text, default="")
 
 
 class Role(Row):

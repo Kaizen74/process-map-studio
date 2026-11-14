@@ -38,8 +38,14 @@ from app.services import compass as compass_service
 Sessions = sessionmaker[Session]
 
 ENGAGEMENT_MISSING = "That engagement doesn't exist. It may have been deleted."
-NOT_SCOPE = {"compass", "role_names"}  # on the create request, not the scope card
+NOT_SCOPE = {"compass", "role_names", "reference_engagement_id"}  # create only, not the card
 ROLE_MISSING = "That role doesn't exist. It may have been removed."
+REFERENCE_MISSING = "The engagement to start from doesn't exist. It may have been deleted."
+COUNTRY_FROM_HANDOFF = (
+    "The country comes from the Capability Compass hand-off, so it can't be changed here."
+)
+# What starting from another country copies of its scope card (DECISIONS 98), with conventions.
+REFERENCE_FIELDS = ("process_name", "trigger", "end_point", "process_kpi", "in_scope_roles")
 TEXT_LIMIT = 2000
 LIST_LIMIT = 50
 ITEM_LIMIT = 120
@@ -47,6 +53,7 @@ ITEM_LIMIT = 120
 _LABELS = {
     "conventions": "Mapping conventions",
     "name": "Engagement name",
+    "country": "Country",
     "process_name": "Process name",
     "trigger": "Trigger",
     "end_point": "End point",
@@ -62,6 +69,10 @@ _LABELS = {
 }
 _LIST_FIELDS = {"in_scope_roles", "adjacent_industries", "confidential_terms"}
 _FLAG_FIELDS = {"trigger_external", "end_point_external", "every_flow"}
+
+
+def _invalid_conflict(field: str, message: str) -> Err:
+    return Err(ErrorKind.CONFLICT, message, {"field": field})
 
 
 def _invalid(field: str, message: str) -> Err:
@@ -134,6 +145,8 @@ def clean_scope(fields: ScopeFields, *, require_name: bool) -> Result[dict[str, 
                     cleaned[field] = items
             continue
         text = str(value).strip()
+        if field == "country" and (len(text) > ITEM_LIMIT or "\n" in text):
+            return _invalid("country", "Country: one line of up to 120 characters.")
         if field == "name":
             if not text or len(text) > ITEM_LIMIT or "\n" in text:
                 return _invalid("name", "Please give the engagement a name (up to 120 characters).")
@@ -186,7 +199,7 @@ def _from_handoff(
         key=preview.key, pilot_ref=pilot.ref, cluster_ref=pilot.cluster_ref,
         cluster_name=pilot.cluster_name, cell_refs=pilot.cell_refs,
         interview_prompts=pilot.interview_prompts, ready=preview.ready,
-        generated_at=preview.generated_at,
+        generated_at=preview.generated_at, country=preview.country,
     )  # fmt: skip
     return Ok((link, preview.principles))
 
@@ -223,10 +236,24 @@ def create_engagement(
             return err
         case Ok(value=lanes):
             pass
+    if link is not None:
+        fields["country"] = link.country  # from the packet, as received (DECISIONS 98)
     actor = actor_name(config)
+    reference_id = data.reference_engagement_id
 
     def work(session: Session) -> Result[EngagementView]:
-        view = repo.create(session, fields, link)
+        if reference_id is not None:
+            reference = repo.get(session, reference_id)
+            if reference is None:
+                return Err(ErrorKind.NOT_FOUND, REFERENCE_MISSING,
+                           {"field": "reference_engagement_id"})  # fmt: skip
+            # The other country's scope card fields the request left out, and its conventions:
+            # nothing else crosses (no source, alias, name to hide, map or code).
+            for name in REFERENCE_FIELDS:
+                if name not in data.model_fields_set:
+                    fields[name] = getattr(reference, name)
+            fields["conventions"] = reference.conventions.model_dump()
+        view = repo.create(session, fields, link, reference_id)
         for name in lanes:
             repo.create_role(session, view.id, name, [], False)
         for principle in principles:
@@ -238,6 +265,9 @@ def create_engagement(
                                 "cluster_ref": link.cluster_ref}  # fmt: skip
             after["roles"], after["testing"] = len(lanes), len(principles)
         elif lanes:
+            after["roles"] = len(lanes)
+        if reference_id is not None:
+            after["reference_engagement_id"] = reference_id
             after["roles"] = len(lanes)
         audit.record(
             session,
@@ -278,6 +308,8 @@ def update_engagement(
         before = repo.get(session, engagement_id)
         if before is None:
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        if before.compass is not None and fields.get("country", before.country) != before.country:
+            return _invalid_conflict("country", COUNTRY_FROM_HANDOFF)
         view = repo.update(session, engagement_id, fields)
         assert view is not None
         old = before.model_dump()

@@ -11,11 +11,13 @@ import {
 } from "../../components/common";
 import { CheckGlyph } from "../../components/quality";
 import { PackDownloads } from "../../components/reality";
+import { useComparisons } from "../../hooks/useComparisons";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGapAnalyses } from "../../hooks/useGap";
 import { useSettings } from "../../hooks/useSettings";
 import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
+import { referenceNote, versionNotes } from "../../lib/comparisons";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import type { CompassLink } from "../../api/types";
 import { EXCLUDED, EXPORTS, PACK_EXCLUDED, RETURN_EXCLUDED, compassReturnUrl, exportUrl } from "../../lib/exports";
@@ -75,15 +77,20 @@ function GapReportsCard({ versionId, versionLabel, engagementId }: { versionId: 
  * and as the same content in readable text. Eric may add the cells the findings bear on.
  */
 function CompassReturnCard({
+  engagementId,
   versionId,
   versionLabel,
   link,
 }: {
+  engagementId: string;
   versionId: string;
   versionLabel: string;
   link: CompassLink;
 }) {
   const [cells, setCells] = useState<string[]>([]);
+  const comparisons = useComparisons(engagementId);
+  const asReference = referenceNote(engagementId, comparisons.data ?? []);
+  const elsewhere = versionNotes(engagementId, versionId, comparisons.data ?? []);
   const toggle = (cell: string, on: boolean) =>
     setCells((chosen) => (on ? [...chosen.filter((c) => c !== cell), cell] : chosen.filter((c) => c !== cell)));
   const chosen = link.cell_refs.filter((c) => cells.includes(c)); // in the hand-off's order
@@ -93,8 +100,23 @@ function CompassReturnCard({
       <p>
         What this version found, under engagement key <span className="mono">{link.key}</span>: each step with its
         work type, each discrepancy with its figure, each intent statement, the knowledge risks and your verdicts on
-        what is being tested, each with its grade.
+        what is being tested, each with its grade. When this country was compared with another on Compare countries,
+        the differences you classed or kept are added, with your reasons.
       </p>
+      {asReference && <p>{asReference}</p>}
+      {elsewhere.map((n) =>
+        n.kind === "refresh" ? (
+          <p key={`${n.reference}-${n.label}`}>
+            The comparison with {n.reference} is on {n.label}. Refresh it on{" "}
+            <Link to={engagementPath(engagementId, "compare")}>Compare countries</Link> to add its differences to this
+            file.
+          </p>
+        ) : (
+          <p key={`${n.reference}-${n.label}`}>
+            The comparison with {n.reference} is on {n.label}, so its differences are in that version&apos;s return file.
+          </p>
+        ),
+      )}
       <p className="export-card__excluded">{RETURN_EXCLUDED}</p>
       <p>
         Relates to: <span className="mono">{relates.join(", ")}</span>
@@ -231,7 +253,12 @@ export function ExportsScreen() {
               <RealityPackCard versionId={chosen.id} versionLabel={chosen.label} />
             )}
             {engagement.data?.compass && (
-              <CompassReturnCard versionId={chosen.id} versionLabel={chosen.label} link={engagement.data.compass} />
+              <CompassReturnCard
+                engagementId={engagementId}
+                versionId={chosen.id}
+                versionLabel={chosen.label}
+                link={engagement.data.compass}
+              />
             )}
           </div>
         </>

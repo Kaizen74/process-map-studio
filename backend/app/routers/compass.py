@@ -13,8 +13,8 @@ router = APIRouter(prefix="/api", tags=["compass"])
 
 
 @router.post("/compass/preview")
-def preview_handoff(body: HandoffIn) -> HandoffPreview:
-    return unwrap(compass.preview(body.handoff))
+def preview_handoff(request: Request, body: HandoffIn) -> HandoffPreview:
+    return unwrap(compass.preview(request.app.state.sessions, body.handoff))
 
 
 @router.get("/engagements/{engagement_id}/testing")

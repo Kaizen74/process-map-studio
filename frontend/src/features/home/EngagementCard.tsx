@@ -20,6 +20,7 @@ export function EngagementCard({ engagement, onDelete }: EngagementCardProps) {
           <Link to={engagementPath(engagement.id)} className="engagement-card__link">
             {engagement.name}
           </Link>
+          {engagement.country && <span className="engagement-card__country"> · {engagement.country}</span>}
         </h2>
         {version ? (
           <Chip tone={version.state === "published" ? "good" : "neutral"} mono>

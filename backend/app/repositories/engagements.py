@@ -45,6 +45,7 @@ CONFIDENTIAL_ORIGIN = "confidential_term"
 
 SCOPE_COLUMNS = (
     "name",
+    "country",
     "process_name",
     "trigger",
     "end_point",
@@ -70,6 +71,11 @@ def _confidential_terms(session: Session, engagement_id: str) -> list[str]:
     return list(session.scalars(query))
 
 
+def _name_of(session: Session, engagement_id: str | None) -> str:
+    row = session.get(Engagement, engagement_id) if engagement_id else None
+    return row.name if row else ""
+
+
 def _view(session: Session, row: Engagement) -> EngagementView:
     return EngagementView(
         id=row.id,
@@ -88,6 +94,9 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         end_point_external=bool(row.end_point_external),
         every_flow=bool(row.every_flow),
         compass=CompassLink.model_validate(row.compass) if row.compass else None,
+        country=row.country or "",
+        reference_engagement_id=row.reference_engagement_id,
+        reference_engagement_name=_name_of(session, row.reference_engagement_id),
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,
@@ -95,10 +104,14 @@ def _view(session: Session, row: Engagement) -> EngagementView:
 
 
 def create(
-    session: Session, fields: dict[str, Any], compass: CompassLink | None = None
+    session: Session,
+    fields: dict[str, Any],
+    compass: CompassLink | None = None,
+    reference_engagement_id: str | None = None,
 ) -> EngagementView:
     row = Engagement(**{k: v for k, v in fields.items() if k in SCOPE_COLUMNS})
     row.compass = compass.model_dump() if compass else None  # set once, never by a scope edit
+    row.reference_engagement_id = reference_engagement_id  # set once (DECISIONS 98)
     session.add(row)
     session.flush()
     if "confidential_terms" in fields:
@@ -374,3 +387,38 @@ def delete_role(session: Session, role_id: str) -> None:
     for lane, other in enumerate(_roles(session, engagement_id), start=1):
         other.lane_order = lane
     session.flush()
+
+
+def with_hand_off(session: Session) -> list[EngagementView]:
+    """Every engagement started from a Capability Compass hand-off (to find the same pilot in
+    another country, DECISIONS 98)."""
+    rows = session.scalars(select(Engagement).where(Engagement.compass.is_not(None)))
+    return [_view(session, row) for row in rows]
+
+
+def family(session: Session, engagement_id: str) -> list[EngagementView]:
+    """Engagements linked to this one by a reference, either way, or by the same reference."""
+    row = session.get(Engagement, engagement_id)
+    if row is None:
+        return []
+    ids = {row.reference_engagement_id} if row.reference_engagement_id else set()
+    started_here = select(Engagement.id).where(Engagement.reference_engagement_id == engagement_id)
+    ids |= set(session.scalars(started_here))
+    if row.reference_engagement_id:
+        ids |= set(session.scalars(select(Engagement.id).where(
+            Engagement.reference_engagement_id == row.reference_engagement_id)))  # fmt: skip
+    ids.discard(engagement_id)
+    found = [session.get(Engagement, i) for i in sorted(ids)]
+    return [_view(session, r) for r in found if r is not None]
+
+
+def all_views(session: Session) -> list[EngagementView]:
+    rows = session.scalars(select(Engagement).order_by(Engagement.updated_at.desc(), Engagement.id))
+    return [_view(session, row) for row in rows]
+
+
+def lane_names(
+    session: Session, engagement_id: str, only: Collection[str] | None = None
+) -> list[str]:
+    """Lane names in lane order (only those in `only` when given): the names alone, no aliases."""
+    return [r.name for r in _roles(session, engagement_id) if only is None or r.id in only]

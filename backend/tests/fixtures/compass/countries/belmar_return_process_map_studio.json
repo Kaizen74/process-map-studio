@@ -1,0 +1,69 @@
+{
+  "format": "compass-return",
+  "format_version": "1.0",
+  "generated_at": "2026-11-13T09:00:00Z",
+  "source_app": "process-map-studio",
+  "engagement_key": "MERIDIANBE",
+  "country": "Belmar",
+  "findings": [
+    {
+      "ref": "X1",
+      "kind": "discrepancy",
+      "title": "Load plans are signed off by the shift supervisor, not the certified load controller",
+      "detail": "Types: Different role, Skipped check. Impact: safety exposure on wide-body turns. Verdict: Risky drift.",
+      "grade": "confirmed",
+      "figure": "3 of 10 turns observed",
+      "relates_to": [
+        "CAP-01",
+        "CAP-01.Process"
+      ],
+      "source_note": "Rests on 1 document, 4 interviews, system records of 10 cases.",
+      "topic": "decision_right"
+    },
+    {
+      "ref": "X2",
+      "kind": "discrepancy",
+      "title": "Two load-planning systems have run in parallel since the merger",
+      "detail": "Types: Duplicate work. Impact: double entry on every departure. Verdict: Obsolete rule.",
+      "grade": "indicated",
+      "figure": "2 systems",
+      "relates_to": [
+        "CAP-01",
+        "CAP-01.Process"
+      ],
+      "source_note": "Rests on 3 interviews.",
+      "topic": "way_of_working"
+    },
+    {
+      "ref": "V1",
+      "kind": "variation",
+      "title": "Renewal pricing: approved by the country manager in Belmar, by the regional finance controller in Arden",
+      "detail": "Types: Different role. Step S-07 (Approve the renewal price). Reason: Belmar kept its pre-merger delegation of authority.",
+      "grade": "indicated",
+      "figure": "",
+      "relates_to": [
+        "VS-01",
+        "CAP-04",
+        "CAP-04.Process"
+      ],
+      "source_note": "Compared between the two published maps of VS-01; each side rests on 3 interviews.",
+      "topic": "decision_right",
+      "reason_class": "inherited",
+      "compared_with": "Arden"
+    },
+    {
+      "ref": "X3",
+      "kind": "discrepancy",
+      "title": "Overtime is approved by the station manager without the regional roster owner",
+      "detail": "Types: Different role. Impact: roster decisions made twice. Verdict: Unexplained.",
+      "grade": "indicated",
+      "figure": "",
+      "relates_to": [
+        "CAP-03",
+        "CAP-03.Process"
+      ],
+      "source_note": "Rests on 2 interviews.",
+      "topic": "decision_right"
+    }
+  ]
+}

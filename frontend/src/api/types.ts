@@ -90,6 +90,8 @@ export interface ScopeFields {
   trigger_external?: boolean;
   end_point_external?: boolean;
   every_flow?: boolean;
+  /** DECISIONS 98: the country it covers; refused for an engagement from a hand-off. */
+  country?: string;
 }
 
 /** What an engagement keeps of the Capability Compass hand-off it started from (DECISIONS 95). */
@@ -103,6 +105,17 @@ export interface CompassLink {
   interview_prompts: string[];
   ready: boolean;
   generated_at: string;
+  /** The packet's engagement.country, as received (DECISIONS 98; absent before). */
+  country?: string;
+}
+
+/** An engagement mapping the same pilot of the same frame in another country (DECISIONS 98). */
+export interface SameProcess {
+  engagement_id: string;
+  name: string;
+  country: string;
+  process_name: string;
+  has_published: boolean;
 }
 
 export interface HandoffPilot {
@@ -116,6 +129,7 @@ export interface HandoffPilot {
   in_scope_roles: string[];
   interview_prompts: string[];
   cell_refs: string[];
+  same_process?: SameProcess[];
 }
 
 /** POST /compass/preview: what a hand-off file would create; nothing is applied. */
@@ -128,6 +142,7 @@ export interface HandoffPreview {
   open: string[];
   pilots: HandoffPilot[];
   principles: { ref: string; text: string; refuted_by: string }[];
+  country?: string;
 }
 
 /** POST /engagements: the scope fields plus, optionally, the hand-off and the lanes to create. */
@@ -135,6 +150,15 @@ export interface EngagementCreate extends ScopeFields {
   name: string;
   compass?: { handoff: unknown; pilot_ref: string };
   role_names?: string[];
+  /** Another country's engagement to start from: its scope fields left out and conventions. */
+  reference_engagement_id?: string;
+}
+
+/** POST /engagements/{id}/another-country (DECISIONS 98). */
+export interface AnotherCountry {
+  country: string;
+  name?: string;
+  role_ids?: string[] | null;
 }
 
 export type TestingVerdict = "open" | "supported" | "refuted";
@@ -190,6 +214,10 @@ export interface Engagement {
   every_flow?: boolean;
   /** The hand-off it started from, or null (absent before DECISIONS 95: none). */
   compass?: CompassLink | null;
+  /** DECISIONS 98: the country it covers ("" when not known), and the engagement it started from. */
+  country?: string;
+  reference_engagement_id?: string | null;
+  reference_engagement_name?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -357,7 +385,8 @@ export interface Job {
     | "event_log_import"
     | "event_log_alignment"
     | "intent_extract"
-    | "intent_compare";
+    | "intent_compare"
+    | "country_match";
   target_id: string | null;
   status: JobStatus;
   stage: string;

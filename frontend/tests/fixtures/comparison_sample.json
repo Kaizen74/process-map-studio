@@ -1,0 +1,344 @@
+{
+  "candidates": [
+    {
+      "engagement_id": "id-1",
+      "name": "MERIDIAN VS-01 Bid to contract renewal",
+      "country": "Arden",
+      "process_name": "Bid to contract renewal",
+      "why": "this map started from it",
+      "published_version_id": "id-2",
+      "published_label": "v1.0"
+    }
+  ],
+  "comparison": {
+    "id": "id-3",
+    "rules_version": "1",
+    "reference": {
+      "engagement_id": "id-1",
+      "name": "MERIDIAN VS-01 Bid to contract renewal",
+      "country": "Arden",
+      "version_id": "id-2",
+      "version_label": "v1.0",
+      "newer_version_label": null
+    },
+    "other": {
+      "engagement_id": "id-4",
+      "name": "MERIDIANBE VS-01 Bid to contract renewal",
+      "country": "Belmar",
+      "version_id": "id-5",
+      "version_label": "v1.0",
+      "newer_version_label": null
+    },
+    "same_process": "Belmar's map started from Arden's",
+    "steps": {
+      "reference": [
+        {
+          "key": "receive-the-renewal-request",
+          "code": "S-01",
+          "label": "Receive the renewal request",
+          "kind": "activity",
+          "lane": "VP Global Account Management",
+          "phase": "Prepare",
+          "order": 1
+        },
+        {
+          "key": "build-the-bid-solution",
+          "code": "S-02",
+          "label": "Build the bid solution",
+          "kind": "activity",
+          "lane": "Bid & Solutions Architect",
+          "phase": "Prepare",
+          "order": 2
+        },
+        {
+          "key": "draft-the-renewal-price",
+          "code": "S-03",
+          "label": "Draft the renewal price",
+          "kind": "activity",
+          "lane": "Head of Pricing / Revenue Management",
+          "phase": "Price",
+          "order": 3
+        },
+        {
+          "key": "approve-the-renewal-price",
+          "code": "S-04",
+          "label": "Approve the renewal price",
+          "kind": "approval",
+          "lane": "Regional finance controller",
+          "phase": "Price",
+          "order": 4
+        },
+        {
+          "key": "legal-review-of-terms",
+          "code": "S-05",
+          "label": "Legal review of terms",
+          "kind": "activity",
+          "lane": "Global Head, Commercial Excellence",
+          "phase": "Close",
+          "order": 5
+        },
+        {
+          "key": "send-the-renewal-offer",
+          "code": "S-06",
+          "label": "Send the renewal offer",
+          "kind": "activity",
+          "lane": "VP Global Account Management",
+          "phase": "Close",
+          "order": 6
+        }
+      ],
+      "other": [
+        {
+          "key": "receive-the-renewal-request",
+          "code": "S-01",
+          "label": "Receive the renewal request",
+          "kind": "activity",
+          "lane": "VP Global Account Management",
+          "phase": "Prepare",
+          "order": 1
+        },
+        {
+          "key": "build-the-bid-solution",
+          "code": "S-02",
+          "label": "Build the bid solution",
+          "kind": "activity",
+          "lane": "Bid & Solutions Architect",
+          "phase": "Prepare",
+          "order": 2
+        },
+        {
+          "key": "draft-the-renewal-price",
+          "code": "S-03",
+          "label": "Draft the renewal price",
+          "kind": "activity",
+          "lane": "Head of Pricing / Revenue Management",
+          "phase": "Price",
+          "order": 3
+        },
+        {
+          "key": "approve-the-renewal-price",
+          "code": "S-04",
+          "label": "Approve the renewal price",
+          "kind": "approval",
+          "lane": "Country manager",
+          "phase": "Price",
+          "order": 4
+        },
+        {
+          "key": "check-the-credit-limit",
+          "code": "S-05",
+          "label": "Check the credit limit",
+          "kind": "activity",
+          "lane": "Country manager",
+          "phase": "Close",
+          "order": 5
+        },
+        {
+          "key": "send-the-renewal-offer",
+          "code": "S-06",
+          "label": "Send the renewal offer",
+          "kind": "activity",
+          "lane": "VP Global Account Management",
+          "phase": "Close",
+          "order": 6
+        }
+      ]
+    },
+    "pairs": [
+      {
+        "reference_key": "receive-the-renewal-request",
+        "other_key": "receive-the-renewal-request",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "build-the-bid-solution",
+        "other_key": "build-the-bid-solution",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "draft-the-renewal-price",
+        "other_key": "draft-the-renewal-price",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": null,
+        "other_key": "check-the-credit-limit",
+        "status": "only_other",
+        "why": ""
+      },
+      {
+        "reference_key": "legal-review-of-terms",
+        "other_key": null,
+        "status": "only_reference",
+        "why": ""
+      },
+      {
+        "reference_key": "send-the-renewal-offer",
+        "other_key": "send-the-renewal-offer",
+        "status": "confirmed",
+        "why": ""
+      }
+    ],
+    "differences": [
+      {
+        "key": "work_time|draft-the-renewal-price|draft-the-renewal-price",
+        "kind": "work_time",
+        "topic": "way_of_working",
+        "title": "Draft the renewal price: 60 min of work in Belmar, 120 min in Arden",
+        "reference_value": "120 min",
+        "other_value": "60 min",
+        "figure": "60 min in Belmar vs 120 min in Arden (stated)",
+        "reference_key": "draft-the-renewal-price",
+        "other_key": "draft-the-renewal-price",
+        "status": "kept",
+        "code": "V2",
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "who_does|approve-the-renewal-price|approve-the-renewal-price",
+        "kind": "who_does",
+        "topic": "way_of_working",
+        "title": "Approve the renewal price: done by Country manager in Belmar, by Regional finance controller in Arden",
+        "reference_value": "Regional finance controller",
+        "other_value": "Country manager",
+        "figure": "",
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "open",
+        "code": null,
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "who_decides|approve-the-renewal-price|approve-the-renewal-price",
+        "kind": "who_decides",
+        "topic": "decision_right",
+        "title": "Approve the renewal price: approved by Country manager in Belmar, by Regional finance controller in Arden",
+        "reference_value": "Regional finance controller",
+        "other_value": "Country manager",
+        "figure": "",
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "classed",
+        "code": "V1",
+        "reason_class": "inherited",
+        "reason_note": "Belmar kept its pre-merger delegation.",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "only_other||check-the-credit-limit",
+        "kind": "only_other",
+        "topic": "role_presence",
+        "title": "Check the credit limit: only in Belmar (Country manager), not in Arden",
+        "reference_value": "absent",
+        "other_value": "present",
+        "figure": "",
+        "reference_key": null,
+        "other_key": "check-the-credit-limit",
+        "status": "open",
+        "code": null,
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Hypothesis: only one map has this step, and the other map's sources may simply not mention it."
+      },
+      {
+        "key": "only_reference|legal-review-of-terms|",
+        "kind": "only_reference",
+        "topic": "way_of_working",
+        "title": "Legal review of terms: only in Arden (Global Head, Commercial Excellence), not in Belmar",
+        "reference_value": "present",
+        "other_value": "absent",
+        "figure": "",
+        "reference_key": "legal-review-of-terms",
+        "other_key": null,
+        "status": "open",
+        "code": null,
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Hypothesis: only one map has this step, and the other map's sources may simply not mention it."
+      }
+    ],
+    "no_longer_found": [],
+    "counts": {
+      "open": 3,
+      "kept": 1,
+      "classed": 1,
+      "dismissed": 0
+    },
+    "suggest_job": null
+  },
+  "comparisons": [
+    {
+      "id": "id-3",
+      "reference": {
+        "engagement_id": "id-1",
+        "name": "MERIDIAN VS-01 Bid to contract renewal",
+        "country": "Arden",
+        "version_id": "id-2",
+        "version_label": "v1.0",
+        "newer_version_label": null
+      },
+      "other": {
+        "engagement_id": "id-4",
+        "name": "MERIDIANBE VS-01 Bid to contract renewal",
+        "country": "Belmar",
+        "version_id": "id-5",
+        "version_label": "v1.0",
+        "newer_version_label": null
+      },
+      "differences": {
+        "open": 3,
+        "kept": 1,
+        "classed": 1,
+        "dismissed": 0
+      }
+    }
+  ]
+}

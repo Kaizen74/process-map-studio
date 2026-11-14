@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router";
 import { DraftScreen } from "./features/draft/DraftScreen";
 import { EngagementIndex } from "./features/engagement/EngagementIndex";
 import { ExportsScreen } from "./features/exports/ExportsScreen";
+import { CompareScreen } from "./features/compare/CompareScreen";
 import { GapScreen } from "./features/gap/GapScreen";
 import { InterviewScreen } from "./features/interview/InterviewScreen";
 import { LeadershipScreen } from "./features/leadership/LeadershipScreen";
@@ -39,6 +40,7 @@ export function App() {
         <Route path="engagements/:engagementId/reality" element={<RealityScreen />} />
         <Route path="engagements/:engagementId/leadership" element={<LeadershipScreen />} />
         <Route path="engagements/:engagementId/exports" element={<ExportsScreen />} />
+        <Route path="engagements/:engagementId/compare" element={<CompareScreen />} />
         <Route path="engagements/:engagementId/:step" element={<StepPlaceholder />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>

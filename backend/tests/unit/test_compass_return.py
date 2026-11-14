@@ -92,15 +92,20 @@ def test_the_file_has_the_agreed_shape_and_this_apps_own_codes(drafted: Drafted)
     link = published(drafted)
     response = download(drafted)
     assert response.status_code == 200, response.text
-    assert response.headers["content-disposition"].endswith('-compass-return.json"')
+    # Named "<key>_compass_return.json" since 2026-11-13 (Eric's brief, DECISIONS 98).
+    assert response.headers["content-disposition"].endswith(
+        'filename="MERIDIAN_compass_return.json"'
+    )
     file = response.json()
     assert list(file) == ["format", "format_version", "generated_at", "source_app",
                           "engagement_key", "findings"]  # fmt: skip
     assert (file["format"], file["format_version"]) == ("compass-return", "1.0")
     assert (file["source_app"], file["engagement_key"]) == ("process-map-studio", link["key"])
     fields = ["ref", "kind", "title", "detail", "grade", "figure", "relates_to", "source_note"]
+    # Steps and discrepancies also carry the readout page they belong on (DECISIONS 98).
+    topical = {"step": [*fields, "topic"], "discrepancy": [*fields, "topic"]}
     for f in file["findings"]:
-        assert list(f) == fields
+        assert list(f) == topical.get(f["kind"], fields)
         assert f["kind"] in rules.KINDS and f["grade"] in grade.GRADES
         assert isinstance(f["figure"], str) and f["source_note"]
         # The pilot and its cluster by default, exactly as received.
@@ -236,10 +241,11 @@ def test_discrepancies_and_intent_are_written_from_what_was_computed() -> None:
     by_ref = {f["ref"]: f for f in found}
     assert by_ref["X1"] == {
         "ref": "X1", "kind": "discrepancy", "title": "Approval skipped on a busy wave",
-        "detail": "Types: D3. Impact: Control. Verdict: correct the practice.",
+        "detail": "Types: Reordered. Impact: Control. Verdict: correct the practice.",
         "grade": "confirmed", "figure": "38% of cases (measured)",
         "relates_to": ["VS-01", "CAP-04"],
         "source_note": "Rests on 1 document, 2 interviews, system records of 412 cases.",
+        "topic": "way_of_working",
     }  # fmt: skip
     assert (by_ref["I1"]["detail"], by_ref["I1"]["figure"]) == ("Not met.", "100% of cases")
     assert by_ref["I1"]["source_note"].startswith("Quoted from a policy or charter")

@@ -284,6 +284,56 @@ What a **published** version found, in the `compass-return` 1.0 shape the other 
 
 Used by: Exports → Capability Compass return file card (shown only for an engagement from a hand-off); Interview → guide editor.
 
+## Comparing countries (PRD §3.19; Eric's brief 2026-11-13; DECISIONS 98)
+
+Optional. Nothing here is needed to use the app on its own.
+
+### Country and reference engagement (increment 1)
+
+- The engagement object (`GET /api/engagements`, `GET·PATCH /api/engagements/{id}`, `POST /api/engagements`) gains `country` (string, `""` when not known) and `reference_engagement_id` (string or null: the engagement of another country it started from) and `reference_engagement_name` (string, `""` when none). `compass` gains `country` (as the packet's `engagement.country` gave it, `""` for a group-wide workspace).
+- `PATCH /api/engagements/{id}` accepts `country` (at most 120 characters, one line). For an engagement started from a hand-off it is refused: `409 CONFLICT` "The country comes from the Capability Compass hand-off, so it can't be changed here." (`details.field: "country"`). Audit row "Edited process scope", as for other scope fields.
+- `POST /api/compass/preview`: the response gains `country`, and each pilot gains `same_process`: `[{"engagement_id", "name", "country", "process_name", "has_published": bool}]`, the engagements on this machine of the same frame and pilot in another country (a different key). Empty when none.
+
+### Start a country from another country (increment 2)
+
+- `POST /api/engagements` accepts `reference_engagement_id` (with or without `compass`). The new engagement copies from that engagement, for every field the request leaves out: `process_name`, `trigger`, `end_point`, `process_kpi`, `in_scope_roles`, and always its `conventions`; what the request sends wins. Lanes are the `role_names` sent (the frontend offers the reference's lane names, ticked). No source, role alias, name to hide, map or code is copied. Audit `after` adds `reference_engagement_id`. Errors: `404 NOT_FOUND` "The engagement to start from doesn't exist. It may have been deleted." (`details.field: "reference_engagement_id"`).
+- `POST /api/engagements/{id}/another-country` `{"country": "Belmar", "name": "…"?, "role_ids": […]?}` → `201` the new engagement (country set, `reference_engagement_id` = `{id}`, scope card fields and conventions copied, the chosen roles' names as lanes in their order; `role_ids` null = every role). Name defaults to "<process name or name> — <country>". Errors: `404` engagement; `409 CONFLICT` "Publish a version of this engagement first: another country starts from a published map." · `422 VALIDATION` "Type the country this map will cover." (`field: country`) · "This engagement already covers Arden." (`field: country`) · "Choose roles of this engagement." (`field: role_ids`). Audit "Started this process in another country" on the new engagement.
+
+### Comparisons (increments 3-4)
+
+A comparison is one **reference** engagement and one **other** engagement mapping the same process (PRD §3.19 "Same process"), each read at one published version.
+
+- `GET /api/engagements/{id}/comparison-candidates` → `[{"engagement_id", "name", "country", "process_name", "why": "same pilot VS-01" | "started from this map" | "this map started from it" | "started from the same map", "published_version_id": str | null, "published_label": str | null}]`, the same-process engagements only.
+- `GET /api/engagements/{id}/comparisons` → `[{"id", "reference": Side, "other": Side, "differences": {"open", "kept", "classed", "dismissed"}}]` where the engagement is either side. `Side` = `{"engagement_id", "name", "country", "version_id", "version_label", "newer_version_label": str | null}`.
+- `POST /api/comparisons` `{"reference_engagement_id", "other_engagement_id", "reference_version_id"?, "other_version_id"?}` → `201` the comparison view below (or `200` the existing one for this pair of engagements). Versions default to each engagement's latest published one. Errors: `404 NOT_FOUND` an engagement or version; `422 VALIDATION` "Choose two different engagements." · `409 CONFLICT` "<name> has no published version yet. Only published maps are compared." · "Version <label> of <name> is a draft. Only published maps are compared." · "These maps describe different processes (<VS-01 or process name> and <…>). Only maps of the same process in two countries are compared."
+- `GET /api/comparisons/{cid}` → the comparison view:
+```
+{ "id", "rules_version": "1", "reference": Side, "other": Side, "same_process": "same pilot VS-01",
+  "steps": {"reference": [Step], "other": [Step]},
+  "pairs": [ { "reference_key": str | null, "other_key": str | null,
+               "status": "proposed" | "suggested" | "confirmed" | "only_reference" | "only_other",
+               "why": "Same words: load, plan · same lane: Load controller · same kind · same phase" } ],
+  "differences": [Difference], "no_longer_found": [Difference], "counts": {...},
+  "suggest_job": {"job_id", "status"} | null }
+```
+  `pairs` are in process order: by the reference map's step, and a step only the other country has just after the step before it on its own map (DECISIONS 100). `differences` follow the same order, by the pair each belongs to; within one pair, in the rules' order (DECISIONS 103).
+`same_process` names both countries so it reads right on either screen: "Belmar's map started from Arden's", "both maps started from the same map" or "same pilot VS-01" (DECISIONS 107). The candidates' `why` stays from the asking engagement's side ("started from this map", "this map started from it").
+  `Step` = `{"key", "code", "label", "kind", "lane", "phase", "order"}` (names hidden with that engagement's own list). `Difference` = `{"key", "kind" (B.53), "topic" (B.52), "title", "reference_value", "other_value", "figure", "reference_key", "other_key", "status" (B.55), "code": "V1" | null, "reason_class" (B.51) | null, "reason_note", "note", "grade": Grade, "grade_reason"}` (Grade as in Shared codes and the shared grade).
+- `PUT /api/comparisons/{cid}/pairs` `{"reference_key": str | null, "other_key": str | null, "decision": "confirmed" | "only_reference" | "only_other" | "clear"}` → the comparison view. Confirm needs both keys of steps on the compared versions; a key already in another decision is moved (its old decision cleared). Errors `422` "Choose a step of each map." · "That step isn't on the compared map." Audit "Paired steps across countries" / "Marked a step as only in one country" / "Cleared a step pair".
+- **AI** `POST /api/comparisons/{cid}/suggest` → `202 {"job_id"}`: `CC_match` suggests pairs among the unpaired steps, existing keys only; stored as `suggested`, never applied until Eric confirms. `409` while one is running.
+- `POST /api/comparisons/{cid}/refresh` → the view, moved to each engagement's latest published version; decisions follow their stable keys; a decision whose step is gone is dropped and counted in the audit row "Refreshed country comparison".
+- `PUT /api/comparisons/{cid}/differences/{key}` `{"action": "class" | "keep" | "dismiss" | "reopen", "reason_class"?: B.51, "reason_note"?: str, "grade"?: "confirmed" | "indicated" | "hypothesis" | null, "note"?: str}` → the difference. `class` needs `reason_class`, and a reason line unless it is `unknown`; `dismiss` needs a note; texts one line, at most 300 characters, no name on the list of names to hide. The first `class` or `keep` gives the code `Vn` (the other engagement's, never reused); `dismiss` gives none. Errors `422` "Choose Required, Chosen, Inherited or Not known yet." · "Add one line saying why." · "Add a note saying why this isn't a real difference." · `404` "That difference isn't in this comparison." Audit "Classed country difference" / "Kept country difference" / "Dismissed country difference" / "Reopened country difference".
+
+### Printable pages (increment 5)
+
+- `GET /api/comparisons/{cid}/export?layout=a3|slide` → one HTML file: Summary, Who decides, How the work differs, Only in one country. Fixed templates, role names only, no quote, name, source text or file name; dismissed and open differences are left out (open ones are counted on the summary). A long list continues on further pages (at most 11 rows per A3 page, 13 per 16:9 page), headed "(1 of 2)", "(continued, 2 of 2)" (DECISIONS 101). `409 CONFLICT` when a hidden name or anything shaped like a key would be in the file. Audit "Exported country comparison".
+
+### Return file (increment 6)
+
+- `GET /api/versions/{vid}/compass-return`: the file name becomes `<key>_compass_return.json` / `.md`. The header gains `country` (after `engagement_key`) when the engagement has one. Findings gain `topic` (steps and discrepancies; see PRD §3.19), and a `variation` finding per coded, not-dismissed difference of comparisons where this engagement is the other country at this version: `{"ref": "V1", "kind": "variation", "title", "detail": "Types: Different role. Step S-07 (…). Reason: …", "grade", "figure", "relates_to", "source_note", "topic", "reason_class"? , "compared_with": "Arden"}`. `reason_class` is left out unless the difference was classed. Discrepancy types in `detail` are words (B.48).
+
+Used by: Home (country on cards), New engagement dialog, Setup (Country field, "Map this process in another country"), Compare countries screen, Exports.
+
 ## Sources (PRD §4, §5.4 Sources) — phase P1
 
 Files are stored as `data/sources/<engagement_id>/<source_id>.<ext>` (the original file name is kept for display only). Accepted formats: `.docx`, `.pdf`, `.txt`, `.vtt`, `.srt`, and since P10b R11 (2026-10-13) `.xlsx`, `.csv` and `.eml`, up to 50 MB. From phase P2 every file is **read by a background job** (PRD §4 "parsing runs as a job"): the upload answers straight away with `text_status: "pending"` and a `job_id`, and the file is read a moment later. How a file is read:

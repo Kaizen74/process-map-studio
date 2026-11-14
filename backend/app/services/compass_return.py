@@ -19,10 +19,39 @@ RETURN_VERSION = "1.0"
 SOURCE_APP = "process-map-studio"
 RETURN_RULES_VERSION = "1"
 
-KINDS = ("step", "discrepancy", "intent", "knowledge_risk", "hypothesis_verdict")
+KINDS = ("step", "discrepancy", "intent", "knowledge_risk", "hypothesis_verdict", "variation")
 KIND_WORDS = {"step": "Steps", "discrepancy": "Discrepancies", "intent": "Intent statements",
               "knowledge_risk": "Knowledge risks",
-              "hypothesis_verdict": "What we are testing"}  # fmt: skip
+              "hypothesis_verdict": "What we are testing",
+              "variation": "Differences from another country"}  # fmt: skip
+REASON_WORDS = {"required": "Required", "chosen": "Chosen", "inherited": "Inherited",
+                "unknown": "Not known yet"}  # fmt: skip
+SECRET_MARKERS = ("sk-" + "ant-", "api_key", "x-api-key")
+# Topics (PRD §3.19, B.52): which Compass readout page a finding belongs on.
+DECISION_RIGHT, WAY_OF_WORKING = "decision_right", "way_of_working"
+DECIDING = frozenset({"decision", "approval"})
+# Discrepancy types in words (B.48), as the Compass's own sample writes them.
+TYPE_WORDS = {
+    "D1": "Skipped step", "D2": "Added step", "D3": "Reordered", "D4": "Rework loop",
+    "D5": "Control bypassed", "D6": "Off-system", "D7": "Takes longer", "D8": "Waiting",
+    "D9": "Parallel routes", "D10": "Belief gap", "D11": "No record", "D12": "Different role",
+    "D13": "Design gap", "D14": "Promise missed",
+}  # fmt: skip
+# Country differences in words (B.53); "Only in …" names the country.
+DIFFERENCE_WORDS = {
+    "who_does": "Different role doing it", "who_decides": "Different role",
+    "how_decided": "Different way of deciding", "step_kind": "Different kind of step",
+    "work_type": "Different work type", "work_time": "Different work time",
+    "wait_time": "Different waiting time", "documented_vs_done": "Documented and done differ",
+}  # fmt: skip
+
+
+def discrepancy_topic(step_kinds: list[str], types: list[str]) -> str:
+    """D12 "Different role" on a decision or approval is about who decides; the rest is how the
+    work runs."""
+    return DECISION_RIGHT if "D12" in types and DECIDING & set(step_kinds) else WAY_OF_WORKING
+
+
 STEP_KINDS = {"activity": "Activity", "decision": "Decision", "approval": "Approval"}
 WORK_TYPES = {"clear": "clear", "complicated": "complicated", "complex": "complex",
               "chaotic": "chaotic"}  # fmt: skip
@@ -63,6 +92,27 @@ class Discrepancy:
     documents: int
     interviews: int
     system_cases: int | None
+    topic: str = WAY_OF_WORKING
+
+
+@dataclass(frozen=True, slots=True)
+class Variation:
+    """One classed or kept difference between this country's map and the reference country's
+    (PRD §3.19): reported by this country only."""
+
+    code: str  # V1
+    kind: str  # B.53
+    title: str
+    topic: str
+    step_code: str  # this country's S-nn; "" for a step only the reference country has
+    step_label: str
+    reason_class: str | None  # None unless Eric classed it
+    reason_note: str
+    grade: str
+    figure: str
+    country: str
+    compared_with: str
+    source_note: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +147,8 @@ class Inputs:
     discrepancies: list[Discrepancy] = field(default_factory=list)
     intents: list[Intent] = field(default_factory=list)
     tested: list[Tested] = field(default_factory=list)
+    country: str = ""
+    variations: list[Variation] = field(default_factory=list)
 
 
 def _count(n: int, one: str, many: str) -> str:
@@ -147,27 +199,28 @@ def findings(data: Inputs) -> list[dict[str, object]]:
     out: list[dict[str, object]] = []
 
     def add(ref: str, kind: str, title: str, detail: str, grade: str, figure: str,
-            note: str) -> None:  # fmt: skip
+            note: str, **extra: str) -> None:  # fmt: skip
         out.append({"ref": ref, "kind": kind, "title": title, "detail": detail,
                     "grade": grade, "figure": figure, "relates_to": list(relates),
-                    "source_note": note})  # fmt: skip
+                    "source_note": note, **extra})  # fmt: skip
 
     for s in data.steps:
         detail, grade, note = _step(s)
         grades[s.code] = grade
-        add(s.code, "step", s.label, detail, grade, "", note)
+        topic = DECISION_RIGHT if s.kind in DECIDING else WAY_OF_WORKING
+        add(s.code, "step", s.label, detail, grade, "", note, topic=topic)
     for d in data.discrepancies:
         grades[d.code] = d.grade
         verdict = DISCREPANCY_VERDICTS.get(d.verdict or "", "")
         detail = " ".join(p for p in (
-            f"Types: {', '.join(d.types)}." if d.types else "",
+            f"Types: {', '.join(TYPE_WORDS.get(t, t) for t in d.types)}." if d.types else "",
             f"Impact: {d.impact}." if d.impact else "",
             f"Verdict: {verdict}." if verdict else "",
         ) if p)  # fmt: skip
         figure = f"{d.figure} ({d.figure_label})" if d.figure and d.figure_label else d.figure
         chosen = "Grade chosen by the owner. " if d.grade_by_owner else ""
         note = f"{chosen}Rests on {_sources(d.documents, d.interviews, d.system_cases)}."
-        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note)
+        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note, topic=d.topic)
     for i in data.intents:
         known = i.result in ("met", "not_met")
         grade = grade_rules.INDICATED if known else grade_rules.HYPOTHESIS
@@ -189,13 +242,29 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         note = (f"The owner's verdict, resting on {behind}." if behind
                 else "No verdict yet.")  # fmt: skip
         add(t.ref, "hypothesis_verdict", t.text, detail, _tested_grade(t, grades), "", note)
+    for v in data.variations:
+        word = DIFFERENCE_WORDS.get(v.kind) or (
+            f"Only in {v.compared_with}" if v.kind == "only_reference" else f"Only in {v.country}"
+        )
+        elsewhere = f"Step not on this map ({v.compared_with}'s step: {v.step_label})."
+        where = f"Step {v.step_code} ({v.step_label})." if v.step_code else elsewhere
+        reason = v.reason_note.strip().rstrip(".")
+        detail = f"Types: {word}. {where}" + (f" Reason: {reason}." if reason else "")
+        extra = {"topic": v.topic}
+        if v.reason_class is not None:
+            extra["reason_class"] = v.reason_class
+        extra["compared_with"] = v.compared_with
+        add(v.code, "variation", v.title, detail, v.grade, v.figure, v.source_note, **extra)
     return out
 
 
 def build(data: Inputs) -> dict[str, object]:
-    return {"format": RETURN_FORMAT, "format_version": RETURN_VERSION,
-            "generated_at": data.generated_at, "source_app": SOURCE_APP,
-            "engagement_key": data.engagement_key, "findings": findings(data)}  # fmt: skip
+    head: dict[str, object] = {"format": RETURN_FORMAT, "format_version": RETURN_VERSION,
+                               "generated_at": data.generated_at, "source_app": SOURCE_APP,
+                               "engagement_key": data.engagement_key}  # fmt: skip
+    if data.country:
+        head["country"] = data.country
+    return {**head, "findings": findings(data)}
 
 
 def render_json(data: Inputs) -> str:
@@ -211,8 +280,9 @@ def render_text(data: Inputs) -> str:
     lines = [
         f"# {data.process_name}: findings for Capability Compass",
         "",
-        f"Engagement key: {data.engagement_key} · pilot: {data.pilot_ref} · "
-        f"map version: {data.version_label}",
+        f"Engagement key: {data.engagement_key} · "
+        + (f"country: {data.country} · " if data.country else "")
+        + f"pilot: {data.pilot_ref} · map version: {data.version_label}",
         f"Format: {file['format']} {file['format_version']} · made by {SOURCE_APP} · "
         f"{data.generated_at}",
         f"Relates to: {relates}",
@@ -233,6 +303,10 @@ def render_text(data: Inputs) -> str:
                 lines.append(f"  {f['detail']}")
             if f["figure"]:
                 lines.append(f"  Figure: {f['figure']}")
+            if f.get("reason_class"):
+                lines.append(f"  Reason class: {REASON_WORDS.get(str(f['reason_class']), '')}")
+            if f.get("compared_with"):
+                lines.append(f"  Compared with: {f['compared_with']}")
             lines.append(f"  Rests on: {f['source_note']}")
     if not found:
         lines += ["", "No finding to return yet."]

@@ -5,10 +5,11 @@ import {
   getEngagement,
   getReadiness,
   listEngagements,
+  startAnotherCountry,
   startAnotherFlow,
   updateEngagement,
 } from "../api/engagements";
-import type { AnotherFlow, Engagement, ScopeFields } from "../api/types";
+import type { AnotherCountry, AnotherFlow, Engagement, ScopeFields } from "../api/types";
 
 const ENGAGEMENTS = ["engagements"] as const;
 const engagementKey = (id: string) => ["engagements", id] as const;
@@ -65,6 +66,18 @@ export function useDeleteEngagement() {
     onSettled: (_data, _error, id) => {
       client.removeQueries({ queryKey: engagementKey(id), exact: true });
       client.removeQueries({ queryKey: readinessKey(id), exact: true });
+      void client.invalidateQueries({ queryKey: ENGAGEMENTS, exact: true });
+    },
+  });
+}
+
+/** Map this process in another country (DECISIONS 98): the new engagement is cached. */
+export function useAnotherCountry(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (fields: AnotherCountry) => startAnotherCountry(id, fields),
+    onSuccess: (engagement: Engagement) => {
+      client.setQueryData(engagementKey(engagement.id), engagement);
       void client.invalidateQueries({ queryKey: ENGAGEMENTS, exact: true });
     },
   });

@@ -17,6 +17,7 @@ from app.repositories.tables import SharedCode
 
 STEP = "step"
 INTENT = "intent"
+DIFF = "diff"  # a difference between two countries' maps (V1 …; DECISIONS 98)
 
 
 def step_code(number: int) -> str:
@@ -27,7 +28,15 @@ def intent_code(number: int) -> str:
     return f"I{number}"
 
 
-FORMATS: dict[str, Callable[[int], str]] = {STEP: step_code, INTENT: intent_code}
+def diff_code(number: int) -> str:
+    return f"V{number}"
+
+
+FORMATS: dict[str, Callable[[int], str]] = {
+    STEP: step_code,
+    INTENT: intent_code,
+    DIFF: diff_code,
+}
 
 
 def _number(code: str) -> int:

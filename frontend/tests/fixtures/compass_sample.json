@@ -27,7 +27,8 @@
           "CAP-03.People",
           "CAP-03.Process",
           "CAP-03.Culture"
-        ]
+        ],
+        "same_process": []
       },
       {
         "ref": "VS-01",
@@ -52,7 +53,8 @@
           "CAP-04.People",
           "CAP-04.Process",
           "CAP-04.Culture"
-        ]
+        ],
+        "same_process": []
       }
     ],
     "principles": [
@@ -76,7 +78,8 @@
         "text": "Capability is built ahead of growth, not after it.",
         "refuted_by": "Anchor seats still absent two cycles after a growth decision."
       }
-    ]
+    ],
+    "country": ""
   },
   "link": {
     "key": "MERIDIAN",
@@ -94,7 +97,8 @@
       "CAP-04.Process Process is Emerging: CRM programme commenced; contract-lifecycle system underway; multi-year EBITDA uplift targeted. Watch: CRM adoption below 60% at 90 days post-launch → flip trajectory down (adoption gap predicts stall)"
     ],
     "ready": true,
-    "generated_at": "2026-11-12T00:00:00.000Z"
+    "generated_at": "2026-11-12T00:00:00.000Z",
+    "country": ""
   },
   "testing": [
     {

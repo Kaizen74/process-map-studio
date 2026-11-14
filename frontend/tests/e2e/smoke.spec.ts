@@ -888,6 +888,26 @@ test("interview only: draft, review and publish at Limited signal strength", asy
   }
 });
 
+// Eric, 2026-11-14: a link drawn as a button looks like every other button (no underline), on
+// every screen; only the link style (btn--link) is underlined.
+test("a link drawn as a button is never underlined", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: "Interview templates" })).toBeVisible();
+  const lines = await page.evaluate(() =>
+    ["btn btn--primary", "btn btn--secondary", "btn btn--link"].map((cls) => {
+      const a = document.createElement("a");
+      a.href = "#";
+      a.className = cls;
+      a.textContent = "Download";
+      document.body.append(a);
+      const line = getComputedStyle(a).textDecorationLine;
+      a.remove();
+      return line;
+    }),
+  );
+  expect(lines).toEqual(["none", "none", "underline"]);
+});
+
 // PRD v1.10 F.9 and acceptance 77: the standard interview templates download from the home screen
 // as Word and Markdown, with no engagement needed; the Word file is a real .docx (a zip package).
 test("interview templates: download Word and Markdown from the home screen", async ({ page }) => {

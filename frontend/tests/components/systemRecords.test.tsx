@@ -159,8 +159,8 @@ describe("System records: the module switch and the nav (decision A)", () => {
     const steps = await nav();
     await moreSteps();
     await waitFor(() =>
-      expect(within(steps).getAllByRole("link")).toHaveLength(11),
-    ); // 6 in the bar, 5 under More
+      expect(within(steps).getAllByRole("link")).toHaveLength(12),
+    ); // 6 in the bar, 6 under More (Compare countries since 2026-11-13, DECISIONS 98)
     expect(
       within(steps).queryByRole("link", { name: /System records/ }),
     ).toBeNull();

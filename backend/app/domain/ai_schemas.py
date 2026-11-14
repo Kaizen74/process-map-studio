@@ -553,6 +553,23 @@ class SROutput(BaseModel):
     )
 
 
+# --- CC_match (PRD §3.19; DECISIONS 98) ------------------------------------------------------
+
+
+class CCPair(BaseModel):
+    """One suggested pair between a step of the reference map and a step of the other map."""
+
+    reference_key: str = Field(description="The step's key exactly as supplied in <reference>")
+    other_key: str = Field(description="The step's key exactly as supplied in <other>")
+    reason: str = Field(description="One plain sentence: why the two steps are the same work")
+
+
+class CCOutput(BaseModel):
+    pairs: list[CCPair] = Field(
+        description="Only steps that clearly do the same work; may be empty"
+    )
+
+
 # --- S1 intent, IX_compare, IX_verify (PRD §3.16, G16; P13a) ----------------------------------
 
 IntentKindName = Literal["promise", "target", "control_objective", "policy_rule"]

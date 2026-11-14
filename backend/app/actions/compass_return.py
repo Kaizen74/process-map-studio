@@ -4,15 +4,15 @@ hand out a file that still holds a hidden name or anything shaped like a key."""
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions import comparisons, redaction
 from app.actions import reality as reality_action
-from app.actions import redaction
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
-from app.actions.publish import slug
 from app.config import AppConfig
 from app.db import session_scope
 from app.domain.compass import CompassLink
@@ -22,6 +22,7 @@ from app.domain.models import ExportFile, VersionView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
 from app.repositories import codes as codes_repo
+from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import intent as intent_repo
 from app.repositories import testing as testing_repo
@@ -43,9 +44,10 @@ LEAK = (
     "The return file would have held a name on the list of names to hide, so nothing was "
     "downloaded. Check the list of names to hide and the wording of the map, then try again."
 )
-FILES = {"json": ("compass-return.json", "application/json"),
-         "md": ("compass-return.md", "text/markdown; charset=utf-8")}  # fmt: skip
-SECRET_MARKERS = ("sk-" + "ant-", "api_key", "x-api-key")
+# "<key>_compass_return.json" / ".md" (Eric's brief 2026-11-13, DECISIONS 98).
+FILES = {"json": ("compass_return.json", "application/json"),
+         "md": ("compass_return.md", "text/markdown; charset=utf-8")}  # fmt: skip
+SECRET_MARKERS = rules.SECRET_MARKERS
 
 
 def _counts(e: GraphElement) -> tuple[int, int]:
@@ -74,6 +76,7 @@ def _reality(session: Session, version: VersionView,
     """The published version's frozen snapshot: its X codes and its confirmed intent."""
     assert callable(hide)
     snapshot = reality_action.snapshot_of(session, version)
+    kinds = {e.id: e.kind for e in map_repo.elements(session, version.id)}
     discrepancies = []
     for c in snapshot.codes:
         suggested = grade_rules.for_discrepancy(
@@ -85,6 +88,7 @@ def _reality(session: Session, version: VersionView,
             grade_by_owner=bool(c.grade and c.grade.chosen_by_owner), impact=c.impact_word,
             verdict=c.verdict.shown if c.verdict else None, documents=c.evidence.documents,
             interviews=c.evidence.interviews, system_cases=c.evidence.system_cases,
+            topic=rules.discrepancy_topic([kinds.get(i, "") for i in c.element_ids], list(c.types)),
         ))  # fmt: skip
     codes = codes_repo.ensure(session, version.engagement_id, codes_repo.INTENT,
                               [i.id for i in snapshot.intents])  # fmt: skip
@@ -111,7 +115,7 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
             return Err(ErrorKind.CONFLICT, NOT_PUBLISHED)
         engagement = engagements_repo.get(session, version.engagement_id)
         link: CompassLink | None = engagement.compass if engagement else None
-        if link is None:
+        if link is None or engagement is None:
             return Err(ErrorKind.CONFLICT, NO_HANDOFF)
         chosen = list(dict.fromkeys(c.strip() for c in cells if c.strip()))
         if any(c not in link.cell_refs for c in chosen):  # never an ID this app made up
@@ -129,14 +133,17 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
         tested = [rules.Tested(ref=t.ref, text=hide(t.text), verdict=t.verdict,
                                evidence_refs=list(t.evidence_refs), note=hide(t.note))
                   for t in testing_repo.list_for(session, version.engagement_id)]  # fmt: skip
+        variations, other_hidden = comparisons.variations_for(config, session, engagement.id,
+                                                              version_id)  # fmt: skip
         data = rules.Inputs(
             engagement_key=link.key, pilot_ref=link.pilot_ref, cluster_ref=link.cluster_ref,
             cells=chosen, generated_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
             process_name=graph.process.name, version_label=version.label, steps=_steps(graph),
             discrepancies=discrepancies, intents=intents, tested=tested,
+            country=link.country or engagement.country, variations=variations,
         )  # fmt: skip
         content = rules.render_json(data) if fmt == "json" else rules.render_text(data)
-        if rules.leaks(content, [t.term for t in terms], SECRET_MARKERS):
+        if rules.leaks(content, [t.term for t in terms] + other_hidden, SECRET_MARKERS):
             return Err(ErrorKind.CONFLICT, LEAK)
         name, media = FILES[fmt]
         audit.record(session, actor=actor_name(config), action="Exported compass-return",
@@ -144,5 +151,5 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
                      engagement_id=version.engagement_id,
                      after={"format": fmt, "findings": len(rules.findings(data)),
                             "relates_to": [link.pilot_ref, link.cluster_ref, *chosen]})  # fmt: skip
-        filename = f"{slug(graph.process.name)}-{slug(version.label)}-{name}"
+        filename = f"{re.sub(r'[^A-Za-z0-9-]+', '-', link.key).strip('-') or 'engagement'}_{name}"
         return Ok(ExportFile(filename=filename, media_type=media, content=content))

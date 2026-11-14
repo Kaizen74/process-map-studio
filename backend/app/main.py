@@ -24,6 +24,7 @@ from app.actions import jobs as job_actions
 from app.config import AppConfig, load_config
 from app.routers import (
     causes,
+    comparisons,
     compass,
     draft,
     engagements,
@@ -103,6 +104,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(settings.router)
     app.include_router(engagements.router)
     app.include_router(compass.router)
+    app.include_router(comparisons.router)
     app.include_router(sources.router)
     app.include_router(readiness.router)
     app.include_router(jobs.router)

@@ -143,6 +143,7 @@ class ScopeFields(BaseModel):
     trigger_external: bool | None = None  # E1: the process starts outside the organisation
     end_point_external: bool | None = None  # E1: it ends outside the organisation
     every_flow: bool | None = None  # 0018: map every flow in the documents (an overview)
+    country: str | None = None  # 0022: the country it covers (locked when from a hand-off)
 
 
 class EngagementCreate(ScopeFields):
@@ -151,6 +152,19 @@ class EngagementCreate(ScopeFields):
     # and the roles to create as lanes. Both optional: without them, as before.
     compass: CompassStart | None = None
     role_names: list[str] | None = None
+    # The other country's engagement to start from (DECISIONS 98): its scope card fields the
+    # request leaves out, and its conventions, are copied; nothing else.
+    reference_engagement_id: str | None = None
+
+
+class AnotherCountry(BaseModel):
+    """Map this process in another country (DECISIONS 98)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    country: str
+    name: str | None = None
+    role_ids: list[str] | None = None  # the lanes to bring along; None: every lane
 
 
 class AnotherFlow(BaseModel):
@@ -181,6 +195,9 @@ class EngagementView(BaseModel):
     end_point_external: bool = False
     every_flow: bool = False
     compass: CompassLink | None = None  # the hand-off it started from (DECISIONS 95)
+    country: str = ""  # DECISIONS 98
+    reference_engagement_id: str | None = None
+    reference_engagement_name: str = ""
     status: str
     created_at: str
     updated_at: str

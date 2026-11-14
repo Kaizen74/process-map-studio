@@ -6,7 +6,15 @@ import { useUpdateEngagement } from "../../hooks/useEngagements";
 import { fieldOf, messageOf } from "../../lib/errors";
 import { validateEngagementName, validateScopeList, validateScopeText } from "../../lib/validation";
 
-type TextKey = "name" | "process_name" | "trigger" | "end_point" | "out_of_scope" | "process_kpi" | "industry";
+type TextKey =
+  | "name"
+  | "country"
+  | "process_name"
+  | "trigger"
+  | "end_point"
+  | "out_of_scope"
+  | "process_kpi"
+  | "industry";
 type ListKey = "in_scope_roles" | "adjacent_industries" | "confidential_terms";
 type FlagKey = "trigger_external" | "end_point_external" | "every_flow";
 type Form = Record<TextKey, string> & Record<ListKey, string[]> & Record<FlagKey, boolean>;
@@ -22,16 +30,27 @@ const LABELS: Record<TextKey | ListKey | FlagKey, string> = {
   in_scope_roles: "In-scope roles",
   out_of_scope: "Out of scope",
   process_kpi: "Process KPI",
+  country: "Country",
   industry: "Industry",
   adjacent_industries: "Adjacent industries",
   confidential_terms: "Confidential terms",
 };
-const TEXT_KEYS: TextKey[] = ["name", "process_name", "trigger", "end_point", "out_of_scope", "process_kpi", "industry"];
+const TEXT_KEYS: TextKey[] = [
+  "name",
+  "country",
+  "process_name",
+  "trigger",
+  "end_point",
+  "out_of_scope",
+  "process_kpi",
+  "industry",
+];
 const LIST_KEYS: ListKey[] = ["in_scope_roles", "adjacent_industries", "confidential_terms"];
 
 function formOf(e: Engagement): Form {
   return {
     name: e.name,
+    country: e.country ?? "",
     process_name: e.process_name,
     trigger: e.trigger,
     end_point: e.end_point,
@@ -86,7 +105,9 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
     setErrors(problems);
     setFormError(null);
     if (Object.keys(problems).length > 0 || save.isPending) return;
-    const fields: ScopeFields = { ...form };
+    // A country from the hand-off is kept as received (DECISIONS 98): it isn't sent.
+    const { country, ...rest } = form;
+    const fields: ScopeFields = engagement.compass ? rest : { ...rest, country };
     save.mutate(fields, {
       onSuccess: (saved) => {
         setForm(formOf(saved));
@@ -111,6 +132,13 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
     <Card title="Process scope" description="What this map covers. Claude uses it to stay inside the process.">
       <form className="setup-form" onSubmit={onSubmit} noValidate>
         {text("name")}
+        {engagement.compass ? (
+          <p className="setup-form__note">
+            Country: {engagement.country || "not given (a group-wide workspace)"}, from the Capability Compass hand-off.
+          </p>
+        ) : (
+          text("country", "The country this map covers, if it is one country. Used to compare countries.")
+        )}
         {text("process_name", "The process as your organisation names it, if different.")}
         <div className="setup-form__pair">
           {text("trigger", "What starts the process.")}
