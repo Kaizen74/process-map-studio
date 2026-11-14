@@ -140,7 +140,8 @@ def test_the_obvious_steps_are_proposed_with_their_reasons(countries: Countries)
     )
     assert again.status_code == 200 and again.json()["id"] == view["id"]  # the existing one
     assert (view["reference"]["country"], view["other"]["country"]) == ("Arden", "Belmar")
-    assert view["same_process"] == "this map started from it"
+    # Named by country, so it reads right from either side (Eric, 2026-11-14).
+    assert view["same_process"] == "Belmar's map started from Arden's"
     proposed = {(p["reference_key"], p["other_key"]): p["why"] for p in view["pairs"]}
     assert set(proposed) == {
         (k, k)

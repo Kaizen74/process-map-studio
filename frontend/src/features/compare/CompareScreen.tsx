@@ -31,6 +31,7 @@ import {
   TOPIC_LABELS,
   type ComparedStep,
   type Comparison,
+  type ComparisonSummary,
   type Difference,
   type ReasonClass,
 } from "../../lib/comparisons";
@@ -79,6 +80,7 @@ export function CompareScreen() {
           engagementId={engagementId}
           here={{ id: engagementId, name: engagement.data.name, country: engagement.data.country ?? "" }}
           candidates={candidates.data}
+          existing={existing.data ?? []}
           onOpen={(id) => setParams({ comparison: id })}
         />
       )}
@@ -105,21 +107,41 @@ export function CompareScreen() {
   );
 }
 
+/** Which side starts as the reference: the existing comparison's, else the map the other began from. */
+function thisIsOtherByDefault(
+  hereId: string,
+  otherId: string,
+  candidates: { engagement_id: string; why: string }[],
+  existing: ComparisonSummary[],
+): boolean {
+  const known = existing.find((c) => [c.reference.engagement_id, c.other.engagement_id].includes(otherId));
+  if (known) return known.other.engagement_id === hereId;
+  // "started from this map": the other country's map began from this one, so this one is the reference.
+  return candidates.find((c) => c.engagement_id === otherId)?.why !== "started from this map";
+}
+
 function Chooser({
   engagementId,
   here,
   candidates,
+  existing,
   onOpen,
 }: {
   engagementId: string;
   here: { id: string; name: string; country: string };
   candidates: { engagement_id: string; name: string; country: string; why: string; published_label: string | null }[];
+  existing: ComparisonSummary[];
   onOpen: (id: string) => void;
 }) {
   const start = useStartComparison(engagementId);
   const published = candidates.filter((c) => c.published_label);
   const [reference, setReference] = useState(published[0]?.engagement_id ?? "");
-  const [thisIsOther, setThisIsOther] = useState(true);
+  // Eric, 2026-11-14: the reference starts on the existing comparison's reference, else on the
+  // country the other map began from; Eric's own choice wins until he picks another map.
+  const [picked, setPicked] = useState<{ map: string; thisIsOther: boolean } | null>(null);
+  const thisIsOther =
+    picked?.map === reference ? picked.thisIsOther : thisIsOtherByDefault(here.id, reference, candidates, existing);
+  const setThisIsOther = (value: boolean) => setPicked({ map: reference, thisIsOther: value });
   if (candidates.length === 0) {
     return (
       <EmptyState

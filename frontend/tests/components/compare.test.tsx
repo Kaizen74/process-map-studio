@@ -99,6 +99,68 @@ describe("Compare countries", () => {
     expect(screen.getByRole("link", { name: "Go to Setup" })).toHaveAttribute("href", "/engagements/id-4/setup");
   });
 
+  // Eric, 2026-11-14: the reference choice starts on the country the other map began from (or
+  // the existing comparison's reference), on either country's screen.
+  const reference = async () => {
+    const field = (await screen.findByLabelText("Reference country")) as HTMLSelectElement;
+    return field.selectedOptions[0]?.textContent ?? "";
+  };
+  const ARDEN = { ...ENGAGEMENT, id: "id-4", name: VIEW.reference.name, country: "Arden" };
+  const BELMAR_CANDIDATE: Candidate = {
+    ...(CANDIDATES[0] as Candidate),
+    engagement_id: "id-9",
+    name: VIEW.other.name,
+    country: "Belmar",
+    why: "started from this map",
+  };
+
+  it("starts the reference on Arden on Belmar's screen", async () => {
+    backend({ "GET /api/engagements/id-4/comparisons": () => ({ body: [] }) });
+    renderApp(PATH);
+    expect(await reference()).toBe(`Arden · ${VIEW.reference.name}`);
+  });
+
+  it("starts the reference on Arden on Arden's screen too", async () => {
+    backend({
+      "GET /api/engagements/id-4": () => ({ body: ARDEN }),
+      "GET /api/engagements/id-4/comparison-candidates": () => ({ body: [BELMAR_CANDIDATE] }),
+      "GET /api/engagements/id-4/comparisons": () => ({ body: [] }),
+    });
+    renderApp(PATH);
+    expect(await reference()).toBe(`Arden · ${VIEW.reference.name}`);
+  });
+
+  it("follows the existing comparison when there is one", async () => {
+    const existing = {
+      ...(LIST[0] as ComparisonSummary),
+      reference: { ...(LIST[0] as ComparisonSummary).other, engagement_id: "id-9", country: "Belmar" },
+      other: { ...(LIST[0] as ComparisonSummary).reference, engagement_id: "id-4", country: "Arden" },
+    };
+    backend({
+      "GET /api/engagements/id-4": () => ({ body: ARDEN }),
+      "GET /api/engagements/id-4/comparison-candidates": () => ({ body: [BELMAR_CANDIDATE] }),
+      "GET /api/engagements/id-4/comparisons": () => ({ body: [existing] }),
+    });
+    renderApp(PATH);
+    await screen.findByRole("heading", { name: "Comparisons of this map" });
+    expect(await reference()).toBe(`Belmar · ${VIEW.other.name}`);
+  });
+
+  it("keeps Eric's own choice of reference", async () => {
+    backend({ "GET /api/engagements/id-4/comparisons": () => ({ body: [] }) });
+    renderApp(PATH);
+    fireEvent.change(await screen.findByLabelText("Reference country"), { target: { value: "us" } });
+    expect(await reference()).toBe(`Belmar · ${BELMAR.name}`);
+  });
+
+  it("says which map started from which, by country", async () => {
+    backend();
+    renderApp(`${PATH}?comparison=id-3`);
+    expect(
+      await screen.findByText("Arden v1.0 is the reference; Belmar v1.0 is compared with it (Belmar's map started from Arden's)."),
+    ).toBeInTheDocument();
+  });
+
   it("counts every status in the list of comparisons, dismissed included", async () => {
     // Eric, 2026-11-14: the list line matches the comparison card's counts.
     backend();

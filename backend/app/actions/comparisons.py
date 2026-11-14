@@ -122,6 +122,18 @@ def country_of(e: EngagementView) -> str:
     return e.country or e.name
 
 
+def _between(ref_e: EngagementView, oth_e: EngagementView) -> str:
+    """Why the two maps of a comparison are the same process, named by country so it reads right
+    on either country's screen (Eric, 2026-11-14)."""
+    ref, other = country_of(ref_e), country_of(oth_e)
+    why = same_process(oth_e, ref_e) or ""
+    return {
+        "this map started from it": f"{other}'s map started from {ref}'s",
+        "started from this map": f"{ref}'s map started from {other}'s",
+        "started from the same map": "both maps started from the same map",
+    }.get(why, why)
+
+
 def same_process(a: EngagementView, b: EngagementView) -> str | None:
     """Why two engagements map the same process (PRD §3.19), or None when they don't."""
     if b.reference_engagement_id == a.id:
@@ -260,7 +272,7 @@ def _load(config: AppConfig, session: Session, comparison_id: str) -> Result[_Lo
         reference_lanes=reference.lanes,
         other_lanes=other.lanes,
     )
-    return Ok(_Loaded(record, reference, other, countries, same_process(oth_e, ref_e) or ""))
+    return Ok(_Loaded(record, reference, other, countries, _between(ref_e, oth_e)))
 
 
 def _pairs(
