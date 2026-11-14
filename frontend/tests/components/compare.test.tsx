@@ -99,6 +99,18 @@ describe("Compare countries", () => {
     expect(screen.getByRole("link", { name: "Go to Setup" })).toHaveAttribute("href", "/engagements/id-4/setup");
   });
 
+  it("counts every status in the list of comparisons, dismissed included", async () => {
+    // Eric, 2026-11-14: the list line matches the comparison card's counts.
+    backend();
+    renderApp(PATH);
+    const list = await screen.findByRole("heading", { name: "Comparisons of this map" });
+    const card = list.closest("section") ?? document.body;
+    const d = LIST[0]?.differences;
+    expect(within(card as HTMLElement).getByText(/\(reference\) and Belmar/)).toHaveTextContent(
+      `Arden v1.0 (reference) and Belmar v1.0: ${d?.open} not classed yet, ${d?.classed} classed, ${d?.kept} kept, ${d?.dismissed} dismissed`,
+    );
+  });
+
   it("shows the pairs with their reasons and sends Eric's decisions", async () => {
     const { calls } = backend();
     const { container } = renderApp(`${PATH}?comparison=id-3`);

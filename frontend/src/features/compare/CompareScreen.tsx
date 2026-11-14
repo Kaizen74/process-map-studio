@@ -90,7 +90,7 @@ export function CompareScreen() {
                 <span>
                   {c.reference.country} {c.reference.version_label} (reference) and {c.other.country}{" "}
                   {c.other.version_label}: {c.differences.open} not classed yet, {c.differences.classed} classed,{" "}
-                  {c.differences.kept} kept
+                  {c.differences.kept} kept, {c.differences.dismissed} dismissed
                 </span>{" "}
                 <Button onClick={() => setParams({ comparison: c.id })}>
                   Open <span className="visually-hidden">the comparison with {c.reference.country}</span>
