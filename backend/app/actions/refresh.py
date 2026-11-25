@@ -31,7 +31,10 @@ STEP_KINDS = {"activity", "decision", "approval"}
 
 
 OWN_VALUE_FIELDS = ("disposition", "disposition_note", "risk_flag", "time_override_min",
-                    "volume_override_month", "value_override_note")  # fmt: skip
+                    "volume_override_month", "value_override_note",
+                    # §3.20 (DECISIONS 110): the decider on paper and the system of record.
+                    "paper_decider_status", "paper_decider_role_id", "paper_decider_segment_id",
+                    "system_status", "system_role_id", "system_other")  # fmt: skip
 
 
 def changes(old: list[ElementRecord], fresh: list[ElementRecord], kept: int) -> RefreshChanges:

@@ -5,6 +5,8 @@ hand out a file that still holds a hidden name or anything shaped like a key."""
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
+from dataclasses import replace
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -27,8 +29,8 @@ from app.repositories import engagements as engagements_repo
 from app.repositories import intent as intent_repo
 from app.repositories import testing as testing_repo
 from app.repositories import versions as versions_repo
+from app.services import accountability, exports
 from app.services import compass_return as rules
-from app.services import exports
 from app.services import grade as grade_rules
 
 Sessions = sessionmaker[Session]
@@ -58,7 +60,13 @@ def _counts(e: GraphElement) -> tuple[int, int]:
     return len(speaking) - interviews, interviews
 
 
-def _steps(graph: Graph) -> list[rules.Step]:
+def _rights(graph: Graph, hide: Callable[[str], str]) -> dict[str, accountability.Rights]:
+    """§3.20: element ID → its three roles, names hidden, for every decision and approval."""
+    roles = {r.id: hide(r.name) for r in graph.roles}
+    return {e.id: r for e in graph.elements if (r := accountability.rights(e, roles)) is not None}
+
+
+def _steps(graph: Graph, rights: dict[str, accountability.Rights]) -> list[rules.Step]:
     roles = {r.id: r.name for r in graph.roles}
     out = []
     for e in exports.steps(exports.on_the_map(graph)):
@@ -67,12 +75,28 @@ def _steps(graph: Graph) -> list[rules.Step]:
             code=e.code or "", label=e.label, kind=e.kind, lane=roles.get(e.lane_role_id or "", ""),
             work_type=e.work_type, mechanism=e.decision.mechanism, provenance=e.provenance,
             documents=documents, interviews=interviews, knowledge_risk=e.k_risk,
+            rights=rights.get(e.id),
         ))  # fmt: skip
     return [s for s in out if s.code]
 
 
-def _reality(session: Session, version: VersionView,
-             hide: object) -> tuple[list[rules.Discrepancy], list[rules.Intent]]:  # fmt: skip
+def _at_decisions(graph: Graph, rights: dict[str, accountability.Rights],
+                  d: rules.Discrepancy, element_ids: list[str]) -> rules.Discrepancy:  # fmt: skip
+    """A Different role discrepancy's three roles: the first decision or approval step it is at;
+    the other such steps with other values are named in its detail."""
+    if d.topic != rules.DECISION_RIGHT:
+        return d
+    codes = {e.id: e.code or "" for e in graph.elements}
+    at = [i for i in element_ids if i in rights]
+    if not at:
+        return d
+    first = rights[at[0]]
+    also = [codes[i] for i in at[1:] if rights[i] != first and codes.get(i)]
+    return replace(d, rights=first, also_at=also)
+
+
+def _reality(session: Session, version: VersionView, hide: object
+             ) -> tuple[list[rules.Discrepancy], list[list[str]], list[rules.Intent]]:  # fmt: skip
     """The published version's frozen snapshot: its X codes and its confirmed intent."""
     assert callable(hide)
     snapshot = reality_action.snapshot_of(session, version)
@@ -100,7 +124,7 @@ def _reality(session: Session, version: VersionView,
                 code=codes[i.id], text=hide(i.text), kind=i.kind, result=i.result,
                 target=hide(i.target), quoted=bool(stored and stored.origin == "document"),
             ))  # fmt: skip
-    return discrepancies, intents
+    return discrepancies, [list(c.element_ids) for c in snapshot.codes], intents
 
 
 def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
@@ -127,18 +151,29 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
         def hide(text: str) -> str:
             return redaction.hide(text, terms)
 
-        discrepancies, intents = (
-            _reality(session, version, hide) if reality_action.enabled(config) else ([], [])
+        discrepancies, at_steps, intents = (
+            _reality(session, version, hide) if reality_action.enabled(config) else ([], [], [])
         )
         tested = [rules.Tested(ref=t.ref, text=hide(t.text), verdict=t.verdict,
                                evidence_refs=list(t.evidence_refs), note=hide(t.note))
                   for t in testing_repo.list_for(session, version.engagement_id)]  # fmt: skip
         variations, other_hidden = comparisons.variations_for(config, session, engagement.id,
                                                               version_id)  # fmt: skip
+        rights = _rights(graph, hide)
+        by_code = {e.code: e.id for e in graph.elements if e.code}
+        variations = [
+            replace(v, rights=rights.get(by_code.get(v.step_code, "")))
+            if v.topic == rules.DECISION_RIGHT
+            else v
+            for v in variations
+        ]
+        discrepancies = [_at_decisions(graph, rights, d, ids)
+                         for d, ids in zip(discrepancies, at_steps, strict=True)]  # fmt: skip
         data = rules.Inputs(
             engagement_key=link.key, pilot_ref=link.pilot_ref, cluster_ref=link.cluster_ref,
             cells=chosen, generated_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
-            process_name=graph.process.name, version_label=version.label, steps=_steps(graph),
+            process_name=graph.process.name, version_label=version.label,
+            steps=_steps(graph, rights),
             discrepancies=discrepancies, intents=intents, tested=tested,
             country=link.country or engagement.country, variations=variations,
         )  # fmt: skip

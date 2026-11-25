@@ -399,7 +399,7 @@ def test_enums_match_appendix_b() -> None:
         for cls in vars(enums).values()
         if isinstance(cls, type) and issubclass(cls, enums.StrEnum) and cls is not enums.StrEnum
     }
-    assert len(rows) == 56 == len(by_id)  # B.51-B.56: comparing countries (DECISIONS 98)
+    assert len(rows) == 59 == len(by_id)  # B.57-B.59: accountability and data lens (DECISIONS 110)
     for bid, values in rows:
         expected = [re.sub(r"\s*\(.*?\)", "", v).strip().split()[0] for v in values.split("·")]
         pending = PENDING_VALUES.get(bid, set())
@@ -479,9 +479,35 @@ def test_downgrade_of_0014_removes_only_the_two_notes(migrated: Path) -> None:
         engine.dispose()
         return columns
 
+    db.downgrade(migrated, "0014")  # later migrations add element columns of their own
     before = element_columns()
     db.downgrade(migrated, "0013")
     assert before - element_columns() == {"disposition_note", "value_override_note"}
     assert {"disposition", "risk_flag", "time_override_min"} <= element_columns()
     db.upgrade(migrated)
     assert {"disposition_note", "value_override_note"} <= element_columns()
+
+
+def test_downgrade_of_0023_removes_only_its_columns(migrated: Path) -> None:
+    """DECISIONS 110: the accountability and data lens columns, and nothing else."""
+    added = {
+        "elements": {"paper_decider_status", "paper_decider_role_id", "paper_decider_segment_id",
+                     "system_status", "system_role_id", "system_other"},
+        "edges": {"data_move"},
+        "sources": {"owner_role_id", "owner_checked", "updated_by_role_id", "updated_by_other",
+                    "last_reviewed", "review_due", "controlled_copy_set"},
+        "engagements": {"process_owner_role_id", "process_owner_other"},
+    }  # fmt: skip
+
+    def columns() -> dict[str, set[str]]:
+        engine = db.make_engine(migrated)
+        found = {t: {c["name"] for c in inspect(engine).get_columns(t)} for t in added}
+        engine.dispose()
+        return found
+
+    before = columns()
+    db.downgrade(migrated, "0022")
+    after = columns()
+    assert {t: before[t] - after[t] for t in added} == added
+    db.upgrade(migrated)
+    assert columns() == before

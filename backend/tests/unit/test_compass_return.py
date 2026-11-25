@@ -104,8 +104,14 @@ def test_the_file_has_the_agreed_shape_and_this_apps_own_codes(drafted: Drafted)
     fields = ["ref", "kind", "title", "detail", "grade", "figure", "relates_to", "source_note"]
     # Steps and discrepancies also carry the readout page they belong on (DECISIONS 98).
     topical = {"step": [*fields, "topic"], "discrepancy": [*fields, "topic"]}
+    # Since 2026-11-25 (DECISIONS 110) a decision_right finding also carries, when known,
+    # on_paper, decided_by, accountable and accountable_contested, in that order.
+    rights = ["on_paper", "decided_by", "accountable", "accountable_contested"]
     for f in file["findings"]:
-        assert list(f) == topical.get(f["kind"], fields)
+        extra = [k for k in rights if k in f]
+        assert list(f) == topical.get(f["kind"], fields) + extra
+        if extra:
+            assert f["topic"] == "decision_right" and "decided_by" in extra
         assert f["kind"] in rules.KINDS and f["grade"] in grade.GRADES
         assert isinstance(f["figure"], str) and f["source_note"]
         # The pilot and its cluster by default, exactly as received.

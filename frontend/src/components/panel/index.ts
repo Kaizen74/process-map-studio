@@ -27,3 +27,4 @@ export {
 } from "./SensemakingSections";
 export { SystemDataSection, type SystemDataSectionProps } from "./SystemDataSection";
 export { DispositionValueSection, type DispositionValueSectionProps } from "./DispositionValueSection";
+export { DeciderSection, type DeciderSectionProps, type PaperChoice } from "./DeciderSection";

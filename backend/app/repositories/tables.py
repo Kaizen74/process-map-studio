@@ -78,6 +78,11 @@ class Engagement(Row):
     # from (only its scope card, conventions and lane names were copied).
     country: Mapped[str] = mapped_column(Text, default="", server_default="")
     reference_engagement_id: Mapped[str | None] = opt_fk("engagements.id")
+    # 0023 (DECISIONS 110): the role accountable for the process end to end, or another role's
+    # name typed by Eric ("" when not recorded).
+    # No foreign key: roles already point at engagements (no cycle); the role check guards it.
+    process_owner_role_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    process_owner_other: Mapped[str] = mapped_column(Text, default="", server_default="")
 
 
 class Source(Row):
@@ -91,6 +96,18 @@ class Source(Row):
     version_date: Mapped[str] = mapped_column(String(32), default="")
     owner: Mapped[str] = mapped_column(Text, default="")
     controlled_copy: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 0023 (DECISIONS 110): an SOP's owner and updater roles ("other role" text beside them), its
+    # review dates, whether Eric checked a free-text owner is a role, and whether he set the
+    # controlled copy flag (a "no" he never set reads as not known).
+    owner_role_id: Mapped[str | None] = opt_fk("roles.id")
+    owner_checked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    updated_by_role_id: Mapped[str | None] = opt_fk("roles.id")
+    updated_by_other: Mapped[str] = mapped_column(Text, default="", server_default="")
+    last_reviewed: Mapped[str] = mapped_column(String(32), default="", server_default="")
+    review_due: Mapped[str] = mapped_column(String(32), default="", server_default="")
+    controlled_copy_set: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     text_status: Mapped[str] = mapped_column(String(16), default="pending")
     error: Mapped[str] = mapped_column(Text, default="")
     # PDF pages with almost no text, to be read by OCR (S0) from phase P3.
@@ -310,6 +327,14 @@ class Element(Row):
     # R9 (0014): Eric's notes on his disposition and on his value overrides.
     disposition_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     value_override_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 0023 (DECISIONS 110): the decider named in the documents (B.58) with the passage naming it,
+    # and the step's system of record (B.59). Eric's only.
+    paper_decider_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    paper_decider_role_id: Mapped[str | None] = opt_fk("roles.id")
+    paper_decider_segment_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    system_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    system_role_id: Mapped[str | None] = opt_fk("roles.id")
+    system_other: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class ElementClaim(Row):
@@ -340,6 +365,8 @@ class Edge(Row):
     typical: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     view_membership: Mapped[str | None] = mapped_column(String(16), nullable=True)
     information_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 0023 (DECISIONS 110): how the data moves at a handoff (B.57); null = not known.
+    data_move: Mapped[str | None] = mapped_column(String(24), nullable=True)
 
 
 class EvidenceLink(Row):

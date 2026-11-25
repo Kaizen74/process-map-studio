@@ -2,6 +2,7 @@ import {
   AiFlag,
   ConfidenceBreakdown,
   ConstraintList,
+  DeciderSection,
   DecisionRights,
   DispositionValueSection,
   type DispositionValueSectionProps,
@@ -21,9 +22,10 @@ import {
   type PassageLink,
 } from "../../components/panel";
 import { ErrorState, Skeleton } from "../../components/common";
-import { useElement, useSetWorkType } from "../../hooks/useReview";
+import { useElement, useSetPaperDecider, useSetWorkType } from "../../hooks/useReview";
+import { rightsOf } from "../../lib/accountability";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import type { EvidenceCard as Card, GraphElement } from "../../lib/mapTypes";
+import type { EvidenceCard as Card, GraphElement, GraphRole } from "../../lib/mapTypes";
 import type { ReviewAction } from "../../api/review";
 import type { SystemTrace } from "../../lib/systemRecords";
 import { GapFindingsSection } from "../../components/gap";
@@ -32,6 +34,8 @@ import { ImagesSection } from "./ImagesSection";
 
 export interface DetailPanelProps {
   element: GraphElement;
+  /** The version's roles (§3.20: who decides on paper, in practice and accountable). */
+  roles?: readonly GraphRole[] | undefined;
   laneName: string;
   phaseName: string;
   /** The landscape activity a practice step is part of (K2), or "". */
@@ -68,6 +72,7 @@ const STEPS = new Set(["activity", "decision", "approval"]);
 /** The selected step with its review actions (PRD §5.7.5, §5.7.7). */
 export function DetailPanel({
   element,
+  roles = [],
   laneName,
   phaseName,
   partOf,
@@ -84,6 +89,8 @@ export function DetailPanel({
 }: DetailPanelProps) {
   const detail = useElement(element.id);
   const workType = useSetWorkType(images.versionId, images.engagementId);
+  const paperDecider = useSetPaperDecider(images.versionId, images.engagementId);
+  const rights = rightsOf(element, roles);
   const step = STEPS.has(element.kind);
   // A know-how item, story, cue or answer opens in the source viewer like an evidence card.
   const openPassage = (passage: PassageLink) => {
@@ -159,6 +166,22 @@ export function DetailPanel({
           <ConfidenceBreakdown element={detail.data} />
           <RoleAccountability element={detail.data} />
           <DecisionRights element={detail.data} />
+          {rights && (
+            <DeciderSection
+              element={detail.data}
+              rights={rights}
+              roles={roles}
+              choice={
+                review && element.review_status !== "rejected"
+                  ? {
+                      busy: paperDecider.isPending,
+                      error: paperDecider.isError ? messageOf(paperDecider.error) : null,
+                      onSave: (body) => paperDecider.mutate({ elementId: element.id, body }),
+                    }
+                  : undefined
+              }
+            />
+          )}
           <WorkTypeSection
             element={detail.data}
             typicalResponses={typicalResponses}

@@ -1,4 +1,5 @@
 import type { Graph } from "../../lib/mapTypes";
+import { raciCounts, rightsOf, splits } from "../../lib/accountability";
 import "./tabs.css";
 
 export interface RaciMatrixProps {
@@ -21,8 +22,17 @@ export function RaciMatrix({ graph, laneOrder, selectedId, onSelect }: RaciMatri
   const used = new Set(steps.flatMap((e) => e.raci.map((r) => r.role_id)));
   const names = new Map(graph.roles.map((r) => [r.id, r.name]));
   const columns = [...laneOrder.filter((id) => used.has(id)), ...[...used].filter((id) => !laneOrder.includes(id))];
+  // §3.20 (DECISIONS 110): who decides against who is accountable, over the live steps.
+  const live = steps.filter((e) => e.review_status !== "rejected");
+  const counts = raciCounts(live, graph.roles);
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   return (
     <div className="raci">
+      <p className="raci__counts">
+        {plural(counts.decisions, "decision", "decisions")} · {counts.paperDiffers} decided by a different role from the
+        documents · {counts.split} where the one who decides is not accountable ·{" "}
+        {counts.contested} with a contested A
+      </p>
       <table className="raci__table">
         <caption className="raci__caption">
           R responsible · A accountable · C consulted · I informed. <span className="raci__contested">A?</span> means
@@ -56,6 +66,14 @@ export function RaciMatrix({ graph, laneOrder, selectedId, onSelect }: RaciMatri
                   }}>
                     {step.label}
                   </button>
+                  {(() => {
+                    const r = rightsOf(step, graph.roles);
+                    return r && splits(r) ? (
+                      <span className="raci__split">
+                        <span aria-hidden="true">≠ </span>decides ≠ accountable
+                      </span>
+                    ) : null;
+                  })()}
                 </th>
                 {columns.map((id) => {
                   const letters = step.raci.filter((r) => r.role_id === id);

@@ -4,12 +4,21 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
 
-from app.actions import dispositions, map_edits, merges, next_steps, questions, review
+from app.actions import (
+    accountability,
+    dispositions,
+    map_edits,
+    merges,
+    next_steps,
+    questions,
+    review,
+)
 from app.domain.graph import ElementDetail, GraphEdge
 from app.domain.models import (
     AcceptedSteps,
     AcceptRemaining,
     AuditEntry,
+    DataMoveInput,
     DispositionInput,
     DispositionView,
     EdgeInput,
@@ -19,9 +28,11 @@ from app.domain.models import (
     MergeProposalView,
     NewStep,
     NextSteps,
+    PaperDeciderInput,
     QuestionStatus,
     QuestionView,
     RaciInput,
+    SystemOfRecordInput,
     WorkTypeInput,
 )
 from app.routers.http import unwrap
@@ -86,6 +97,32 @@ def set_work_type(request: Request, element_id: str, body: WorkTypeInput) -> Ele
 def set_disposition(request: Request, element_id: str, body: DispositionInput) -> DispositionView:
     state = request.app.state
     return unwrap(dispositions.set_disposition(state.config, state.sessions, element_id, body))
+
+
+@router.put("/elements/{element_id}/paper-decider")
+def set_paper_decider(request: Request, element_id: str, body: PaperDeciderInput) -> ElementDetail:
+    state = request.app.state
+    return unwrap(accountability.set_paper_decider(state.config, state.sessions, element_id, body))
+
+
+@router.put("/elements/{element_id}/system-of-record")
+def set_system_of_record(
+    request: Request, element_id: str, body: SystemOfRecordInput
+) -> ElementDetail:
+    state = request.app.state
+    return unwrap(
+        accountability.set_system_of_record(state.config, state.sessions, element_id, body)
+    )
+
+
+@router.put("/versions/{version_id}/edges/{edge_id}/data-move")
+def set_data_move(
+    request: Request, version_id: str, edge_id: str, body: DataMoveInput
+) -> GraphEdge:
+    state = request.app.state
+    return unwrap(
+        accountability.set_data_move(state.config, state.sessions, version_id, edge_id, body)
+    )
 
 
 @router.get("/versions/{version_id}/dispositions")

@@ -355,6 +355,8 @@ def role_uses(session: Session, role_id: str) -> RoleUses:
     uses_it = or_(
         Element.lane_role_id == role_id,
         Element.decider_role_id == role_id,
+        Element.paper_decider_role_id == role_id,  # §3.20 (DECISIONS 110)
+        Element.system_role_id == role_id,
         Element.id.in_(in_raci),
     )
     steps = session.scalars(

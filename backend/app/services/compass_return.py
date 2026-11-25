@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from typing import Any
 
 from app.services import grade as grade_rules
+from app.services.accountability import Rights
 
 RETURN_FORMAT = "compass-return"
 RETURN_VERSION = "1.0"
@@ -76,6 +78,7 @@ class Step:
     documents: int
     interviews: int
     knowledge_risk: str = ""
+    rights: Rights | None = None  # §3.20: decisions and approvals only
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +96,8 @@ class Discrepancy:
     interviews: int
     system_cases: int | None
     topic: str = WAY_OF_WORKING
+    rights: Rights | None = None  # §3.20: from the first decision or approval step it is at
+    also_at: list[str] = field(default_factory=list)  # other such steps with other values
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +118,7 @@ class Variation:
     country: str
     compared_with: str
     source_note: str
+    rights: Rights | None = None  # §3.20: this country's step, on a decision_right difference
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +197,22 @@ def _tested_grade(t: Tested, grades: dict[str, str]) -> str:
     return grade_rules.INDICATED
 
 
+def decision_fields(r: Rights | None) -> dict[str, Any]:
+    """§3.20: `on_paper`, `decided_by`, `accountable` (each only when known) and
+    `accountable_contested: true` (only when so), for a `decision_right` finding."""
+    if r is None:
+        return {}
+    out: dict[str, Any] = {
+        k: v
+        for k, v in (("on_paper", r.on_paper), ("decided_by", r.decided_by),
+                     ("accountable", r.accountable))
+        if v
+    }  # fmt: skip
+    if r.contested:
+        out["accountable_contested"] = True
+    return out
+
+
 def findings(data: Inputs) -> list[dict[str, object]]:
     """Every finding in the order: steps, discrepancies, intent, knowledge risks, verdicts."""
     relates = list(dict.fromkeys([data.pilot_ref, data.cluster_ref, *data.cells]))
@@ -199,7 +221,7 @@ def findings(data: Inputs) -> list[dict[str, object]]:
     out: list[dict[str, object]] = []
 
     def add(ref: str, kind: str, title: str, detail: str, grade: str, figure: str,
-            note: str, **extra: str) -> None:  # fmt: skip
+            note: str, **extra: Any) -> None:  # fmt: skip
         out.append({"ref": ref, "kind": kind, "title": title, "detail": detail,
                     "grade": grade, "figure": figure, "relates_to": list(relates),
                     "source_note": note, **extra})  # fmt: skip
@@ -208,7 +230,8 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         detail, grade, note = _step(s)
         grades[s.code] = grade
         topic = DECISION_RIGHT if s.kind in DECIDING else WAY_OF_WORKING
-        add(s.code, "step", s.label, detail, grade, "", note, topic=topic)
+        add(s.code, "step", s.label, detail, grade, "", note, topic=topic,
+            **decision_fields(s.rights if topic == DECISION_RIGHT else None))  # fmt: skip
     for d in data.discrepancies:
         grades[d.code] = d.grade
         verdict = DISCREPANCY_VERDICTS.get(d.verdict or "", "")
@@ -216,11 +239,13 @@ def findings(data: Inputs) -> list[dict[str, object]]:
             f"Types: {', '.join(TYPE_WORDS.get(t, t) for t in d.types)}." if d.types else "",
             f"Impact: {d.impact}." if d.impact else "",
             f"Verdict: {verdict}." if verdict else "",
+            f"Also at {', '.join(d.also_at)}." if d.also_at and d.topic == DECISION_RIGHT else "",
         ) if p)  # fmt: skip
         figure = f"{d.figure} ({d.figure_label})" if d.figure and d.figure_label else d.figure
         chosen = "Grade chosen by the owner. " if d.grade_by_owner else ""
         note = f"{chosen}Rests on {_sources(d.documents, d.interviews, d.system_cases)}."
-        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note, topic=d.topic)
+        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note, topic=d.topic,
+            **decision_fields(d.rights if d.topic == DECISION_RIGHT else None))  # fmt: skip
     for i in data.intents:
         known = i.result in ("met", "not_met")
         grade = grade_rules.INDICATED if known else grade_rules.HYPOTHESIS
@@ -254,6 +279,7 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         if v.reason_class is not None:
             extra["reason_class"] = v.reason_class
         extra["compared_with"] = v.compared_with
+        extra.update(decision_fields(v.rights if v.topic == DECISION_RIGHT else None))
         add(v.code, "variation", v.title, detail, v.grade, v.figure, v.source_note, **extra)
     return out
 
@@ -307,6 +333,15 @@ def render_text(data: Inputs) -> str:
                 lines.append(f"  Reason class: {REASON_WORDS.get(str(f['reason_class']), '')}")
             if f.get("compared_with"):
                 lines.append(f"  Compared with: {f['compared_with']}")
+            roles = [
+                f"{word}: {f[key]}"
+                for key, word in (("on_paper", "On paper"), ("decided_by", "Decides"),
+                                  ("accountable", "Accountable"))
+                if f.get(key)
+            ]  # fmt: skip
+            if roles:
+                contested = " (contested)" if f.get("accountable_contested") is True else ""
+                lines.append(f"  {' · '.join(roles)}{contested}")
             lines.append(f"  Rests on: {f['source_note']}")
     if not found:
         lines += ["", "No finding to return yet."]

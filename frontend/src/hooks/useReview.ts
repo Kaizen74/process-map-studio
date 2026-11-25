@@ -13,7 +13,10 @@ import {
   listQuestions,
   listSegmentsAround,
   reviewElement,
+  setDataMove,
+  setPaperDecider,
   setQuestionStatus,
+  setSystemOfRecord,
   setWorkType,
   updateElement,
   type MergeChoice,
@@ -22,7 +25,7 @@ import {
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { ElementDetail, Graph } from "../api/types";
-import type { ChoosableWorkType } from "../lib/mapTypes";
+import type { ChoosableWorkType, DataMove } from "../lib/mapTypes";
 import type { AsView } from "../lib/views";
 
 // Keys follow PRD §5.8 "invalidate graph, layout, quality-card and lint for the version".
@@ -141,6 +144,42 @@ export function useSetWorkType(versionId: string, engagementId: string) {
       client.setQueryData(["elements", detail.id], detail);
       refreshReview(client, versionId, engagementId);
     },
+  });
+}
+
+/** §3.20: the decider on paper; the step's detail is replaced and the map asked again. */
+export function useSetPaperDecider(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ elementId, body }: { elementId: string; body: Parameters<typeof setPaperDecider>[1] }) =>
+      setPaperDecider(elementId, body),
+    onSuccess: (detail: ElementDetail) => {
+      client.setQueryData(["elements", detail.id], detail);
+      refreshReview(client, versionId, engagementId);
+    },
+  });
+}
+
+/** §3.20: the system of record of a step. */
+export function useSetSystemOfRecord(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ elementId, body }: { elementId: string; body: Parameters<typeof setSystemOfRecord>[1] }) =>
+      setSystemOfRecord(elementId, body),
+    onSuccess: (detail: ElementDetail) => {
+      client.setQueryData(["elements", detail.id], detail);
+      refreshReview(client, versionId, engagementId);
+    },
+  });
+}
+
+/** §3.20: how the data moves at a handoff; never set without Eric. */
+export function useSetDataMove(versionId: string, engagementId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ edgeId, dataMove }: { edgeId: string; dataMove: DataMove | null }) =>
+      setDataMove(versionId, edgeId, dataMove),
+    onSuccess: () => refreshReview(client, versionId, engagementId),
   });
 }
 

@@ -276,7 +276,7 @@ def _view(edge: EdgeRecord) -> GraphEdge:
                      kind=edge.kind, label=edge.label, sequence_basis=edge.sequence_basis,
                      view_membership=edge.view_membership,
                      information_payload=edge.information_payload, typical=edge.typical,
-                     provenance=edge.provenance)  # fmt: skip
+                     provenance=edge.provenance, data_move=edge.data_move)  # fmt: skip
 
 
 def _plain(edge: EdgeRecord) -> dict[str, str]:

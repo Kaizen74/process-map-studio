@@ -72,6 +72,13 @@ class ElementRecord(Record):
     time_override_min: float | None = None
     volume_override_month: float | None = None
     value_override_note: str | None = None
+    # 0023 (DECISIONS 110, §3.20): the decider named in the documents and the system of record.
+    paper_decider_status: str | None = None  # B.58
+    paper_decider_role_id: str | None = None
+    paper_decider_segment_id: str | None = None
+    system_status: str | None = None  # B.59
+    system_role_id: str | None = None
+    system_other: str | None = None
 
 
 class EdgeRecord(Record):
@@ -85,6 +92,7 @@ class EdgeRecord(Record):
     typical: bool | None = None
     view_membership: str | None = None  # B.35
     information_payload: str | None = None
+    data_move: str | None = None  # B.57; None = not known (0023, DECISIONS 110)
 
 
 class RaciRecord(Record):
@@ -233,6 +241,22 @@ class GraphHandoff(Out):
     out: str
 
 
+class GraphPaperDecider(Out):
+    """§3.20: the decider the documents name (B.58), with the cited passage naming it."""
+
+    status: str  # named · not_named
+    role_id: str | None = None
+    segment_id: str | None = None  # None: "not cited"
+
+
+class GraphSystem(Out):
+    """§3.20: the step's system of record (B.59)."""
+
+    status: str  # system · other · none
+    role_id: str | None = None  # a role marked as a system
+    other: str = ""  # another system's name
+
+
 class GraphRaci(Out):
     role_id: str
     letter: str
@@ -321,6 +345,9 @@ class GraphElement(Out):
     # belongs to; both null on a map with one level (and before v1.10).
     level: str | None = None
     parent_element_id: str | None = None
+    # §3.20 (DECISIONS 110): Eric's record; null when not recorded.
+    paper_decider: GraphPaperDecider | None = None
+    system_of_record: GraphSystem | None = None
 
 
 class GraphEdge(Out):
@@ -336,6 +363,8 @@ class GraphEdge(Out):
     information_payload: str | None = None
     typical: bool | None = None
     provenance: str = "O"  # I: added by the translation for one view (§3.12.10 rules 1 and 7)
+    # §3.20 (B.57): how the data moves at a handoff; null = not known.
+    data_move: str | None = None
 
 
 class Graph(Out):
@@ -539,6 +568,15 @@ class ElementDetail(Out):
     answers: list[AnswerQuote] = []
     know_how: KnowHow | None = None
     stories: list[StoryCard] = []
+    # §3.20 (DECISIONS 110): the decider named in the documents, with its role name, the place of
+    # the passage naming it ("" when not cited), and the hint when it differs from the decider in
+    # practice with no Different role discrepancy; the system of record with its role's name.
+    paper_decider: GraphPaperDecider | None = None
+    paper_decider_role_name: str = ""
+    paper_decider_anchor: str = ""
+    paper_decider_hint: str = ""
+    system_of_record: GraphSystem | None = None
+    system_role_name: str = ""
 
 
 # --- Alignment matrix (PRD §4 Views, §5.4 Matrix; phase P9) ------------------------------------

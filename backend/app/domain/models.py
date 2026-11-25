@@ -882,6 +882,34 @@ class EdgeInput(BaseModel):
     label: str = ""
 
 
+class PaperDeciderInput(BaseModel):
+    """§3.20 (DECISIONS 110): the decider named in the documents; `status: null` clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None  # B.58 named · not_named
+    role_id: str | None = None
+    segment_id: str | None = None  # one of the step's cited document passages; null: not cited
+
+
+class SystemOfRecordInput(BaseModel):
+    """§3.20: the step's system of record; `status: null` clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None  # B.59 system · other · none
+    role_id: str | None = None
+    other: str = ""
+
+
+class DataMoveInput(BaseModel):
+    """§3.20: how the data moves at a handoff (B.57); null = not known."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    data_move: str | None
+
+
 class EdgePatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

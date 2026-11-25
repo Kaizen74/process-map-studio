@@ -129,7 +129,9 @@
         "work_type_basis": [],
         "work_type_status": null,
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-12",
@@ -212,7 +214,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-15",
@@ -295,7 +299,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-16",
@@ -378,7 +384,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-18",
@@ -461,7 +469,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-19",
@@ -544,7 +554,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-21",
@@ -627,7 +639,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-22",
@@ -680,7 +694,9 @@
         "work_type_basis": [],
         "work_type_status": null,
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       }
     ],
     "edges": [
@@ -694,7 +710,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-24",
@@ -706,7 +723,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-25",
@@ -718,7 +736,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-26",
@@ -730,7 +749,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-27",
@@ -742,7 +762,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-28",
@@ -754,7 +775,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-29",
@@ -766,7 +788,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-30",
@@ -778,7 +801,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-31",
@@ -790,7 +814,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "I"
+        "provenance": "I",
+        "data_move": null
       }
     ]
   },

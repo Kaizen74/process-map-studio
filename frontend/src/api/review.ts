@@ -3,7 +3,7 @@ import type { AcceptedSteps, AuditEntry, ElementDetail, Layout, MergeProposal, N
 import type { NewStepBody } from "../lib/addStep";
 import type { StepPatch } from "../lib/stepForm";
 import type { AsView } from "../lib/views";
-import type { ChoosableWorkType } from "../lib/mapTypes";
+import type { ChoosableWorkType, DataMove, GraphEdge, PaperDecider, SystemOfRecord } from "../lib/mapTypes";
 
 const enc = encodeURIComponent;
 
@@ -48,6 +48,25 @@ export const setWorkType = (elementId: string, workType: ChoosableWorkType) =>
   request<ElementDetail>(`/elements/${enc(elementId)}/work-type`, {
     method: "PUT",
     body: { work_type: workType, confirm: true },
+  });
+
+/** §3.20: the decider named in the documents (PUT /elements/{eid}/paper-decider); null clears. */
+export const setPaperDecider = (
+  elementId: string,
+  body: { status: PaperDecider["status"] | null; role_id?: string | null; segment_id?: string | null },
+) => request<ElementDetail>(`/elements/${enc(elementId)}/paper-decider`, { method: "PUT", body });
+
+/** §3.20: the step's system of record (PUT /elements/{eid}/system-of-record); null clears. */
+export const setSystemOfRecord = (
+  elementId: string,
+  body: { status: SystemOfRecord["status"] | null; role_id?: string | null; other?: string },
+) => request<ElementDetail>(`/elements/${enc(elementId)}/system-of-record`, { method: "PUT", body });
+
+/** §3.20: how the data moves at a handoff (PUT …/edges/{edge_id}/data-move); null = not known. */
+export const setDataMove = (versionId: string, edgeId: string, dataMove: DataMove | null) =>
+  request<GraphEdge>(`/versions/${enc(versionId)}/edges/${enc(edgeId)}/data-move`, {
+    method: "PUT",
+    body: { data_move: dataMove },
   });
 
 /** Add a missing step: Eric's own, observed with passages or recommended with a reference. */
