@@ -30,6 +30,7 @@ from app.domain.comparisons import (
     ComparisonRecord,
     ComparisonSummary,
     ComparisonView,
+    Deviation,
     DifferenceCounts,
     DifferenceDecision,
     DifferenceView,
@@ -424,7 +425,35 @@ def _view(session: Session, m: _Loaded) -> ComparisonView:
         no_longer_found=gone,
         counts=counts,
         suggest_job=SuggestJob(job_id=job.id, status=job.status) if job else None,
+        deviation=Deviation(
+            differing=len(_differing(views, m)),
+            steps=len(m.other.steps),
+        ),
     )
+
+
+def _differing(views: list[DifferenceView], m: _Loaded) -> set[str]:
+    return rules.differing_steps([(v.status, v.other_key) for v in views],
+                                 {s.key for s in m.other.steps})  # fmt: skip
+
+
+def steps_differing_for(config: AppConfig, session: Session, engagement_id: str,
+                        version_id: str) -> int | None:  # fmt: skip
+    """§3.20 (DECISIONS 110): this version's steps that run differently from a reference map, in
+    the comparisons where this engagement is the other unit at this version. None for a reference
+    unit, with no comparison, or while Eric has decided none of its differences (all open)."""
+    differing: set[str] = set()
+    decided = False
+    for record in repo.as_other(session, engagement_id, version_id):
+        match _load(config, session, record.id):
+            case Err():
+                continue
+            case Ok(value=m):
+                pass
+        views = _view(session, m).differences
+        decided = decided or any(v.status != DifferenceStatus.OPEN.value for v in views)
+        differing |= _differing(views, m)
+    return len(differing) if decided else None
 
 
 def view_of(config: AppConfig, session: Session, comparison_id: str) -> Result[ComparisonView]:

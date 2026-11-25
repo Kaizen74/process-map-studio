@@ -10,6 +10,7 @@ import { CompassCard } from "./CompassCard";
 import { TestingCard } from "./TestingCard";
 import { RolesCard } from "./RolesCard";
 import { ConventionsCard } from "./ConventionsCard";
+import { ProcessOwnerCard } from "./ProcessOwnerCard";
 import { ScopeCard } from "./ScopeCard";
 import "./setup.css";
 
@@ -58,6 +59,13 @@ export function SetupScreen() {
               <Skeleton height="28px" />
             </div>
           </Card>
+        )}
+        {engagement.data && roles.data && (
+          <ProcessOwnerCard
+            key={`owner-${engagement.data.process_owner_role_id ?? ""}-${engagement.data.process_owner_other ?? ""}`}
+            engagement={engagement.data}
+            roles={roles.data}
+          />
         )}
         {engagement.data && <AnotherFlowCard engagement={engagement.data} />}
         {engagement.data && <AnotherCountryCard engagement={engagement.data} />}

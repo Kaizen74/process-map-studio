@@ -9,6 +9,9 @@ import {
   type DecisionNeeded,
   type LeadershipView,
   type PhaseFacts,
+  type ProcessSummary,
+  dataFigures,
+  summaryLine,
 } from "../../lib/leadership";
 import { divergenceLabel } from "../../lib/matrix";
 import { causeTypeLabel } from "../../lib/registers";
@@ -29,18 +32,21 @@ export function StepsBehind({
   ids,
   labels,
   onOpen,
+  showCount = true,
 }: {
   figure: ReactNode;
   ids: readonly string[];
   labels: Labels;
   onOpen: Open;
+  /** Off where the figure already counts steps (the data lens line). */
+  showCount?: boolean;
 }) {
   if (ids.length === 0) return <span className="figure figure--none">{figure}</span>;
   return (
     <details className="figure">
       <summary>
         {figure}
-        <span className="figure__count"> · {plural(ids.length, "step")}</span>
+        {showCount && <span className="figure__count"> · {plural(ids.length, "step")}</span>}
       </summary>
       <ul className="figure__steps">
         {ids.map((id) => (
@@ -242,6 +248,32 @@ export function RecommendationColumn({ view, labels, saving, problem, onOpen, on
             {saving ? "Saving…" : "Save decisions"}
           </Button>
         </form>
+      )}
+    </section>
+  );
+}
+
+/**
+ * The process at a glance (PRD §3.20; DECISIONS 110), above the three columns: one line of counts
+ * and the process owner, and the data lens line, whose figures each open the steps behind them.
+ */
+export function ProcessAtAGlance({ summary, labels, onOpen }: { summary: ProcessSummary; labels: Labels; onOpen: Open }) {
+  const figures = dataFigures(summary);
+  return (
+    <section className="glance" aria-label="The process at a glance">
+      <p className="glance__line">{summaryLine(summary)}</p>
+      <p className="glance__line glance__line--data">
+        {figures.map((f, i) => (
+          <span key={f.key}>
+            {i > 0 && <span aria-hidden="true"> · </span>}
+            <StepsBehind figure={f.text} ids={f.ids} labels={labels} onOpen={onOpen} showCount={false} />
+          </span>
+        ))}
+      </p>
+      {summary.timed_steps < summary.steps && (
+        <p className="glance__note">
+          Times recorded on {summary.timed_steps} of {summary.steps} steps.
+        </p>
       )}
     </section>
   );

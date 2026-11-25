@@ -377,3 +377,17 @@
   flex-direction: column;
   gap: var(--space-6);
 }
+
+/* §3.20 (DECISIONS 110): the count line above the matrix, and the mark on a step where the one
+   who decides is not the one accountable (a symbol and words, never colour alone). */
+.raci__counts {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}
+.raci__split {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}

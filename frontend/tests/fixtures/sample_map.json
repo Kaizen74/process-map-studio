@@ -123,7 +123,9 @@
         "work_type_basis": [],
         "work_type_status": null,
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-11",
@@ -269,7 +271,9 @@
         ],
         "work_type_status": "proposed",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-22",
@@ -397,7 +401,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-25",
@@ -550,7 +556,9 @@
         ],
         "work_type_status": "proposed",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-28",
@@ -678,7 +686,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-30",
@@ -848,7 +858,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-34",
@@ -976,7 +988,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-36",
@@ -1104,7 +1118,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-37",
@@ -1263,7 +1279,9 @@
         ],
         "work_type_status": "proposed",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-41",
@@ -1386,7 +1404,9 @@
         "work_type_basis": [],
         "work_type_status": "not_classified",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-43",
@@ -1531,7 +1551,9 @@
         ],
         "work_type_status": "proposed",
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       },
       {
         "id": "id-46",
@@ -1584,7 +1606,9 @@
         "work_type_basis": [],
         "work_type_status": null,
         "level": null,
-        "parent_element_id": null
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
       }
     ],
     "edges": [
@@ -1598,7 +1622,8 @@
         "view_membership": "both",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-48",
@@ -1610,7 +1635,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-49",
@@ -1622,7 +1648,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-50",
@@ -1634,7 +1661,8 @@
         "view_membership": "documented_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-51",
@@ -1646,7 +1674,8 @@
         "view_membership": "both",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-52",
@@ -1658,7 +1687,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-53",
@@ -1670,7 +1700,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-54",
@@ -1682,7 +1713,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-55",
@@ -1694,7 +1726,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-56",
@@ -1706,7 +1739,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-57",
@@ -1718,7 +1752,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-58",
@@ -1730,7 +1765,8 @@
         "view_membership": "both",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-59",
@@ -1742,7 +1778,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-60",
@@ -1754,7 +1791,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-61",
@@ -1766,7 +1804,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-62",
@@ -1778,7 +1817,8 @@
         "view_membership": "both",
         "information_payload": null,
         "typical": null,
-        "provenance": "O"
+        "provenance": "O",
+        "data_move": null
       },
       {
         "id": "id-63",
@@ -1790,7 +1830,8 @@
         "view_membership": "both",
         "information_payload": "preliminary load plan",
         "typical": null,
-        "provenance": "I"
+        "provenance": "I",
+        "data_move": null
       },
       {
         "id": "id-64",
@@ -1802,7 +1843,8 @@
         "view_membership": "both",
         "information_payload": "loading report",
         "typical": null,
-        "provenance": "I"
+        "provenance": "I",
+        "data_move": null
       },
       {
         "id": "id-65",
@@ -1814,7 +1856,8 @@
         "view_membership": "done_only",
         "information_payload": null,
         "typical": null,
-        "provenance": "I"
+        "provenance": "I",
+        "data_move": null
       }
     ]
   },
@@ -2666,7 +2709,13 @@
       "work_type_cues": [],
       "answers": [],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-11": {
       "id": "id-11",
@@ -2886,7 +2935,13 @@
           "segment_id": "id-66",
           "anchor": "24:10"
         }
-      ]
+      ],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-22": {
       "id": "id-22",
@@ -3056,7 +3111,13 @@
         "wanted": [],
         "communicated_via": []
       },
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-25": {
       "id": "id-25",
@@ -3298,7 +3359,13 @@
         "wanted": [],
         "communicated_via": []
       },
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-28": {
       "id": "id-28",
@@ -3466,7 +3533,13 @@
         }
       ],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-30": {
       "id": "id-30",
@@ -3767,7 +3840,13 @@
         }
       ],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-34": {
       "id": "id-34",
@@ -3951,7 +4030,13 @@
         "wanted": [],
         "communicated_via": []
       },
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-36": {
       "id": "id-36",
@@ -4119,7 +4204,13 @@
         }
       ],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-37": {
       "id": "id-37",
@@ -4426,7 +4517,13 @@
           "segment_id": "id-66",
           "anchor": "24:10"
         }
-      ]
+      ],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-41": {
       "id": "id-41",
@@ -4603,7 +4700,13 @@
         "wanted": [],
         "communicated_via": []
       },
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-43": {
       "id": "id-43",
@@ -4795,7 +4898,13 @@
         }
       ],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     },
     "id-46": {
       "id": "id-46",
@@ -4858,7 +4967,13 @@
       "work_type_cues": [],
       "answers": [],
       "know_how": null,
-      "stories": []
+      "stories": [],
+      "paper_decider": null,
+      "paper_decider_role_name": "",
+      "paper_decider_anchor": "",
+      "paper_decider_hint": "",
+      "system_of_record": null,
+      "system_role_name": ""
     }
   },
   "segments": {
@@ -7610,7 +7725,9 @@
           "work_type_basis": [],
           "work_type_status": null,
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-11",
@@ -7756,7 +7873,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-25",
@@ -7909,7 +8028,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-28",
@@ -8037,7 +8158,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-30",
@@ -8207,7 +8330,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-34",
@@ -8335,7 +8460,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-36",
@@ -8463,7 +8590,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-37",
@@ -8622,7 +8751,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-41",
@@ -8745,7 +8876,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-43",
@@ -8890,7 +9023,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-46",
@@ -8943,7 +9078,9 @@
           "work_type_basis": [],
           "work_type_status": null,
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         }
       ],
       "edges": [
@@ -8957,7 +9094,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-51",
@@ -8969,7 +9107,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-52",
@@ -8981,7 +9120,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-53",
@@ -8993,7 +9133,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-54",
@@ -9005,7 +9146,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-55",
@@ -9017,7 +9159,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-56",
@@ -9029,7 +9172,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-57",
@@ -9041,7 +9185,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-58",
@@ -9053,7 +9198,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-59",
@@ -9065,7 +9211,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-60",
@@ -9077,7 +9224,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-61",
@@ -9089,7 +9237,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-62",
@@ -9101,7 +9250,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-63",
@@ -9113,7 +9263,8 @@
           "view_membership": "both",
           "information_payload": "preliminary load plan",
           "typical": null,
-          "provenance": "I"
+          "provenance": "I",
+          "data_move": null
         },
         {
           "id": "id-64",
@@ -9125,7 +9276,8 @@
           "view_membership": "both",
           "information_payload": "loading report",
           "typical": null,
-          "provenance": "I"
+          "provenance": "I",
+          "data_move": null
         },
         {
           "id": "id-65",
@@ -9137,7 +9289,8 @@
           "view_membership": "done_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "I"
+          "provenance": "I",
+          "data_move": null
         }
       ]
     },
@@ -9265,7 +9418,9 @@
           "work_type_basis": [],
           "work_type_status": null,
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-11",
@@ -9411,7 +9566,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-22",
@@ -9539,7 +9696,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-25",
@@ -9692,7 +9851,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-30",
@@ -9862,7 +10023,9 @@
           "work_type_basis": [],
           "work_type_status": "not_classified",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-37",
@@ -10021,7 +10184,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-43",
@@ -10166,7 +10331,9 @@
           ],
           "work_type_status": "proposed",
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         },
         {
           "id": "id-46",
@@ -10219,7 +10386,9 @@
           "work_type_basis": [],
           "work_type_status": null,
           "level": null,
-          "parent_element_id": null
+          "parent_element_id": null,
+          "paper_decider": null,
+          "system_of_record": null
         }
       ],
       "edges": [
@@ -10233,7 +10402,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-48",
@@ -10245,7 +10415,8 @@
           "view_membership": "documented_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-49",
@@ -10257,7 +10428,8 @@
           "view_membership": "documented_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-50",
@@ -10269,7 +10441,8 @@
           "view_membership": "documented_only",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-51",
@@ -10281,7 +10454,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-58",
@@ -10293,7 +10467,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-62",
@@ -10305,7 +10480,8 @@
           "view_membership": "both",
           "information_payload": null,
           "typical": null,
-          "provenance": "O"
+          "provenance": "O",
+          "data_move": null
         },
         {
           "id": "id-63",
@@ -10317,7 +10493,8 @@
           "view_membership": "both",
           "information_payload": "preliminary load plan",
           "typical": null,
-          "provenance": "I"
+          "provenance": "I",
+          "data_move": null
         },
         {
           "id": "id-64",
@@ -10329,7 +10506,8 @@
           "view_membership": "both",
           "information_payload": "loading report",
           "typical": null,
-          "provenance": "I"
+          "provenance": "I",
+          "data_move": null
         }
       ]
     }

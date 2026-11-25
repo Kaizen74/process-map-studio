@@ -1,9 +1,22 @@
 import { request } from "./request";
-import type { Segment, SegmentPage, Source, SourcePatch, SourceUpload, Speaker, SpeakerMapping } from "./types";
+import type {
+  Segment,
+  SegmentPage,
+  SopRegister,
+  Source,
+  SourcePatch,
+  SourceUpload,
+  Speaker,
+  SpeakerMapping,
+} from "./types";
 
 const enc = encodeURIComponent;
 
 export const listSources = (engagementId: string) => request<Source[]>(`/engagements/${enc(engagementId)}/sources`);
+
+/** §3.20: the SOP register with its counts. */
+export const getSopRegister = (engagementId: string) =>
+  request<SopRegister>(`/engagements/${enc(engagementId)}/sop-register`);
 
 export const getSource = (sourceId: string) => request<Source>(`/sources/${enc(sourceId)}`);
 

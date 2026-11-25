@@ -28,7 +28,8 @@
           "CAP-03.Process",
           "CAP-03.Culture"
         ],
-        "same_process": []
+        "same_process": [],
+        "process_owner": ""
       },
       {
         "ref": "VS-01",
@@ -54,7 +55,8 @@
           "CAP-04.Process",
           "CAP-04.Culture"
         ],
-        "same_process": []
+        "same_process": [],
+        "process_owner": ""
       }
     ],
     "principles": [
@@ -98,7 +100,8 @@
     ],
     "ready": true,
     "generated_at": "2026-11-12T00:00:00.000Z",
-    "country": ""
+    "country": "",
+    "process_owner": ""
   },
   "testing": [
     {

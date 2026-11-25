@@ -954,6 +954,26 @@ The Capability Compass keeps one workspace per country, copied from one frame, s
 
 **Nothing moves between engagements** except the scope card fields, conventions and lane names above. No source, quote, name, transcript passage or claim crosses; each side's labels are shown with its own names hidden. The app works on its own with no packet and no comparison.
 
+### 3.20 Decision rights, SOP owners, process owner and the data lens, sent to the Compass (owner decision 2026-11-25, DECISIONS 110)
+
+EXCO asks of every unit: who decides and who is really accountable; who owns and updates the SOPs; how many steps and handoffs the work takes and who owns the process end to end; and where data is re-keyed, sent by email or paper, kept off-system or not recorded. Everything here is Eric's record or a count of the **published** version by fixed rules; no AI fills any of it.
+
+**Decider on paper.** A decision or approval step may carry the decider **named in the documents**: a role of the engagement, or "not named in any document" (`paper_decider_status` named · not_named, B.58), with the passage that names it chosen from the step's own cited document passages; a value with no passage is shown "not cited". When it names a different role from the decider in practice and the step has no D12 (Different role) discrepancy, the panel hints "The documents name a different decider. Record a Different role discrepancy?" and creates nothing.
+
+**Decides versus accountable.** The decider in practice is the step's decider role, or its lane role when it has none. Accountable is the role or roles holding A in the step's RACI, joined with " / "; it is contested when an A is contested ("A?") or two roles hold A. "Decides ≠ accountable" marks a decision or approval where some role holds A and the accountable text differs from the decider's name, exactly as the Compass compares them. The RACI view marks those steps with a symbol and the words, and counts above the matrix: decisions · decided by a different role from the documents · the one who decides is not accountable · contested A.
+
+**SOP register.** A source of kind SOP or manual gains its owner role and the role that updates it (each a role of the engagement or "other role…" text), last reviewed and review due beside its version date, and its controlled copy flag. An owner typed before this change is kept with a "check: is this a role?" marker until Eric confirms or changes it. Text naming a name on the hidden-names list is refused: "Name the role, not the person." A copy counts as uncontrolled only once Eric has set the flag (or it was already "yes"). A review is overdue when its due date has passed (the Compass also flags, with no due date, no review or version in 24 months; this app sends the dates). The same SOP uploaded twice (same title) counts once, the newest by version date; the older is marked. The Sources screen counts: SOPs · without an owner · with nobody to update them · review overdue · uncontrolled. An SOP's own title (typed, or the file name) is its title in the register and the return file.
+
+**Process owner.** The scope card gains the process owner (a role or "other role…"); from a hand-off whose pilot carries `process_owner`, it is offered and set only when Eric confirms.
+
+**Data lens.** A step may name its **system of record** (`system_status` system · other · none, B.59: a role marked as a system, another system by name, or "none: paper or memory"). A handoff (a line between steps in different lanes) may say **how the data moves** (`data_move`, B.57; not set = not known); where a confirmed system log shows the receiving step, "System interface" is suggested and set only when Eric confirms. No reliability score: the discrepancy register (D4, D6, D11) stays the record of unreliable data.
+
+**Leadership view.** Two lines above the phases: steps · decisions · approvals · handoffs between roles · rework loops · work and waiting hours · process owner; and systems · handoffs by hand · steps off-system · steps with no record (the last two only with the Reality views on). Each figure lists its steps.
+
+**Steps run differently.** On a comparison, the other country's steps carrying at least one difference Eric classed or kept: "n of m steps (x%) run differently from {reference}", beside "For scale: IATA audits find about 8% of procedures vary from the manual."
+
+**Return file** (`compass-return` 1.0, additive). `decision_right` findings (steps, D12 discrepancies, `who_decides` variations) carry `on_paper`, `decided_by`, `accountable` and `accountable_contested: true` (each only when known; a discrepancy takes the first decision or approval step it is attached to and names the others in its detail). One `sop` finding (`SOP-nn`, never reused) per SOP or manual source, the newest by version date when the same title is uploaded twice: `owner_role`, `updated_by`, `version_date`, `last_reviewed`, `review_due`, `controlled_copy`, `steps_governed` (steps citing it in a checked passage) and `steps_departing`. One `process_summary` finding (ref = pilot) with `process_owner` and `metrics` (steps, decisions, approvals, handoffs, roles, rework_loops, work_min, wait_min, systems, handoffs_manual, off_system_steps, no_record_steps, steps_differing); a number that cannot be counted is left out, never sent as 0. Role names only, every value through the name hiding, and the file is refused if a hidden name would leave.
+
 ---
 
 ## 4. API contract (mirror into API_CONTRACT.md before coding each endpoint)
@@ -983,6 +1003,8 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | | POST `/comparisons` · GET `/comparisons/{cid}` | `{reference_engagement_id, other_engagement_id, *_version_id?}` | the comparison: sides, steps, pairs (proposed, suggested, decided), differences with codes and grades; 409 for a draft or different processes |
 | | PUT `/comparisons/{cid}/pairs` · POST `/comparisons/{cid}/refresh` · PUT `/comparisons/{cid}/differences/{key}` | pair decision; —; `{action, reason_class?, reason_note?, grade?, note?}` | the comparison or the difference; audit rows; `Vn` given on the first class or keep |
 | | **AI** POST `/comparisons/{cid}/suggest` | — | job `country_match` (`CC_match`): suggested pairs between existing, unpaired keys only |
+| Accountability and data lens (§3.20) | PUT `/elements/{eid}/paper-decider` · PUT `/elements/{eid}/system-of-record` · PUT `/versions/{vid}/edges/{edge_id}/data-move` | `{status, role_id?, segment_id?}`; `{status, role_id?, other?}`; `{data_move}` | the element (with the hint when the documents name a different decider) or the line; draft only; audit rows (DECISIONS 110) |
+| SOP register and process owner (§3.20) | PATCH `/sources/{sid}` (register fields) · GET `/engagements/{eid}/sop-register` · PATCH `/engagements/{eid}` (`process_owner_role_id` · `process_owner_other`) | the register fields; the process owner | the source; `{counts, entries}`; the engagement; Leadership gains `summary` (DECISIONS 110) |
 | | GET · POST `/engagements/{id}/testing`; PATCH · DELETE `/testing/{tid}` (DECISIONS 95) | `{ref, text, refuted_by}`; `{verdict, evidence_refs, note}` | What we are testing: design principles from the hand-off and hypotheses Eric adds (IDs typed, never minted here), each with his verdict (open / supported / refuted) and the step, discrepancy or intent codes behind it |
 | | POST `/engagements/{id}/another-flow` (DECISIONS 81) | `{name, trigger, end_point, out_of_scope}` | the new engagement, with the same sources as read, roles, names to hide and conventions; nothing of the map |
 | | GET `/engagements/{id}/readiness` | — | `{key_set, transcripts_ready, documents_ready, speakers_unmapped, draft_exists, blockers_count, nav:{setup,interview,sources,system_records,draft,review,published,matrix,gap_analysis,registers,leadership,exports: done\|attention\|not_started}, next_step, missing:[plain-language strings]}` |
@@ -1075,6 +1097,8 @@ Endpoints marked **AI** start a background job, return `202 {"job_id": "…"}` i
 | Exports | GET `/versions/{vid}/export/{fmt}`, fmt = `md` · `json` · `csv` · `html` | | file; 409 unless published with a green quality card — except a draft's `html` (2026-10-28): the draft map, stamped "Draft: not reviewed, not published", each step with its review state |
 
 Every element response includes `provenance`, `source_state`, `divergence_types`, `evidence[]` (with `verified`), `confidence`, `confidence_breakdown`, `needs_check` and `review_status`, plus `lane_role_name`, `phase_name`, `image_count`, `gap_findings: [{id, analysis_id, mode, title, severity, disposition, gap_class}]`, `work_type`, `constraint_type`, `work_type_basis`, `work_type_status`, `sme_work_type_signifier`, `knowledge_point: {ashen, knowledge_risk}`, `fragment_ids` and `account_summary: {official, lived, unclear}` so the panel renders without extra calls. From P13 it also carries `discrepancies: [{code, types, impact_class, verdict}]` and `intent: [{id, kind, text, status, met}]` when the Reality views module is on.
+
+**Built (2026-11-25, DECISIONS 111):** the steps run differently from the reference are shown on Compare countries ("n of m steps (x%) run differently from {reference}", with the IATA scale line) and sent as `steps_differing` once Eric has decided at least one difference; the return file hides names on the list in step names and lanes too; a refresh keeps how data moves on lines whose steps survive; a version date may be a full date, a month or a year (DECISIONS 112). The acceptance tests run on the Belmar fixture (`backend/tests/accountability_fixture.py`), and the screens are tested on the same backend output (`frontend/tests/fixtures/accountability_sample.json`).
 
 ### 4.1 Backend–frontend alignment rules
 1. **One contract.** API_CONTRACT.md holds the field-level shape of every endpoint and which frontend feature uses it; this §4 lists every endpoint the app serves. A difference between the two, or between either and the code, is a defect: log it in DECISIONS.md and fix it in the same increment (contract first, then backend, then frontend, then tests).
@@ -2161,7 +2185,10 @@ Owner-stated target (entered in the test): "Weight deviations outside tolerance 
 | B.53 | country difference kind (§3.19) | who_does · who_decides · how_decided · step_kind · work_type · work_time · wait_time · documented_vs_done · only_reference · only_other |
 | B.54 | step pair status (§3.19) | proposed · suggested · confirmed · only_reference · only_other |
 | B.55 | difference status (§3.19) | open · kept · classed · dismissed |
-| B.56 | return finding kind (§3.19) | step · discrepancy · intent · knowledge_risk · hypothesis_verdict · variation |
+| B.56 | return finding kind (§3.19, §3.20) | step · discrepancy · intent · knowledge_risk · hypothesis_verdict · variation · sop · process_summary |
+| B.57 | how the data moves at a handoff (§3.20) | system_interface · re_keyed · email_spreadsheet · paper · verbal |
+| B.58 | decider on paper (§3.20) | named · not_named |
+| B.59 | system of record (§3.20) | system · other · none |
 
 ---
 

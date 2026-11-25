@@ -24,6 +24,9 @@ class CompassLink(BaseModel):
     ready: bool = True
     generated_at: str = ""
     country: str = ""  # the packet's engagement.country, as received (DECISIONS 98)
+    # The pilot's process owner as the packet names it (DECISIONS 110): offered on the scope card,
+    # set only when Eric confirms it.
+    process_owner: str = ""
 
 
 class SameProcess(BaseModel):
@@ -49,6 +52,7 @@ class HandoffPilot(BaseModel):
     interview_prompts: list[str]
     cell_refs: list[str]
     same_process: list[SameProcess] = []
+    process_owner: str = ""  # DECISIONS 110: the packet's pilots[].process_owner, as received
 
 
 class HandoffPrinciple(BaseModel):

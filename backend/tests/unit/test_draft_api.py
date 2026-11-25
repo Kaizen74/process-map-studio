@@ -378,10 +378,12 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
     assert graph.status_code == 200
     body = graph.json()
     assert set(body) == {"version", "process", "roles", "phases", "elements", "edges"}
-    # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it.
+    # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it; §3.20 (DECISIONS
+    # 110): how the data moves at a handoff.
     assert set(body["edges"][0]) == {
         "id", "from", "to", "kind", "label",
         "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
+        "data_move",
     }  # fmt: skip
     assert "Priya" not in graph.text and "I build the preliminary" not in graph.text
     layout = client.get(f"/api/versions/{job['target_id']}/layout")

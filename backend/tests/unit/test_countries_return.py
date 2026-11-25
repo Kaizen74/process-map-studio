@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any
 
 import pytest
@@ -83,7 +84,9 @@ def test_belmars_file_has_its_country_and_variations_in_the_compass_shape(
     variations = [f for f in file["findings"] if f["kind"] == "variation"]
     assert [v["ref"] for v in variations] == ["V1", "V2", "V3"]  # the dismissed one has no code
     v1, v2, v3 = variations
-    assert list(v1) == shape["variation"]
+    # A who-decides difference also carries this country's decider (DECISIONS 110); the fixture's
+    # step has no RACI, so no accountable role.
+    assert list(v1) == [*shape["variation"], "decided_by"]
     assert v1 == {
         "ref": "V1",
         "kind": "variation",
@@ -99,6 +102,7 @@ def test_belmars_file_has_its_country_and_variations_in_the_compass_shape(
         "topic": "decision_right",
         "reason_class": "inherited",
         "compared_with": "Arden",
+        "decided_by": "Country manager",
     }
     # Kept without a reason: no reason_class at all (never "unknown" unless Eric chose it).
     assert list(v2) == [k for k in shape["variation"] if k != "reason_class"]
@@ -121,7 +125,8 @@ def test_ardens_file_repeats_none_of_them(classed: tuple[Countries, dict[str, An
     file = returned(c, c.arden_version).json()
     assert (file["engagement_key"], file["country"]) == ("MERIDIAN", "Arden")
     assert not [f for f in file["findings"] if f["kind"] == "variation"]
-    assert not [f for f in file["findings"] if f["ref"].startswith("V")]
+    # No variation code (V1, V2…); "VS-01" is the pilot's own ref on the process summary.
+    assert not [f for f in file["findings"] if re.fullmatch(r"V\d+", f["ref"])]
 
 
 def test_the_readable_text_and_no_names_or_quotes(

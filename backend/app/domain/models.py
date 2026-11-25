@@ -144,6 +144,10 @@ class ScopeFields(BaseModel):
     end_point_external: bool | None = None  # E1: it ends outside the organisation
     every_flow: bool | None = None  # 0018: map every flow in the documents (an overview)
     country: str | None = None  # 0022: the country it covers (locked when from a hand-off)
+    # 0023 (DECISIONS 110): the role accountable for the process end to end, or another role's
+    # name; sending one clears the other, null clears it.
+    process_owner_role_id: str | None = None
+    process_owner_other: str | None = None
 
 
 class EngagementCreate(ScopeFields):
@@ -198,6 +202,9 @@ class EngagementView(BaseModel):
     country: str = ""  # DECISIONS 98
     reference_engagement_id: str | None = None
     reference_engagement_name: str = ""
+    process_owner_role_id: str | None = None  # DECISIONS 110
+    process_owner_other: str = ""
+    process_owner: str = ""  # the role's name or the other text; "" when not named
     status: str
     created_at: str
     updated_at: str
@@ -264,6 +271,8 @@ class RoleUses(BaseModel):
     costs: int = 0
     intents: int = 0
     discrepancies: int = 0
+    sops: int = 0  # §3.20: an SOP's owner or updater
+    process_owner: int = 0  # §3.20: the scope's process owner
 
 
 # --- Parsed documents (services/parsing.py) ---------------------------------------------------
@@ -326,6 +335,17 @@ class SourceView(BaseModel):
     coverage_pct: float | None = None
     # Only on the upload response: the background job reading the file.
     job_id: str | None = None
+    # §3.20 (DECISIONS 110), for an SOP or manual: its own title ("" = the file name), its owner
+    # and updater roles ("other role" text in `owner` and `updated_by_other`), whether Eric checked
+    # a free-text owner is a role, its review dates, and whether he set the controlled copy flag.
+    title: str = ""
+    owner_role_id: str | None = None
+    owner_checked: bool = False
+    updated_by_role_id: str | None = None
+    updated_by_other: str = ""
+    last_reviewed: str = ""
+    review_due: str = ""
+    controlled_copy_set: bool = False
 
 
 class SourceReadInfo(BaseModel):
@@ -344,6 +364,45 @@ class SourcePatch(BaseModel):
     version_date: str | None = None
     owner: str | None = None
     controlled_copy: bool | None = None
+    # §3.20 (DECISIONS 110): the SOP register.
+    title: str | None = None
+    owner_role_id: str | None = None
+    owner_checked: bool | None = None
+    updated_by_role_id: str | None = None
+    updated_by_other: str | None = None
+    last_reviewed: str | None = None
+    review_due: str | None = None
+    controlled_copy_known: bool | None = None  # False: "not known" (clears the flag)
+
+
+class SopEntry(BaseModel):
+    """§3.20 (DECISIONS 110): one SOP or manual in the register, names hidden."""
+
+    source_id: str
+    title: str
+    kind: str
+    owner: str
+    owner_status: str  # role · other · check ("check: is this a role?") · none
+    updated_by: str
+    version_date: str
+    last_reviewed: str
+    review_due: str
+    controlled: bool | None
+    overdue: bool
+    older: bool
+
+
+class SopCounts(BaseModel):
+    sops: int
+    without_owner: int
+    without_updater: int
+    overdue: int
+    uncontrolled: int
+
+
+class SopRegister(BaseModel):
+    counts: SopCounts
+    entries: list[SopEntry]
 
 
 class SegmentView(BaseModel):
@@ -880,6 +939,34 @@ class EdgeInput(BaseModel):
     to: str
     kind: str
     label: str = ""
+
+
+class PaperDeciderInput(BaseModel):
+    """§3.20 (DECISIONS 110): the decider named in the documents; `status: null` clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None  # B.58 named · not_named
+    role_id: str | None = None
+    segment_id: str | None = None  # one of the step's cited document passages; null: not cited
+
+
+class SystemOfRecordInput(BaseModel):
+    """§3.20: the step's system of record; `status: null` clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None  # B.59 system · other · none
+    role_id: str | None = None
+    other: str = ""
+
+
+class DataMoveInput(BaseModel):
+    """§3.20: how the data moves at a handoff (B.57); null = not known."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    data_move: str | None
 
 
 class EdgePatch(BaseModel):

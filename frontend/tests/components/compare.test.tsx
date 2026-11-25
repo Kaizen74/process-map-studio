@@ -173,6 +173,15 @@ describe("Compare countries", () => {
     );
   });
 
+  it("says how many of Belmar's steps run differently, beside the IATA scale line (§3.20)", async () => {
+    backend();
+    const { container } = renderApp(`${PATH}?comparison=id-3`);
+    // The sample: 2 of Belmar's 6 steps carry a difference Eric classed or kept.
+    expect(await screen.findByText(/2 of 6 steps \(33%\) run differently from Arden/)).toBeInTheDocument();
+    expect(screen.getByText("For scale: IATA audits find about 8% of procedures vary from the manual.")).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
   it("shows the pairs with their reasons and sends Eric's decisions", async () => {
     const { calls } = backend();
     const { container } = renderApp(`${PATH}?comparison=id-3`);

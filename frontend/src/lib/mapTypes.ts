@@ -68,7 +68,28 @@ export interface GraphElement {
    * part of; null on a map with one level. */
   level?: "landscape" | "practice" | null;
   parent_element_id?: string | null;
+  /** §3.20 (DECISIONS 110): the decider named in the documents; null when not recorded. */
+  paper_decider?: PaperDecider | null;
+  /** §3.20: the step's system of record; null when not recorded. */
+  system_of_record?: SystemOfRecord | null;
 }
+
+/** B.58: a role the documents name (with the cited passage, null: "not cited"), or none named. */
+export interface PaperDecider {
+  status: "named" | "not_named";
+  role_id: string | null;
+  segment_id: string | null;
+}
+
+/** B.59: a role marked as a system, another system by name, or none (paper or memory). */
+export interface SystemOfRecord {
+  status: "system" | "other" | "none";
+  role_id: string | null;
+  other: string;
+}
+
+/** B.57: how the data moves at a handoff; null means not known. */
+export type DataMove = "system_interface" | "re_keyed" | "email_spreadsheet" | "paper" | "verbal";
 
 export type WorkType = "clear" | "complicated" | "complex" | "chaotic" | "confused" | "not_classified";
 /** The work types Eric can choose (V3b); "not classified" is the model's answer, not a choice. */
@@ -97,6 +118,15 @@ export interface GraphEdge {
   typical?: boolean | null;
   /** "I" for a line the translation added for one view (drawn per view from V1). */
   provenance?: "O" | "I" | "R";
+  /** §3.20 (B.57): how the data moves at a handoff; null = not known. */
+  data_move?: DataMove | null;
+}
+
+export interface GraphRole {
+  id: string;
+  name: string;
+  is_system: boolean;
+  lane_order: number | null;
 }
 
 export interface Graph {
@@ -111,7 +141,7 @@ export interface Graph {
     engagement_key?: string | null;
     pilot_ref?: string | null;
   };
-  roles: { id: string; name: string; is_system: boolean; lane_order: number | null }[];
+  roles: GraphRole[];
   phases: { id: string; name: string; time_window: string; order: number }[];
   elements: GraphElement[];
   edges: GraphEdge[];
@@ -202,6 +232,12 @@ export interface ElementDetail extends Omit<GraphElement, "evidence" | "raci"> {
   stories?: StoryCard[];
   /** V3 (§5.7.7 4a): the work type's quoted cues with their anchors. */
   work_type_cues?: { quote: string; source_id: string; segment_id: string | null; anchor: string }[];
+  /** §3.20: the decider on paper's role name, the place of its passage ("" when not cited) and the
+   * hint when it differs from the decider in practice with no Different role discrepancy. */
+  paper_decider_role_name?: string;
+  paper_decider_anchor?: string;
+  paper_decider_hint?: string;
+  system_role_name?: string;
 }
 
 export type AshenCategory = "artefacts" | "skills" | "heuristics" | "experience" | "natural_talent";

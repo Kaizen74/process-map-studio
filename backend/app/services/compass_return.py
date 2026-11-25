@@ -11,19 +11,25 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from typing import Any
 
+from app.domain.leadership import ProcessSummary
 from app.services import grade as grade_rules
+from app.services import process_summary as summary_rules
+from app.services.accountability import Rights
 
 RETURN_FORMAT = "compass-return"
 RETURN_VERSION = "1.0"
 SOURCE_APP = "process-map-studio"
 RETURN_RULES_VERSION = "1"
 
-KINDS = ("step", "discrepancy", "intent", "knowledge_risk", "hypothesis_verdict", "variation")
+KINDS = ("step", "discrepancy", "intent", "knowledge_risk", "hypothesis_verdict", "variation",
+         "sop", "process_summary")  # fmt: skip
 KIND_WORDS = {"step": "Steps", "discrepancy": "Discrepancies", "intent": "Intent statements",
               "knowledge_risk": "Knowledge risks",
               "hypothesis_verdict": "What we are testing",
-              "variation": "Differences from another country"}  # fmt: skip
+              "variation": "Differences from another country",
+              "sop": "SOPs and manuals", "process_summary": "The process at a glance"}  # fmt: skip
 REASON_WORDS = {"required": "Required", "chosen": "Chosen", "inherited": "Inherited",
                 "unknown": "Not known yet"}  # fmt: skip
 SECRET_MARKERS = ("sk-" + "ant-", "api_key", "x-api-key")
@@ -76,6 +82,7 @@ class Step:
     documents: int
     interviews: int
     knowledge_risk: str = ""
+    rights: Rights | None = None  # §3.20: decisions and approvals only
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +100,8 @@ class Discrepancy:
     interviews: int
     system_cases: int | None
     topic: str = WAY_OF_WORKING
+    rights: Rights | None = None  # §3.20: from the first decision or approval step it is at
+    also_at: list[str] = field(default_factory=list)  # other such steps with other values
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +122,28 @@ class Variation:
     country: str
     compared_with: str
     source_note: str
+    rights: Rights | None = None  # §3.20: this country's step, on a decision_right difference
+
+
+@dataclass(frozen=True, slots=True)
+class Sop:
+    """One SOP or manual of the source register (§3.20): who owns and updates it, its dates, and
+    the published map's steps that cite it and, of those, the ones done differently."""
+
+    code: str  # SOP-01
+    title: str
+    owner_role: str
+    updated_by: str
+    version_date: str
+    last_reviewed: str
+    review_due: str
+    controlled: bool | None
+    governed: int
+    departing: int
+    by_discrepancies: (
+        bool  # True: departing counts Reality discrepancies; False: disagreeing sources
+    )
+    older_also: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +180,9 @@ class Inputs:
     tested: list[Tested] = field(default_factory=list)
     country: str = ""
     variations: list[Variation] = field(default_factory=list)
+    sops: list[Sop] = field(default_factory=list)
+    process_cell: str = ""  # the cluster's ".Process" cell when the hand-off has it (§3.20)
+    summary: ProcessSummary | None = None  # §3.20: the process at a glance, names hidden
 
 
 def _count(n: int, one: str, many: str) -> str:
@@ -191,6 +225,22 @@ def _tested_grade(t: Tested, grades: dict[str, str]) -> str:
     return grade_rules.INDICATED
 
 
+def decision_fields(r: Rights | None) -> dict[str, Any]:
+    """§3.20: `on_paper`, `decided_by`, `accountable` (each only when known) and
+    `accountable_contested: true` (only when so), for a `decision_right` finding."""
+    if r is None:
+        return {}
+    out: dict[str, Any] = {
+        k: v
+        for k, v in (("on_paper", r.on_paper), ("decided_by", r.decided_by),
+                     ("accountable", r.accountable))
+        if v
+    }  # fmt: skip
+    if r.contested:
+        out["accountable_contested"] = True
+    return out
+
+
 def findings(data: Inputs) -> list[dict[str, object]]:
     """Every finding in the order: steps, discrepancies, intent, knowledge risks, verdicts."""
     relates = list(dict.fromkeys([data.pilot_ref, data.cluster_ref, *data.cells]))
@@ -199,7 +249,7 @@ def findings(data: Inputs) -> list[dict[str, object]]:
     out: list[dict[str, object]] = []
 
     def add(ref: str, kind: str, title: str, detail: str, grade: str, figure: str,
-            note: str, **extra: str) -> None:  # fmt: skip
+            note: str, **extra: Any) -> None:  # fmt: skip
         out.append({"ref": ref, "kind": kind, "title": title, "detail": detail,
                     "grade": grade, "figure": figure, "relates_to": list(relates),
                     "source_note": note, **extra})  # fmt: skip
@@ -208,7 +258,8 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         detail, grade, note = _step(s)
         grades[s.code] = grade
         topic = DECISION_RIGHT if s.kind in DECIDING else WAY_OF_WORKING
-        add(s.code, "step", s.label, detail, grade, "", note, topic=topic)
+        add(s.code, "step", s.label, detail, grade, "", note, topic=topic,
+            **decision_fields(s.rights if topic == DECISION_RIGHT else None))  # fmt: skip
     for d in data.discrepancies:
         grades[d.code] = d.grade
         verdict = DISCREPANCY_VERDICTS.get(d.verdict or "", "")
@@ -216,11 +267,13 @@ def findings(data: Inputs) -> list[dict[str, object]]:
             f"Types: {', '.join(TYPE_WORDS.get(t, t) for t in d.types)}." if d.types else "",
             f"Impact: {d.impact}." if d.impact else "",
             f"Verdict: {verdict}." if verdict else "",
+            f"Also at {', '.join(d.also_at)}." if d.also_at and d.topic == DECISION_RIGHT else "",
         ) if p)  # fmt: skip
         figure = f"{d.figure} ({d.figure_label})" if d.figure and d.figure_label else d.figure
         chosen = "Grade chosen by the owner. " if d.grade_by_owner else ""
         note = f"{chosen}Rests on {_sources(d.documents, d.interviews, d.system_cases)}."
-        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note, topic=d.topic)
+        add(d.code, "discrepancy", d.title, detail, d.grade, figure, note, topic=d.topic,
+            **decision_fields(d.rights if d.topic == DECISION_RIGHT else None))  # fmt: skip
     for i in data.intents:
         known = i.result in ("met", "not_met")
         grade = grade_rules.INDICATED if known else grade_rules.HYPOTHESIS
@@ -254,8 +307,90 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         if v.reason_class is not None:
             extra["reason_class"] = v.reason_class
         extra["compared_with"] = v.compared_with
+        extra.update(decision_fields(v.rights if v.topic == DECISION_RIGHT else None))
         add(v.code, "variation", v.title, detail, v.grade, v.figure, v.source_note, **extra)
+    for sop in data.sops:
+        sop_relates = [r for r in dict.fromkeys([data.pilot_ref, data.cluster_ref,
+                                                 data.process_cell]) if r]  # fmt: skip
+        out.append({"ref": sop.code, "kind": "sop", "title": sop.title,
+                    "detail": _sop_detail(sop), "grade": grade_rules.INDICATED,
+                    "figure": (f"{sop.departing} of {_count(sop.governed, 'step', 'steps')} "
+                               "done differently"
+                               if sop.governed else "Cited by no step on the published map"),
+                    "relates_to": sop_relates, "source_note": _sop_note(sop, data.pilot_ref),
+                    "topic": WAY_OF_WORKING, **_sop_fields(sop)})  # fmt: skip
+    if data.summary is not None:
+        out.append(_summary_finding(data, data.summary))
     return out
+
+
+def _summary_finding(data: Inputs, s: ProcessSummary) -> dict[str, Any]:
+    """§3.20: one `process_summary` per published map, under the pilot's own ref."""
+    detail = (
+        f"Counted on the published map: {_count(s.steps, 'step', 'steps')}, "
+        f"{_count(s.decisions, 'decision', 'decisions')}, "
+        f"{_count(s.approvals, 'approval', 'approvals')}, "
+        f"{_count(s.handoffs, 'handoff', 'handoffs')} between {_count(s.roles, 'role', 'roles')}, "
+        f"{_count(s.rework_loops, 'rework loop', 'rework loops')}."
+    )
+    if s.timed_steps < s.steps:
+        detail += f" Times recorded on {s.timed_steps} of {s.steps} steps."
+    finding: dict[str, Any] = {
+        "ref": data.pilot_ref, "kind": "process_summary", "title": data.process_name,
+        "detail": detail, "grade": grade_rules.INDICATED,
+        "figure": f"{_count(s.steps, 'step', 'steps')}, "
+                  f"{_count(s.handoffs, 'handoff', 'handoffs')}",
+        "relates_to": [r for r in dict.fromkeys([data.pilot_ref, data.cluster_ref]) if r],
+        "source_note": f"Counted from the published map of {data.pilot_ref}.",
+        "topic": WAY_OF_WORKING,
+    }  # fmt: skip
+    if s.process_owner:
+        finding["process_owner"] = s.process_owner[:80]
+    finding["metrics"] = summary_rules.metrics(s)
+    return finding
+
+
+def _sop_fields(sop: Sop) -> dict[str, Any]:
+    """The register's fields, each only when known; the two step counts always."""
+    out: dict[str, Any] = {
+        k: v
+        for k, v in (("owner_role", sop.owner_role), ("updated_by", sop.updated_by),
+                     ("version_date", sop.version_date), ("last_reviewed", sop.last_reviewed),
+                     ("review_due", sop.review_due))
+        if v
+    }  # fmt: skip
+    if sop.controlled is not None:
+        out["controlled_copy"] = sop.controlled
+    out["steps_governed"], out["steps_departing"] = sop.governed, sop.departing
+    return out
+
+
+def _sop_detail(sop: Sop) -> str:
+    dates = ", ".join(p for p in (
+        f"version {sop.version_date}" if sop.version_date else "",
+        f"last reviewed {sop.last_reviewed}" if sop.last_reviewed else "not reviewed on record",
+        f"review due {sop.review_due}" if sop.review_due else "no review due recorded",
+    ) if p)  # fmt: skip
+    copy = {
+        True: " The copy in use is the controlled one.",
+        False: " The copy in use is not the controlled one.",
+        None: "",
+    }[sop.controlled]
+    return (
+        f"Owner: {sop.owner_role or 'not recorded'}. "
+        f"Updated by: {sop.updated_by or 'nobody named'}. "
+        f"{dates[:1].upper()}{dates[1:]}.{copy}"
+        + (" Older version also in the sources." if sop.older_also else "")
+    )
+
+
+def _sop_note(sop: Sop, pilot_ref: str) -> str:
+    how = (
+        ""
+        if sop.by_discrepancies
+        else " Done differently: cited steps whose sources disagree (the Reality views are off)."
+    )
+    return f"From the source register; step counts from the published map of {pilot_ref}.{how}"
 
 
 def build(data: Inputs) -> dict[str, object]:
@@ -307,6 +442,20 @@ def render_text(data: Inputs) -> str:
                 lines.append(f"  Reason class: {REASON_WORDS.get(str(f['reason_class']), '')}")
             if f.get("compared_with"):
                 lines.append(f"  Compared with: {f['compared_with']}")
+            if f["kind"] == "process_summary":
+                lines.append(f"  Process owner: {f.get('process_owner') or 'not named'}")
+                counts: dict[str, int] = dict(f.get("metrics") or {})  # type: ignore[call-overload]
+                lines.append("  Counts: " + " · ".join(
+                    f"{k.replace('_', ' ')} {v}" for k, v in counts.items()))  # fmt: skip
+            roles = [
+                f"{word}: {f[key]}"
+                for key, word in (("on_paper", "On paper"), ("decided_by", "Decides"),
+                                  ("accountable", "Accountable"))
+                if f.get(key)
+            ]  # fmt: skip
+            if roles:
+                contested = " (contested)" if f.get("accountable_contested") is True else ""
+                lines.append(f"  {' · '.join(roles)}{contested}")
             lines.append(f"  Rests on: {f['source_note']}")
     if not found:
         lines += ["", "No finding to return yet."]

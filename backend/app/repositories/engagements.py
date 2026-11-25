@@ -45,6 +45,8 @@ CONFIDENTIAL_ORIGIN = "confidential_term"
 
 SCOPE_COLUMNS = (
     "name",
+    "process_owner_role_id",  # DECISIONS 110
+    "process_owner_other",
     "country",
     "process_name",
     "trigger",
@@ -76,6 +78,11 @@ def _name_of(session: Session, engagement_id: str | None) -> str:
     return row.name if row else ""
 
 
+def _role_name(session: Session, role_id: str | None) -> str:
+    role = session.get(Role, role_id) if role_id else None
+    return role.name if role is not None else ""
+
+
 def _view(session: Session, row: Engagement) -> EngagementView:
     return EngagementView(
         id=row.id,
@@ -97,6 +104,10 @@ def _view(session: Session, row: Engagement) -> EngagementView:
         country=row.country or "",
         reference_engagement_id=row.reference_engagement_id,
         reference_engagement_name=_name_of(session, row.reference_engagement_id),
+        process_owner_role_id=row.process_owner_role_id,
+        process_owner_other=row.process_owner_other or "",
+        process_owner=_role_name(session, row.process_owner_role_id)
+        or (row.process_owner_other or ""),
         status=row.status,
         created_at=row.created_at,
         updated_at=row.updated_at,
@@ -355,6 +366,8 @@ def role_uses(session: Session, role_id: str) -> RoleUses:
     uses_it = or_(
         Element.lane_role_id == role_id,
         Element.decider_role_id == role_id,
+        Element.paper_decider_role_id == role_id,  # §3.20 (DECISIONS 110)
+        Element.system_role_id == role_id,
         Element.id.in_(in_raci),
     )
     steps = session.scalars(
@@ -373,6 +386,8 @@ def role_uses(session: Session, role_id: str) -> RoleUses:
         costs=count(RoleCost.role_id),
         intents=count(IntentStatement.owner_role_id),
         discrepancies=count(DiscrepancyItem.decision_owner_role_id),
+        sops=count(Source.owner_role_id) + count(Source.updated_by_role_id),
+        process_owner=count(Engagement.process_owner_role_id),
     )
 
 

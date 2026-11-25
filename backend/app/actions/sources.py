@@ -10,6 +10,8 @@ import math
 import re
 import uuid
 from collections.abc import Callable
+from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -27,6 +29,9 @@ from app.domain.models import (
     SegmentPage,
     SegmentPatch,
     SegmentView,
+    SopCounts,
+    SopEntry,
+    SopRegister,
     SourcePatch,
     SourceReadInfo,
     SourceView,
@@ -43,6 +48,7 @@ from app.repositories import sources as repo
 from app.repositories import versions as versions_repo
 from app.services import grounding, parsing
 from app.services import images as pictures
+from app.services import sop_register as register_rules
 from app.services.grounding import DEFAULT_REPLACEMENT
 
 Sessions = sessionmaker[Session]
@@ -56,10 +62,18 @@ BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .cs
 TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again."
 EMPTY = "The file is empty."
 BAD_KIND = "Please choose what kind of source this is."
-BAD_DATE = "Please enter the version date as YYYY-MM-DD, or leave it blank."
+BAD_DATE = "Please enter the version date as YYYY-MM-DD, YYYY-MM or YYYY, or leave it blank."
 BAD_OWNER = "Owner: up to 120 characters, one line."
 CANT_READ_TAIL = " Check it opens on your computer, then upload it again."
-_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# §3.20 (DECISIONS 110): the SOP register.
+SOP_KINDS = frozenset({SourceKind.SOP.value, SourceKind.MANUAL.value})
+REGISTER_DATE = re.compile(r"^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$")
+BAD_REGISTER_DATE = "Enter the date as YYYY, YYYY-MM or YYYY-MM-DD, or leave it blank."
+BAD_TITLE = "Title: up to 200 characters, one line."
+BAD_ROLE = "Choose one of this engagement's roles."
+BAD_OTHER_ROLE = "Name the role in up to 80 characters, one line."
+PERSON = "Name the role, not the person."
+NOT_AN_SOP = "Only an SOP or a manual has an owner role, an updater and review dates."
 
 
 def guess_kind(filename: str) -> SourceKind:
@@ -96,7 +110,8 @@ def _check_meta(
         fields["kind"] = kind
     if version_date is not None:
         date = version_date.strip()
-        if date and not _DATE.match(date):
+        # DECISIONS 112: a month or a year too, as the Capability Compass writes them.
+        if date and not REGISTER_DATE.match(date):
             return Err(ErrorKind.VALIDATION, BAD_DATE, {"field": "version_date"})
         fields["version_date"] = date
     if owner is not None:
@@ -350,6 +365,30 @@ def list_sources(sessions: Sessions, engagement_id: str) -> Result[list[SourceVi
         )
 
 
+def sop_register(sessions: Sessions, engagement_id: str) -> Result[SopRegister]:
+    """§3.20 (DECISIONS 110): the SOPs and manuals with their owners, updaters, review dates and
+    controlled copies, and the counts the Sources screen shows. Names hidden."""
+    with session_scope(sessions) as session:
+        if not engagements_repo.exists(session, engagement_id):
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        views = [_public(session, v) for v in repo.list_for_engagement(session, engagement_id)]
+        terms = redaction.name_replacements(session, engagement_id)
+        roles = {r.id: r.name for r in engagements_repo.list_roles(session, engagement_id)}
+    found = register_rules.entries(views, roles, date.today().isoformat())
+    hidden = [
+        SopEntry.model_validate(asdict(e)).model_copy(
+            update={
+                "title": redaction.hide(e.title, terms),
+                "owner": redaction.hide(e.owner, terms),
+                "updated_by": redaction.hide(e.updated_by, terms),
+            }
+        )
+        for e in found
+    ]
+    return Ok(SopRegister(counts=SopCounts.model_validate(asdict(register_rules.counts(found))),
+                          entries=hidden))  # fmt: skip
+
+
 def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:
     with session_scope(sessions) as session:
         view = repo.get(session, source_id)
@@ -377,12 +416,18 @@ def update_source(
             pass
     if sent.get("controlled_copy") is not None:
         fields["controlled_copy"] = bool(sent["controlled_copy"])
+        fields["controlled_copy_set"] = True  # §3.20: Eric set it, so "no" now means no
     actor = actor_name(config)
     job_id = None
     with session_scope(sessions) as session:
         before = repo.get(session, source_id)
         if before is None:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        match _register_fields(session, before, sent, str(fields.get("kind", before.kind))):
+            case Err() as err:
+                return err
+            case Ok(value=register):
+                fields.update(register)
         changed = {k: v for k, v in fields.items() if getattr(before, k) != v}
         if (
             "kind" in changed
@@ -411,6 +456,69 @@ def update_source(
         enqueue(job_id)
         return Ok(view.model_copy(update={"job_id": job_id}))
     return Ok(view)
+
+
+def _register_fields(session: Session, before: SourceView, sent: dict[str, Any],
+                     kind: str) -> Result[dict[str, object]]:  # fmt: skip
+    """§3.20 (DECISIONS 110): the SOP register fields sent, checked. Roles are the engagement's;
+    "other role" text and the title never hold a name on the list of names to hide; choosing a
+    role clears the other text and the other way round."""
+    register = {
+        "title", "owner_role_id", "owner_checked", "updated_by_role_id", "updated_by_other",
+        "last_reviewed", "review_due", "controlled_copy_known",
+    }  # fmt: skip
+    asked = register & set(sent)
+    sop = kind in SOP_KINDS
+    if not asked and not (sop and "owner" in sent):
+        return Ok({})
+    if asked - {"title", "controlled_copy_known"} and not sop:
+        return Err(ErrorKind.VALIDATION, NOT_AN_SOP, {"field": sorted(asked)[0]})
+    terms = [t.term for t in redaction.name_replacements(session, before.engagement_id)]
+    roles = {r.id: r.name for r in engagements_repo.list_roles(session, before.engagement_id)}
+    out: dict[str, object] = {}
+
+    def invalid(field: str, message: str) -> Err:
+        return Err(ErrorKind.VALIDATION, message, {"field": field})
+
+    if sent.get("title") is not None:
+        title = " ".join(str(sent["title"]).split())
+        if len(title) > 200:
+            return invalid("title", BAD_TITLE)
+        if grounding.scan_redaction_terms(title, terms):
+            return invalid("title", PERSON)
+        out["title"] = title
+    for field in ("last_reviewed", "review_due"):
+        if sent.get(field) is not None:
+            date = str(sent[field]).strip()
+            if date and not REGISTER_DATE.match(date):
+                return invalid(field, BAD_REGISTER_DATE)
+            out[field] = date
+    for role_field, text_field in (("owner_role_id", "owner"),
+                                   ("updated_by_role_id", "updated_by_other")):  # fmt: skip
+        if role_field in sent:
+            role = sent[role_field]
+            if role is not None and role not in roles:
+                return invalid(role_field, BAD_ROLE)
+            out[role_field] = role
+            if role is not None:
+                # The owner's text keeps the role's name, so the source list in exports reads it.
+                out[text_field] = roles[role] if text_field == "owner" else ""
+        if sop and sent.get(text_field) is not None and sent.get(role_field) is None:
+            text = " ".join(str(sent[text_field]).split())
+            if len(text) > 80:
+                return invalid(text_field, BAD_OTHER_ROLE)
+            if text and grounding.scan_redaction_terms(text, terms):
+                return invalid(text_field, PERSON)
+            out[text_field] = text
+            if text:
+                out[role_field] = None
+    if sop and ("owner_role_id" in out or "owner" in out):
+        out["owner_checked"] = True  # Eric chose or typed it as a role
+    if sent.get("owner_checked") is not None:
+        out["owner_checked"] = bool(sent["owner_checked"])
+    if sent.get("controlled_copy_known") is False:
+        out["controlled_copy"], out["controlled_copy_set"] = False, False
+    return Ok(out)
 
 
 def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Result[None]:

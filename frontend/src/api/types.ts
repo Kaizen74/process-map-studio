@@ -92,6 +92,9 @@ export interface ScopeFields {
   every_flow?: boolean;
   /** DECISIONS 98: the country it covers; refused for an engagement from a hand-off. */
   country?: string;
+  /** §3.20 (DECISIONS 110): the process owner, a role of this engagement or another role's name. */
+  process_owner_role_id?: string | null;
+  process_owner_other?: string;
 }
 
 /** What an engagement keeps of the Capability Compass hand-off it started from (DECISIONS 95). */
@@ -107,6 +110,8 @@ export interface CompassLink {
   generated_at: string;
   /** The packet's engagement.country, as received (DECISIONS 98; absent before). */
   country?: string;
+  /** §3.20: the pilot's process owner as the hand-off names it; only offered, never set. */
+  process_owner?: string;
 }
 
 /** An engagement mapping the same pilot of the same frame in another country (DECISIONS 98). */
@@ -130,6 +135,7 @@ export interface HandoffPilot {
   interview_prompts: string[];
   cell_refs: string[];
   same_process?: SameProcess[];
+  process_owner?: string;
 }
 
 /** POST /compass/preview: what a hand-off file would create; nothing is applied. */
@@ -218,6 +224,10 @@ export interface Engagement {
   country?: string;
   reference_engagement_id?: string | null;
   reference_engagement_name?: string;
+  /** §3.20 (DECISIONS 110): the process owner ("" when not named); the role's name or the text. */
+  process_owner_role_id?: string | null;
+  process_owner_other?: string;
+  process_owner?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -298,6 +308,17 @@ export interface Source {
   coverage_pct?: number | null;
   /** Only on upload (and kind changes that re-read the file): the background reading job. */
   job_id?: string | null;
+  /** §3.20 (DECISIONS 110): the SOP register, for SOPs and manuals (absent before: not recorded). */
+  title?: string;
+  owner_role_id?: string | null;
+  /** The owner text was chosen or confirmed as a role; false: "check: is this a role?". */
+  owner_checked?: boolean;
+  updated_by_role_id?: string | null;
+  updated_by_other?: string;
+  last_reviewed?: string;
+  review_due?: string;
+  /** Controlled copy set by Eric; before that an unticked box means "not known". */
+  controlled_copy_set?: boolean;
 }
 
 export interface SourcePatch {
@@ -305,6 +326,35 @@ export interface SourcePatch {
   version_date?: string;
   owner?: string;
   controlled_copy?: boolean;
+  title?: string;
+  owner_role_id?: string | null;
+  owner_checked?: boolean;
+  updated_by_role_id?: string | null;
+  updated_by_other?: string;
+  last_reviewed?: string;
+  review_due?: string;
+}
+
+/** GET /engagements/{id}/sop-register (§3.20): one entry per SOP or manual, names hidden. */
+export interface SopEntry {
+  source_id: string;
+  title: string;
+  kind: string;
+  owner: string;
+  owner_status: "role" | "other" | "check" | "none";
+  updated_by: string;
+  version_date: string;
+  last_reviewed: string;
+  review_due: string;
+  controlled: boolean | null;
+  overdue: boolean;
+  /** An older version of an SOP also in the sources: left out of the counts. */
+  older: boolean;
+}
+
+export interface SopRegister {
+  counts: { sops: number; without_owner: number; without_updater: number; overdue: number; uncontrolled: number };
+  entries: SopEntry[];
 }
 
 export interface SourceUpload {

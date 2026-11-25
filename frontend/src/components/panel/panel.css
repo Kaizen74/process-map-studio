@@ -611,3 +611,10 @@ button.evidence:focus-visible {
   background: var(--surface-2);
   border-radius: var(--radius-control);
 }
+
+/* §3.20 (DECISIONS 110): the one who decides is not the one accountable: a symbol and the words. */
+.decider-split {
+  margin: var(--space-4) 0 0;
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}

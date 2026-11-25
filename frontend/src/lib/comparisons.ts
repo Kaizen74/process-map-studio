@@ -81,7 +81,19 @@ export interface Comparison {
   no_longer_found: Difference[];
   counts: DifferenceCounts;
   suggest_job: { job_id: string; status: string } | null;
+  /** §3.20 (DECISIONS 110): the other map's steps with a difference Eric classed or kept. */
+  deviation?: { differing: number; steps: number } | null;
 }
+
+/** §3.20: "3 of 11 steps (27%) run differently from Arden", in the brief's words. */
+export function deviationLine(c: Comparison): string | null {
+  const d = c.deviation;
+  if (!d || d.steps === 0) return null;
+  const pct = Math.round((d.differing / d.steps) * 100);
+  return `${d.differing} of ${d.steps} steps (${pct}%) run differently from ${c.reference.country || c.reference.name}`;
+}
+
+export const IATA_SCALE = "For scale: IATA audits find about 8% of procedures vary from the manual.";
 
 export interface ComparisonSummary {
   id: string;

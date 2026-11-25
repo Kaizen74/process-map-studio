@@ -595,3 +595,30 @@ class ReturnKind(StrEnum):
     KNOWLEDGE_RISK = "knowledge_risk"
     HYPOTHESIS_VERDICT = "hypothesis_verdict"
     VARIATION = "variation"
+    SOP = "sop"  # §3.20 (DECISIONS 110)
+    PROCESS_SUMMARY = "process_summary"
+
+
+class DataMove(StrEnum):
+    """B.57 how the data moves at a handoff (§3.20); not set means not known."""
+
+    SYSTEM_INTERFACE = "system_interface"
+    RE_KEYED = "re_keyed"
+    EMAIL_SPREADSHEET = "email_spreadsheet"
+    PAPER = "paper"
+    VERBAL = "verbal"
+
+
+class PaperDecider(StrEnum):
+    """B.58 decider on paper (§3.20)."""
+
+    NAMED = "named"
+    NOT_NAMED = "not_named"
+
+
+class SystemOfRecord(StrEnum):
+    """B.59 system of record (§3.20)."""
+
+    SYSTEM = "system"
+    OTHER = "other"
+    NONE = "none"

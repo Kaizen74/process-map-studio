@@ -5,11 +5,11 @@ import { Button, Card, Dialog, EmptyState, ErrorState, Skeleton } from "../../co
 import { useToast } from "../../components/shell";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
-import { useDeleteSource, useSources, useUpdateSource, useUploadSource } from "../../hooks/useSources";
+import { useDeleteSource, useSopRegister, useSources, useUpdateSource, useUploadSource } from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
-import { uploadProblem } from "../../lib/sources";
+import { sopCountsLine, uploadProblem } from "../../lib/sources";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DropZone } from "./DropZone";
 import { RedactionList } from "./RedactionList";
@@ -34,6 +34,7 @@ export function SourcesScreen() {
   const sources = useSources(engagementId);
   const readiness = useReadiness(engagementId);
   const roles = useRoles(engagementId);
+  const register = useSopRegister(engagementId);
   const upload = useUploadSource(engagementId);
   const update = useUpdateSource(engagementId);
   const remove = useDeleteSource(engagementId);
@@ -114,6 +115,10 @@ export function SourcesScreen() {
         <p className="screen__intro">
           The documents and interviews this map is drawn from. Every step on the map will point back to them.
         </p>
+        {/* §3.20 (DECISIONS 110): who owns and updates the SOPs, in one line. */}
+        {register.data && register.data.counts.sops > 0 && (
+          <p className="registry__counts">{sopCountsLine(register.data.counts)}</p>
+        )}
       </div>
 
       <DropZone onFiles={(files) => void addFiles(files)} busy={busy} />
@@ -175,6 +180,8 @@ export function SourcesScreen() {
             setDeleteError(null);
             setDeleting(source);
           }}
+          roles={roles.data ?? []}
+          register={register.data?.entries ?? []}
         />
       )}
       {rowError && (

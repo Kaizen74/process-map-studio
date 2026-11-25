@@ -39,10 +39,12 @@ from app.domain.graph import (
     GraphElement,
     GraphEvidence,
     GraphHandoff,
+    GraphPaperDecider,
     GraphPhase,
     GraphProcess,
     GraphRaci,
     GraphRole,
+    GraphSystem,
     GraphTime,
     GraphVersion,
     LintReport,
@@ -60,9 +62,11 @@ from app.repositories import codes as codes_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import gap as gap_repo
+from app.repositories import reality_snapshots as snapshots_repo
 from app.repositories import sources as sources_repo
 from app.repositories import versions as versions_repo
 from app.services import (
+    accountability,
     alignment,
     exceptions,
     interview_templates,
@@ -371,6 +375,20 @@ def _build_graph(
                 work_type_status=e.work_type_status,
                 level=e.level,
                 parent_element_id=e.parent_element_id,
+                paper_decider=GraphPaperDecider(
+                    status=e.paper_decider_status,
+                    role_id=e.paper_decider_role_id,
+                    segment_id=e.paper_decider_segment_id,
+                )
+                if e.paper_decider_status
+                else None,
+                system_of_record=GraphSystem(
+                    status=e.system_status,
+                    role_id=e.system_role_id,
+                    other=hide(e.system_other or ""),
+                )
+                if e.system_status
+                else None,
             )
         )
 
@@ -410,6 +428,7 @@ def _build_graph(
                 else None,
                 typical=e.typical,
                 provenance=e.provenance,
+                data_move=e.data_move,
             )
             for e in edges
         ],
@@ -547,6 +566,18 @@ def _answer(
     )
 
 
+def different_role(session: Session, version_id: str, element_id: str) -> bool:
+    """Whether the version's kept Reality snapshot has a Different role (D12) discrepancy on the
+    step. Read only: no snapshot (Reality views off, or not worked out yet) means none."""
+    stored = snapshots_repo.get(session, version_id)
+    codes = stored.payload.get("codes", []) if stored is not None else []
+    return any(
+        "D12" in (c.get("types") or []) and element_id in (c.get("element_ids") or [])
+        for c in codes
+        if isinstance(c, dict)
+    )
+
+
 def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
     """One step as the detail panel shows it: the graph element with role, lane and phase names,
     each evidence card's source name and quote, and the passages behind each RACI entry. Names
@@ -564,6 +595,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
         sources = sources_repo.list_for_engagement(session, version.engagement_id)
         names = {s.id: s.filename for s in sources}
         images = map_repo.image_count(session, element_id)
+        has_d12 = different_role(session, version.id, element_id)  # §3.20, inside the session
         found = gap_repo.step_findings(session, version.engagement_id, element.stable_key)
         lens = lenses.load(session, version.id, version.engagement_id)
         claim_ids = map_repo.element_claims(session, version.id).get(element_id, [])
@@ -626,6 +658,7 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
             if p.evidence.raci_id == raci_id
         ]  # fmt: skip
 
+    paper, system = element.paper_decider, element.system_of_record
     fields = element.model_dump(by_alias=False, exclude={"evidence", "raci"})
     return Ok(
         ElementDetail(
@@ -657,6 +690,17 @@ def get_element(sessions: Sessions, element_id: str) -> Result[ElementDetail]:
                 for r in raci
             ],
             evidence=cards,
+            paper_decider_role_name=roles.get(paper.role_id or "", "") if paper else "",
+            paper_decider_anchor=next(
+                (
+                    f"{c.source_name} {c.anchor}".strip()
+                    for c in cards
+                    if paper and paper.segment_id and c.segment_id == paper.segment_id
+                ),
+                "",
+            ),
+            paper_decider_hint=accountability.paper_hint(element, roles, has_d12),
+            system_role_name=roles.get(system.role_id or "", "") if system else "",
             image_count=images,
             answers=[_answer(r, where, bank, hide) for r in interview],
             gap_findings=[

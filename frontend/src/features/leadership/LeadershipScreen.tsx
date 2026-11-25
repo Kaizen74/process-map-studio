@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState, ErrorState, SelectField, Skeleton } from "../../components/common";
-import { FactsColumn, InterpretationColumn, RecommendationColumn } from "../../components/leadership";
+import { FactsColumn, InterpretationColumn, ProcessAtAGlance, RecommendationColumn } from "../../components/leadership";
 import { useToast } from "../../components/shell";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useLeadership, useSaveDecisions } from "../../hooks/useLeadership";
@@ -90,6 +90,7 @@ export function LeadershipScreen() {
           />
         </div>
       )}
+      {view.data?.summary && <ProcessAtAGlance summary={view.data.summary} labels={labels} onOpen={open} />}
       {view.data && (
         <div className="leadership-columns">
           <FactsColumn view={view.data} labels={labels} onOpen={open} />

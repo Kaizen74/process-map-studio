@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import {
   correctSegment,
   deleteSource,
+  getSopRegister,
   getSource,
   getSpeakers,
   listSegments,
@@ -17,13 +18,20 @@ const sourcesKey = (engagementId: string) => ["engagements", engagementId, "sour
 const sourceKey = (sourceId: string) => ["sources", sourceId] as const;
 const segmentsKey = (sourceId: string) => ["sources", sourceId, "segments"] as const;
 const rawSegmentsKey = (sourceId: string) => ["sources", sourceId, "segments", "raw"] as const;
+const sopRegisterKey = (engagementId: string) => ["engagements", engagementId, "sop-register"] as const;
 const speakersKey = (sourceId: string) => ["sources", sourceId, "speakers"] as const;
 
 /** Sources change what the draft still needs and the Home card counts: refresh those too. */
 function refreshAround(client: QueryClient, engagementId: string) {
   void client.invalidateQueries({ queryKey: sourcesKey(engagementId) });
   void client.invalidateQueries({ queryKey: ["engagements", engagementId, "readiness"] });
+  void client.invalidateQueries({ queryKey: sopRegisterKey(engagementId) });
   void client.invalidateQueries({ queryKey: ["engagements"], exact: true });
+}
+
+/** §3.20 (DECISIONS 110): who owns and updates each SOP, with the counts line. */
+export function useSopRegister(engagementId: string) {
+  return useQuery({ queryKey: sopRegisterKey(engagementId), queryFn: () => getSopRegister(engagementId) });
 }
 
 /** How often to look again while a file is being read in the background. */

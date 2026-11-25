@@ -1,5 +1,5 @@
 // Source kinds, accepted formats and status wording (API_CONTRACT.md → Sources; PRD B.1, §5.4).
-import type { Source } from "../api/types";
+import type { SopRegister, Source } from "../api/types";
 
 export const KIND_OPTIONS = [
   { value: "interview_transcript", label: "Interview transcript" },
@@ -56,3 +56,22 @@ export function coverageText(pct: number | null | undefined): string | null {
 }
 
 export const NOT_MEASURED = "Measured after a draft that uses this file";
+
+// §3.20 (DECISIONS 110): who owns and updates each SOP or manual.
+
+export const SOP_KINDS: readonly string[] = ["sop", "manual"];
+export const isSop = (source: { kind: string }) => SOP_KINDS.includes(source.kind);
+
+/** The Sources screen line, in the brief's words. */
+export function sopCountsLine(c: SopRegister["counts"]): string {
+  return [
+    `${c.sops} ${c.sops === 1 ? "SOP" : "SOPs"}`,
+    `${c.without_owner} without an owner`,
+    `${c.without_updater} with nobody to update them`,
+    `${c.overdue} review overdue`,
+    `${c.uncontrolled} uncontrolled`,
+  ].join(" · ");
+}
+
+export const CHECK_ROLE = "check: is this a role?";
+export const OLDER_VERSION = "Older version also in the sources";

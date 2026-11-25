@@ -31,7 +31,10 @@ STEP_KINDS = {"activity", "decision", "approval"}
 
 
 OWN_VALUE_FIELDS = ("disposition", "disposition_note", "risk_flag", "time_override_min",
-                    "volume_override_month", "value_override_note")  # fmt: skip
+                    "volume_override_month", "value_override_note",
+                    # §3.20 (DECISIONS 110): the decider on paper and the system of record.
+                    "paper_decider_status", "paper_decider_role_id", "paper_decider_segment_id",
+                    "system_status", "system_role_id", "system_other")  # fmt: skip
 
 
 def changes(old: list[ElementRecord], fresh: list[ElementRecord], kept: int) -> RefreshChanges:
@@ -72,10 +75,14 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
 
     # The draft's lines around its kept steps stay; their other end follows its fresh successor.
     own_exits: set[str] = set()
+    # §3.20: how data moves at a handoff is Eric's record: it follows the line's two ends.
+    moves: dict[tuple[str, str, str], str] = {}
     for edge in map_repo.edges(session, draft_id):
         start, end = edge.from_element_id, edge.to_element_id
         new_start = start if start in keep else successor.get(start)
         new_end = end if end in keep else successor.get(end)
+        if edge.data_move and new_start is not None and new_end is not None:
+            moves[(new_start, new_end, edge.kind)] = edge.data_move
         if (start not in keep and end not in keep) or new_start is None or new_end is None:
             map_repo.delete_edge(session, edge.id)
             continue
@@ -153,6 +160,8 @@ def fold(session: Session, draft_id: str, fresh_id: str) -> RefreshChanges:
         key = (edge.from_element_id, edge.to_element_id, edge.kind)
         if edge.from_element_id == edge.to_element_id or key in seen:
             map_repo.delete_edge(session, edge.id)
+        elif key in moves and edge.data_move != moves[key]:
+            map_repo.update_edge(session, edge.id, {"data_move": moves[key]})
         seen.add(key)
     for q in map_repo.questions(session, draft_id):
         if q.question in answered and q.status == "open":

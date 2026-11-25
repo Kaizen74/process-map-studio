@@ -177,10 +177,12 @@ def test_graph_has_the_prd_shape(built: Built) -> None:
     assert process["end_point"] == "Final load sheet issued"
     edges = graph["edges"]
     assert isinstance(edges, list)
-    # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it.
+    # v1.10 (§3.12.10-3.12.11): why each line is there and which views draw it; §3.20 (DECISIONS
+    # 110): how the data moves at a handoff.
     assert set(edges[0]) == {
         "id", "from", "to", "kind", "label",
         "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
+        "data_move",
     }  # fmt: skip
     elements = graph["elements"]
     assert isinstance(elements, list)

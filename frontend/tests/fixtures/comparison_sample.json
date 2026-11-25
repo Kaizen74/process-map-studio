@@ -312,7 +312,11 @@
       "classed": 1,
       "dismissed": 0
     },
-    "suggest_job": null
+    "suggest_job": null,
+    "deviation": {
+      "differing": 2,
+      "steps": 6
+    }
   },
   "comparisons": [
     {

@@ -9,7 +9,7 @@ classes a difference: the reason is Eric's.
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence, Set
 from dataclasses import dataclass, field
 
 from app.services import grade as grade_rules
@@ -342,3 +342,14 @@ def differences(
             o = by_o[other_key]
             found.append((o.order, o.order, only_difference(o, "other", c)))
     return [d for _, _, d in sorted(found, key=lambda x: (x[0], x[1]))]
+
+
+DECIDED = frozenset({"classed", "kept"})
+
+
+def differing_steps(found: Sequence[tuple[str, str | None]], other_keys: Set[str]) -> set[str]:
+    """§3.20 (DECISIONS 110): the other map's steps with at least one difference Eric classed or
+    kept, of any kind (a step only on that map included); `found` is (status, other_key)."""
+    return {
+        key for status, key in found if status in DECIDED and key is not None and key in other_keys
+    }

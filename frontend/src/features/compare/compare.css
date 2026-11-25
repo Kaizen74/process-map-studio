@@ -115,3 +115,18 @@
   display: grid;
   gap: var(--space-4);
 }
+
+/* §3.20: the share of steps run differently, with the scale line beside it. */
+.compare-deviation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4) var(--space-16);
+}
+.compare-deviation p {
+  margin: 0;
+}
+.compare-deviation__note {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}

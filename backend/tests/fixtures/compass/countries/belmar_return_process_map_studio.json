@@ -18,7 +18,10 @@
         "CAP-01.Process"
       ],
       "source_note": "Rests on 1 document, 4 interviews, system records of 10 cases.",
-      "topic": "decision_right"
+      "topic": "decision_right",
+      "on_paper": "Certified load controller",
+      "decided_by": "Shift supervisor",
+      "accountable": "Certified load controller"
     },
     {
       "ref": "X2",
@@ -52,6 +55,57 @@
       "compared_with": "Arden"
     },
     {
+      "ref": "VS-01",
+      "kind": "process_summary",
+      "title": "Bid to contract renewal",
+      "detail": "Counted on the published map: 11 steps, 2 decisions, 2 approvals, 6 handoffs between 5 roles, 1 rework loop.",
+      "grade": "confirmed",
+      "figure": "11 steps, 6 handoffs",
+      "relates_to": [
+        "VS-01",
+        "CAP-04"
+      ],
+      "source_note": "Counted from the published map of VS-01.",
+      "topic": "way_of_working",
+      "process_owner": "Country manager",
+      "metrics": {
+        "steps": 11,
+        "decisions": 2,
+        "approvals": 2,
+        "handoffs": 6,
+        "roles": 5,
+        "rework_loops": 1,
+        "work_min": 840,
+        "wait_min": 7200,
+        "systems": 3,
+        "handoffs_manual": 2,
+        "off_system_steps": 1,
+        "no_record_steps": 0,
+        "steps_differing": 3
+      }
+    },
+    {
+      "ref": "SOP-01",
+      "kind": "sop",
+      "title": "Load planning and sign-off",
+      "detail": "The SOP still names the pre-merger roles; the shift supervisor keeps an annotated copy at the desk.",
+      "grade": "confirmed",
+      "figure": "3 of 9 steps done differently",
+      "relates_to": [
+        "CAP-01",
+        "CAP-01.Process"
+      ],
+      "source_note": "From the source register; step counts from the published map of CAP-01.",
+      "topic": "way_of_working",
+      "owner_role": "Station manager",
+      "updated_by": "Shift supervisor",
+      "version_date": "2019-04",
+      "last_reviewed": "2019-04",
+      "controlled_copy": false,
+      "steps_governed": 9,
+      "steps_departing": 3
+    },
+    {
       "ref": "X3",
       "kind": "discrepancy",
       "title": "Overtime is approved by the station manager without the regional roster owner",
@@ -63,7 +117,11 @@
         "CAP-03.Process"
       ],
       "source_note": "Rests on 2 interviews.",
-      "topic": "decision_right"
+      "topic": "decision_right",
+      "on_paper": "Regional roster owner",
+      "decided_by": "Station manager",
+      "accountable": "Regional roster owner",
+      "accountable_contested": true
     }
   ]
 }

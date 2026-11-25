@@ -11,6 +11,7 @@ from app.domain.models import (
     SegmentPage,
     SegmentPatch,
     SegmentView,
+    SopRegister,
     SourcePatch,
     SourceView,
     SpeakerView,
@@ -51,6 +52,11 @@ def upload_source(
 @router.get("/engagements/{engagement_id}/sources")
 def list_sources(request: Request, engagement_id: str) -> list[SourceView]:
     return unwrap(sources.list_sources(request.app.state.sessions, engagement_id))
+
+
+@router.get("/engagements/{engagement_id}/sop-register")
+def sop_register(request: Request, engagement_id: str) -> SopRegister:
+    return unwrap(sources.sop_register(request.app.state.sessions, engagement_id))
 
 
 @router.get("/sources/{source_id}")

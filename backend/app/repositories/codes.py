@@ -18,6 +18,7 @@ from app.repositories.tables import SharedCode
 STEP = "step"
 INTENT = "intent"
 DIFF = "diff"  # a difference between two countries' maps (V1 …; DECISIONS 98)
+SOP = "sop"  # an SOP or manual in the sources (SOP-01 …; DECISIONS 110), keyed by source ID
 
 
 def step_code(number: int) -> str:
@@ -32,10 +33,15 @@ def diff_code(number: int) -> str:
     return f"V{number}"
 
 
+def sop_code(number: int) -> str:
+    return f"SOP-{number:02d}"
+
+
 FORMATS: dict[str, Callable[[int], str]] = {
     STEP: step_code,
     INTENT: intent_code,
     DIFF: diff_code,
+    SOP: sop_code,
 }
 
 

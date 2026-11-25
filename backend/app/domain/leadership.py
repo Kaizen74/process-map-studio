@@ -109,3 +109,40 @@ class LeadershipView(BaseModel):
     # P13b (G17): while the Reality views switch is on, the figures Leadership shares with them,
     # read from the version's frozen Reality snapshot.
     reality: RealityFigures | None = None
+    # §3.20 (DECISIONS 110): the process at a glance and the data lens line.
+    summary: ProcessSummary | None = None
+
+
+class SummaryLinks(BaseModel):
+    """The steps behind each figure of the process at a glance (clicking a figure lists them)."""
+
+    steps: list[str] = Field(default_factory=list)
+    handoffs: list[str] = Field(default_factory=list)  # the steps each handoff leaves
+    rework_loops: list[str] = Field(default_factory=list)
+    systems: list[str] = Field(default_factory=list)  # steps with a system of record
+    handoffs_manual: list[str] = Field(default_factory=list)
+    off_system: list[str] = Field(default_factory=list)
+    no_record: list[str] = Field(default_factory=list)
+
+
+class ProcessSummary(BaseModel):
+    """§3.20 (DECISIONS 110): the process at a glance, counted from one version's map. A figure
+    that can't be counted is null, never 0 for "not known"."""
+
+    process_owner: str  # the role's name; "" when not named
+    steps: int
+    decisions: int
+    approvals: int
+    handoffs: int
+    roles: int
+    rework_loops: int
+    work_min: int | None
+    wait_min: int | None
+    timed_steps: int  # steps with a work or waiting time recorded
+    systems: int | None  # null until a step has a system of record
+    handoffs_known: int  # handoffs with how the data moves recorded
+    handoffs_manual: int | None  # null until a handoff has it recorded
+    off_system_steps: int | None  # D6 steps; null while the Reality views are off
+    no_record_steps: int | None  # D11 steps; likewise
+    steps_differing: int | None  # §4.7; null for a reference unit or with no comparison
+    links: SummaryLinks = Field(default_factory=SummaryLinks)
