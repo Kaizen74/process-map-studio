@@ -69,13 +69,17 @@ def _rights(graph: Graph, hide: Callable[[str], str]) -> dict[str, accountabilit
     return {e.id: r for e in graph.elements if (r := accountability.rights(e, roles)) is not None}
 
 
-def _steps(graph: Graph, rights: dict[str, accountability.Rights]) -> list[rules.Step]:
-    roles = {r.id: r.name for r in graph.roles}
+def _steps(graph: Graph, rights: dict[str, accountability.Rights],
+           hide: Callable[[str], str]) -> list[rules.Step]:  # fmt: skip
+    """The coded steps, their names and lanes hidden like every other text (§3.20: a role's name
+    on the list of names to hide is shown as its replacement)."""
+    roles = {r.id: hide(r.name) for r in graph.roles}
     out = []
     for e in exports.steps(exports.on_the_map(graph)):
         documents, interviews = _counts(e)
         out.append(rules.Step(
-            code=e.code or "", label=e.label, kind=e.kind, lane=roles.get(e.lane_role_id or "", ""),
+            code=e.code or "", label=hide(e.label), kind=e.kind,
+            lane=roles.get(e.lane_role_id or "", ""),
             work_type=e.work_type, mechanism=e.decision.mechanism, provenance=e.provenance,
             documents=documents, interviews=interviews, knowledge_risk=e.k_risk,
             rights=rights.get(e.id),
@@ -214,7 +218,7 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
             engagement_key=link.key, pilot_ref=link.pilot_ref, cluster_ref=link.cluster_ref,
             cells=chosen, generated_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
             process_name=graph.process.name, version_label=version.label,
-            steps=_steps(graph, rights),
+            steps=_steps(graph, rights, hide),
             discrepancies=discrepancies, intents=intents, tested=tested,
             country=link.country or engagement.country, variations=variations, sops=sops,
             process_cell=process_cell if process_cell in link.cell_refs else "",

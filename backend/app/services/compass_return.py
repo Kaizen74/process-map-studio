@@ -314,7 +314,8 @@ def findings(data: Inputs) -> list[dict[str, object]]:
                                                  data.process_cell]) if r]  # fmt: skip
         out.append({"ref": sop.code, "kind": "sop", "title": sop.title,
                     "detail": _sop_detail(sop), "grade": grade_rules.INDICATED,
-                    "figure": (f"{sop.departing} of {sop.governed} steps done differently"
+                    "figure": (f"{sop.departing} of {_count(sop.governed, 'step', 'steps')} "
+                               "done differently"
                                if sop.governed else "Cited by no step on the published map"),
                     "relates_to": sop_relates, "source_note": _sop_note(sop, data.pilot_ref),
                     "topic": WAY_OF_WORKING, **_sop_fields(sop)})  # fmt: skip

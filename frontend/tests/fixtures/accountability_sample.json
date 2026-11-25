@@ -1,0 +1,2056 @@
+{
+  "graph": {
+    "version": {
+      "id": "id-1",
+      "label": "v1.0",
+      "state": "published",
+      "quality_card": null
+    },
+    "process": {
+      "name": "Bid to contract renewal",
+      "trigger": "",
+      "end_point": "",
+      "kpi": "Win rate on renewals; days from bid request to signed contract",
+      "cycle_time": {
+        "elapsed_min": 8040.0,
+        "work_min": 840.0,
+        "incomplete_steps": 0
+      },
+      "engagement_key": "MERIDIANBE",
+      "pilot_ref": "VS-01"
+    },
+    "roles": [
+      {
+        "id": "id-2",
+        "name": "Head of Pricing / Revenue Management",
+        "is_system": false,
+        "lane_order": 1
+      },
+      {
+        "id": "id-3",
+        "name": "Global Head, Commercial Excellence",
+        "is_system": false,
+        "lane_order": 2
+      },
+      {
+        "id": "id-4",
+        "name": "Bid & Solutions Architect",
+        "is_system": false,
+        "lane_order": 3
+      },
+      {
+        "id": "id-5",
+        "name": "VP Global Account Management",
+        "is_system": false,
+        "lane_order": 4
+      },
+      {
+        "id": "id-6",
+        "name": "Commercial lead",
+        "is_system": false,
+        "lane_order": 5
+      },
+      {
+        "id": "id-7",
+        "name": "Shift supervisor",
+        "is_system": false,
+        "lane_order": 6
+      },
+      {
+        "id": "id-8",
+        "name": "Station manager",
+        "is_system": false,
+        "lane_order": 7
+      },
+      {
+        "id": "id-9",
+        "name": "Certified load controller",
+        "is_system": false,
+        "lane_order": 8
+      },
+      {
+        "id": "id-10",
+        "name": "Country manager",
+        "is_system": false,
+        "lane_order": 9
+      },
+      {
+        "id": "id-11",
+        "name": "Regional roster owner",
+        "is_system": false,
+        "lane_order": 10
+      },
+      {
+        "id": "id-12",
+        "name": "Regional finance controller",
+        "is_system": false,
+        "lane_order": 11
+      },
+      {
+        "id": "id-13",
+        "name": "Load control system",
+        "is_system": true,
+        "lane_order": 12
+      },
+      {
+        "id": "id-14",
+        "name": "Rostering system",
+        "is_system": true,
+        "lane_order": 13
+      },
+      {
+        "id": "id-15",
+        "name": "Contract system",
+        "is_system": true,
+        "lane_order": 14
+      }
+    ],
+    "phases": [
+      {
+        "id": "id-16",
+        "name": "Renew",
+        "time_window": "",
+        "order": 1
+      }
+    ],
+    "elements": [
+      {
+        "id": "id-17",
+        "stable_key": "start",
+        "code": null,
+        "kind": "start",
+        "label": "Renewal due",
+        "lane_role_id": null,
+        "phase_id": null,
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "not_assessed",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": null,
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
+      },
+      {
+        "id": "id-18",
+        "stable_key": "receive-the-renewal-request",
+        "code": "S-01",
+        "kind": "activity",
+        "label": "Receive the renewal request",
+        "lane_role_id": "id-6",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 30.0,
+          "wait_min": 1440.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-6",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-19",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 1",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-21",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 1",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "none",
+          "role_id": null,
+          "other": ""
+        }
+      },
+      {
+        "id": "id-24",
+        "stable_key": "weigh-the-cargo",
+        "code": "S-02",
+        "kind": "activity",
+        "label": "Weigh the cargo",
+        "lane_role_id": "id-7",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 60.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-7",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-25",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-26",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 2",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-13",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-27",
+        "stable_key": "sign-off-the-load-plan",
+        "code": "S-03",
+        "kind": "approval",
+        "label": "Sign off the load plan",
+        "lane_role_id": "id-7",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 30.0,
+          "wait_min": 720.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": "id-7",
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-7",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-9",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-28",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 3",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-29",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 3",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": {
+          "status": "named",
+          "role_id": "id-9",
+          "segment_id": "id-29"
+        },
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-13",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-30",
+        "stable_key": "plan-the-overtime",
+        "code": "S-04",
+        "kind": "activity",
+        "label": "Plan the overtime",
+        "lane_role_id": "id-8",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 60.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-8",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-31",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 4",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-32",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 4",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-14",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-33",
+        "stable_key": "approve-overtime",
+        "code": "S-05",
+        "kind": "approval",
+        "label": "Approve overtime",
+        "lane_role_id": "id-8",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 15.0,
+          "wait_min": 1440.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": "id-8",
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-8",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-11",
+            "letter": "A",
+            "contested": true
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-34",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 5",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-35",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 5",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-36",
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "supports",
+            "anchor": "¶ 5",
+            "verified": true,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": {
+          "status": "named",
+          "role_id": "id-11",
+          "segment_id": "id-35"
+        },
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-14",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-37",
+        "stable_key": "check-the-load-sheet",
+        "code": "S-06",
+        "kind": "activity",
+        "label": "Check the load sheet",
+        "lane_role_id": "id-9",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 45.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-9",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-38",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 6",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-39",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 6",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-13",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-40",
+        "stable_key": "approve-the-renewal-price",
+        "code": "S-07",
+        "kind": "decision",
+        "label": "Approve the renewal price",
+        "lane_role_id": "id-10",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 60.0,
+          "wait_min": 2880.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": "id-10",
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-10",
+            "letter": "R",
+            "contested": false
+          },
+          {
+            "role_id": "id-10",
+            "letter": "A",
+            "contested": false
+          },
+          {
+            "role_id": "id-12",
+            "letter": "A",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-41",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 7",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-42",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 7",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
+      },
+      {
+        "id": "id-43",
+        "stable_key": "release-the-bid",
+        "code": "S-08",
+        "kind": "decision",
+        "label": "Release the bid",
+        "lane_role_id": "id-6",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 30.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "judgment",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-6",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-44",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 8",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
+      },
+      {
+        "id": "id-45",
+        "stable_key": "prepare-the-contract",
+        "code": "S-09",
+        "kind": "activity",
+        "label": "Prepare the contract",
+        "lane_role_id": "id-6",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 240.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-6",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-46",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 9",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-47",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 9",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-15",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-48",
+        "stable_key": "sign-the-contract",
+        "code": "S-10",
+        "kind": "activity",
+        "label": "Sign the contract",
+        "lane_role_id": "id-10",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 30.0,
+          "wait_min": 720.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-10",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-49",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 10",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "system",
+          "role_id": "id-15",
+          "other": ""
+        }
+      },
+      {
+        "id": "id-50",
+        "stable_key": "file-the-contract",
+        "code": "S-11",
+        "kind": "activity",
+        "label": "File the contract",
+        "lane_role_id": "id-10",
+        "phase_id": "id-16",
+        "time": {
+          "work_min": 240.0,
+          "wait_min": 0.0,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [
+          {
+            "role_id": "id-10",
+            "letter": "R",
+            "contested": false
+          }
+        ],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "corroborated",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [
+          {
+            "segment_id": "id-51",
+            "source_id": "id-20",
+            "source_kind": "interview_transcript",
+            "stance": "supports",
+            "anchor": "¶ 11",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": "id-52",
+            "source_id": "id-22",
+            "source_kind": "sop",
+            "stance": "supports",
+            "anchor": "¶ 11",
+            "verified": true,
+            "note": ""
+          },
+          {
+            "segment_id": null,
+            "source_id": "id-23",
+            "source_kind": "manual",
+            "stance": "silent",
+            "anchor": "",
+            "verified": false,
+            "note": ""
+          }
+        ],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": "both",
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": {
+          "status": "none",
+          "role_id": null,
+          "other": ""
+        }
+      },
+      {
+        "id": "id-53",
+        "stable_key": "end",
+        "code": null,
+        "kind": "end",
+        "label": "Contract filed",
+        "lane_role_id": null,
+        "phase_id": null,
+        "time": {
+          "work_min": null,
+          "wait_min": null,
+          "text": ""
+        },
+        "complexity": null,
+        "kpi": "",
+        "decision": {
+          "mechanism": "none",
+          "decider_role_id": null,
+          "rule_or_threshold": "",
+          "escalation": ""
+        },
+        "handoff": {
+          "in": "",
+          "out": ""
+        },
+        "raci": [],
+        "provenance": "O",
+        "r_reference": "",
+        "source_state": "not_assessed",
+        "divergence_types": [],
+        "constraints": [],
+        "k_risk": "",
+        "ai_flag": null,
+        "evidence": [],
+        "confidence": null,
+        "confidence_breakdown": [],
+        "needs_check": false,
+        "review_status": "confirmed",
+        "account_summary": {
+          "official": 0,
+          "lived": 0,
+          "unclear": 0
+        },
+        "practice_described": null,
+        "variants": null,
+        "view_membership": null,
+        "work_type": null,
+        "constraint_type": null,
+        "work_type_basis": [],
+        "work_type_status": null,
+        "level": null,
+        "parent_element_id": null,
+        "paper_decider": null,
+        "system_of_record": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "id-54",
+        "from": "id-17",
+        "to": "id-18",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-55",
+        "from": "id-18",
+        "to": "id-24",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "re_keyed"
+      },
+      {
+        "id": "id-56",
+        "from": "id-24",
+        "to": "id-27",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-57",
+        "from": "id-27",
+        "to": "id-30",
+        "kind": "approve",
+        "label": "Approve",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "system_interface"
+      },
+      {
+        "id": "id-58",
+        "from": "id-27",
+        "to": "id-24",
+        "kind": "rework",
+        "label": "Weigh again",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-59",
+        "from": "id-30",
+        "to": "id-33",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-60",
+        "from": "id-33",
+        "to": "id-37",
+        "kind": "approve",
+        "label": "Approve",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "system_interface"
+      },
+      {
+        "id": "id-61",
+        "from": "id-33",
+        "to": "id-53",
+        "kind": "reject",
+        "label": "Refused",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-62",
+        "from": "id-37",
+        "to": "id-40",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "system_interface"
+      },
+      {
+        "id": "id-63",
+        "from": "id-40",
+        "to": "id-43",
+        "kind": "yes",
+        "label": "Price approved",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "email_spreadsheet"
+      },
+      {
+        "id": "id-64",
+        "from": "id-40",
+        "to": "id-53",
+        "kind": "no",
+        "label": "Not approved",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-65",
+        "from": "id-43",
+        "to": "id-45",
+        "kind": "yes",
+        "label": "Released",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-66",
+        "from": "id-43",
+        "to": "id-53",
+        "kind": "no",
+        "label": "Held",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-67",
+        "from": "id-45",
+        "to": "id-48",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": "system_interface"
+      },
+      {
+        "id": "id-68",
+        "from": "id-48",
+        "to": "id-50",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      },
+      {
+        "id": "id-69",
+        "from": "id-50",
+        "to": "id-53",
+        "kind": "sequence",
+        "label": "",
+        "sequence_basis": null,
+        "view_membership": null,
+        "information_payload": null,
+        "typical": null,
+        "provenance": "O",
+        "data_move": null
+      }
+    ]
+  },
+  "sop_register": {
+    "counts": {
+      "sops": 2,
+      "without_owner": 1,
+      "without_updater": 1,
+      "overdue": 0,
+      "uncontrolled": 1
+    },
+    "entries": [
+      {
+        "source_id": "id-22",
+        "title": "Load planning and sign-off",
+        "kind": "sop",
+        "owner": "Station manager",
+        "owner_status": "role",
+        "updated_by": "Shift supervisor",
+        "version_date": "2019-04",
+        "last_reviewed": "2019-04",
+        "review_due": "",
+        "controlled": false,
+        "overdue": false,
+        "older": false
+      },
+      {
+        "source_id": "id-23",
+        "title": "Overtime approval",
+        "kind": "manual",
+        "owner": "",
+        "owner_status": "none",
+        "updated_by": "",
+        "version_date": "",
+        "last_reviewed": "",
+        "review_due": "",
+        "controlled": null,
+        "overdue": false,
+        "older": false
+      }
+    ]
+  },
+  "leadership": {
+    "version": {
+      "id": "id-1",
+      "label": "v1.0",
+      "state": "published"
+    },
+    "facts": {
+      "phases": [
+        {
+          "phase_id": "id-16",
+          "name": "Renew",
+          "work_min": 840.0,
+          "wait_min": 7200.0,
+          "rework_loops": 1,
+          "handoffs": 6,
+          "divergence_counts": {},
+          "links": {
+            "work": [
+              "id-18",
+              "id-24",
+              "id-27",
+              "id-30",
+              "id-33",
+              "id-37",
+              "id-40",
+              "id-43",
+              "id-45",
+              "id-48",
+              "id-50"
+            ],
+            "wait": [
+              "id-18",
+              "id-27",
+              "id-33",
+              "id-40",
+              "id-48"
+            ],
+            "rework_loops": [
+              "id-27"
+            ],
+            "handoffs": [
+              "id-18",
+              "id-27",
+              "id-33",
+              "id-37",
+              "id-40",
+              "id-45"
+            ],
+            "divergence": {}
+          }
+        }
+      ],
+      "sources": 3
+    },
+    "interpretation": {
+      "causes": []
+    },
+    "recommendation": {
+      "recoverable_wait_min": 0.0,
+      "recoverable_wait_element_ids": [],
+      "rework_loops": 1,
+      "rework_element_ids": [
+        "id-27"
+      ],
+      "ai_flags": [],
+      "decisions_needed": []
+    },
+    "reality": {
+      "data_label": "Version v1.0, validated by Eric on 2026-11-25",
+      "tiles": [
+        {
+          "figure": {
+            "id": "rv1.practised",
+            "value": 5.0,
+            "unit": "count",
+            "text": "5 of 11",
+            "label": "stated",
+            "percent_type": null
+          },
+          "caption": "steps practised as documented"
+        }
+      ]
+    },
+    "summary": {
+      "process_owner": "Country manager",
+      "steps": 11,
+      "decisions": 2,
+      "approvals": 2,
+      "handoffs": 6,
+      "roles": 5,
+      "rework_loops": 1,
+      "work_min": 840,
+      "wait_min": 7200,
+      "timed_steps": 11,
+      "systems": 3,
+      "handoffs_known": 6,
+      "handoffs_manual": 2,
+      "off_system_steps": 1,
+      "no_record_steps": 0,
+      "steps_differing": 3,
+      "links": {
+        "steps": [
+          "id-18",
+          "id-24",
+          "id-27",
+          "id-30",
+          "id-33",
+          "id-37",
+          "id-40",
+          "id-43",
+          "id-45",
+          "id-48",
+          "id-50"
+        ],
+        "handoffs": [
+          "id-18",
+          "id-27",
+          "id-33",
+          "id-37",
+          "id-40",
+          "id-45"
+        ],
+        "rework_loops": [
+          "id-27"
+        ],
+        "systems": [
+          "id-24",
+          "id-27",
+          "id-30",
+          "id-33",
+          "id-37",
+          "id-45",
+          "id-48"
+        ],
+        "handoffs_manual": [
+          "id-18",
+          "id-40"
+        ],
+        "off_system": [
+          "id-50"
+        ],
+        "no_record": []
+      }
+    }
+  },
+  "comparison": {
+    "id": "id-70",
+    "rules_version": "1",
+    "reference": {
+      "engagement_id": "id-71",
+      "name": "MERIDIAN VS-01 Bid to contract renewal",
+      "country": "Arden",
+      "version_id": "id-72",
+      "version_label": "v1.0",
+      "newer_version_label": null
+    },
+    "other": {
+      "engagement_id": "id-73",
+      "name": "MERIDIANBE VS-01 Bid to contract renewal",
+      "country": "Belmar",
+      "version_id": "id-1",
+      "version_label": "v1.0",
+      "newer_version_label": null
+    },
+    "same_process": "Belmar's map started from Arden's",
+    "steps": {
+      "reference": [
+        {
+          "key": "receive-the-renewal-request",
+          "code": "S-01",
+          "label": "Receive the renewal request",
+          "kind": "activity",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 1
+        },
+        {
+          "key": "weigh-the-cargo",
+          "code": "S-02",
+          "label": "Weigh the cargo",
+          "kind": "activity",
+          "lane": "Shift supervisor",
+          "phase": "Renew",
+          "order": 2
+        },
+        {
+          "key": "sign-off-the-load-plan",
+          "code": "S-03",
+          "label": "Sign off the load plan",
+          "kind": "approval",
+          "lane": "Shift supervisor",
+          "phase": "Renew",
+          "order": 3
+        },
+        {
+          "key": "plan-the-overtime",
+          "code": "S-04",
+          "label": "Plan the overtime",
+          "kind": "activity",
+          "lane": "Station manager",
+          "phase": "Renew",
+          "order": 4
+        },
+        {
+          "key": "approve-overtime",
+          "code": "S-05",
+          "label": "Approve overtime",
+          "kind": "approval",
+          "lane": "Station manager",
+          "phase": "Renew",
+          "order": 5
+        },
+        {
+          "key": "check-the-load-sheet",
+          "code": "S-06",
+          "label": "Check the load sheet",
+          "kind": "activity",
+          "lane": "Certified load controller",
+          "phase": "Renew",
+          "order": 6
+        },
+        {
+          "key": "approve-the-renewal-price",
+          "code": "S-07",
+          "label": "Approve the renewal price",
+          "kind": "decision",
+          "lane": "Regional finance controller",
+          "phase": "Renew",
+          "order": 7
+        },
+        {
+          "key": "release-the-bid",
+          "code": "S-08",
+          "label": "Release the bid",
+          "kind": "decision",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 8
+        },
+        {
+          "key": "prepare-the-contract",
+          "code": "S-09",
+          "label": "Prepare the contract",
+          "kind": "activity",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 9
+        },
+        {
+          "key": "sign-the-contract",
+          "code": "S-10",
+          "label": "Sign the contract",
+          "kind": "activity",
+          "lane": "Country manager",
+          "phase": "Renew",
+          "order": 10
+        }
+      ],
+      "other": [
+        {
+          "key": "receive-the-renewal-request",
+          "code": "S-01",
+          "label": "Receive the renewal request",
+          "kind": "activity",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 1
+        },
+        {
+          "key": "weigh-the-cargo",
+          "code": "S-02",
+          "label": "Weigh the cargo",
+          "kind": "activity",
+          "lane": "Shift supervisor",
+          "phase": "Renew",
+          "order": 2
+        },
+        {
+          "key": "sign-off-the-load-plan",
+          "code": "S-03",
+          "label": "Sign off the load plan",
+          "kind": "approval",
+          "lane": "Shift supervisor",
+          "phase": "Renew",
+          "order": 3
+        },
+        {
+          "key": "plan-the-overtime",
+          "code": "S-04",
+          "label": "Plan the overtime",
+          "kind": "activity",
+          "lane": "Station manager",
+          "phase": "Renew",
+          "order": 4
+        },
+        {
+          "key": "approve-overtime",
+          "code": "S-05",
+          "label": "Approve overtime",
+          "kind": "approval",
+          "lane": "Station manager",
+          "phase": "Renew",
+          "order": 5
+        },
+        {
+          "key": "check-the-load-sheet",
+          "code": "S-06",
+          "label": "Check the load sheet",
+          "kind": "activity",
+          "lane": "Certified load controller",
+          "phase": "Renew",
+          "order": 6
+        },
+        {
+          "key": "approve-the-renewal-price",
+          "code": "S-07",
+          "label": "Approve the renewal price",
+          "kind": "decision",
+          "lane": "Country manager",
+          "phase": "Renew",
+          "order": 7
+        },
+        {
+          "key": "release-the-bid",
+          "code": "S-08",
+          "label": "Release the bid",
+          "kind": "decision",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 8
+        },
+        {
+          "key": "prepare-the-contract",
+          "code": "S-09",
+          "label": "Prepare the contract",
+          "kind": "activity",
+          "lane": "Commercial lead",
+          "phase": "Renew",
+          "order": 9
+        },
+        {
+          "key": "sign-the-contract",
+          "code": "S-10",
+          "label": "Sign the contract",
+          "kind": "activity",
+          "lane": "Country manager",
+          "phase": "Renew",
+          "order": 10
+        },
+        {
+          "key": "file-the-contract",
+          "code": "S-11",
+          "label": "File the contract",
+          "kind": "activity",
+          "lane": "Country manager",
+          "phase": "Renew",
+          "order": 11
+        }
+      ]
+    },
+    "pairs": [
+      {
+        "reference_key": "receive-the-renewal-request",
+        "other_key": "receive-the-renewal-request",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "weigh-the-cargo",
+        "other_key": "weigh-the-cargo",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "sign-off-the-load-plan",
+        "other_key": "sign-off-the-load-plan",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "plan-the-overtime",
+        "other_key": "plan-the-overtime",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "approve-overtime",
+        "other_key": "approve-overtime",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "check-the-load-sheet",
+        "other_key": "check-the-load-sheet",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "release-the-bid",
+        "other_key": "release-the-bid",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "prepare-the-contract",
+        "other_key": "prepare-the-contract",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": "sign-the-contract",
+        "other_key": "sign-the-contract",
+        "status": "confirmed",
+        "why": ""
+      },
+      {
+        "reference_key": null,
+        "other_key": "file-the-contract",
+        "status": "only_other",
+        "why": ""
+      }
+    ],
+    "differences": [
+      {
+        "key": "work_time|plan-the-overtime|plan-the-overtime",
+        "kind": "work_time",
+        "topic": "way_of_working",
+        "title": "Plan the overtime: 60 min of work in Belmar, 120 min in Arden",
+        "reference_value": "120 min",
+        "other_value": "60 min",
+        "figure": "60 min in Belmar vs 120 min in Arden (stated)",
+        "reference_key": "plan-the-overtime",
+        "other_key": "plan-the-overtime",
+        "status": "kept",
+        "code": "V1",
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "who_does|approve-the-renewal-price|approve-the-renewal-price",
+        "kind": "who_does",
+        "topic": "way_of_working",
+        "title": "Approve the renewal price: done by Country manager in Belmar, by Regional finance controller in Arden",
+        "reference_value": "Regional finance controller",
+        "other_value": "Country manager",
+        "figure": "",
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "kept",
+        "code": "V2",
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "who_decides|approve-the-renewal-price|approve-the-renewal-price",
+        "kind": "who_decides",
+        "topic": "decision_right",
+        "title": "Approve the renewal price: decided by Country manager in Belmar, by Regional finance controller in Arden",
+        "reference_value": "Regional finance controller",
+        "other_value": "Country manager",
+        "figure": "",
+        "reference_key": "approve-the-renewal-price",
+        "other_key": "approve-the-renewal-price",
+        "status": "classed",
+        "code": "V3",
+        "reason_class": "chosen",
+        "reason_note": "Its own delegation.",
+        "note": "",
+        "grade": {
+          "grade": "indicated",
+          "suggested": "indicated",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Indicated: both steps are observed, each in at least one checked source."
+      },
+      {
+        "key": "only_other||file-the-contract",
+        "kind": "only_other",
+        "topic": "way_of_working",
+        "title": "File the contract: only in Belmar (Country manager), not in Arden",
+        "reference_value": "absent",
+        "other_value": "present",
+        "figure": "",
+        "reference_key": null,
+        "other_key": "file-the-contract",
+        "status": "kept",
+        "code": "V4",
+        "reason_class": null,
+        "reason_note": "",
+        "note": "",
+        "grade": {
+          "grade": "hypothesis",
+          "suggested": "hypothesis",
+          "chosen_by_owner": false,
+          "rules_version": "1"
+        },
+        "grade_reason": "Hypothesis: only one map has this step, and the other map's sources may simply not mention it."
+      }
+    ],
+    "no_longer_found": [],
+    "counts": {
+      "open": 0,
+      "kept": 3,
+      "classed": 1,
+      "dismissed": 0
+    },
+    "suggest_job": null,
+    "deviation": {
+      "differing": 3,
+      "steps": 11
+    }
+  }
+}

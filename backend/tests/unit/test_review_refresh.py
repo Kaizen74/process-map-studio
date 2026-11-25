@@ -186,3 +186,33 @@ def test_refresh_start_rules(drafted: Drafted) -> None:
     assert busy.json()["error"]["message"] == "A draft map is already being made."
     again = drafted.client.post(f"/api/engagements/{drafted.engagement_id}/draft")
     assert again.json()["error"]["message"] == "A draft map is already being made."
+
+
+def test_how_data_moves_survives_a_refresh(drafted: Drafted) -> None:
+    """§3.20 (DECISIONS 110): Eric's record of how data moves at a handoff stays on the line
+    between the same two steps after a refresh, reviewed or not (constraint 8)."""
+    d = drafted
+    g = graph(d)
+    lanes = {e["id"]: (e["lane_role_id"], e["kind"], e["label"]) for e in g["elements"]}
+    steps = {"activity", "decision", "approval"}
+    handoffs = [
+        x for x in g["edges"]
+        if lanes[x["from"]][1] in steps and lanes[x["to"]][1] in steps
+        and lanes[x["from"]][0] != lanes[x["to"]][0]
+    ]  # fmt: skip
+    marked = {}
+    for x, move in zip(handoffs[:2], ["re_keyed", "paper"], strict=False):
+        url = f"/api/versions/{d.version_id}/edges/{x['id']}/data-move"
+        assert d.client.put(url, json={"data_move": move}).status_code == 200
+        marked[(lanes[x["from"]][2], lanes[x["to"]][2], x["kind"])] = move
+    assert marked
+    d.act(lanes[handoffs[0]["from"]][2], "confirm")  # one end reviewed, the other not
+    assert refresh(d)["status"] == "done"
+    after = graph(d)
+    names = {e["id"]: e["label"] for e in after["elements"]}
+    found = {
+        (names[x["from"]], names[x["to"]], x["kind"]): x["data_move"]
+        for x in after["edges"]
+        if x["data_move"]
+    }
+    assert found == marked

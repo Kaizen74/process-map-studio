@@ -1,4 +1,4 @@
-import type { GraphElement, GraphRole } from "./mapTypes";
+import type { DataMove, GraphEdge, GraphElement, GraphRole, SystemOfRecord } from "./mapTypes";
 
 // Who decides and who is accountable (PRD §3.20; DECISIONS 110), the same rules as the backend
 // (services/accountability.py) and the Capability Compass: the decider in practice is the step's
@@ -56,4 +56,44 @@ export function raciCounts(steps: readonly GraphElement[], roles: readonly Graph
     split: found.filter(splits).length,
     contested: found.filter((r) => r.contested).length,
   };
+}
+
+// The data lens (§3.20): words for the system of record and how data moves at a handoff.
+
+export const DATA_MOVES: readonly DataMove[] = ["system_interface", "re_keyed", "email_spreadsheet", "paper", "verbal"];
+const MOVE_WORDS: Readonly<Record<DataMove, string>> = {
+  system_interface: "System interface",
+  re_keyed: "Re-keyed",
+  email_spreadsheet: "Email or spreadsheet",
+  paper: "Paper",
+  verbal: "Verbal",
+};
+
+export function dataMoveWord(move: DataMove | null): string {
+  return move ? MOVE_WORDS[move] : "Not known";
+}
+
+export function systemWord(record: SystemOfRecord | null, roles: readonly GraphRole[]): string {
+  if (record === null) return "Not recorded";
+  if (record.status === "none") return "None: paper or memory";
+  if (record.status === "other") return `${record.other} (other system)`;
+  return roles.find((r) => r.id === record.role_id)?.name ?? "A system no longer on the map";
+}
+
+const STEP_KINDS = new Set(["activity", "decision", "approval"]);
+
+/** The handoffs a step starts: lines to a step in another lane (as the backend counts them). */
+export function handoffsFrom(
+  element: GraphElement,
+  elements: readonly GraphElement[],
+  edges: readonly GraphEdge[],
+  logged: ReadonlySet<string>,
+): { edge: GraphEdge; toLabel: string; logged: boolean }[] {
+  const steps = new Map(
+    elements.filter((e) => STEP_KINDS.has(e.kind) && e.review_status !== "rejected").map((e) => [e.id, e]),
+  );
+  if (!steps.has(element.id)) return [];
+  return edges
+    .filter((x) => x.from === element.id && steps.has(x.to) && steps.get(x.to)?.lane_role_id !== element.lane_role_id)
+    .map((x) => ({ edge: x, toLabel: steps.get(x.to)?.label ?? "the next step", logged: logged.has(x.to) }));
 }

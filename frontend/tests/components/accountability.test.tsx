@@ -2,10 +2,10 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ProcessAtAGlance } from "../../src/components/leadership";
 import { RaciMatrix } from "../../src/components/tabs/RaciMatrix";
-import { DeciderSection } from "../../src/components/panel";
-import { raciCounts, rightsOf, splits, type Rights } from "../../src/lib/accountability";
+import { DataSection, DeciderSection } from "../../src/components/panel";
+import { handoffsFrom, raciCounts, rightsOf, splits, type Rights } from "../../src/lib/accountability";
 import type { ProcessSummary } from "../../src/lib/leadership";
-import type { ElementDetail, GraphElement, GraphRole } from "../../src/lib/mapTypes";
+import type { ElementDetail, GraphEdge, GraphElement, GraphRole } from "../../src/lib/mapTypes";
 import { seriousViolations } from "../axe";
 import { SAMPLE, elementByLabel } from "../sampleMap";
 
@@ -213,5 +213,74 @@ describe("the process at a glance on the leadership view (§3.20)", () => {
       "systems not recorded · how data moves not recorded",
     );
     expect(glance).toHaveTextContent("Times recorded on 4 of 11 steps.");
+  });
+});
+
+describe("the data lens on the step panel (§3.20)", () => {
+  const roles: GraphRole[] = [
+    { id: "lc", name: "Load controller", is_system: false, lane_order: 0 },
+    { id: "dcs", name: "Departure control system", is_system: true, lane_order: 1 },
+  ];
+  const element = { ...elementByLabel("Draft load plan"), system_of_record: null };
+  const edge = (id: string, move: GraphEdge["data_move"] = null): GraphEdge =>
+    ({ id, from: element.id, to: `${id}-to`, kind: "sequence", label: "", data_move: move }) as GraphEdge;
+
+  it("shows what is recorded and suggests System interface where a log records the next step", async () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <DataSection
+        element={{ ...element, system_of_record: { status: "system", role_id: "dcs", other: "" } }}
+        roles={roles}
+        handoffs={[
+          { edge: edge("a"), toLabel: "Check the plan", logged: true },
+          { edge: edge("b", "re_keyed"), toLabel: "Load the hold", logged: false },
+        ]}
+        choice={{ busy: false, onSystem: vi.fn(), onMove }}
+      />,
+    );
+    const section = screen.getByRole("region", { name: "Data" });
+    expect(within(section).getByText("Departure control system")).toBeInTheDocument();
+    expect(within(section).getByText("Not known")).toBeInTheDocument();
+    expect(within(section).getByText("Re-keyed")).toBeInTheDocument();
+    expect(within(section).getByText("A system log records Check the plan. Suggested: System interface.")).toBeInTheDocument();
+    expect(onMove).not.toHaveBeenCalled(); // a suggestion, never set on its own
+    fireEvent.click(within(section).getByRole("button", { name: "Use System interface for Check the plan" }));
+    expect(onMove).toHaveBeenCalledWith("a", "system_interface");
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("records another system and how data moves, sending only what changed", () => {
+    const onSystem = vi.fn();
+    const onMove = vi.fn();
+    render(
+      <DataSection
+        element={element}
+        roles={roles}
+        handoffs={[{ edge: edge("a"), toLabel: "Check the plan", logged: false }]}
+        choice={{ busy: false, onSystem, onMove }}
+      />,
+    );
+    const section = screen.getByRole("region", { name: "Data" });
+    expect(within(section).getByText("Not recorded")).toBeInTheDocument();
+    fireEvent.click(within(section).getByRole("button", { name: "Record the data" }));
+    fireEvent.change(within(section).getByLabelText("System of record"), { target: { value: "__other" } });
+    fireEvent.click(within(section).getByRole("button", { name: "Save" }));
+    expect(within(section).getByText("Type the other system's name, or choose another answer.")).toBeInTheDocument();
+    fireEvent.change(within(section).getByLabelText("The other system's name"), { target: { value: "Weighbridge log" } });
+    fireEvent.change(within(section).getByLabelText("How the data moves to Check the plan"), {
+      target: { value: "email_spreadsheet" },
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Save" }));
+    expect(onSystem).toHaveBeenCalledWith({ status: "other", other: "Weighbridge log" });
+    expect(onMove).toHaveBeenCalledWith("a", "email_spreadsheet");
+  });
+
+  it("finds the handoffs a step starts as the backend counts them", () => {
+    const g = SAMPLE.graph;
+    const step = g.elements.find((e) => g.edges.some((x) => x.from === e.id && g.elements.find((t) => t.id === x.to)?.lane_role_id !== e.lane_role_id && ["activity", "decision", "approval"].includes(g.elements.find((t) => t.id === x.to)?.kind ?? "")) && ["activity", "decision", "approval"].includes(e.kind));
+    expect(step).toBeDefined();
+    const found = handoffsFrom(step as GraphElement, g.elements, g.edges, new Set());
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.every((h) => g.elements.find((e) => e.id === h.edge.to)?.lane_role_id !== step?.lane_role_id)).toBe(true);
   });
 });

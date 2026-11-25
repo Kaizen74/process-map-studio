@@ -24,11 +24,13 @@ import {
 } from "../../hooks/useComparisons";
 import { comparisonExportUrl } from "../../api/comparisons";
 import {
+  IATA_SCALE,
   PAIR_LABELS,
   REASON_HELP,
   REASON_LABELS,
   STATUS_LABELS,
   TOPIC_LABELS,
+  deviationLine,
   type ComparedStep,
   type Comparison,
   type ComparisonSummary,
@@ -242,6 +244,14 @@ function ComparisonPanel({ id }: { id: string }) {
           classed · <span className="mono">{c.counts.kept}</span> kept ·{" "}
           <span className="mono">{c.counts.dismissed}</span> dismissed
         </p>
+        {deviationLine(c) && (
+          <div className="compare-deviation">
+            <p className="compare-counts">
+              {deviationLine(c)}. <span className="compare-deviation__note">Counts the differences you classed or kept.</span>
+            </p>
+            <p className="compare-deviation__note">{IATA_SCALE}</p>
+          </div>
+        )}
         <p className="compare-downloads">
           <a className="btn btn--secondary" href={comparisonExportUrl(c.id, "a3")} download>
             Download printable pages (A3)

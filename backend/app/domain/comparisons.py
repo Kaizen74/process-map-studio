@@ -103,6 +103,14 @@ class SuggestJob(BaseModel):
     status: str
 
 
+class Deviation(BaseModel):
+    """§3.20 (DECISIONS 110): the other map's steps that run differently from the reference (a
+    difference Eric classed or kept), of all its steps."""
+
+    differing: int
+    steps: int
+
+
 class ComparisonView(BaseModel):
     id: str
     rules_version: str
@@ -115,6 +123,7 @@ class ComparisonView(BaseModel):
     no_longer_found: list[DifferenceView]
     counts: DifferenceCounts
     suggest_job: SuggestJob | None
+    deviation: Deviation | None = None
 
 
 class ComparisonSummary(BaseModel):

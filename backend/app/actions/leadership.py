@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import reality, redaction
+from app.actions import comparisons, reality, redaction
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import AppConfig
@@ -78,7 +78,8 @@ def summary_of(config: AppConfig, session: Session, version: VersionView,
         codes = reality.snapshot_of(session, version).codes
         off_system = {i for c in codes if "D6" in c.types for i in c.element_ids}
         no_record = {i for c in codes if "D11" in c.types for i in c.element_ids}
-    return process_summary.summarise(graph, owner, off_system, no_record)
+    differing = comparisons.steps_differing_for(config, session, version.engagement_id, version.id)
+    return process_summary.summarise(graph, owner, off_system, no_record, differing)
 
 
 def save_decisions(

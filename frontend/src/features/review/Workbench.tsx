@@ -38,6 +38,7 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { RefreshDialog } from "./RefreshDialog";
 import { ShortcutsDialog } from "./ShortcutsDialog";
 import { TableView } from "./TableView";
+import { handoffsFrom } from "../../lib/accountability";
 import { WorkbenchTabs } from "./WorkbenchTabs";
 import { HowToReview } from "./HowToReview";
 import { useFitScale } from "./useFitScale";
@@ -105,6 +106,8 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
   const lenses = lensesFor(systemOn);
   const lens: Lens = lenses.some((l) => l.value === chosenLens) ? chosenLens : "plain";
   const traces = useSystemTraces(versionId, systemOn);
+  // §3.20: a system log that records a handoff's receiving step suggests "System interface".
+  const logged = new Set((traces.data ?? []).filter((t) => t.stance === "supports").map((t) => t.element_id));
   const variants = useSystemVariants(versionId, systemOn);
   // The value calculator and step dispositions (R10b, decision A): the panel section only while on.
   const valueOn = settings.data?.value_enabled === true;
@@ -482,6 +485,7 @@ export function Workbench({ engagementId, versionId, title, banner, below }: Wor
             <DetailPanel
               element={selected}
               roles={g.roles}
+              handoffs={handoffsFrom(selected, g.elements, g.edges, logged)}
               typicalResponses={g.edges.filter((e) => e.from === selected.id && e.typical).map((e) => e.label)}
               system={
                 systemOn
