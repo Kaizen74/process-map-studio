@@ -505,9 +505,25 @@ def test_downgrade_of_0023_removes_only_its_columns(migrated: Path) -> None:
         engine.dispose()
         return found
 
+    db.downgrade(migrated, "0023")  # later migrations add columns of their own
     before = columns()
     db.downgrade(migrated, "0022")
     after = columns()
     assert {t: before[t] - after[t] for t in added} == added
     db.upgrade(migrated)
-    assert columns() == before
+    assert all(before[t] <= columns()[t] for t in added)
+
+
+def test_downgrade_of_0024_removes_only_the_sop_title(migrated: Path) -> None:
+    def columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        found = {c["name"] for c in inspect(engine).get_columns("sources")}
+        engine.dispose()
+        return found
+
+    db.downgrade(migrated, "0024")
+    before = columns()
+    db.downgrade(migrated, "0023")
+    assert before - columns() == {"title"}
+    db.upgrade(migrated)
+    assert "title" in columns()

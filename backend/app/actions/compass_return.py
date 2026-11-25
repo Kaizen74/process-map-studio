@@ -7,11 +7,12 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import comparisons, redaction
+from app.actions import leadership as leadership_action
 from app.actions import reality as reality_action
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
@@ -27,11 +28,13 @@ from app.repositories import codes as codes_repo
 from app.repositories import elements as map_repo
 from app.repositories import engagements as engagements_repo
 from app.repositories import intent as intent_repo
+from app.repositories import sources as sources_repo
 from app.repositories import testing as testing_repo
 from app.repositories import versions as versions_repo
 from app.services import accountability, exports
 from app.services import compass_return as rules
 from app.services import grade as grade_rules
+from app.services import sop_register as register_rules
 
 Sessions = sessionmaker[Session]
 
@@ -127,6 +130,40 @@ def _reality(session: Session, version: VersionView, hide: object
     return discrepancies, [list(c.element_ids) for c in snapshot.codes], intents
 
 
+def _sops(session: Session, engagement_id: str, graph: Graph, hide: Callable[[str], str],
+          departing_at: set[str] | None) -> list[rules.Sop]:  # fmt: skip
+    """§3.20: one finding per SOP or manual (the newest when the same one is there twice), with
+    the published map's steps citing it in a checked passage and, of those, the ones done
+    differently: with a Reality discrepancy when the views are on (`departing_at`), otherwise
+    where the step's sources disagree."""
+    roles = {r.id: r.name for r in engagements_repo.list_roles(session, engagement_id)}
+    found = register_rules.entries(sources_repo.list_for_engagement(session, engagement_id),
+                                   roles, date.today().isoformat())  # fmt: skip
+    current = [e for e in found if not e.older]
+    codes = codes_repo.ensure(session, engagement_id, codes_repo.SOP,
+                              [e.source_id for e in current])  # fmt: skip
+    steps = exports.steps(exports.on_the_map(graph))
+    out = []
+    for e in current:
+        if e.source_id not in codes:
+            continue  # a read-only request gives no new code
+        cited = [s for s in steps
+                 if any(ev.source_id == e.source_id and ev.verified and ev.stance != "silent"
+                        for ev in s.evidence)]  # fmt: skip
+        departing = [s for s in cited
+                     if (s.id in departing_at if departing_at is not None
+                         else bool(s.divergence_types))]  # fmt: skip
+        out.append(rules.Sop(
+            code=codes[e.source_id], title=hide(e.title), owner_role=hide(e.owner)[:80],
+            updated_by=hide(e.updated_by)[:80], version_date=e.version_date,
+            last_reviewed=e.last_reviewed, review_due=e.review_due, controlled=e.controlled,
+            governed=len(cited), departing=len(departing),
+            by_discrepancies=departing_at is not None,
+            older_also=any(o.older and o.title.casefold() == e.title.casefold() for o in found),
+        ))  # fmt: skip
+    return sorted(out, key=lambda x: int(x.code.split("-")[1]))
+
+
 def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
            cells: list[str]) -> Result[ExportFile]:  # fmt: skip
     if fmt not in FILES:
@@ -169,13 +206,19 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
         ]
         discrepancies = [_at_decisions(graph, rights, d, ids)
                          for d, ids in zip(discrepancies, at_steps, strict=True)]  # fmt: skip
+        sops = _sops(session, engagement.id, graph, hide,
+                     {i for ids in at_steps for i in ids}
+                     if reality_action.enabled(config) else None)  # fmt: skip
+        process_cell = f"{link.cluster_ref}.Process"
         data = rules.Inputs(
             engagement_key=link.key, pilot_ref=link.pilot_ref, cluster_ref=link.cluster_ref,
             cells=chosen, generated_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
             process_name=graph.process.name, version_label=version.label,
             steps=_steps(graph, rights),
             discrepancies=discrepancies, intents=intents, tested=tested,
-            country=link.country or engagement.country, variations=variations,
+            country=link.country or engagement.country, variations=variations, sops=sops,
+            process_cell=process_cell if process_cell in link.cell_refs else "",
+            summary=leadership_action.summary_of(config, session, version, graph),
         )  # fmt: skip
         content = rules.render_json(data) if fmt == "json" else rules.render_text(data)
         if rules.leaks(content, [t.term for t in terms] + other_hidden, SECRET_MARKERS):

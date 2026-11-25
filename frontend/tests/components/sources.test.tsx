@@ -445,3 +445,83 @@ describe("Sources: coverage (PRD §3.8 G11)", () => {
   });
 });
 
+
+describe("Sources: who owns and updates each SOP (§3.20)", () => {
+  const ROLES = [
+    { id: "r1", engagement_id: "e1", name: "Station manager", aliases: [], is_system: false, lane_order: 0 },
+    { id: "r2", engagement_id: "e1", name: "Shift supervisor", aliases: [], is_system: false, lane_order: 1 },
+  ];
+  const OWNED = source("s1", "sop_LC-07.docx", {
+    owner: "Station manager",
+    owner_role_id: "r1",
+    owner_checked: true,
+    updated_by_role_id: "r2",
+    last_reviewed: "2019-04",
+    review_due: "",
+    title: "Load planning and sign-off",
+  });
+  const UNOWNED = source("s3", "overtime.pdf", { kind: "manual", title: "Overtime approval" });
+  const REGISTER = {
+    counts: { sops: 2, without_owner: 1, without_updater: 1, overdue: 0, uncontrolled: 1 },
+    entries: [],
+  };
+
+  it("reads the counts line and each SOP's roles and dates", async () => {
+    sourcesApi([OWNED, UNOWNED, TRANSCRIPT], {
+      "GET /api/engagements/e1/roles": () => ({ body: ROLES }),
+      "GET /api/engagements/e1/sop-register": () => ({ body: REGISTER }),
+    });
+    const { container } = renderApp(PATH);
+    expect(
+      await screen.findByText("2 SOPs · 1 without an owner · 1 with nobody to update them · 0 review overdue · 1 uncontrolled"),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Owner role of sop_LC-07.docx")).toHaveValue("r1"));
+    expect(screen.getByLabelText("Role that updates sop_LC-07.docx")).toHaveValue("r2");
+    expect(screen.getByLabelText("Last reviewed, sop_LC-07.docx")).toHaveValue("2019-04");
+    expect(screen.getByLabelText("Title of sop_LC-07.docx")).toHaveValue("Load planning and sign-off");
+    expect(screen.getByLabelText("Owner role of overtime.pdf")).toHaveValue("");
+    // Not for a transcript: no role choices or review dates there.
+    expect(screen.queryByLabelText("Role that updates interview_transcript.txt")).toBeNull();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("marks an owner typed before as a check until Eric confirms it, and saves roles and dates", async () => {
+    const { calls } = sourcesApi([SOP], {
+      "GET /api/engagements/e1/roles": () => ({ body: ROLES }),
+    });
+    renderApp(PATH);
+    expect(await screen.findByText("check: is this a role?")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "It is a role" }));
+    await waitFor(() => expect(screen.getByLabelText("Owner role of sop_LC-07.docx")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("Owner role of sop_LC-07.docx"), { target: { value: "r1" } });
+    fireEvent.change(screen.getByLabelText("Role that updates sop_LC-07.docx"), { target: { value: "__other" } });
+    const other = screen.getByLabelText("Other role that updates sop_LC-07.docx");
+    fireEvent.change(other, { target: { value: "Quality office" } });
+    fireEvent.blur(other);
+    const due = screen.getByLabelText("Review due, sop_LC-07.docx");
+    fireEvent.change(due, { target: { value: "2027-01" } });
+    fireEvent.blur(due);
+    await waitFor(() =>
+      expect(calls.filter((c) => c.key === "PATCH /api/sources/s1").map((c) => c.body)).toEqual([
+        { owner_checked: true },
+        { owner_role_id: "r1" },
+        { updated_by_other: "Quality office" },
+        { review_due: "2027-01" },
+      ]),
+    );
+  });
+
+  it("shows the server's plain refusal of a person's name", async () => {
+    sourcesApi([SOP], {
+      "PATCH /api/sources/s1": () => ({
+        status: 422,
+        body: { error: { code: "VALIDATION", message: "Name the role, not the person.", details: { field: "owner" } } },
+      }),
+    });
+    renderApp(PATH);
+    const owner = await screen.findByLabelText("Owner of sop_LC-07.docx");
+    fireEvent.change(owner, { target: { value: "Priya Nair" } });
+    fireEvent.blur(owner);
+    expect(await screen.findByText(/Name the role, not the person\./)).toBeInTheDocument();
+  });
+});

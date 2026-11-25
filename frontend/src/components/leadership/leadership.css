@@ -155,3 +155,27 @@
 .leadership__version {
   max-width: 360px;
 }
+
+/* §3.20: the process at a glance, above the three columns. */
+.glance {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.glance__line {
+  margin: 0;
+}
+.glance__line--data {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  color: var(--ink-2);
+}
+.glance__note {
+  margin: 0;
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}

@@ -18,7 +18,10 @@ from app.domain.models import (
 from app.repositories.read_memo import remembered
 from app.repositories.tables import Image, Role, Source, SourceSegment, new_id
 
-EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error")
+EDITABLE = ("kind", "version_date", "owner", "controlled_copy", "text_status", "error",
+            # §3.20 (DECISIONS 110): the SOP register.
+            "title", "owner_role_id", "owner_checked", "updated_by_role_id", "updated_by_other",
+            "last_reviewed", "review_due", "controlled_copy_set")  # fmt: skip
 
 
 # The pictures found in a file: its own, not the copies a draft suggests on a step (2026-10-29:
@@ -58,6 +61,14 @@ def _view(session: Session, row: Source, counts: tuple[int, int] | None = None) 
         ocr_pages=list(row.ocr_pages),
         suggested_images=suggested,
         created_at=row.created_at,
+        title=row.title,
+        owner_role_id=row.owner_role_id,
+        owner_checked=row.owner_checked,
+        updated_by_role_id=row.updated_by_role_id,
+        updated_by_other=row.updated_by_other,
+        last_reviewed=row.last_reviewed,
+        review_due=row.review_due,
+        controlled_copy_set=row.controlled_copy_set,
     )
 
 

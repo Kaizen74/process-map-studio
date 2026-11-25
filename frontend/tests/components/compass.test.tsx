@@ -265,3 +265,54 @@ describe("Setup: the hand-off's IDs and What we are testing (DECISIONS 95)", () 
     expect(await screen.findByText("H2 removed.")).toBeInTheDocument();
   });
 });
+
+describe("Setup: the process owner (§3.20)", () => {
+  const ROLES = [
+    { id: "r1", engagement_id: "e1", name: "Country manager", aliases: [], is_system: false, lane_order: 0 },
+    { id: "r2", engagement_id: "e1", name: "Station manager", aliases: [], is_system: false, lane_order: 1 },
+  ];
+  const ownerCard = () => screen.getByRole("region", { name: "Process owner" });
+
+  it("offers the hand-off's process owner and sets it only when Eric uses it", async () => {
+    let engagement: Engagement = { ...ENGAGEMENT, compass: { ...LINK, process_owner: "Country manager" } };
+    const { calls } = setup(engagement, [], {
+      "GET /api/engagements/e1": () => ({ body: engagement }),
+      "GET /api/engagements/e1/roles": () => ({ body: ROLES }),
+      "PATCH /api/engagements/e1": (body) => {
+        engagement = { ...engagement, ...(body as object), process_owner: "Country manager" };
+        return { body: engagement };
+      },
+    });
+    const { container } = renderApp("/engagements/e1/setup");
+    const card = await screen.findByRole("region", { name: "Process owner" });
+    expect(card).toHaveTextContent("Process owner: not named");
+    expect(card).toHaveTextContent("The Capability Compass hand-off names Country manager as process owner.");
+    expect(calls.some((c) => c.key === "PATCH /api/engagements/e1")).toBe(false); // never set on its own
+    expect(await seriousViolations(container)).toEqual([]);
+    fireEvent.click(within(card).getByRole("button", { name: "Use it" }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.key === "PATCH /api/engagements/e1")?.body).toEqual({ process_owner_role_id: "r1" }),
+    );
+    await waitFor(() => expect(ownerCard()).toHaveTextContent("Process owner: Country manager"));
+    expect(within(ownerCard()).queryByRole("button", { name: "Use it" })).toBeNull();
+  });
+
+  it("takes another role's name and shows the server's refusal of a person's name", async () => {
+    const { calls } = setup(ENGAGEMENT, [], {
+      "GET /api/engagements/e1/roles": () => ({ body: ROLES }),
+      "PATCH /api/engagements/e1": () => ({
+        status: 422,
+        body: { error: { code: "VALIDATION", message: "Name the role, not the person.", details: { field: "process_owner_other" } } },
+      }),
+    });
+    renderApp("/engagements/e1/setup");
+    const card = await screen.findByRole("region", { name: "Process owner" });
+    fireEvent.change(within(card).getByLabelText("Process owner"), { target: { value: "__other" } });
+    fireEvent.click(within(card).getByRole("button", { name: "Save process owner" }));
+    expect(within(card).getByRole("alert")).toHaveTextContent("Type the role's name, or choose one of the roles.");
+    fireEvent.change(within(card).getByLabelText("The role's name"), { target: { value: "Priya Nair" } });
+    fireEvent.click(within(card).getByRole("button", { name: "Save process owner" }));
+    expect(await within(card).findByText("Name the role, not the person.")).toBeInTheDocument();
+    expect(calls.find((c) => c.key === "PATCH /api/engagements/e1")?.body).toEqual({ process_owner_other: "Priya Nair" });
+  });
+});

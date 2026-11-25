@@ -108,6 +108,8 @@ class Source(Row):
     controlled_copy_set: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=false()
     )
+    # 0024: the document's own title ("" when not typed: the file name stands in).
+    title: Mapped[str] = mapped_column(Text, default="", server_default="")
     text_status: Mapped[str] = mapped_column(String(16), default="pending")
     error: Mapped[str] = mapped_column(Text, default="")
     # PDF pages with almost no text, to be read by OCR (S0) from phase P3.

@@ -8,17 +8,20 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions import reality
+from app.actions import reality, redaction
 from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import AppConfig
 from app.db import session_scope
-from app.domain.leadership import DecisionNeeded, LeadershipView
+from app.domain.graph import Graph
+from app.domain.leadership import DecisionNeeded, LeadershipView, ProcessSummary
+from app.domain.models import VersionView
 from app.domain.result import Err, ErrorKind, Ok, Result
 from app.repositories import audit
+from app.repositories import engagements as engagements_repo
 from app.repositories import leadership as repo
 from app.repositories import versions as versions_repo
-from app.services import leadership
+from app.services import leadership, process_summary
 
 Sessions = sessionmaker[Session]
 
@@ -53,11 +56,29 @@ def get_view(config: AppConfig, sessions: Sessions, version_id: str) -> Result[L
                 return err
             case Ok(value=view):
                 pass
+        version = versions_repo.get(session, version_id)
+        graph = versions_action.build_graph(session, version_id)
+        assert version is not None and graph is not None
         if reality.enabled(config):
-            version = versions_repo.get(session, version_id)
-            assert version is not None
             view.reality = reality.leadership_figures(session, version)
+        view.summary = summary_of(config, session, version, graph)
         return Ok(view)
+
+
+def summary_of(config: AppConfig, session: Session, version: VersionView,
+               graph: Graph) -> ProcessSummary:  # fmt: skip
+    """§3.20 (DECISIONS 110): the process at a glance for one version, shared by the leadership
+    view and the Capability Compass return file. The process owner's name is hidden like every
+    other text; D6 and D11 come from the version's Reality snapshot while those views are on."""
+    engagement = engagements_repo.get(session, version.engagement_id)
+    terms = redaction.name_replacements(session, version.engagement_id)
+    owner = redaction.hide(engagement.process_owner, terms) if engagement else ""
+    off_system = no_record = None
+    if reality.enabled(config):
+        codes = reality.snapshot_of(session, version).codes
+        off_system = {i for c in codes if "D6" in c.types for i in c.element_ids}
+        no_record = {i for c in codes if "D11" in c.types for i in c.element_ids}
+    return process_summary.summarise(graph, owner, off_system, no_record)
 
 
 def save_decisions(

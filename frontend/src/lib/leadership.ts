@@ -53,6 +53,97 @@ export interface LeadershipView {
   };
   /** P13b (G17): the figures shared with the Reality views, from the frozen snapshot; null while off. */
   reality: RealityFigures | null;
+  /** §3.20 (DECISIONS 110): the process at a glance and the data lens (absent before). */
+  summary?: ProcessSummary | null;
+}
+
+/** §3.20: counted by the server; null means it can't be counted (never 0 for "not known"). */
+export interface ProcessSummary {
+  process_owner: string;
+  steps: number;
+  decisions: number;
+  approvals: number;
+  handoffs: number;
+  roles: number;
+  rework_loops: number;
+  work_min: number | null;
+  wait_min: number | null;
+  timed_steps: number;
+  systems: number | null;
+  handoffs_known: number;
+  handoffs_manual: number | null;
+  off_system_steps: number | null;
+  no_record_steps: number | null;
+  steps_differing: number | null;
+  links: {
+    steps: string[];
+    handoffs: string[];
+    rework_loops: string[];
+    systems: string[];
+    handoffs_manual: string[];
+    off_system: string[];
+    no_record: string[];
+  };
+}
+
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** "14 h", "2.5 h". */
+export function hours(min: number): string {
+  const h = min / 60;
+  return `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
+}
+
+/** The leadership line, in the brief's words (§3.20). */
+export function summaryLine(s: ProcessSummary): string {
+  const time =
+    s.work_min === null && s.wait_min === null
+      ? "times not recorded"
+      : `work ${s.work_min === null ? "not recorded" : hours(s.work_min)}, waiting ${
+          s.wait_min === null ? "not recorded" : hours(s.wait_min)
+        }`;
+  return [
+    count(s.steps, "step", "steps"),
+    count(s.decisions, "decision", "decisions"),
+    count(s.approvals, "approval", "approvals"),
+    `${count(s.handoffs, "handoff", "handoffs")} between ${count(s.roles, "role", "roles")}`,
+    count(s.rework_loops, "rework loop", "rework loops"),
+    time,
+    `process owner: ${s.process_owner || "not named"}`,
+  ].join(" · ");
+}
+
+export interface DataFigure {
+  key: string;
+  text: string;
+  ids: string[];
+}
+
+/**
+ * The data lens line (§3.20): "n systems · n of n handoffs by hand · n steps off-system · n steps
+ * with no record". The two Reality counts are left out while those views are off.
+ */
+export function dataFigures(s: ProcessSummary): DataFigure[] {
+  const out: DataFigure[] = [
+    {
+      key: "systems",
+      text: s.systems === null ? "systems not recorded" : count(s.systems, "system", "systems"),
+      ids: s.links.systems,
+    },
+    {
+      key: "handoffs_manual",
+      text:
+        s.handoffs_manual === null
+          ? "how data moves not recorded"
+          : `${s.handoffs_manual} of ${s.handoffs} handoffs by hand`,
+      ids: s.links.handoffs_manual,
+    },
+  ];
+  if (s.off_system_steps !== null)
+    out.push({ key: "off_system", text: `${count(s.off_system_steps, "step", "steps")} off-system`, ids: s.links.off_system });
+  if (s.no_record_steps !== null)
+    out.push({ key: "no_record", text: `${count(s.no_record_steps, "step", "steps")} with no record`, ids: s.links.no_record });
+  return out;
 }
 
 /** "20 min", "1.5 min", "0 min". */

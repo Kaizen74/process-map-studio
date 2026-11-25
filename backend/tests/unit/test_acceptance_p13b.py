@@ -63,7 +63,9 @@ def test_switching_reality_on_changes_no_other_answer(reality: Reality) -> None:
 
 def test_exports_and_leadership_with_the_switch_on_and_off(reality: Reality) -> None:
     """A published version's exports are the same with Reality on or off (the Reality pack is
-    separate, P13d); Leadership gains only `reality`, equal to the frozen snapshot's tiles."""
+    separate, P13d); Leadership gains only `reality`, equal to the frozen snapshot's tiles, and
+    (§3.20, DECISIONS 110) the summary's two Reality counts: steps off-system (D6) and steps with
+    no record (D11), left out (null) while the switch is off."""
     client, vid = reality.engagement.client, reality.version_id
     switch(client, True)
     publish(client, vid)
@@ -73,8 +75,17 @@ def test_exports_and_leadership_with_the_switch_on_and_off(reality: Reality) -> 
     off = {f: client.get(f"/api/versions/{vid}/export/{f}").content for f in EXPORTS}
     leadership_off = client.get(f"/api/versions/{vid}/leadership").json()
     assert on == off
-    assert {k: v for k, v in leadership_on.items() if k != "reality"} == {
-        k: v for k, v in leadership_off.items() if k != "reality"}  # fmt: skip
+    reality_counts = ("off_system_steps", "no_record_steps")
+
+    def without_reality(body: dict[str, Any]) -> dict[str, Any]:
+        summary = {k: v for k, v in body["summary"].items() if k not in reality_counts}
+        links = summary.pop("links")  # and the steps behind those two counts
+        summary["links"] = {k: v for k, v in links.items() if k not in ("off_system", "no_record")}
+        return {**{k: v for k, v in body.items() if k != "reality"}, "summary": summary}
+
+    assert without_reality(leadership_on) == without_reality(leadership_off)
+    assert all(leadership_off["summary"][k] is None for k in reality_counts)
+    assert all(isinstance(leadership_on["summary"][k], int) for k in reality_counts)
     assert leadership_off["reality"] is None
     assert leadership_on["reality"]["tiles"] == snapshot(client, vid)["tiles"]
     for fmt in ("md", "json", "csv"):  # (the HTML file embeds fonts, so it is compared above)

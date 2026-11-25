@@ -107,7 +107,22 @@ def test_the_file_has_the_agreed_shape_and_this_apps_own_codes(drafted: Drafted)
     # Since 2026-11-25 (DECISIONS 110) a decision_right finding also carries, when known,
     # on_paper, decided_by, accountable and accountable_contested, in that order.
     rights = ["on_paper", "decided_by", "accountable", "accountable_contested"]
+    sop_keys = ["owner_role", "updated_by", "version_date", "last_reviewed", "review_due",
+                "controlled_copy"]  # fmt: skip
     for f in file["findings"]:
+        if f["kind"] == "sop":  # DECISIONS 110: the register's fields when known, both counts
+            known = [k for k in sop_keys if k in f]
+            assert list(f) == [*fields, "topic", *known, "steps_governed", "steps_departing"]
+            assert f["topic"] == "way_of_working" and f["grade"] == "indicated"
+            assert f["ref"].startswith("SOP-")
+            continue
+        if f["kind"] == "process_summary":  # DECISIONS 110: one per map, the pilot's own ref
+            owner = ["process_owner"] if "process_owner" in f else []
+            assert list(f) == [*fields, "topic", *owner, "metrics"]
+            assert f["ref"] == link["pilot_ref"] and f["topic"] == "way_of_working"
+            assert f["relates_to"] == [link["pilot_ref"], link["cluster_ref"]]
+            assert all(isinstance(v, int) and v >= 0 for v in f["metrics"].values())
+            continue
         extra = [k for k in rights if k in f]
         assert list(f) == topical.get(f["kind"], fields) + extra
         if extra:
@@ -141,7 +156,18 @@ def test_eric_adds_cells_from_the_hand_off_and_no_other_id(drafted: Drafted) -> 
     cell = link["cell_refs"][0]
     file = download(drafted, cells=cell).json()
     assert all(f["relates_to"] == [link["pilot_ref"], link["cluster_ref"], cell]
-               for f in file["findings"])  # fmt: skip
+               for f in file["findings"]
+               if f["kind"] not in ("sop", "process_summary"))  # fmt: skip
+    # The process summary relates to the pilot and its cluster only (DECISIONS 110).
+    assert all(f["relates_to"] == [link["pilot_ref"], link["cluster_ref"]]
+               for f in file["findings"] if f["kind"] == "process_summary")  # fmt: skip
+    # An SOP relates to the pilot, the cluster and the cluster's Process cell (DECISIONS 110),
+    # whichever cells Eric adds; never a cell the hand-off doesn't have.
+    process = f"{link['cluster_ref']}.Process"
+    expected = [link["pilot_ref"], link["cluster_ref"]] + (
+        [process] if process in link["cell_refs"] else []
+    )
+    assert all(f["relates_to"] == expected for f in file["findings"] if f["kind"] == "sop")
     stranger = download(drafted, cells="CAP-99.People")
     assert stranger.status_code == 422
     assert message(stranger) == "Choose cells from this engagement's hand-off."

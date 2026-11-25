@@ -90,6 +90,7 @@ def read_handoff(raw: Any) -> Result[HandoffPreview]:
                 cell_refs=[
                     r for r in (_text(c.get("ref")) for c in _dicts(cluster.get("cells"))) if r
                 ],
+                process_owner=_text(pilot.get("process_owner"))[:80],
             )
         )
     if not pilots:

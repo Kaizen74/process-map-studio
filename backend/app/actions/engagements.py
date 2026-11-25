@@ -34,11 +34,18 @@ from app.repositories import engagements as repo
 from app.repositories import redaction as redaction_repo
 from app.repositories import testing as testing_repo
 from app.services import compass as compass_service
+from app.services import grounding
 
 Sessions = sessionmaker[Session]
 
 ENGAGEMENT_MISSING = "That engagement doesn't exist. It may have been deleted."
-NOT_SCOPE = {"compass", "role_names", "reference_engagement_id"}  # create only, not the card
+NOT_SCOPE = {
+    "compass",
+    "role_names",
+    "reference_engagement_id",  # create only, not the card
+    "process_owner_role_id",
+    "process_owner_other",
+}  # checked with the roles (DECISIONS 110)
 ROLE_MISSING = "That role doesn't exist. It may have been removed."
 REFERENCE_MISSING = "The engagement to start from doesn't exist. It may have been deleted."
 COUNTRY_FROM_HANDOFF = (
@@ -200,6 +207,7 @@ def _from_handoff(
         cluster_name=pilot.cluster_name, cell_refs=pilot.cell_refs,
         interview_prompts=pilot.interview_prompts, ready=preview.ready,
         generated_at=preview.generated_at, country=preview.country,
+        process_owner=pilot.process_owner,
     )  # fmt: skip
     return Ok((link, preview.principles))
 
@@ -310,6 +318,11 @@ def update_engagement(
             return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
         if before.compass is not None and fields.get("country", before.country) != before.country:
             return _invalid_conflict("country", COUNTRY_FROM_HANDOFF)
+        match _process_owner(session, engagement_id, data):
+            case Err() as err:
+                return err
+            case Ok(value=owner):
+                fields.update(owner)
         view = repo.update(session, engagement_id, fields)
         assert view is not None
         old = before.model_dump()
@@ -328,6 +341,38 @@ def update_engagement(
         return Ok(view)
 
     return _in_session(sessions, work)
+
+
+PERSON = "Name the role, not the person."
+
+
+def _process_owner(session: Session, engagement_id: str,
+                   data: ScopeFields) -> Result[dict[str, Any]]:  # fmt: skip
+    """§3.20 (DECISIONS 110): the process owner sent, a role of this engagement or another role's
+    name (never a name on the list of names to hide); one clears the other."""
+    sent = data.model_fields_set
+    out: dict[str, Any] = {}
+    if "process_owner_role_id" in sent:
+        role = data.process_owner_role_id
+        found = repo.get_role(session, role) if role is not None else None
+        if role is not None and (found is None or found.engagement_id != engagement_id):
+            return _invalid("process_owner_role_id", ROLE_MISSING)
+        out["process_owner_role_id"] = role
+        if role is not None:
+            out["process_owner_other"] = ""
+    if "process_owner_other" in sent and data.process_owner_other is not None:
+        text = " ".join(data.process_owner_other.split())
+        if len(text) > 80:
+            return _invalid("process_owner_other", "Name the role in up to 80 characters.")
+        from app.actions.redaction import name_replacements  # here: it imports this module
+
+        terms = [t.term for t in name_replacements(session, engagement_id)]
+        if text and grounding.scan_redaction_terms(text, terms):
+            return _invalid("process_owner_other", PERSON)
+        out["process_owner_other"] = text
+        if text:
+            out["process_owner_role_id"] = None
+    return Ok(out)
 
 
 def delete_engagement(config: AppConfig, sessions: Sessions, engagement_id: str) -> Result[None]:
@@ -499,6 +544,8 @@ def role_in_use(name: str, uses: RoleUses) -> str:
         (uses.costs, "it has an hourly cost"),
         (uses.intents, "an intent statement names it as owner"),
         (uses.discrepancies, "a discrepancy names it as decision owner"),
+        (uses.sops, "an SOP names it as owner or updater"),
+        (uses.process_owner, "the scope names it as process owner"),
     ):
         if count:
             reasons.append(words)
