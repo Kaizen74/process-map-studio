@@ -185,3 +185,19 @@ def test_the_process_owner_in_the_scope(
     assert refused.json()["error"]["message"] == "Name the role, not the person."
     cleared = client.patch(url, json={"process_owner_other": ""}).json()
     assert cleared["process_owner"] == ""
+
+
+def test_a_version_date_may_be_a_month_or_a_year(
+    built: tuple[TestClient, fixture_engagement.FixtureEngagement],
+) -> None:
+    """DECISIONS 112: as the Capability Compass writes them ("2019-04"), for every source."""
+    client, eng = built
+    sid = eng.sources["sop_LC-07.docx"]
+    for date in ("2019-04", "2019", "2019-04-30", ""):
+        r = client.patch(f"/api/sources/{sid}", json={"version_date": date})
+        assert r.status_code == 200, r.text
+        assert r.json()["version_date"] == date
+    for bad in ("2019-13", "April 2019", "19-04", "2019-04-32"):
+        r = client.patch(f"/api/sources/{sid}", json={"version_date": bad})
+        assert r.status_code == 422, bad
+        assert r.json()["error"]["details"]["field"] == "version_date"

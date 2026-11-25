@@ -17,7 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.db import session_scope
-from app.repositories.tables import Element, Source
+from app.repositories.tables import Element
 from app.services import accountability
 from app.services import compass_return as rules
 from tests.accountability_fixture import (
@@ -70,16 +70,12 @@ def set_register(b: Built) -> None:
     sop, manual = b.sources["sop"], b.sources["manual"]
     sent = b.client.patch(f"/api/sources/{sop}", json={
         "title": "Load planning and sign-off", "owner_role_id": b.roles[SM],
-        "updated_by_role_id": b.roles[SS], "last_reviewed": "2019-04", "controlled_copy": False,
+        "updated_by_role_id": b.roles[SS], "version_date": "2019-04", "last_reviewed": "2019-04",
+        "controlled_copy": False,
     })  # fmt: skip
     assert sent.status_code == 200, sent.text
     assert b.client.patch(f"/api/sources/{manual}",
                           json={"title": "Overtime approval"}).status_code == 200  # fmt: skip
-    # The version date as an older register holds it (the screen takes a full date).
-    with session_scope(b.client.app.state.sessions) as s:  # type: ignore[attr-defined]
-        row = s.get(Source, sop)
-        assert row is not None
-        row.version_date = "2019-04"
 
 
 def compare_and_class(fx: Fixture) -> dict[str, Any]:

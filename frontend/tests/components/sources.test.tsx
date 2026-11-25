@@ -525,3 +525,23 @@ describe("Sources: who owns and updates each SOP (§3.20)", () => {
     expect(await screen.findByText(/Name the role, not the person\./)).toBeInTheDocument();
   });
 });
+
+describe("Sources: a version date may be a month or a year (DECISIONS 112)", () => {
+  it("saves 2019-04 and says what to type instead of a date it can't read", async () => {
+    const { calls } = sourcesApi([SOP]);
+    renderApp(PATH);
+    const date = await screen.findByLabelText("Version date of sop_LC-07.docx");
+    fireEvent.change(date, { target: { value: "2019-04" } });
+    fireEvent.blur(date);
+    await waitFor(() =>
+      expect(calls.filter((c) => c.key === "PATCH /api/sources/s1").map((c) => c.body)).toEqual([
+        { version_date: "2019-04" },
+      ]),
+    );
+    const again = screen.getByLabelText("Version date of sop_LC-07.docx"); // remounted with the saved value
+    fireEvent.change(again, { target: { value: "April 2019" } });
+    fireEvent.blur(again);
+    expect(await screen.findByText("Type the date as YYYY-MM-DD, YYYY-MM or YYYY.")).toBeInTheDocument();
+    expect(calls.filter((c) => c.key === "PATCH /api/sources/s1")).toHaveLength(1);
+  });
+});

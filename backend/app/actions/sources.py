@@ -62,10 +62,9 @@ BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .cs
 TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again."
 EMPTY = "The file is empty."
 BAD_KIND = "Please choose what kind of source this is."
-BAD_DATE = "Please enter the version date as YYYY-MM-DD, or leave it blank."
+BAD_DATE = "Please enter the version date as YYYY-MM-DD, YYYY-MM or YYYY, or leave it blank."
 BAD_OWNER = "Owner: up to 120 characters, one line."
 CANT_READ_TAIL = " Check it opens on your computer, then upload it again."
-_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # §3.20 (DECISIONS 110): the SOP register.
 SOP_KINDS = frozenset({SourceKind.SOP.value, SourceKind.MANUAL.value})
 REGISTER_DATE = re.compile(r"^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$")
@@ -111,7 +110,8 @@ def _check_meta(
         fields["kind"] = kind
     if version_date is not None:
         date = version_date.strip()
-        if date and not _DATE.match(date):
+        # DECISIONS 112: a month or a year too, as the Capability Compass writes them.
+        if date and not REGISTER_DATE.match(date):
             return Err(ErrorKind.VALIDATION, BAD_DATE, {"field": "version_date"})
         fields["version_date"] = date
     if owner is not None:

@@ -11,7 +11,9 @@ import {
   sourceStatus,
 } from "../../lib/sources";
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
+// DECISIONS 112: a date, a month or a year, as the Capability Compass writes them ("2019-04").
+const DATE = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/;
+const BAD_DATE = "Type the date as YYYY-MM-DD, YYYY-MM or YYYY.";
 
 export interface SourceRegistryProps {
   sources: readonly Source[];
@@ -111,29 +113,43 @@ function BlurText({
 }: {
   label: string;
   value: string;
+  /** "date": YYYY-MM-DD, YYYY-MM or YYYY, checked before it is saved. */
   type?: "text" | "date";
   placeholder?: string;
   onCommit: (value: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
+  const [problem, setProblem] = useState(false);
   return (
-    <input
-      className="field__control registry__input"
-      type={type}
-      value={draft}
-      aria-label={label}
-      placeholder={placeholder}
-      onChange={(event) => setDraft(event.target.value)}
-      onBlur={() => {
-        const next = draft.trim();
-        if (next === value) return;
-        if (type === "date" && next && !DATE.test(next)) {
-          setDraft(value);
-          return;
-        }
-        onCommit(next);
-      }}
-    />
+    <>
+      <input
+        className="field__control registry__input"
+        type="text"
+        inputMode={type === "date" ? "numeric" : undefined}
+        value={draft}
+        aria-label={label}
+        aria-invalid={problem || undefined}
+        placeholder={placeholder ?? (type === "date" ? "YYYY-MM-DD" : undefined)}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          setProblem(false);
+        }}
+        onBlur={() => {
+          const next = draft.trim();
+          if (next === value) return;
+          if (type === "date" && next && !DATE.test(next)) {
+            setProblem(true);
+            return;
+          }
+          onCommit(next);
+        }}
+      />
+      {problem && (
+        <span className="registry__reason" role="alert">
+          {BAD_DATE}
+        </span>
+      )}
+    </>
   );
 }
 
@@ -272,6 +288,7 @@ export function SourceRegistry({
                   {sop ? (
                     <BlurText
                       key={`reviewed-${source.last_reviewed ?? ""}`}
+                      type="date"
                       label={`Last reviewed, ${source.filename}`}
                       placeholder="YYYY-MM"
                       value={source.last_reviewed ?? ""}
@@ -286,6 +303,7 @@ export function SourceRegistry({
                     <>
                       <BlurText
                         key={`due-${source.review_due ?? ""}`}
+                        type="date"
                         label={`Review due, ${source.filename}`}
                         placeholder="YYYY-MM"
                         value={source.review_due ?? ""}
