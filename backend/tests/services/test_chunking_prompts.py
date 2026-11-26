@@ -295,7 +295,7 @@ def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -
     versions = prompts.instruction_versions()
     assert versions["S1_extract_interview"] == "5"
     assert versions["S3c_worktype"] == "2"
-    assert versions["question_bank"] == "1.0"
+    assert versions["question_bank"] == "1.1"
     (tmp_path / "A.md").write_text("<!-- prompt: A · version 3 -->\nDo the task.\n", "utf-8")
     (tmp_path / "no_line.md").write_text("Do the task.\n", encoding="utf-8")
     (tmp_path / "bank.json").write_text('{"version": "2.1"}', encoding="utf-8")

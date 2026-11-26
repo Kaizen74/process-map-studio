@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addTesting, deleteTesting, listTesting, previewHandoff, updateTesting } from "../api/compass";
+import { addTesting, deleteTesting, getCompassReadiness, listTesting, previewHandoff, updateTesting } from "../api/compass";
 import type { TestingPatch } from "../api/types";
 
 const testingKey = (engagementId: string) => ["engagements", engagementId, "testing"] as const;
@@ -34,5 +34,14 @@ export function useDeleteTesting(engagementId: string) {
   return useMutation({
     mutationFn: (id: string) => deleteTesting(id),
     onSuccess: () => void client.invalidateQueries({ queryKey: testingKey(engagementId) }),
+  });
+}
+
+/** DECISIONS 113: asked again each time Exports opens, so it reads the latest records. */
+export function useCompassReadiness(versionId: string) {
+  return useQuery({
+    queryKey: ["versions", versionId, "compass-readiness"],
+    queryFn: () => getCompassReadiness(versionId),
+    enabled: Boolean(versionId),
   });
 }

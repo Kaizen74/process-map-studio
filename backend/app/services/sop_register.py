@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.domain.enums import SourceKind
+from app.domain.graph import GraphElement
 from app.domain.models import SourceView
 
 KINDS = frozenset({SourceKind.SOP.value, SourceKind.MANUAL.value})
@@ -112,3 +113,19 @@ def counts(found: Sequence[Entry]) -> Counts:
         overdue=sum(1 for e in current if e.overdue),
         uncontrolled=sum(1 for e in current if e.controlled is False),
     )
+
+
+DOCUMENT_KINDS = frozenset({SourceKind.SOP.value, SourceKind.MANUAL.value})
+
+
+def uncited_steps(steps: Sequence[GraphElement]) -> list[str]:
+    """DECISIONS 113: the steps no SOP or manual governs: none of their checked, non-silent
+    passages comes from one. Worked out from the map; Eric types nothing."""
+    return [
+        e.id
+        for e in steps
+        if not any(
+            ev.verified and ev.stance != "silent" and ev.source_kind in DOCUMENT_KINDS
+            for ev in e.evidence
+        )
+    ]

@@ -249,6 +249,8 @@ class RolePatch(BaseModel):
     aliases: list[str] | None = None
     is_system: bool | None = None
     lane_order: int | None = None
+    # DECISIONS 113: one of the hand-off's role refs (RL-014), or null to unlink.
+    compass_role_ref: str | None = None
 
 
 class RoleView(BaseModel):
@@ -258,6 +260,7 @@ class RoleView(BaseModel):
     aliases: list[str]
     is_system: bool
     lane_order: int | None
+    compass_role_ref: str | None = None
 
 
 class RoleUses(BaseModel):
@@ -400,9 +403,19 @@ class SopCounts(BaseModel):
     uncontrolled: int
 
 
+class SopMapLine(BaseModel):
+    """DECISIONS 113: on the map Eric is working on, the steps citing no SOP or manual."""
+
+    version_label: str
+    steps: int
+    uncited: int
+    uncited_ids: list[str]
+
+
 class SopRegister(BaseModel):
     counts: SopCounts
     entries: list[SopEntry]
+    map: SopMapLine | None = None
 
 
 class SegmentView(BaseModel):
@@ -962,11 +975,13 @@ class SystemOfRecordInput(BaseModel):
 
 
 class DataMoveInput(BaseModel):
-    """§3.20: how the data moves at a handoff (B.57); null = not known."""
+    """§3.20: how the data moves at a handoff (B.57); null = not known. DECISIONS 113: and
+    Eric's one line on what checks it. A field left out is left as it is."""
 
     model_config = ConfigDict(extra="forbid")
 
-    data_move: str | None
+    data_move: str | None = None
+    check: str | None = None
 
 
 class EdgePatch(BaseModel):

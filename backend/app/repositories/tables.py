@@ -145,6 +145,16 @@ class RedactionTerm(Row):
     origin: Mapped[str] = mapped_column(String(32))
 
 
+class OwnerProbe(Row):
+    """Eric's own suggested probe for interviews (0025; DECISIONS 113): offered beside a guide,
+    never a question of the guide, a claim, a step or a source; never sent to AI or exported."""
+
+    __tablename__ = "owner_probes"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    text: Mapped[str] = mapped_column(Text)
+    about: Mapped[str] = mapped_column(Text, default="")
+
+
 class TestingItem(Row):
     """What we are testing (0020): a design principle from the hand-off or a hypothesis Eric
     added, with the verdict he sets and the step or discrepancy codes behind it."""
@@ -214,6 +224,8 @@ class Role(Row):
     aliases: Mapped[list[str]] = mapped_column(JSON, default=list)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
     lane_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # DECISIONS 113 (0026): the Capability Compass role this lane is (RL-014), from the hand-off.
+    compass_role_ref: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
 
 # --- Versions and the map ------------------------------------------------------------------
@@ -369,6 +381,8 @@ class Edge(Row):
     information_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
     # 0023 (DECISIONS 110): how the data moves at a handoff (B.57); null = not known.
     data_move: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    # DECISIONS 113 (0026): Eric's one line on what checks the data at this handoff.
+    data_check: Mapped[str] = mapped_column(Text, default="")
 
 
 class EvidenceLink(Row):

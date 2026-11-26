@@ -207,7 +207,7 @@ def _from_handoff(
         cluster_name=pilot.cluster_name, cell_refs=pilot.cell_refs,
         interview_prompts=pilot.interview_prompts, ready=preview.ready,
         generated_at=preview.generated_at, country=preview.country,
-        process_owner=pilot.process_owner,
+        process_owner=pilot.process_owner, roles=preview.roles,
     )  # fmt: skip
     return Ok((link, preview.principles))
 
@@ -343,6 +343,7 @@ def update_engagement(
     return _in_session(sessions, work)
 
 
+NOT_A_COMPASS_ROLE = "Choose one of the roles in the Capability Compass hand-off."
 PERSON = "Name the role, not the person."
 
 
@@ -494,6 +495,14 @@ def update_role(
         before = repo.get_role(session, role_id)
         if before is None:
             return Err(ErrorKind.NOT_FOUND, ROLE_MISSING)
+        if "compass_role_ref" in sent:
+            ref = sent["compass_role_ref"]
+            engagement = repo.get(session, before.engagement_id)
+            link = engagement.compass if engagement else None
+            offered = {r.ref for r in link.roles} if link else set()
+            if ref is not None and ref not in offered:
+                return _invalid("compass_role_ref", NOT_A_COMPASS_ROLE)
+            fields["compass_role_ref"] = ref
         if "name" in fields and repo.role_name_taken(
             session, before.engagement_id, fields["name"], exclude_id=role_id
         ):

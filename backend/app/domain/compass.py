@@ -12,6 +12,14 @@ HANDOFF_FORMAT = "compass-handoff"
 VERDICTS = ("open", "supported", "refuted")
 
 
+class CompassRole(BaseModel):
+    """A role of the hand-off (`roles[]`), as received: offered to link a lane (DECISIONS 113)."""
+
+    ref: str
+    title: str
+    cluster_ref: str = ""
+
+
 class CompassLink(BaseModel):
     """What an engagement keeps of the hand-off it started from."""
 
@@ -27,6 +35,8 @@ class CompassLink(BaseModel):
     # The pilot's process owner as the packet names it (DECISIONS 110): offered on the scope card,
     # set only when Eric confirms it.
     process_owner: str = ""
+    # The hand-off's roles (DECISIONS 113): a lane may be linked to one; absent before.
+    roles: list[CompassRole] = []
 
 
 class SameProcess(BaseModel):
@@ -71,6 +81,7 @@ class HandoffPreview(BaseModel):
     pilots: list[HandoffPilot]
     principles: list[HandoffPrinciple]
     country: str = ""
+    roles: list[CompassRole] = []
 
 
 class HandoffIn(BaseModel):
@@ -131,3 +142,21 @@ class TestingPatch(BaseModel):
     note: str | None = None
     text: str | None = None
     refuted_by: str | None = None
+
+
+class ReadinessItem(BaseModel):
+    """DECISIONS 113: one line of "Ready to send to the Capability Compass"."""
+
+    key: str
+    text: str
+    done: int | None
+    total: int | None
+    complete: bool | None  # None: shown for information
+    screen: str  # the nav key where it is recorded
+
+
+class CompassReadiness(BaseModel):
+    version_id: str
+    version_label: str
+    state: str
+    items: list[ReadinessItem]

@@ -464,6 +464,7 @@ describe("Sources: who owns and updates each SOP (§3.20)", () => {
   const REGISTER = {
     counts: { sops: 2, without_owner: 1, without_updater: 1, overdue: 0, uncontrolled: 1 },
     entries: [],
+    map: { version_label: "v1.0", steps: 11, uncited: 2, uncited_ids: ["a", "b"] },
   };
 
   it("reads the counts line and each SOP's roles and dates", async () => {
@@ -475,6 +476,7 @@ describe("Sources: who owns and updates each SOP (§3.20)", () => {
     expect(
       await screen.findByText("2 SOPs · 1 without an owner · 1 with nobody to update them · 0 review overdue · 1 uncontrolled"),
     ).toBeInTheDocument();
+    expect(screen.getByText("On the current map (v1.0): 2 of 11 steps cite no SOP or manual.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("Owner role of sop_LC-07.docx")).toHaveValue("r1"));
     expect(screen.getByLabelText("Role that updates sop_LC-07.docx")).toHaveValue("r2");
     expect(screen.getByLabelText("Last reviewed, sop_LC-07.docx")).toHaveValue("2019-04");

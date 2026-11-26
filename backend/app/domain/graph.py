@@ -93,6 +93,7 @@ class EdgeRecord(Record):
     view_membership: str | None = None  # B.35
     information_payload: str | None = None
     data_move: str | None = None  # B.57; None = not known (0023, DECISIONS 110)
+    data_check: str = ""  # what checks the data at a handoff (0026, DECISIONS 113)
 
 
 class RaciRecord(Record):
@@ -214,6 +215,8 @@ class GraphRole(Out):
     name: str
     is_system: bool
     lane_order: int | None
+    # DECISIONS 113: the Capability Compass role this lane is (RL-014); null when not linked.
+    compass_role_ref: str | None = None
 
 
 class GraphPhase(Out):
@@ -365,6 +368,8 @@ class GraphEdge(Out):
     provenance: str = "O"  # I: added by the translation for one view (§3.12.10 rules 1 and 7)
     # §3.20 (B.57): how the data moves at a handoff; null = not known.
     data_move: str | None = None
+    # DECISIONS 113: Eric's one line on what checks the data at this handoff ("" not recorded).
+    data_check: str = ""
 
 
 class Graph(Out):

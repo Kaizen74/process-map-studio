@@ -25,6 +25,8 @@ export interface DataChoice {
   error?: string | null | undefined;
   onSystem: (body: { status: SystemOfRecord["status"] | null; role_id?: string | null; other?: string }) => void;
   onMove: (edgeId: string, move: DataMove | null) => void;
+  /** DECISIONS 113: what checks the data at a handoff ("" clears it). */
+  onCheck?: (edgeId: string, check: string) => void;
 }
 
 export interface DataSectionProps {
@@ -48,7 +50,11 @@ export function DataSection({ element, roles, handoffs, choice }: DataSectionPro
         {handoffs.map((h) => (
           <div key={h.edge.id}>
             <dt>Data to {h.toLabel}</dt>
-            <dd>{dataMoveWord(h.edge.data_move ?? null)}</dd>
+            <dd>
+              {dataMoveWord(h.edge.data_move ?? null)}
+              {h.edge.information_payload && <span className="data-section__more">What moves: {h.edge.information_payload}</span>}
+              {h.edge.data_check && <span className="data-section__more">What checks it: {h.edge.data_check}</span>}
+            </dd>
           </div>
         ))}
       </dl>
@@ -110,6 +116,9 @@ function DataForm({
   const [moves, setMoves] = useState<Record<string, string>>(
     Object.fromEntries(handoffs.map((h) => [h.edge.id, h.edge.data_move ?? ""])),
   );
+  const [checks, setChecks] = useState<Record<string, string>>(
+    Object.fromEntries(handoffs.map((h) => [h.edge.id, h.edge.data_check ?? ""])),
+  );
   const [problem, setProblem] = useState<string | null>(null);
   return (
     <form
@@ -131,6 +140,8 @@ function DataForm({
         for (const h of handoffs) {
           const next = moves[h.edge.id] ?? "";
           if (next !== (h.edge.data_move ?? "")) choice.onMove(h.edge.id, (next || null) as DataMove | null);
+          const check = (checks[h.edge.id] ?? "").trim();
+          if (choice.onCheck && check !== (h.edge.data_check ?? "")) choice.onCheck(h.edge.id, check);
         }
         onDone();
       }}
@@ -163,6 +174,17 @@ function DataForm({
           help={h.logged ? "A system log records this step: System interface is suggested." : undefined}
         />
       ))}
+      {choice.onCheck &&
+        handoffs.map((h) => (
+          <TextField
+            key={`check-${h.edge.id}`}
+            label={`What checks the data going to ${h.toLabel}`}
+            value={checks[h.edge.id] ?? ""}
+            onChange={(value) => setChecks((current) => ({ ...current, [h.edge.id]: value }))}
+            help="Optional, one line: for example, the weight is checked against the booking."
+            error={null}
+          />
+        ))}
       <div className="work-type-choice__actions">
         <Button type="submit" variant="primary" disabled={choice.busy}>
           Save

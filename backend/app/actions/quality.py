@@ -234,6 +234,7 @@ def render_exports(data: ExportInput) -> dict[str, str]:
         "md": exports.render_master_map_md(data),
         "json": exports.render_graph_json(data),
         "csv": exports.render_raci_csv(data),
+        "workbench": exports.render_workbench_csv(data),  # DECISIONS 113
         "html": export_html.render_map_html(data, tokens, fonts),
     }
 

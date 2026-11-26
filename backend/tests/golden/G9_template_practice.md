@@ -1,6 +1,6 @@
 # Practice interview template
 
-Question bank v1.0 · Process Map Studio
+Question bank v1.1 · Process Map Studio
 
 ## Interview details
 
@@ -79,9 +79,9 @@ Use roles by default ("the global contract holder"); you may type personal names
 
 | ID | Question | Probes | Minutes | Notes |
 |---|---|---|---|---|
-| M3.1 | Take me through this form. Who fills in each part, and when? | Who uses it after that? | 1½ |  |
+| M3.1 | Take me through this form. Who fills in each part, and when? | Who uses it after that? · Which system holds this record, or is it on paper or memory? | 1½ |  |
 | M3.2 | What do you check here, and what happens if it's blank or wrong? | Who fixes it? · How long does that add? | 1½ |  |
-| M3.3 | Where does this go next, and does anyone sign it? | What if they're not around? | 1½ |  |
+| M3.3 | Where does this go next, and does anyone sign it? | What if they're not around? · How does it reach them: through the system, keyed in again, by email or spreadsheet, on paper or by word of mouth? | 1½ |  |
 | M3.4 | *On the exception example:* What happened on this one? | What was different? | 1½ |  |
 
 ## M4 — Decisions: decision mapping and ASHEN (12 min)

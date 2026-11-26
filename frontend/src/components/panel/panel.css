@@ -618,3 +618,10 @@ button.evidence:focus-visible {
   font-weight: var(--weight-medium);
   color: var(--ink);
 }
+
+/* DECISIONS 113: what moves and what checks it, under how the data moves. */
+.data-section__more {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--ink-2);
+}

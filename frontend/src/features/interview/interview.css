@@ -20,3 +20,29 @@
   color: var(--ink-3);
   max-width: 72ch;
 }
+
+/* DECISIONS 113: your own probes. */
+.own-probes {
+  margin: 0;
+  padding-left: var(--space-16);
+  display: grid;
+  gap: var(--space-8);
+}
+.own-probes__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.own-probes__about {
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
+.own-probes__actions {
+  display: inline-flex;
+  gap: var(--space-8);
+}
+.own-probes__form {
+  max-width: 640px;
+}

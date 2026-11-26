@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.enums import InterviewType
 
@@ -329,6 +329,16 @@ class GuideSummary(BaseModel):
     created_at: str
 
 
+class OwnerProbe(BaseModel):
+    """DECISIONS 113: a probe Eric typed or pasted before interviews, with an optional note of
+    what it is about ("Step 4, load control"). Offered beside a guide; never a question of the
+    guide, a claim, a step or a source; never sent to AI or exported."""
+
+    id: str
+    text: str
+    about: str = ""
+
+
 class GuideView(BaseModel):
     id: str
     engagement_id: str
@@ -341,3 +351,21 @@ class GuideView(BaseModel):
     # DECISIONS 97: prompts from the Capability Compass hand-off, offered beside the guide as
     # suggested probes. Never a question of the guide, a source, a claim or a step.
     suggested_probes: list[str] = []
+    # DECISIONS 113: Eric's own probes from his desk research, offered the same way.
+    own_probes: list[OwnerProbe] = []
+
+
+class OwnerProbesIn(BaseModel):
+    """One probe per line (pasted lines are split), all about the same thing."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    about: str = ""
+
+
+class OwnerProbePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str | None = None
+    about: str | None = None

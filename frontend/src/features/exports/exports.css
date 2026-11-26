@@ -52,3 +52,42 @@
   gap: var(--space-4);
   margin-top: auto;
 }
+
+/* DECISIONS 113: ready to send to the Capability Compass. Each state has its word and shape. */
+.readiness {
+  display: grid;
+  gap: var(--space-8);
+}
+.readiness__title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+.readiness__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-4);
+}
+.readiness__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+.readiness__state {
+  min-width: 112px;
+  padding: 0 var(--space-8);
+  border: var(--line-hairline) solid var(--border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-label);
+  text-align: center;
+}
+.readiness__item--todo .readiness__state {
+  border-style: dashed;
+  border-color: var(--ink-2);
+}
+.readiness__item--done .readiness__state {
+  background: var(--surface-2);
+}

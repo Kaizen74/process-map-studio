@@ -1,4 +1,4 @@
-// Comparing countries (API_CONTRACT.md → Comparing countries; PRD §3.19; DECISIONS 98). Words
+// Comparing units (API_CONTRACT.md → Comparing units; PRD §3.19; DECISIONS 98). Words
 // only: every pair, difference, figure and grade comes from the backend.
 import type { Grade, GradeKey } from "./grade";
 
@@ -145,8 +145,8 @@ export const PAIR_LABELS: Record<PairStatus, string> = {
   proposed: "Proposed",
   suggested: "Suggested by Claude",
   confirmed: "Confirmed",
-  only_reference: "Only in one country",
-  only_other: "Only in one country",
+  only_reference: "Only in one unit",
+  only_other: "Only in one unit",
 };
 
 function joined(names: string[]): string {
@@ -155,7 +155,7 @@ function joined(names: string[]): string {
 
 /**
  * For the return file on Exports (Eric, 2026-11-14): a country that is the reference in a
- * comparison reads where those differences go (the other country's file). Null when it is never
+ * comparison reads where those differences go (the other unit's file). Null when it is never
  * the reference.
  */
 export function referenceNote(engagementId: string, list: ComparisonSummary[]): string | null {
@@ -170,7 +170,7 @@ export function referenceNote(engagementId: string, list: ComparisonSummary[]): 
   return `${me} is the reference in ${what} with ${joined(others)}, so those differences are in ${files}.`;
 }
 
-/** A comparison of this country on another version than the one chosen on Exports (Eric, 2026-11-14). */
+/** A comparison of this unit on another version than the one chosen on Exports (Eric, 2026-11-14). */
 export interface VersionNote {
   /** "refresh": the comparison is on an older version; "elsewhere": on a newer one. */
   kind: "refresh" | "elsewhere";
@@ -180,7 +180,7 @@ export interface VersionNote {
 
 /**
  * The differences go with the version compared, so on Exports the return file card says when a
- * comparison where this engagement is the other country is not on the chosen version.
+ * comparison where this engagement is the other unit is not on the chosen version.
  */
 export function versionNotes(engagementId: string, versionId: string, list: ComparisonSummary[]): VersionNote[] {
   return list

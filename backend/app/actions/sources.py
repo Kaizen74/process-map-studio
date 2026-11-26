@@ -18,6 +18,7 @@ from typing import Any, BinaryIO
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.actions import redaction
+from app.actions import versions as versions_action
 from app.actions.engagements import ENGAGEMENT_MISSING, actor_name
 from app.actions.redaction import NAME_ORIGINS
 from app.config import AppConfig
@@ -31,6 +32,7 @@ from app.domain.models import (
     SegmentView,
     SopCounts,
     SopEntry,
+    SopMapLine,
     SopRegister,
     SourcePatch,
     SourceReadInfo,
@@ -46,7 +48,7 @@ from app.repositories import jobs as jobs_repo
 from app.repositories import redaction as redaction_repo
 from app.repositories import sources as repo
 from app.repositories import versions as versions_repo
-from app.services import grounding, parsing
+from app.services import exports, grounding, parsing
 from app.services import images as pictures
 from app.services import sop_register as register_rules
 from app.services.grounding import DEFAULT_REPLACEMENT
@@ -374,6 +376,7 @@ def sop_register(sessions: Sessions, engagement_id: str) -> Result[SopRegister]:
         views = [_public(session, v) for v in repo.list_for_engagement(session, engagement_id)]
         terms = redaction.name_replacements(session, engagement_id)
         roles = {r.id: r.name for r in engagements_repo.list_roles(session, engagement_id)}
+        line = _map_line(session, engagement_id)
     found = register_rules.entries(views, roles, date.today().isoformat())
     hidden = [
         SopEntry.model_validate(asdict(e)).model_copy(
@@ -386,7 +389,21 @@ def sop_register(sessions: Sessions, engagement_id: str) -> Result[SopRegister]:
         for e in found
     ]
     return Ok(SopRegister(counts=SopCounts.model_validate(asdict(register_rules.counts(found))),
-                          entries=hidden))  # fmt: skip
+                          entries=hidden, map=line))  # fmt: skip
+
+
+def _map_line(session: Session, engagement_id: str) -> SopMapLine | None:
+    """DECISIONS 113: on the map Eric is working on (the draft, else the latest published
+    version), the steps citing no SOP or manual."""
+    version_id = versions_repo.current_map_id(session, engagement_id)
+    version = versions_repo.get(session, version_id) if version_id else None
+    graph = versions_action.build_graph(session, version_id) if version_id else None
+    if version is None or graph is None:
+        return None
+    steps = exports.steps(exports.on_the_map(graph))
+    uncited = register_rules.uncited_steps(steps)
+    return SopMapLine(version_label=version.label, steps=len(steps), uncited=len(uncited),
+                      uncited_ids=uncited)  # fmt: skip
 
 
 def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:

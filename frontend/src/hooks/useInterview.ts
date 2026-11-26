@@ -2,14 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getJob } from "../api/draft";
 import {
+  addProbes,
   addProfile,
+  deleteProbe,
   editGuide,
   editProfile,
   getCoverage,
   getGuide,
   listGuides,
+  listProbes,
   listProfiles,
   makeGuide,
+  updateProbe,
 } from "../api/interview";
 import type { GuideEdit, ProfileInput } from "../lib/interview";
 
@@ -132,3 +136,31 @@ export function useCoverage(versionId: string | null) {
   });
 }
 
+
+// DECISIONS 113: Eric's own suggested probes; a change also refreshes the guide that shows them.
+const probesKey = (engagementId: string) => ["engagements", engagementId, "probes"] as const;
+
+export function useProbes(engagementId: string) {
+  return useQuery({ queryKey: probesKey(engagementId), queryFn: () => listProbes(engagementId) });
+}
+
+function useProbeChange<V, R>(engagementId: string, change: (vars: V) => Promise<R>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: change,
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: probesKey(engagementId) });
+      void client.invalidateQueries({ queryKey: ["engagements", engagementId, "interview-guide"] });
+    },
+  });
+}
+
+export const useAddProbes = (engagementId: string) =>
+  useProbeChange(engagementId, (body: { text: string; about?: string }) => addProbes(engagementId, body));
+
+export const useEditProbe = (engagementId: string) =>
+  useProbeChange(engagementId, ({ id, body }: { id: string; body: { text?: string; about?: string } }) =>
+    updateProbe(id, body),
+  );
+
+export const useRemoveProbe = (engagementId: string) => useProbeChange(engagementId, (id: string) => deleteProbe(id));

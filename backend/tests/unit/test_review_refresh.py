@@ -206,6 +206,10 @@ def test_how_data_moves_survives_a_refresh(drafted: Drafted) -> None:
         assert d.client.put(url, json={"data_move": move}).status_code == 200
         marked[(lanes[x["from"]][2], lanes[x["to"]][2], x["kind"])] = move
     assert marked
+    first = handoffs[0]
+    checked = d.client.put(f"/api/versions/{d.version_id}/edges/{first['id']}/data-move",
+                           json={"check": "Weight checked against the booking"})  # fmt: skip
+    assert checked.status_code == 200, checked.text
     d.act(lanes[handoffs[0]["from"]][2], "confirm")  # one end reviewed, the other not
     assert refresh(d)["status"] == "done"
     after = graph(d)
@@ -216,3 +220,8 @@ def test_how_data_moves_survives_a_refresh(drafted: Drafted) -> None:
         if x["data_move"]
     }
     assert found == marked
+    # DECISIONS 113: what checks the data stays with it.
+    checks = {(names[x["from"]], names[x["to"]]): x["data_check"] for x in after["edges"]
+              if x["data_check"]}  # fmt: skip
+    assert checks == {(lanes[first["from"]][2], lanes[first["to"]][2]):
+                      "Weight checked against the booking"}  # fmt: skip

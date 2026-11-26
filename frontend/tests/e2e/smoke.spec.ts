@@ -930,7 +930,7 @@ test("interview templates: download Word and Markdown from the home screen", asy
   ]);
   expect(markdown.suggestedFilename()).toBe("interview-template-landscape.md");
   const text = readFileSync(await markdown.path(), "utf-8");
-  expect(text.startsWith("# Landscape interview template\n\nQuestion bank v1.0 · Process Map Studio")).toBe(true);
+  expect(text.startsWith("# Landscape interview template\n\nQuestion bank v1.1 · Process Map Studio")).toBe(true);
   expect(text).toContain("| **Total** | **60** |");
   expect(text).toContain("| L3 |");
   expect(text).toContain("Use roles, not names.");

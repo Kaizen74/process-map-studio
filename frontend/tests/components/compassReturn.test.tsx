@@ -92,7 +92,7 @@ describe("the Capability Compass return file on Exports", () => {
     { ...SUMMARY, [side]: { ...SUMMARY[side], engagement_id: "e1" } },
   ];
 
-  it("tells the reference country that the differences are in the other country's file", async () => {
+  it("tells the reference unit that the differences are in the other unit's file", async () => {
     backend({ ...ENGAGEMENT, compass: LINK }, { "GET /api/engagements/e1/comparisons": () => ({ body: asSide("reference") }) });
     renderApp(PATH);
     const card = (await screen.findByRole("heading", { name: "Capability Compass return file" })).closest(".card") as HTMLElement;
@@ -122,9 +122,9 @@ describe("the Capability Compass return file on Exports", () => {
     renderApp(PATH);
     const note = await within(await card()).findByText(/The comparison with Arden is on v0\.9\./);
     expect(note).toHaveTextContent(
-      "The comparison with Arden is on v0.9. Refresh it on Compare countries to add its differences to this file.",
+      "The comparison with Arden is on v0.9. Refresh it on Compare units to add its differences to this file.",
     );
-    expect(within(note).getByRole("link", { name: "Compare countries" })).toHaveAttribute(
+    expect(within(note).getByRole("link", { name: "Compare units" })).toHaveAttribute(
       "href",
       "/engagements/e1/compare",
     );
@@ -212,5 +212,65 @@ describe("suggested probes beside an interview guide", () => {
     cleanup();
     render(<GuideEditor guide={guide([])} {...props} />);
     expect(screen.queryByText("Suggested probes from Capability Compass")).toBeNull();
+  });
+});
+
+describe("ready to send to the Capability Compass (DECISIONS 113)", () => {
+  const READY = {
+    version_id: "v1",
+    version_label: "v1.0",
+    state: "published",
+    items: [
+      { key: "on_paper", text: "Decider named in the documents: recorded on 2 of 4 decisions and approvals", done: 2, total: 4, complete: false, screen: "review" },
+      { key: "data_moves", text: "How data moves: recorded on 6 of 6 handoffs", done: 6, total: 6, complete: true, screen: "review" },
+      { key: "uncited", text: "Steps citing no SOP or manual: 2 of 11", done: null, total: null, complete: null, screen: "sources" },
+      { key: "process_owner", text: "Process owner: not named", done: null, total: null, complete: false, screen: "setup" },
+    ],
+  };
+
+  it("says what each question still lacks, where to record it, and never blocks the download", async () => {
+    backend({ ...ENGAGEMENT, compass: LINK }, { "GET /api/versions/v1/compass-readiness": () => ({ body: READY }) });
+    const { container } = renderApp(PATH);
+    const section = await screen.findByRole("region", { name: "Ready to send?" });
+    const rows = within(section).getAllByRole("listitem");
+    expect(rows.map((r) => r.querySelector(".readiness__state")?.textContent)).toEqual([
+      "To do",
+      "Done",
+      "For information",
+      "To do",
+    ]);
+    expect(within(rows[0] as HTMLElement).getByRole("link", { name: "Review" })).toHaveAttribute(
+      "href",
+      "/engagements/e1/review",
+    );
+    expect(within(rows[3] as HTMLElement).getByRole("link", { name: "Setup" })).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).queryByRole("link")).toBeNull(); // done: nothing to go to
+    expect(section).toHaveTextContent("Nothing here stops the download");
+    expect(section).toHaveTextContent("reopen this version on Published");
+    expect(screen.getByRole("link", { name: /Download JSON/ })).toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+});
+
+describe("your own probes beside a guide (DECISIONS 113)", () => {
+  it("lists them apart from the Compass prompts, with what they are about", async () => {
+    const doc: GuideView = {
+      id: "g1",
+      engagement_id: "e1",
+      profile_id: "p1",
+      interview_type: "practice",
+      version: 1,
+      edited: false,
+      created_at: "2026-11-10T09:00:00+00:00",
+      document: { kind: "practice", title: "Practice interview guide: Ramp agent · Ramp", minutes: 60, generation_note: "", tables: [] },
+      own_probes: [{ id: "p1", text: "Where is the plan really built?", about: "Step 2" }],
+    };
+    const { container } = render(
+      <GuideEditor guide={doc} busy={false} error={null} saved={false} onSave={vi.fn()} onClose={vi.fn()} />,
+    );
+    const section = screen.getByRole("region", { name: "Your probes" });
+    expect(section).toHaveTextContent("Where is the plan really built? · Step 2");
+    expect(section).toHaveTextContent("Not questions of this guide.");
+    expect(await seriousViolations(container)).toEqual([]);
   });
 });

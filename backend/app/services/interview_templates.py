@@ -517,6 +517,15 @@ def _text_problem(text: str, limit: int, hidden: list[str], sop_ok: bool) -> str
     return ""
 
 
+def probe_problem(text: str, hidden: list[str]) -> str:
+    """DECISIONS 113: why one of Eric's own probes can't be kept, or "": one line, no banned
+    word, no hidden name. It may name what the documents say: Eric chooses when to ask it."""
+    return _text_problem(text, PROBE_LIMIT, hidden, sop_ok=True)
+
+
+PROBE_LIMIT = 300
+
+
 def apply_edits(
     doc: InterviewDocument, edit: GuideEdit, hidden: list[str]
 ) -> Result[tuple[InterviewDocument, list[str]]]:

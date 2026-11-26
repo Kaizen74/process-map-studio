@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "source": "PRD_ProcessMapStudio.md v1.10, Appendix F (F.1-F.6, F.9)",
   "note": "The single source of the interview questions (PRD §3.12.8, Appendix F). Wording is the PRD's, word for word; `lead_in` is the interviewer's cue before the spoken question and `note` a label, both kept apart so transcripts are matched on the spoken wording. Priority `core`: never dropped when a guide is shortened (F.8 rule 6); `standard`: dropped first.",
   "principles": [
@@ -130,7 +130,9 @@
       "lead_in": "",
       "wording": "Where do the key decision rights sit — who decides, who must be consulted, who is told?",
       "probes": [
-        "Does it always work that way?"
+        "Does it always work that way?",
+        "Who signs it off on paper, and who decides in practice?",
+        "Is there a written instruction for it? Who owns it, and who keeps it up to date?"
       ],
       "targets": [
         "Flow (decision rights, RACI)"
@@ -383,7 +385,8 @@
       "lead_in": "",
       "wording": "Take me through this form. Who fills in each part, and when?",
       "probes": [
-        "Who uses it after that?"
+        "Who uses it after that?",
+        "Which system holds this record, or is it on paper or memory?"
       ],
       "targets": [
         "Flow",
@@ -417,7 +420,8 @@
       "lead_in": "",
       "wording": "Where does this go next, and does anyone sign it?",
       "probes": [
-        "What if they're not around?"
+        "What if they're not around?",
+        "How does it reach them: through the system, keyed in again, by email or spreadsheet, on paper or by word of mouth?"
       ],
       "targets": [
         "Flow (handoff, approval, escalation)"

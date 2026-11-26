@@ -25,7 +25,7 @@ export const deleteEngagement = (id: string) =>
 export const getReadiness = (id: string) =>
   request<Readiness>(`/engagements/${encodeURIComponent(id)}/readiness`);
 
-/** Map this process in another country (DECISIONS 98): scope card, conventions and lane names only. */
+/** Map this process in another unit (DECISIONS 98): scope card, conventions and lane names only. */
 export const startAnotherCountry = (id: string, fields: AnotherCountry) =>
   request<Engagement>(`/engagements/${encodeURIComponent(id)}/another-country`, { method: "POST", body: fields });
 

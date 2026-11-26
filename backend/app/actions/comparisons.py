@@ -77,9 +77,9 @@ A_DRAFT = "Version {label} of {name} is a draft. Only published maps are compare
 NOT_ITS_VERSION = "That version isn't one of {name}'s."
 DIFFERENT = (
     "These maps describe different processes ({a} and {b}). Only maps of the same process in two "
-    "countries are compared."
+    "units are compared."
 )
-BAD_DECISION = "Choose Confirm, Only in one country, or Clear."
+BAD_DECISION = "Choose Confirm, Only in one unit, or Clear."
 CHOOSE_STEPS = "Choose a step of each map."
 NOT_ON_MAP = "That step isn't on the compared map."
 BAD_ACTION = "Choose Class, Keep, Dismiss or Reopen."
@@ -435,6 +435,22 @@ def _view(session: Session, m: _Loaded) -> ComparisonView:
 def _differing(views: list[DifferenceView], m: _Loaded) -> set[str]:
     return rules.differing_steps([(v.status, v.other_key) for v in views],
                                  {s.key for s in m.other.steps})  # fmt: skip
+
+
+def open_differences_for(config: AppConfig, session: Session, engagement_id: str,
+                         version_id: str) -> list[tuple[str, int]]:  # fmt: skip
+    """DECISIONS 113: per comparison where this engagement, at this version, is the other unit,
+    the reference unit's name and how many differences are still open."""
+    out = []
+    for record in repo.as_other(session, engagement_id, version_id):
+        match _load(config, session, record.id):
+            case Err():
+                continue
+            case Ok(value=m):
+                pass
+        name = m.countries.reference or m.reference.engagement.name
+        out.append((name, _view(session, m).counts.open))
+    return out
 
 
 def steps_differing_for(config: AppConfig, session: Session, engagement_id: str,

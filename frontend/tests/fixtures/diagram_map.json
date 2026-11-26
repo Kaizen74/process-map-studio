@@ -24,37 +24,43 @@
         "id": "id-2",
         "name": "Load controller",
         "is_system": false,
-        "lane_order": 1
+        "lane_order": 1,
+        "compass_role_ref": null
       },
       {
         "id": "id-3",
         "name": "Load control lead",
         "is_system": false,
-        "lane_order": 2
+        "lane_order": 2,
+        "compass_role_ref": null
       },
       {
         "id": "id-4",
         "name": "Ramp",
         "is_system": false,
-        "lane_order": 3
+        "lane_order": 3,
+        "compass_role_ref": null
       },
       {
         "id": "id-5",
         "name": "Airline ops",
         "is_system": false,
-        "lane_order": 4
+        "lane_order": 4,
+        "compass_role_ref": null
       },
       {
         "id": "id-6",
         "name": "Captain",
         "is_system": false,
-        "lane_order": 5
+        "lane_order": 5,
+        "compass_role_ref": null
       },
       {
         "id": "id-7",
         "name": "Load control team",
         "is_system": false,
-        "lane_order": 6
+        "lane_order": 6,
+        "compass_role_ref": null
       }
     ],
     "phases": [
@@ -711,7 +717,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-24",
@@ -724,7 +731,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-25",
@@ -737,7 +745,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-26",
@@ -750,7 +759,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-27",
@@ -763,7 +773,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-28",
@@ -776,7 +787,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-29",
@@ -789,7 +801,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-30",
@@ -802,7 +815,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "O",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       },
       {
         "id": "id-31",
@@ -815,7 +829,8 @@
         "information_payload": null,
         "typical": null,
         "provenance": "I",
-        "data_move": null
+        "data_move": null,
+        "data_check": ""
       }
     ]
   },

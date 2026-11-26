@@ -178,12 +178,15 @@ def test_map_this_process_in_another_country_needs_a_published_map(drafted: Draf
     early = client.post(url, json={"country": "Belmar"})
     assert early.status_code == 409
     assert said(early) == (
-        "Publish a version of this engagement first: another country starts from a published map."
+        "Publish a version of this engagement first: another unit starts from a published map."
     )
     confirm_all(drafted)
     assert publish(drafted).status_code == 200
     client.patch(f"/api/engagements/{eid}", json={"country": "Arden"})
-    assert said(client.post(url, json={"country": " "})) == "Type the country this map will cover."
+    assert (
+        said(client.post(url, json={"country": " "}))
+        == "Type the unit this map will cover (a country, station, asset or business unit)."
+    )
     assert said(client.post(url, json={"country": "arden"})) == (
         "This engagement already covers Arden."
     )

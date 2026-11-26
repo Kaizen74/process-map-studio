@@ -183,6 +183,7 @@ def test_graph_has_the_prd_shape(built: Built) -> None:
         "id", "from", "to", "kind", "label",
         "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
         "data_move",
+        "data_check",
     }  # fmt: skip
     elements = graph["elements"]
     assert isinstance(elements, list)

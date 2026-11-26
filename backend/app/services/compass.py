@@ -7,7 +7,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.compass import HANDOFF_FORMAT, HandoffPilot, HandoffPreview, HandoffPrinciple
+from app.domain.compass import (
+    HANDOFF_FORMAT,
+    CompassRole,
+    HandoffPilot,
+    HandoffPreview,
+    HandoffPrinciple,
+)
 from app.domain.result import Err, ErrorKind, Ok, Result
 
 NOT_A_HANDOFF = (
@@ -113,6 +119,15 @@ def read_handoff(raw: Any) -> Result[HandoffPreview]:
             pilots=pilots,
             principles=principles,
             country=_text(engagement.get("country")),
+            roles=[
+                CompassRole(
+                    ref=_text(r.get("ref"))[:32],
+                    title=_text(r.get("title"))[:200],
+                    cluster_ref=_text(r.get("cluster_ref")),
+                )
+                for r in _dicts(file.get("roles"))
+                if _text(r.get("ref")) and _text(r.get("title"))
+            ],
         )
     )
 

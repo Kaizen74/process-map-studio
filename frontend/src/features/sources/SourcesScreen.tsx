@@ -9,7 +9,7 @@ import { useDeleteSource, useSopRegister, useSources, useUpdateSource, useUpload
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
-import { sopCountsLine, uploadProblem } from "../../lib/sources";
+import { sopCountsLine, uncitedLine, uploadProblem } from "../../lib/sources";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DropZone } from "./DropZone";
 import { RedactionList } from "./RedactionList";
@@ -118,6 +118,9 @@ export function SourcesScreen() {
         {/* §3.20 (DECISIONS 110): who owns and updates the SOPs, in one line. */}
         {register.data && register.data.counts.sops > 0 && (
           <p className="registry__counts">{sopCountsLine(register.data.counts)}</p>
+        )}
+        {register.data?.map && register.data.map.steps > 0 && (
+          <p className="registry__counts">{uncitedLine(register.data.map)}</p>
         )}
       </div>
 

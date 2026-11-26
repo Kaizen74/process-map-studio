@@ -1,7 +1,7 @@
 // The four exports of a published version (PRD §5.4 Exports, §7.3). Downloads are plain links to
 // `GET /api/versions/{vid}/export/{fmt}`: the browser saves the file the server names.
 
-export type ExportFormat = "md" | "json" | "csv" | "html";
+export type ExportFormat = "md" | "json" | "csv" | "html" | "workbench";
 
 export interface ExportKind {
   format: ExportFormat;

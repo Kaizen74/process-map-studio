@@ -42,6 +42,8 @@ BAD_SYSTEM = "Choose a system, another system, or none (paper or memory)."
 NOT_A_SYSTEM = "Choose a role marked as a system, or another system by name."
 BAD_OTHER = "Name the system in 1 to 80 characters."
 PERSON = "Name the role, not the person."
+CHECK_LIMIT = 200
+BAD_CHECK = "Say what checks it in one line of up to 200 characters."
 BAD_MOVE = "Choose how the data moves, or that it isn't known."
 STEPS = {ElementKind.ACTIVITY.value, ElementKind.DECISION.value, ElementKind.APPROVAL.value}
 
@@ -152,9 +154,14 @@ def set_system_of_record(config: AppConfig, sessions: Sessions, element_id: str,
 
 def set_data_move(config: AppConfig, sessions: Sessions, version_id: str, edge_id: str,
                   body: DataMoveInput) -> Result[GraphEdge]:  # fmt: skip
-    """How the data moves at a handoff; never set without Eric."""
+    """How the data moves at a handoff, and what checks it (DECISIONS 113); never set without
+    Eric. A field left out of the body is left as it is."""
+    sent = body.model_fields_set
     if body.data_move is not None and body.data_move not in {m.value for m in DataMove}:
         return _invalid("data_move", BAD_MOVE)
+    check = " ".join((body.check or "").split())
+    if "check" in sent and len(check) > CHECK_LIMIT:
+        return _invalid("check", BAD_CHECK)
     with session_scope(sessions) as session:
         found = map_repo.edge(session, edge_id)
         if found is None or found[0] != version_id:
@@ -172,19 +179,27 @@ def set_data_move(config: AppConfig, sessions: Sessions, version_id: str, edge_i
             or start.lane_role_id == end.lane_role_id
         ):  # fmt: skip
             return _invalid("edge_id", NOT_A_HANDOFF)
-        if edge.data_move != body.data_move:
-            updated = map_repo.update_edge(session, edge_id, {"data_move": body.data_move})
+        terms = [t.term for t in redaction.name_replacements(session, version.engagement_id)]
+        if check and grounding.scan_redaction_terms(check, terms):
+            return _invalid("check", PERSON)
+        changes: dict[str, object] = {}
+        if "data_move" in sent and edge.data_move != body.data_move:
+            changes["data_move"] = body.data_move
+        if "check" in sent and edge.data_check != check:
+            changes["data_check"] = check
+        if changes:
+            updated = map_repo.update_edge(session, edge_id, changes)
             assert updated is not None
             edge = updated
             audit.record(session, actor=actor_name(config), action="Recorded how data moves",
                          target_type="edge", target_id=edge_id,
                          engagement_id=version.engagement_id, version_id=version.id,
-                         before={"data_move": found[1].data_move},
-                         after={"data_move": body.data_move})  # fmt: skip
+                         before={k: getattr(found[1], k) for k in changes},
+                         after=changes)  # fmt: skip
         return Ok(GraphEdge(id=edge.id, from_=edge.from_element_id, to=edge.to_element_id,
                             kind=edge.kind, label=edge.label,
                             sequence_basis=edge.sequence_basis,
                             view_membership=edge.view_membership,
                             information_payload=edge.information_payload,
                             typical=edge.typical, provenance=edge.provenance,
-                            data_move=edge.data_move))  # fmt: skip
+                            data_move=edge.data_move, data_check=edge.data_check))  # fmt: skip

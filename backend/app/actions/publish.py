@@ -61,6 +61,8 @@ FILES = {
     "json": ("graph.json", "application/json"),
     "csv": ("raci.csv", "text/csv; charset=utf-8"),
     "html": ("map.html", "text/html; charset=utf-8"),
+    # DECISIONS 113: the step file for the AI Org Advisory Workbench.
+    "workbench": ("workbench-steps.csv", "text/csv; charset=utf-8"),
 }
 DRAFT_FILE = "draft-map.html"
 CARD_CHECKS = {"Q1", "Q2", "Q7", "Q8", "Q9"}  # blockers not already listed one by one

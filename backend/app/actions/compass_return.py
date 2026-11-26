@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import asdict, replace
 from datetime import UTC, date, datetime
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -18,7 +18,7 @@ from app.actions import versions as versions_action
 from app.actions.engagements import actor_name
 from app.config import AppConfig
 from app.db import session_scope
-from app.domain.compass import CompassLink
+from app.domain.compass import CompassLink, CompassReadiness, ReadinessItem
 from app.domain.enums import SourceKind, VersionState
 from app.domain.graph import Graph, GraphElement
 from app.domain.models import ExportFile, VersionView
@@ -32,6 +32,7 @@ from app.repositories import sources as sources_repo
 from app.repositories import testing as testing_repo
 from app.repositories import versions as versions_repo
 from app.services import accountability, exports
+from app.services import compass_readiness as readiness_rules
 from app.services import compass_return as rules
 from app.services import grade as grade_rules
 from app.services import sop_register as register_rules
@@ -74,6 +75,7 @@ def _steps(graph: Graph, rights: dict[str, accountability.Rights],
     """The coded steps, their names and lanes hidden like every other text (§3.20: a role's name
     on the list of names to hide is shown as its replacement)."""
     roles = {r.id: hide(r.name) for r in graph.roles}
+    linked = {r.id: r.compass_role_ref or "" for r in graph.roles}
     out = []
     for e in exports.steps(exports.on_the_map(graph)):
         documents, interviews = _counts(e)
@@ -82,7 +84,7 @@ def _steps(graph: Graph, rights: dict[str, accountability.Rights],
             lane=roles.get(e.lane_role_id or "", ""),
             work_type=e.work_type, mechanism=e.decision.mechanism, provenance=e.provenance,
             documents=documents, interviews=interviews, knowledge_risk=e.k_risk,
-            rights=rights.get(e.id),
+            rights=rights.get(e.id), role_ref=linked.get(e.lane_role_id or "", ""),
         ))  # fmt: skip
     return [s for s in out if s.code]
 
@@ -235,3 +237,31 @@ def export(config: AppConfig, sessions: Sessions, version_id: str, fmt: str,
                             "relates_to": [link.pilot_ref, link.cluster_ref, *chosen]})  # fmt: skip
         filename = f"{re.sub(r'[^A-Za-z0-9-]+', '-', link.key).strip('-') or 'engagement'}_{name}"
         return Ok(ExportFile(filename=filename, media_type=media, content=content))
+
+
+def readiness(config: AppConfig, sessions: Sessions, version_id: str) -> Result[CompassReadiness]:
+    """DECISIONS 113: what each question of Eric's executive committee still lacks in this
+    version's return file. Read only; it never blocks the download."""
+    with session_scope(sessions) as session:
+        version = versions_repo.get(session, version_id)
+        if version is None:
+            return Err(ErrorKind.NOT_FOUND, versions_action.VERSION_MISSING)
+        graph = versions_action.build_graph(session, version_id)
+        assert graph is not None
+        steps = exports.steps(exports.on_the_map(graph))
+        summary = leadership_action.summary_of(config, session, version, graph)
+        roles = {r.id: r.name for r in engagements_repo.list_roles(session, version.engagement_id)}
+        entries = register_rules.entries(
+            sources_repo.list_for_engagement(session, version.engagement_id), roles,
+            date.today().isoformat())  # fmt: skip
+        differences = [
+            readiness_rules.Difference(reference=name, open=n)
+            for name, n in comparisons.open_differences_for(
+                config, session, version.engagement_id, version_id)
+        ]  # fmt: skip
+        uncited = len(register_rules.uncited_steps(steps))
+        found = readiness_rules.items(steps, summary, entries, uncited, differences)
+        return Ok(CompassReadiness(
+            version_id=version.id, version_label=version.label, state=version.state,
+            items=[ReadinessItem.model_validate(asdict(i)) for i in found],
+        ))  # fmt: skip

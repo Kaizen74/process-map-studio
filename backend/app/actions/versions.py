@@ -406,7 +406,13 @@ def _build_graph(
             pilot_ref=engagement.compass.pilot_ref if engagement.compass else None,
         ),
         roles=[
-            GraphRole(id=r.id, name=r.name, is_system=r.is_system, lane_order=r.lane_order)
+            GraphRole(
+                id=r.id,
+                name=r.name,
+                is_system=r.is_system,
+                lane_order=r.lane_order,
+                compass_role_ref=r.compass_role_ref,
+            )
             for r in roles
         ],
         phases=[
@@ -429,6 +435,7 @@ def _build_graph(
                 typical=e.typical,
                 provenance=e.provenance,
                 data_move=e.data_move,
+                data_check=hide(e.data_check),
             )
             for e in edges
         ],

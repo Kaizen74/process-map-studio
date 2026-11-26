@@ -384,6 +384,7 @@ def test_graph_layout_and_lint_endpoints(client: TestClient) -> None:
         "id", "from", "to", "kind", "label",
         "sequence_basis", "view_membership", "information_payload", "typical", "provenance",
         "data_move",
+        "data_check",
     }  # fmt: skip
     assert "Priya" not in graph.text and "I build the preliminary" not in graph.text
     layout = client.get(f"/api/versions/{job['target_id']}/layout")

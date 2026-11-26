@@ -81,7 +81,104 @@
         "refuted_by": "Anchor seats still absent two cycles after a growth decision."
       }
     ],
-    "country": ""
+    "country": "",
+    "roles": [
+      {
+        "ref": "RL-001",
+        "title": "Regional VP Cargo",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-002",
+        "title": "Cargo & Pharma Manager (cold-chain certified)",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-003",
+        "title": "Load Control / Weight & Balance Officer",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-004",
+        "title": "Hub Duty Controller (disruption)",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-005",
+        "title": "Executive Chef — Culinary Design",
+        "cluster_ref": "CAP-02"
+      },
+      {
+        "ref": "RL-006",
+        "title": "Food Safety & Quality Lead",
+        "cluster_ref": "CAP-02"
+      },
+      {
+        "ref": "RL-007",
+        "title": "Head, Analytics & AI",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-008",
+        "title": "Head, Data Engineering & Platform",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-009",
+        "title": "Core-system super-user",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-010",
+        "title": "People Analytics & Workforce Planning Lead",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-011",
+        "title": "Head of Pricing / Revenue Management",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-012",
+        "title": "Global Head, Commercial Excellence",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-013",
+        "title": "Bid & Solutions Architect",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-014",
+        "title": "VP Global Account Management",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-015",
+        "title": "Regional Managing Director",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-016",
+        "title": "Station Head / General Manager",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-017",
+        "title": "M&A / Integration Lead",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-018",
+        "title": "Organisation Design & Change Lead",
+        "cluster_ref": "CAP-06"
+      },
+      {
+        "ref": "RL-019",
+        "title": "Head of Talent Acquisition — specialist hiring",
+        "cluster_ref": "CAP-06"
+      }
+    ]
   },
   "link": {
     "key": "MERIDIAN",
@@ -101,7 +198,104 @@
     "ready": true,
     "generated_at": "2026-11-12T00:00:00.000Z",
     "country": "",
-    "process_owner": ""
+    "process_owner": "",
+    "roles": [
+      {
+        "ref": "RL-001",
+        "title": "Regional VP Cargo",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-002",
+        "title": "Cargo & Pharma Manager (cold-chain certified)",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-003",
+        "title": "Load Control / Weight & Balance Officer",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-004",
+        "title": "Hub Duty Controller (disruption)",
+        "cluster_ref": "CAP-01"
+      },
+      {
+        "ref": "RL-005",
+        "title": "Executive Chef — Culinary Design",
+        "cluster_ref": "CAP-02"
+      },
+      {
+        "ref": "RL-006",
+        "title": "Food Safety & Quality Lead",
+        "cluster_ref": "CAP-02"
+      },
+      {
+        "ref": "RL-007",
+        "title": "Head, Analytics & AI",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-008",
+        "title": "Head, Data Engineering & Platform",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-009",
+        "title": "Core-system super-user",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-010",
+        "title": "People Analytics & Workforce Planning Lead",
+        "cluster_ref": "CAP-03"
+      },
+      {
+        "ref": "RL-011",
+        "title": "Head of Pricing / Revenue Management",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-012",
+        "title": "Global Head, Commercial Excellence",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-013",
+        "title": "Bid & Solutions Architect",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-014",
+        "title": "VP Global Account Management",
+        "cluster_ref": "CAP-04"
+      },
+      {
+        "ref": "RL-015",
+        "title": "Regional Managing Director",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-016",
+        "title": "Station Head / General Manager",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-017",
+        "title": "M&A / Integration Lead",
+        "cluster_ref": "CAP-05"
+      },
+      {
+        "ref": "RL-018",
+        "title": "Organisation Design & Change Lead",
+        "cluster_ref": "CAP-06"
+      },
+      {
+        "ref": "RL-019",
+        "title": "Head of Talent Acquisition — specialist hiring",
+        "cluster_ref": "CAP-06"
+      }
+    ]
   },
   "testing": [
     {

@@ -5,7 +5,7 @@ import { seriousViolations } from "../axe";
 import sample from "../fixtures/compass_sample.json";
 import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp, type Handler } from "../renderApp";
 
-// The same process in another country (2026-11-13, Eric's brief; DECISIONS 98).
+// The same process in another unit (2026-11-13, Eric's brief; DECISIONS 98).
 afterEach(() => vi.unstubAllGlobals());
 
 const PREVIEW = sample.preview as HandoffPreview;
@@ -90,7 +90,7 @@ describe("the country on an engagement", () => {
       "PATCH /api/engagements/e1": () => ({ body: { ...plain, country: "Caldera" } }),
     });
     renderApp("/engagements/e1/setup");
-    const country = await screen.findByLabelText("Country");
+    const country = await screen.findByLabelText("Unit");
     fireEvent.change(country, { target: { value: "Caldera" } });
     fireEvent.click(screen.getByRole("button", { name: "Save scope" }));
     await screen.findByText("Scope saved.");
@@ -106,8 +106,8 @@ describe("the country on an engagement", () => {
       "PATCH /api/engagements/arden": () => ({ body: ARDEN }),
     });
     renderApp("/engagements/arden/setup");
-    expect(await screen.findByText("Country: Arden, from the Capability Compass hand-off.")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Country")).toBeNull();
+    expect(await screen.findByText("Unit: Arden, from the Capability Compass hand-off.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Unit")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save scope" }));
     await screen.findByText("Scope saved.");
     expect(calls.find((c) => c.key === "PATCH /api/engagements/arden")?.body).not.toHaveProperty("country");
@@ -166,7 +166,7 @@ describe("starting Belmar from Arden (DECISIONS 98)", () => {
   });
 });
 
-describe("Map this process in another country", () => {
+describe("Map this process in another unit", () => {
   function setup(published: boolean) {
     return fakeApi({
       "GET /api/settings": () => ({ body: SETTINGS }),
@@ -189,22 +189,22 @@ describe("Map this process in another country", () => {
     setup(false);
     renderApp("/engagements/e1/setup");
     expect(
-      await screen.findByText("Publish a version of this map first: another country starts from a published map."),
+      await screen.findByText("Publish a version of this map first: another unit starts from a published map."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Map this process in another country…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Map this process in another unit…" })).toBeNull();
   });
 
-  it("starts the other country with the country typed and the lanes ticked", async () => {
+  it("starts the other unit with the country typed and the lanes ticked", async () => {
     const { calls } = setup(true);
     renderApp("/engagements/e1/setup");
-    fireEvent.click(await screen.findByRole("button", { name: "Map this process in another country…" }));
-    const dialog = screen.getByRole("dialog", { name: "Map this process in another country" });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Start this country" }));
-    expect(within(dialog).getByText("Type the country this map will cover.")).toBeInTheDocument();
-    fireEvent.change(within(dialog).getByLabelText("Country"), { target: { value: "Belmar" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Map this process in another unit…" }));
+    const dialog = screen.getByRole("dialog", { name: "Map this process in another unit" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Start this unit" }));
+    expect(within(dialog).getByText("Type the unit this map will cover (a country, station, asset or business unit).")).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText("Unit"), { target: { value: "Belmar" } });
     fireEvent.click(within(dialog).getByRole("checkbox", { name: "Regional finance controller" }));
     expect(await seriousViolations(dialog)).toEqual([]);
-    fireEvent.click(within(dialog).getByRole("button", { name: "Start this country" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Start this unit" }));
     await screen.findByRole("heading", { level: 1, name: "Setup" });
     expect(calls.find((c) => c.key === "POST /api/engagements/e1/another-country")?.body).toEqual({
       country: "Belmar",

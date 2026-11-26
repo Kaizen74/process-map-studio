@@ -44,9 +44,9 @@ import { EngagementProblem } from "../engagement/EngagementProblem";
 import "./compare.css";
 
 /**
- * Compare countries (PRD §3.19; DECISIONS 98): two published maps of the same process in two
- * countries. Eric chooses the reference and the other country, confirms the step pairs, and classes
- * each difference the rules find. The app never says why two countries differ: the reason is his.
+ * Compare units (PRD §3.19; DECISIONS 98): two published maps of the same process in two
+ * countries. Eric chooses the reference and the other unit, confirms the step pairs, and classes
+ * each difference the rules find. The app never says why two units differ: the reason is his.
  */
 export function CompareScreen() {
   const { engagementId = "" } = useParams();
@@ -62,9 +62,9 @@ export function CompareScreen() {
   return (
     <main className="screen" aria-labelledby="compare-title">
       <div>
-        <h1 id="compare-title">Compare countries</h1>
+        <h1 id="compare-title">Compare units</h1>
         <p className="screen__intro">
-          Two published maps of the same process in two countries, step by step. Confirm which steps are the same
+          Two published maps of the same process in two units, step by step. Confirm which steps are the same
           work, then class each difference: Required, Chosen, Inherited or Not known yet. The reason is always
           yours; nothing here changes either map.
         </p>
@@ -118,7 +118,7 @@ function thisIsOtherByDefault(
 ): boolean {
   const known = existing.find((c) => [c.reference.engagement_id, c.other.engagement_id].includes(otherId));
   if (known) return known.other.engagement_id === hereId;
-  // "started from this map": the other country's map began from this one, so this one is the reference.
+  // "started from this map": the other unit's map began from this one, so this one is the reference.
   return candidates.find((c) => c.engagement_id === otherId)?.why !== "started from this map";
 }
 
@@ -147,7 +147,7 @@ function Chooser({
   if (candidates.length === 0) {
     return (
       <EmptyState
-        message="No other country maps this process yet. Start one from Setup with Map this process in another country, or from the other country's Capability Compass hand-off. Maps of different processes are never compared."
+        message="No other unit maps this process yet. Start one from Setup with Map this process in another unit, or from the other unit's Capability Compass hand-off. Maps of different processes are never compared."
         action={<Link to={engagementPath(engagementId, "setup")}>Go to Setup</Link>}
       />
     );
@@ -176,14 +176,14 @@ function Chooser({
             onChange={setReference}
           />
           <SelectField
-            label="Reference country"
+            label="Reference unit"
             value={thisIsOther ? "them" : "us"}
             options={[
               { value: "them", label: chosen ? label(chosen) : "The other map" },
               { value: "us", label: label(here) },
             ]}
             onChange={(v) => setThisIsOther(v === "them")}
-            help="The map the other country is compared with. Differences are reported back by the other country."
+            help="The map the other unit is compared with. Differences are reported back by the other unit."
           />
           {start.isError && (
             <p className="field__error" role="alert">
@@ -197,7 +197,7 @@ function Chooser({
           </div>
         </form>
       ) : (
-        <p className="field__help">None of the maps of this process in another country is published yet.</p>
+        <p className="field__help">None of the maps of this process in another unit is published yet.</p>
       )}
       {unpublished.length > 0 && (
         <p className="field__help">
@@ -291,7 +291,7 @@ function PairsCard({ comparison: c }: { comparison: Comparison }) {
   return (
     <Card
       title="Step pairs"
-      description="Proposed by fixed rules, each with its reason. Confirm the pairs that are the same work, choose another step, or mark a step as only in one country."
+      description="Proposed by fixed rules, each with its reason. Confirm the pairs that are the same work, choose another step, or mark a step as only in one unit."
     >
       <div>
         <Button onClick={suggest.start}>{suggest.running ? "Claude is suggesting…" : "Ask Claude to suggest pairs"}</Button>
@@ -446,7 +446,7 @@ function DifferencesCard({ comparison: c }: { comparison: Comparison }) {
     return (
       <Card title="Differences">
         <p className="field__help">
-          No difference yet. Differences appear once you confirm a pair or mark a step as only in one country.
+          No difference yet. Differences appear once you confirm a pair or mark a step as only in one unit.
         </p>
       </Card>
     );
@@ -555,7 +555,7 @@ function DifferenceRow({ comparisonId, difference: d }: { comparisonId: string; 
           }}
         >
           <fieldset className="role-picks">
-            <legend>Why do the two countries differ here?</legend>
+            <legend>Why do the two units differ here?</legend>
             {REASONS.map((r) => (
               <label key={r} className="radio-row">
                 <input type="radio" name={`reason-${d.key}`} checked={reason === r} onChange={() => setReason(r)} />

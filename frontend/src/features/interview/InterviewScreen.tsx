@@ -24,6 +24,7 @@ import { useTemplatePlans } from "../../hooks/useTemplates";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { QUESTION_ID_TIP } from "../../lib/templates";
 import { EngagementProblem } from "../engagement/EngagementProblem";
+import { ProbesSection } from "./ProbesSection";
 import "./interview.css";
 
 /** The server's refusal of a profile, as the form shows it. */
@@ -292,7 +293,14 @@ export function InterviewScreen() {
       <TabBar label="Interview" tabs={TABS} active={tab} onChange={setTab}>
         {tab === "templates" && <Templates />}
         {tab === "guide" &&
-          (engagement.data ? <Interviewees engagementId={engagementId} make={make} /> : <Skeleton height="96px" />)}
+          (engagement.data ? (
+            <>
+              <Interviewees engagementId={engagementId} make={make} />
+              <ProbesSection engagementId={engagementId} />
+            </>
+          ) : (
+            <Skeleton height="96px" />
+          ))}
         {tab === "coverage" && (
           <Coverage engagementId={engagementId} make={make} onStarted={() => setTab("guide")} />
         )}
