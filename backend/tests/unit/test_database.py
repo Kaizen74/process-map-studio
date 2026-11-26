@@ -544,3 +544,20 @@ def test_downgrade_of_0025_removes_only_the_owner_probes(migrated: Path) -> None
     assert before - tables() == {"owner_probes"}
     db.upgrade(migrated)
     assert "owner_probes" in tables()
+
+
+def test_downgrade_of_0026_removes_only_the_compass_role_and_the_check(migrated: Path) -> None:
+    def columns(table: str) -> set[str]:
+        engine = db.make_engine(migrated)
+        found = {c["name"] for c in inspect(engine).get_columns(table)}
+        engine.dispose()
+        return found
+
+    db.downgrade(migrated, "0026")
+    roles, edges = columns("roles"), columns("edges")
+    db.downgrade(migrated, "0025")
+    assert (roles - columns("roles"), edges - columns("edges")) == (
+        {"compass_role_ref"}, {"data_check"},
+    )  # fmt: skip
+    db.upgrade(migrated)
+    assert "data_check" in columns("edges")

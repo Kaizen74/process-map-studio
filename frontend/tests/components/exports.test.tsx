@@ -147,3 +147,17 @@ describe("the Exports screen (PRD §5.4, §7.3)", () => {
     expect(await seriousViolations(document.body)).toEqual([]);
   });
 });
+
+describe("the AI Org Advisory Workbench step file (DECISIONS 113)", () => {
+  it("is offered for the published version, joined on the step codes", async () => {
+    backend([version("p2", "v1.1", "published", "2026-09-28T10:00:00+00:00")]);
+    renderApp(PATH);
+    const card = await screen.findByRole("region", { name: "AI Org Advisory Workbench step file" });
+    expect(within(card).getByRole("link", { name: "Download CSV Workbench step file of v1.1" })).toHaveAttribute(
+      "href",
+      "/api/versions/p2/export/workbench",
+    );
+    expect(card).toHaveTextContent("for the Workbench to join on the step codes");
+    expect(card).toHaveTextContent("Role names only");
+  });
+});

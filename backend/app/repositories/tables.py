@@ -224,6 +224,8 @@ class Role(Row):
     aliases: Mapped[list[str]] = mapped_column(JSON, default=list)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
     lane_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # DECISIONS 113 (0026): the Capability Compass role this lane is (RL-014), from the hand-off.
+    compass_role_ref: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
 
 # --- Versions and the map ------------------------------------------------------------------
@@ -379,6 +381,8 @@ class Edge(Row):
     information_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
     # 0023 (DECISIONS 110): how the data moves at a handoff (B.57); null = not known.
     data_move: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    # DECISIONS 113 (0026): Eric's one line on what checks the data at this handoff.
+    data_check: Mapped[str] = mapped_column(Text, default="")
 
 
 class EvidenceLink(Row):

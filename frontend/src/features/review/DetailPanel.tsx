@@ -225,6 +225,7 @@ export function DetailPanel({
                     error: dataError ? messageOf(dataError) : null,
                     onSystem: (body) => systemOfRecord.mutate({ elementId: element.id, body }),
                     onMove: (edgeId, move) => dataMove.mutate({ edgeId, dataMove: move }),
+                    onCheck: (edgeId, check) => dataMove.mutate({ edgeId, check }),
                   }
                 : undefined
             }

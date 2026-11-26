@@ -120,6 +120,8 @@ export interface GraphEdge {
   provenance?: "O" | "I" | "R";
   /** §3.20 (B.57): how the data moves at a handoff; null = not known. */
   data_move?: DataMove | null;
+  /** DECISIONS 113: Eric's one line on what checks the data at this handoff ("" not recorded). */
+  data_check?: string;
 }
 
 export interface GraphRole {
@@ -127,6 +129,8 @@ export interface GraphRole {
   name: string;
   is_system: boolean;
   lane_order: number | null;
+  /** DECISIONS 113: the Capability Compass role this lane is (RL-014); null when not linked. */
+  compass_role_ref?: string | null;
 }
 
 export interface Graph {

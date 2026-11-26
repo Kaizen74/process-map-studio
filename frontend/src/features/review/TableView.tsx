@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/common";
 import { InlineEditor, StepTable } from "../../components/table";
+import { DataTable } from "./DataTable";
 import { useEditStep } from "../../hooks/useReview";
 import { fieldOf, messageOf } from "../../lib/errors";
 import { isTyping } from "../../lib/keys";
@@ -38,6 +39,8 @@ export function TableView({
   onAddStep,
 }: TableViewProps) {
   const [filter, setFilter] = useState<TableFilter>("all");
+  // DECISIONS 113: the data fields of every step, in one table.
+  const [dataFields, setDataFields] = useState(false);
   const [editing, setEditing] = useState<{ id: string; original: StepForm; form: StepForm } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
@@ -94,13 +97,25 @@ export function TableView({
   }
 
   const label = graph.elements.find((e) => e.id === editing?.id)?.label ?? "";
+  const toggle = (
+    <Button onClick={() => setDataFields((on) => !on)} aria-pressed={dataFields}>
+      {dataFields ? "Show the step fields" : "Show the data fields"}
+    </Button>
+  );
+  if (dataFields) {
+    return (
+      <div className="table-view">
+        <div className="table-view__actions">{toggle}</div>
+        <DataTable graph={graph} versionId={versionId} engagementId={engagementId} editable={editable} onSelect={onSelect} />
+      </div>
+    );
+  }
   return (
     <div className="table-view">
-      {editable && (
-        <div className="table-view__actions">
-          <Button onClick={onAddStep}>Add missing step</Button>
-        </div>
-      )}
+      <div className="table-view__actions">
+        {editable && <Button onClick={onAddStep}>Add missing step</Button>}
+        {toggle}
+      </div>
       <StepTable
         rows={tableRows(graph, filter)}
         filter={filter}

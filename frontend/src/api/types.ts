@@ -112,6 +112,14 @@ export interface CompassLink {
   country?: string;
   /** §3.20: the pilot's process owner as the hand-off names it; only offered, never set. */
   process_owner?: string;
+  /** DECISIONS 113: the hand-off's roles, to link a lane to (absent before). */
+  roles?: CompassRole[];
+}
+
+export interface CompassRole {
+  ref: string;
+  title: string;
+  cluster_ref: string;
 }
 
 /** An engagement mapping the same pilot of the same frame in another unit (DECISIONS 98). */
@@ -278,6 +286,8 @@ export interface Role {
   aliases: string[];
   is_system: boolean;
   lane_order: number | null;
+  /** DECISIONS 113: the Capability Compass role this lane is (RL-014); null when not linked. */
+  compass_role_ref?: string | null;
 }
 
 export interface RoleCreate {
@@ -286,7 +296,7 @@ export interface RoleCreate {
   is_system?: boolean;
 }
 
-export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system">> & { lane_order?: number };
+export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system" | "compass_role_ref">> & { lane_order?: number };
 
 export interface Source {
   id: string;

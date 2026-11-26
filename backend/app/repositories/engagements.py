@@ -260,6 +260,7 @@ def _role_view(row: Role) -> RoleView:
         aliases=list(row.aliases),
         is_system=row.is_system,
         lane_order=row.lane_order,
+        compass_role_ref=row.compass_role_ref,
     )
 
 
@@ -310,7 +311,7 @@ def update_role(session: Session, role_id: str, fields: dict[str, Any]) -> RoleV
     row = session.get(Role, role_id)
     if row is None:
         return None
-    for name in ("name", "aliases", "is_system"):
+    for name in ("name", "aliases", "is_system", "compass_role_ref"):
         if name in fields:
             setattr(row, name, fields[name])
     if "lane_order" in fields:

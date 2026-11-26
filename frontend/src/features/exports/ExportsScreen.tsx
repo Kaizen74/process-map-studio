@@ -307,6 +307,17 @@ export function ExportsScreen() {
             {settings.data?.reality_views_enabled === true && (
               <RealityPackCard versionId={chosen.id} versionLabel={chosen.label} />
             )}
+            <Card title="AI Org Advisory Workbench step file" className="export-card">
+              <p>
+                One row per step with its code (S-01, S-02 …), role, Capability Compass role where linked, phase, work
+                type, rule or judgment, work and waiting minutes and system of record, for the Workbench to join on the
+                step codes.
+              </p>
+              <p className="export-card__excluded">Role names only: no quotes, passages, images or names.</p>
+              <a className="btn btn--primary export-card__download" href={exportUrl(chosen.id, "workbench")} download>
+                Download CSV <span className="visually-hidden">Workbench step file of {chosen.label}</span>
+              </a>
+            </Card>
             {engagement.data?.compass && (
               <CompassReturnCard
                 engagementId={engagementId}

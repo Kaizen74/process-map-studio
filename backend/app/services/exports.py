@@ -694,6 +694,49 @@ def render_graph_json(data: ExportInput) -> str:
     return json.dumps(graph.model_dump(mode="json"), indent=2, ensure_ascii=False) + "\n"
 
 
+WORKBENCH_HEAD = [
+    "Engagement key", "Pilot", "Step code", "Step", "Kind", "Lane role", "Compass role",
+    "Phase", "Work type", "Rule or judgment", "Work min", "Wait min", "System of record",
+]  # fmt: skip
+MECHANISM_WORDS = {"rule_based": "rule", "judgment": "judgment"}
+
+
+def render_workbench_csv(data: ExportInput) -> str:
+    """DECISIONS 113: the step file for the AI Org Advisory Workbench, one row per step on the
+    map, joined on the `S-nn` code; role names only, a byte-order mark first as for the RACI."""
+    graph = on_the_map(data.graph)
+    roles = {r.id: r for r in graph.roles}
+    phases = {p.id: p.name for p in graph.phases}
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\r\n")
+    writer.writerow(WORKBENCH_HEAD)
+
+    def minutes(value: float | None) -> str:
+        return "" if value is None else f"{value:g}"
+
+    def system(e: GraphElement) -> str:
+        found = e.system_of_record
+        if found is None:
+            return ""
+        if found.status == "none":
+            return "none: paper or memory"
+        if found.status == "other":
+            return found.other
+        role = roles.get(found.role_id or "")
+        return role.name if role else ""
+
+    for e in steps(graph):
+        lane = roles.get(e.lane_role_id or "")
+        writer.writerow([
+            graph.process.engagement_key or "", graph.process.pilot_ref or "", e.code or "",
+            e.label, KINDS.get(e.kind, e.kind), lane.name if lane else "",
+            (lane.compass_role_ref or "") if lane else "", phases.get(e.phase_id or "", ""),
+            e.work_type or "", MECHANISM_WORDS.get(e.decision.mechanism, ""),
+            minutes(e.time.work_min), minutes(e.time.wait_min), system(e),
+        ])  # fmt: skip
+    return "\ufeff" + buffer.getvalue()
+
+
 def render_raci_csv(data: ExportInput) -> str:
     """Steps by roles; a byte-order mark first so spreadsheet programs read the accents right."""
     graph = on_the_map(data.graph)

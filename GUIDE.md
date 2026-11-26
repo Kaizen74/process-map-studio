@@ -282,6 +282,11 @@ A typical engagement, start to finish (each step has its own section above):
 9. After the SME session, **Reopen as new draft** on **Published**, make the changes and publish the next version.
 
 ## What changed recently
+- 2026-11-26 (later): **Linking the apps:**
+  - **Each lane's Compass role.** On **Setup**, **Roles and lanes**, an engagement started from a hand-off offers **Capability Compass role of …** under each lane (the pilot's cluster first). The return file's steps in that lane then name it, so the Compass and the Workbench can match the role.
+  - **All the data fields in one table.** On **Review**, **Table**, **Show the data fields** lists every step with the decider named in the documents, the system of record and how data moves at each handoff. Choose from a list and it is saved at once.
+  - **What checks a handoff.** In a step's **Data** section, each handoff shows what moves and, once you record it, what checks it (one line, for example "weight checked against the booking").
+  - **A step file for the Workbench.** On **Exports**, **AI Org Advisory Workbench step file** downloads one row per step with its code, role, Compass role, work type, rule or judgment, times and system, for the Workbench to import.
 - 2026-11-26: **Getting ready for the Capability Compass, and your own probes:**
   - **Ready to send?** On **Exports**, the Capability Compass return file card lists what each question still lacks: the decider named in the documents, systems of record, how data moves, times, SOP owners, the process owner and any differences not yet classed. Each line says **Done**, **To do** or **For information**, with a link to where you record it. It never stops the download: what isn't recorded is simply left out of the file.
   - **Your probes.** On **Interview**, **Guide** tab, **Your probes** takes questions from your desk research, one per line, with an optional note of what they are about (for example "Step 2, build-up planning"). They appear beside every guide, apart from its questions; they are never evidence and never leave the app.

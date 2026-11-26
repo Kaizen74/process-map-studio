@@ -75,6 +75,7 @@ def _steps(graph: Graph, rights: dict[str, accountability.Rights],
     """The coded steps, their names and lanes hidden like every other text (§3.20: a role's name
     on the list of names to hide is shown as its replacement)."""
     roles = {r.id: hide(r.name) for r in graph.roles}
+    linked = {r.id: r.compass_role_ref or "" for r in graph.roles}
     out = []
     for e in exports.steps(exports.on_the_map(graph)):
         documents, interviews = _counts(e)
@@ -83,7 +84,7 @@ def _steps(graph: Graph, rights: dict[str, accountability.Rights],
             lane=roles.get(e.lane_role_id or "", ""),
             work_type=e.work_type, mechanism=e.decision.mechanism, provenance=e.provenance,
             documents=documents, interviews=interviews, knowledge_risk=e.k_risk,
-            rights=rights.get(e.id),
+            rights=rights.get(e.id), role_ref=linked.get(e.lane_role_id or "", ""),
         ))  # fmt: skip
     return [s for s in out if s.code]
 

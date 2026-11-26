@@ -63,11 +63,12 @@ export const setSystemOfRecord = (
 ) => request<ElementDetail>(`/elements/${enc(elementId)}/system-of-record`, { method: "PUT", body });
 
 /** §3.20: how the data moves at a handoff (PUT …/edges/{edge_id}/data-move); null = not known. */
-export const setDataMove = (versionId: string, edgeId: string, dataMove: DataMove | null) =>
-  request<GraphEdge>(`/versions/${enc(versionId)}/edges/${enc(edgeId)}/data-move`, {
-    method: "PUT",
-    body: { data_move: dataMove },
-  });
+/** A field left out is left as it is (DECISIONS 113: `check` is what checks the data). */
+export const setDataMove = (
+  versionId: string,
+  edgeId: string,
+  body: { data_move?: DataMove | null; check?: string },
+) => request<GraphEdge>(`/versions/${enc(versionId)}/edges/${enc(edgeId)}/data-move`, { method: "PUT", body });
 
 /** Add a missing step: Eric's own, observed with passages or recommended with a reference. */
 export const addStep = (versionId: string, body: NewStepBody) =>

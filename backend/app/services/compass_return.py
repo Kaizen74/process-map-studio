@@ -83,6 +83,7 @@ class Step:
     interviews: int
     knowledge_risk: str = ""
     rights: Rights | None = None  # §3.20: decisions and approvals only
+    role_ref: str = ""  # DECISIONS 113: the lane's Capability Compass role (RL-014), if linked
 
 
 @dataclass(frozen=True, slots=True)
@@ -260,6 +261,8 @@ def findings(data: Inputs) -> list[dict[str, object]]:
         topic = DECISION_RIGHT if s.kind in DECIDING else WAY_OF_WORKING
         add(s.code, "step", s.label, detail, grade, "", note, topic=topic,
             **decision_fields(s.rights if topic == DECISION_RIGHT else None))  # fmt: skip
+        if s.role_ref and s.role_ref not in relates:  # DECISIONS 113: the lane's Compass role
+            out[-1]["relates_to"] = [*relates, s.role_ref]
     for d in data.discrepancies:
         grades[d.code] = d.grade
         verdict = DISCREPANCY_VERDICTS.get(d.verdict or "", "")

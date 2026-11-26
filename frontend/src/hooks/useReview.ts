@@ -177,8 +177,11 @@ export function useSetSystemOfRecord(versionId: string, engagementId: string) {
 export function useSetDataMove(versionId: string, engagementId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ edgeId, dataMove }: { edgeId: string; dataMove: DataMove | null }) =>
-      setDataMove(versionId, edgeId, dataMove),
+    mutationFn: ({ edgeId, dataMove, check }: { edgeId: string; dataMove?: DataMove | null; check?: string }) =>
+      setDataMove(versionId, edgeId, {
+        ...(dataMove !== undefined ? { data_move: dataMove } : {}),
+        ...(check !== undefined ? { check } : {}),
+      }),
     onSuccess: () => refreshReview(client, versionId, engagementId),
   });
 }

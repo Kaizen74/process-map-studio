@@ -51,7 +51,12 @@ export function SetupScreen() {
             onRetry={() => void roles.refetch()}
           />
         ) : roles.data ? (
-          <RolesCard engagementId={engagementId} roles={roles.data} />
+          <RolesCard
+            engagementId={engagementId}
+            roles={roles.data}
+            compassRoles={engagement.data?.compass?.roles ?? []}
+            clusterRef={engagement.data?.compass?.cluster_ref ?? ""}
+          />
         ) : (
           <Card title="Roles and lanes">
             <div className="stack" aria-busy="true">

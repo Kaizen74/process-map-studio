@@ -80,7 +80,8 @@ def test_a_role_nothing_uses_is_removed_and_the_lanes_close_up(
                                   ("Captain", 4)]  # fmt: skip
     [row] = [r for r in audit_actions(client, eid) if r["action"] == "Removed role"]
     assert row["before"] == {"name": "Load control lead", "aliases": ["Load Control Lead"],
-                             "is_system": False, "lane_order": 2}  # fmt: skip
+                             "is_system": False, "lane_order": 2,
+                             "compass_role_ref": None}  # fmt: skip
     again = client.delete(f"/api/roles/{built.roles['Load control lead']}")
     assert again.status_code == 404
     assert again.json()["error"]["message"] == "That role doesn't exist. It may have been removed."

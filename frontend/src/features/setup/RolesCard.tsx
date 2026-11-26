@@ -1,6 +1,6 @@
 import { useId, useState, type DragEvent, type FormEvent } from "react";
-import type { Role } from "../../api/types";
-import { Button, Card, CheckboxField, Chip, ChipField, Dialog, EmptyState, TextField } from "../../components/common";
+import type { CompassRole, Role } from "../../api/types";
+import { Button, Card, CheckboxField, Chip, ChipField, Dialog, EmptyState, SelectField, TextField } from "../../components/common";
 import { useToast } from "../../components/shell";
 import { useCreateRole, useDeleteRole, useUpdateRole } from "../../hooks/useRoles";
 import { messageOf } from "../../lib/errors";
@@ -49,7 +49,21 @@ function RoleForm({ initial, submitLabel, pending, serverError, onSubmit, onCanc
 }
 
 /** Roles and lanes (PRD §5.4 Setup): lane order, aliases, system roles, add role, lane preview. */
-export function RolesCard({ engagementId, roles }: { engagementId: string; roles: readonly Role[] }) {
+export function RolesCard({
+  engagementId,
+  roles,
+  compassRoles = [],
+  clusterRef = "",
+}: {
+  engagementId: string;
+  roles: readonly Role[];
+  /** DECISIONS 113: the hand-off's roles a lane may be linked to, the pilot's cluster first. */
+  compassRoles?: readonly CompassRole[];
+  clusterRef?: string;
+}) {
+  const offered = [...compassRoles].sort(
+    (a, b) => Number(b.cluster_ref === clusterRef) - Number(a.cluster_ref === clusterRef),
+  );
   const create = useCreateRole(engagementId);
   const update = useUpdateRole(engagementId);
   const remove = useDeleteRole(engagementId);
@@ -165,6 +179,23 @@ export function RolesCard({ engagementId, roles }: { engagementId: string; roles
                           patch(role, { is_system: checked }, checked ? `${role.name} is a system role.` : `${role.name} is a person's role.`)
                         }
                       />
+                      {offered.length > 0 && !role.is_system && (
+                        <SelectField
+                          label={`Capability Compass role of ${role.name}`}
+                          value={role.compass_role_ref ?? ""}
+                          options={[
+                            { value: "", label: "Not linked" },
+                            ...offered.map((r) => ({ value: r.ref, label: `${r.ref} · ${r.title}` })),
+                          ]}
+                          onChange={(ref) =>
+                            patch(
+                              role,
+                              { compass_role_ref: ref || null },
+                              ref ? `${role.name} is linked to ${ref}.` : `${role.name} is no longer linked.`,
+                            )
+                          }
+                        />
+                      )}
                     </div>
                     <div className="role-row__actions">
                       {index > 0 && (

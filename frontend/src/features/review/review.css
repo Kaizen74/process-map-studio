@@ -158,3 +158,20 @@
   outline: none;
   box-shadow: var(--shadow-selection);
 }
+
+/* DECISIONS 113: the data fields table. */
+.data-table__handoffs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-4);
+}
+.data-table__handoff {
+  display: grid;
+  gap: var(--space-4);
+}
+.data-table__to {
+  font-size: var(--text-label);
+  color: var(--ink-3);
+}
