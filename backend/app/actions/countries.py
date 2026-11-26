@@ -26,9 +26,9 @@ from app.services import compass as compass_service
 Sessions = sessionmaker[Session]
 
 NOT_PUBLISHED = (
-    "Publish a version of this engagement first: another country starts from a published map."
+    "Publish a version of this engagement first: another unit starts from a published map."
 )
-NO_COUNTRY = "Type the country this map will cover."
+NO_COUNTRY = "Type the unit this map will cover (a country, station, asset or business unit)."
 SAME_COUNTRY = "This engagement already covers {country}."
 NOT_THESE_ROLES = "Choose roles of this engagement."
 

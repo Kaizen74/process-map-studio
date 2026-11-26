@@ -400,9 +400,19 @@ class SopCounts(BaseModel):
     uncontrolled: int
 
 
+class SopMapLine(BaseModel):
+    """DECISIONS 113: on the map Eric is working on, the steps citing no SOP or manual."""
+
+    version_label: str
+    steps: int
+    uncited: int
+    uncited_ids: list[str]
+
+
 class SopRegister(BaseModel):
     counts: SopCounts
     entries: list[SopEntry]
+    map: SopMapLine | None = None
 
 
 class SegmentView(BaseModel):

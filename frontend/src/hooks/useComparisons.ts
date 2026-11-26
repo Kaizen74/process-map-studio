@@ -52,7 +52,7 @@ export function useStartComparison(engagementId: string) {
 }
 
 /**
- * The lists of comparisons, on both countries' screens, carry each comparison's counts: asked again
+ * The lists of comparisons, on both units' screens, carry each comparison's counts: asked again
  * after every change so they keep up with the comparison shown (Eric, 2026-11-14).
  */
 function refreshLists(client: QueryClient) {

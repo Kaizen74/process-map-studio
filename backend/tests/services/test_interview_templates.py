@@ -118,7 +118,7 @@ def test_blank_rows_for_the_role_module_and_reflective_probes() -> None:
 
 LAYOUT = [
     r"^# (Landscape|Practice|Follow-up) interview template$",  # 1 title
-    r"^Question bank v1\.0 · Process Map Studio$",  # 1 version stamp
+    r"^Question bank v1\.1 · Process Map Studio$",  # 1 version stamp
     r"^## Interview details$",  # 2 header table
     r"^\*\*\[RECORD THE SESSION — confirm consent\]\*\*$",  # 3 opener
     r"^## Minute plan \(\d+ min\)$",  # 4
@@ -192,7 +192,7 @@ def test_summaries_for_the_screens() -> None:
     ]  # fmt: skip
     assert [sum(p.minutes for p in s.plan) for s in summaries] == [60, 60, 30]
     assert [s.question_count for s in summaries] == [16, 45, 13]
-    assert {s.bank_version for s in summaries} == {"1.0"}
+    assert {s.bank_version for s in summaries} == {"1.1"}
 
 
 def test_file_names() -> None:
@@ -247,7 +247,7 @@ def test_the_word_file_reopens_cleanly_with_the_same_content(kind: InterviewType
         wording_ = bank().question(question_id).wording
         assert wording_ in text, question_id
     assert sum(p.text.startswith("☐ ") for p in document.paragraphs) == 14  # item 7
-    assert document.paragraphs[1].text == "Question bank v1.0 · Process Map Studio"
+    assert document.paragraphs[1].text == "Question bank v1.1 · Process Map Studio"
     footer = document.sections[0].footer.paragraphs[0].text
     assert footer.startswith("Say or note the question ID (e.g. [M2.2]) when you ask it")
     assert document.sections[0].page_width > document.sections[0].page_height  # landscape

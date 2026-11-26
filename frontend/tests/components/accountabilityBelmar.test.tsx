@@ -7,7 +7,7 @@ import { handoffsFrom, raciCounts } from "../../src/lib/accountability";
 import { deviationLine, type Comparison } from "../../src/lib/comparisons";
 import type { LeadershipView, ProcessSummary } from "../../src/lib/leadership";
 import type { Graph } from "../../src/lib/mapTypes";
-import { sopCountsLine } from "../../src/lib/sources";
+import { sopCountsLine, uncitedLine } from "../../src/lib/sources";
 import { seriousViolations } from "../axe";
 import sample from "../fixtures/accountability_sample.json";
 
@@ -41,9 +41,12 @@ describe("the Belmar fixture on the screens", () => {
     expect(await seriousViolations(container)).toEqual([]);
   });
 
-  it("test 8: the Sources line", () => {
+  it("test 8: the Sources line, and the steps citing no SOP or manual (DECISIONS 113)", () => {
     expect(sopCountsLine(REGISTER.counts)).toBe(
       "2 SOPs · 1 without an owner · 1 with nobody to update them · 0 review overdue · 1 uncontrolled",
+    );
+    expect(uncitedLine(REGISTER.map as NonNullable<SopRegister["map"]>)).toBe(
+      "On the current map (v1.0): 2 of 11 steps cite no SOP or manual.",
     );
   });
 

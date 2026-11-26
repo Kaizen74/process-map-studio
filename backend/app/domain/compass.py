@@ -131,3 +131,21 @@ class TestingPatch(BaseModel):
     note: str | None = None
     text: str | None = None
     refuted_by: str | None = None
+
+
+class ReadinessItem(BaseModel):
+    """DECISIONS 113: one line of "Ready to send to the Capability Compass"."""
+
+    key: str
+    text: str
+    done: int | None
+    total: int | None
+    complete: bool | None  # None: shown for information
+    screen: str  # the nav key where it is recorded
+
+
+class CompassReadiness(BaseModel):
+    version_id: str
+    version_label: str
+    state: str
+    items: list[ReadinessItem]

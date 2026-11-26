@@ -45,7 +45,7 @@ export function NewEngagementDialog({ open, onClose }: { open: boolean; onClose:
   const [scope, setScope] = useState<Scope>({ process_name: "", process_kpi: "", industry: "" });
   const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());
   const pilot = handoff?.found.pilots.find((p) => p.ref === pilotRef) ?? null;
-  // DECISIONS 98: the same pilot already mapped in another country, and whether to start from it.
+  // DECISIONS 98: the same pilot already mapped in another unit, and whether to start from it.
   const [referenceId, setReferenceId] = useState("");
   const reference = useEngagement(referenceId || undefined).data;
   const referenceLanes = (useRoles(referenceId).data ?? []).map((r) => r.name);
@@ -105,7 +105,7 @@ export function NewEngagementDialog({ open, onClose }: { open: boolean; onClose:
     const body: EngagementCreate =
       handoff && pilot && fromReference
         ? {
-            // The other country's process name, trigger, end point, KPI, in-scope roles and
+            // The other unit's process name, trigger, end point, KPI, in-scope roles and
             // conventions are copied by the backend (DECISIONS 98); the lanes are those ticked.
             name: name.trim(),
             industry: scope.industry.trim(),
@@ -212,7 +212,7 @@ export function NewEngagementDialog({ open, onClose }: { open: boolean; onClose:
             <legend>{sameProcessQuestion(sameProcess, pilot.ref, pilot.process_name)}</legend>
             <p className="field__help">
               Yes copies its process name, trigger, end point, KPI, in-scope roles, conventions and the lanes you tick.
-              No document, transcript, map or code is copied: this country has its own sources.
+              No document, transcript, map or code is copied: this unit has its own sources.
             </p>
             {sameProcess.map((m) => (
               <label key={m.engagement_id} className="radio-row">
@@ -283,7 +283,7 @@ export function NewEngagementDialog({ open, onClose }: { open: boolean; onClose:
                 <legend>Roles to create as lanes</legend>
                 <p className="field__help">
                   {fromReference
-                    ? `The lanes of ${reference?.name ?? "the other country"}. Untick any this country doesn't have.`
+                    ? `The lanes of ${reference?.name ?? "the other unit"}. Untick any this unit doesn't have.`
                     : "Untick any this map doesn't need. You can add or remove roles later."}
                 </p>
                 {lanes.map((role) => (

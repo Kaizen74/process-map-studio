@@ -6,7 +6,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 
 from app.actions import compass, compass_return
-from app.domain.compass import HandoffIn, HandoffPreview, TestingCreate, TestingItem, TestingPatch
+from app.domain.compass import (
+    CompassReadiness,
+    HandoffIn,
+    HandoffPreview,
+    TestingCreate,
+    TestingItem,
+    TestingPatch,
+)
 from app.routers.http import unwrap
 
 router = APIRouter(prefix="/api", tags=["compass"])
@@ -54,3 +61,9 @@ def export_compass_return(
         media_type=file.media_type,
         headers={"Content-Disposition": f'attachment; filename="{file.filename}"'},
     )
+
+
+@router.get("/versions/{version_id}/compass-readiness")
+def compass_readiness(version_id: str, request: Request) -> CompassReadiness:
+    state = request.app.state
+    return unwrap(compass_return.readiness(state.config, state.sessions, version_id))

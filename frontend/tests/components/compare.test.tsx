@@ -5,7 +5,7 @@ import { seriousViolations } from "../axe";
 import sample from "../fixtures/comparison_sample.json";
 import { ENGAGEMENT, READINESS, SETTINGS, fakeApi, renderApp, type Handler } from "../renderApp";
 
-// Compare countries (2026-11-13, Eric's brief §4.3-4.5; DECISIONS 98), on the backend's own output.
+// Compare units (2026-11-13, Eric's brief §4.3-4.5; DECISIONS 98), on the backend's own output.
 afterEach(() => vi.unstubAllGlobals());
 
 const CANDIDATES = sample.candidates as Candidate[];
@@ -34,7 +34,7 @@ function rowOf(title: string): HTMLElement {
   return row;
 }
 
-describe("Compare countries", () => {
+describe("Compare units", () => {
   it("lists the pairs in process order, each code with its country, and slims the buttons once decided", async () => {
     backend();
     renderApp(`${PATH}?comparison=id-3`);
@@ -50,7 +50,7 @@ describe("Compare countries", () => {
       "Arden S-05 Legal review of terms",
       "Arden S-06 Send the renewal offer",
     ]);
-    // The same code names different steps in each country, so the country is always shown.
+    // The same code names different steps in each unit, so the country is always shown.
     const credit = rows[4] as HTMLElement;
     expect(within(credit).getByText("Belmar S-05 Check the credit limit")).toBeInTheDocument();
     // A decided pair offers only Clear and Choose another step.
@@ -61,7 +61,7 @@ describe("Compare countries", () => {
     expect(within(credit).queryByRole("button", { name: /^Only in/ })).toBeNull();
   });
 
-  it("an undecided proposal still offers Confirm and Only in each country", async () => {
+  it("an undecided proposal still offers Confirm and Only in each unit", async () => {
     const proposed = {
       ...VIEW,
       pairs: VIEW.pairs.map((p, i) => (i === 0 ? { ...p, status: "proposed" as const } : p)),
@@ -95,14 +95,14 @@ describe("Compare countries", () => {
   it("says there is nothing to compare yet and where to start", async () => {
     backend({ "GET /api/engagements/id-4/comparison-candidates": () => ({ body: [] }) });
     renderApp(PATH);
-    expect(await screen.findByText(/No other country maps this process yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No other unit maps this process yet/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Setup" })).toHaveAttribute("href", "/engagements/id-4/setup");
   });
 
   // Eric, 2026-11-14: the reference choice starts on the country the other map began from (or
   // the existing comparison's reference), on either country's screen.
   const reference = async () => {
-    const field = (await screen.findByLabelText("Reference country")) as HTMLSelectElement;
+    const field = (await screen.findByLabelText("Reference unit")) as HTMLSelectElement;
     return field.selectedOptions[0]?.textContent ?? "";
   };
   const ARDEN = { ...ENGAGEMENT, id: "id-4", name: VIEW.reference.name, country: "Arden" };
@@ -149,7 +149,7 @@ describe("Compare countries", () => {
   it("keeps Eric's own choice of reference", async () => {
     backend({ "GET /api/engagements/id-4/comparisons": () => ({ body: [] }) });
     renderApp(PATH);
-    fireEvent.change(await screen.findByLabelText("Reference country"), { target: { value: "us" } });
+    fireEvent.change(await screen.findByLabelText("Reference unit"), { target: { value: "us" } });
     expect(await reference()).toBe(`Belmar · ${BELMAR.name}`);
   });
 

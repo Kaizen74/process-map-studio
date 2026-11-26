@@ -1516,7 +1516,16 @@
         "overdue": false,
         "older": false
       }
-    ]
+    ],
+    "map": {
+      "version_label": "v1.0",
+      "steps": 11,
+      "uncited": 2,
+      "uncited_ids": [
+        "id-43",
+        "id-48"
+      ]
+    }
   },
   "leadership": {
     "version": {

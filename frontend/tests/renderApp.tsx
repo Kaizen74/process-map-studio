@@ -48,7 +48,7 @@ export const TEMPLATE_PLANS = [
       { label: "Close (M7.1, M7.5, M7.6)", minutes: 4 },
     ],
     question_count: 16,
-    bank_version: "1.0",
+    bank_version: "1.1",
   },
   {
     type: "practice",
@@ -78,7 +78,7 @@ export const TEMPLATE_PLANS = [
       { label: "M7 — Close: ask only what is still missing", minutes: 4 },
     ],
     question_count: 45,
-    bank_version: "1.0",
+    bank_version: "1.1",
   },
   {
     type: "follow_up",
@@ -92,7 +92,7 @@ export const TEMPLATE_PLANS = [
       { label: "Close", minutes: 6 },
     ],
     question_count: 13,
-    bank_version: "1.0",
+    bank_version: "1.1",
   },
 ];
 

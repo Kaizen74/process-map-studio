@@ -145,6 +145,16 @@ class RedactionTerm(Row):
     origin: Mapped[str] = mapped_column(String(32))
 
 
+class OwnerProbe(Row):
+    """Eric's own suggested probe for interviews (0025; DECISIONS 113): offered beside a guide,
+    never a question of the guide, a claim, a step or a source; never sent to AI or exported."""
+
+    __tablename__ = "owner_probes"
+    engagement_id: Mapped[str] = fk("engagements.id")
+    text: Mapped[str] = mapped_column(Text)
+    about: Mapped[str] = mapped_column(Text, default="")
+
+
 class TestingItem(Row):
     """What we are testing (0020): a design principle from the hand-off or a hypothesis Eric
     added, with the verdict he sets and the step or discrepancy codes behind it."""

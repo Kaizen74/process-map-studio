@@ -87,7 +87,7 @@ def test_only_the_same_process_is_offered_and_compared(countries: Countries) -> 
     assert different.status_code == 409
     assert said(different) == (
         "These maps describe different processes (VS-01 and Load control). Only maps of the "
-        "same process in two countries are compared."
+        "same process in two units are compared."
     )
     same = c.client.post(
         "/api/comparisons",

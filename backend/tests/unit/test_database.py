@@ -36,6 +36,8 @@ PRD_TABLES = {
     "country_comparisons",
     "country_pairs",
     "country_differences",
+    # Eric's own suggested probes (migration 0025, DECISIONS 113).
+    "owner_probes",
 }  # fmt: skip
 # Tables added after 0001 that the PRD table doesn't list (see DECISIONS.md).
 # 0004: the sources each draft was made from; 0008: the leadership view's decision lines.
@@ -527,3 +529,18 @@ def test_downgrade_of_0024_removes_only_the_sop_title(migrated: Path) -> None:
     assert before - columns() == {"title"}
     db.upgrade(migrated)
     assert "title" in columns()
+
+
+def test_downgrade_of_0025_removes_only_the_owner_probes(migrated: Path) -> None:
+    def tables() -> set[str]:
+        engine = db.make_engine(migrated)
+        found = set(inspect(engine).get_table_names())
+        engine.dispose()
+        return found
+
+    db.downgrade(migrated, "0025")
+    before = tables()
+    db.downgrade(migrated, "0024")
+    assert before - tables() == {"owner_probes"}
+    db.upgrade(migrated)
+    assert "owner_probes" in tables()

@@ -12,6 +12,7 @@ import {
 import { CheckGlyph } from "../../components/quality";
 import { PackDownloads } from "../../components/reality";
 import { useComparisons } from "../../hooks/useComparisons";
+import { useCompassReadiness } from "../../hooks/useCompass";
 import { useEngagement } from "../../hooks/useEngagements";
 import { useGapAnalyses } from "../../hooks/useGap";
 import { useSettings } from "../../hooks/useSettings";
@@ -19,7 +20,7 @@ import { useVersion, useVersions } from "../../hooks/useVersions";
 import { engagementPath } from "../../lib/engagementSteps";
 import { referenceNote, versionNotes } from "../../lib/comparisons";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
-import type { CompassLink } from "../../api/types";
+import type { CompassLink, NavKey } from "../../api/types";
 import { EXCLUDED, EXPORTS, PACK_EXCLUDED, RETURN_EXCLUDED, compassReturnUrl, exportUrl } from "../../lib/exports";
 import { formatDate } from "../../lib/format";
 import { MODE_LABELS, exportUrl as gapExportUrl } from "../../lib/gap";
@@ -100,7 +101,7 @@ function CompassReturnCard({
       <p>
         What this version found, under engagement key <span className="mono">{link.key}</span>: each step with its
         work type, each discrepancy with its figure, each intent statement, the knowledge risks and your verdicts on
-        what is being tested, each with its grade. When this country was compared with another on Compare countries,
+        what is being tested, each with its grade. When this unit was compared with another on Compare units,
         the differences you classed or kept are added, with your reasons.
       </p>
       {asReference && <p>{asReference}</p>}
@@ -108,7 +109,7 @@ function CompassReturnCard({
         n.kind === "refresh" ? (
           <p key={`${n.reference}-${n.label}`}>
             The comparison with {n.reference} is on {n.label}. Refresh it on{" "}
-            <Link to={engagementPath(engagementId, "compare")}>Compare countries</Link> to add its differences to this
+            <Link to={engagementPath(engagementId, "compare")}>Compare units</Link> to add its differences to this
             file.
           </p>
         ) : (
@@ -117,6 +118,7 @@ function CompassReturnCard({
           </p>
         ),
       )}
+      <ReadinessList engagementId={engagementId} versionId={versionId} />
       <p className="export-card__excluded">{RETURN_EXCLUDED}</p>
       <p>
         Relates to: <span className="mono">{relates.join(", ")}</span>
@@ -150,6 +152,59 @@ function CompassReturnCard({
 }
 
 /** The Reality pack (PRD §3.18.6, §7.4; P13d), offered while the Reality views are switched on. */
+const SCREEN_WORDS: Readonly<Record<string, string>> = {
+  review: "Review",
+  sources: "Sources",
+  setup: "Setup",
+  compare: "Compare units",
+};
+
+/**
+ * Ready to send to the Capability Compass (DECISIONS 113): what each question of the executive
+ * committee still lacks, worked out by the backend. It never blocks the download: what isn't
+ * recorded is left out of the file.
+ */
+function ReadinessList({ engagementId, versionId }: { engagementId: string; versionId: string }) {
+  const readiness = useCompassReadiness(versionId);
+  if (readiness.isPending) return <Skeleton height="64px" />;
+  if (readiness.isError) {
+    return (
+      <p className="export-card__excluded" role="alert">
+        What is still missing couldn&apos;t be worked out: {messageOf(readiness.error)}
+      </p>
+    );
+  }
+  const items = readiness.data.items;
+  const draftOnly = readiness.data.state !== "draft" && items.some((i) => i.screen === "review" && i.complete === false);
+  return (
+    <section className="readiness" aria-labelledby="readiness-title">
+      <h3 id="readiness-title" className="readiness__title">
+        Ready to send?
+      </h3>
+      <ul className="readiness__list">
+        {items.map((item) => (
+          <li key={`${item.key}-${item.text}`} className={`readiness__item readiness__item--${state(item.complete)}`}>
+            <span className="readiness__state">{STATE_WORDS[state(item.complete)]}</span>
+            <span>{item.text}</span>
+            {item.complete === false && SCREEN_WORDS[item.screen] && (
+              <Link to={engagementPath(engagementId, item.screen as NavKey)}>{SCREEN_WORDS[item.screen]}</Link>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="export-card__excluded">
+        Nothing here stops the download: what isn&apos;t recorded is left out of the file, never sent as 0.
+        {draftOnly &&
+          " Who decides, systems and how data moves are recorded on a draft: reopen this version on Published, record them on Review and publish again."}
+      </p>
+    </section>
+  );
+}
+
+type ItemState = "done" | "todo" | "info";
+const STATE_WORDS: Readonly<Record<ItemState, string>> = { done: "Done", todo: "To do", info: "For information" };
+const state = (complete: boolean | null): ItemState => (complete === null ? "info" : complete ? "done" : "todo");
+
 function RealityPackCard({ versionId, versionLabel }: { versionId: string; versionLabel: string }) {
   return (
     <Card title="Reality pack (.html)" className="export-card">

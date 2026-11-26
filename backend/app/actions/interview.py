@@ -32,6 +32,9 @@ from app.domain.interview import (
     GuideSummary,
     GuideView,
     InterviewDocument,
+    OwnerProbe,
+    OwnerProbePatch,
+    OwnerProbesIn,
     ProfileInput,
     ProfilePatch,
     ProfileView,
@@ -46,6 +49,7 @@ from app.repositories import audit
 from app.repositories import engagements as engagements_repo
 from app.repositories import interview as interview_repo
 from app.repositories import jobs as jobs_repo
+from app.repositories import probes as probes_repo
 from app.repositories import versions as versions_repo
 from app.services import boundaries as boundary_service
 from app.services import grounding
@@ -413,8 +417,10 @@ def get_guide(sessions: Sessions, engagement_id: str, profile_id: str) -> Result
         guide = interview_repo.latest_guide(session, profile_id)
         if guide is None or guide.engagement_id != engagement_id:
             return Err(ErrorKind.NOT_FOUND, NO_GUIDE)
-        return Ok(guide.model_copy(update={"suggested_probes": suggested_probes(
-            session, engagement_id)}))  # fmt: skip
+        return Ok(guide.model_copy(update={
+            "suggested_probes": suggested_probes(session, engagement_id),
+            "own_probes": own_probes(session, engagement_id),
+        }))  # fmt: skip
 
 
 def suggested_probes(session: Session, engagement_id: str) -> list[str]:
@@ -426,6 +432,112 @@ def suggested_probes(session: Session, engagement_id: str) -> list[str]:
     hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
     return [p for p in engagement.compass.interview_prompts
             if not grounding.scan_redaction_terms(p, hidden)]  # fmt: skip
+
+
+def own_probes(session: Session, engagement_id: str) -> list[OwnerProbe]:
+    """DECISIONS 113: Eric's own probes, offered beside a guide; one holding a name added to the
+    list of names to hide since is left out."""
+    hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
+    return [p for p in probes_repo.list_for(session, engagement_id)
+            if not grounding.scan_redaction_terms(f"{p.text} {p.about}", hidden)]  # fmt: skip
+
+
+MAX_PROBES = 60
+TOO_MANY_PROBES = "Keep it to 60 probes: remove some you no longer need first."
+PROBE_MISSING = "That probe doesn't exist."
+ABOUT_LIMIT = 80
+BAD_ABOUT = "Say what it is about in up to 80 characters, one line."
+
+
+def _probe_fields(text: str | None, about: str | None, hidden: list[str]
+                  ) -> Result[dict[str, str]]:  # fmt: skip
+    out: dict[str, str] = {}
+    if about is not None:
+        about = " ".join(about.split())
+        if len(about) > ABOUT_LIMIT:
+            return Err(ErrorKind.VALIDATION, BAD_ABOUT, {"field": "about"})
+        if problem := templates.probe_problem(about, hidden):
+            return Err(ErrorKind.VALIDATION, problem, {"field": "about"})
+        out["about"] = about
+    if text is not None:
+        text = " ".join(text.split())
+        if not text:
+            return Err(ErrorKind.VALIDATION, "Type the probe.", {"field": "text"})
+        if problem := templates.probe_problem(text, hidden):
+            return Err(ErrorKind.VALIDATION, problem, {"field": "text"})
+        out["text"] = text
+    return Ok(out)
+
+
+def list_probes(sessions: Sessions, engagement_id: str) -> Result[list[OwnerProbe]]:
+    with session_scope(sessions) as session:
+        if engagements_repo.get(session, engagement_id) is None:
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        return Ok(probes_repo.list_for(session, engagement_id))
+
+
+def add_probes(config: AppConfig, sessions: Sessions, engagement_id: str,
+               body: OwnerProbesIn) -> Result[list[OwnerProbe]]:  # fmt: skip
+    """One probe per non-empty line, all with the same note; all or nothing."""
+    lines = [line for line in body.text.splitlines() if line.strip()]
+    if not lines:
+        return Err(ErrorKind.VALIDATION, "Type the probe.", {"field": "text"})
+    with session_scope(sessions) as session:
+        if engagements_repo.get(session, engagement_id) is None:
+            return Err(ErrorKind.NOT_FOUND, ENGAGEMENT_MISSING)
+        hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
+        if len(probes_repo.list_for(session, engagement_id)) + len(lines) > MAX_PROBES:
+            return Err(ErrorKind.VALIDATION, TOO_MANY_PROBES, {"field": "text"})
+        checked = []
+        for line in lines:
+            match _probe_fields(line, body.about, hidden):
+                case Err() as err:
+                    return err
+                case Ok(value=fields):
+                    checked.append(fields)
+        made = [probes_repo.add(session, engagement_id, f["text"], f.get("about", ""))
+                for f in checked]  # fmt: skip
+        audit.record(session, actor=actor_name(config), action="Added interview probes",
+                     target_type="engagement", target_id=engagement_id,
+                     engagement_id=engagement_id, after={"probes": len(made)})  # fmt: skip
+        return Ok(probes_repo.list_for(session, engagement_id))
+
+
+def update_probe(config: AppConfig, sessions: Sessions, probe_id: str,
+                 body: OwnerProbePatch) -> Result[OwnerProbe]:  # fmt: skip
+    with session_scope(sessions) as session:
+        found = probes_repo.get(session, probe_id)
+        if found is None:
+            return Err(ErrorKind.NOT_FOUND, PROBE_MISSING)
+        engagement_id, before = found
+        hidden = [t.term for t in redaction.name_replacements(session, engagement_id)]
+        match _probe_fields(body.text, body.about, hidden):
+            case Err() as err:
+                return err
+            case Ok(value=fields):
+                pass
+        updated = probes_repo.update(session, probe_id, fields)
+        assert updated is not None
+        if updated != before:
+            audit.record(session, actor=actor_name(config), action="Edited interview probe",
+                         target_type="engagement", target_id=engagement_id,
+                         engagement_id=engagement_id,
+                         before={"text": before.text, "about": before.about},
+                         after={"text": updated.text, "about": updated.about})  # fmt: skip
+        return Ok(updated)
+
+
+def delete_probe(config: AppConfig, sessions: Sessions, probe_id: str) -> Result[None]:
+    with session_scope(sessions) as session:
+        found = probes_repo.get(session, probe_id)
+        if found is None:
+            return Err(ErrorKind.NOT_FOUND, PROBE_MISSING)
+        engagement_id, before = found
+        probes_repo.delete(session, probe_id)
+        audit.record(session, actor=actor_name(config), action="Removed interview probe",
+                     target_type="engagement", target_id=engagement_id,
+                     engagement_id=engagement_id, before={"text": before.text})  # fmt: skip
+        return Ok(None)
 
 
 def edit_guide(

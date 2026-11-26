@@ -30,7 +30,7 @@ const LABELS: Record<TextKey | ListKey | FlagKey, string> = {
   in_scope_roles: "In-scope roles",
   out_of_scope: "Out of scope",
   process_kpi: "Process KPI",
-  country: "Country",
+  country: "Unit",
   industry: "Industry",
   adjacent_industries: "Adjacent industries",
   confidential_terms: "Confidential terms",
@@ -134,10 +134,10 @@ export function ScopeCard({ engagement }: { engagement: Engagement }) {
         {text("name")}
         {engagement.compass ? (
           <p className="setup-form__note">
-            Country: {engagement.country || "not given (a group-wide workspace)"}, from the Capability Compass hand-off.
+            Unit: {engagement.country || "not given (a group-wide workspace)"}, from the Capability Compass hand-off.
           </p>
         ) : (
-          text("country", "The country this map covers, if it is one country. Used to compare countries.")
+          text("country", "The country this map covers, if it is one country. Used to compare units.")
         )}
         {text("process_name", "The process as your organisation names it, if different.")}
         <div className="setup-form__pair">

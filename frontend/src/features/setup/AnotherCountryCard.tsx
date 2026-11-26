@@ -16,9 +16,9 @@ import { engagementPath } from "../../lib/engagementSteps";
 import { fieldOf, messageOf } from "../../lib/errors";
 
 /**
- * Map this process in another country (2026-11-13, DECISIONS 98): a new engagement for another
+ * Map this process in another unit (2026-11-13, DECISIONS 98): a new engagement for another
  * country, started from this one's scope card, conventions and the lane names Eric leaves ticked.
- * Unlike Map another flow, no document, map, code or name to hide comes along: another country
+ * Unlike Map another flow, no document, map, code or name to hide comes along: another unit
  * has its own sources. Offered once this engagement has a published version.
  */
 export function AnotherCountryCard({ engagement }: { engagement: Engagement }) {
@@ -59,7 +59,7 @@ export function AnotherCountryCard({ engagement }: { engagement: Engagement }) {
   function onSubmit(event?: FormEvent) {
     event?.preventDefault();
     if (!country.trim()) {
-      setErrors({ country: "Type the country this map will cover." });
+      setErrors({ country: "Type the unit this map will cover (a country, station, asset or business unit)." });
       return;
     }
     if (start.isPending) return;
@@ -88,42 +88,42 @@ export function AnotherCountryCard({ engagement }: { engagement: Engagement }) {
   const process = engagement.process_name || engagement.name;
   return (
     <Card
-      title="The same process in another country"
-      description="Map this process in another country to compare the two maps later. The new engagement starts with this scope card, conventions and lanes, and its own sources: no document, map or name crosses."
+      title="The same process in another unit"
+      description="Map this process in another unit to compare the two maps later. The new engagement starts with this scope card, conventions and lanes, and its own sources: no document, map or name crosses."
     >
       {published ? (
         <div>
           <Button onClick={() => setOpen(true)}>
-            Map this process in another country…
+            Map this process in another unit…
           </Button>
         </div>
       ) : (
         <p className="field__help">
-          Publish a version of this map first: another country starts from a
+          Publish a version of this map first: another unit starts from a
           published map.
         </p>
       )}
       <p className="field__help">
-        Once both countries have a published map, compare them on{" "}
-        <Link to={engagementPath(engagement.id, "compare")}>Compare countries</Link>.
+        Once both units have a published map, compare them on{" "}
+        <Link to={engagementPath(engagement.id, "compare")}>Compare units</Link>.
       </p>
       <Dialog
         open={open}
-        title="Map this process in another country"
-        description={`A new engagement for ${process} in another country. ${engagement.name} stays as it is.`}
+        title="Map this process in another unit"
+        description={`A new engagement for ${process} in another unit. ${engagement.name} stays as it is.`}
         onClose={close}
         actions={
           <>
             <Button onClick={close}>Cancel</Button>
             <Button variant="primary" onClick={() => onSubmit()}>
-              {start.isPending ? "Starting…" : "Start this country"}
+              {start.isPending ? "Starting…" : "Start this unit"}
             </Button>
           </>
         }
       >
         <form className="setup-form" onSubmit={onSubmit} noValidate>
           <TextField
-            label="Country"
+            label="Unit"
             value={country}
             onChange={(v) => {
               setCountry(v);
@@ -147,7 +147,7 @@ export function AnotherCountryCard({ engagement }: { engagement: Engagement }) {
             <fieldset className="role-picks">
               <legend>Lanes to bring along</legend>
               <p className="field__help">
-                Lane names only. Untick the roles this country doesn't have.
+                Lane names only. Untick the roles this unit doesn't have.
               </p>
               {roles.map((r) => (
                 <CheckboxField

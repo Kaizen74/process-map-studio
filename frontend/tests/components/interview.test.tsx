@@ -127,7 +127,7 @@ describe("Interview templates (PRD v1.10 §5.4, F.9)", () => {
     const rows = within(plan).getAllByRole("row");
     expect(rows).toHaveLength(1 + 8 + 1); // header, eight movements, total
     expect(rows.at(-1)).toHaveTextContent("Total60");
-    expect(practice).toHaveTextContent("45 question IDs · question bank v1.0");
+    expect(practice).toHaveTextContent("45 question IDs · question bank v1.1");
     expect(
       within(practice).getByRole("link", {
         name: "Download Word Practice interview template",
@@ -985,5 +985,56 @@ describe("Coverage tab (C5d; PRD §5.4, §3.12.8, criteria 50 and 68)", () => {
     expect(
       await within(list).findByText("Saving the guide…"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("your own probes on the Guide tab (DECISIONS 113)", () => {
+  it("pastes probes one per line with what they are about, edits and removes them", async () => {
+    let probes = [{ id: "p1", text: "Is it done the same way on every shift?", about: "Step 1" }];
+    const { calls } = interviewApi({
+      "GET /api/engagements/e1/probes": () => ({ body: probes }),
+      "POST /api/engagements/e1/probes": (body) => {
+        const sent = body as { text: string; about: string };
+        probes = [...probes, ...sent.text.split("\n").filter(Boolean).map((t, i) => ({ id: `n${i}`, text: t, about: sent.about }))];
+        return { status: 201, body: probes };
+      },
+      "DELETE /api/probes/p1": () => {
+        probes = probes.filter((p) => p.id !== "p1");
+        return { status: 204, body: null };
+      },
+    });
+    const { container } = renderApp("/engagements/e1/interview");
+    await openGuideTab();
+    const section = await screen.findByRole("region", { name: "Your probes" });
+    expect(await within(section).findByText("Is it done the same way on every shift?")).toBeInTheDocument();
+    fireEvent.change(within(section).getByLabelText("Probes to add (one per line)"), {
+      target: { value: "Where is the plan built?\nWho checks the margin?" },
+    });
+    fireEvent.change(within(section).getByLabelText("What they are about (optional)"), { target: { value: "Step 2" } });
+    fireEvent.click(within(section).getByRole("button", { name: "Add probes" }));
+    expect(await within(section).findByText("Who checks the margin?")).toBeInTheDocument();
+    expect(calls.find((c) => c.key === "POST /api/engagements/e1/probes")?.body).toEqual({
+      text: "Where is the plan built?\nWho checks the margin?",
+      about: "Step 2",
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Remove the probe Is it done the same way on every shift?" }));
+    await waitFor(() => expect(within(section).queryByText("Is it done the same way on every shift?")).toBeNull());
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it("shows the server's plain refusal of a name to hide", async () => {
+    interviewApi({
+      "GET /api/engagements/e1/probes": () => ({ body: [] }),
+      "POST /api/engagements/e1/probes": () => ({
+        status: 422,
+        body: { error: { code: "VALIDATION", message: "This contains a name from your list of names to hide. Use the role instead.", details: { field: "text" } } },
+      }),
+    });
+    renderApp("/engagements/e1/interview");
+    await openGuideTab();
+    const section = await screen.findByRole("region", { name: "Your probes" });
+    fireEvent.change(within(section).getByLabelText("Probes to add (one per line)"), { target: { value: "Ask Priya Nair" } });
+    fireEvent.click(within(section).getByRole("button", { name: "Add probes" }));
+    expect(await within(section).findByText(/name from your list of names to hide/)).toBeInTheDocument();
   });
 });

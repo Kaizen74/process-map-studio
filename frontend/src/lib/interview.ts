@@ -99,6 +99,15 @@ export interface GuideView {
   document: GuideDocument;
   /** Prompts from the Capability Compass hand-off, offered beside the guide; never evidence. */
   suggested_probes?: string[];
+  /** DECISIONS 113: Eric's own probes from his desk research, offered the same way. */
+  own_probes?: OwnerProbe[];
+}
+
+/** DECISIONS 113: a probe Eric typed or pasted before interviews; never a question of a guide. */
+export interface OwnerProbe {
+  id: string;
+  text: string;
+  about: string;
 }
 
 export interface RowEdit {

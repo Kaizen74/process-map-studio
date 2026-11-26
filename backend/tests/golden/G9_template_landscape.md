@@ -1,6 +1,6 @@
 # Landscape interview template
 
-Question bank v1.0 · Process Map Studio
+Question bank v1.1 · Process Map Studio
 
 ## Interview details
 
@@ -66,7 +66,7 @@ Use roles by default ("the global contract holder"); you may type personal names
 | ID | Question | Probes | Minutes | Notes |
 |---|---|---|---|---|
 | L3 | How does your team interface with [adjacent functions]? Where do the handoffs happen? | What passes across — a document, a decision, a request? · What happens when it's late or unclear? | 8 |  |
-| L4 | Where do the key decision rights sit — who decides, who must be consulted, who is told? | Does it always work that way? | 8 |  |
+| L4 | Where do the key decision rights sit — who decides, who must be consulted, who is told? | Does it always work that way? · Who signs it off on paper, and who decides in practice? · Is there a written instruction for it? Who owns it, and who keeps it up to date? | 8 |  |
 | L5 | Could you help me separate the activities your team manages from those of [other team]? Where do they overlap or fall between the two? | Who shows up to the supplier or customer? · Who is held accountable when it goes wrong? | 4 |  |
 
 ## Role module (3–5 blank rows for the stakeholder group) (8 min)

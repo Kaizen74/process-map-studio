@@ -73,5 +73,11 @@ export function sopCountsLine(c: SopRegister["counts"]): string {
   ].join(" · ");
 }
 
+/** DECISIONS 113: "On the current map (v1.0): 2 of 11 steps cite no SOP or manual." */
+export function uncitedLine(map: NonNullable<SopRegister["map"]>): string {
+  const verb = map.uncited === 1 ? "cites" : "cite";
+  return `On the current map (${map.version_label}): ${map.uncited} of ${map.steps} steps ${verb} no SOP or manual.`;
+}
+
 export const CHECK_ROLE = "check: is this a role?";
 export const OLDER_VERSION = "Older version also in the sources";

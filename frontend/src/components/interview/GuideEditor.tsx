@@ -151,6 +151,20 @@ export function GuideEditor({ guide, busy, error, saved, onSave, onClose }: Guid
           </ul>
         </section>
       )}
+      {(guide.own_probes?.length ?? 0) > 0 && (
+        <section className="guide-probes" aria-labelledby="guide-own-probes-title">
+          <h3 id="guide-own-probes-title">Your probes</h3>
+          <p className="interview-tip">From your own desk research, to use if they help. Not questions of this guide.</p>
+          <ul>
+            {guide.own_probes?.map((probe) => (
+              <li key={probe.id}>
+                {probe.text}
+                {probe.about && <span className="own-probes__about"> · {probe.about}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {guide.document.tables.map((table, ti) => (
         <TableCard
           key={table.label}

@@ -55,8 +55,8 @@ export const ENGAGEMENT_STEPS: readonly EngagementStep[] = [
     more: true,
   },
   { key: "leadership", label: "Leadership", slug: "leadership", more: true },
-  // DECISIONS 98: the same process in another country; optional, needs two published maps.
-  { key: "compare", label: "Compare countries", slug: "compare", optional: true, more: true },
+  // DECISIONS 98: the same process in another unit; optional, needs two published maps.
+  { key: "compare", label: "Compare units", slug: "compare", optional: true, more: true },
   { key: "exports", label: "Exports", slug: "exports" },
 ];
 

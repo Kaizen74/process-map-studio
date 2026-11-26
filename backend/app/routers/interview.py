@@ -12,6 +12,9 @@ from app.domain.interview import (
     GuideStarted,
     GuideSummary,
     GuideView,
+    OwnerProbe,
+    OwnerProbePatch,
+    OwnerProbesIn,
     ProfileInput,
     ProfilePatch,
     ProfileView,
@@ -87,3 +90,30 @@ def list_themes(request: Request, engagement_id: str) -> list[ThemeView]:
 def update_theme(request: Request, theme_id: str, body: ThemePatch) -> ThemeView:
     state = request.app.state
     return unwrap(themes.update_theme(state.config, state.sessions, theme_id, body))
+
+
+# DECISIONS 113: Eric's own suggested probes, offered beside a guide.
+
+
+@router.get("/engagements/{engagement_id}/probes")
+def list_probes(request: Request, engagement_id: str) -> list[OwnerProbe]:
+    return unwrap(interview.list_probes(request.app.state.sessions, engagement_id))
+
+
+@router.post("/engagements/{engagement_id}/probes", status_code=201)
+def add_probes(request: Request, engagement_id: str, body: OwnerProbesIn) -> list[OwnerProbe]:
+    state = request.app.state
+    return unwrap(interview.add_probes(state.config, state.sessions, engagement_id, body))
+
+
+@router.patch("/probes/{probe_id}")
+def update_probe(request: Request, probe_id: str, body: OwnerProbePatch) -> OwnerProbe:
+    state = request.app.state
+    return unwrap(interview.update_probe(state.config, state.sessions, probe_id, body))
+
+
+@router.delete("/probes/{probe_id}", status_code=204)
+def delete_probe(request: Request, probe_id: str) -> Response:
+    state = request.app.state
+    unwrap(interview.delete_probe(state.config, state.sessions, probe_id))
+    return Response(status_code=204)

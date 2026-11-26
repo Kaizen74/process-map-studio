@@ -114,7 +114,7 @@ export interface CompassLink {
   process_owner?: string;
 }
 
-/** An engagement mapping the same pilot of the same frame in another country (DECISIONS 98). */
+/** An engagement mapping the same pilot of the same frame in another unit (DECISIONS 98). */
 export interface SameProcess {
   engagement_id: string;
   name: string;
@@ -156,7 +156,7 @@ export interface EngagementCreate extends ScopeFields {
   name: string;
   compass?: { handoff: unknown; pilot_ref: string };
   role_names?: string[];
-  /** Another country's engagement to start from: its scope fields left out and conventions. */
+  /** Another unit's engagement to start from: its scope fields left out and conventions. */
   reference_engagement_id?: string;
 }
 
@@ -355,6 +355,8 @@ export interface SopEntry {
 export interface SopRegister {
   counts: { sops: number; without_owner: number; without_updater: number; overdue: number; uncontrolled: number };
   entries: SopEntry[];
+  /** DECISIONS 113: on the map being worked on, the steps citing no SOP or manual. */
+  map?: { version_label: string; steps: number; uncited: number; uncited_ids: string[] } | null;
 }
 
 export interface SourceUpload {
@@ -582,3 +584,22 @@ export type {
   VersionDetail,
   ChangeEntry,
 } from "../lib/reviewTypes";
+
+/** GET /versions/{vid}/compass-readiness (DECISIONS 113): what the return file still lacks. */
+export interface ReadinessItem {
+  key: string;
+  text: string;
+  done: number | null;
+  total: number | null;
+  /** null: shown for information, nothing to fill. */
+  complete: boolean | null;
+  /** The nav key of the screen where it is recorded. */
+  screen: "review" | "sources" | "setup" | "compare" | string;
+}
+
+export interface CompassReadiness {
+  version_id: string;
+  version_label: string;
+  state: string;
+  items: ReadinessItem[];
+}

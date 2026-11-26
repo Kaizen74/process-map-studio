@@ -1,5 +1,5 @@
 import { request } from "./request";
-import type { HandoffPreview, TestingItem, TestingPatch } from "./types";
+import type { CompassReadiness, HandoffPreview, TestingItem, TestingPatch } from "./types";
 
 const enc = encodeURIComponent;
 
@@ -17,3 +17,7 @@ export const updateTesting = (itemId: string, patch: TestingPatch) =>
   request<TestingItem>(`/testing/${enc(itemId)}`, { method: "PATCH", body: patch });
 
 export const deleteTesting = (itemId: string) => request<null>(`/testing/${enc(itemId)}`, { method: "DELETE" });
+
+/** DECISIONS 113: what each question still lacks in this version's return file. */
+export const getCompassReadiness = (versionId: string) =>
+  request<CompassReadiness>(`/versions/${enc(versionId)}/compass-readiness`);

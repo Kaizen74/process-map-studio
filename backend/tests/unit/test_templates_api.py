@@ -32,7 +32,7 @@ def test_the_plans_for_the_screens(client: TestClient) -> None:
     ]  # fmt: skip
     assert [sum(p["minutes"] for p in t["plan"]) for t in body] == [60, 60, 30]
     assert body[1]["plan"][0] == {"label": "M0 — Framing", "minutes": 3}
-    assert {t["bank_version"] for t in body} == {"1.0"}
+    assert {t["bank_version"] for t in body} == {"1.1"}
 
 
 @pytest.mark.parametrize("kind", list(InterviewType))
@@ -44,7 +44,7 @@ def test_markdown_downloads_with_no_engagement(client: TestClient, kind: Intervi
     name = templates.filename(kind, "md")
     assert response.headers["content-disposition"] == f'attachment; filename="{name}"'
     assert response.text == templates.render_markdown(templates.build(bank(), kind))
-    assert "Question bank v1.0 · Process Map Studio" in response.text
+    assert "Question bank v1.1 · Process Map Studio" in response.text
 
 
 @pytest.mark.parametrize("kind", list(InterviewType))
