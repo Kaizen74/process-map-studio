@@ -8,6 +8,7 @@ import { engagementPath } from "../../lib/engagementSteps";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { PublishControls } from "./PublishControls";
+import { RemovedSourcesNote } from "./RemovedSourcesNote";
 import { Workbench } from "./Workbench";
 import "./review.css";
 
@@ -22,7 +23,12 @@ export function ReviewScreen() {
   const versionId = draft.data?.version?.id ?? null;
 
   if (engagement.isError) {
-    return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
+    return (
+      <EngagementProblem
+        error={engagement.error}
+        onRetry={() => void engagement.refetch()}
+      />
+    );
   }
   if (draft.isError) {
     return (
@@ -38,7 +44,9 @@ export function ReviewScreen() {
     );
   }
   if (draft.isSuccess && !versionId) {
-    const running = draft.data.job?.status === "queued" || draft.data.job?.status === "running";
+    const running =
+      draft.data.job?.status === "queued" ||
+      draft.data.job?.status === "running";
     const published = versions.data?.find((v) => v.state === "published");
     return (
       <main className="screen" aria-labelledby="review-title">
@@ -46,7 +54,11 @@ export function ReviewScreen() {
         {published && !running ? (
           <EmptyState
             message={`Nothing to review: ${published.label} is published. To change it, reopen it as a new draft on the Published screen.`}
-            action={<Link to={engagementPath(engagementId, "published")}>Go to Published</Link>}
+            action={
+              <Link to={engagementPath(engagementId, "published")}>
+                Go to Published
+              </Link>
+            }
           />
         ) : (
           <EmptyState
@@ -55,7 +67,11 @@ export function ReviewScreen() {
                 ? "A draft map is being made. It appears here as soon as it's ready."
                 : "There is no draft map to review yet. Create one on the Draft screen."
             }
-            action={<Link to={engagementPath(engagementId, "draft")}>Go to Draft</Link>}
+            action={
+              <Link to={engagementPath(engagementId, "draft")}>
+                Go to Draft
+              </Link>
+            }
           />
         )}
       </main>
@@ -78,26 +94,40 @@ export function ReviewScreen() {
       title="Review"
       banner={(g, selectedId, select) => {
         const steps = g.elements.filter((e) => STEPS.has(e.kind));
-        const sources = new Set(g.elements.flatMap((e) => e.evidence.map((ev) => ev.source_id))).size;
+        const sources = new Set(
+          g.elements.flatMap((e) => e.evidence.map((ev) => ev.source_id)),
+        ).size;
         return (
-          <VersionBanner
-            label={g.version.label}
-            handoff={
-              g.process.engagement_key
-                ? { key: g.process.engagement_key, pilot: g.process.pilot_ref ?? "" }
-                : undefined
-            }
-            sources={sources}
-            steps={steps}
-            selectedId={selectedId}
-            onSelect={select}
-            signal={versions.data?.find((v) => v.id === g.version.id)?.signal}
-            actions={
-              g.version.state === "draft" ? (
-                <PublishControls versionId={g.version.id} engagementId={engagementId} onSelect={(id) => select(id)} />
-              ) : undefined
-            }
-          />
+          <>
+            <VersionBanner
+              label={g.version.label}
+              handoff={
+                g.process.engagement_key
+                  ? {
+                      key: g.process.engagement_key,
+                      pilot: g.process.pilot_ref ?? "",
+                    }
+                  : undefined
+              }
+              sources={sources}
+              steps={steps}
+              selectedId={selectedId}
+              onSelect={select}
+              signal={versions.data?.find((v) => v.id === g.version.id)?.signal}
+              actions={
+                g.version.state === "draft" ? (
+                  <PublishControls
+                    versionId={g.version.id}
+                    engagementId={engagementId}
+                    onSelect={(id) => select(id)}
+                  />
+                ) : undefined
+              }
+            />
+            {g.version.state === "draft" && (
+              <RemovedSourcesNote versionId={g.version.id} />
+            )}
+          </>
         );
       }}
     />

@@ -44,8 +44,8 @@
     "version": "1"
   },
   "S1_extract_document.md": {
-    "sha256": "3eaac6b4db749c71bc49537565b9abf1c4a1b3e2dc5b6ccdce53983770c38d5e",
-    "version": "1"
+    "sha256": "7eda054e228a89044112d7987e495128aca8e51ce1498539f90ab2ec5f5d883f",
+    "version": "2"
   },
   "S1_extract_intent.md": {
     "sha256": "345feed01fcde642b8cdfa4b1955f003749e863877895cbb18a8bcbed525dbc8",
@@ -60,8 +60,8 @@
     "version": "2"
   },
   "S2_canonicalise.md": {
-    "sha256": "8fcb50c74d66e977d25397a89e67acf035ba57d0cf999c450a0ed8daba50c6af",
-    "version": "4"
+    "sha256": "9e806e7cef67b7f8990551603a95a1fc0ee1904ee70f8b6245739af65e17e64c",
+    "version": "5"
   },
   "S3_calibrate.md": {
     "sha256": "ec6fa0dc24674b0fb06520a4e7642285f0f0d163c74ef2df38cdb03012cfe877",

@@ -29,6 +29,7 @@ from app.domain.graph import (
 from app.repositories.read_memo import remembered
 from app.repositories.tables import (
     AiFlag,
+    Claim,
     Constraint,
     Edge,
     Element,
@@ -462,3 +463,23 @@ def delete_evidence(session: Session, link_ids: Sequence[str]) -> None:
     if link_ids:
         session.execute(delete(EvidenceLink).where(EvidenceLink.id.in_(link_ids)))
         session.flush()
+
+
+def steps_citing(session: Session, version_id: str, source_ids: list[str]) -> dict[str, int]:
+    """For each source, how many of the version's steps (not rejected) are built from a claim
+    taken from it (DECISIONS 114: the warning before a source is deleted)."""
+    rows = session.execute(
+        select(Claim.source_id, func.count(func.distinct(Element.id)))
+        .join(ElementClaim, ElementClaim.claim_id == Claim.id)
+        .join(Element, Element.id == ElementClaim.element_id)
+        .where(
+            Element.version_id == version_id,
+            Element.review_status != "rejected",
+            Element.kind.in_(("activity", "decision", "approval")),
+            Claim.source_id.in_(source_ids),
+        )
+        .group_by(Claim.source_id)
+    )
+    counts = {sid: 0 for sid in source_ids}
+    counts.update({str(sid): int(n) for sid, n in rows})
+    return counts

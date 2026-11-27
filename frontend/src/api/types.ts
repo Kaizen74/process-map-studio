@@ -73,7 +73,11 @@ export interface MappingConventions {
   phase_naming: "sme" | "standard";
 }
 
-export const DEFAULT_CONVENTIONS: MappingConventions = { granularity: "standard", label_style: "standard", phase_naming: "sme" };
+export const DEFAULT_CONVENTIONS: MappingConventions = {
+  granularity: "standard",
+  label_style: "standard",
+  phase_naming: "sme",
+};
 
 export interface ScopeFields {
   conventions?: MappingConventions;
@@ -296,7 +300,9 @@ export interface RoleCreate {
   is_system?: boolean;
 }
 
-export type RolePatch = Partial<Pick<Role, "name" | "aliases" | "is_system" | "compass_role_ref">> & { lane_order?: number };
+export type RolePatch = Partial<
+  Pick<Role, "name" | "aliases" | "is_system" | "compass_role_ref">
+> & { lane_order?: number };
 
 export interface Source {
   id: string;
@@ -329,6 +335,10 @@ export interface Source {
   review_due?: string;
   /** Controlled copy set by Eric; before that an unticked box means "not known". */
   controlled_copy_set?: boolean;
+  /** DECISIONS 114: the versions drafted from this source, e.g. "v0.1 (draft)". */
+  used_by?: string[];
+  /** DECISIONS 114: steps of the current map built from this source. */
+  steps_citing?: number;
 }
 
 export interface SourcePatch {
@@ -363,10 +373,21 @@ export interface SopEntry {
 }
 
 export interface SopRegister {
-  counts: { sops: number; without_owner: number; without_updater: number; overdue: number; uncontrolled: number };
+  counts: {
+    sops: number;
+    without_owner: number;
+    without_updater: number;
+    overdue: number;
+    uncontrolled: number;
+  };
   entries: SopEntry[];
   /** DECISIONS 113: on the map being worked on, the steps citing no SOP or manual. */
-  map?: { version_label: string; steps: number; uncited: number; uncited_ids: string[] } | null;
+  map?: {
+    version_label: string;
+    steps: number;
+    uncited: number;
+    uncited_ids: string[];
+  } | null;
 }
 
 export interface SourceUpload {
@@ -424,7 +445,13 @@ export interface RedactionTerm {
 // --- Jobs and drafting (API_CONTRACT.md → Jobs, Draft) — phase P3 ---------------------------
 
 export type JobStatus = "queued" | "running" | "done" | "failed";
-export type StageStatus = "waiting" | "running" | "done" | "failed" | "skipped" | "later";
+export type StageStatus =
+  | "waiting"
+  | "running"
+  | "done"
+  | "failed"
+  | "skipped"
+  | "later";
 
 export interface JobStage {
   id: string;
@@ -480,6 +507,21 @@ export interface DraftSummary {
   outside_flow?: number;
   /** DECISIONS 83: the reading's questions about another flow, set aside (absent before: 0). */
   outside_flow_questions?: number;
+  /** DECISIONS 114: what each source gave the draft, in the order drafted. */
+  sources?: SourceBreakdown[];
+}
+
+/** One source's share of a draft (DECISIONS 114). */
+export interface SourceBreakdown {
+  source_id: string;
+  filename: string;
+  kind: string;
+  found: number;
+  verified: number;
+  rejected: number;
+  outside_flow: number;
+  steps: number;
+  reasons: { reason: string; count: number }[];
 }
 
 /** How a draft or refresh was made (API_CONTRACT.md → Run record). */

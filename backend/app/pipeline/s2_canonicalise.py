@@ -232,8 +232,11 @@ def stable_key(label: str, taken: set[str]) -> str:
 def _role_for(
     name: str, roles: list[RoleView], new_roles: list[ai_schemas.S2Role]
 ) -> tuple[RoleView | None, ai_schemas.S2Role | None]:
-    """The known role a lane name refers to, or the new role Claude listed for it."""
+    """The known role a lane name refers to, or the new role Claude listed for it. A step whose
+    claims name no role has no lane yet (DECISIONS 114): Eric places it."""
     key = grounding.normalise_text(name)
+    if not key:
+        return None, None
     for role in roles:
         if key in {grounding.normalise_text(n) for n in (role.name, *role.aliases)}:
             return role, None

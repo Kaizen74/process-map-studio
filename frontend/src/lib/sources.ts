@@ -17,13 +17,27 @@ export function kindLabel(kind: string): string {
   return KIND_OPTIONS.find((k) => k.value === kind)?.label ?? kind;
 }
 
-export const ACCEPTED_FORMATS = [".docx", ".pdf", ".txt", ".vtt", ".srt", ".xlsx", ".csv", ".eml"] as const;
+export const ACCEPTED_FORMATS = [
+  ".docx",
+  ".pdf",
+  ".txt",
+  ".vtt",
+  ".srt",
+  ".xlsx",
+  ".csv",
+  ".eml",
+] as const;
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
-export const BAD_FORMAT = "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files.";
-export const TOO_BIG = "That file is larger than 50 MB. Split it or save a smaller copy, then upload again.";
+export const BAD_FORMAT =
+  "Process Map Studio reads .docx, .pdf, .txt, .vtt, .srt, .xlsx, .csv and .eml files.";
+export const TOO_BIG =
+  "That file is larger than 50 MB. Split it or save a smaller copy, then upload again.";
 
 /** null when the file can be uploaded, otherwise why not (same wording as the server). */
-export function uploadProblem(file: { name: string; size: number }): string | null {
+export function uploadProblem(file: {
+  name: string;
+  size: number;
+}): string | null {
   const name = file.name.toLowerCase();
   if (!ACCEPTED_FORMATS.some((ext) => name.endsWith(ext))) return BAD_FORMAT;
   if (file.size > MAX_UPLOAD_BYTES) return TOO_BIG;
@@ -38,7 +52,9 @@ export interface SourceStatus {
 
 /** Status chip wording (PRD §5.4 Sources: Reading… · Ready · Failed + reason). "pending" means its
  * background reading job hasn't finished yet. */
-export function sourceStatus(source: Pick<Source, "text_status">): SourceStatus {
+export function sourceStatus(
+  source: Pick<Source, "text_status">,
+): SourceStatus {
   switch (source.text_status) {
     case "ready":
       return { label: "Ready", tone: "good", dashed: false };
@@ -60,7 +76,8 @@ export const NOT_MEASURED = "Measured after a draft that uses this file";
 // §3.20 (DECISIONS 110): who owns and updates each SOP or manual.
 
 export const SOP_KINDS: readonly string[] = ["sop", "manual"];
-export const isSop = (source: { kind: string }) => SOP_KINDS.includes(source.kind);
+export const isSop = (source: { kind: string }) =>
+  SOP_KINDS.includes(source.kind);
 
 /** The Sources screen line, in the brief's words. */
 export function sopCountsLine(c: SopRegister["counts"]): string {
@@ -81,3 +98,26 @@ export function uncitedLine(map: NonNullable<SopRegister["map"]>): string {
 
 export const CHECK_ROLE = "check: is this a role?";
 export const OLDER_VERSION = "Older version also in the sources";
+
+/**
+ * DECISIONS 114: what deleting a source does to the maps drafted from it, said before Eric
+ * deletes it; "" when no version was drafted from it.
+ */
+export function deleteWarning(
+  source: Pick<Source, "used_by" | "steps_citing">,
+): string {
+  const used = source.used_by ?? [];
+  if (used.length === 0) return "";
+  const versions =
+    used.length === 1
+      ? used[0]
+      : `${used.slice(0, -1).join(", ")} and ${used[used.length - 1]}`;
+  const steps = source.steps_citing ?? 0;
+  const built = steps
+    ? ` ${steps === 1 ? "1 step of the current map is" : `${steps} steps of the current map are`} built from it.`
+    : "";
+  return (
+    `${versions} ${used.length === 1 ? "was" : "were"} drafted from this file.${built} ` +
+    "Deleting it takes that evidence away, and the draft will say it needs a refresh. To replace the file, upload the new copy, refresh the draft, then delete this one."
+  );
+}

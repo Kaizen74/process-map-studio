@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import AppConfig
 from app.db import session_scope
-from app.domain.models import ClaimRecord
+from app.domain.models import ClaimRecord, PromptSegment
 from app.domain.result import Err, ErrorKind, Ok
 from app.main import create_app
 from app.pipeline import s0_normalise, s1_extract
@@ -23,6 +23,7 @@ from app.repositories import ai_calls, claims, versions
 from app.repositories import jobs as jobs_repo
 from app.repositories import sources as sources_repo
 from app.repositories.tables import AiCall
+from app.services import ai_service
 from tests import fixture_engagement
 from tests.fixtures import make_ai_fixtures
 from tests.uploads import upload, wait_for_jobs
@@ -223,6 +224,96 @@ def test_a_format_failure_saves_nothing_for_the_source(sample: Setup, tmp_path: 
     with session_scope(sample.sessions) as session:
         # Both the first answer and the repair attempt cost tokens, so both are recorded.
         assert ai_calls.usage_for_job(session, job_id)["calls"] == 2
+
+
+def split_mocks(folder: Path, whole_hash: str | None) -> Path:
+    """Mock answers where every S1 answer is broken, or (with `whole_hash`) only the answer to
+    the part with that input hash: smaller parts then get a valid, empty answer."""
+    for stage in ("models_get", "S1_extract_document", "R_repair"):
+        (folder / stage).mkdir(parents=True)
+    (folder / "models_get" / "default.json").write_bytes(
+        (make_ai_fixtures.MOCKS / "models_get" / "default.json").read_bytes()
+    )
+    broken, empty = '{"claims": "nope"}', '{"claims": [], "unknowns": []}'
+    if whole_hash is None:
+        (folder / "S1_extract_document" / "default.json").write_text(broken)
+        (folder / "R_repair" / "default.json").write_text(broken)
+    else:
+        (folder / "S1_extract_document" / f"{whole_hash}.json").write_text(broken)
+        (folder / "R_repair" / f"{whole_hash}.json").write_text(broken)
+        (folder / "S1_extract_document" / "default.json").write_text(empty)
+    return folder
+
+
+def whole_part_hash(setup: Setup, name: str) -> str:
+    with session_scope(setup.sessions) as session:
+        prepared = s1_extract.prepare(session, setup.built.sources[name])
+    assert isinstance(prepared, Ok)
+    [chunk] = s1_extract.chunks_for(prepared.value.info.kind, prepared.value.segments)
+    blocks = s1_extract.blocks_for(prepared.value.info.kind, chunk)
+    return ai_service.input_hash("S1_extract_document", blocks)
+
+
+def test_a_failed_part_is_split_in_half_and_sent_again(
+    sample: Setup, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """DECISIONS 114: one long SOP part failing no longer stops the whole draft."""
+    monkeypatch.setattr(s1_extract, "MIN_SPLIT_PASSAGES", 2)
+    mocks = split_mocks(tmp_path / "m", whole_part_hash(sample, "sop_LC-07.docx"))
+    config = dataclasses.replace(sample.config, mock_fixtures_dir=mocks)
+    job_id = new_job(sample)
+    result = s1_extract.extract_source(
+        config,
+        sample.sessions,
+        context(config),
+        version_id=sample.version_id,
+        source_id=sample.built.sources["sop_LC-07.docx"],
+        job_id=job_id,
+    )
+    assert isinstance(result, Ok) and result.value.splits == 1
+    with session_scope(sample.sessions) as session:
+        # The whole part and its repair, then one answer for each half.
+        assert ai_calls.usage_for_job(session, job_id)["calls"] == 4
+
+
+def test_a_part_that_still_fails_after_splitting_says_where(
+    sample: Setup, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(s1_extract, "MIN_SPLIT_PASSAGES", 2)
+    config = dataclasses.replace(sample.config, mock_fixtures_dir=split_mocks(tmp_path / "m", None))
+    job_id = new_job(sample)
+    result = s1_extract.extract_source(
+        config,
+        sample.sessions,
+        context(config),
+        version_id=sample.version_id,
+        source_id=sample.built.sources["sop_LC-07.docx"],
+        job_id=job_id,
+    )
+    assert isinstance(result, Err) and result.kind is ErrorKind.AI_FORMAT
+    assert result.message.startswith(
+        "Claude's answer for 'Extracting steps from each source' didn't match the expected format "
+        "twice, even after the app split passages 1 to "
+    )
+    assert result.message.endswith(
+        "Nothing was saved. Try again, or use Copy details to report it."
+    )
+    assert result.details["splits"] == 2 and str(result.details["reason"]).startswith("Does not")
+    assert stored(sample) == []
+    with session_scope(sample.sessions) as session:
+        # The whole part, its first half, then that half's first half: two calls each.
+        assert ai_calls.usage_for_job(session, job_id)["calls"] == 6
+
+
+def test_halves_cut_at_a_page_break_near_the_middle() -> None:
+    def seg(seq: int, page: int) -> PromptSegment:
+        return PromptSegment(ref=f"p{seq}", segment_id=str(seq), seq=seq, anchor="", text="t",
+                             page=page)  # fmt: skip
+
+    chunk = [seg(i, 1 if i <= 4 else 2) for i in range(1, 11)]  # page 2 starts at passage 5
+    first, second = s1_extract.halves(chunk)
+    assert ([s.seq for s in first], [s.seq for s in second]) == ([1, 2, 3, 4], list(range(5, 11)))
+    assert [len(h) for h in s1_extract.halves([seg(i, 1) for i in range(1, 8)])] == [3, 4]
 
 
 def test_a_deleted_source_is_reported_plainly(sample: Setup) -> None:

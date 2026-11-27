@@ -21,9 +21,10 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 import re
 import warnings
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from datetime import date, datetime, time
 from email import policy
 from email.message import EmailMessage
@@ -236,12 +237,7 @@ def _diagram_page(page: Any) -> list[str] | None:
     )
 
 
-def parse_pdf_text(path: Path) -> Result[ParsedDocument]:
-    """The text layer, one segment per non-empty line, anchored by page number; a process-flow
-    diagram page one segment per box, with its team label (`_diagram_page`).
-
-    Pages with fewer than 50 characters are listed in `ocr_pages` (PRD §3.7 S0; OCR from P3).
-    """
+def _read_pdf(path: Path) -> Result[tuple[ParsedDocument, frozenset[int]]]:
     try:
         with pdfplumber.open(path) as pdf:
             pages = [(page.extract_text() or "", _diagram_page(page)) for page in pdf.pages]
@@ -249,15 +245,184 @@ def parse_pdf_text(path: Path) -> Result[ParsedDocument]:
         return Err(ErrorKind.IO, "The PDF could not be read.", {"reason": type(exc).__name__})
     segments: list[ParsedSegment] = []
     ocr_pages: list[int] = []
+    diagrams: set[int] = set()
     for number, (text, diagram) in enumerate(pages, start=1):
         if len(text.strip()) < OCR_THRESHOLD_CHARS:
             ocr_pages.append(number)
             continue
+        if diagram is not None:
+            diagrams.add(number)
         for line in diagram if diagram is not None else text.splitlines():
             clean = _tidy(line)
             if clean:
                 segments.append(ParsedSegment(seq=len(segments) + 1, text=clean, page=number))
-    return Ok(ParsedDocument(segments=segments, ocr_pages=ocr_pages, page_count=len(pages)))
+    document = ParsedDocument(segments=segments, ocr_pages=ocr_pages, page_count=len(pages))
+    return Ok((document, frozenset(diagrams)))
+
+
+def parse_pdf_text(path: Path) -> Result[ParsedDocument]:
+    """The text layer, one segment per non-empty line, anchored by page number; a process-flow
+    diagram page one segment per box, with its team label (`_diagram_page`).
+
+    Pages with fewer than 50 characters are listed in `ocr_pages` (PRD §3.7 S0; OCR from P3).
+    Transcripts are read this way, then `detect_speakers` joins their lines into turns.
+    """
+    match _read_pdf(path):
+        case Ok(value=(document, _)):
+            return Ok(document)
+        case Err() as err:
+            return err
+
+
+def parse_pdf_document(path: Path) -> Result[ParsedDocument]:
+    """A process document's text layer, tidied for reading (`tidy_pdf_lines`, DECISIONS 114)."""
+    match _read_pdf(path):
+        case Ok(value=(document, diagrams)):
+            return Ok(
+                document.model_copy(
+                    update={"segments": tidy_pdf_lines(document.segments, diagrams)}
+                )
+            )
+        case Err() as err:
+            return err
+
+
+# --- Tidying a PDF document's lines (DECISIONS 114) ----------------------------------------------
+# A manual printed with a page header and an approval footer on every page, a contents list and
+# sentences wrapped across lines arrived as one passage per printed line: a fifth of what was sent
+# was repeated header text, a quote across a line break or a stray bullet mark failed the quote
+# check, and parts were cut at every 15th page instead of at the manual's own sections.
+
+EDGE_LINES = 6  # the running header and footer sit in the first and last lines of a page
+REPEAT_SHARE = 0.3  # a line repeated at the edge of this share of the pages is a header or footer
+REPEAT_MIN_PAGES = 3
+PASSAGE_MAX_CHARS = 1200  # lines are joined into a passage up to this length
+HEADING_MAX_CHARS = 90
+APPENDICES = 10_000  # once the appendices start, numbered headings are lists inside them
+_LEADER = re.compile(r"(?:\.\s?){4,}\s*\d{1,4}$|\u2026{2,}\s*\d{1,4}$")
+_BULLET_ONLY = re.compile(r"^(?:[o•●▪◦■□➢►\-\u2013\uf0a7\uf0b7\uf076\uf0d8])$")
+_ITEM = re.compile(
+    r"^(?:\d+(?:\.\d+)*\.?\s|\.\d+\s|\(?[a-zA-Z]\)\s|\(?[ivxIVX]{1,4}\)\s"
+    r"|[•●▪◦■□➢►\-\u2013\uf0a7\uf0b7\uf076\uf0d8]\s?|o\s|(?:note|step|appendix|section|table)\b)",
+    re.IGNORECASE,
+)
+_ENDS_SENTENCE = re.compile(r"[.;:?!][\"'\u201d\u2019)\]]*$")
+_CARRIES_ON = re.compile(
+    r"(?:,|/|&|-|\u2013|\b(?:and|or|the|a|an|of|to|for|with|by|in|on|at|from|as|that|which|is|are|be"
+    r"|will|shall|must|should|may|its|their|this|these|any|all|if|when|than|into|under|via|per"
+    r"|not|no|only|both|either|each|every|such|so|but|nor|whether))$",
+    re.IGNORECASE,
+)
+_SECTION = re.compile(r"^(\d{1,2})\.?\s+(\S.*)$")
+_APPENDIX = re.compile(r"^appendix\s+[a-z0-9]{1,4}\b", re.IGNORECASE)
+
+
+def _edge_key(text: str) -> str:
+    """A line as compared across pages: letters only, lower case, doubled letters single (a
+    header drawn twice on top of itself reads "<<RReessttrriicctteedd>>")."""
+    letters = re.sub(r"[^a-z]+", " ", text.lower()).strip()
+    return re.sub(r"(.)\1+", r"\1", letters)
+
+
+def _running_lines(segments: Sequence[ParsedSegment]) -> set[int]:
+    """The seqs of the page header and footer lines repeated across the pages."""
+    by_page: dict[int, list[ParsedSegment]] = {}
+    for segment in segments:
+        if segment.page is not None:
+            by_page.setdefault(segment.page, []).append(segment)
+    edges = {
+        page: lines[:EDGE_LINES] + lines[EDGE_LINES:][-EDGE_LINES:]
+        for page, lines in by_page.items()
+    }
+    pages_with: dict[str, set[int]] = {}
+    for page, lines in edges.items():
+        for line in lines:
+            key = _edge_key(line.text)
+            if key:
+                pages_with.setdefault(key, set()).add(page)
+    needed = max(REPEAT_MIN_PAGES, math.ceil(REPEAT_SHARE * len(by_page)))
+    repeated = {key for key, pages in pages_with.items() if len(pages) >= needed}
+    return {
+        line.seq for lines in edges.values() for line in lines if _edge_key(line.text) in repeated
+    }
+
+
+def _contents_lines(segments: Sequence[ParsedSegment]) -> set[int]:
+    """The seqs of a contents list: on a page with three or more dot-leader lines ("1. INTRODUCTION
+    ....... 4"), every line from the first leader line on."""
+    by_page: dict[int | None, list[ParsedSegment]] = {}
+    for segment in segments:
+        by_page.setdefault(segment.page, []).append(segment)
+    found: set[int] = set()
+    for lines in by_page.values():
+        leaders = [i for i, s in enumerate(lines) if _LEADER.search(s.text)]
+        if len(leaders) >= 3:
+            found |= {s.seq for s in lines[leaders[0] :]}
+    return found
+
+
+def _heading(text: str, last_number: int) -> tuple[str, int] | None:
+    """A top-level heading ("6. ONE STOP E-ACCEPTANCE", "Appendix A - Flowchart II") and its
+    number, or None. Numbered headings are in capitals and never go backwards."""
+    if len(text) > HEADING_MAX_CHARS or _ENDS_SENTENCE.search(text):
+        return None
+    if _APPENDIX.match(text):
+        return text, APPENDICES
+    found = _SECTION.match(text)
+    if found is None or last_number >= APPENDICES:  # numbered lists inside an appendix
+        return None
+    number, title = int(found.group(1)), found.group(2)
+    letters = [c for c in title if c.isalpha()]
+    if number < last_number or len(letters) < 3:
+        return None
+    if sum(c.isupper() for c in letters) / len(letters) < 0.8:
+        return None
+    return f"{number}. {title}", number
+
+
+def _joins(previous: str, line: str) -> bool:
+    """Whether `line` carries on the sentence `previous` left unfinished."""
+    if _ENDS_SENTENCE.search(previous) or _ITEM.match(line):
+        return False
+    if len(previous) + len(line) + 1 > PASSAGE_MAX_CHARS:
+        return False
+    return line[:1].islower() or line.startswith("(") or bool(_CARRIES_ON.search(previous))
+
+
+def tidy_pdf_lines(
+    segments: Sequence[ParsedSegment], diagram_pages: Collection[int] = ()
+) -> list[ParsedSegment]:
+    """A process document's lines made readable (DECISIONS 114):
+
+    - the running page header and footer (a line repeated at the top or bottom of at least 30%
+      of the pages, and of three or more) and the contents list are left out;
+    - a line holding only a bullet mark ("o", "•") is left out;
+    - a line that carries on an unfinished sentence is joined to it, across a page break too
+      (the passage keeps the page it starts on), but never past a new numbered item or bullet;
+    - each passage is labelled with the top-level section it falls under.
+
+    Diagram pages, already read box by box, are only cleared of header and footer lines.
+    """
+    drop = _running_lines(segments) | _contents_lines(segments)
+    out: list[ParsedSegment] = []
+    section, last_number = "", 0
+    previous_diagram = False
+    for segment in segments:
+        text = segment.text
+        if segment.seq in drop or _BULLET_ONLY.match(text):
+            continue
+        diagram = segment.page in diagram_pages
+        heading = None if diagram and not _APPENDIX.match(text) else _heading(text, last_number)
+        if heading is not None:
+            section, last_number = heading
+        elif out and not diagram and not previous_diagram and _joins(out[-1].text, text):
+            out[-1] = out[-1].model_copy(update={"text": f"{out[-1].text} {text}"})
+            continue
+        out.append(
+            segment.model_copy(update={"seq": len(out) + 1, "section": segment.section or section})
+        )
+        previous_diagram = diagram
+    return out
 
 
 def extract_pdf_images(path: Path) -> Result[list[ExtractedImage]]:

@@ -65,9 +65,18 @@ PROMPT_BY_KIND = {
 }
 DOCUMENT_PROMPT = "S1_extract_document"
 UNMAPPED_SPEAKER = "Speaker"
-FORMAT_FAILED = (
-    "Claude's answer for 'Extracting steps from each source' didn't match the expected format "
-    "twice. Nothing was saved. Try again, or use Copy details to report it."
+# DECISIONS 114: a part whose answer fails is split in half and each half sent again, at most
+# twice, before the draft stops; a part is never split below this many passages.
+MAX_SPLITS = 2
+MIN_SPLIT_PASSAGES = 8
+STAGE_FAILED = (
+    "Claude's answer for 'Extracting steps from each source' {problem}. Nothing was saved. "
+    "Try again, or use Copy details to report it."
+)
+FORMAT_FAILED = STAGE_FAILED.format(problem="didn't match the expected format twice")
+SPLIT_FAILED = (
+    "Claude's answer for 'Extracting steps from each source' {problem}, even after the app split "
+    "{where} into smaller parts. Nothing was saved. Try again, or use Copy details to report it."
 )
 
 
@@ -77,6 +86,7 @@ class S1Tally:
     rejected: int = 0
     unknowns: int = 0
     scrubbed: int = 0
+    splits: int = 0  # parts split in half after a failed answer (DECISIONS 114)
 
 
 def prompt_segments(
@@ -105,6 +115,7 @@ def prompt_segments(
                 speaker_role=role,
                 page=s.page,
                 start_ms=s.start_ms,
+                section=s.section if fmt == "pdf" else "",
             )
         )
     return out
@@ -430,6 +441,38 @@ def check_sense(
     return record, hits
 
 
+def halves(chunk: list[PromptSegment]) -> tuple[list[PromptSegment], list[PromptSegment]]:
+    """A part split in two near its middle, at a page break where one is close (DECISIONS 114)."""
+    middle = len(chunk) // 2
+    near = range(max(1, middle - len(chunk) // 4), min(len(chunk), middle + len(chunk) // 4 + 1))
+    breaks = [i for i in near if chunk[i].page is not None and chunk[i].page != chunk[i - 1].page]
+    cut = min(breaks, key=lambda i: abs(i - middle)) if breaks else middle
+    return chunk[:cut], chunk[cut:]
+
+
+def _where(chunk: list[PromptSegment]) -> str:
+    pages = [s.page for s in chunk if s.page is not None]
+    if pages:
+        first, last = min(pages), max(pages)
+        return f"page {first}" if first == last else f"pages {first} to {last}"
+    return f"passages {chunk[0].seq} to {chunk[-1].seq}"
+
+
+def format_failure(err: Err, chunk: list[PromptSegment], depth: int) -> Err:
+    """The draft stops: what went wrong, and where, in plain words; the details keep the reason."""
+    details = {**err.details, "part": _where(chunk), "passages": len(chunk), "splits": depth}
+    problem = {
+        ai_service.CUT_OFF: "was cut off before it was complete",
+        ai_service.DECLINED: "was declined for this part of the sources",
+    }.get(err.message, "didn't match the expected format twice")
+    message = (
+        SPLIT_FAILED.format(problem=problem, where=_where(chunk))
+        if depth
+        else STAGE_FAILED.format(problem=problem)
+    )
+    return Err(ErrorKind.AI_FORMAT, message, details)
+
+
 def _dedupe(records: list[ClaimRecord]) -> list[ClaimRecord]:
     """Overlapping chunks can return the same claim twice; keep the first."""
     seen: set[tuple[str, str, tuple[str, ...]]] = set()
@@ -483,7 +526,9 @@ def extract_source(
         if info.kind == SourceKind.INTERVIEW_TRANSCRIPT.value
         else ai_schemas.S1Output
     )
-    for chunk in chunks_for(info.kind, prepared.segments):
+    work = [(chunk, 0) for chunk in chunks_for(info.kind, prepared.segments)]
+    while work:
+        chunk, depth = work.pop(0)
         call = ai_service.StageCall(
             stage_id=prompt_name,
             prompt_version=prompt.version,
@@ -503,7 +548,12 @@ def extract_source(
             record_calls(session, job_id, used)
         match result:
             case Err(kind=ErrorKind.AI_FORMAT) as err:
-                return Err(ErrorKind.AI_FORMAT, FORMAT_FAILED, err.details)
+                if depth < MAX_SPLITS and len(chunk) >= 2 * MIN_SPLIT_PASSAGES:
+                    first, second = halves(chunk)
+                    work[:0] = [(first, depth + 1), (second, depth + 1)]
+                    tally.splits += 1
+                    continue
+                return format_failure(err, chunk, depth)
             case Err() as err:
                 return ai_failure(err)
             case Ok(value=answer):

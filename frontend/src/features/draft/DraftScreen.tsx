@@ -11,6 +11,7 @@ import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { plural } from "../../lib/format";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { RejectedClaimsList } from "./RejectedClaimsList";
+import { SourceBreakdownTable } from "./SourceBreakdownTable";
 import { StageStepper } from "./StageStepper";
 import "./draft.css";
 
@@ -217,6 +218,7 @@ function Summary({
           <Link to={`${engagementPath(engagementId, "review")}?tab=outside`}>See them under Outside this flow</Link>
         </p>
       )}
+      <SourceBreakdownTable sources={summary.sources ?? []} />
       {signal && (
         <div className="draft-signal">
           <SignalMeter signal={signal} />

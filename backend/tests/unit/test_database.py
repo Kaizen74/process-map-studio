@@ -466,6 +466,7 @@ def test_downgrade_of_0013_removes_only_the_frozen_system_traces(migrated: Path)
         engine.dispose()
         return columns
 
+    db.downgrade(migrated, "0013")  # later migrations add columns to map_versions too (0027)
     before = version_columns()
     db.downgrade(migrated, "0012")
     assert before - version_columns() == {"system_traces"}
@@ -561,3 +562,18 @@ def test_downgrade_of_0026_removes_only_the_compass_role_and_the_check(migrated:
     )  # fmt: skip
     db.upgrade(migrated)
     assert "data_check" in columns("edges")
+
+
+def test_downgrade_of_0027_removes_only_the_removed_sources(migrated: Path) -> None:
+    def columns() -> set[str]:
+        engine = db.make_engine(migrated)
+        found = {c["name"] for c in inspect(engine).get_columns("map_versions")}
+        engine.dispose()
+        return found
+
+    db.downgrade(migrated, "0027")
+    before = columns()
+    db.downgrade(migrated, "0026")
+    assert before - columns() == {"removed_sources"}
+    db.upgrade(migrated)
+    assert "removed_sources" in columns()

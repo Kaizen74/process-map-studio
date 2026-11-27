@@ -18,7 +18,13 @@ export interface RejectedClaim {
 /** A claim with a passage Eric can open or add a step from (rejected, or about another flow). */
 export type PassageClaim = Pick<
   RejectedClaim,
-  "id" | "claim_text" | "source_id" | "source_name" | "anchor" | "passage_available" | "segment_id"
+  | "id"
+  | "claim_text"
+  | "source_id"
+  | "source_name"
+  | "anchor"
+  | "passage_available"
+  | "segment_id"
 >;
 
 /** GET /versions/{vid}/outside-flow (DECISIONS 81): checked claims about another flow. */
@@ -137,7 +143,13 @@ export interface PublishBlocker {
 }
 
 /** What is left before publishing (GET /versions/{vid}/next-steps, 2026-10-28). */
-export type NextStepKey = "fix_map" | "check_steps" | "merges" | "review_steps" | "pictures" | "publish";
+export type NextStepKey =
+  | "fix_map"
+  | "check_steps"
+  | "merges"
+  | "review_steps"
+  | "pictures"
+  | "publish";
 
 export interface NextStepItem {
   message: string;
@@ -207,4 +219,6 @@ export interface VersionDetail extends VersionSummary {
   acceptance: DraftAcceptance;
   change_log: ChangeEntry[];
   quality_card: QualityCard | null;
+  /** DECISIONS 114: sources deleted after this version was drafted from them. */
+  removed_sources?: string[];
 }

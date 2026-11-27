@@ -1851,8 +1851,10 @@ def write_documents_only() -> None:
 
 
 # The diagram sample (2026-10-28, from Eric's cargo manual): `process_flow_diagram.pdf` alone, a
-# process-flow page whose boxed stages each carry their team's label (passages p3-p7, each box
-# with its label in front). Its engagement adds the role "Load control team" (the label). Each
+# process-flow page whose boxed stages each carry their team's label (passages p2-p6, each box
+# with its label in front; the page header "Document ID … Page 1 of 3" is on every page, so it is
+# left out when the manual is read, DECISIONS 114). Its engagement adds the role "Load control
+# team" (the label). Each
 # claim names the team or role printed on its box, so the role check (G5) finds it in the cited
 # passage; one planted claim names "Airline ops", which no box says, and is rejected. The diagram
 # never says where an out-of-tolerance deviation or a refused load sheet goes, so those exits are
@@ -1861,33 +1863,33 @@ DIAGRAM_SOURCES = ["process_flow_diagram.pdf"]
 DIAGRAM_ROLE = {"name": "Load control team", "aliases": ["Load Control Team"]}
 DIAGRAM_S1: dict[str, Any] = {
     "claims": [
-        claim("activity", "The Load control team drafts the preliminary load plan by T-90.", ["p3"],
+        claim("activity", "The Load control team drafts the preliminary load plan by T-90.", ["p2"],
               "Draft the preliminary load plan by T-90", responsible="Load control team"),
-        claim("approval", "The Load control lead approves the plan.", ["p3"],
+        claim("approval", "The Load control lead approves the plan.", ["p2"],
               "Load Control Lead approves the plan", responsible="Load control lead"),
-        claim("activity", "Ramp loads the ULDs as per the load plan.", ["p4"],
+        claim("activity", "Ramp loads the ULDs as per the load plan.", ["p3"],
               "Load ULDs as per the load plan", responsible="Ramp"),
-        claim("activity", "Ramp returns the loading report within 10 minutes.", ["p4"],
+        claim("activity", "Ramp returns the loading report within 10 minutes.", ["p3"],
               "Return the loading report within 10 minutes", responsible="Ramp", duration="10 minutes"),
-        claim("decision", "The Captain checks the deviation against tolerance.", ["p5"],
+        claim("decision", "The Captain checks the deviation against tolerance.", ["p4"],
               "Check deviation against tolerance", decider="Captain", mechanism="judgment"),
-        claim("approval", "The Captain accepts the final load sheet.", ["p5"],
+        claim("approval", "The Captain accepts the final load sheet.", ["p4"],
               "Captain accepts the final load sheet", responsible="Captain"),
         # Planted: no box names Airline ops (G5, role not found in the cited passage).
-        claim("activity", "Airline ops verify pieces, weight and dimensions.", ["p6"],
+        claim("activity", "Airline ops verify pieces, weight and dimensions.", ["p5"],
               "Verify pieces, weight and dimensions", responsible="Airline ops"),
         # Another flow on the same page (export: accept cargo, build ULDs). Both pass the checks;
         # this engagement maps load control only, so S2 sets them aside (DECISIONS 81).
-        claim("activity", "Cargo acceptance verifies pieces, weight and dimensions.", ["p6"],
+        claim("activity", "Cargo acceptance verifies pieces, weight and dimensions.", ["p5"],
               "Verify pieces, weight and dimensions", responsible="Cargo acceptance"),
-        claim("activity", "The Build-up team secures and nets the ULDs as required.", ["p7"],
+        claim("activity", "The Build-up team secures and nets the ULDs as required.", ["p6"],
               "Secure and net as required", responsible="Build-up team"),
     ],
     "unknowns": [{"question": "Where does a deviation outside tolerance go next?",
-                  "segment_ids": ["p5"]},
+                  "segment_ids": ["p4"]},
                  # About the export flow on the same page: set aside (DECISIONS 83).
                  {"question": "What happens to cargo that fails security screening?",
-                  "segment_ids": ["p6"]}],
+                  "segment_ids": ["p5"]}],
 }  # fmt: skip
 DIAGRAM_S2: dict[str, Any] = {
     "steps": [
@@ -1904,12 +1906,12 @@ DIAGRAM_S2: dict[str, Any] = {
 }
 DIAGRAM_UNCOMPARED = "Return loading report"
 DIAGRAM_QUOTES = {
-    "Draft load plan": ("p3", "Draft the preliminary load plan by T-90"),
-    "Approve load plan": ("p3", "Load Control Lead approves the plan"),
-    "Load ULDs": ("p4", "Load ULDs as per the load plan"),
-    "Return loading report": ("p4", "Return the loading report within 10 minutes"),
-    "Deviation in limits?": ("p5", "Check deviation against tolerance"),
-    "Accept final load sheet": ("p5", "Captain accepts the final load sheet"),
+    "Draft load plan": ("p2", "Draft the preliminary load plan by T-90"),
+    "Approve load plan": ("p2", "Load Control Lead approves the plan"),
+    "Load ULDs": ("p3", "Load ULDs as per the load plan"),
+    "Return loading report": ("p3", "Return the loading report within 10 minutes"),
+    "Deviation in limits?": ("p4", "Check deviation against tolerance"),
+    "Accept final load sheet": ("p4", "Captain accepts the final load sheet"),
 }
 
 

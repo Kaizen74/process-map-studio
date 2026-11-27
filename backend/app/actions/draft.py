@@ -33,9 +33,11 @@ from app.domain.models import (
     OutsideFlowClaim,
     OutsideFlowClaims,
     OutsideFlowQuestion,
+    ReasonCount,
     RefreshChanges,
     RejectedClaim,
     RejectedClaims,
+    SourceBreakdown,
     VersionView,
 )
 from app.domain.result import Err, ErrorKind, Ok, Result
@@ -490,7 +492,62 @@ def _summary(session: Session, version_id: str) -> DraftSummary:
         scrubbed=claims.scrub_count(session, version_id),
         outside_flow=counts.get("outside_flow", 0),
         outside_flow_questions=claims.unknown_count(session, version_id, outside_flow=True),
+        sources=_by_source(session, version_id),
     )
+
+
+def _reason_words(guardrail: str, reason: str) -> str:
+    """A rejection reason as the Draft screen says it (DECISIONS 114)."""
+    if guardrail == "G3":
+        return "cites a passage that wasn't sent"
+    if reason.startswith("role not found"):
+        return "names a role the cited passage doesn't"
+    if reason.startswith("number not found"):
+        return "states a number the cited passage doesn't"
+    if reason.startswith("quote longer"):
+        return "quote too long"
+    if guardrail == "G4":
+        return "quote not found in the cited passage"
+    return "failed another check"
+
+
+def _by_source(session: Session, version_id: str) -> list[SourceBreakdown]:
+    """What each source gave the draft, in the order drafted (DECISIONS 114). Names hidden."""
+    order = map_repo.version_source_ids(session, version_id)
+    found = {s.id: s for s in sources_repo.get_many(session, order)}
+    if not found:
+        return []
+    terms = redaction.name_replacements(session, next(iter(found.values())).engagement_id)
+    facts: dict[str, list[tuple[str, str, str]]] = {sid: [] for sid in found}
+    for source_id, status, guardrail, reason in claims.reading_facts(session, version_id):
+        if source_id in facts:
+            facts[source_id].append((status, guardrail, reason))
+    steps = map_repo.steps_citing(session, version_id, list(found))
+    out = []
+    for sid, source in found.items():
+        rows = facts[sid]
+        reasons: dict[str, int] = {}
+        for status, guardrail, reason in rows:
+            if status == "rejected":
+                words = _reason_words(guardrail, reason)
+                reasons[words] = reasons.get(words, 0) + 1
+        out.append(
+            SourceBreakdown(
+                source_id=sid,
+                filename=redaction.hide(source.filename, terms),
+                kind=source.kind,
+                found=len(rows),
+                verified=sum(r[0] == "verified" for r in rows),
+                rejected=sum(r[0] == "rejected" for r in rows),
+                outside_flow=sum(r[0] == "outside_flow" for r in rows),
+                steps=steps.get(sid, 0),
+                reasons=[
+                    ReasonCount(reason=k, count=v)
+                    for k, v in sorted(reasons.items(), key=lambda kv: (-kv[1], kv[0]))
+                ],
+            )
+        )
+    return out
 
 
 def with_progress(session: Session, job: JobView) -> JobView:

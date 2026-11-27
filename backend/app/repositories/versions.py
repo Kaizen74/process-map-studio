@@ -155,6 +155,9 @@ def clear_for_refresh(session: Session, version_id: str, keep: set[str]) -> None
     lines themselves are handled by the caller."""
     for table in (ValidationQuestion, Unknown, MergeProposal, VersionSource):
         session.execute(sql_delete(table).where(table.version_id == version_id))
+    session.execute(  # rebuilt from the sources there are now (DECISIONS 114)
+        update(MapVersion).where(MapVersion.id == version_id).values(removed_sources=None)
+    )
     kept_claims = select(ElementClaim.claim_id).where(ElementClaim.element_id.in_(keep))
     session.execute(
         sql_delete(Claim).where(Claim.version_id == version_id).where(Claim.id.not_in(kept_claims))
@@ -452,3 +455,38 @@ def set_system_traces(session: Session, version_id: str, traces: list[Any]) -> N
 def system_traces(session: Session, version_id: str) -> list[Any] | None:
     row = session.get(MapVersion, version_id)
     return list(row.system_traces) if row is not None and row.system_traces is not None else None
+
+
+# --- Sources a version was made from (DECISIONS 114) -------------------------------------------
+
+
+def made_from(session: Session, source_ids: list[str]) -> dict[str, list[tuple[str, str]]]:
+    """For each source, the (label, state) of every listed version drafted from it, oldest first."""
+    found: dict[str, list[tuple[str, str]]] = {sid: [] for sid in source_ids}
+    rows = session.execute(
+        select(VersionSource.source_id, MapVersion.label, MapVersion.state)
+        .join(MapVersion, MapVersion.id == VersionSource.version_id)
+        .where(VersionSource.source_id.in_(source_ids), MapVersion.state != "building")
+        .order_by(MapVersion.created_at, MapVersion.id)
+    )
+    for source_id, label, state in rows:
+        if (label, state) not in found[source_id]:
+            found[source_id].append((label, state))
+    return found
+
+
+def note_removed_source(session: Session, source_id: str, filename: str) -> None:
+    """Before a source is deleted: record its file name on every version drafted from it."""
+    version_ids = session.scalars(
+        select(VersionSource.version_id).where(VersionSource.source_id == source_id)
+    )
+    for version_id in set(version_ids):
+        row = session.get(MapVersion, version_id)
+        if row is not None and filename not in (row.removed_sources or []):
+            row.removed_sources = [*(row.removed_sources or []), filename]
+    session.flush()
+
+
+def removed_sources(session: Session, version_id: str) -> list[str]:
+    found = session.scalar(select(MapVersion.removed_sources).where(MapVersion.id == version_id))
+    return [str(name) for name in found or []]

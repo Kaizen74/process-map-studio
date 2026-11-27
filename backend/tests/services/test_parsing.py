@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from docx import Document
 
+from app.domain.models import ParsedSegment
 from app.domain.result import Err, ErrorKind, Ok
 from app.services import parsing
 from tests.paths import BACKEND_ROOT
@@ -189,3 +190,73 @@ def test_a_picture_on_three_or_more_pages_is_a_logo_never_a_suggestion() -> None
     result = parsing.extract_pdf_images(DIAGRAM)
     assert isinstance(result, Ok)
     assert [(i.page, i.width) for i in result.value] == [(1, 56), (1, 60)]  # the two icons
+
+
+# A manual laid out like Eric's cargo manual (DECISIONS 114): a header and footer on every page,
+# a contents list, wrapped sentences, a lone bullet mark and numbered sections.
+MANUAL = FIXTURES / "acceptance_manual.pdf"
+
+
+def manual_document() -> list[tuple[int | None, str, str]]:
+    result = parsing.parse_pdf_document(MANUAL)
+    assert isinstance(result, Ok)
+    return [(s.page, s.section, s.text) for s in result.value.segments]
+
+
+def test_a_manual_loses_its_running_header_footer_and_contents_list() -> None:
+    texts = [text for _, _, text in manual_document()]
+    for repeated in ("<Controlled copy>", "CARGO HANDLING MANUAL", "EFFECTIVE DATE", "PREPARED BY"):
+        assert not any(repeated in t for t in texts), repeated
+    assert not any("....." in t for t in texts)
+    assert texts[:3] == ["SECTION 2", "ACCEPTANCE", "ITEM CONTENTS PAGE"]  # before the list
+
+
+def test_a_manual_sentence_is_one_passage_across_lines_a_bullet_mark_and_a_page_break() -> None:
+    found = {text: page for page, _, text in manual_document()}
+    assert (
+        found[
+            "1.2 The staff who find an irregularity shall immediately notify the Duty Manager "
+            "(DM) before the cargo is released."
+        ]
+        == 2
+    )
+    assert "o" not in found
+    wrapped = (
+        "2.2 If the weight differs by more than 5%, the Acceptance Officer asks the agent to "
+        "amend the air waybill before the cut-off time."
+    )
+    assert found[wrapped] == 3  # the passage keeps the page it starts on
+
+
+def test_a_manual_passage_carries_its_section_and_numbered_items_stay_apart() -> None:
+    sections = {text: section for _, section, text in manual_document()}
+    assert sections[
+        "3.1 Cargo that is prohibited by the carrier is rejected by the Duty Manager."
+    ] == ("3. REJECTED CARGO")
+    assert sections["2. Check the marks."] == "Appendix A - Checklist"  # a list, not a heading
+    assert sections["SECTION 2"] == ""
+    assert "1. Check the labels." in sections  # never joined to the item before it
+
+
+def test_a_transcript_pdf_is_still_read_line_by_line() -> None:
+    raw = parsing.parse_pdf_text(MANUAL)
+    assert isinstance(raw, Ok)
+    texts = [s.text for s in raw.value.segments]
+    assert "o" in texts and texts.count("<Controlled copy>") == 5
+    assert all(s.section == "" for s in raw.value.segments)
+
+
+def test_tidying_leaves_a_short_document_and_diagram_boxes_alone() -> None:
+    segments = [
+        ParsedSegment(seq=1, text="Load plan approved by the", page=1),
+        ParsedSegment(seq=2, text="Load Control Lead.", page=1),
+        ParsedSegment(seq=3, text="Check the plan and", page=2),
+        ParsedSegment(seq=4, text="release it", page=2),
+    ]
+    tidied = parsing.tidy_pdf_lines(segments, diagram_pages={2})
+    assert [s.text for s in tidied] == [
+        "Load plan approved by the Load Control Lead.",
+        "Check the plan and",
+        "release it",
+    ]
+    assert [s.seq for s in tidied] == [1, 2, 3]

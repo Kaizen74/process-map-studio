@@ -175,3 +175,14 @@
   font-size: var(--text-label);
   color: var(--ink-3);
 }
+
+/* DECISIONS 114: a draft made from sources deleted since. */
+.removed-sources {
+  margin: var(--space-8) 0 0;
+  padding: var(--space-8) var(--space-12);
+  border: var(--line-hairline) solid var(--constraint);
+  border-radius: var(--radius-card);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: var(--text-label);
+}

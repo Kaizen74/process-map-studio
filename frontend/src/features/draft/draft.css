@@ -200,3 +200,17 @@
   font-size: var(--text-micro);
   color: var(--ink-3);
 }
+
+/* DECISIONS 114: what each source gave the draft. */
+.draft-sources {
+  margin-top: var(--space-16);
+}
+.draft-sources caption {
+  text-align: left;
+  font-weight: var(--weight-medium);
+  padding-bottom: var(--space-8);
+}
+.draft-sources__reasons {
+  color: var(--ink-3);
+  font-size: var(--text-label);
+}
