@@ -349,6 +349,10 @@ class SourceView(BaseModel):
     last_reviewed: str = ""
     review_due: str = ""
     controlled_copy_set: bool = False
+    # DECISIONS 114, for the warning before a delete: the versions drafted from this source
+    # ("v0.1 (draft)") and how many steps of the current map are built from it.
+    used_by: list[str] = []
+    steps_citing: int = 0
 
 
 class SourceReadInfo(BaseModel):
@@ -613,6 +617,8 @@ class PromptSegment(BaseModel):
     speaker_role: str = ""
     page: int | None = None
     start_ms: int | None = None
+    # The top-level section of a tidied PDF document (DECISIONS 114): chunks follow sections.
+    section: str = ""
     # Interviews (§3.12.10 steps A and B): the guide question of the answer block, and the marker
     # pre-tags as hints ("explicit_order: First thing").
     question_id: str = ""
@@ -674,6 +680,27 @@ class StoredSegment(BaseModel):
     instruction_like: bool
 
 
+class ReasonCount(BaseModel):
+    reason: str  # in plain words: "names a role the cited passage doesn't"
+    count: int
+
+
+class SourceBreakdown(BaseModel):
+    """What one source gave the draft (DECISIONS 114): the claims the reading found in it, how
+    many passed the checks, were rejected (and why) or were set aside as another flow, and how
+    many steps of the draft are built from it."""
+
+    source_id: str
+    filename: str
+    kind: str
+    found: int
+    verified: int
+    rejected: int
+    outside_flow: int
+    steps: int
+    reasons: list[ReasonCount]
+
+
 class DraftSummary(BaseModel):
     steps: int
     needs_check: int
@@ -683,6 +710,7 @@ class DraftSummary(BaseModel):
     scrubbed: int
     outside_flow: int = 0  # checked claims about another flow, set aside (DECISIONS 81)
     outside_flow_questions: int = 0  # the reading's questions about another flow (DECISIONS 83)
+    sources: list[SourceBreakdown] = []  # per document, in the order drafted (DECISIONS 114)
 
 
 class StepRename(BaseModel):
@@ -1070,6 +1098,8 @@ class VersionDetail(VersionSummary):
     acceptance: DraftAcceptance
     change_log: list[ChangeEntry]
     quality_card: dict[str, object] | None
+    # DECISIONS 114: file names of sources deleted after this version was drafted from them.
+    removed_sources: list[str] = []
 
 
 class NextStepItem(BaseModel):

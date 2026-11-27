@@ -69,6 +69,38 @@ def test_documents_are_split_every_15_pages() -> None:
     assert sum(len(c) for c in chunks) == 80  # no overlap, nothing lost
 
 
+def passage(seq: int, page: int, section: str, chars: int) -> PromptSegment:
+    return turn(seq, None, page).model_copy(update={"section": section, "text": "x" * chars})
+
+
+def test_a_tidied_manual_is_split_at_its_sections_not_every_15_pages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DECISIONS 114: whole sections packed up to the budget; a longer one cut at a page break."""
+    monkeypatch.setattr(chunking, "SECTION_CHUNK_CHARS", 1000)
+    segments = [
+        passage(1, 1, "1. INTRODUCTION", 300),
+        passage(2, 1, "1. INTRODUCTION", 300),
+        passage(3, 2, "2. CHECKS", 300),  # fits with section 1 (900)
+        passage(4, 3, "3. ONE STOP", 400),  # section 3 is 1,400: split at the page break
+        passage(5, 3, "3. ONE STOP", 400),
+        passage(6, 4, "3. ONE STOP", 300),
+        passage(7, 4, "3. ONE STOP", 300),
+        passage(8, 30, "Appendix A", 200),
+    ]
+    chunks = chunking.chunk_document(segments)
+    assert seqs(chunks) == [[1, 2, 3], [4, 5], [6, 7, 8]]
+    assert chunking.chunk_document(segments[:3], max_pages=1) == [segments[:3]]  # pages ignored
+
+
+def test_one_passage_longer_than_the_budget_is_a_chunk_of_its_own(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(chunking, "SECTION_CHUNK_CHARS", 100)
+    segments = [passage(1, 1, "1. A", 250), passage(2, 1, "1. A", 50), passage(3, 2, "1. A", 50)]
+    assert seqs(chunking.chunk_document(segments)) == [[1], [2, 3]]
+
+
 def test_word_documents_are_split_by_passage_count() -> None:
     chunks = chunking.chunk_document([turn(i + 1, None) for i in range(320)])
     assert [len(c) for c in chunks] == [150, 150, 20]
@@ -103,7 +135,10 @@ STAGES = [
 VERSIONS = {
     "S1_extract_interview": "5",  # X1: frequency of exceptions, variations and workarounds
     "S1_extract_jd": "2",
-    "S2_canonicalise": "4",  # C7a: the mapping conventions; DECISIONS 81: one flow or every flow
+    "S1_extract_document": "2",  # DECISIONS 114: a role only when a cited passage names it
+    # C7a: the mapping conventions; DECISIONS 81: one flow or every flow; DECISIONS 114: no lane
+    # when no claim names the role
+    "S2_canonicalise": "5",
     "S4_assemble": "3",  # C7a: the mapping conventions
     "GA_internal": "2",  # C4b: reality gaps, accounts and work types
     "S3c_worktype": "2",  # C7b: emerging themes
@@ -231,7 +266,7 @@ def test_the_canonicalise_prompt_defines_the_three_step_kinds() -> None:
     # P12 live run: without definitions, Claude drafted approvals as decisions and the content
     # of a piece of work ("what to offload") as a routing decision (PRD B.2, B.8, constraint 6).
     result = prompts.load_prompt("S2_canonicalise")
-    assert isinstance(result, Ok) and result.value.version == "4"
+    assert isinstance(result, Ok) and result.value.version == "5"
     text = result.value.text.lower()
     assert "an approval is" in text and "accepts or rejects" in text
     assert "a decision is a routing call" in text
@@ -304,3 +339,14 @@ def test_instruction_versions_of_prompts_and_the_question_bank(tmp_path: Path) -
     (tmp_path / "notes.txt").write_text("not an instruction", encoding="utf-8")
     assert prompts.instruction_versions(tmp_path) == {"A": "3", "bank": "2.1"}
     assert prompts.instruction_version(tmp_path / "missing.md") is None
+
+
+def test_document_extraction_names_a_role_only_from_a_cited_passage() -> None:
+    """DECISIONS 114: a flowchart box rarely says who does it. A guessed role failed the role check
+    and took the whole step with it; the role's own passage is cited instead, or it is left out."""
+    text = prompts.load_prompt("S1_extract_document").value.text  # type: ignore[union-attr]
+    assert "name a role only when a segment you cite names it" in text
+    assert "add that segment's ID to `segment_ids` as well" in text
+    assert "leave the role empty; the owner assigns it. Never guess a role." in text
+    grouping = prompts.load_prompt("S2_canonicalise").value.text  # type: ignore[union-attr]
+    assert "leave its `lane_role` empty: the owner places it in a lane" in grouping

@@ -188,6 +188,25 @@ def test_two_malformed_answers_are_a_plain_format_error() -> None:
     assert len(fake.requests) == 2
 
 
+def test_the_validation_reason_is_kept_for_copy_details() -> None:
+    """DECISIONS 114: the reason names the fields at fault, never the answer's own text."""
+    fake = FakeAnthropic(stream("not json"), stream('{"steps": "secret words"}'))
+    result = ai_service.call_claude(connect(fake), stage())
+    assert isinstance(result, Err)
+    reason = str(result.details["reason"])
+    assert reason.startswith("Does not match the schema: steps:") and "secret words" not in reason
+
+
+def test_a_repair_that_is_cut_off_is_reported_as_cut_off() -> None:
+    """DECISIONS 114: Eric's long SOP part was cut off on repair and read 'format twice'."""
+    fake = FakeAnthropic(stream('{"steps": "no"}'), stream('{"steps": [', stop="max_tokens"))
+    result = ai_service.call_claude(connect(fake), stage())
+    assert isinstance(result, Err) and result.kind is ErrorKind.AI_FORMAT
+    assert result.message == "Claude's answer was cut off before it was complete."
+    assert result.details["stop_reason"] == "max_tokens"
+    assert [c["status"] for c in result.details["calls"]] == ["invalid", "truncated"]  # type: ignore[index, union-attr]
+
+
 def test_every_connection_the_app_opens_is_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     # Found by the first live run (P12): each call opened a connection to Anthropic and left it
     # open ("unclosed SSL socket"). The app's own clients are closed after each call.

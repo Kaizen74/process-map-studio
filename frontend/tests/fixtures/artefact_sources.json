@@ -25,7 +25,9 @@
       "updated_by_other": "",
       "last_reviewed": "",
       "review_due": "",
-      "controlled_copy_set": false
+      "controlled_copy_set": false,
+      "used_by": [],
+      "steps_citing": 0
     },
     {
       "id": "id-3",
@@ -52,7 +54,9 @@
       "updated_by_other": "",
       "last_reviewed": "",
       "review_due": "",
-      "controlled_copy_set": false
+      "controlled_copy_set": false,
+      "used_by": [],
+      "steps_citing": 0
     }
   ],
   "sheet_segments": {

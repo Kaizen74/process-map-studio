@@ -168,7 +168,12 @@ def _parse(info: SourceReadInfo) -> Result[ParsedDocument]:
         return (
             parsing.parse_transcript_text(path) if transcript else parsing.parse_text_document(path)
         )
-    result = parsing.parse_docx(path) if info.format == "docx" else parsing.parse_pdf_text(path)
+    if info.format == "docx":
+        result = parsing.parse_docx(path)
+    elif transcript:
+        result = parsing.parse_pdf_text(path)
+    else:  # a process document: running headers, contents and broken lines tidied (DECISIONS 114)
+        result = parsing.parse_pdf_document(path)
     match result:
         case Ok(value=document) if transcript:
             return Ok(
@@ -362,9 +367,35 @@ def list_sources(sessions: Sessions, engagement_id: str) -> Result[list[SourceVi
         views = repo.list_for_engagement(session, engagement_id)
         found = _current_map_citations(session, engagement_id)
         coverage = _coverage(session, [v.id for v in views], found)
+        usage = _usage(session, engagement_id, [v.id for v in views])
         return Ok(
-            [_public(session, v).model_copy(update={"coverage_pct": coverage[v.id]}) for v in views]
+            [
+                _public(session, v).model_copy(
+                    update={"coverage_pct": coverage[v.id], **usage[v.id]}
+                )
+                for v in views
+            ]
         )
+
+
+STATE_WORDS = {"draft": "draft", "published": "published", "superseded": "earlier version"}
+
+
+def _usage(
+    session: Session, engagement_id: str, source_ids: list[str]
+) -> dict[str, dict[str, Any]]:
+    """DECISIONS 114: the versions drafted from each source and the current map's steps built
+    from it, so deleting a source a draft depends on is never a surprise."""
+    made = versions_repo.made_from(session, source_ids)
+    version_id = versions_repo.current_map_id(session, engagement_id)
+    citing = map_repo.steps_citing(session, version_id, source_ids) if version_id else {}
+    return {
+        sid: {
+            "used_by": [f"{label} ({STATE_WORDS.get(state, state)})" for label, state in made[sid]],
+            "steps_citing": citing.get(sid, 0),
+        }
+        for sid in source_ids
+    }
 
 
 def sop_register(sessions: Sessions, engagement_id: str) -> Result[SopRegister]:
@@ -413,7 +444,8 @@ def get_source(sessions: Sessions, source_id: str) -> Result[SourceView]:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
         found = _current_map_citations(session, view.engagement_id)
         coverage = _coverage(session, [source_id], found)[source_id]
-        return Ok(_public(session, view).model_copy(update={"coverage_pct": coverage}))
+        usage = _usage(session, view.engagement_id, [source_id])[source_id]
+        return Ok(_public(session, view).model_copy(update={"coverage_pct": coverage, **usage}))
 
 
 def _reading_changes(fmt: str, old_kind: str, new_kind: str) -> bool:
@@ -544,6 +576,9 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
         before = repo.get(session, source_id)
         if before is None:
             return Err(ErrorKind.NOT_FOUND, SOURCE_MISSING)
+        drafted = versions_repo.made_from(session, [source_id])[source_id]
+        # DECISIONS 114: the drafts made from it say so, until they are refreshed.
+        versions_repo.note_removed_source(session, source_id, before.filename)
         removed = repo.delete(session, source_id)
         assert removed is not None
         engagements_repo.touch(session, before.engagement_id)
@@ -554,7 +589,11 @@ def delete_source(config: AppConfig, sessions: Sessions, source_id: str) -> Resu
             target_type="source",
             target_id=source_id,
             engagement_id=before.engagement_id,
-            before={"filename": before.filename, "kind": before.kind},
+            before={
+                "filename": before.filename,
+                "kind": before.kind,
+                "used_by": [label for label, _ in drafted],
+            },
         )
     file_path, image_paths = removed
     data_root = config.data_dir.resolve()

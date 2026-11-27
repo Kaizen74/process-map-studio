@@ -294,6 +294,45 @@ def table_page() -> bytes:
     return "\n".join(ops).encode("latin-1")
 
 
+def manual_page(number: int, body: list[str]) -> bytes:
+    """A manual page with the running header and approval footer printed on every page."""
+    top = ["<Controlled copy>", "CARGO HANDLING MANUAL REVISION: 3"]
+    header = text_at(72, 760, [*top, f"EFFECTIVE DATE: 01 March 2026 PAGE: {number}"])
+    bottom = ["PREPARED BY: QUALITY TEAM APPROVED BY: HEAD OF OPERATIONS"]
+    footer = text_at(72, 70, [*bottom, "Illustrative fixture, not a real manual"])
+    return (header + text_at(72, 690, body) + footer).encode("latin-1")
+
+
+def write_manual_pdf(name: str) -> None:
+    """A made-up acceptance manual laid out like Eric's cargo manual (DECISIONS 114): a header and
+    footer on every page, a contents list, sentences wrapped onto the next line and across a page
+    break, a bullet mark on a line of its own and numbered sections."""
+    pages = [
+        manual_page(1, ["SECTION 2", "ACCEPTANCE", "ITEM CONTENTS PAGE",
+                        "1. INTRODUCTION ........................................ 2",
+                        "2. ACCEPTANCE CHECKS ................................... 3",
+                        "3. REJECTED CARGO ...................................... 4",
+                        "Appendix A - Checklist ................................. 5"]),
+        manual_page(2, ["1. INTRODUCTION",
+                        "1.1 This section sets out how cargo is accepted at the terminal and",
+                        "handed to the warehouse.",
+                        "1.2 The staff who find an irregularity shall immediately notify the Duty Manager",
+                        "o",
+                        "(DM) before the cargo is released."]),
+        manual_page(3, ["2. ACCEPTANCE CHECKS",
+                        "2.1 The Acceptance Officer checks the air waybill against the cargo and",
+                        "weighs every piece.",
+                        "2.2 If the weight differs by more than 5%, the Acceptance Officer asks the agent to"]),
+        manual_page(4, ["amend the air waybill before the cut-off time.",
+                        "3. REJECTED CARGO",
+                        "3.1 Cargo that is prohibited by the carrier is rejected by the Duty Manager."]),
+        manual_page(5, ["Appendix A - Checklist",
+                        "1. Check the labels.",
+                        "2. Check the marks."]),
+    ]  # fmt: skip
+    (HERE / name).write_bytes(pdf_bytes(pages))
+
+
 def write_diagram_pdf(name: str) -> None:
     text = text_at(72, 700, ["Section 4 Records",
                              "The loading report is kept for three months by Load Control."])  # fmt: skip
@@ -470,6 +509,7 @@ def main() -> None:
     write_docx("jd_load_controller.docx", JD_CONTROLLER)
     write_pdf("manual_extract.pdf")
     write_diagram_pdf("process_flow_diagram.pdf")
+    write_manual_pdf("acceptance_manual.pdf")
     write_transcripts()
     write_photo("photo_with_gps.jpg")
     (HERE / "README.md").write_text(
@@ -483,6 +523,9 @@ def main() -> None:
         "- `process_flow_diagram.pdf`: a process-flow diagram page (two columns of boxed stages, "
         "each with its team label beside it), a table page and a text page, with the same logo "
         "on every page and small icons on the diagram.\n"
+        "- `acceptance_manual.pdf`: a made-up acceptance manual with a running header and footer, "
+        "a contents list, sentences wrapped across lines and a page break, a lone bullet mark and "
+        "numbered sections, to check how a manual is tidied for reading.\n"
         "- `interview_transcript.txt`: Appendix A.1 verbatim (`[mm:ss] Speaker: text`); the same "
         "interview as `.vtt` (voice tags), `.srt`, `.docx` (one paragraph per turn) and `.pdf` "
         '(two pages, long turns wrapped onto continuation lines). "Priya Nair" is fictional.\n'

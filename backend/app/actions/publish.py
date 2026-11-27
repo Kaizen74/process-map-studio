@@ -92,6 +92,9 @@ def _detail(session: Session, version_id: str) -> VersionDetail | None:
         acceptance=_acceptance(session, version_id, steps),
         change_log=log,
         quality_card=versions_repo.quality_card(session, version_id),
+        removed_sources=[
+            redaction.hide(n, terms) for n in versions_repo.removed_sources(session, version_id)
+        ],
     )
 
 

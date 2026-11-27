@@ -86,6 +86,20 @@ def counts(session: Session, version_id: str) -> dict[str, int]:
     return {status: count for status, count in rows}
 
 
+def reading_facts(session: Session, version_id: str) -> list[tuple[str, str, str, str]]:
+    """(source_id, status, guardrail, reason) of every claim the reading stage (S1) checked in a
+    version: the per-document breakdown on the Draft screen (DECISIONS 114)."""
+    rows = session.execute(
+        select(
+            Claim.source_id,
+            Claim.verification_status,
+            Claim.rejection_guardrail,
+            Claim.rejection_reason,
+        ).where(Claim.version_id == version_id, Claim.stage == "S1")
+    )
+    return [(str(a), str(b), str(c or ""), str(d or "")) for a, b, c, d in rows]
+
+
 @remembered
 def _rows_with_ids(session: Session, version_id: str, status: str) -> list[tuple[str, ClaimRecord]]:
     rows = session.scalars(

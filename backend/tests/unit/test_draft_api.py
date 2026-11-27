@@ -96,10 +96,19 @@ def test_a_draft_runs_every_stage_and_reports_counts(client: TestClient) -> None
 
     state = draft_state(client, built.engagement_id)
     assert state["version"]["label"] == "v0.1" and state["version"]["id"] == job["target_id"]
+    by_source = state["summary"].pop("sources")
     assert state["summary"] == {
         "steps": 10, "needs_check": 0, "verified": 40, "rejected": 0, "open_questions": 10,
         "scrubbed": 0, "outside_flow": 0, "outside_flow_questions": 0,  # DECISIONS 81, 83
     }  # fmt: skip
+    # DECISIONS 114: what each source gave, in the order drafted.
+    assert [s["filename"] for s in by_source] == [s for s in built.sources]
+    assert sum(s["verified"] for s in by_source) == 40
+    for s in by_source:
+        assert s["found"] == s["verified"] + s["rejected"] + s["outside_flow"]
+        assert s["reasons"] == [] and s["rejected"] == 0
+    sop = next(s for s in by_source if s["filename"] == "sop_LC-07.docx")
+    assert sop["kind"] == "sop" and sop["steps"] > 0
     assert state["job"]["id"] == job["id"]
     readiness = client.get(f"/api/engagements/{built.engagement_id}/readiness").json()
     assert readiness["draft_exists"] is True and readiness["nav"]["draft"] == "done"
@@ -180,6 +189,16 @@ def test_rejected_claims_register_shows_each_trap(settings_config: AppConfig) ->
         assert t3["anchor"] and t3["source_name"] == "interview_transcript.txt"
         assert rows["T5"]["source_name"] == "sop_LC-07.docx" and rows["T5"]["anchor"]
         assert "Priya" not in response.text and "Nair" not in response.text
+
+        # DECISIONS 114: the Draft screen says, per document, why its claims were rejected.
+        by_source = draft_state(client, built.engagement_id)["summary"]["sources"]
+        reasons = {r["reason"]: 0 for s in by_source for r in s["reasons"]}
+        for s in by_source:
+            for r in s["reasons"]:
+                reasons[r["reason"]] += r["count"]
+        assert sum(s["rejected"] for s in by_source) == 5  # T1-T5; the verifier's is S3b
+        assert reasons["cites a passage that wasn't sent"] == 1  # T1
+        assert sum(reasons.values()) == 5
 
 
 def test_a_failed_draft_saves_nothing_but_keeps_the_usage(

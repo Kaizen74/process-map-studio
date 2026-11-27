@@ -356,6 +356,10 @@ def _calls_of(err: Err) -> list[object]:
     return list(calls) if isinstance(calls, list) else []
 
 
+CUT_OFF = "Claude's answer was cut off before it was complete."
+DECLINED = "Claude declined this part of the sources."
+
+
 def call_claude(conn: AiConnection, call: StageCall) -> Result[AiAnswer]:
     """Send one stage request and return its answer validated against `call.output_model`.
 
@@ -384,9 +388,7 @@ def call_claude(conn: AiConnection, call: StageCall) -> Result[AiAnswer]:
     if problem is not None:
         return Err(
             ErrorKind.AI_FORMAT,
-            "Claude declined this part of the sources."
-            if problem == "refused"
-            else "Claude's answer was cut off before it was complete.",
+            DECLINED if problem == "refused" else CUT_OFF,
             {"stop_reason": first.stop_reason, "calls": [c.model_dump() for c in calls]},
         )
     match _validate(call.output_model, first.text):
@@ -423,17 +425,27 @@ def call_claude(conn: AiConnection, call: StageCall) -> Result[AiAnswer]:
         case Ok(value=second):
             pass
     calls.append(second.record)
-    if _stop_problem(second) is None:
+    problem = _stop_problem(second)
+    if problem is None:
         match _validate(call.output_model, second.text):
             case Ok(value=data):
                 second.record.status = "repaired"
                 return Ok(AiAnswer(data=data, calls=calls))
-            case Err():
+            case Err(message=repair_reason):
                 second.record.status = "invalid"
+                reason = repair_reason
+    # DECISIONS 114: say what actually went wrong (a repair cut off is a cut-off answer, not a
+    # format problem) and keep the validation reason (field paths and messages only, never the
+    # answer's text) for Copy details.
+    details: dict[str, object] = {"reason": reason[:500], "calls": [c.model_dump() for c in calls]}
+    if problem is not None:
+        details["stop_reason"] = second.stop_reason
     return Err(
         ErrorKind.AI_FORMAT,
-        "Claude's answer didn't match the expected format twice.",
-        {"calls": [c.model_dump() for c in calls]},
+        CUT_OFF
+        if problem == "truncated"
+        else "Claude's answer didn't match the expected format twice.",
+        details,
     )
 
 

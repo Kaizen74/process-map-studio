@@ -58,8 +58,10 @@ def test_the_diagram_is_read_box_by_box_with_its_team_label(diagram: Drafted) ->
     d = diagram
     page = get(d, f"/api/sources/{d.source_id}/segments?page_size=200")  # type: ignore[attr-defined]
     texts = [s["text"] for s in page["segments"] if s["page"] == 1]
-    assert texts[2].startswith("LOAD CONTROL TEAM: 1. PLAN THE LOAD • Draft the preliminary")
-    assert texts[3].startswith("RAMP TEAM: 2. LOAD THE AIRCRAFT • Load ULDs as per the load plan")
+    # The "Document ID … Page 1 of 3" header is on every page, so it is left out (DECISIONS 114).
+    assert texts[0] == "PROCESS FLOW (ILLUSTRATIVE)"
+    assert texts[1].startswith("LOAD CONTROL TEAM: 1. PLAN THE LOAD • Draft the preliminary")
+    assert texts[2].startswith("RAMP TEAM: 2. LOAD THE AIRCRAFT • Load ULDs as per the load plan")
     assert not any("A. ACCEPT CARGO" in t and "1. PLAN THE LOAD" in t for t in texts)
 
 

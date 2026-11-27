@@ -1,15 +1,33 @@
 import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import type { Source, SourcePatch } from "../../api/types";
-import { Button, Card, Dialog, EmptyState, ErrorState, Skeleton } from "../../components/common";
+import {
+  Button,
+  Card,
+  Dialog,
+  EmptyState,
+  ErrorState,
+  Skeleton,
+} from "../../components/common";
 import { useToast } from "../../components/shell";
 import { useEngagement, useReadiness } from "../../hooks/useEngagements";
 import { useRoles } from "../../hooks/useRoles";
-import { useDeleteSource, useSopRegister, useSources, useUpdateSource, useUploadSource } from "../../hooks/useSources";
+import {
+  useDeleteSource,
+  useSopRegister,
+  useSources,
+  useUpdateSource,
+  useUploadSource,
+} from "../../hooks/useSources";
 import { copyDetailsOf, messageOf } from "../../lib/errors";
 import { engagementPath } from "../../lib/engagementSteps";
 import { plural } from "../../lib/format";
-import { sopCountsLine, uncitedLine, uploadProblem } from "../../lib/sources";
+import {
+  deleteWarning,
+  sopCountsLine,
+  uncitedLine,
+  uploadProblem,
+} from "../../lib/sources";
 import { EngagementProblem } from "../engagement/EngagementProblem";
 import { DropZone } from "./DropZone";
 import { RedactionList } from "./RedactionList";
@@ -57,7 +75,10 @@ export function SourcesScreen() {
       const key = nextKey.current++;
       const problem = uploadProblem(file);
       if (problem) {
-        setNotes((n) => [...n, { key, name: file.name, state: "failed", message: problem }]);
+        setNotes((n) => [
+          ...n,
+          { key, name: file.name, state: "failed", message: problem },
+        ]);
         continue;
       }
       setNotes((n) => [...n, { key, name: file.name, state: "reading" }]);
@@ -67,7 +88,11 @@ export function SourcesScreen() {
         setNotes((n) => n.filter((note) => note.key !== key));
       } catch (e) {
         setNotes((n) =>
-          n.map((note) => (note.key === key ? { ...note, state: "failed", message: messageOf(e) } : note)),
+          n.map((note) =>
+            note.key === key
+              ? { ...note, state: "failed", message: messageOf(e) }
+              : note,
+          ),
         );
       }
     }
@@ -97,7 +122,12 @@ export function SourcesScreen() {
   }
 
   if (engagement.isError) {
-    return <EngagementProblem error={engagement.error} onRetry={() => void engagement.refetch()} />;
+    return (
+      <EngagementProblem
+        error={engagement.error}
+        onRetry={() => void engagement.refetch()}
+      />
+    );
   }
 
   const list = sources.data ?? [];
@@ -106,18 +136,23 @@ export function SourcesScreen() {
   const opened = list.find((s) => s.id === openId);
   // Transcripts map their speakers; email threads map their senders (R11).
   const showSpeakers =
-    (opened?.kind === "interview_transcript" || opened?.kind === "email_thread") && opened.text_status === "ready";
+    (opened?.kind === "interview_transcript" ||
+      opened?.kind === "email_thread") &&
+    opened.text_status === "ready";
 
   return (
     <main className="screen" aria-labelledby="sources-title">
       <div>
         <h1 id="sources-title">Sources</h1>
         <p className="screen__intro">
-          The documents and interviews this map is drawn from. Every step on the map will point back to them.
+          The documents and interviews this map is drawn from. Every step on the
+          map will point back to them.
         </p>
         {/* §3.20 (DECISIONS 110): who owns and updates the SOPs, in one line. */}
         {register.data && register.data.counts.sops > 0 && (
-          <p className="registry__counts">{sopCountsLine(register.data.counts)}</p>
+          <p className="registry__counts">
+            {sopCountsLine(register.data.counts)}
+          </p>
         )}
         {register.data?.map && register.data.map.steps > 0 && (
           <p className="registry__counts">{uncitedLine(register.data.map)}</p>
@@ -129,7 +164,10 @@ export function SourcesScreen() {
       {notes.length > 0 && (
         <ul className="upload-notes" aria-label="Uploads">
           {notes.map((note) => (
-            <li key={note.key} className={`upload-note upload-note--${note.state}`}>
+            <li
+              key={note.key}
+              className={`upload-note upload-note--${note.state}`}
+            >
               <span className="upload-note__name">{note.name}</span>
               {note.state === "reading" ? (
                 <span className="upload-note__state" role="status">
@@ -143,7 +181,9 @@ export function SourcesScreen() {
                   <Button
                     variant="link"
                     aria-label={`Dismiss the message about ${note.name}`}
-                    onClick={() => setNotes((n) => n.filter((x) => x.key !== note.key))}
+                    onClick={() =>
+                      setNotes((n) => n.filter((x) => x.key !== note.key))
+                    }
                   >
                     Dismiss
                   </Button>
@@ -204,14 +244,27 @@ export function SourcesScreen() {
       )}
       {/* Names to hide sit below the speaker mapping (PRD §5.4); shown once there are sources. */}
       {list.length > 0 && <RedactionList engagementId={engagementId} />}
-      {openId && <SourceViewer key={openId} sourceId={openId} onClose={() => open(null)} />}
+      {openId && (
+        <SourceViewer
+          key={openId}
+          sourceId={openId}
+          onClose={() => open(null)}
+        />
+      )}
 
       {readiness.data && (
-        <div className={["readiness-line", missing.length ? "" : "readiness-line--ready"].join(" ")}>
+        <div
+          className={[
+            "readiness-line",
+            missing.length ? "" : "readiness-line--ready",
+          ].join(" ")}
+        >
           {missing.length === 0 ? (
             <p>
               <strong>Ready to draft.</strong>{" "}
-              <Link to={engagementPath(engagementId, "draft")}>Go to Draft</Link>
+              <Link to={engagementPath(engagementId, "draft")}>
+                Go to Draft
+              </Link>
             </p>
           ) : (
             <>
@@ -238,7 +291,6 @@ export function SourcesScreen() {
         </div>
       )}
 
-
       <Dialog
         open={deleting !== null}
         title={`Delete ${deleting?.filename ?? ""}?`}
@@ -246,7 +298,9 @@ export function SourcesScreen() {
         onClose={() => setDeleting(null)}
         actions={
           <>
-            <Button onClick={() => setDeleting(null)}>{deleteError ? "Close" : "Cancel"}</Button>
+            <Button onClick={() => setDeleting(null)}>
+              {deleteError ? "Close" : "Cancel"}
+            </Button>
             {!deleteError && (
               <Button variant="danger" onClick={confirmDelete}>
                 {remove.isPending ? "Deleting…" : "Delete source"}
@@ -255,6 +309,11 @@ export function SourcesScreen() {
           </>
         }
       >
+        {deleting && deleteWarning(deleting) && (
+          <p className="upload-note" role="note">
+            <strong>Used by a map.</strong> {deleteWarning(deleting)}
+          </p>
+        )}
         {deleteError && (
           <p className="field__error" role="alert">
             {deleteError}

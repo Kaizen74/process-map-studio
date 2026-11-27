@@ -185,6 +185,29 @@ def test_every_step_is_checked_before_it_is_kept(
         assert (tally.merged, tally.pending_merges) == (0, 1)
 
 
+NO_ROLE_STEP = {
+    "steps": [make_ai_fixtures.step("a", "activity", "Draft load plan", "", [1])],
+    "new_roles": [],
+    "merge_proposals": [],
+}
+
+
+def test_a_step_whose_claims_name_no_role_is_kept_without_a_lane(
+    settings_config: AppConfig, tmp_path: Path
+) -> None:
+    """DECISIONS 114: no role is guessed and no blank role is made; Eric places the step."""
+    for d in drafted_with(crafted(settings_config, tmp_path, NO_ROLE_STEP)):
+        with session_scope(d.sessions) as session:
+            before = len(engagements.list_roles(session, d.engagement_id))
+        tally = run(d)
+        with session_scope(d.sessions) as session:
+            [element] = map_repo.elements(session, d.version_id)
+            roles = engagements.list_roles(session, d.engagement_id)
+        assert (element.label, element.lane_role_id) == ("Draft load plan", None)
+        assert len(roles) == before and all(r.name.strip() for r in roles)
+        assert tally.roles_created == 0
+
+
 def test_a_version_without_verified_claims_needs_no_call(sample: Drafted) -> None:
     with session_scope(sample.sessions) as session:
         empty = versions.create(
